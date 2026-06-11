@@ -7,7 +7,6 @@ import type {
   TempoModifier,
   TimeCap,
 } from "@repo/contracts/lms/_shared";
-import type { ParallelInterleaveOrder } from "@repo/contracts/lms/composition";
 import type { Position, RowKind, SchemaRowPayload } from "@repo/contracts/lms/schema-row";
 
 import type { CountOrRangeValue } from "../count-or-range-field";
@@ -22,12 +21,6 @@ export type RepetitionAxis =
   | { kind: "cadence"; everyMin: number; rounds: number }
   | { kind: "interval"; workMin: number; offMin: number; count: number };
 
-export type SupersetPairDraft = { label: string; rowIds: NodeId[] };
-
-export type ArrangementAxis =
-  | { kind: "ordered" }
-  | { kind: "superset"; pairs: SupersetPairDraft[] };
-
 export type RestAxis = RestSpec;
 
 export type ComposeContainer = {
@@ -36,8 +29,6 @@ export type ComposeContainer = {
   header: string | null;
   notes: string | null;
   repetition?: RepetitionAxis;
-  arrangement?: ArrangementAxis;
-  interleaveOrder?: ParallelInterleaveOrder;
   rest?: RestAxis;
   children: ComposeNode[];
 };

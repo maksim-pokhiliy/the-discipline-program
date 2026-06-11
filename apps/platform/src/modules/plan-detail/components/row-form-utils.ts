@@ -189,12 +189,7 @@ export const parseRowPayload = (rowKind: RowKind, value: unknown): ParseRowPaylo
   switch (rowKind) {
     case "EXERCISE":
     case "REST":
-    case "FOOTNOTE":
-    case "STANDALONE_LOAD":
-    case "STANDALONE_URL":
     case "PLACEHOLDER":
-    case "INNER_LADDER_MARKER":
-    case "REP_DEFINITION":
     case "REST_SLOT":
       return finalizeRowPayload(rowKind, value);
     default:
@@ -203,8 +198,6 @@ export const parseRowPayload = (rowKind: RowKind, value: unknown): ParseRowPaylo
       return finalizeRowPayload(rowKind, value);
   }
 };
-
-const STANDALONE_LOAD_SCOPE = "applies_to_all_preceding_rows";
 
 export type RowSiblings = {
   reps?: RepNotation | null;
@@ -277,18 +270,6 @@ export const assembleRowPayloadAndNotes = (
         payloadInput: { parsed: record.parsed, raw: resolveRestRaw(record) },
         notes: toNotes(record.notes),
       };
-    case "STANDALONE_LOAD":
-      return {
-        payloadInput: { load: record.load, scope: STANDALONE_LOAD_SCOPE },
-        notes: toNotes(record.notes),
-      };
-    case "STANDALONE_URL":
-      return {
-        payloadInput: { url: record.url, wrapped: record.wrapped, appliesTo: record.appliesTo },
-        notes: null,
-      };
-    case "INNER_LADDER_MARKER":
-      return { payloadInput: { steps: record.steps }, notes: null };
     case "REST_SLOT":
       return { payloadInput: {}, notes: toNotes(record.notes) };
     case "EXERCISE":
@@ -297,9 +278,7 @@ export const assembleRowPayloadAndNotes = (
         notes: toNotes(record.notes),
         siblings: assembleExerciseSiblings(record),
       };
-    case "FOOTNOTE":
     case "PLACEHOLDER":
-    case "REP_DEFINITION":
       return { payloadInput: record, notes: toNotes(record.notes) };
     default:
       rowKind satisfies never;

@@ -2,10 +2,10 @@
 
 import { Typography } from "@mui/material";
 
-export const LoadWithoutWeightFields = () => {
+export const LoadNoneFields = () => {
   return (
     <Typography variant="caption" color="text.secondary">
-      No weight — drop-set stage.
+      No load — bodyweight or unloaded movement.
     </Typography>
   );
 };

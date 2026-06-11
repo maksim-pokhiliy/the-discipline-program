@@ -6,20 +6,20 @@ import { PlusRowButton } from "@repo/ui";
 
 import { AxisEditorModal } from "./axis-editor-modal";
 
-const BUTTON_LABEL = "Add sub-schema";
+const BUTTON_LABEL = "Add schema into group";
 
 type AddSubSchemaButtonProps = {
   planId: string;
   startDate: string;
   blockId: string;
-  parentSchemaId: string;
+  groupId: string;
 };
 
 export const AddSubSchemaButton: React.FC<AddSubSchemaButtonProps> = ({
   planId,
   startDate,
   blockId,
-  parentSchemaId,
+  groupId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -33,7 +33,7 @@ export const AddSubSchemaButton: React.FC<AddSubSchemaButtonProps> = ({
           onClose={() => setIsOpen(false)}
           planId={planId}
           startDate={startDate}
-          mode={{ kind: "create", blockId, parentSchemaId }}
+          mode={{ kind: "create", blockId, groupId }}
         />
       )}
     </>

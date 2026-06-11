@@ -31,14 +31,10 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
 }): ReactElement => {
   const composition = schema.schema.composition;
   const schemaIntensity = schema.schema.intensity;
-  const subSchemaCount = schema.subSchemas.length;
 
   const metaParts = useMemo(
-    () =>
-      composition === null
-        ? EMPTY_PARTS
-        : formatCompositionSummary(composition, { containerChildCount: subSchemaCount }),
-    [composition, subSchemaCount],
+    () => (composition === null ? EMPTY_PARTS : formatCompositionSummary(composition)),
+    [composition],
   );
 
   const ownChips = useMemo(

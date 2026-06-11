@@ -8,9 +8,7 @@ export const shouldBeContainer = (node: ComposeNode): boolean => {
   }
 
   const hasRepetitionSemantics = node.repetition !== undefined && node.repetition.kind !== "once";
-  const hasArrangementSemantics =
-    node.arrangement !== undefined && node.arrangement.kind !== "ordered";
   const hasMultipleChildren = node.children.length > MULTI_CHILD_THRESHOLD;
 
-  return hasRepetitionSemantics || hasArrangementSemantics || hasMultipleChildren;
+  return hasRepetitionSemantics || hasMultipleChildren;
 };

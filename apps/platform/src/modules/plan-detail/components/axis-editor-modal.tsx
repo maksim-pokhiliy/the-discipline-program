@@ -5,20 +5,18 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Stack } from "@mui/material";
 
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import { FormModal } from "@repo/ui";
 
-import { useCatalog, useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
+import { useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
 
-import { collectTrackChildren } from "../lib/arrangement-tree";
 import { makeNodeId } from "../lib/axis-draft-id";
 import { buildComposition, previewComposition } from "../lib/build-axis-composition";
 import { formatCompositionSummary } from "../lib/format-composition-summary";
 import { isParallelDraft } from "../lib/parallel-ladder-draft";
 import { schemaWithBodyToDraftContainer } from "../lib/schema-to-draft-container";
+import { useCreateGroup } from "../lib/use-create-group";
 import { useCreateIndependentLadders } from "../lib/use-create-independent-ladders";
-import { useCreateParallelSchemas } from "../lib/use-create-parallel-schemas";
 
 import type { ComposeContainer, ComposeNode, NodeId } from "./axes/axis-draft.types";
 import { ContainerInspector } from "./axes/container-inspector";
@@ -34,7 +32,7 @@ const BODY_SPACING = 2;
 const EMPTY_COMPOSITION: Composition = {};
 
 export type AxisEditorMode =
-  | { kind: "create"; blockId: string; parentSchemaId?: string }
+  | { kind: "create"; blockId: string; groupId?: string }
   | { kind: "edit"; schema: SchemaWithBody };
 
 type AxisEditorModalProps = {
@@ -62,7 +60,7 @@ const seedDraft = (mode: AxisEditorMode): DraftSeed =>
 
 const modeKey = (mode: AxisEditorMode): string =>
   mode.kind === "create"
-    ? `create:${mode.blockId}:${mode.parentSchemaId ?? ""}`
+    ? `create:${mode.blockId}:${mode.groupId ?? ""}`
     : `edit:${mode.schema.schema.id}`;
 
 export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
@@ -74,13 +72,8 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 }): ReactElement => {
   const createSchema = useCreateSchema(planId, startDate);
   const updateSchema = useUpdateSchema(planId, startDate);
-  const parallelCreate = useCreateParallelSchemas(planId, startDate);
+  const groupCreate = useCreateGroup(planId, startDate);
   const independentCreate = useCreateIndependentLadders(planId, startDate);
-  const { exerciseById: catalogExercises } = useCatalog();
-  const exerciseById = useMemo<Map<string, Exercise>>(
-    () => new Map(catalogExercises),
-    [catalogExercises],
-  );
 
   const [{ container: draft }, setSeed] = useState<DraftSeed>(() => seedDraft(mode));
   const [error, setError] = useState<string | null>(null);
@@ -122,19 +115,18 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   const onDraftChange = (next: ComposeContainer): void => setSeed({ container: next });
 
   const isCreateMode = mode.kind === "create";
+  const isInGroupAdd = mode.kind === "create" && mode.groupId !== undefined;
   const isPending =
     createSchema.isPending ||
     updateSchema.isPending ||
-    parallelCreate.isPending ||
+    groupCreate.isPending ||
     independentCreate.isPending;
   const preview = useMemo(
     () => (isCreateMode ? EMPTY_COMPOSITION : previewComposition(draft)),
     [isCreateMode, draft],
   );
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
-  const labelKind = deriveCompositionLabel(preview, {
-    containerChildCount: collectTrackChildren(draft).length,
-  }).kind;
+  const labelKind = deriveCompositionLabel(preview).kind;
   const showsFlatHint = labelKind === FLAT_KIND && parts.length === 0;
 
   const releaseGuard = (): void => {
@@ -154,7 +146,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     createSchema.mutate(
       {
         blockId: createMode.blockId,
-        ...(createMode.parentSchemaId != null && { parentSchemaId: createMode.parentSchemaId }),
+        ...(createMode.groupId !== undefined && { groupId: createMode.groupId }),
         composition: result.composition,
         header: draft.header,
         notes: null,
@@ -163,14 +155,10 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     );
   };
 
-  const submitParallelCreate = (createMode: Extract<AxisEditorMode, { kind: "create" }>): void => {
+  const submitGroupCreate = (createMode: Extract<AxisEditorMode, { kind: "create" }>): void => {
     isSubmittingRef.current = true;
-    void parallelCreate.run(
-      {
-        blockId: createMode.blockId,
-        ...(createMode.parentSchemaId != null && { parentSchemaId: createMode.parentSchemaId }),
-        draft,
-      },
+    void groupCreate.run(
+      { blockId: createMode.blockId, draft },
       {
         onSuccess: () => {
           releaseGuard();
@@ -189,11 +177,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   ): void => {
     isSubmittingRef.current = true;
     void independentCreate.run(
-      {
-        blockId: createMode.blockId,
-        ...(createMode.parentSchemaId != null && { parentSchemaId: createMode.parentSchemaId }),
-        draft,
-      },
+      { blockId: createMode.blockId, draft },
       {
         onSuccess: () => {
           releaseGuard();
@@ -239,9 +223,9 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       return;
     }
 
-    if (isParallelDraft(draft)) {
+    if (isParallelDraft(draft) && !isInGroupAdd) {
       if (linkIntoBox) {
-        submitParallelCreate(mode);
+        submitGroupCreate(mode);
       } else {
         submitIndependentLadders(mode);
       }
@@ -271,7 +255,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
           draft={draft}
           onDraftChange={onDraftChange}
           linkIntoBox={linkIntoBox}
-          onLinkIntoBoxChange={setLinkIntoBox}
+          onLinkIntoBoxChange={isInGroupAdd ? undefined : setLinkIntoBox}
         />
       ) : (
         <Stack direction="column" spacing={BODY_SPACING}>
@@ -279,7 +263,6 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
           <ContainerInspector
             container={draft}
-            exerciseById={exerciseById}
             isCreateMode={isCreateMode}
             headerEditable
             onUpdateNode={onUpdateNode}

@@ -11,8 +11,6 @@ const SPACE = " ";
 const MIDDLE_DOT_SEPARATOR = " · ";
 const STAGE_AT = " @ ";
 const STAGE_JOIN = " → ";
-const DUAL_VALUE_SUFFIX = " kg (M/F)";
-const DUAL_VALUE_SEPARATOR = " / ";
 const ASYMMETRIC_INFIX = " arm working, passive: ";
 const UNDERSCORE_RE = /_/g;
 const UNDERSCORE_REPLACEMENT = " ";
@@ -54,8 +52,6 @@ export const formatWeight = (weight: Weight): string => {
       return weight.stages
         .map((stage) => `${stage.reps}${STAGE_AT}${stage.valueKg}${KG_SUFFIX}`)
         .join(STAGE_JOIN);
-    case "dual_value":
-      return `${weight.first}${DUAL_VALUE_SEPARATOR}${weight.second}${DUAL_VALUE_SUFFIX}`;
     case "with_asymmetric_arm":
       return `${weight.valueKg}${KG_SUFFIX}${MIDDLE_DOT_SEPARATOR}${weight.workingArm}${ASYMMETRIC_INFIX}${weight.passiveArmAction.replace(UNDERSCORE_RE, UNDERSCORE_REPLACEMENT)}`;
     case "with_depth_modifier":

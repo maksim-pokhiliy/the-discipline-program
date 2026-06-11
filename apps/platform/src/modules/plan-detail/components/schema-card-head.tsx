@@ -93,11 +93,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
           >
             {schema.schema.composition !== null ? (
               <SchemaCompositionTag
-                label={
-                  deriveCompositionLabel(schema.schema.composition, {
-                    containerChildCount: schema.subSchemas.length,
-                  }).kind
-                }
+                label={deriveCompositionLabel(schema.schema.composition).kind}
               />
             ) : null}
             <InlineEditText

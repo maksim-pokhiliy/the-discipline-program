@@ -3,19 +3,12 @@
 import { Button, Stack, TextField, ToggleButton, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
-import {
-  MAX_SUB_FORMS,
-  REP_UNITS,
-  type MaxSubForm,
-  type RepNotation,
-  type RepUnit,
-} from "@repo/contracts/lms/_shared";
+import { REP_UNITS, type RepNotation, type RepUnit } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
 
 type CountReps = Extract<RepNotation, { kind: "count" }>;
 type RangeReps = Extract<RepNotation, { kind: "range" }>;
 type UnitBoundReps = Extract<RepNotation, { kind: "unit_bound" }>;
-type TotalFlagReps = Extract<RepNotation, { kind: "total_flag" }>;
 
 const UNIT_BOUND_DEFAULT_VALUE = 30;
 const UNIT_BOUND_RANGE_DEFAULT_MIN = 30;
@@ -25,15 +18,7 @@ const NUMERIC_FIELD_WIDTH = 80;
 const RANGE_FIELD_WIDTH = 70;
 const EN_DASH = "–";
 const ROW_STACK_SX = { alignItems: "center", flexWrap: "wrap" } as const;
-const PROGRESSIVE_SEED_PLACEHOLDER = "e.g. 3-3-3-2-2-1-1";
-const IMPLICIT_HINT = "no reps written — defined by surrounding context (ladder marker, etc.)";
-const COMPOUND_HINT = "a single rep is defined elsewhere via REP_DEFINITION row.";
-
-const MAX_SUB_FORM_LABELS: Record<MaxSubForm, string> = {
-  bare: "Bare",
-  progressive: "Progressive",
-  in_remaining_time: "In remaining time",
-};
+const MAX_TAIL_PLACEHOLDER = "e.g. in remaining time";
 
 type RepNotationFieldsProps = {
   value: RepNotation;
@@ -56,14 +41,6 @@ export const RepNotationFields = ({
     }
 
     onChange({ ...value, unit: next });
-  };
-
-  const handleSubFormChange = (_: unknown, next: MaxSubForm | null): void => {
-    if (next === null || value.kind !== "max") {
-      return;
-    }
-
-    onChange({ kind: "max", subForm: next });
   };
 
   switch (value.kind) {
@@ -238,77 +215,24 @@ export const RepNotationFields = ({
     }
     case "max":
       return (
-        <Stack spacing={1}>
-          <LabeledToggleGroup
-            label="form"
-            value={value.subForm}
-            onChange={handleSubFormChange}
-            disabled={disabled}
-          >
-            {MAX_SUB_FORMS.map((subForm) => (
-              <ToggleButton key={subForm} value={subForm}>
-                {MAX_SUB_FORM_LABELS[subForm]}
-              </ToggleButton>
-            ))}
-          </LabeledToggleGroup>
-
-          {value.subForm === "progressive" && (
-            <Stack direction="row" spacing={1} sx={ROW_STACK_SX}>
-              <Typography variant="caption" color="text.subtle">
-                seed
-              </Typography>
-
-              <TextField
-                size="small"
-                placeholder={PROGRESSIVE_SEED_PLACEHOLDER}
-                value={value.progressiveSeed ?? ""}
-                onChange={(e) =>
-                  onChange({
-                    kind: "max",
-                    subForm: "progressive",
-                    ...(e.target.value !== "" && { progressiveSeed: e.target.value }),
-                  })
-                }
-                disabled={disabled}
-              />
-            </Stack>
-          )}
-        </Stack>
-      );
-    case "implicit":
-      return (
-        <Typography variant="caption" color="text.subtle">
-          {IMPLICIT_HINT}
-        </Typography>
-      );
-    case "total_flag": {
-      const totalFlagError: FieldErrors<TotalFlagReps> | undefined = error;
-
-      return (
         <Stack direction="row" spacing={1} sx={ROW_STACK_SX}>
           <Typography variant="caption" color="text.subtle">
-            total
+            max
           </Typography>
 
           <TextField
-            type="number"
             size="small"
-            value={value.value}
-            onChange={(e) => onChange({ kind: "total_flag", value: Number(e.target.value) })}
-            inputProps={{ min: 1, step: 1 }}
-            error={totalFlagError?.value !== undefined}
-            helperText={totalFlagError?.value?.message}
+            placeholder={MAX_TAIL_PLACEHOLDER}
+            value={value.tail ?? ""}
+            onChange={(e) =>
+              onChange({
+                kind: "max",
+                ...(e.target.value !== "" && { tail: e.target.value }),
+              })
+            }
             disabled={disabled}
-            sx={{ maxWidth: NUMERIC_FIELD_WIDTH }}
           />
         </Stack>
-      );
-    }
-    case "compound_rep_unit":
-      return (
-        <Typography variant="caption" color="text.subtle">
-          {COMPOUND_HINT}
-        </Typography>
       );
     default:
       value satisfies never;

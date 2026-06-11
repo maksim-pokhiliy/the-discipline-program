@@ -3,7 +3,6 @@
 import { Stack } from "@mui/material";
 
 import { collectTrackChildren } from "../lib/arrangement-tree";
-import { hasLadderMarkerConflict, LADDER_MARKER_CONFLICT } from "../lib/ladder-marker-conflict";
 import {
   appendTrack,
   dematerializeToFlat,
@@ -84,7 +83,7 @@ type CreateSchemaFlowProps = {
   draft: ComposeContainer;
   onDraftChange: (next: ComposeContainer) => void;
   linkIntoBox?: boolean;
-  onLinkIntoBoxChange?: (checked: boolean) => void;
+  onLinkIntoBoxChange?: ((checked: boolean) => void) | undefined;
 };
 
 export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
@@ -96,7 +95,6 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
   const activeKind: RepetitionAxis["kind"] = isParallelDraft(draft)
     ? LADDER_KIND
     : (draft.repetition?.kind ?? FALLBACK_KIND);
-  const ladderError = hasLadderMarkerConflict(draft) ? LADDER_MARKER_CONFLICT : undefined;
 
   const handleKind = (nextKind: RepetitionAxis["kind"]): void => {
     if (nextKind === activeKind) {
@@ -158,7 +156,6 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
         onChangeTrack={handleChangeTrack}
         onAppendTrack={handleAppendTrack}
         onRemoveTrack={handleRemoveTrack}
-        error={ladderError}
         isBoxed={linkIntoBox}
       />
 

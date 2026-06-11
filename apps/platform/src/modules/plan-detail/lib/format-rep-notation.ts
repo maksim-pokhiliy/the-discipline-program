@@ -4,13 +4,6 @@ const REPS_SUFFIX = " reps";
 const RANGE_SEPARATOR = "–";
 const SPACE = " ";
 const MAX_LABEL = "max";
-const MAX_REMAINING_TIME_LABEL = "max (in remaining time)";
-const MAX_PROGRESSIVE_PREFIX = "max · progressive";
-const SEED_OPEN = " (";
-const SEED_CLOSE = ")";
-const IMPLICIT_LABEL = "implicit";
-const TOTAL_PREFIX = "total ";
-const COMPOUND_REP_UNIT_LABEL = "compound rep";
 
 export const formatRepNotation = (reps: RepNotation): string => {
   switch (reps.kind) {
@@ -29,28 +22,8 @@ export const formatRepNotation = (reps: RepNotation): string => {
 
       return reps.unit;
     }
-    case "max": {
-      if (reps.subForm === "in_remaining_time") {
-        return MAX_REMAINING_TIME_LABEL;
-      }
-
-      if (reps.subForm === "progressive") {
-        const seedSuffix =
-          reps.progressiveSeed !== undefined
-            ? `${SEED_OPEN}${reps.progressiveSeed}${SEED_CLOSE}`
-            : "";
-
-        return `${MAX_PROGRESSIVE_PREFIX}${seedSuffix}`;
-      }
-
-      return MAX_LABEL;
-    }
-    case "implicit":
-      return IMPLICIT_LABEL;
-    case "total_flag":
-      return `${TOTAL_PREFIX}${reps.value}`;
-    case "compound_rep_unit":
-      return COMPOUND_REP_UNIT_LABEL;
+    case "max":
+      return reps.tail !== undefined ? `${MAX_LABEL}${SPACE}${reps.tail}` : MAX_LABEL;
     default:
       reps satisfies never;
 

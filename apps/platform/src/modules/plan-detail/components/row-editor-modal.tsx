@@ -29,24 +29,14 @@ export type RowShellFormData = z.infer<typeof rowShellResolverSchema>;
 const ROW_KIND_TITLE: Record<RowKind, string> = {
   EXERCISE: "exercise row",
   REST: "rest row",
-  FOOTNOTE: "footnote row",
-  STANDALONE_LOAD: "load row",
-  STANDALONE_URL: "url row",
   PLACEHOLDER: "placeholder row",
-  INNER_LADDER_MARKER: "ladder marker row",
-  REP_DEFINITION: "rep definition row",
   REST_SLOT: "rest slot row",
 };
 
 const ROW_KIND_MODAL_WIDTH: Record<RowKind, "sm" | "md"> = {
   EXERCISE: "md",
   REST: "sm",
-  FOOTNOTE: "md",
-  STANDALONE_LOAD: "sm",
-  STANDALONE_URL: "sm",
   PLACEHOLDER: "md",
-  INNER_LADDER_MARKER: "sm",
-  REP_DEFINITION: "sm",
   REST_SLOT: "sm",
 };
 

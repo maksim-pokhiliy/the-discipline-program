@@ -28,13 +28,6 @@ export const buildDefaultWeight = (variant: WeightVariant): Weight => {
       };
     case "split_tier":
       return { variant: "split_tier", stages: [buildDefaultStage(), buildDefaultStage()] };
-    case "dual_value":
-      return {
-        variant: "dual_value",
-        first: DEFAULT_VALUE_KG,
-        second: DEFAULT_VALUE_KG,
-        resolver: "athlete_profile",
-      };
     case "with_asymmetric_arm":
       return {
         variant: "with_asymmetric_arm",
@@ -55,9 +48,9 @@ export const buildDefaultLoad = (kind: LoadKind): Load => {
       return { kind: "percentage", value: DEFAULT_PERCENTAGE, reference: { scope: "self" } };
     case "bodyweight":
       return { kind: "bodyweight" };
-    case "without_weight":
-      return { kind: "without_weight", context: "drop_set_stage" };
-    case "unspecified":
-      return { kind: "unspecified" };
+    case "byProfile":
+      return { kind: "byProfile", first: DEFAULT_VALUE_KG, second: DEFAULT_VALUE_KG };
+    case "none":
+      return { kind: "none" };
   }
 };

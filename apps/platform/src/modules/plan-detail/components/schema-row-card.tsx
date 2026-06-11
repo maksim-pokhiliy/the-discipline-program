@@ -30,8 +30,6 @@ const DEMO_PX_FACTOR = 0.75;
 const DEMO_PY_FACTOR = 0.5;
 const DEMO_BORDER_RADIUS_FACTOR = 0.5;
 const TINT_ALPHA = 0.04;
-const TINT_HOVER_ALPHA = 0.07;
-const LADDER_TINT_ALPHA = 0.02;
 const DRAG_OPACITY_DRAGGING = 0.5;
 const DRAG_OPACITY_DEFAULT = 1;
 const TRANSITION_BG = "background-color 150ms";
@@ -51,7 +49,6 @@ type SchemaRowCardProps = {
   startDate: string;
   index: number;
   minuteLabel?: string | null;
-  supersetLabel?: string | null;
   isReorderPending: boolean;
 };
 
@@ -62,22 +59,11 @@ type RowTintSx = {
 
 const getRowTintSx = (rowKind: RowKind, theme: Theme): RowTintSx => {
   switch (rowKind) {
-    case "STANDALONE_LOAD":
-    case "STANDALONE_URL":
-      return {
-        bgcolor: alpha(theme.palette.kind.load, TINT_ALPHA),
-        "&:hover": { bgcolor: alpha(theme.palette.kind.load, TINT_HOVER_ALPHA) },
-      };
     case "REST":
     case "REST_SLOT":
       return { bgcolor: alpha(theme.palette.kind.rest, TINT_ALPHA) };
-    case "FOOTNOTE":
-      return { bgcolor: alpha(theme.palette.kind.foot, TINT_ALPHA) };
-    case "INNER_LADDER_MARKER":
-      return { bgcolor: alpha(theme.palette.text.primary, LADDER_TINT_ALPHA) };
     case "EXERCISE":
     case "PLACEHOLDER":
-    case "REP_DEFINITION":
       return {};
     default:
       rowKind satisfies never;
@@ -92,7 +78,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   startDate,
   index,
   minuteLabel = null,
-  supersetLabel = null,
   isReorderPending,
 }) => {
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
@@ -115,7 +100,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const editorMode = useMemo<RowEditorMode>(() => ({ kind: "edit", row }), [row]);
 
   const rowKind = row.rowPayload.rowKind;
-  const isFootnote = rowKind === "FOOTNOTE";
 
   const handleEditOpen = () => setIsEditOpen(true);
 
@@ -150,7 +134,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         transition: TRANSITION_BG,
         "&:hover": { bgcolor: "action.hover" },
         ...getRowTintSx(rowKind, theme),
-        fontStyle: isFootnote ? "italic" : "inherit",
         "&:last-of-type": { borderBottom: 0 },
       })}
     >
@@ -188,7 +171,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         formPillText={fmt.formPillText}
         subParts={fmt.subParts}
         minuteLabel={minuteLabel}
-        supersetLabel={supersetLabel}
       />
 
       {fmt.demoUrl !== null ? (

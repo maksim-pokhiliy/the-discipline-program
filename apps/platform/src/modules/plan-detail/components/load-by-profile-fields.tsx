@@ -3,27 +3,27 @@
 import { Stack, TextField } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
-import type { Weight } from "@repo/contracts/lms/_shared";
+import type { Load } from "@repo/contracts/lms/_shared";
 
-type DualValueWeight = Extract<Weight, { variant: "dual_value" }>;
+type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
 
-type WeightDualValueFieldsProps = {
-  value: DualValueWeight;
-  onChange: (next: DualValueWeight) => void;
-  error?: FieldErrors<DualValueWeight> | undefined;
+type LoadByProfileFieldsProps = {
+  value: ByProfileLoad;
+  onChange: (next: ByProfileLoad) => void;
+  error?: FieldErrors<ByProfileLoad> | undefined;
   disabled?: boolean;
 };
 
-export const WeightDualValueFields = ({
+export const LoadByProfileFields = ({
   value,
   onChange,
   error,
   disabled = false,
-}: WeightDualValueFieldsProps) => {
+}: LoadByProfileFieldsProps) => {
   return (
     <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
       <TextField
-        label="First value (kg)"
+        label="Male (kg)"
         type="number"
         size="small"
         value={typeof value.first === "number" ? value.first : ""}
@@ -36,7 +36,7 @@ export const WeightDualValueFields = ({
       />
 
       <TextField
-        label="Second value (kg)"
+        label="Female (kg)"
         type="number"
         size="small"
         value={typeof value.second === "number" ? value.second : ""}

@@ -20,7 +20,7 @@ import {
 import { Stack } from "@mui/material";
 
 import type { Block } from "@repo/contracts/lms/block";
-import type { SchemaWithBody } from "@repo/contracts/lms/schema";
+import { buildBlockItems, type BlockItem } from "@repo/contracts/lms/schema-group";
 
 import { useReorderSchemas } from "@app/lib/hooks";
 
@@ -28,6 +28,7 @@ import { type BlockCtx } from "../lib/build-cascade-chips";
 
 import { AddSchemaButton } from "./add-schema-button";
 import { SchemaCard } from "./schema-card";
+import { SchemaGroupBox } from "./schema-group-box";
 
 type BlockCardBodyProps = {
   block: Block;
@@ -36,6 +37,12 @@ type BlockCardBodyProps = {
   parentIsReorderPending?: boolean;
 };
 
+const itemSortableId = (item: BlockItem): string =>
+  item.kind === "group" ? `group:${item.group.id}` : `schema:${item.schema.schema.id}`;
+
+const itemMemberIds = (item: BlockItem): string[] =>
+  item.kind === "group" ? item.members.map((member) => member.schema.id) : [item.schema.schema.id];
+
 export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   block,
   planId,
@@ -43,11 +50,16 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   parentIsReorderPending = false,
 }) => {
   const reorderSchemas = useReorderSchemas(planId, startDate);
-  const [sortedSchemas, setSortedSchemas] = useState<SchemaWithBody[]>(block.schemas);
+
+  const items = useMemo(
+    () => buildBlockItems(block.schemas, block.groups),
+    [block.schemas, block.groups],
+  );
+  const [sortedItems, setSortedItems] = useState<BlockItem[]>(items);
 
   useEffect(() => {
-    setSortedSchemas(block.schemas);
-  }, [block.schemas]);
+    setSortedItems(items);
+  }, [items]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -68,41 +80,53 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
       return;
     }
 
-    const oldIndex = sortedSchemas.findIndex((s) => s.schema.id === active.id);
-    const newIndex = sortedSchemas.findIndex((s) => s.schema.id === over.id);
+    const oldIndex = sortedItems.findIndex((item) => itemSortableId(item) === active.id);
+    const newIndex = sortedItems.findIndex((item) => itemSortableId(item) === over.id);
 
     if (oldIndex < 0 || newIndex < 0) {
       return;
     }
 
-    const previousOrder = sortedSchemas;
-    const nextOrder = arrayMove(sortedSchemas, oldIndex, newIndex);
+    const previousOrder = sortedItems;
+    const nextOrder = arrayMove(sortedItems, oldIndex, newIndex);
 
-    setSortedSchemas(nextOrder);
+    setSortedItems(nextOrder);
 
     reorderSchemas.mutate(
-      { blockId: block.id, orderedIds: nextOrder.map((s) => s.schema.id) },
-      { onError: () => setSortedSchemas(previousOrder) },
+      { blockId: block.id, orderedIds: nextOrder.flatMap(itemMemberIds) },
+      { onError: () => setSortedItems(previousOrder) },
     );
   };
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext
-        items={sortedSchemas.map((s) => s.schema.id)}
+        items={sortedItems.map(itemSortableId)}
         strategy={verticalListSortingStrategy}
       >
         <Stack direction="column" spacing={1.25} sx={(theme) => ({ p: theme.spacing(1.5) })}>
-          {sortedSchemas.map((s) => (
-            <SchemaCard
-              key={s.schema.id}
-              schema={s}
-              planId={planId}
-              startDate={startDate}
-              blockCtx={blockCtx}
-              parentIsReorderPending={effectiveReorderPending}
-            />
-          ))}
+          {sortedItems.map((item) =>
+            item.kind === "group" ? (
+              <SchemaGroupBox
+                key={itemSortableId(item)}
+                group={item.group}
+                members={item.members}
+                planId={planId}
+                startDate={startDate}
+                blockCtx={blockCtx}
+                parentIsReorderPending={effectiveReorderPending}
+              />
+            ) : (
+              <SchemaCard
+                key={itemSortableId(item)}
+                schema={item.schema}
+                planId={planId}
+                startDate={startDate}
+                blockCtx={blockCtx}
+                parentIsReorderPending={effectiveReorderPending}
+              />
+            ),
+          )}
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />

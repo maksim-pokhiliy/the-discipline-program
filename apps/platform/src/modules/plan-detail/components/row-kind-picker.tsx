@@ -9,10 +9,10 @@ import { BaseModal } from "@repo/ui";
 
 import { RowKindPickerTile, type RowKindTile } from "./row-kind-picker-tile";
 
-const GRID_COLUMNS = "repeat(3, 1fr)";
+const GRID_COLUMNS = "repeat(2, 1fr)";
 const GRID_GAP = 1;
 const ENTER_KEY = "Enter";
-const HOTKEYS_HINT = "hotkeys: E R F L U P I D S · enter to accept · esc to cancel";
+const HOTKEYS_HINT = "hotkeys: E R P S · enter to accept · esc to cancel";
 
 const DEFAULT_SELECTED_KIND: RowKind = "REST";
 
@@ -36,33 +36,6 @@ const ROW_KIND_TILES: readonly RowKindTile[] = [
     hotkey: "R",
   },
   {
-    kind: "FOOTNOTE",
-    label: "Footnote",
-    desc: "* notes that apply per round / per set",
-    badge: "FN",
-    badgeKind: "foot",
-    dashed: false,
-    hotkey: "F",
-  },
-  {
-    kind: "STANDALONE_LOAD",
-    label: "Standalone load",
-    desc: "A load line that applies to ALL rows above it",
-    badge: "LD",
-    badgeKind: "load",
-    dashed: false,
-    hotkey: "L",
-  },
-  {
-    kind: "STANDALONE_URL",
-    label: "Standalone URL",
-    desc: "Demo link or external reference",
-    badge: "URL",
-    badgeKind: "url",
-    dashed: false,
-    hotkey: "U",
-  },
-  {
     kind: "PLACEHOLDER",
     label: "Placeholder",
     desc: "'any exercise for ABS' — coach picks at runtime",
@@ -70,24 +43,6 @@ const ROW_KIND_TILES: readonly RowKindTile[] = [
     badgeKind: "placeholder",
     dashed: true,
     hotkey: "P",
-  },
-  {
-    kind: "INNER_LADDER_MARKER",
-    label: "Inner ladder",
-    desc: "'12-9-6:' — segments rows below into ladder rungs",
-    badge: "↓",
-    badgeKind: "ladder",
-    dashed: true,
-    hotkey: "I",
-  },
-  {
-    kind: "REP_DEFINITION",
-    label: "Rep definition",
-    desc: "'5 reps = 1 HS walk + 2 strict HSPU'",
-    badge: "≡",
-    badgeKind: "ex",
-    dashed: false,
-    hotkey: "D",
   },
   {
     kind: "REST_SLOT",

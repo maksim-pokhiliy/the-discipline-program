@@ -8,38 +8,27 @@ import type { FieldErrors } from "react-hook-form";
 import {
   EXERCISE_FORMS,
   type CompoundRow,
-  type CyclicalCompound,
   type ExerciseFormKind,
   type OrAlternative,
-  type SandwichCompound,
 } from "@repo/contracts/lms/_shared";
 
 import { CompoundFormEditor } from "./compound-form-editor";
-import { CyclicalFormEditor } from "./cyclical-form-editor";
 import type { ExerciseFormValue } from "./exercise-form-draft.types";
 import { ExerciseFormPickerTile, type ExerciseFormTile } from "./exercise-form-picker-tile";
 import { ExercisePicker } from "./exercise-picker";
 import { OrAlternativeFormEditor } from "./or-alternative-form-editor";
-import { SandwichFormEditor } from "./sandwich-form-editor";
 
 type AtomicFormValue = Extract<ExerciseFormValue, { form: "atomic" }>;
 type CompoundFormValue = Extract<ExerciseFormValue, { form: "compound" }>;
-type CyclicalFormValue = Extract<ExerciseFormValue, { form: "cyclical" }>;
-type SandwichFormValue = Extract<ExerciseFormValue, { form: "sandwich" }>;
 type OrAlternativeFormValue = Extract<ExerciseFormValue, { form: "or_alternative" }>;
 type PlaceholderRefFormValue = Extract<ExerciseFormValue, { form: "placeholder_ref" }>;
 
 const COMPOUND_SEED_REPS = 10;
-const SANDWICH_OPENING_REPS = 12;
-const SANDWICH_MIDDLE_REPS = 9;
-const SANDWICH_CLOSING_REPS = 6;
 const OR_PRIMARY_REPS = 5;
 const OR_ALT_REPS = 10;
-const CYCLICAL_SEED_PRIMARY_REPS = 1;
-const CYCLICAL_SEED_SECONDARY_REPS = 1;
 const OR_SEED_PURPOSE = "scale_down";
 
-const FORM_GRID_COLUMNS = "repeat(3, 1fr)";
+const FORM_GRID_COLUMNS = "repeat(2, 1fr)";
 const NO_DEFERRED_HINT = "";
 
 const FORM_TILES: Record<ExerciseFormKind, Omit<ExerciseFormTile, "form">> = {
@@ -49,8 +38,6 @@ const FORM_TILES: Record<ExerciseFormKind, Omit<ExerciseFormTile, "form">> = {
     desc: "multiple exercises performed back-to-back as ONE row",
     glyph: "+",
   },
-  cyclical: { label: "Cyclical", desc: "alternating primary ↔ secondary in cycles", glyph: "↻" },
-  sandwich: { label: "Sandwich", desc: "opening → middle → closing (3 fixed slots)", glyph: "▢" },
   or_alternative: {
     label: "OR alternative",
     desc: "primary · or · alternative (scale / equipment / coach pick)",
@@ -78,29 +65,6 @@ const buildExerciseFormDraft = (
             { exerciseId: null, reps: { kind: "count", value: COMPOUND_SEED_REPS } },
             { exerciseId: null, reps: { kind: "count", value: COMPOUND_SEED_REPS } },
           ],
-        },
-      };
-    case "cyclical":
-      return {
-        form: "cyclical",
-        cyclical: {
-          primaryExerciseId: null,
-          secondaryExerciseId: null,
-          cycles: [
-            {
-              primaryReps: CYCLICAL_SEED_PRIMARY_REPS,
-              secondaryReps: CYCLICAL_SEED_SECONDARY_REPS,
-            },
-          ],
-        },
-      };
-    case "sandwich":
-      return {
-        form: "sandwich",
-        sandwich: {
-          opening: { exerciseId: null, reps: { kind: "count", value: SANDWICH_OPENING_REPS } },
-          middle: { exerciseId: null, reps: { kind: "count", value: SANDWICH_MIDDLE_REPS } },
-          closing: { exerciseId: null, reps: { kind: "count", value: SANDWICH_CLOSING_REPS } },
         },
       };
     case "or_alternative":
@@ -138,10 +102,6 @@ export const ExerciseFormPicker = ({
     value.form === "atomic" ? error : undefined;
   const compoundArmError: FieldErrors<CompoundFormValue> | undefined =
     value.form === "compound" ? error : undefined;
-  const cyclicalArmError: FieldErrors<CyclicalFormValue> | undefined =
-    value.form === "cyclical" ? error : undefined;
-  const sandwichArmError: FieldErrors<SandwichFormValue> | undefined =
-    value.form === "sandwich" ? error : undefined;
   const orAlternativeArmError: FieldErrors<OrAlternativeFormValue> | undefined =
     value.form === "or_alternative" ? error : undefined;
   const placeholderArmError: FieldErrors<PlaceholderRefFormValue> | undefined =
@@ -154,8 +114,6 @@ export const ExerciseFormPicker = ({
     placeholderArmError?.root !== undefined;
 
   const compoundError: FieldErrors<CompoundRow> | undefined = compoundArmError?.compound;
-  const cyclicalError: FieldErrors<CyclicalCompound> | undefined = cyclicalArmError?.cyclical;
-  const sandwichError: FieldErrors<SandwichCompound> | undefined = sandwichArmError?.sandwich;
   const orAlternativeError: FieldErrors<OrAlternative> | undefined =
     orAlternativeArmError?.orAlternative;
 
@@ -176,24 +134,6 @@ export const ExerciseFormPicker = ({
             value={value.compound}
             onChange={(compound) => onChange({ form: "compound", compound })}
             error={compoundError}
-            disabled={disabled}
-          />
-        );
-      case "cyclical":
-        return (
-          <CyclicalFormEditor
-            value={value.cyclical}
-            onChange={(cyclical) => onChange({ form: "cyclical", cyclical })}
-            error={cyclicalError}
-            disabled={disabled}
-          />
-        );
-      case "sandwich":
-        return (
-          <SandwichFormEditor
-            value={value.sandwich}
-            onChange={(sandwich) => onChange({ form: "sandwich", sandwich })}
-            error={sandwichError}
             disabled={disabled}
           />
         );
