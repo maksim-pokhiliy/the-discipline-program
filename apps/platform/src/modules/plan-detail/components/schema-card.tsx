@@ -6,8 +6,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
-import { type SchemaWithBody } from "@repo/contracts/lms/schema";
-import { ConfirmationModal } from "@repo/ui";
+import { isStructurallyParallel } from "@repo/contracts/lms/composition";
+import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
+import { ConfirmationModal, InlineEditText } from "@repo/ui";
 
 import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
@@ -17,6 +18,7 @@ import { formatSchemaHeader } from "../lib/format-schema-header";
 import { AddSubSchemaButton } from "./add-sub-schema-button";
 import { AxisEditorModal } from "./axis-editor-modal";
 import { SchemaCardHead } from "./schema-card-head";
+import { SchemaGroupBox } from "./schema-group-box";
 import { SchemaList } from "./schema-list";
 import { SchemaRowList } from "./schema-row-list";
 
@@ -30,6 +32,8 @@ const PADDING_X_FACTOR = 1.5;
 const PADDING_B_FACTOR = 1.25;
 const PADDING_T_FACTOR = 0.5;
 const OUTER_BORDER_RADIUS_FACTOR = 0.5;
+const BOX_LABEL_ARIA = "Group label";
+const BOX_LABEL_PLACEHOLDER = "group…";
 
 type SchemaCardProps = {
   schema: SchemaWithBody;
@@ -83,11 +87,48 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     updateSchema.mutate({ schemaId: schema.schema.id, data: { header: nextHeader } });
   };
 
+  const isBox =
+    schema.schema.composition !== null &&
+    isStructurallyParallel(schema.schema.composition, {
+      containerChildCount: schema.subSchemas.length,
+    });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };
+
+  const renderMembers = (
+    <>
+      {schema.subSchemas.length > 0 ? (
+        <SchemaList
+          planId={planId}
+          startDate={startDate}
+          parentSchemaId={schema.schema.id}
+          schemas={schema.subSchemas}
+          parentIsReorderPending={isMutationPending}
+          renderItem={(sub, pending) => (
+            <SchemaCard
+              key={sub.schema.id}
+              schema={sub}
+              planId={planId}
+              startDate={startDate}
+              blockCtx={blockCtx}
+              parentIsReorderPending={pending}
+            />
+          )}
+        />
+      ) : null}
+
+      <AddSubSchemaButton
+        planId={planId}
+        startDate={startDate}
+        blockId={schema.schema.blockId}
+        parentSchemaId={schema.schema.id}
+      />
+    </>
+  );
 
   return (
     <Stack
@@ -111,45 +152,39 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onTitleCommit={handleTitleCommit}
         onDeleteOpen={handleDeleteOpen}
         onEditOpen={handleEditOpen}
+        isBoxed={isBox}
       />
 
-      <Stack
-        direction="column"
-        spacing={SUB_SCHEMAS_SPACING}
-        sx={(theme) => ({
-          pl: theme.spacing(SUB_SCHEMAS_PL_FACTOR),
-          pr: theme.spacing(PADDING_X_FACTOR),
-          pb: theme.spacing(PADDING_B_FACTOR),
-          pt: theme.spacing(PADDING_T_FACTOR),
-        })}
-      >
-        {schema.subSchemas.length > 0 ? (
-          <SchemaList
-            planId={planId}
-            startDate={startDate}
-            parentSchemaId={schema.schema.id}
-            schemas={schema.subSchemas}
-            parentIsReorderPending={isMutationPending}
-            renderItem={(sub, pending) => (
-              <SchemaCard
-                key={sub.schema.id}
-                schema={sub}
-                planId={planId}
-                startDate={startDate}
-                blockCtx={blockCtx}
-                parentIsReorderPending={pending}
-              />
-            )}
-          />
-        ) : null}
-
-        <AddSubSchemaButton
-          planId={planId}
-          startDate={startDate}
-          blockId={schema.schema.blockId}
-          parentSchemaId={schema.schema.id}
-        />
-      </Stack>
+      {isBox ? (
+        <SchemaGroupBox
+          label={
+            <InlineEditText
+              value={schema.schema.header ?? ""}
+              onCommit={handleTitleCommit}
+              variant="h4"
+              ariaLabel={BOX_LABEL_ARIA}
+              emptyIsValid
+              maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
+              placeholder={BOX_LABEL_PLACEHOLDER}
+            />
+          }
+        >
+          {renderMembers}
+        </SchemaGroupBox>
+      ) : (
+        <Stack
+          direction="column"
+          spacing={SUB_SCHEMAS_SPACING}
+          sx={(theme) => ({
+            pl: theme.spacing(SUB_SCHEMAS_PL_FACTOR),
+            pr: theme.spacing(PADDING_X_FACTOR),
+            pb: theme.spacing(PADDING_B_FACTOR),
+            pt: theme.spacing(PADDING_T_FACTOR),
+          })}
+        >
+          {renderMembers}
+        </Stack>
+      )}
 
       <SchemaRowList
         rows={schema.rows}

@@ -2,10 +2,12 @@
 
 Phased, **UI-first** (project rule `ui-first-for-training-domain`: each step ships UI on mocks first, the backend lands under the approved UX after). Budget ≤1 `/feature` per session → expect 2 sessions. Owner directive: **2 steps, not 3** — rounds/tail/other-patterns are backlog, not steps.
 
-| #   | Step                                     | Gate                                                                                         | Status                          |
-| --- | ---------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------- |
-| 1   | Authoring UI flow (on mocks)             | coach walkthrough: create parallel ladders in one flow (Ladder tile → stepper → "+ another") | 🟢 shipped (PR #258 merged)     |
-| 2   | Contract + model + api reshape (persist) | gated api-server suite green; parallel-ladder round-trip reconstructs tracks from children   | 🟢 shipped (owner gate pending) |
+**Initiative CLOSED 2026-06-10** — both steps merged; successor: `initiatives/session-primitive/`.
+
+| #   | Step                                     | Gate                                                                                         | Status                                            |
+| --- | ---------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| 1   | Authoring UI flow (on mocks)             | coach walkthrough: create parallel ladders in one flow (Ladder tile → stepper → "+ another") | 🟢 shipped (PR #258 merged)                       |
+| 2   | Contract + model + api reshape (persist) | gated api-server suite green; parallel-ladder round-trip reconstructs tracks from children   | 🟢 shipped & merged (PRs #259+#260; owner closed) |
 
 ## Step 1 — authoring UI (the coach flow, on mocks)
 
@@ -33,6 +35,6 @@ Make the persisted model match what the UI already implies: parallelism is deriv
 
 The ~10 consumer sites are enumerated (verify ran the trace) — they ride into the step-2 `/feature` design stage, re-confirmed there, not trusted blind.
 
-**Shipped 2026-06-10** (`feat/compose-derived-parallel`, per ADR-0040 + DR-S2-1..9). The stored `arrangement.parallel` arm + `parallelTrackSchema` are gone (arrangement = ordered|superset); `interleaveOrder` lives at the composition root; the "parallel" tag derives from structure (≥2 container children, no repetition/arrangement) on the card, in the tree builders' `Schema.label`, and in the edit-modal preview; the step-1 flow submits ONE atomic `POST …/schemas/parallel` (one Serializable tx + ONE idempotency key — MATERIALIZE-ATOMICITY closed); write guards fetch block-flat and project full depth (QA-106 closed; `buildSchemaWithBody` deleted); the seed's 4 parallels reshaped + the coverage gate moved to structural tallies. Repo verification green (check-types/lint/dep:check; contracts 824; platform 992); 14 checkpoint commits + docs close-out. **OWNER GATE (the step-2 gate remainder):** `pnpm db:reset` + `pnpm db:seed` (coverage gate runs inside), the gated api-server suite (~10 min serial), and the browser round-trip — create a parallel via the flow → the tag returns; edit it → it survives.
+**Shipped 2026-06-10** (`feat/compose-derived-parallel`, per ADR-0040 + DR-S2-1..9). The stored `arrangement.parallel` arm + `parallelTrackSchema` are gone (arrangement = ordered|superset); `interleaveOrder` lives at the composition root; the "parallel" tag derives from structure (≥2 container children, no repetition/arrangement) on the card, in the tree builders' `Schema.label`, and in the edit-modal preview; the step-1 flow submits ONE atomic `POST …/schemas/parallel` (one Serializable tx + ONE idempotency key — MATERIALIZE-ATOMICITY closed); write guards fetch block-flat and project full depth (QA-106 closed; `buildSchemaWithBody` deleted); the seed's 4 parallels reshaped + the coverage gate moved to structural tallies. Repo verification green (check-types/lint/dep:check; contracts 824; platform 992); 14 checkpoint commits + docs close-out. **Merged via PRs #259+#260; owner closed the step 2026-06-10** (the gated api-server suite + reseed + browser round-trip remained his manual ritual).
 
 Open design details deferred to their step: persist strategy for the step-1 flow on mocks + parent-materialization id-stability (step 1); exact derived-tracks read shape (step 2). Listed so they are not silently decided early.

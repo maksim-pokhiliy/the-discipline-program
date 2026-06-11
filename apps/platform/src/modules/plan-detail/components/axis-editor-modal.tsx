@@ -17,6 +17,7 @@ import { buildComposition, previewComposition } from "../lib/build-axis-composit
 import { formatCompositionSummary } from "../lib/format-composition-summary";
 import { isParallelDraft } from "../lib/parallel-ladder-draft";
 import { schemaWithBodyToDraftContainer } from "../lib/schema-to-draft-container";
+import { useCreateIndependentLadders } from "../lib/use-create-independent-ladders";
 import { useCreateParallelSchemas } from "../lib/use-create-parallel-schemas";
 
 import type { ComposeContainer, ComposeNode, NodeId } from "./axes/axis-draft.types";
@@ -74,6 +75,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   const createSchema = useCreateSchema(planId, startDate);
   const updateSchema = useUpdateSchema(planId, startDate);
   const parallelCreate = useCreateParallelSchemas(planId, startDate);
+  const independentCreate = useCreateIndependentLadders(planId, startDate);
   const { exerciseById: catalogExercises } = useCatalog();
   const exerciseById = useMemo<Map<string, Exercise>>(
     () => new Map(catalogExercises),
@@ -82,6 +84,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
   const [{ container: draft }, setSeed] = useState<DraftSeed>(() => seedDraft(mode));
   const [error, setError] = useState<string | null>(null);
+  const [linkIntoBox, setLinkIntoBox] = useState(true);
 
   const modeRef = useRef(mode);
 
@@ -94,6 +97,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   useEffect(() => {
     setSeed(seedDraft(modeRef.current));
     setError(null);
+    setLinkIntoBox(true);
     isSubmittingRef.current = false;
   }, [key]);
 
@@ -118,7 +122,11 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   const onDraftChange = (next: ComposeContainer): void => setSeed({ container: next });
 
   const isCreateMode = mode.kind === "create";
-  const isPending = createSchema.isPending || updateSchema.isPending || parallelCreate.isPending;
+  const isPending =
+    createSchema.isPending ||
+    updateSchema.isPending ||
+    parallelCreate.isPending ||
+    independentCreate.isPending;
   const preview = useMemo(
     () => (isCreateMode ? EMPTY_COMPOSITION : previewComposition(draft)),
     [isCreateMode, draft],
@@ -176,6 +184,29 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     );
   };
 
+  const submitIndependentLadders = (
+    createMode: Extract<AxisEditorMode, { kind: "create" }>,
+  ): void => {
+    isSubmittingRef.current = true;
+    void independentCreate.run(
+      {
+        blockId: createMode.blockId,
+        ...(createMode.parentSchemaId != null && { parentSchemaId: createMode.parentSchemaId }),
+        draft,
+      },
+      {
+        onSuccess: () => {
+          releaseGuard();
+          onClose();
+        },
+        onError: (message) => {
+          setError(message);
+          releaseGuard();
+        },
+      },
+    );
+  };
+
   const submitEdit = (editMode: Extract<AxisEditorMode, { kind: "edit" }>): void => {
     const result = buildComposition(draft);
 
@@ -209,7 +240,11 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     }
 
     if (isParallelDraft(draft)) {
-      submitParallelCreate(mode);
+      if (linkIntoBox) {
+        submitParallelCreate(mode);
+      } else {
+        submitIndependentLadders(mode);
+      }
 
       return;
     }
@@ -232,7 +267,12 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       error={error}
     >
       {isCreateMode ? (
-        <CreateSchemaFlow draft={draft} onDraftChange={onDraftChange} />
+        <CreateSchemaFlow
+          draft={draft}
+          onDraftChange={onDraftChange}
+          linkIntoBox={linkIntoBox}
+          onLinkIntoBoxChange={setLinkIntoBox}
+        />
       ) : (
         <Stack direction="column" spacing={BODY_SPACING}>
           <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />

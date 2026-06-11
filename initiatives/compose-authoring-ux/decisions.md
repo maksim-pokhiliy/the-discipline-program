@@ -202,3 +202,9 @@ Promoted from the step-2 RFC (`/feature` design stage) so the "why" is durable, 
 - **Rationale.** Aggressive-migration ground rules (no bridges; the reseeded DB has no legacy rows) — exactly the ADR-0038/0039 precedent for drained fields. The cheap remedy is `pnpm db:reset && pnpm db:seed`.
 - **Consequences.** Raw-SQL/manual inserts of the old shape fail loudly instead of half-rendering — acceptable in a non-prod solo world.
 - **Reversibility.** N/A (absence of code).
+
+---
+
+## Post-close supersede pointer (2026-06-10, append-only)
+
+The initiative closed with both steps merged. The 2026-06-10 domain-model review founded `initiatives/session-primitive/`, whose ratified **D-BOX** (relations = explicit Group nodes with coach-owned opaque labels; no semantics derived from child count; no typed relation kinds) **will supersede** the structural-derivation mechanism here (D-TRACKS-DERIVED, DR-S2-1, DR-S2-4) when its implementation lands. The marker primitive's death (vs MARKER-FATE / D-LADDER's sacred clause) is PROPOSED there as D-MARKER-DEATH, OPEN. Until then ADR-0040 is the live behavior of main. Recorded forward per the house supersede-don't-edit mechanism; no entry above is edited.

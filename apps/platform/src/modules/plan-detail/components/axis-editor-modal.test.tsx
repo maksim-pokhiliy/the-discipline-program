@@ -9,6 +9,7 @@ import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 import { collectTrackChildren } from "../lib/arrangement-tree";
+import type { UseCreateIndependentLaddersResult } from "../lib/use-create-independent-ladders";
 import type { UseCreateParallelSchemasResult } from "../lib/use-create-parallel-schemas";
 
 import type { ComposeContainer } from "./axes/axis-draft.types";
@@ -17,12 +18,17 @@ type ParallelRun = UseCreateParallelSchemasResult["run"];
 type ParallelRunArgs = Parameters<ParallelRun>[0];
 type ParallelRunOptions = Parameters<ParallelRun>[1];
 
+type IndependentRun = UseCreateIndependentLaddersResult["run"];
+type IndependentRunArgs = Parameters<IndependentRun>[0];
+
 const createSchemaMutate = vi.fn();
 const updateSchemaMutate = vi.fn();
 const parallelRun = vi.fn<ParallelRun>();
+const independentRun = vi.fn<IndependentRun>();
 const createSchemaState = { isPending: false };
 const updateSchemaState = { isPending: false };
 const parallelState = { isPending: false };
+const independentState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -43,6 +49,13 @@ vi.mock("@app/lib/hooks", async () => {
 
 vi.mock("../lib/use-create-parallel-schemas", () => ({
   useCreateParallelSchemas: () => ({ run: parallelRun, isPending: parallelState.isPending }),
+}));
+
+vi.mock("../lib/use-create-independent-ladders", () => ({
+  useCreateIndependentLadders: () => ({
+    run: independentRun,
+    isPending: independentState.isPending,
+  }),
 }));
 
 const { AxisEditorModal } = await import("./axis-editor-modal");
@@ -189,13 +202,25 @@ const capturedParallelOptions = (): ParallelRunOptions => {
   return options;
 };
 
+const capturedIndependentArgs = (): IndependentRunArgs => {
+  const args = independentRun.mock.calls[0]?.[0];
+
+  if (args === undefined) {
+    throw new Error("independentRun was not called");
+  }
+
+  return args;
+};
+
 afterEach(() => {
   createSchemaState.isPending = false;
   updateSchemaState.isPending = false;
   parallelState.isPending = false;
+  independentState.isPending = false;
   createSchemaMutate.mockReset();
   updateSchemaMutate.mockReset();
   parallelRun.mockReset();
+  independentRun.mockReset();
 });
 
 describe("AxisEditorModal create mode", () => {
@@ -781,5 +806,83 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
 
     expect(capturedParallelOptions().onSuccess).toBeTypeOf("function");
     expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
+  });
+});
+
+describe("AxisEditorModal group-into-box submit routing (MT-18)", () => {
+  const GROUP_CHECKBOX = /group into one box/i;
+
+  const groupCheckbox = (): HTMLElement | null =>
+    screen.queryByRole("checkbox", { name: GROUP_CHECKBOX });
+
+  const uncheckGroup = (): void => {
+    const checkbox = screen.getByRole("checkbox", { name: GROUP_CHECKBOX });
+
+    fireEvent.click(checkbox);
+  };
+
+  it("routes a parallel draft to the parallel create when Group-into-box stays checked", () => {
+    renderCreate();
+
+    buildParallel();
+
+    expect(groupCheckbox()).toBeChecked();
+
+    submit();
+
+    expect(parallelRun).toHaveBeenCalledTimes(1);
+    expect(independentRun).not.toHaveBeenCalled();
+  });
+
+  it("routes a parallel draft to the independent create when Group-into-box is unchecked", () => {
+    renderCreate();
+
+    buildParallel();
+    uncheckGroup();
+
+    expect(groupCheckbox()).not.toBeChecked();
+
+    submit();
+
+    expect(independentRun).toHaveBeenCalledTimes(1);
+    expect(parallelRun).not.toHaveBeenCalled();
+    expect(collectTrackChildren(capturedIndependentArgs().draft)).toHaveLength(2);
+  });
+
+  it("forwards an incoming parentSchemaId to the independent create for a sub-schema", () => {
+    renderCreateSub(SUB_SCHEMA_ID);
+
+    buildParallel();
+    uncheckGroup();
+    submit();
+
+    expect(independentRun).toHaveBeenCalledTimes(1);
+    expect(capturedIndependentArgs().parentSchemaId).toBe(SUB_SCHEMA_ID);
+  });
+
+  it("never shows the checkbox or routes through a create hook in edit mode of a parallel schema", () => {
+    renderEdit(makeStructurallyParallelSchema());
+
+    expect(groupCheckbox()).toBeNull();
+
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(parallelRun).not.toHaveBeenCalled();
+    expect(independentRun).not.toHaveBeenCalled();
+  });
+
+  it("routes a single-track ladder through the flat create regardless of the box flag", () => {
+    renderCreate();
+
+    selectRepetition("Ladder");
+
+    expect(groupCheckbox()).toBeNull();
+
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(parallelRun).not.toHaveBeenCalled();
+    expect(independentRun).not.toHaveBeenCalled();
   });
 });
