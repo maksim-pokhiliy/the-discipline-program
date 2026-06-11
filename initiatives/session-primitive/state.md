@@ -16,7 +16,7 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 
 ## Next action
 
-**W1 is built (PR open)** — `/feature` full ran 2026-06-10; 9 platform-only commits; box render via the live one-predicate, `header` box-label, «Group into one box» checkbox + `useCreateIndependentLadders`. Diff reviewed against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) — held; ratified calls promoted as DR-W1-1..5. **Remaining W1 gate:** owner acceptance walkthrough (boxes feel right — the 4 seed shapes + block-010 depth-3; W1-BOX-FRAME double-frame is the thing to eyeball) + merge. **Then, gating W2: D-MARKER-DEATH yes/no** from the owner (`decisions.md` — everything needed for the call is written there).
+**W1 is built (PR open)** — `/feature` full ran 2026-06-10; 9 platform-only commits; box render via the live one-predicate, `header` box-label, «Group into one box» checkbox + `useCreateIndependentLadders`. Diff reviewed against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) — held; ratified calls promoted as DR-W1-1..5. **Orchestrator independent review PASSED (2026-06-10, PR #261):** scope = plan-detail + initiative docs only; one-predicate held (zero hand-rolled checks; marker untouched in code); draft transforms untouched; gates re-run independently — check-types + lint green, platform **1035/1035**; one new low carry-forward recorded (W1-SUBADD-BOX). **Remaining W1 gate:** owner acceptance walkthrough (boxes feel right — the 4 seed shapes + block-010 depth-3; W1-BOX-FRAME double-frame is the thing to eyeball) + merge. **Then, gating W2: D-MARKER-DEATH yes/no** from the owner (`decisions.md` — everything needed for the call is written there).
 
 ## Open decisions awaiting ratification
 
@@ -25,7 +25,7 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 
 ## Live carry-forwards
 
-From W1 (`deferred.md`): **W1-DUP-RETRY** (unchecked batch dup-on-retry → W2 idempotency) · **W1-RENDER-REPOINT** (re-point box-ness from the predicate to Group membership at W2) · **W1-BOX-FRAME** (double-frame — eyeball at acceptance) · W1-INSESSION-CHECK (low).
+From W1 (`deferred.md`): **W1-DUP-RETRY** (unchecked batch dup-on-retry → W2 idempotency) · **W1-RENDER-REPOINT** (re-point box-ness from the predicate to Group membership at W2) · **W1-BOX-FRAME** (double-frame — eyeball at acceptance) · W1-INSESSION-CHECK (low) · W1-SUBADD-BOX (low, found at orchestrator review).
 Inherited: QA-004 (confirm/undo rides the editor rebuild) · MARKER-FATE (→ D-MARKER-DEATH) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale; reuse features post-primitive.
 
 ## Gotchas a resuming session must know
