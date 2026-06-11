@@ -1,17 +1,20 @@
 import { type PrismaClient } from "@prisma/client";
 
+import { DEFAULT_INTERLEAVE_ORDER } from "@repo/contracts/lms/schema-group";
+
 import { requireId } from "../_id-helpers";
 import {
   type CanonicalBlock,
+  type CanonicalGroupItem,
   type CanonicalRow,
   type CanonicalSchemaNode,
   type CanonicalSeed,
+  isCanonicalGroupItem,
 } from "../plan-data/canonical-schema";
 
 import { type BlockRefMap, buildBlockKey } from "./block-emit";
 import { phase7WeekIndex, stampPhase7ExamplesOrder } from "./phase7-helpers";
 import { type RefResolver } from "./ref-resolver";
-import { arrangementHasRefs, backPatchComposition } from "./schema-emit-back-patch";
 
 type SchemaEmitContext = {
   db: PrismaClient;
@@ -23,7 +26,7 @@ const emitSchemaRow = async (
   schemaId: string,
   row: CanonicalRow,
 ): Promise<void> => {
-  const created = await ctx.db.schemaRow.create({
+  await ctx.db.schemaRow.create({
     data: {
       schemaId,
       order: row.order,
@@ -37,39 +40,26 @@ const emitSchemaRow = async (
       ...(row.sequence !== null && { sequence: row.sequence }),
       ...(row.intensity !== null && { intensity: row.intensity }),
       ...(row.media !== null && { media: row.media }),
-      ...(row.compoundRep !== null && { compoundRep: row.compoundRep }),
       notes: row.notes,
     },
   });
-
-  if (row.refId !== undefined) {
-    ctx.resolver.setRow(row.refId, requireId(created));
-  }
 };
-
-const stripArrangement = (
-  composition: CanonicalSchemaNode["composition"],
-): CanonicalSchemaNode["composition"] => ({
-  ...(composition.repetition !== undefined && { repetition: composition.repetition }),
-  ...(composition.rest !== undefined && { rest: composition.rest }),
-});
 
 const emitSchemaNode = async (
   ctx: SchemaEmitContext,
   blockId: string,
-  parentSchemaId: string | null,
+  groupId: string | null,
+  order: number,
   node: CanonicalSchemaNode,
 ): Promise<void> => {
-  const needsBackPatch = arrangementHasRefs(node.composition.arrangement);
-
   const created = await ctx.db.schema.create({
     data: {
       blockId,
-      parentSchemaId,
-      order: node.order,
+      groupId,
+      order,
       header: node.header,
       ...(node.intensity !== null && { intensity: node.intensity }),
-      composition: needsBackPatch ? stripArrangement(node.composition) : node.composition,
+      composition: node.composition,
       notes: node.notes,
     },
   });
@@ -79,48 +69,48 @@ const emitSchemaNode = async (
   for (const row of node.rows) {
     await emitSchemaRow(ctx, schemaId, row);
   }
-
-  for (const sub of node.subSchemas) {
-    await emitSchemaNode(ctx, blockId, schemaId, sub);
-  }
-
-  if (needsBackPatch) {
-    await backPatchComposition(ctx.db, schemaId, node.composition, ctx.resolver);
-  }
 };
 
-const collectReferencedRefs = (
-  schemas: readonly CanonicalSchemaNode[],
-  rowRefs: Set<string> = new Set(),
-): Set<string> => {
-  for (const schema of schemas) {
-    const { arrangement } = schema.composition;
+const emitGroup = async (
+  ctx: SchemaEmitContext,
+  blockId: string,
+  startOrder: number,
+  item: CanonicalGroupItem,
+): Promise<number> => {
+  const group = await ctx.db.schemaGroup.create({
+    data: {
+      blockId,
+      label: item.group.label,
+      interleaveOrder: item.group.interleaveOrder ?? DEFAULT_INTERLEAVE_ORDER,
+    },
+  });
 
-    if (arrangement?.kind === "superset") {
-      for (const pair of arrangement.pairs) {
-        for (const rowRef of pair.rowIds) {
-          rowRefs.add(rowRef);
-        }
-      }
-    }
+  const groupId = requireId(group);
+  let order = startOrder;
 
-    collectReferencedRefs(schema.subSchemas, rowRefs);
+  for (const member of item.group.members) {
+    await emitSchemaNode(ctx, blockId, groupId, order, member);
+    order += 1;
   }
 
-  return rowRefs;
+  return order;
 };
 
-const assertUniqueTopLevelOrders = (block: CanonicalBlock, blockKey: string): void => {
+const assertUniqueBlockItemOrders = (block: CanonicalBlock, blockKey: string): void => {
   const seen = new Set<number>();
 
-  for (const schema of block.schemas) {
-    if (seen.has(schema.order)) {
-      throw new Error(
-        `schema-emit: duplicate top-level schema order ${schema.order} within block "${blockKey}" — Postgres @@unique([parentSchemaId, order]) does not enforce uniqueness when parentSchemaId is NULL`,
-      );
-    }
+  for (const item of block.schemas) {
+    const orders = isCanonicalGroupItem(item)
+      ? item.group.members.map((member) => member.order)
+      : [item.order];
 
-    seen.add(schema.order);
+    for (const order of orders) {
+      if (seen.has(order)) {
+        throw new Error(`schema-emit: duplicate schema order ${order} within block "${blockKey}"`);
+      }
+
+      seen.add(order);
+    }
   }
 };
 
@@ -130,18 +120,29 @@ const emitBlockSchemas = async (
   blockId: string,
   blockKey: string,
 ): Promise<void> => {
-  assertUniqueTopLevelOrders(block, blockKey);
+  assertUniqueBlockItemOrders(block, blockKey);
 
-  const rowRefs = collectReferencedRefs(block.schemas);
+  ctx.resolver.enterBlock(blockKey);
 
-  ctx.resolver.enterBlock(blockKey, rowRefs);
+  let order = 1;
 
-  for (const schema of block.schemas) {
-    await emitSchemaNode(ctx, blockId, null, schema);
+  for (const item of block.schemas) {
+    if (isCanonicalGroupItem(item)) {
+      order = await emitGroup(ctx, blockId, order, item);
+    } else {
+      await emitSchemaNode(ctx, blockId, null, order, item);
+      order += 1;
+    }
   }
 
   ctx.resolver.exitBlock();
 };
+
+const countBlockSchemas = (block: CanonicalBlock): number =>
+  block.schemas.reduce(
+    (total, item) => total + (isCanonicalGroupItem(item) ? item.group.members.length : 1),
+    0,
+  );
 
 const requireBlockId = (blockRefs: BlockRefMap, blockKey: string): string => {
   const id = blockRefs.get(blockKey);
@@ -170,7 +171,7 @@ const emitSheetWeeksSchemas = async (
           const blockId = requireBlockId(blockRefs, blockKey);
 
           await emitBlockSchemas(ctx, block, blockId, blockKey);
-          schemaCount += block.schemas.length;
+          schemaCount += countBlockSchemas(block);
         }
       }
     }
@@ -198,7 +199,7 @@ const emitPhase7Schemas = async (
       const blockId = requireBlockId(blockRefs, blockKey);
 
       await emitBlockSchemas(ctx, block, blockId, blockKey);
-      schemaCount += block.schemas.length;
+      schemaCount += countBlockSchemas(block);
     }
   }
 
@@ -216,9 +217,7 @@ export const seedCanonicalSchemas = async (
   const phase7Count = await emitPhase7Schemas(ctx, seed, blockRefs);
   const schemaCount = sheetCount + phase7Count;
 
-  console.log(
-    `  plan schemas: ${schemaCount} top-level schemas (recursive sub-schemas not counted)`,
-  );
+  console.log(`  plan schemas: ${schemaCount} flat schemas (members grouped via SchemaGroup)`);
 
   return { schemaCount };
 };

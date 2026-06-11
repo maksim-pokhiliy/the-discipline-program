@@ -1,5 +1,5 @@
 import { bodyweightLoad, buildComposeNode, cadenceRep, countReps } from "../builder";
-import type { CanonicalBlock, CanonicalSchemaNode } from "../canonical-schema";
+import type { CanonicalBlock, CanonicalRow } from "../canonical-schema";
 
 import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
@@ -32,31 +32,21 @@ const SLOT_EXERCISES: string[] = [
 const EMOM_MINUTES = 22;
 const SLOT_REPS = 10;
 
-const buildSlot = (minute: number): CanonicalSchemaNode =>
-  buildComposeNode(
+const buildSlotRow = (minute: number): CanonicalRow =>
+  mkRow(
+    minute,
     {
-      order: minute,
-      header: `Min ${minute}`,
-      rows: [
-        mkRow(
-          1,
-          {
-            rowKind: "EXERCISE",
-            exercise: {
-              form: "atomic",
-              exerciseId: SLOT_EXERCISES[(minute - 1) % SLOT_EXERCISES.length] ?? EX.burpee,
-            },
-          },
-          { load: bodyweightLoad(), reps: countReps(SLOT_REPS) },
-        ),
-      ],
+      rowKind: "EXERCISE",
+      exercise: {
+        form: "atomic",
+        exerciseId: SLOT_EXERCISES[(minute - 1) % SLOT_EXERCISES.length] ?? EX.burpee,
+      },
     },
-    {},
-    null,
+    { load: bodyweightLoad(), reps: countReps(SLOT_REPS), notes: `Min ${minute}` },
   );
 
-const SUB_SLOTS: CanonicalSchemaNode[] = Array.from({ length: EMOM_MINUTES }, (_, i) =>
-  buildSlot(i + 1),
+const SLOT_ROWS: CanonicalRow[] = Array.from({ length: EMOM_MINUTES }, (_, i) =>
+  buildSlotRow(i + 1),
 );
 
 export const BLOCK_EMOM_22_SUBSCHEMAS: CanonicalBlock = {
@@ -70,9 +60,8 @@ export const BLOCK_EMOM_22_SUBSCHEMAS: CanonicalBlock = {
     buildComposeNode(
       {
         order: 1,
-        header: "22-min EMOM (sub-schema coverage)",
-        rows: [],
-        subSchemas: SUB_SLOTS,
+        header: "22-min EMOM (slots-as-rows coverage)",
+        rows: SLOT_ROWS,
       },
       cadenceRep(1, EMOM_MINUTES),
       null,

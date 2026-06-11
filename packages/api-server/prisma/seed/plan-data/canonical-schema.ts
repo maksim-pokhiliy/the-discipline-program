@@ -32,14 +32,13 @@
 // Phase 7 examples:
 //
 //  Out-of-sample sessions covering professional CrossFit extensions (HR Z2 /
-//  numeric pace / tempo / wave / cluster / super-set) live in
-//  `phase7Examples` and are injected as one extra week at the plan tail.
-//  Coverage matrix marks them with `source: "phase-7"`.
+//  numeric pace / tempo / wave / cluster) live in `phase7Examples` and are
+//  injected as one extra week at the plan tail. Coverage matrix marks them
+//  with `source: "phase-7"`.
 
 import { z } from "zod";
 
 import {
-  compoundRepDefinitionSchema,
   dayOfWeekSchema,
   intensitySchema,
   loadSchema,
@@ -51,6 +50,7 @@ import {
   timeCapSchema,
 } from "@repo/contracts/lms/_shared";
 import { compositionSchema } from "@repo/contracts/lms/composition";
+import { PARALLEL_INTERLEAVE_ORDERS } from "@repo/contracts/lms/schema-group";
 import {
   positionSchema,
   rowKindSchema,
@@ -171,13 +171,6 @@ export type LabelCatalogEntry = z.infer<typeof labelCatalogEntrySchema>;
 // contracts. Top-level VO fields are nullable per existing schema (they may
 // be present on ANY rowKind, not only EXERCISE — coach can attach a load to
 // a PLACEHOLDER row, etc).
-//
-// Internal references:
-//
-//  - `refId` (optional) — internal handle used inside the same plan for FK
-//    targets (`composition.arrangement.superset.pairs[].rowIds`). The emit
-//    pipeline resolves refId → cuid at emit time. Refs are scoped to the
-//    containing block (uniqueness inside one block).
 // ──────────────────────────────────────────────────────────────────────────
 
 export const rowSchema = z.object({
@@ -193,34 +186,51 @@ export const rowSchema = z.object({
   sequence: sequenceIndicatorSchema.nullable().default(null),
   intensity: intensitySchema.nullable().default(null),
   media: mediaReferenceSchema.nullable().default(null),
-  compoundRep: compoundRepDefinitionSchema.nullable().default(null),
   notes: z.string().max(4000).nullable().default(null),
 });
 export type CanonicalRow = z.infer<typeof rowSchema>;
 
-export type CanonicalSchemaNode = {
-  refId?: string;
-  order: number;
-  composition: z.infer<typeof compositionSchema>;
-  header: string | null;
-  intensity: z.infer<typeof intensitySchema> | null;
-  notes: string | null;
-  rows: CanonicalRow[];
-  subSchemas: CanonicalSchemaNode[];
-};
+export const canonicalSchemaNodeSchema = z.object({
+  refId: z.string().min(1).max(48).optional(),
+  order: z.number().int().positive(),
+  composition: compositionSchema,
+  header: z.string().min(1).max(200).nullable(),
+  intensity: intensitySchema.nullable(),
+  notes: z.string().max(4000).nullable(),
+  rows: z.array(rowSchema),
+});
+export type CanonicalSchemaNode = z.infer<typeof canonicalSchemaNodeSchema>;
 
-export const canonicalSchemaNodeSchema = z.lazy(() =>
-  z.object({
-    refId: z.string().min(1).max(48).optional(),
-    order: z.number().int().positive(),
-    composition: compositionSchema,
-    header: z.string().min(1).max(200).nullable(),
-    intensity: intensitySchema.nullable(),
-    notes: z.string().max(4000).nullable(),
-    rows: z.array(rowSchema),
-    subSchemas: z.array(canonicalSchemaNodeSchema),
-  }),
-) as z.ZodType<CanonicalSchemaNode>;
+// ──────────────────────────────────────────────────────────────────────────
+// Block schema item
+//
+// A block's `schemas` list holds items that are EITHER a plain schema node OR
+// an explicit group of ≥1 member schema nodes (`{ group: {...} }`). A group
+// carries an opaque label the system NEVER interprets + an optional
+// interleaveOrder display setting. Membership is the only sibling relation:
+// the emit pipeline writes a `SchemaGroup` row and assigns its members
+// CONTIGUOUS orders within the block. Plain nodes stay UNWRAPPED — only the
+// group form is tagged, keeping authoring ergonomics for the common case.
+// ──────────────────────────────────────────────────────────────────────────
+
+export const canonicalSchemaGroupSchema = z.object({
+  label: z.string().min(1).max(200).nullable(),
+  interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS).optional(),
+  members: z.array(canonicalSchemaNodeSchema).min(1),
+});
+export type CanonicalSchemaGroup = z.infer<typeof canonicalSchemaGroupSchema>;
+
+export const canonicalGroupItemSchema = z.object({ group: canonicalSchemaGroupSchema }).strict();
+export type CanonicalGroupItem = z.infer<typeof canonicalGroupItemSchema>;
+
+export const canonicalBlockSchemaItemSchema = z.union([
+  canonicalSchemaNodeSchema,
+  canonicalGroupItemSchema,
+]);
+export type CanonicalBlockSchemaItem = z.infer<typeof canonicalBlockSchemaItemSchema>;
+
+export const isCanonicalGroupItem = (item: CanonicalBlockSchemaItem): item is CanonicalGroupItem =>
+  "group" in item;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Block
@@ -239,7 +249,7 @@ export const blockSchema = z.object({
   intensity: intensitySchema.nullable().default(null),
   timeCap: timeCapSchema.nullable().default(null),
   notes: z.string().max(4000).nullable().default(null),
-  schemas: z.array(canonicalSchemaNodeSchema).default([]),
+  schemas: z.array(canonicalBlockSchemaItemSchema).default([]),
 });
 export type CanonicalBlock = z.infer<typeof blockSchema>;
 
@@ -330,8 +340,8 @@ export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 // Cross-reference invariants (enforced after Zod parses; kept here as
 // documented expectations for the builder).
 //
-//  X1. Every `exerciseRef` referenced anywhere (rowPayload, compoundRep,
-//      mediaReference, etc) MUST resolve in `catalog.exercises`. Enforced by
+//  X1. Every `exerciseRef` referenced anywhere (rowPayload, mediaReference,
+//      etc) MUST resolve in `catalog.exercises`. Enforced by
 //      `assertExerciseRefsResolve` in `plan-emit/load-and-validate.ts`.
 //
 //  X2. Every `labelRef` referenced anywhere (day.label, session.label,
@@ -340,10 +350,9 @@ export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 //  X3. Every `blockInstanceRef` MUST match the `block-NNN` regex. Coverage
 //      matrix tracks block presence.
 //
-//  X4. `composition.arrangement.superset.pairs[].rowIds` MUST reference a
-//      row `refId` defined on a DIRECT row of the same schema. Refs are
-//      authored cuid-format (`cuidFromSeed`) and resolved refId → cuid at
-//      emit time by the two-phase back-patch.
+//  X4. A group's members are written on CONTIGUOUS block orders at emit time;
+//      a `SchemaGroup` row owns them via `Schema.groupId`. Membership is the
+//      only sibling relation — no sibling→sibling references.
 //
 //  X5. `Day.label` references with `applicableLevels` including "DAY" SHOULD
 //      hold; cross-level misassignment is allowed but coverage matrix flags

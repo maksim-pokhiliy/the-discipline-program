@@ -8,7 +8,6 @@ import {
   restBetweenRounds,
   rounds,
   singleWeight,
-  unspecifiedLoad,
 } from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
 
@@ -91,7 +90,7 @@ const BLOCK_UNSPECIFIED_LOAD_WK2_WED: CanonicalBlock = {
           mkRow(
             1,
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbLateralRaise } },
-            { load: unspecifiedLoad(), reps: countReps(12) },
+            { reps: countReps(12) },
           ),
         ],
       },

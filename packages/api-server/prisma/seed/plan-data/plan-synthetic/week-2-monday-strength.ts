@@ -7,13 +7,13 @@ import {
   holdAfterLast,
   maxReps,
   mediaReference,
+  noneLoad,
   pauseInUp,
   perNthRepPause,
   rounds,
   singleArmWeight,
   singleWeight,
   slowEccentric,
-  withoutWeight,
 } from "../builder";
 import type { CanonicalBlock } from "../canonical-schema";
 
@@ -48,13 +48,9 @@ export const BLOCK_DROP_SET_WK2_MON: CanonicalBlock = {
               exercise: { form: "atomic", exerciseId: EX.jumpSquat },
             },
             {
-              load: withoutWeight(),
-              reps: maxReps({ subForm: "bare" }),
-              media: mediaReference({
-                url: "https://example.com/demo/explode-stage",
-                position: "inline",
-                appliesTo: "drop_stage",
-              }),
+              load: noneLoad(),
+              reps: maxReps(),
+              media: mediaReference({ url: "https://example.com/demo/explode-stage" }),
             },
           ),
         ],

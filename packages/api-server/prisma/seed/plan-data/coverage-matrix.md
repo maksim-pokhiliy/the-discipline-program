@@ -123,17 +123,16 @@ two member schemas; coverage must keep that N-ary group intact.
 
 ## 4. RowKind coverage (9 + REST_SLOT special)
 
-| `rowKind`             | Sample anchor                                                   | Required | Notes                                       |
-| --------------------- | --------------------------------------------------------------- | -------- | ------------------------------------------- |
-| `EXERCISE`            | block-001 (all four rows)                                       | ≥1       | dominant kind                               |
-| `REST`                | block-170 rest-spec coverage block (inline `REST` rows)         | ≥1       | inline rest row, parsed RestSpec            |
-| `FOOTNOTE`            | block-032 footnote `** 5 strict HSPU [ AFTER EACH ROUND ]`      | ≥1       | marker `**`, target `each_round`            |
-| `STANDALONE_LOAD`     | block-005 / row `[ DB 2x 15 kg ]` (or block-077 `[ 2x 15 kg ]`) | ≥1       | scope `applies_to_all_preceding_rows`       |
-| `STANDALONE_URL`      | block-147 wrapped URL + block-149 bare URL                      | ≥2       | wrapped=true and wrapped=false              |
-| `PLACEHOLDER`         | block-152 (`biceps / triceps`) + block-194 (paired)             | ≥1       | placeholderKind variants                    |
-| `INNER_LADDER_MARKER` | block-037 (`36-28-20` / `18-14-10` / `4-3-2`)                   | ≥1       | inside parallel-ladders-descending          |
-| `REP_DEFINITION`      | block-043 (`5 reps = 1 rep [ 1 HS walk + 2 strict HSPU ]`)      | ≥1       | inline_equality form                        |
-| `REST_SLOT`           | block-080 / sub-4 (REST sub-minute in EMOM)                     | ≥1       | Q12 special; rowPayload has no other fields |
+| `rowKind`         | Sample anchor                                                   | Required | Notes                                       |
+| ----------------- | --------------------------------------------------------------- | -------- | ------------------------------------------- |
+| `EXERCISE`        | block-001 (all four rows)                                       | ≥1       | dominant kind                               |
+| `REST`            | block-170 rest-spec coverage block (inline `REST` rows)         | ≥1       | inline rest row, parsed RestSpec            |
+| `FOOTNOTE`        | block-032 footnote `** 5 strict HSPU [ AFTER EACH ROUND ]`      | ≥1       | marker `**`, target `each_round`            |
+| `STANDALONE_LOAD` | block-005 / row `[ DB 2x 15 kg ]` (or block-077 `[ 2x 15 kg ]`) | ≥1       | scope `applies_to_all_preceding_rows`       |
+| `STANDALONE_URL`  | block-147 wrapped URL + block-149 bare URL                      | ≥2       | wrapped=true and wrapped=false              |
+| `PLACEHOLDER`     | block-152 (`biceps / triceps`) + block-194 (paired)             | ≥1       | placeholderKind variants                    |
+| `REP_DEFINITION`  | block-043 (`5 reps = 1 rep [ 1 HS walk + 2 strict HSPU ]`)      | ≥1       | inline_equality form                        |
+| `REST_SLOT`       | block-080 / sub-4 (REST sub-minute in EMOM)                     | ≥1       | Q12 special; rowPayload has no other fields |
 
 ---
 
@@ -171,7 +170,6 @@ two member schemas; coverage must keep that N-ary group intact.
 | `single_arm`          | block-119 single arm row `[ 1 KB 15 kg ]`                                                                      | ≥1       |
 | `compound_device`     | block-119 single arm row `[ 5 KB 24 kg + 10 DB 15 kg ]` (split tier? — clarify with `load-edge-cases.md` §1.6) | ≥1       |
 | `split_tier`          | block-119 stages [5 KB 24, 10 DB 15]                                                                           | ≥1       |
-| `dual_value`          | block-003 / sub-2 overhead squats `[ 50/30 kg ]` (resolver `athlete_profile`)                                  | ≥1       |
 | `with_asymmetric_arm` | block-123 DB bench `[ 15 kg \| LEFT arm DO \| RIGHT arm HOLD in UP ]`                                          | ≥1       |
 | `with_depth_modifier` | block-189 KB swings `[ 24 kg \| to the parallel ]`                                                             | ≥1       |
 

@@ -16,7 +16,6 @@ export {
   type CoverageCellResult,
   type CoverageReport,
 } from "./types";
-export { isDerivedParallelComposition } from "./shared";
 
 export const COVERAGE_CELLS: readonly CoverageCell[] = [
   ...STRUCTURAL_CELLS,

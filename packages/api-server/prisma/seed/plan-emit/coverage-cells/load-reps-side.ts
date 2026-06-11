@@ -1,13 +1,7 @@
 import { countSchemaRow } from "./shared";
 import { type CoverageCell } from "./types";
 
-const LOAD_KINDS: readonly string[] = [
-  "absolute",
-  "percentage",
-  "bodyweight",
-  "without_weight",
-  "unspecified",
-];
+const LOAD_KINDS: readonly string[] = ["absolute", "percentage", "bodyweight", "byProfile", "none"];
 
 const loadKindCell = (kind: string): CoverageCell => ({
   id: `load.kind.${kind}`,
@@ -24,7 +18,6 @@ const WEIGHT_VARIANTS: readonly string[] = [
   "single_arm",
   "compound_device",
   "split_tier",
-  "dual_value",
   "with_asymmetric_arm",
   "with_depth_modifier",
 ];
@@ -55,15 +48,7 @@ const percentageScopeCell = (scope: string): CoverageCell => ({
     }),
 });
 
-const REP_KINDS: readonly string[] = [
-  "count",
-  "range",
-  "unit_bound",
-  "max",
-  "implicit",
-  "total_flag",
-  "compound_rep_unit",
-];
+const REP_KINDS: readonly string[] = ["count", "range", "unit_bound", "max"];
 
 const repKindCell = (kind: string): CoverageCell => ({
   id: `repNotation.kind.${kind}`,
@@ -89,20 +74,6 @@ const unitBoundFormCell = ({ form }: { form: "value" | "range" }): CoverageCell 
     countSchemaRow(db, planId, {
       reps: { path: ["kind"], equals: "unit_bound" },
       AND: [{ reps: { path: [form], not: { equals: null } } }],
-    }),
-});
-
-const MAX_SUB_FORMS: readonly string[] = ["bare", "progressive", "in_remaining_time"];
-
-const maxSubFormCell = (subForm: string): CoverageCell => ({
-  id: `repNotation.max.${subForm}`,
-  category: "repNotation.kind",
-  label: `RepNotation.max.subForm = ${subForm}`,
-  required: 1,
-  sourceRef: `coverage-matrix §7 max.${subForm}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      reps: { path: ["subForm"], equals: subForm },
     }),
 });
 
@@ -138,7 +109,6 @@ export const LOAD_REPS_SIDE_CELLS: readonly CoverageCell[] = [
   ...PERCENTAGE_SCOPES.map(percentageScopeCell),
   ...REP_KINDS.map(repKindCell),
   ...UNIT_BOUND_FORMS.map(unitBoundFormCell),
-  ...MAX_SUB_FORMS.map(maxSubFormCell),
   ...PER_LIMB_KINDS.map(perLimbCell),
   ...EXPLICIT_SPLIT_SIDES.map(explicitSplitSideCell),
 ];

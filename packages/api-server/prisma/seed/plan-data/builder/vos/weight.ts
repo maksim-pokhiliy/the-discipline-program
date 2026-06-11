@@ -45,15 +45,6 @@ export const splitTierWeight = (stages: SplitTierStageInput[]): Weight => {
   return { variant: "split_tier", stages };
 };
 
-export type DualValueWeightInput = { first: number; second: number };
-
-export const dualValueWeight = (input: DualValueWeightInput): Weight => ({
-  variant: "dual_value",
-  first: input.first,
-  second: input.second,
-  resolver: "athlete_profile",
-});
-
 export type AsymmetricArmWeightInput = {
   valueKg: number;
   workingArm: WeightWorkingArm;

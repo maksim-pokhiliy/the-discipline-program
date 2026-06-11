@@ -1,13 +1,11 @@
 import { Prisma } from "@prisma/client";
 
-import { countSchema, countStructurallyParallelParents, STRUCTURAL_PARALLEL_FLOOR } from "./shared";
+import { countMultiMemberGroups, countSchema, STRUCTURAL_PARALLEL_FLOOR } from "./shared";
 import { type CoverageCell } from "./types";
 
 const COMPOSITION_PRESENT_FLOOR = 40;
 
 const REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
-
-const ARRANGEMENT_KINDS = ["ordered", "superset"] as const;
 
 const repetitionKindCell = (kind: (typeof REPETITION_KINDS)[number]): CoverageCell => ({
   id: `repetition.kind.${kind}`,
@@ -19,24 +17,13 @@ const repetitionKindCell = (kind: (typeof REPETITION_KINDS)[number]): CoverageCe
     countSchema(db, planId, { composition: { path: ["repetition", "kind"], equals: kind } }),
 });
 
-const arrangementKindCell = (kind: (typeof ARRANGEMENT_KINDS)[number]): CoverageCell => ({
-  id: `arrangement.kind.${kind}`,
-  category: "arrangement.kind",
-  label: `composition.arrangement.kind = ${kind}`,
-  required: 1,
-  sourceRef: `compose-axis arrangement.${kind}`,
-  tally: (db, planId) =>
-    countSchema(db, planId, { composition: { path: ["arrangement", "kind"], equals: kind } }),
-});
-
 const STRUCTURAL_PARALLEL_CELL: CoverageCell = {
   id: "structural.parallel",
   category: "composition",
-  label:
-    "Parent schema with ≥2 sub-schemas, repetition absent or once, no arrangement (derived parallel)",
+  label: "SchemaGroup with ≥2 members (explicit parallel/alternating group)",
   required: STRUCTURAL_PARALLEL_FLOOR,
-  sourceRef: "compose-authoring-ux DR-S2-1",
-  tally: countStructurallyParallelParents,
+  sourceRef: "session-primitive DR-W2-1",
+  tally: countMultiMemberGroups,
 };
 
 const REST_PRESENT_CELL: CoverageCell = {
@@ -59,7 +46,6 @@ export const COMPOSITION_CELLS: readonly CoverageCell[] = [
     tally: (db, planId) => countSchema(db, planId, { composition: { not: Prisma.AnyNull } }),
   },
   ...REPETITION_KINDS.map(repetitionKindCell),
-  ...ARRANGEMENT_KINDS.map(arrangementKindCell),
   STRUCTURAL_PARALLEL_CELL,
   REST_PRESENT_CELL,
 ];

@@ -20,9 +20,13 @@ export const percentageLoad = (
 
 export const bodyweightLoad = (): Load => ({ kind: "bodyweight" });
 
-export const withoutWeight = (): Load => ({ kind: "without_weight", context: "drop_set_stage" });
+export const byProfileLoad = (first: number, second: number): Load => ({
+  kind: "byProfile",
+  first,
+  second,
+});
 
-export const unspecifiedLoad = (): Load => ({ kind: "unspecified" });
+export const noneLoad = (): Load => ({ kind: "none" });
 
 export const percentageRefSelf = (): PercentageReference => ({ scope: "self" });
 

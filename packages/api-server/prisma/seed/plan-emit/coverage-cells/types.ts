@@ -21,11 +21,8 @@ export type CoverageCategory =
   | "mediaReference"
   | "perSetSubstitution"
   | "compoundForm"
-  | "compoundRepDefinition.form"
-  | "footnote"
   | "composition"
   | "repetition.kind"
-  | "arrangement.kind"
   | "rest";
 
 export type CoverageCell = {

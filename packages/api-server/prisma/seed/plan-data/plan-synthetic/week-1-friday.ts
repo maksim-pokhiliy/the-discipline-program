@@ -8,7 +8,6 @@ import {
   maxReps,
   rounds,
   singleWeight,
-  totalFlagReps,
   unitBoundReps,
 } from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
@@ -60,7 +59,7 @@ const BLOCK_NAMED_EXERCISE_PROGRAM_WK1_FRI: CanonicalBlock = {
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
             {
               load: absoluteLoad(singleWeight(70)),
-              reps: maxReps({ subForm: "progressive", progressiveSeed: "progressive-bench" }),
+              reps: maxReps("progressive-bench"),
             },
           ),
         ],
@@ -137,7 +136,7 @@ const BLOCK_SINGLE_LINE_TOTAL_COUNTER_WK1_FRI: CanonicalBlock = {
           mkRow(
             1,
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.strictHspu } },
-            { load: bodyweightLoad(), reps: totalFlagReps(30) },
+            { load: bodyweightLoad(), reps: countReps(30) },
           ),
         ],
       },
@@ -226,7 +225,7 @@ const BLOCK_COMPOSITE_INT_ON_OFF_MAX_TAIL_WK1_FRI: CanonicalBlock = {
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
             {
               load: bodyweightLoad(),
-              reps: maxReps({ subForm: "in_remaining_time", targetExerciseId: EX.boxJump }),
+              reps: maxReps("in remaining time"),
             },
           ),
         ],

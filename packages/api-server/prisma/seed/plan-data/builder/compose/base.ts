@@ -1,13 +1,13 @@
 import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { Composition } from "@repo/contracts/lms/composition";
+import type { ParallelInterleaveOrder } from "@repo/contracts/lms/schema-group";
 
-import type { CanonicalRow, CanonicalSchemaNode } from "../../canonical-schema";
+import type { CanonicalGroupItem, CanonicalRow, CanonicalSchemaNode } from "../../canonical-schema";
 import { schemaNode } from "../entities";
 
 export type ComposeBaseInput = {
   order: number;
   rows?: CanonicalRow[];
-  subSchemas?: CanonicalSchemaNode[];
   header?: string | null;
   notes?: string | null;
   intensity?: Intensity | null;
@@ -28,7 +28,6 @@ export const buildComposeNode = (
     intensity: base.intensity ?? null,
     notes: base.notes ?? null,
     rows: base.rows ?? [],
-    subSchemas: base.subSchemas ?? [],
   };
 
   if (base.refId !== undefined) {
@@ -37,3 +36,17 @@ export const buildComposeNode = (
 
   return schemaNode(node);
 };
+
+export type ComposeGroupInput = {
+  label: string | null;
+  interleaveOrder?: ParallelInterleaveOrder;
+  members: CanonicalSchemaNode[];
+};
+
+export const composeGroup = (input: ComposeGroupInput): CanonicalGroupItem => ({
+  group: {
+    label: input.label,
+    ...(input.interleaveOrder !== undefined && { interleaveOrder: input.interleaveOrder }),
+    members: input.members,
+  },
+});
