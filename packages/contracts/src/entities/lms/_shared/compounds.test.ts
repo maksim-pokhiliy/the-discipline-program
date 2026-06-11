@@ -2,24 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import {
   compoundRowSchema,
-  cyclicalCompoundSchema,
   exerciseFormSchema,
-  footnoteContentSchema,
   orAlternativeSchema,
   perSetSubstitutionAssignmentSchema,
   perSetSubstitutionSchema,
   placeholderPayloadSchema,
-  sandwichCompoundSchema,
 } from "./compounds";
 import { OR_ALTERNATIVE_PURPOSES, PLACEHOLDER_KINDS } from "./enums";
 
 const CUID_A = "ck1234567890123456789012";
 const CUID_B = "ck0987654321098765432109";
-const CUID_C = "ckabcdefghijklmnopqrstuv";
 
 const REP_A = { kind: "count", value: 5 } as const;
 const REP_B = { kind: "count", value: 3 } as const;
-const REP_C = { kind: "count", value: 1 } as const;
 
 describe("compoundRowSchema", () => {
   it("accepts 2-element compound row", () => {
@@ -78,94 +73,6 @@ describe("compoundRowSchema", () => {
         ],
       }).success,
     ).toBe(true);
-  });
-});
-
-describe("cyclicalCompoundSchema", () => {
-  it("accepts cycles array with secondaryReps", () => {
-    expect(
-      cyclicalCompoundSchema.safeParse({
-        primaryExerciseId: CUID_A,
-        secondaryExerciseId: CUID_B,
-        cycles: [{ secondaryReps: 5 }, { secondaryReps: 3 }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts cycle with optional primaryReps", () => {
-    expect(
-      cyclicalCompoundSchema.safeParse({
-        primaryExerciseId: CUID_A,
-        secondaryExerciseId: CUID_B,
-        cycles: [{ primaryReps: 1, secondaryReps: 5 }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts optional rotation step exerciseId", () => {
-    expect(
-      cyclicalCompoundSchema.safeParse({
-        primaryExerciseId: CUID_A,
-        secondaryExerciseId: CUID_B,
-        cycles: [{ secondaryReps: 5 }],
-        optionalRotationStepExerciseId: CUID_C,
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects empty cycles", () => {
-    expect(
-      cyclicalCompoundSchema.safeParse({
-        primaryExerciseId: CUID_A,
-        secondaryExerciseId: CUID_B,
-        cycles: [],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects invalid primaryExerciseId", () => {
-    expect(
-      cyclicalCompoundSchema.safeParse({
-        primaryExerciseId: "abc",
-        secondaryExerciseId: CUID_B,
-        cycles: [{ secondaryReps: 5 }],
-      }).success,
-    ).toBe(false);
-  });
-});
-
-describe("sandwichCompoundSchema", () => {
-  it("accepts opening + middle + closing", () => {
-    expect(
-      sandwichCompoundSchema.safeParse({
-        opening: { exerciseId: CUID_A, reps: REP_A },
-        middle: { exerciseId: CUID_B, reps: REP_B },
-        closing: { exerciseId: CUID_C, reps: REP_C },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts sharedModifiers with tempo + load", () => {
-    expect(
-      sandwichCompoundSchema.safeParse({
-        opening: { exerciseId: CUID_A, reps: REP_A },
-        middle: { exerciseId: CUID_B, reps: REP_B },
-        closing: { exerciseId: CUID_C, reps: REP_C },
-        sharedModifiers: {
-          tempo: { slowEccentric: { durationSec: 2 } },
-          load: { kind: "bodyweight" },
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects missing middle", () => {
-    expect(
-      sandwichCompoundSchema.safeParse({
-        opening: { exerciseId: CUID_A, reps: REP_A },
-        closing: { exerciseId: CUID_C, reps: REP_C },
-      }).success,
-    ).toBe(false);
   });
 });
 
@@ -313,24 +220,18 @@ describe("placeholderPayloadSchema", () => {
     ).toBe(true);
   });
 
-  it("accepts optional pairedConcreteRowId", () => {
-    expect(
-      placeholderPayloadSchema.safeParse({
-        placeholderKind: "purpose_category",
-        text: "hip",
-        pairedConcreteRowId: CUID_A,
-      }).success,
-    ).toBe(true);
-  });
+  it("strips the dropped pairedConcreteRowId field (default passthrough)", () => {
+    const result = placeholderPayloadSchema.safeParse({
+      placeholderKind: "purpose_category",
+      text: "hip",
+      pairedConcreteRowId: CUID_A,
+    });
 
-  it("rejects invalid pairedConcreteRowId", () => {
-    expect(
-      placeholderPayloadSchema.safeParse({
-        placeholderKind: "purpose_category",
-        text: "hip",
-        pairedConcreteRowId: "abc",
-      }).success,
-    ).toBe(false);
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).toEqual({ placeholderKind: "purpose_category", text: "hip" });
+    }
   });
 });
 
@@ -348,32 +249,6 @@ describe("exerciseFormSchema", () => {
             { exerciseId: CUID_A, reps: REP_A },
             { exerciseId: CUID_B, reps: REP_B },
           ],
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts cyclical form", () => {
-    expect(
-      exerciseFormSchema.safeParse({
-        form: "cyclical",
-        cyclical: {
-          primaryExerciseId: CUID_A,
-          secondaryExerciseId: CUID_B,
-          cycles: [{ secondaryReps: 5 }],
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts sandwich form", () => {
-    expect(
-      exerciseFormSchema.safeParse({
-        form: "sandwich",
-        sandwich: {
-          opening: { exerciseId: CUID_A, reps: REP_A },
-          middle: { exerciseId: CUID_B, reps: REP_B },
-          closing: { exerciseId: CUID_C, reps: REP_C },
         },
       }).success,
     ).toBe(true);
@@ -403,6 +278,32 @@ describe("exerciseFormSchema", () => {
     ).toBe(true);
   });
 
+  it("rejects the dropped cyclical form", () => {
+    expect(
+      exerciseFormSchema.safeParse({
+        form: "cyclical",
+        cyclical: {
+          primaryExerciseId: CUID_A,
+          secondaryExerciseId: CUID_B,
+          cycles: [{ secondaryReps: 5 }],
+        },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped sandwich form", () => {
+    expect(
+      exerciseFormSchema.safeParse({
+        form: "sandwich",
+        sandwich: {
+          opening: { exerciseId: CUID_A, reps: REP_A },
+          middle: { exerciseId: CUID_B, reps: REP_B },
+          closing: { exerciseId: CUID_A, reps: REP_A },
+        },
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects unknown form", () => {
     expect(exerciseFormSchema.safeParse({ form: "mystery", exerciseId: CUID_A }).success).toBe(
       false,
@@ -420,39 +321,5 @@ describe("exerciseFormSchema", () => {
 
   it("rejects atomic with invalid exerciseId", () => {
     expect(exerciseFormSchema.safeParse({ form: "atomic", exerciseId: "abc" }).success).toBe(false);
-  });
-});
-
-describe("footnoteContentSchema", () => {
-  it("accepts empty elements (note-only footnote, C0-004)", () => {
-    expect(footnoteContentSchema.safeParse({ elements: [] }).success).toBe(true);
-  });
-
-  it("accepts single-element footnote content", () => {
-    expect(
-      footnoteContentSchema.safeParse({
-        elements: [{ exerciseId: CUID_A, reps: REP_A }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts multi-element footnote content with sharedModifiers", () => {
-    expect(
-      footnoteContentSchema.safeParse({
-        elements: [
-          { exerciseId: CUID_A, reps: REP_A },
-          { exerciseId: CUID_B, reps: REP_B },
-        ],
-        sharedModifiers: { load: { kind: "bodyweight" } },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects elements with invalid element shape (non-cuid exerciseId)", () => {
-    expect(
-      footnoteContentSchema.safeParse({
-        elements: [{ exerciseId: "abc", reps: REP_A }],
-      }).success,
-    ).toBe(false);
   });
 });

@@ -3,16 +3,11 @@ import { describe, expect, it } from "vitest";
 import { schemaRowPayloadSchema } from "../schema-row";
 
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
-import type { ComposeNode, ComposeRow } from "./composition.types";
+import type { ComposeRow } from "./composition.types";
 
 const cuidEmom = "clz000000000000000000emom";
-const cuidMin1 = "clz000000000000000000min1";
-const cuidMin2 = "clz000000000000000000min2";
-const cuidMin3 = "clz000000000000000000min3";
-const cuidMin4 = "clz000000000000000000min4";
 const cuidPullups = "clz00000000000000000pullup";
 const cuidDips = "clz0000000000000000000dips";
-const cuidRowCompound = "clz0000000000000compoundrw";
 const cuidRowRest = "clz00000000000000000restrw";
 
 const cuidIntervalD = "clz0000000000000interval_d";
@@ -24,14 +19,9 @@ const cuidWaveA = "clz000000000000000000wavea";
 const cuidBackSquat = "clz0000000000000backsquatr";
 const cuidBoxJumps = "clz00000000000000boxjumpsr";
 
-const cuidSupersetE = "clz0000000000000superset_e";
-const cuidPlaceholder = "clz000000000000placeholder";
-const cuidPlank = "clz00000000000000000plankr";
 const cuidCashOut = "clz0000000000000000cashout";
 const cuidRun800 = "clz00000000000000000run800";
 const cuidRow1000 = "clz0000000000000000row1000";
-
-const cuidDeepLeaf = "clz0000000000000000deepleaf";
 
 function exerciseRow(id: string, exerciseId: string): ComposeRow {
   return {
@@ -49,31 +39,7 @@ function exerciseRow(id: string, exerciseId: string): ComposeRow {
   };
 }
 
-describe("Gauntlet B — EMOM 16 / 4 rounds (outer cadence + per-minute child containers)", () => {
-  const compoundMinRow: ComposeRow = {
-    nodeType: "row",
-    id: cuidRowCompound,
-    rowKind: "REP_DEFINITION",
-    rowPayload: {
-      rowKind: "REP_DEFINITION",
-      equality: {
-        form: "inline_equality",
-        totalReps: 1,
-        composition: [
-          { exerciseId: cuidPullups, count: 5 },
-          { exerciseId: cuidDips, count: 10 },
-        ],
-      },
-    },
-    reps: null,
-    load: null,
-    side: null,
-    tempo: null,
-    position: null,
-    intensity: null,
-    notes: null,
-  };
-
+describe("Gauntlet B — EMOM / 4 rounds (cadence over a flat row set)", () => {
   const restMinRow: ComposeRow = {
     nodeType: "row",
     id: cuidRowRest,
@@ -88,52 +54,13 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (outer cadence + per-minute child co
     notes: null,
   };
 
-  const minuteWindow: ComposeNode = {
-    nodeType: "container",
-    id: cuidMin1,
-    header: null,
-    notes: null,
-    composition: {},
-    children: [exerciseRow(cuidPullups, cuidPullups)],
-  };
-
-  const compoundMinute: ComposeNode = {
-    nodeType: "container",
-    id: cuidMin2,
-    header: null,
-    notes: null,
-    composition: {},
-    children: [compoundMinRow],
-  };
-
-  const restMinute: ComposeNode = {
-    nodeType: "container",
-    id: cuidMin4,
-    header: null,
-    notes: null,
-    composition: {},
-    children: [restMinRow],
-  };
-
-  const emomContainer: ComposeNode = {
-    nodeType: "container",
+  const emomContainer = {
+    nodeType: "container" as const,
     id: cuidEmom,
     header: "EMOM 16",
     notes: null,
-    composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 4 } },
-    children: [
-      minuteWindow,
-      compoundMinute,
-      {
-        nodeType: "container",
-        id: cuidMin3,
-        header: null,
-        notes: null,
-        composition: {},
-        children: [exerciseRow(cuidDips, cuidDips)],
-      },
-      restMinute,
-    ],
+    composition: { repetition: { kind: "cadence" as const, everyMin: 1, rounds: 4 } },
+    children: [exerciseRow(cuidPullups, cuidPullups), exerciseRow(cuidDips, cuidDips), restMinRow],
   };
 
   it("expresses the outer cadence(everyMin:1, rounds:4) as a composition bundle", () => {
@@ -143,25 +70,27 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (outer cadence + per-minute child co
     ).toBe(true);
   });
 
-  it("expresses the compound minute via a REP_DEFINITION row payload (5 pull-ups + 10 dips = 1)", () => {
-    expect(schemaRowPayloadSchema.safeParse(compoundMinRow.rowPayload).success).toBe(true);
+  it("validates a flat cadence container whose children are rows only", () => {
+    expect(composeContainerSchema.safeParse(emomContainer).success).toBe(true);
   });
 
-  it("validates the whole container-in-container EMOM as a composeContainerSchema node", () => {
-    expect(composeContainerSchema.safeParse(emomContainer).success).toBe(true);
+  it("rejects a container whose children include a nested container (recursion is dead)", () => {
+    expect(
+      composeContainerSchema.safeParse({
+        ...emomContainer,
+        children: [emomContainer],
+      }).success,
+    ).toBe(false);
   });
 });
 
-describe("Gauntlet D — 3x(2min work / 1min off) interval, ordered children", () => {
-  const intervalContainer: ComposeNode = {
-    nodeType: "container",
+describe("Gauntlet D — 3x(2min work / 1min off) interval, flat rows", () => {
+  const intervalContainer = {
+    nodeType: "container" as const,
     id: cuidIntervalD,
     header: "MAX wall balls",
     notes: null,
-    composition: {
-      repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-      arrangement: { kind: "ordered" },
-    },
+    composition: { repetition: { kind: "interval" as const, workMin: 2, offMin: 1, count: 3 } },
     children: [
       exerciseRow(cuidKbSwings, cuidKbSwings),
       exerciseRow(cuidPushPress, cuidPushPress),
@@ -169,16 +98,15 @@ describe("Gauntlet D — 3x(2min work / 1min off) interval, ordered children", (
     ],
   };
 
-  it("expresses interval(work:2, off:1, count:3) with an ordered-arrangement bundle", () => {
+  it("expresses interval(work:2, off:1, count:3) as a bundle", () => {
     expect(
       compositionSchema.safeParse({
         repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-        arrangement: { kind: "ordered" },
       }).success,
     ).toBe(true);
   });
 
-  it("validates the ordered-children interval container as a composeContainerSchema node", () => {
+  it("validates the interval container with flat rows", () => {
     expect(composeContainerSchema.safeParse(intervalContainer).success).toBe(true);
   });
 });
@@ -212,17 +140,17 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
     notes: null,
   };
 
-  const waveContainer: ComposeNode = {
-    nodeType: "container",
+  const waveContainer = {
+    nodeType: "container" as const,
     id: cuidWaveA,
     header: "Back squat wave",
     notes: null,
     composition: {
-      repetition: { kind: "count", count: 3 },
+      repetition: { kind: "count" as const, count: 3 },
       rest: {
-        duration: { value: 1, unit: "sec" },
-        scope: "between_rounds",
-        qualifier: "until_recovery",
+        duration: { value: 1, unit: "sec" as const },
+        scope: "between_rounds" as const,
+        qualifier: "until_recovery" as const,
       },
     },
     children: [waveRow, boxJumpsRow],
@@ -246,30 +174,16 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
   });
 });
 
-describe("Gauntlet E — superset / cash-out OR", () => {
+describe("Gauntlet E — cash-out OR (sequence as flat rows)", () => {
   const placeholderRow: ComposeRow = {
     nodeType: "row",
-    id: cuidPlaceholder,
+    id: "clz000000000000placeholder",
     rowKind: "PLACEHOLDER",
     rowPayload: {
       rowKind: "PLACEHOLDER",
       placeholder: { placeholderKind: "coach_choice_slot", text: "biceps/triceps" },
     },
     reps: { kind: "count", value: 12 },
-    load: null,
-    side: null,
-    tempo: null,
-    position: null,
-    intensity: null,
-    notes: null,
-  };
-
-  const plankRow: ComposeRow = {
-    nodeType: "row",
-    id: cuidPlank,
-    rowKind: "EXERCISE",
-    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: cuidPlank } },
-    reps: { kind: "unit_bound", unit: "sec", value: 45 },
     load: null,
     side: null,
     tempo: null,
@@ -304,63 +218,23 @@ describe("Gauntlet E — superset / cash-out OR", () => {
     notes: null,
   };
 
-  const supersetContainer: ComposeNode = {
-    nodeType: "container",
-    id: cuidSupersetE,
-    header: "Superset + cash-out",
+  const sequenceContainer = {
+    nodeType: "container" as const,
+    id: "clz0000000000000superset_e",
+    header: "Accessory + cash-out",
     notes: null,
     composition: {
-      arrangement: {
-        kind: "superset",
-        pairs: [{ label: "A", rowIds: [cuidPlaceholder, cuidPlank] }],
-      },
-      repetition: { kind: "count", count: 3 },
-      rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
+      repetition: { kind: "count" as const, count: 3 },
+      rest: { duration: { value: 90, unit: "sec" as const }, scope: "between_sets" as const },
     },
-    children: [placeholderRow, plankRow, cashOutRow],
+    children: [placeholderRow, cashOutRow],
   };
-
-  it("expresses superset pairs with count(3) and a 90s between_sets rest bundle", () => {
-    expect(
-      compositionSchema.safeParse({
-        arrangement: {
-          kind: "superset",
-          pairs: [{ label: "A", rowIds: [cuidPlaceholder, cuidPlank] }],
-        },
-        repetition: { kind: "count", count: 3 },
-        rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
-      }).success,
-    ).toBe(true);
-  });
 
   it("expresses the cash-out as an or_alternative EXERCISE row payload", () => {
     expect(schemaRowPayloadSchema.safeParse(cashOutRow.rowPayload).success).toBe(true);
   });
 
-  it("validates the superset container with placeholder, plank and cash-out rows", () => {
-    expect(composeContainerSchema.safeParse(supersetContainer).success).toBe(true);
-  });
-});
-
-describe("recursion exercised beyond depth 1", () => {
-  function nestContainers(depth: number): ComposeNode {
-    let node: ComposeNode = exerciseRow(cuidDeepLeaf, cuidDeepLeaf);
-
-    for (let level = 0; level < depth; level += 1) {
-      node = {
-        nodeType: "container",
-        id: cuidDeepLeaf,
-        header: null,
-        notes: null,
-        composition: { repetition: { kind: "count", count: 1 } },
-        children: [node],
-      };
-    }
-
-    return node;
-  }
-
-  it("validates an eight-deep container tree down to a single EXERCISE row leaf", () => {
-    expect(composeContainerSchema.safeParse(nestContainers(8)).success).toBe(true);
+  it("validates the count(3) container with placeholder + cash-out rows", () => {
+    expect(composeContainerSchema.safeParse(sequenceContainer).success).toBe(true);
   });
 });

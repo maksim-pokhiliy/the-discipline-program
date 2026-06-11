@@ -3,41 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   CONNECTOR_FORMS,
   COUNT_FORMS,
-  FOOTNOTE_TARGETS,
   OR_ALTERNATIVE_PURPOSES,
   PLACEHOLDER_KINDS,
-  STANDALONE_LOAD_SCOPES,
   connectorFormSchema,
   countFormSchema,
-  footnoteTargetSchema,
   orAlternativePurposeSchema,
   placeholderKindSchema,
-  standaloneLoadScopeSchema,
 } from "./enums";
-
-describe("footnoteTargetSchema", () => {
-  it("accepts all 3 FOOTNOTE_TARGETS", () => {
-    for (const target of FOOTNOTE_TARGETS) {
-      expect(footnoteTargetSchema.safeParse(target).success).toBe(true);
-    }
-  });
-
-  it("rejects unknown value", () => {
-    expect(footnoteTargetSchema.safeParse("each_block").success).toBe(false);
-  });
-});
-
-describe("standaloneLoadScopeSchema", () => {
-  it("accepts single canonical value", () => {
-    for (const scope of STANDALONE_LOAD_SCOPES) {
-      expect(standaloneLoadScopeSchema.safeParse(scope).success).toBe(true);
-    }
-  });
-
-  it("rejects unknown scope", () => {
-    expect(standaloneLoadScopeSchema.safeParse("applies_to_next_row").success).toBe(false);
-  });
-});
 
 describe("connectorFormSchema", () => {
   it("accepts all 3 CONNECTOR_FORMS", () => {

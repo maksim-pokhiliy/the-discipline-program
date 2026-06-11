@@ -171,18 +171,30 @@ describe("loadSchema", () => {
     expect(loadSchema.safeParse({ kind: "bodyweight" }).success).toBe(true);
   });
 
-  it("accepts without_weight with context drop_set_stage", () => {
+  it("accepts byProfile with positive first/second", () => {
+    expect(loadSchema.safeParse({ kind: "byProfile", first: 24, second: 16 }).success).toBe(true);
+  });
+
+  it("rejects byProfile with non-positive first", () => {
+    expect(loadSchema.safeParse({ kind: "byProfile", first: 0, second: 16 }).success).toBe(false);
+  });
+
+  it("rejects byProfile missing second", () => {
+    expect(loadSchema.safeParse({ kind: "byProfile", first: 24 }).success).toBe(false);
+  });
+
+  it("accepts none with no extras", () => {
+    expect(loadSchema.safeParse({ kind: "none" }).success).toBe(true);
+  });
+
+  it("rejects the dropped without_weight kind", () => {
     expect(
       loadSchema.safeParse({ kind: "without_weight", context: "drop_set_stage" }).success,
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it("rejects without_weight with unknown context", () => {
-    expect(loadSchema.safeParse({ kind: "without_weight", context: "warmup" }).success).toBe(false);
-  });
-
-  it("accepts unspecified with no extras", () => {
-    expect(loadSchema.safeParse({ kind: "unspecified" }).success).toBe(true);
+  it("rejects the dropped unspecified kind", () => {
+    expect(loadSchema.safeParse({ kind: "unspecified" }).success).toBe(false);
   });
 
   it("rejects unknown kind", () => {

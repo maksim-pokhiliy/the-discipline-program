@@ -12,12 +12,11 @@ const cuidA = "clz1234567890123456789aaa";
 const cuidB = "clz1234567890123456789bbb";
 const cuidC = "clz1234567890123456789ccc";
 const cuidD = "clz1234567890123456789ddd";
-const cuidE = "clz1234567890123456789eee";
 
 const baseSchema = {
   id: cuidA,
   blockId: cuidB,
-  parentSchemaId: null,
+  groupId: null,
   order: 1,
   header: null,
   intensity: null,
@@ -42,7 +41,6 @@ const baseRow = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -51,6 +49,10 @@ const baseRow = {
 describe("schemaSchema", () => {
   it("accepts a fully-populated top-level schema", () => {
     expect(schemaSchema.safeParse(baseSchema).success).toBe(true);
+  });
+
+  it("accepts a schema carrying a groupId", () => {
+    expect(schemaSchema.safeParse({ ...baseSchema, groupId: cuidC }).success).toBe(true);
   });
 
   it("accepts header at MAX length", () => {
@@ -73,6 +75,10 @@ describe("schemaSchema", () => {
     expect(schemaSchema.safeParse({ ...baseSchema, id: "not-a-cuid" }).success).toBe(false);
   });
 
+  it("rejects a non-cuid groupId", () => {
+    expect(schemaSchema.safeParse({ ...baseSchema, groupId: "not-a-cuid" }).success).toBe(false);
+  });
+
   it("accepts a composition-only read shape", () => {
     const compositionOnly = {
       ...baseSchema,
@@ -85,11 +91,10 @@ describe("schemaSchema", () => {
 });
 
 describe("schemaWithBodySchema", () => {
-  it("accepts a flat schema with populated rows and empty subSchemas", () => {
+  it("accepts a flat schema with populated rows", () => {
     const result = schemaWithBodySchema.safeParse({
       schema: baseSchema,
       rows: [baseRow],
-      subSchemas: [],
     });
 
     expect(result.success).toBe(true);
@@ -98,31 +103,6 @@ describe("schemaWithBodySchema", () => {
       expect(result.data.schema.id).toBe(baseSchema.id);
       expect(result.data.rows).toHaveLength(1);
       expect(result.data.rows[0]?.id).toBe(baseRow.id);
-      expect(result.data.subSchemas).toEqual([]);
-    }
-  });
-
-  it("accepts a nested schema, depth-2, with populated subSchemas", () => {
-    const result = schemaWithBodySchema.safeParse({
-      schema: baseSchema,
-      rows: [],
-      subSchemas: [
-        {
-          schema: { ...baseSchema, id: cuidE, parentSchemaId: cuidA },
-          rows: [{ ...baseRow, schemaId: cuidE }],
-          subSchemas: [],
-        },
-      ],
-    });
-
-    expect(result.success).toBe(true);
-
-    if (result.success) {
-      expect(result.data.subSchemas).toHaveLength(1);
-      expect(result.data.subSchemas[0]?.schema.id).toBe(cuidE);
-      expect(result.data.subSchemas[0]?.schema.parentSchemaId).toBe(cuidA);
-      expect(result.data.subSchemas[0]?.rows).toHaveLength(1);
-      expect(result.data.subSchemas[0]?.subSchemas).toEqual([]);
     }
   });
 
@@ -130,7 +110,6 @@ describe("schemaWithBodySchema", () => {
     const result = schemaWithBodySchema.safeParse({
       schema: baseSchema,
       rows: [],
-      subSchemas: [],
     });
 
     expect(result.success).toBe(true);
@@ -140,10 +119,24 @@ describe("schemaWithBodySchema", () => {
     }
   });
 
-  it("rejects a missing subSchemas field", () => {
-    const result = schemaWithBodySchema.safeParse({ schema: baseSchema, rows: [] });
+  it("rejects a missing rows field", () => {
+    const result = schemaWithBodySchema.safeParse({ schema: baseSchema });
 
     expect(result.success).toBe(false);
+  });
+
+  it("strips the dropped subSchemas field (default passthrough)", () => {
+    const result = schemaWithBodySchema.safeParse({
+      schema: baseSchema,
+      rows: [],
+      subSchemas: [{ schema: baseSchema, rows: [] }],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("subSchemas");
+    }
   });
 });
 
@@ -161,6 +154,12 @@ describe("createSchemaSchema", () => {
       blockId: cuidA,
       composition: { repetition: { kind: "once" } },
     });
+
+    expect(r.success).toBe(true);
+  });
+
+  it("accepts a create-into-group payload carrying groupId", () => {
+    const r = createSchemaSchema.safeParse({ blockId: cuidA, groupId: cuidB });
 
     expect(r.success).toBe(true);
   });

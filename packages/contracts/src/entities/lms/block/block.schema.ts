@@ -3,6 +3,7 @@ import { z } from "zod";
 import { intensitySchema, timeCapSchema } from "../_shared";
 import { labelSchema } from "../label";
 import { schemaWithBodySchema } from "../schema";
+import { schemaGroupSchema } from "../schema-group";
 
 import { BLOCK_CONSTANTS } from "./block.constants";
 
@@ -15,6 +16,7 @@ export const blockSchema = z.object({
   notes: z.string().nullable(),
   labels: z.array(labelSchema),
   schemas: z.array(schemaWithBodySchema),
+  groups: z.array(schemaGroupSchema),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

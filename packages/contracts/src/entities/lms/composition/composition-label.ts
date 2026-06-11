@@ -3,8 +3,6 @@ import { z } from "zod";
 import type { Composition } from "./composition.types";
 
 export const COMPOSITION_LABEL_KINDS = [
-  "parallel",
-  "superset",
   "ladder",
   "cadence",
   "interval",
@@ -15,8 +13,6 @@ export const COMPOSITION_LABEL_KINDS = [
 export type CompositionLabelKind = (typeof COMPOSITION_LABEL_KINDS)[number];
 
 export const COMPOSITION_LABEL_FAMILIES = [
-  "PARALLEL",
-  "SUPERSET",
   "LADDER",
   "INTERVALIC",
   "TIME_BOUNDED",
@@ -33,19 +29,7 @@ export const compositionLabelSchema = z
   .strict();
 export type CompositionLabel = z.infer<typeof compositionLabelSchema>;
 
-export type CompositionStructure = { containerChildCount: number };
-
-export const isStructurallyParallel = (
-  composition: Composition,
-  structure: CompositionStructure,
-): boolean =>
-  structure.containerChildCount >= 2 &&
-  (composition.repetition === undefined || composition.repetition.kind === "once") &&
-  composition.arrangement === undefined;
-
 const KIND_TO_FAMILY: Record<CompositionLabelKind, CompositionLabelFamily> = {
-  parallel: "PARALLEL",
-  superset: "SUPERSET",
   ladder: "LADDER",
   cadence: "INTERVALIC",
   interval: "INTERVALIC",
@@ -54,18 +38,7 @@ const KIND_TO_FAMILY: Record<CompositionLabelKind, CompositionLabelFamily> = {
   flat: "FLAT",
 };
 
-const deriveKind = (
-  composition: Composition,
-  structure?: CompositionStructure,
-): CompositionLabelKind => {
-  if (structure !== undefined && isStructurallyParallel(composition, structure)) {
-    return "parallel";
-  }
-
-  if (composition.arrangement?.kind === "superset") {
-    return "superset";
-  }
-
+const deriveKind = (composition: Composition): CompositionLabelKind => {
   const repetitionKind = composition.repetition?.kind;
 
   if (repetitionKind === "ladder") {
@@ -87,11 +60,8 @@ const deriveKind = (
   return "flat";
 };
 
-export const deriveCompositionLabel = (
-  composition: Composition,
-  structure?: CompositionStructure,
-): CompositionLabel => {
-  const kind = deriveKind(composition, structure);
+export const deriveCompositionLabel = (composition: Composition): CompositionLabel => {
+  const kind = deriveKind(composition);
 
   return { kind, family: KIND_TO_FAMILY[kind] };
 };
