@@ -18,7 +18,7 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | D-6 GRID            | `primitive-spec.md` grid = the per-notation disposition (statuses inside)        | RATIFIED |
 | D-7 PROCESS         | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review      | RATIFIED |
 | D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave       | RATIFIED |
-| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group   | **OPEN** |
+| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group   | RATIFIED |
 | DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate          | RATIFIED |
 | DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates | RATIFIED |
 | DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone   | RATIFIED |
@@ -75,11 +75,11 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Decision.** Orchestrator (this session's role): research, deep analysis, design WITH the owner, planning, writing executor prompts, reviewing executed work. Owner: discussion + ratification + transport ("взял промпт — отнес — флагнул когда модель закончила выполнение"). Mechanics: every implementation step = its own runner session wrapped in `/feature` (full or small by scope), ≤1 full (or 2 small) per session; prompts are self-contained (the runner has none of this context); the orchestrator reviews via git diff after each run — never via the runner's self-report; migration steps are aggressive/bridge-free per house style (final state green, no compat shims).
 - **Rationale.** The proven planner/executor pattern minus the shuttle ceremony; review-via-git is a standing house rule (long agent runs over-report).
 
-### D-MARKER-DEATH — `INNER_LADDER_MARKER` dies (proposal)
+### D-MARKER-DEATH — `INNER_LADDER_MARKER` dies
 
-- **Status:** **OPEN** (proposed 2026-06-10; explicitly asked, not yet answered by owner).
-- **Proposal.** The marker row kind (38 corpus occurrences, ~15 schemas, no authoring flow — MARKER-FATE inherited) is removed. Its case — per-track single-movement rep-scheme ladders (Block C `21-15-9 ‖ 9-15-21`) — re-expresses as N one-row ladder-schemas inside a Group. D-LADDER's semantic distinction (shared round-counter vs per-track rep-scheme) SURVIVES as two different STRUCTURES (one ladder-schema with N rows vs a Group of N one-row ladder-schemas) instead of two different fields; the forbidden-fusion guard and QA-001 collision die as unrepresentable.
-- **Why it needs explicit ratification.** It supersedes the "D-LADDER is sacred / do NOT remove the marker" clause carried by both predecessor initiatives — mechanism superseded, semantics preserved. Do not execute past this without the owner's yes.
+- **Status:** RATIFIED (2026-06-11, owner: "да, вырываем с корнем").
+- **Decision.** The marker row kind (38 corpus occurrences, ~15 schemas, no authoring flow — MARKER-FATE inherited) is removed. Its case — per-track single-movement rep-scheme ladders (Block C `21-15-9 ‖ 9-15-21`) — re-expresses as N one-row ladder-schemas inside a Group. D-LADDER's semantic distinction (shared round-counter vs per-track rep-scheme) SURVIVES as two different STRUCTURES (one ladder-schema with N rows vs a Group of N one-row ladder-schemas) instead of two different fields; the forbidden-fusion guard and QA-001 collision die as unrepresentable.
+- **Supersession note.** This supersedes the "D-LADDER is sacred / do NOT remove the marker" clause carried by both predecessor initiatives — mechanism superseded, semantics preserved (the distinction lives on as structure, channel-С per D-5). The cut lands in W2: contract payload variant + Prisma enum value + the forbidden-fusion superRefine + test fixtures. **Seed correction (verified at prompt-writing, 2026-06-11):** the seed contains ZERO marker rows — block-037 is already expressed as parallel ladder sub-schemas; the "38 occurrences / ~15 schemas" are CORPUS facts (grid expressibility), not seed data; `coverage-matrix.md`'s stale "marker ≥1" line dies with the cut, unsatisfied.
 
 ### D-8 JIT-FREEZE — implementation starts on the ratified core; follow-ups close just-in-time
 

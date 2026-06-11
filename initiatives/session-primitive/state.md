@@ -1,39 +1,38 @@
 # session-primitive — state (the board)
 
-**Updated:** 2026-06-10
+**Updated:** 2026-06-11
 
 Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; why → `decisions.md`; carry-forwards → `deferred.md`; the design itself → `primitive-spec.md`.
 
 ## Board
 
-| #   | Wave                                                   | Status                  | Pointer                        |
-| --- | ------------------------------------------------------ | ----------------------- | ------------------------------ |
-| 0   | Founding: review → skeleton + grid + spec              | 🟢 done                 | `primitive-spec.md` · D-1..D-8 |
-| W1  | Group/box UX on the existing model (platform-only)     | 🟢 built · PR open      | plan §W1 · DR-W1-1..5          |
-| W2  | Model core (Group entity, recursion/arrangement death) | ⚪ needs D-MARKER-DEATH | plan §W2                       |
-| W3  | Editor remap (DnD/ungroup persistence)                 | ⚪                      | plan §W3                       |
-| W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+      | plan §W4                       |
+| #   | Wave                                                   | Status              | Pointer                        |
+| --- | ------------------------------------------------------ | ------------------- | ------------------------------ |
+| 0   | Founding: review → skeleton + grid + spec              | 🟢 done             | `primitive-spec.md` · D-1..D-8 |
+| W1  | Group/box UX on the existing model (platform-only)     | 🟢 merged (PR #261) | plan §W1 · DR-W1-1..5          |
+| W2  | Model core (Group entity, recursion/arrangement death) | 🟡 prompt issued    | `w2-runner-prompt.md`          |
+| W3  | Editor remap (DnD/ungroup persistence)                 | ⚪                  | plan §W3                       |
+| W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+  | plan §W4                       |
 
 ## Next action
 
-**W1 is built (PR open)** — `/feature` full ran 2026-06-10; 9 platform-only commits; box render via the live one-predicate, `header` box-label, «Group into one box» checkbox + `useCreateIndependentLadders`. Diff reviewed against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) — held; ratified calls promoted as DR-W1-1..5. **Orchestrator independent review PASSED (2026-06-10, PR #261):** scope = plan-detail + initiative docs only; one-predicate held (zero hand-rolled checks; marker untouched in code); draft transforms untouched; gates re-run independently — check-types + lint green, platform **1035/1035**; one new low carry-forward recorded (W1-SUBADD-BOX). **HANDED OFF 2026-06-10 — next planner starts here, in order:**
+**W1 CLOSED 2026-06-11** — PR #261 merged to main `6a45cc3d` (branch deleted); owner walkthrough verdict: "всё работает, полировка будет потом" (W1-BOX-FRAME accepted as-is → CLOSED; W1-SUBADD-BOX no fix → dissolves in W2). **D-MARKER-DEATH RATIFIED** ("да, вырываем с корнем"). **The W2 runner prompt is issued: `w2-runner-prompt.md`** — written against a full orchestrator verify-pass of the live code (contracts core read verbatim; seed verified marker-free; the dormant `@repo/api-routes` idempotency layer chosen for W1-DUP-RETRY; `@@unique([blockId, order])` consciously deferred → W2-ORDER-UNIQUE). Next, in order:
 
-1. **Collect the owner's walkthrough verdict** (was in progress at handoff): the 4 seed boxes + block-010 triple frame (**W1-BOX-FRAME** — if noisy, the calmer fallback is a one-file change in `schema-group-box.tsx`), unchecked de-emphasis (dividers between steppers), label edit/clear → "group…", and the **W1-SUBADD-BOX** confusion check. Fixes, if any, ride the same branch/PR #261.
-2. **Merge PR #261** — owner's call after the walkthrough. Vercel checks in the PR are noise (deployments not configured — ignore).
-3. **Get D-MARKER-DEATH yes/no** from the owner — it gates W2; everything needed for the call is in `decisions.md`.
-4. **Write the W2 runner prompt** from plan §W2 + the runner-prompt checklist (plan.md) + the W2 obligations in `deferred.md` (W1-DUP-RETRY idempotency, W1-RENDER-REPOINT re-point, W1-SUBADD-BOX dissolution). Budget: ≤1 full `/feature` per runner session; owner transports; review the returned diff via git, never the self-report (D-7).
+1. **Owner transports the prompt**: paste the BODY of `w2-runner-prompt.md` into a `/feature` (full) run in a FRESH session — one full run, nothing else in that session (D-7 budget).
+2. **On return: orchestrator reviews the git diff** (never the runner's self-report) against the prompt's §4 red lines — OPEN F-row surfaces untouched (weight exotics/tempo/position/sequence/timeCap/or_alternative/perSet); no recursion/typed-rel/child-count semantics; the ONE clustering helper is the only box-ness source; W3 scope absent; close-out docs rode the PR (D9).
+3. **Owner ritual after review passes**: `db:reset` + seed + the gated api-server suite (runner cannot run it) + the §6 acceptance walkthrough (9 steps in the prompt).
+4. Then W3 (editor remap) planning; W2-ORDER-UNIQUE rides W3's reorder rebuild.
 
 F-ledger follow-ups stay owner-paced and gate only W4 (F-PLAQUE first when the owner has the appetite).
 
 ## Open decisions awaiting ratification
 
-- **D-MARKER-DEATH** (`decisions.md`) — gates W2.
-- The F-ledger (`deferred.md`): F-PLAQUE (gates W4, first) · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time.
+- The F-ledger (`deferred.md`): F-PLAQUE (gates W4, first) · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time. (D-MARKER-DEATH ratified 2026-06-11 — no model-core decisions remain open.)
 
 ## Live carry-forwards
 
-From W1 (`deferred.md`): **W1-DUP-RETRY** (unchecked batch dup-on-retry → W2 idempotency) · **W1-RENDER-REPOINT** (re-point box-ness from the predicate to Group membership at W2) · **W1-BOX-FRAME** (double-frame — eyeball at acceptance) · W1-INSESSION-CHECK (low) · W1-SUBADD-BOX (low, found at orchestrator review).
-Inherited: QA-004 (confirm/undo rides the editor rebuild) · MARKER-FATE (→ D-MARKER-DEATH) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale; reuse features post-primitive.
+SCHEDULED → W2 (in the prompt): **W1-DUP-RETRY** (idempotency via the existing `@repo/api-routes` layer, §D4) · **W1-RENDER-REPOINT** (clustering helper re-point, §D7) · **W1-SUBADD-BOX** (in-box add hides the checkbox, §D7) · MARKER-FATE (the cut, §D1/D6 — seed verified marker-free).
+OPEN: W2-ORDER-UNIQUE (→ W3 reorder rebuild) · W1-INSESSION-CHECK (low) · QA-004 (confirm/undo rides the editor rebuild) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). W1-BOX-FRAME CLOSED (accepted as-is; solid-divider fallback documented). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale; reuse features post-primitive.
 
 ## Gotchas a resuming session must know
 
