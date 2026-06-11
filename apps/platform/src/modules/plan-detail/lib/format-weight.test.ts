@@ -79,19 +79,6 @@ describe("formatWeight", () => {
     });
   });
 
-  describe("dual_value variant", () => {
-    it("renders '<first> / <second> kg (M/F)'", () => {
-      const w: Weight = {
-        variant: "dual_value",
-        first: 24,
-        second: 16,
-        resolver: "athlete_profile",
-      };
-
-      expect(formatWeight(w)).toBe("24 / 16 kg (M/F)");
-    });
-  });
-
   describe("with_asymmetric_arm variant", () => {
     it("renders kg + working arm + passive action with underscores replaced", () => {
       const w: Weight = {

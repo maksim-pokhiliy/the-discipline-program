@@ -87,15 +87,21 @@ export const BLOCK_COMPOUND_ROWS_WK2_TUE: CanonicalBlock = {
             {
               rowKind: "EXERCISE",
               exercise: {
-                form: "sandwich",
-                sandwich: {
-                  opening: { exerciseId: EX.dbStrictPress, reps: { kind: "count", value: 5 } },
-                  middle: { exerciseId: EX.dbCurl, reps: { kind: "count", value: 10 } },
-                  closing: { exerciseId: EX.dbStrictPress, reps: { kind: "count", value: 5 } },
+                form: "compound",
+                compound: {
+                  elements: [
+                    { exerciseId: EX.dbStrictPress, reps: { kind: "count", value: 5 } },
+                    { exerciseId: EX.dbCurl, reps: { kind: "count", value: 10 } },
+                    { exerciseId: EX.dbStrictPress, reps: { kind: "count", value: 5 } },
+                  ],
                 },
               },
             },
-            { sequence: beforeNamedAfterNamedComposite("WARMUP", "METCON"), side: eachArm(8) },
+            {
+              sequence: beforeNamedAfterNamedComposite("WARMUP", "METCON"),
+              side: eachArm(8),
+              notes: "Sandwich: 5 strict press / 10 curl / 5 strict press",
+            },
           ),
           mkRow(
             4,
@@ -187,40 +193,22 @@ export const BLOCK_FOOTNOTES_WK2_TUE: CanonicalBlock = {
           ),
           mkRow(
             2,
-            {
-              rowKind: "FOOTNOTE",
-              marker: "**",
-              target: "each_round",
-              content: {
-                elements: [{ exerciseId: EX.strictHspu, reps: { kind: "count", value: 5 } }],
-              },
-            },
-            { sequence: afterEachRound() },
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.strictHspu } },
+            { reps: countReps(5), sequence: afterEachRound(), notes: "** after each round" },
           ),
           mkRow(
             3,
-            {
-              rowKind: "FOOTNOTE",
-              marker: "*",
-              target: "each_set",
-              content: {
-                elements: [{ exerciseId: EX.toesToBar, reps: { kind: "count", value: 10 } }],
-              },
-            },
-            {},
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.toesToBar } },
+            { reps: countReps(10), notes: "* after each set" },
           ),
           mkRow(
             4,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.strictHspu } },
             {
-              rowKind: "FOOTNOTE",
-              marker: "**",
-              target: "each_typed_round",
-              content: {
-                elements: [{ exerciseId: EX.strictHspu, reps: { kind: "count", value: 5 } }],
-              },
-              typeLabel: "GYMNASTICS",
+              reps: countReps(5),
+              sequence: afterEachTypedRound("GYMNASTICS"),
+              notes: "** after each GYMNASTICS round",
             },
-            { sequence: afterEachTypedRound("GYMNASTICS") },
           ),
         ],
       },

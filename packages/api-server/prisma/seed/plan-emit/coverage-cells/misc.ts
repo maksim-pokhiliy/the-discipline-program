@@ -3,14 +3,15 @@ import { Prisma } from "@prisma/client";
 import {
   countBlock,
   countDay,
+  countMultiMemberGroups,
   countSchema,
+  countSchemaGroup,
   countSession,
-  countStructurallyParallelParents,
   STRUCTURAL_PARALLEL_FLOOR,
 } from "./shared";
 import { type CoverageCell } from "./types";
 
-const SUB_SCHEMA_FLOOR = 25;
+const GROUP_FLOOR = 5;
 
 const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
   {
@@ -114,20 +115,28 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
     tally: (db, planId) => countSchema(db, planId, { intensity: { not: Prisma.AnyNull } }),
   },
   {
-    id: "entity.subSchemas",
+    id: "entity.schemaGroup",
     category: "entity-invariants",
-    label: "Schema with parentSchemaId (sub-schema)",
-    required: SUB_SCHEMA_FLOOR,
-    sourceRef: "coverage-matrix §2 sub-schemas",
-    tally: (db, planId) => countSchema(db, planId, { NOT: { parentSchemaId: null } }),
+    label: "SchemaGroup present (block owns an explicit group)",
+    required: GROUP_FLOOR,
+    sourceRef: "session-primitive DR-W2-1 group presence",
+    tally: (db, planId) => countSchemaGroup(db, planId),
   },
   {
-    id: "entity.alternatingGroup",
+    id: "entity.groupMember",
     category: "entity-invariants",
-    label: "Alternating-group schema: ≥2 sub-schemas, repetition absent or once, no arrangement",
+    label: "Schema that is a group member (groupId set)",
+    required: GROUP_FLOOR,
+    sourceRef: "session-primitive DR-W2-1 group membership",
+    tally: (db, planId) => countSchema(db, planId, { NOT: { groupId: null } }),
+  },
+  {
+    id: "entity.multiMemberGroup",
+    category: "entity-invariants",
+    label: "SchemaGroup with ≥2 members (explicit parallel/alternating group)",
     required: STRUCTURAL_PARALLEL_FLOOR,
-    sourceRef: "coverage-matrix §2 alternating-group presence",
-    tally: countStructurallyParallelParents,
+    sourceRef: "session-primitive DR-W2-1 multi-member group presence",
+    tally: countMultiMemberGroups,
   },
   {
     id: "entity.labeledSession",

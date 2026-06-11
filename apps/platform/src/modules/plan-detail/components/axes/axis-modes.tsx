@@ -7,7 +7,7 @@ import Repeat from "@mui/icons-material/Repeat";
 import Stairs from "@mui/icons-material/Stairs";
 import Timer from "@mui/icons-material/Timer";
 
-import { type ArrangementAxis, type RepetitionAxis } from "./axis-draft.types";
+import { type RepetitionAxis } from "./axis-draft.types";
 import { type AxisModeTile } from "./axis-mode-button-grid";
 
 const ICON_FONT_SIZE = "small" as const;
@@ -52,8 +52,3 @@ export const REPETITION_TILES: readonly RepetitionTile[] = [
     hint: "Work / rest cycle × N (Tabata). work:rest is a first-class unit.",
   },
 ];
-
-export const ARRANGEMENT_HINTS: Record<ArrangementAxis["kind"], string> = {
-  ordered: "Children performed one after another.",
-  superset: "Children coupled back-to-back, repeated as a unit.",
-};

@@ -7,17 +7,17 @@ import { LOAD_KINDS, type Load, type LoadKind } from "@repo/contracts/lms/_share
 
 import { LoadAbsoluteFields } from "./load-absolute-fields";
 import { LoadBodyweightFields } from "./load-bodyweight-fields";
+import { LoadByProfileFields } from "./load-by-profile-fields";
+import { LoadNoneFields } from "./load-none-fields";
 import { LoadPercentageFields } from "./load-percentage-fields";
-import { LoadUnspecifiedFields } from "./load-unspecified-fields";
-import { LoadWithoutWeightFields } from "./load-without-weight-fields";
 import { buildDefaultLoad } from "./weight-load-defaults";
 
 const LOAD_KIND_LABELS: Record<LoadKind, string> = {
   absolute: "Absolute kg",
   percentage: "% of ref",
   bodyweight: "BW",
-  without_weight: "No wt",
-  unspecified: "—",
+  byProfile: "By profile (M/F)",
+  none: "No load",
 };
 
 type LoadEditorProps = {
@@ -53,10 +53,17 @@ export const LoadEditor = ({ value, onChange, error, disabled = false }: LoadEdi
         );
       case "bodyweight":
         return <LoadBodyweightFields />;
-      case "without_weight":
-        return <LoadWithoutWeightFields />;
-      case "unspecified":
-        return <LoadUnspecifiedFields />;
+      case "byProfile":
+        return (
+          <LoadByProfileFields
+            value={value}
+            onChange={onChange}
+            error={error}
+            disabled={disabled}
+          />
+        );
+      case "none":
+        return <LoadNoneFields />;
     }
   };
 

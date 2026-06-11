@@ -1,54 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  MEDIA_APPLIES_TO,
-  MEDIA_POSITIONS,
   POSITION_EQUIPMENT_MODIFIERS,
   mediaReferenceSchema,
   positionEquipmentModifierSchema,
 } from "./media";
 
 describe("mediaReferenceSchema", () => {
-  it("accepts a valid url + position inline + appliesTo current_row", () => {
-    expect(
-      mediaReferenceSchema.safeParse({
-        url: "https://example.com/video.mp4",
-        position: "inline",
-        appliesTo: "current_row",
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts all 3 MEDIA_POSITIONS", () => {
-    for (const position of MEDIA_POSITIONS) {
-      expect(
-        mediaReferenceSchema.safeParse({
-          url: "https://example.com/v.mp4",
-          position,
-          appliesTo: "current_row",
-        }).success,
-      ).toBe(true);
-    }
-  });
-
-  it("accepts all 4 MEDIA_APPLIES_TO", () => {
-    for (const appliesTo of MEDIA_APPLIES_TO) {
-      expect(
-        mediaReferenceSchema.safeParse({
-          url: "https://example.com/v.mp4",
-          position: "inline",
-          appliesTo,
-        }).success,
-      ).toBe(true);
-    }
+  it("accepts a valid url with no label", () => {
+    expect(mediaReferenceSchema.safeParse({ url: "https://example.com/video.mp4" }).success).toBe(
+      true,
+    );
   });
 
   it("accepts optional label", () => {
     expect(
       mediaReferenceSchema.safeParse({
         url: "https://example.com/v.mp4",
-        position: "standalone_row",
-        appliesTo: "whole_schema",
         label: "Watch this carefully",
       }).success,
     ).toBe(true);
@@ -56,43 +24,25 @@ describe("mediaReferenceSchema", () => {
 
   it("rejects empty label string", () => {
     expect(
-      mediaReferenceSchema.safeParse({
-        url: "https://example.com/v.mp4",
-        position: "inline",
-        appliesTo: "current_row",
-        label: "",
-      }).success,
+      mediaReferenceSchema.safeParse({ url: "https://example.com/v.mp4", label: "" }).success,
     ).toBe(false);
   });
 
   it("rejects invalid url", () => {
-    expect(
-      mediaReferenceSchema.safeParse({
-        url: "not-a-url",
-        position: "inline",
-        appliesTo: "current_row",
-      }).success,
-    ).toBe(false);
+    expect(mediaReferenceSchema.safeParse({ url: "not-a-url" }).success).toBe(false);
   });
 
-  it("rejects unknown position", () => {
-    expect(
-      mediaReferenceSchema.safeParse({
-        url: "https://example.com/v.mp4",
-        position: "popup",
-        appliesTo: "current_row",
-      }).success,
-    ).toBe(false);
-  });
+  it("strips the dropped position field (default passthrough)", () => {
+    const result = mediaReferenceSchema.safeParse({
+      url: "https://example.com/v.mp4",
+      position: "inline",
+    });
 
-  it("rejects unknown appliesTo", () => {
-    expect(
-      mediaReferenceSchema.safeParse({
-        url: "https://example.com/v.mp4",
-        position: "inline",
-        appliesTo: "next_row",
-      }).success,
-    ).toBe(false);
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).toEqual({ url: "https://example.com/v.mp4" });
+    }
   });
 });
 

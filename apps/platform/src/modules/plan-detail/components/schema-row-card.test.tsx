@@ -20,14 +20,11 @@ import {
   makeAtomicExerciseNoDemoRow,
   makeCompoundExerciseRow,
   makeExerciseRow,
-  makeFootnoteRow,
-  makeInnerLadderMarkerRow,
+  makePlaceholderRow,
   makeRestRow,
-  makeStandaloneLoadRow,
 } from "./schema-row-card.fixtures";
 
 const TINT_ALPHA = 0.04;
-const LADDER_TINT_ALPHA = 0.02;
 
 const updateSchemaRowMutate = vi.fn();
 const deleteSchemaRowMutate = vi.fn();
@@ -153,14 +150,6 @@ describe("SchemaRowCard chrome", () => {
 });
 
 describe("SchemaRowCard per-RowKind tint", () => {
-  it("applies kind.load tint at 0.04 alpha for STANDALONE_LOAD", () => {
-    const { container } = renderRowCard({ row: makeStandaloneLoadRow() });
-    const shell = container.firstChild;
-    const expectedBgColor = alpha(theme.palette.kind.load, TINT_ALPHA);
-
-    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
-  });
-
   it("applies kind.rest tint at 0.04 alpha for REST", () => {
     const { container } = renderRowCard({ row: makeRestRow() });
     const shell = container.firstChild;
@@ -169,24 +158,19 @@ describe("SchemaRowCard per-RowKind tint", () => {
     expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
   });
 
-  it("applies kind.foot tint at 0.04 alpha for FOOTNOTE", () => {
-    const { container } = renderRowCard({ row: makeFootnoteRow() });
-    const shell = container.firstChild;
-    const expectedBgColor = alpha(theme.palette.kind.foot, TINT_ALPHA);
-
-    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
-  });
-
-  it("applies text.primary tint at 0.02 alpha for INNER_LADDER_MARKER", () => {
-    const { container } = renderRowCard({ row: makeInnerLadderMarkerRow() });
-    const shell = container.firstChild;
-    const expectedBgColor = alpha(theme.palette.text.primary, LADDER_TINT_ALPHA);
-
-    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
-  });
-
   it("applies no kind tint for EXERCISE rows (empty backgroundColor inline)", () => {
     const { container } = renderRowCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected row shell to be an HTMLElement");
+    }
+
+    expect(shell.style.backgroundColor).toBe("");
+  });
+
+  it("applies no kind tint for PLACEHOLDER rows (empty backgroundColor inline)", () => {
+    const { container } = renderRowCard({ row: makePlaceholderRow() });
     const shell = container.firstChild;
 
     if (!(shell instanceof HTMLElement)) {
@@ -256,7 +240,7 @@ describe("SchemaRowCard edit + delete actions", () => {
   });
 
   it("opens the ConfirmationModal with the row mainText as details when the Delete IconButton is clicked", () => {
-    renderRowCard({ row: makeStandaloneLoadRow() });
+    renderRowCard({ row: makePlaceholderRow() });
 
     fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
 
@@ -264,7 +248,7 @@ describe("SchemaRowCard edit + delete actions", () => {
 
     expect(within(dialog).getByRole("heading", { name: "Delete row" })).toBeInTheDocument();
     expect(within(dialog).getByText("Delete this row?")).toBeInTheDocument();
-    expect(within(dialog).getByText("20 kg")).toBeInTheDocument();
+    expect(within(dialog).getByText("ABS finisher")).toBeInTheDocument();
   });
 
   it("fires useDeleteSchemaRow.mutate with the schemaRowId when Confirm is clicked", () => {

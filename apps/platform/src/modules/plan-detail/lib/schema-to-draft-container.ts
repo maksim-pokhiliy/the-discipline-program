@@ -1,6 +1,4 @@
 import type {
-  ArrangementAxis as ContractArrangementAxis,
-  Composition,
   RepetitionAxis as ContractRepetitionAxis,
   RestAxis as ContractRestAxis,
 } from "@repo/contracts/lms/composition";
@@ -8,13 +6,11 @@ import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type {
-  ArrangementAxis,
   ComposeContainer,
   ComposeNode,
   ComposeRow,
   RepetitionAxis,
   RestAxis,
-  SupersetPairDraft,
 } from "../components/axes/axis-draft.types";
 
 import { asNodeId } from "./axis-draft-id";
@@ -43,24 +39,6 @@ const repetitionFromComposition = (repetition: ContractRepetitionAxis): Repetiti
   }
 };
 
-const pairFromComposition = (
-  pair: Extract<ContractArrangementAxis, { kind: "superset" }>["pairs"][number],
-): SupersetPairDraft => ({
-  label: pair.label,
-  rowIds: pair.rowIds.map(asNodeId),
-});
-
-const arrangementFromComposition = (arrangement: ContractArrangementAxis): ArrangementAxis => {
-  switch (arrangement.kind) {
-    case "ordered":
-      return { kind: "ordered" };
-    case "superset":
-      return { kind: "superset", pairs: arrangement.pairs.map(pairFromComposition) };
-    default:
-      return arrangement satisfies never;
-  }
-};
-
 const restFromComposition = (rest: ContractRestAxis): RestAxis => rest;
 
 const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
@@ -78,39 +56,19 @@ const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
   editorDraft: undefined,
 });
 
-const splitAxes = (
-  composition: Composition,
-): {
-  arrangement?: ArrangementAxis;
-  rest?: RestAxis;
-} => ({
-  ...(composition.arrangement !== undefined && {
-    arrangement: arrangementFromComposition(composition.arrangement),
-  }),
-  ...(composition.rest !== undefined && { rest: restFromComposition(composition.rest) }),
-});
+export const schemaWithBodyToDraftContainer = (schema: SchemaWithBody): ComposeContainer => {
+  const composition = schema.schema.composition ?? {};
+  const { repetition, rest } = composition;
 
-const containerFromSchemaWithBody = (node: SchemaWithBody): ComposeContainer => {
-  const composition = node.schema.composition ?? {};
-  const { repetition, interleaveOrder } = composition;
-
-  const children: ComposeNode[] = node.rows.map(rowFromSchemaRow);
-
-  for (const subSchema of node.subSchemas) {
-    children.push(containerFromSchemaWithBody(subSchema));
-  }
+  const children: ComposeNode[] = schema.rows.map(rowFromSchemaRow);
 
   return {
     nodeType: "container",
-    id: asNodeId(node.schema.id),
-    header: node.schema.header,
-    notes: node.schema.notes,
+    id: asNodeId(schema.schema.id),
+    header: schema.schema.header,
+    notes: schema.schema.notes,
     ...(repetition !== undefined && { repetition: repetitionFromComposition(repetition) }),
-    ...(interleaveOrder !== undefined && { interleaveOrder }),
-    ...splitAxes(composition),
+    ...(rest !== undefined && { rest: restFromComposition(rest) }),
     children,
   };
 };
-
-export const schemaWithBodyToDraftContainer = (schema: SchemaWithBody): ComposeContainer =>
-  containerFromSchemaWithBody(schema);

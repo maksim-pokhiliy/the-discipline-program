@@ -16,6 +16,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS plan_enrollment_unique_active
   ON lms_plan_enrollments ("planId", "athleteId")
   WHERE "deletedAt" IS NULL;
 
-CREATE UNIQUE INDEX IF NOT EXISTS schemas_block_top_order
-  ON training_schemas ("blockId", "order")
-  WHERE "parentSchemaId" IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS schemas_block_order
+  ON training_schemas ("blockId", "order");

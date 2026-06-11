@@ -424,9 +424,10 @@ describe("lmsWeekApi", () => {
         expect(embedded?.id).toBe(block.id);
         expect(embedded?.schemas).toHaveLength(1);
         expect(embedded?.schemas[0]?.schema.id).toBe(schema.id);
+        expect(embedded?.schemas[0]?.schema.groupId).toBeNull();
         expect(embedded?.schemas[0]?.rows).toHaveLength(2);
         expect(embedded?.schemas[0]?.rows.map((r) => r.id)).toEqual([rowFirst.id, rowSecond.id]);
-        expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
+        expect(embedded?.groups).toEqual([]);
       } finally {
         await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});
@@ -437,7 +438,7 @@ describe("lmsWeekApi", () => {
       }
     });
 
-    it("nests a depth-2 sub-schema under subSchemas and not at the top level", async () => {
+    it("embeds a group's members FLAT in schemas (each carrying groupId) and surfaces the group in groups", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
       });
@@ -448,17 +449,23 @@ describe("lmsWeekApi", () => {
       const block = await cleanupRaw.block.create({
         data: { sessionId: session.id, order: 10 },
       });
-      const parent = await cleanupRaw.schema.create({
+      const group = await cleanupRaw.schemaGroup.create({
+        data: { blockId: block.id, label: "parallel ladders", interleaveOrder: "track_by_track" },
+      });
+      const memberA = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
+          groupId: group.id,
           order: 10,
+          composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
         },
       });
-      const child = await cleanupRaw.schema.create({
+      const memberB = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: parent.id,
-          order: 10,
+          groupId: group.id,
+          order: 20,
+          composition: { repetition: { kind: "ladder", steps: [9, 15, 21] } },
         },
       });
 
@@ -467,14 +474,20 @@ describe("lmsWeekApi", () => {
 
         const embedded = result.days[2]?.sessions[0]?.blocks[0];
 
-        expect(embedded?.schemas).toHaveLength(1);
-        expect(embedded?.schemas[0]?.schema.id).toBe(parent.id);
-        expect(embedded?.schemas[0]?.subSchemas).toHaveLength(1);
-        expect(embedded?.schemas[0]?.subSchemas[0]?.schema.id).toBe(child.id);
-        expect(embedded?.schemas.map((s) => s.schema.id)).not.toContain(child.id);
+        expect(embedded?.schemas).toHaveLength(2);
+        expect(embedded?.schemas.map((s) => s.schema.id)).toEqual([memberA.id, memberB.id]);
+        expect(embedded?.schemas.map((s) => s.schema.groupId)).toEqual([group.id, group.id]);
+        expect(embedded?.schemas.every((s) => !("subSchemas" in s))).toBe(true);
+
+        expect(embedded?.groups).toHaveLength(1);
+        expect(embedded?.groups[0]?.id).toBe(group.id);
+        expect(embedded?.groups[0]?.label).toBe("parallel ladders");
+        expect(embedded?.groups[0]?.interleaveOrder).toBe("track_by_track");
+        expect(embedded?.groups[0]?.blockId).toBe(block.id);
       } finally {
-        await cleanupRaw.schema.delete({ where: { id: child.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: parent.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: memberA.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: memberB.id } }).catch(() => {});
+        await cleanupRaw.schemaGroup.delete({ where: { id: group.id } }).catch(() => {});
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
@@ -482,7 +495,7 @@ describe("lmsWeekApi", () => {
       }
     });
 
-    it("reads a depth-3 structurally-parallel tree back with derived labels and level-3 rows intact (T1-3)", async () => {
+    it("reads a group with ladder members and their level-2 rows intact, flat with derived labels", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
       });
@@ -493,35 +506,23 @@ describe("lmsWeekApi", () => {
       const block = await cleanupRaw.block.create({
         data: { sessionId: session.id, order: 10 },
       });
-      const rounds = await cleanupRaw.schema.create({
-        data: {
-          blockId: block.id,
-          order: 10,
-          composition: { repetition: { kind: "count", count: 2 } },
-        },
+      const group = await cleanupRaw.schemaGroup.create({
+        data: { blockId: block.id, label: null },
       });
-      const parallel = await cleanupRaw.schema.create({
+      const trackA = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: rounds.id,
+          groupId: group.id,
           order: 10,
-          composition: {},
+          composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
         },
       });
       const trackB = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: parallel.id,
+          groupId: group.id,
           order: 20,
           composition: { repetition: { kind: "ladder", steps: [9, 15, 21] } },
-        },
-      });
-      const trackA = await cleanupRaw.schema.create({
-        data: {
-          blockId: block.id,
-          parentSchemaId: parallel.id,
-          order: 10,
-          composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
         },
       });
       const rowA = await cleanupRaw.schemaRow.create({
@@ -551,30 +552,24 @@ describe("lmsWeekApi", () => {
         const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
 
         const embedded = result.days[5]?.sessions[0]?.blocks[0];
-        const level1 = embedded?.schemas[0];
-        const level2Parallel = level1?.subSchemas[0];
-        const level3A = level2Parallel?.subSchemas.find((s) => s.schema.id === trackA.id);
-        const level3B = level2Parallel?.subSchemas.find((s) => s.schema.id === trackB.id);
+        const memberA = embedded?.schemas.find((s) => s.schema.id === trackA.id);
+        const memberB = embedded?.schemas.find((s) => s.schema.id === trackB.id);
 
-        expect(embedded?.schemas).toHaveLength(1);
-        expect(level1?.schema.id).toBe(rounds.id);
-        expect(level1?.schema.label).toEqual({ kind: "rounds", family: "ROUNDS" });
-        expect(level1?.subSchemas.map((s) => s.schema.id)).toEqual([parallel.id]);
-        expect(level2Parallel?.schema.composition).toEqual({});
-        expect(level2Parallel?.schema.label).toEqual({ kind: "parallel", family: "PARALLEL" });
-        expect(level2Parallel?.subSchemas.map((s) => s.schema.id)).toEqual([trackA.id, trackB.id]);
-        expect(level2Parallel?.subSchemas.map((s) => s.schema.order)).toEqual([10, 20]);
-        expect(level3A?.schema.label).toEqual({ kind: "ladder", family: "LADDER" });
-        expect(level3A?.rows.map((r) => r.id)).toEqual([rowA.id]);
-        expect(level3B?.rows.map((r) => r.id)).toEqual([rowB.id]);
+        expect(embedded?.schemas).toHaveLength(2);
+        expect(embedded?.schemas.map((s) => s.schema.id)).toEqual([trackA.id, trackB.id]);
+        expect(embedded?.schemas.map((s) => s.schema.order)).toEqual([10, 20]);
+        expect(memberA?.schema.label).toEqual({ kind: "ladder", family: "LADDER" });
+        expect(memberB?.schema.label).toEqual({ kind: "ladder", family: "LADDER" });
+        expect(memberA?.rows.map((r) => r.id)).toEqual([rowA.id]);
+        expect(memberB?.rows.map((r) => r.id)).toEqual([rowB.id]);
+        expect(embedded?.groups.map((g) => g.id)).toEqual([group.id]);
       } finally {
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
           .catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: trackA.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: trackB.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: parallel.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: rounds.id } }).catch(() => {});
+        await cleanupRaw.schemaGroup.delete({ where: { id: group.id } }).catch(() => {});
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
@@ -609,7 +604,7 @@ describe("lmsWeekApi", () => {
       }
     });
 
-    it("returns schemas, rows and subSchemas each sorted ascending by order", async () => {
+    it("returns flat schemas and rows each sorted ascending by order, group members included flat", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
       });
@@ -620,35 +615,32 @@ describe("lmsWeekApi", () => {
       const block = await cleanupRaw.block.create({
         data: { sessionId: session.id, order: 10 },
       });
-      const schemaLater = await cleanupRaw.schema.create({
-        data: {
-          blockId: block.id,
-          order: 20,
-        },
-      });
       const schemaEarlier = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
           order: 10,
         },
       });
-      const subLater = await cleanupRaw.schema.create({
+      const group = await cleanupRaw.schemaGroup.create({
+        data: { blockId: block.id, label: null },
+      });
+      const memberLater = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: schemaEarlier.id,
-          order: 20,
+          groupId: group.id,
+          order: 30,
         },
       });
-      const subEarlier = await cleanupRaw.schema.create({
+      const memberEarlier = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: schemaEarlier.id,
-          order: 10,
+          groupId: group.id,
+          order: 20,
         },
       });
       const rowLater = await cleanupRaw.schemaRow.create({
         data: {
-          schemaId: schemaLater.id,
+          schemaId: schemaEarlier.id,
           order: 20,
           rowKind: "REST_SLOT",
           rowPayload: REST_SLOT_PAYLOAD,
@@ -656,7 +648,7 @@ describe("lmsWeekApi", () => {
       });
       const rowEarlier = await cleanupRaw.schemaRow.create({
         data: {
-          schemaId: schemaLater.id,
+          schemaId: schemaEarlier.id,
           order: 10,
           rowKind: "REST_SLOT",
           rowPayload: REST_SLOT_PAYLOAD,
@@ -667,25 +659,25 @@ describe("lmsWeekApi", () => {
         const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
 
         const embedded = result.days[4]?.sessions[0]?.blocks[0];
-        const nested = embedded?.schemas[0];
 
-        expect(embedded?.schemas.map((s) => s.schema.order)).toEqual([10, 20]);
+        expect(embedded?.schemas.map((s) => s.schema.order)).toEqual([10, 20, 30]);
         expect(embedded?.schemas.map((s) => s.schema.id)).toEqual([
           schemaEarlier.id,
-          schemaLater.id,
+          memberEarlier.id,
+          memberLater.id,
         ]);
-        expect(nested?.subSchemas.map((s) => s.schema.order)).toEqual([10, 20]);
-        expect(nested?.subSchemas.map((s) => s.schema.id)).toEqual([subEarlier.id, subLater.id]);
-        expect(embedded?.schemas[1]?.rows.map((r) => r.order)).toEqual([10, 20]);
-        expect(embedded?.schemas[1]?.rows.map((r) => r.id)).toEqual([rowEarlier.id, rowLater.id]);
+        expect(embedded?.schemas.map((s) => s.schema.groupId)).toEqual([null, group.id, group.id]);
+        expect(embedded?.schemas[0]?.rows.map((r) => r.order)).toEqual([10, 20]);
+        expect(embedded?.schemas[0]?.rows.map((r) => r.id)).toEqual([rowEarlier.id, rowLater.id]);
+        expect(embedded?.groups.map((g) => g.id)).toEqual([group.id]);
       } finally {
         await cleanupRaw.schemaRow
-          .deleteMany({ where: { schemaId: schemaLater.id } })
+          .deleteMany({ where: { schemaId: schemaEarlier.id } })
           .catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: subEarlier.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: subLater.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: memberEarlier.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: memberLater.id } }).catch(() => {});
+        await cleanupRaw.schemaGroup.delete({ where: { id: group.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: schemaEarlier.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: schemaLater.id } }).catch(() => {});
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
@@ -697,11 +689,6 @@ describe("lmsWeekApi", () => {
   describe("getByPlanAndDate — composition collision (QA-001 write-guard, read-time DbCorruption)", () => {
     const COLLISION_MONDAY_PARAM = "2026-06-01";
     const COLLISION_UTC_MONDAY = new Date(Date.UTC(2026, 5, 1));
-    const LADDER_COMPOSITION: Composition = {
-      repetition: { kind: "ladder", steps: [21, 15, 9] },
-    };
-    const MARKER_PAYLOAD = { rowKind: "INNER_LADDER_MARKER" as const, steps: [21, 15, 9] };
-
     const provisionCollisionWeek = async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: COLLISION_UTC_MONDAY },
@@ -725,77 +712,6 @@ describe("lmsWeekApi", () => {
         },
       };
     };
-
-    it("rejects a ladder-collision marker-row create with 400 and persists no corruption", async () => {
-      const ctx = await provisionCollisionWeek();
-
-      try {
-        const schema = await lmsSchemaApi.create(
-          coach.user.id,
-          activePlanId,
-          { blockId: ctx.block.id },
-          { composition: LADDER_COMPOSITION },
-        );
-
-        expect(schema.composition).toEqual(LADDER_COMPOSITION);
-
-        await expect(
-          lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-            schemaId: schema.id,
-            rowKind: "INNER_LADDER_MARKER",
-            rowPayload: MARKER_PAYLOAD,
-          }),
-        ).rejects.toThrow(BadRequestError);
-
-        const result = await lmsWeekApi.getByPlanAndDate(
-          coach.user.id,
-          activePlanId,
-          COLLISION_MONDAY_PARAM,
-        );
-
-        expect(result.week).not.toBeNull();
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("500s the WHOLE week even when a sibling schema is collision-free (QA-002 no per-block isolation)", async () => {
-      const ctx = await provisionCollisionWeek();
-
-      try {
-        const cleanSchema = await lmsSchemaApi.create(
-          coach.user.id,
-          activePlanId,
-          { blockId: ctx.block.id },
-          {},
-        );
-
-        expect(cleanSchema.composition).toBeNull();
-
-        const collidingSchema = await cleanupRaw.schema.create({
-          data: {
-            blockId: ctx.block.id,
-            order: 20,
-            composition: LADDER_COMPOSITION,
-          },
-        });
-
-        await cleanupRaw.schemaRow.create({
-          data: {
-            schemaId: collidingSchema.id,
-            order: 10,
-            rowKind: "INNER_LADDER_MARKER",
-            rowPayload: MARKER_PAYLOAD,
-          },
-        });
-
-        await expect(
-          lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
-        ).rejects.toThrow(InternalServerError);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
 
     it("surfaces a malformed single-node composition column as a 500 DbCorruption", async () => {
       const ctx = await provisionCollisionWeek();
@@ -919,8 +835,8 @@ describe("lmsWeekApi", () => {
         expect(embedded?.schema.composition).toEqual(CADENCE_COMPOSITION);
         expect(embedded?.schema.label).toEqual(deriveCompositionLabel(CADENCE_COMPOSITION));
         expect(embedded?.schema.header).toBe("EMOM 4");
+        expect(embedded?.schema.groupId).toBeNull();
         expect(embedded?.rows).toHaveLength(2);
-        expect(embedded?.subSchemas).toEqual([]);
       } finally {
         await ctx.cleanup();
       }

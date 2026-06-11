@@ -33,10 +33,14 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
       ).toBe(false);
     });
 
-    it("rejects without_weight with unknown context", () => {
+    it("rejects the dropped without_weight kind", () => {
       expect(loadSchema.safeParse({ kind: "without_weight", context: "warmup" }).success).toBe(
         false,
       );
+    });
+
+    it("rejects byProfile with a non-positive value", () => {
+      expect(loadSchema.safeParse({ kind: "byProfile", first: 0, second: 16 }).success).toBe(false);
     });
   });
 
@@ -60,14 +64,8 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
       expect(repNotationSchema.safeParse({ kind: "unit_bound", unit: "sec" }).success).toBe(false);
     });
 
-    it("rejects max with empty progressiveSeed (min(1))", () => {
-      expect(
-        repNotationSchema.safeParse({
-          kind: "max",
-          subForm: "progressive",
-          progressiveSeed: "",
-        }).success,
-      ).toBe(false);
+    it("rejects max with an empty tail string (min(1) when set)", () => {
+      expect(repNotationSchema.safeParse({ kind: "max", tail: "" }).success).toBe(false);
     });
   });
 

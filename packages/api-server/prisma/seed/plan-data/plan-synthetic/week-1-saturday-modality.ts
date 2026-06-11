@@ -48,23 +48,15 @@ export const BLOCK_URL_ONLY_BODY_WRAPPED_WK1_SAT: CanonicalBlock = {
     buildComposeNode(
       {
         order: 1,
-        header: "URL only body (wrapped)",
+        header: "URL only body",
         rows: [
           mkRow(
             1,
             {
-              rowKind: "STANDALONE_URL",
-              url: "https://example.com/demo/wrapped-url",
-              wrapped: true,
-              appliesTo: "whole_schema",
+              rowKind: "PLACEHOLDER",
+              placeholder: { placeholderKind: "coach_choice_slot", text: "Demo (see video)" },
             },
-            {
-              media: mediaReference({
-                url: "https://example.com/demo/wrapped-url",
-                position: "standalone_row",
-                appliesTo: "whole_schema",
-              }),
-            },
+            { media: mediaReference({ url: "https://example.com/demo/wrapped-url" }) },
           ),
         ],
       },
@@ -90,18 +82,10 @@ export const BLOCK_URL_ONLY_BODY_BARE_WK1_SAT: CanonicalBlock = {
           mkRow(
             1,
             {
-              rowKind: "STANDALONE_URL",
-              url: "https://example.com/demo/bare-url",
-              wrapped: false,
-              appliesTo: "previous_exercise_row",
+              rowKind: "PLACEHOLDER",
+              placeholder: { placeholderKind: "coach_choice_slot", text: "Demo (see video)" },
             },
-            {
-              media: mediaReference({
-                url: "https://example.com/demo/bare-url",
-                position: "bare",
-                appliesTo: "whole_schema",
-              }),
-            },
+            { media: mediaReference({ url: "https://example.com/demo/bare-url" }) },
           ),
         ],
       },
@@ -141,7 +125,7 @@ export const BLOCK_MULTILABEL_WK1_SAT: CanonicalBlock = {
           ),
         ],
       },
-      { ...ladderRep([3, 5, 7]), arrangement: { kind: "ordered" } },
+      ladderRep([3, 5, 7]),
       null,
     ),
   ],

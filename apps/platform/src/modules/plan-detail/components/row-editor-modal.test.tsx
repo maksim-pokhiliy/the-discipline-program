@@ -84,31 +84,18 @@ const baseSchemaRow = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 } as const;
 
-const urlRowWrappedFalse: SchemaRow = {
+const restRow: SchemaRow = {
   ...baseSchemaRow,
-  rowKind: "STANDALONE_URL",
+  rowKind: "REST",
   rowPayload: {
-    rowKind: "STANDALONE_URL",
-    url: "https://youtu.be/abc123",
-    wrapped: false,
-    appliesTo: "whole_schema",
-  },
-};
-
-const footnoteRow: SchemaRow = {
-  ...baseSchemaRow,
-  rowKind: "FOOTNOTE",
-  rowPayload: {
-    rowKind: "FOOTNOTE",
-    marker: "*",
-    target: "each_round",
-    content: { elements: [] },
+    rowKind: "REST",
+    raw: "rest 90s",
+    parsed: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
   },
 };
 
@@ -187,44 +174,6 @@ describe("RowEditorModal create submit assembly (MT-8)", () => {
     });
   });
 
-  it("assembles the STANDALONE_URL envelope with wrapped:true and notes:null", async () => {
-    renderModal(createMode("STANDALONE_URL"));
-
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "https://x.com" } });
-    saveRow();
-
-    await waitFor(() => {
-      expect(createRowMutate).toHaveBeenCalledTimes(1);
-    });
-    expect(createRowMutate.mock.calls[0]?.[0]).toEqual({
-      schemaId: SCHEMA_ID,
-      rowKind: "STANDALONE_URL",
-      rowPayload: {
-        rowKind: "STANDALONE_URL",
-        url: "https://x.com",
-        wrapped: true,
-        appliesTo: "previous_exercise_row",
-      },
-      notes: null,
-    });
-  });
-
-  it("assembles the INNER_LADDER_MARKER envelope with steps:[21] and notes:null", async () => {
-    renderModal(createMode("INNER_LADDER_MARKER"));
-
-    saveRow();
-
-    await waitFor(() => {
-      expect(createRowMutate).toHaveBeenCalledTimes(1);
-    });
-    expect(createRowMutate.mock.calls[0]?.[0]).toEqual({
-      schemaId: SCHEMA_ID,
-      rowKind: "INNER_LADDER_MARKER",
-      rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [21] },
-      notes: null,
-    });
-  });
-
   it("assembles the REST_SLOT envelope with an empty payload and notes from the field", async () => {
     renderModal(createMode("REST_SLOT"));
 
@@ -241,32 +190,11 @@ describe("RowEditorModal create submit assembly (MT-8)", () => {
       notes: "emom rest",
     });
   });
-
-  it("assembles the STANDALONE_LOAD envelope injecting the scope and notes from the field", async () => {
-    renderModal(createMode("STANDALONE_LOAD"));
-
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "heavy day" } });
-    saveRow();
-
-    await waitFor(() => {
-      expect(createRowMutate).toHaveBeenCalledTimes(1);
-    });
-    expect(createRowMutate.mock.calls[0]?.[0]).toEqual({
-      schemaId: SCHEMA_ID,
-      rowKind: "STANDALONE_LOAD",
-      rowPayload: {
-        rowKind: "STANDALONE_LOAD",
-        load: { kind: "absolute", weight: { variant: "single", valueKg: 15 } },
-        scope: "applies_to_all_preceding_rows",
-      },
-      notes: "heavy day",
-    });
-  });
 });
 
 describe("RowEditorModal edit submit assembly (MT-9)", () => {
-  it("round-trips a STANDALONE_URL wrapped:false row through update", async () => {
-    renderModal({ kind: "edit", row: urlRowWrappedFalse });
+  it("round-trips a REST row through update", async () => {
+    renderModal({ kind: "edit", row: restRow });
 
     saveRow();
 
@@ -277,10 +205,9 @@ describe("RowEditorModal edit submit assembly (MT-9)", () => {
       schemaRowId: baseSchemaRow.id,
       data: {
         rowPayload: {
-          rowKind: "STANDALONE_URL",
-          url: "https://youtu.be/abc123",
-          wrapped: false,
-          appliesTo: "whole_schema",
+          rowKind: "REST",
+          raw: "rest 90s",
+          parsed: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
         },
         notes: null,
       },
@@ -307,22 +234,6 @@ describe("RowEditorModal REST range validation (MT-1, QA-01)", () => {
   });
 });
 
-describe("RowEditorModal percentage-load range validation (MT-2, QA-02)", () => {
-  it("blocks the mutation and shows the load refine message when rangeMax <= value", async () => {
-    renderModal(createMode("STANDALONE_LOAD"));
-
-    fireEvent.click(screen.getByRole("button", { name: "% of ref" }));
-    setNumber("Percentage", "70");
-    setNumber("Max % (optional)", "60");
-    saveRow();
-
-    await waitFor(() => {
-      expect(screen.getByText("percentage.rangeMax must be > value when set")).toBeInTheDocument();
-    });
-    expect(createRowMutate).not.toHaveBeenCalled();
-  });
-});
-
 describe("RowEditorModal double-submit guard (MT-3, QA-03)", () => {
   it("fires exactly one create mutation on a double Save click", async () => {
     renderModal(createMode("REST_SLOT"));
@@ -343,7 +254,7 @@ describe("RowEditorModal submit-while-pending guard (MT-4, QA-04)", () => {
   it("does not call mutate when a form submit fires while pending", async () => {
     createRowState.isPending = true;
 
-    renderModal(createMode("STANDALONE_URL"));
+    renderModal(createMode("REST_SLOT"));
 
     const form = document.querySelector("form");
 
@@ -361,34 +272,6 @@ describe("RowEditorModal submit-while-pending guard (MT-4, QA-04)", () => {
   });
 });
 
-describe("RowEditorModal un-deferred FOOTNOTE edit (MT-11, QA-06)", () => {
-  it("renders the footnote form body and round-trips the row through update on Save", async () => {
-    renderModal({ kind: "edit", row: footnoteRow });
-
-    expect(screen.getByRole("button", { name: "Save row" })).toBeInTheDocument();
-    expect(document.querySelector("form")?.childElementCount ?? -1).toBeGreaterThan(0);
-    expect(screen.getByRole("group", { name: "marker" })).toBeInTheDocument();
-
-    saveRow();
-
-    await waitFor(() => {
-      expect(updateRowMutate).toHaveBeenCalledTimes(1);
-    });
-    expect(updateRowMutate.mock.calls[0]?.[0]).toEqual({
-      schemaRowId: baseSchemaRow.id,
-      data: {
-        rowPayload: {
-          rowKind: "FOOTNOTE",
-          marker: "*",
-          target: "each_round",
-          content: { elements: [] },
-        },
-        notes: null,
-      },
-    });
-  });
-});
-
 describe("RowEditorModal Back affordance (MT-16)", () => {
   it("renders Back in create mode when onBack is supplied", () => {
     renderModal(createMode("REST"), { onBack: vi.fn() });
@@ -403,7 +286,7 @@ describe("RowEditorModal Back affordance (MT-16)", () => {
   });
 
   it("does not render Back in edit mode even when onBack is supplied", () => {
-    renderModal({ kind: "edit", row: urlRowWrappedFalse }, { onBack: vi.fn() });
+    renderModal({ kind: "edit", row: restRow }, { onBack: vi.fn() });
 
     expect(screen.queryByRole("button", { name: "← Back" })).toBeNull();
   });

@@ -57,8 +57,7 @@ export const toPlaceholderValue = (mode: RowEditorMode): PlaceholderRowFormValue
   }
 
   if (mode.row.rowPayload.rowKind === "PLACEHOLDER") {
-    const { placeholderKind, text, perSetAssignments, pairedConcreteRowId } =
-      mode.row.rowPayload.placeholder;
+    const { placeholderKind, text, perSetAssignments } = mode.row.rowPayload.placeholder;
 
     return {
       placeholder: {
@@ -67,7 +66,6 @@ export const toPlaceholderValue = (mode: RowEditorMode): PlaceholderRowFormValue
         ...(perSetAssignments !== undefined && {
           perSetAssignments: toPerSetDraft(perSetAssignments),
         }),
-        ...(pairedConcreteRowId !== undefined && { pairedConcreteRowId }),
       },
       ...(mode.row.notes !== null && { notes: mode.row.notes }),
     };
@@ -101,9 +99,6 @@ export const PlaceholderRowPayloadForm: React.FC<RowPayloadFormProps<Placeholder
     const next: PlaceholderPayloadDraft = {
       placeholderKind: value.placeholder.placeholderKind,
       text: value.placeholder.text,
-      ...(value.placeholder.pairedConcreteRowId !== undefined && {
-        pairedConcreteRowId: value.placeholder.pairedConcreteRowId,
-      }),
     };
 
     onChange({ ...value, placeholder: next });

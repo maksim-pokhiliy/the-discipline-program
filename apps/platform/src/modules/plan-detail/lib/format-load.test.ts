@@ -114,19 +114,19 @@ describe("formatLoad", () => {
     });
   });
 
-  describe("without_weight kind", () => {
-    it("renders 'without weight'", () => {
-      const load: Load = { kind: "without_weight", context: "drop_set_stage" };
+  describe("byProfile kind", () => {
+    it("renders '<first> / <second> (M/F)'", () => {
+      const load: Load = { kind: "byProfile", first: 24, second: 16 };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("without weight");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("24 / 16 (M/F)");
     });
   });
 
-  describe("unspecified kind", () => {
-    it("renders '—'", () => {
-      const load: Load = { kind: "unspecified" };
+  describe("none kind", () => {
+    it("renders 'no load'", () => {
+      const load: Load = { kind: "none" };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("—");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("no load");
     });
   });
 });

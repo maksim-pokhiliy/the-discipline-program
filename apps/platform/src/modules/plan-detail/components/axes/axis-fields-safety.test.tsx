@@ -3,19 +3,11 @@ import { type ReactElement, useState } from "react";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
-
 import { render } from "@app/test/render";
 
 import { asNodeId } from "../../lib/axis-draft-id";
 
-import type {
-  ComposeContainer,
-  ComposeNode,
-  ComposeRow,
-  NodeId,
-  RepetitionAxis,
-} from "./axis-draft.types";
+import type { ComposeContainer, ComposeNode, NodeId, RepetitionAxis } from "./axis-draft.types";
 import { ContainerInspector } from "./container-inspector";
 
 const baseContainer = (repetition?: RepetitionAxis): ComposeContainer => ({
@@ -25,40 +17,6 @@ const baseContainer = (repetition?: RepetitionAxis): ComposeContainer => ({
   notes: null,
   ...(repetition !== undefined && { repetition }),
   children: [],
-});
-
-const uncommittedMarkerRow = (): ComposeRow => ({
-  nodeType: "row",
-  id: asNodeId("ladder-marker-row"),
-  rowKind: "INNER_LADDER_MARKER",
-  rowPayload: { rowKind: "REST_SLOT" },
-  reps: null,
-  load: null,
-  side: null,
-  tempo: null,
-  position: null,
-  intensity: null,
-  notes: null,
-  editorDraft: null,
-});
-
-const containerWithChild = (repetition: RepetitionAxis, child: ComposeNode): ComposeContainer => ({
-  ...baseContainer(repetition),
-  children: [child],
-});
-
-const ladderTrack = (id: string, steps: number[]): ComposeContainer => ({
-  nodeType: "container",
-  id: asNodeId(id),
-  header: null,
-  notes: null,
-  repetition: { kind: "ladder", steps },
-  children: [],
-});
-
-const parallelContainer = (): ComposeContainer => ({
-  ...baseContainer(),
-  children: [ladderTrack("track-a", [21, 15, 9]), ladderTrack("track-b", [15, 12, 9])],
 });
 
 const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElement => {
@@ -80,10 +38,8 @@ const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElem
     <>
       <div data-testid="repetition-json">{JSON.stringify(container.repetition ?? null)}</div>
       <div data-testid="rest-json">{JSON.stringify(container.rest ?? null)}</div>
-      <div data-testid="interleave-json">{JSON.stringify(container.interleaveOrder ?? null)}</div>
       <ContainerInspector
         container={container}
-        exerciseById={new Map<string, Exercise>()}
         isCreateMode
         onUpdateNode={handleUpdateNode}
         onRename={() => undefined}
@@ -100,9 +56,6 @@ const readRest = (): Record<string, unknown> | null =>
     string,
     unknown
   > | null;
-
-const readInterleave = (): string | null =>
-  JSON.parse(screen.getByTestId("interleave-json").textContent ?? "null") as string | null;
 
 const spinbuttonByLabel = (name: string): HTMLElement => screen.getByRole("spinbutton", { name });
 
@@ -192,28 +145,6 @@ describe("rest axis field surfaces the refine error while storing the typed valu
   });
 });
 
-describe("ladder × inner-marker mutex surfaces an inline repetition error (T2-4)", () => {
-  it("shows the conflict error when a ladder container holds an uncommitted marker row", () => {
-    render(
-      <InspectorHarness
-        initial={containerWithChild({ kind: "ladder", steps: [21, 15, 9] }, uncommittedMarkerRow())}
-      />,
-    );
-
-    expect(screen.getByText(/inner-ladder-marker row/i)).toBeInTheDocument();
-  });
-
-  it("shows no conflict error when the same marker sits under a non-ladder repetition", () => {
-    render(
-      <InspectorHarness
-        initial={containerWithChild({ kind: "count", count: 3 }, uncommittedMarkerRow())}
-      />,
-    );
-
-    expect(screen.queryByText(/inner-ladder-marker row/i)).not.toBeInTheDocument();
-  });
-});
-
 describe("switching repetition variant wholesale-replaces the body (QA-14, no stale fields)", () => {
   it("drops ladder steps when switching ladder → cadence", () => {
     render(<InspectorHarness initial={baseContainer({ kind: "ladder", steps: [21, 15, 9] })} />);
@@ -227,57 +158,11 @@ describe("switching repetition variant wholesale-replaces the body (QA-14, no st
   });
 });
 
-describe("arrangement section swaps to the interleave toggle on structural parallels (T11)", () => {
-  it("offers exactly ordered and superset in the arrangement toggle", () => {
-    render(<InspectorHarness initial={baseContainer()} />);
+describe("the inspector exposes no arrangement or interleave control after the axis death (DR-W2-2)", () => {
+  it("renders neither an arrangement nor an interleave group for any container", () => {
+    render(<InspectorHarness initial={baseContainer({ kind: "once" })} />);
 
-    const buttons = within(screen.getByRole("group", { name: "arrangement" })).getAllByRole(
-      "button",
-    );
-
-    expect(buttons.map((button) => button.textContent)).toStrictEqual(["ordered", "superset"]);
-  });
-
-  it("shows the interleave toggle defaulted to round by round and no track switches on a structurally-parallel container", () => {
-    render(<InspectorHarness initial={parallelContainer()} />);
-
-    const interleaveGroup = screen.getByRole("group", { name: "interleave" });
-
-    expect(within(interleaveGroup).getByText("round by round")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
     expect(screen.queryByRole("group", { name: "arrangement" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
-  });
-
-  it("stores track_by_track on the draft when the interleave toggle flips", () => {
-    render(<InspectorHarness initial={parallelContainer()} />);
-
-    fireEvent.click(
-      within(screen.getByRole("group", { name: "interleave" })).getByText("track by track"),
-    );
-
-    expect(readInterleave()).toBe("track_by_track");
-  });
-
-  it("shows no interleave toggle on a childless container", () => {
-    render(<InspectorHarness initial={baseContainer()} />);
-
     expect(screen.queryByRole("group", { name: "interleave" })).not.toBeInTheDocument();
-  });
-
-  it("shows the arrangement toggle, not interleave, when a repetition sits over two child containers", () => {
-    render(
-      <InspectorHarness
-        initial={{
-          ...baseContainer({ kind: "cadence", everyMin: 1, rounds: 4 }),
-          children: [ladderTrack("track-a", [21, 15, 9]), ladderTrack("track-b", [15, 12, 9])],
-        }}
-      />,
-    );
-
-    expect(screen.queryByRole("group", { name: "interleave" })).not.toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "arrangement" })).toBeInTheDocument();
   });
 });

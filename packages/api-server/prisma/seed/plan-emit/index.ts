@@ -1,6 +1,10 @@
 import { type PrismaClient } from "@prisma/client";
 
-import { type CanonicalSchemaNode, type CanonicalSeed } from "../plan-data/canonical-schema";
+import {
+  type CanonicalBlock,
+  type CanonicalSeed,
+  isCanonicalGroupItem,
+} from "../plan-data/canonical-schema";
 
 import { seedCanonicalBlocks } from "./block-emit";
 import { seedCanonicalCatalog } from "./catalog-emit";
@@ -9,7 +13,7 @@ import { seedCanonicalPlanShell } from "./plan-emit";
 import { createRefResolver } from "./ref-resolver";
 import { seedCanonicalSchemas } from "./schema-emit";
 
-export { COVERAGE_CELLS, isDerivedParallelComposition, tallyCoverage } from "./coverage-cells";
+export { COVERAGE_CELLS, tallyCoverage } from "./coverage-cells";
 export type {
   CoverageCategory,
   CoverageCell,
@@ -30,15 +34,12 @@ export type SeedCanonicalPlanResult = {
   };
 };
 
-const countRowsInNode = (node: CanonicalSchemaNode): number => {
-  let total = node.rows.length;
+const countRowsInBlock = (block: CanonicalBlock): number =>
+  block.schemas.reduce((total, item) => {
+    const members = isCanonicalGroupItem(item) ? item.group.members : [item];
 
-  for (const sub of node.subSchemas) {
-    total += countRowsInNode(sub);
-  }
-
-  return total;
-};
+    return total + members.reduce((sum, member) => sum + member.rows.length, 0);
+  }, 0);
 
 const countRowsInSeed = (seed: CanonicalSeed): number => {
   let total = 0;
@@ -47,9 +48,7 @@ const countRowsInSeed = (seed: CanonicalSeed): number => {
     for (const day of week.days) {
       for (const session of day.sessions) {
         for (const block of session.blocks) {
-          for (const schema of block.schemas) {
-            total += countRowsInNode(schema);
-          }
+          total += countRowsInBlock(block);
         }
       }
     }
@@ -57,9 +56,7 @@ const countRowsInSeed = (seed: CanonicalSeed): number => {
 
   for (const example of seed.phase7Examples) {
     for (const block of example.blocks) {
-      for (const schema of block.schemas) {
-        total += countRowsInNode(schema);
-      }
+      total += countRowsInBlock(block);
     }
   }
 

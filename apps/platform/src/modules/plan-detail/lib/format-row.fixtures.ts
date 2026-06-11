@@ -48,7 +48,6 @@ export const baseRowFields = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: new Date("2025-01-01T00:00:00.000Z"),
   updatedAt: new Date("2025-01-01T00:00:00.000Z"),
@@ -71,69 +70,12 @@ export const makeRestRow = (): SchemaRow => ({
   },
 });
 
-export const makeFootnoteRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "FOOTNOTE",
-  rowPayload: {
-    rowKind: "FOOTNOTE",
-    marker: "*",
-    target: "each_round",
-    content: {
-      elements: [{ exerciseId: ID_BACK_SQUAT, reps: { kind: "count", value: 5 } }],
-    },
-  },
-  ...overrides,
-});
-
-export const makeStandaloneLoadRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "STANDALONE_LOAD",
-  rowPayload: {
-    rowKind: "STANDALONE_LOAD",
-    load: { kind: "absolute", weight: { variant: "single", valueKg: 20 } },
-    scope: "applies_to_all_preceding_rows",
-  },
-});
-
-export const makeStandaloneUrlRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "STANDALONE_URL",
-  rowPayload: {
-    rowKind: "STANDALONE_URL",
-    url: "https://example.com/ref.pdf",
-    wrapped: false,
-    appliesTo: "whole_schema",
-  },
-});
-
 export const makePlaceholderRow = (): SchemaRow => ({
   ...baseRowFields,
   rowKind: "PLACEHOLDER",
   rowPayload: {
     rowKind: "PLACEHOLDER",
     placeholder: { placeholderKind: "coach_choice_slot", text: "ABS finisher" },
-  },
-});
-
-export const makeInnerLadderMarkerRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "INNER_LADDER_MARKER",
-  rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [12, 9, 6] },
-});
-
-export const makeRepDefinitionRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "REP_DEFINITION",
-  rowPayload: {
-    rowKind: "REP_DEFINITION",
-    equality: {
-      form: "inline_equality",
-      totalReps: 5,
-      composition: [
-        { exerciseId: ID_BACK_SQUAT, count: 1 },
-        { exerciseId: ID_DEADLIFT, count: 2 },
-      ],
-    },
   },
 });
 

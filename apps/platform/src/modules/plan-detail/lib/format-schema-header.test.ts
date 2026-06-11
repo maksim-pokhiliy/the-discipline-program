@@ -9,14 +9,11 @@ const now = new Date("2025-01-06T00:00:00Z");
 const DEFAULT_SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const DEFAULT_BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 
-const makeSchema = (
-  overrides: Partial<SchemaWithBody["schema"]> = {},
-  subSchemas: SchemaWithBody[] = [],
-): SchemaWithBody => ({
+const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWithBody => ({
   schema: {
     id: DEFAULT_SCHEMA_ID,
     blockId: DEFAULT_BLOCK_ID,
-    parentSchemaId: null,
+    groupId: null,
     order: 10,
     header: null,
     intensity: null,
@@ -28,13 +25,7 @@ const makeSchema = (
     ...overrides,
   },
   rows: [],
-  subSchemas,
 });
-
-const makeLadderTracks = (): SchemaWithBody[] => [
-  makeSchema({ composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } } }),
-  makeSchema({ composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } } }),
-];
 
 describe("formatSchemaHeader", () => {
   it("returns the persisted header verbatim when non-null and non-empty", () => {
@@ -75,27 +66,6 @@ describe("formatSchemaHeader", () => {
     const schema = makeSchema({ composition: {} });
 
     expect(formatSchemaHeader(schema)).toBe("");
-  });
-
-  it("falls back to the parallel title with the default interleave order for a headerless structural parallel", () => {
-    const schema = makeSchema({ composition: {} }, makeLadderTracks());
-
-    expect(formatSchemaHeader(schema)).toBe("parallel (round by round)");
-  });
-
-  it("folds a stored interleave order into the parallel fallback title", () => {
-    const schema = makeSchema(
-      { composition: { interleaveOrder: "track_by_track" } },
-      makeLadderTracks(),
-    );
-
-    expect(formatSchemaHeader(schema)).toBe("parallel (track by track)");
-  });
-
-  it("prefers the persisted header over the parallel derivation", () => {
-    const schema = makeSchema({ composition: {}, header: "Conditioning A/B" }, makeLadderTracks());
-
-    expect(formatSchemaHeader(schema)).toBe("Conditioning A/B");
   });
 
   it("returns an empty string when both header and composition are absent", () => {

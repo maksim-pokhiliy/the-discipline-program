@@ -11,6 +11,25 @@
 > (`composition.programKind`) plus the `window` repetition kind were removed in the
 > compose-axis cleanup (ADR-0039); a full rewrite of the remaining dead
 > archetype/schemaKind/connectorForm tables is still deferred (low-priority).
+>
+> **⚠️ FURTHER SUPERSEDED (2026-06-11, session-primitive W2 — ADR-0041).** The
+> session-primitive model core killed the leaf surface these tables describe. NOW
+> DEAD (the contract rejects them — see `decisions.md` DR-W2-2/DR-W2-3): the §2
+> `parentSchemaId` (sub-schema) invariant — recursion is gone, the carrier is the
+> `SchemaGroup` member count (live gate: `coverage-cells/shared.ts` > `_count.members >= 2`, floored at 4 in `seed-coverage.test.ts`); the §2
+> `alternatingGroupRef` / `trailingConnector` rows; the §4 `FOOTNOTE` /
+> `STANDALONE_LOAD` / `STANDALONE_URL` / `REP_DEFINITION` RowKinds (RowKind is now
+> `EXERCISE | REST | PLACEHOLDER | REST_SLOT`); the §5 `cyclical` / `sandwich`
+> exercise forms (only `compound` survives among the multi-element forms); the §6.1
+> `without_weight` / `unspecified` load kinds (now `byProfile` / `none` / `null`);
+> the §6.2 `dual_value` weight (moved to `load.byProfile`); the §7 `implicit` /
+> `total_flag` / `compound_rep_unit` rep kinds + the §22 CompoundRepDefinition;
+> the §19 MediaReference `position` / `appliesTo` axes (media is now
+> `{ url, label? }`); the §23 Footnote and §15 ConnectorForm tables. The remaining
+> sections (catalog, intensity, rest-spec, tempo, position, the surviving load
+> kinds + weight exotics) stay valid. A full rewrite of the dead tables is still
+> deferred (low-priority); the runnable gate is `seed-coverage.test.ts`, not this
+> doc.
 
 Single source of truth for **what Session B must emit** so the seeded DB
 covers 100% of the training-domain discriminator space. Session A's emit
@@ -123,17 +142,16 @@ two member schemas; coverage must keep that N-ary group intact.
 
 ## 4. RowKind coverage (9 + REST_SLOT special)
 
-| `rowKind`             | Sample anchor                                                   | Required | Notes                                       |
-| --------------------- | --------------------------------------------------------------- | -------- | ------------------------------------------- |
-| `EXERCISE`            | block-001 (all four rows)                                       | ≥1       | dominant kind                               |
-| `REST`                | block-170 rest-spec coverage block (inline `REST` rows)         | ≥1       | inline rest row, parsed RestSpec            |
-| `FOOTNOTE`            | block-032 footnote `** 5 strict HSPU [ AFTER EACH ROUND ]`      | ≥1       | marker `**`, target `each_round`            |
-| `STANDALONE_LOAD`     | block-005 / row `[ DB 2x 15 kg ]` (or block-077 `[ 2x 15 kg ]`) | ≥1       | scope `applies_to_all_preceding_rows`       |
-| `STANDALONE_URL`      | block-147 wrapped URL + block-149 bare URL                      | ≥2       | wrapped=true and wrapped=false              |
-| `PLACEHOLDER`         | block-152 (`biceps / triceps`) + block-194 (paired)             | ≥1       | placeholderKind variants                    |
-| `INNER_LADDER_MARKER` | block-037 (`36-28-20` / `18-14-10` / `4-3-2`)                   | ≥1       | inside parallel-ladders-descending          |
-| `REP_DEFINITION`      | block-043 (`5 reps = 1 rep [ 1 HS walk + 2 strict HSPU ]`)      | ≥1       | inline_equality form                        |
-| `REST_SLOT`           | block-080 / sub-4 (REST sub-minute in EMOM)                     | ≥1       | Q12 special; rowPayload has no other fields |
+| `rowKind`         | Sample anchor                                                   | Required | Notes                                       |
+| ----------------- | --------------------------------------------------------------- | -------- | ------------------------------------------- |
+| `EXERCISE`        | block-001 (all four rows)                                       | ≥1       | dominant kind                               |
+| `REST`            | block-170 rest-spec coverage block (inline `REST` rows)         | ≥1       | inline rest row, parsed RestSpec            |
+| `FOOTNOTE`        | block-032 footnote `** 5 strict HSPU [ AFTER EACH ROUND ]`      | ≥1       | marker `**`, target `each_round`            |
+| `STANDALONE_LOAD` | block-005 / row `[ DB 2x 15 kg ]` (or block-077 `[ 2x 15 kg ]`) | ≥1       | scope `applies_to_all_preceding_rows`       |
+| `STANDALONE_URL`  | block-147 wrapped URL + block-149 bare URL                      | ≥2       | wrapped=true and wrapped=false              |
+| `PLACEHOLDER`     | block-152 (`biceps / triceps`) + block-194 (paired)             | ≥1       | placeholderKind variants                    |
+| `REP_DEFINITION`  | block-043 (`5 reps = 1 rep [ 1 HS walk + 2 strict HSPU ]`)      | ≥1       | inline_equality form                        |
+| `REST_SLOT`       | block-080 / sub-4 (REST sub-minute in EMOM)                     | ≥1       | Q12 special; rowPayload has no other fields |
 
 ---
 
@@ -171,7 +189,6 @@ two member schemas; coverage must keep that N-ary group intact.
 | `single_arm`          | block-119 single arm row `[ 1 KB 15 kg ]`                                                                      | ≥1       |
 | `compound_device`     | block-119 single arm row `[ 5 KB 24 kg + 10 DB 15 kg ]` (split tier? — clarify with `load-edge-cases.md` §1.6) | ≥1       |
 | `split_tier`          | block-119 stages [5 KB 24, 10 DB 15]                                                                           | ≥1       |
-| `dual_value`          | block-003 / sub-2 overhead squats `[ 50/30 kg ]` (resolver `athlete_profile`)                                  | ≥1       |
 | `with_asymmetric_arm` | block-123 DB bench `[ 15 kg \| LEFT arm DO \| RIGHT arm HOLD in UP ]`                                          | ≥1       |
 | `with_depth_modifier` | block-189 KB swings `[ 24 kg \| to the parallel ]`                                                             | ≥1       |
 

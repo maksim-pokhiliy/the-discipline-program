@@ -1,23 +1,37 @@
-import { type ArrangementAxis, type Composition } from "@repo/contracts/lms/composition";
+import { type Composition } from "@repo/contracts/lms/composition";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
-import { assertComposeTreeValidForWrite, buildSchemaSubtree } from "../../../mappers/lms";
+import { assertComposeTreeValidForWrite, mapToSchemaWithBody } from "../../../mappers/lms";
 import { type TxClient } from "../_shared";
 
-export const assertArrangementRefsInScope = (
-  arrangement: ArrangementAxis,
-  directRowIds: ReadonlySet<string>,
+type BlockSchemaOrder = { id: string; groupId: string | null; order: number };
+
+export const assertGroupMembersContiguous = (
+  blockSchemas: BlockSchemaOrder[],
+  groupId: string,
 ): void => {
-  if (arrangement.kind === "superset") {
-    for (const pair of arrangement.pairs) {
-      for (const rowId of pair.rowIds) {
-        if (!directRowIds.has(rowId)) {
-          throw new BadRequestError("arrangement superset rowId is not a row of this schema", {
-            rowId,
-          });
-        }
-      }
+  const ordered = [...blockSchemas].sort((a, b) => a.order - b.order);
+  const memberIndices = ordered.reduce<number[]>((acc, schema, index) => {
+    if (schema.groupId === groupId) {
+      acc.push(index);
     }
+
+    return acc;
+  }, []);
+
+  if (memberIndices.length === 0) {
+    return;
+  }
+
+  const first = memberIndices[0] ?? 0;
+  const last = memberIndices[memberIndices.length - 1] ?? 0;
+  const isContiguous = last - first + 1 === memberIndices.length;
+
+  if (!isContiguous) {
+    throw new BadRequestError("Group members must be a contiguous run within the block", {
+      groupId,
+      memberOrders: ordered.filter((s) => s.groupId === groupId).map((s) => s.order),
+    });
   }
 };
 
@@ -28,29 +42,17 @@ export const assertCompositionUpdateValid = async (
 ): Promise<void> => {
   const current = await client.schema.findUnique({
     where: { id: schemaId },
-    select: { id: true, blockId: true },
+    include: { rows: { orderBy: { order: "asc" } } },
   });
 
   if (!current) {
     throw new NotFoundError("Schema not found", { schemaId });
   }
 
-  const flat = await client.schema.findMany({
-    where: { blockId: current.blockId },
-    include: { rows: { orderBy: { order: "asc" } } },
-  });
-  const node = buildSchemaSubtree(flat, schemaId);
+  const node = mapToSchemaWithBody(current);
 
   assertComposeTreeValidForWrite({
     ...node,
     schema: { ...node.schema, composition: nextComposition },
   });
-
-  const arrangement = nextComposition?.arrangement;
-
-  if (arrangement !== undefined && arrangement.kind !== "ordered") {
-    const directRowIds = new Set(node.rows.map((row) => row.id));
-
-    assertArrangementRefsInScope(arrangement, directRowIds);
-  }
 };

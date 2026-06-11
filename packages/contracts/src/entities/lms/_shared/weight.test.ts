@@ -130,24 +130,13 @@ describe("weightSchema", () => {
     }
   });
 
-  it("accepts dual_value variant", () => {
+  it("rejects the dropped dual_value variant (moved to load.byProfile)", () => {
     expect(
       weightSchema.safeParse({
         variant: "dual_value",
         first: 50,
         second: 30,
         resolver: "athlete_profile",
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects dual_value with resolver other than athlete_profile", () => {
-    expect(
-      weightSchema.safeParse({
-        variant: "dual_value",
-        first: 50,
-        second: 30,
-        resolver: "default",
       }).success,
     ).toBe(false);
   });

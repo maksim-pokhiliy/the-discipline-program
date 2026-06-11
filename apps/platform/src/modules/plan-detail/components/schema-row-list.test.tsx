@@ -26,13 +26,13 @@ vi.mock("@app/lib/hooks", async () => {
 });
 
 vi.mock("./schema-row-card", () => {
-  const renderSchemaRowCardMock = (props: { row: SchemaRow; supersetLabel?: string | null }) =>
+  const renderSchemaRowCardMock = (props: { row: SchemaRow; minuteLabel?: string | null }) =>
     createElement(
       "div",
       {
         "data-testid": "schema-row-card-mock",
         "data-row-id": props.row.id,
-        "data-superset-label": props.supersetLabel ?? "",
+        "data-minute-label": props.minuteLabel ?? "",
       },
       `schema-row-card:${props.row.id}`,
     );
@@ -91,7 +91,6 @@ const makeRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -232,58 +231,34 @@ describe("SchemaRowList optimistic + rollback (QA-Must-05)", () => {
   });
 });
 
-const supersetLabelsOf = (container: HTMLElement): (string | null)[] =>
+const minuteLabelsOf = (container: HTMLElement): (string | null)[] =>
   Array.from(container.querySelectorAll('[data-testid="schema-row-card-mock"]')).map((node) =>
-    node.getAttribute("data-superset-label"),
+    node.getAttribute("data-minute-label"),
   );
 
-describe("SchemaRowList superset pair labels (T2-2)", () => {
-  it("maps a superset pair label onto every member row", () => {
-    const r1 = makeRow({ id: "clp9z8x7w0000abcd12ss1r001", order: 1 });
-    const r2 = makeRow({ id: "clp9z8x7w0000abcd12ss1r002", order: 2 });
-    const composition: Composition = {
-      arrangement: { kind: "superset", pairs: [{ label: "Pair A", rowIds: [r1.id, r2.id] }] },
-    };
+describe("SchemaRowList cadence minute labels", () => {
+  it("cycles MIN labels across rows by the cadence round count", () => {
+    const r1 = makeRow({ id: "clp9z8x7w0000abcd12ca1r001", order: 1 });
+    const r2 = makeRow({ id: "clp9z8x7w0000abcd12ca1r002", order: 2 });
+    const r3 = makeRow({ id: "clp9z8x7w0000abcd12ca1r003", order: 3 });
+    const composition: Composition = { repetition: { kind: "cadence", everyMin: 1, rounds: 2 } };
 
     const { container } = render(
       <SchemaRowList
         planId={PLAN_ID}
         startDate={START_DATE}
         schemaId={SCHEMA_ID}
-        rows={[r1, r2]}
+        rows={[r1, r2, r3]}
         composition={composition}
       />,
     );
 
-    expect(supersetLabelsOf(container)).toEqual(["Pair A", "Pair A"]);
+    expect(minuteLabelsOf(container)).toEqual(["MIN 1", "MIN 2", "MIN 1"]);
   });
 
-  it("labels only rows that belong to a pair, leaving the rest unlabeled", () => {
-    const r1 = makeRow({ id: "clp9z8x7w0000abcd12pp1r001", order: 1 });
-    const r2 = makeRow({ id: "clp9z8x7w0000abcd12pp1r002", order: 2 });
-    const composition: Composition = {
-      arrangement: {
-        kind: "superset",
-        pairs: [{ label: "Pair A", rowIds: [r1.id, "clp9z8x7w0000abcd12absent01"] }],
-      },
-    };
-
-    const { container } = render(
-      <SchemaRowList
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        schemaId={SCHEMA_ID}
-        rows={[r1, r2]}
-        composition={composition}
-      />,
-    );
-
-    expect(supersetLabelsOf(container)).toEqual(["Pair A", ""]);
-  });
-
-  it("assigns no pair label when the arrangement is not a superset", () => {
-    const r1 = makeRow({ id: "clp9z8x7w0000abcd12ns1r001", order: 1 });
-    const composition: Composition = { arrangement: { kind: "ordered" } };
+  it("assigns no minute label when the repetition is not a cadence", () => {
+    const r1 = makeRow({ id: "clp9z8x7w0000abcd12no1r001", order: 1 });
+    const composition: Composition = { repetition: { kind: "once" } };
 
     const { container } = render(
       <SchemaRowList
@@ -295,6 +270,16 @@ describe("SchemaRowList superset pair labels (T2-2)", () => {
       />,
     );
 
-    expect(supersetLabelsOf(container)).toEqual([""]);
+    expect(minuteLabelsOf(container)).toEqual([""]);
+  });
+
+  it("assigns no minute label when no composition is supplied", () => {
+    const r1 = makeRow({ id: "clp9z8x7w0000abcd12nc1r001", order: 1 });
+
+    const { container } = render(
+      <SchemaRowList planId={PLAN_ID} startDate={START_DATE} schemaId={SCHEMA_ID} rows={[r1]} />,
+    );
+
+    expect(minuteLabelsOf(container)).toEqual([""]);
   });
 });

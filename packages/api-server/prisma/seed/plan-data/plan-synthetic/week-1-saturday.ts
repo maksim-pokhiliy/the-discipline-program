@@ -2,6 +2,7 @@ import {
   absoluteLoad,
   bodyweightLoad,
   buildComposeNode,
+  composeGroup,
   dualWeight,
   ladderRep,
   rangeReps,
@@ -27,47 +28,42 @@ const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    buildComposeNode(
-      {
-        order: 1,
-        header: "parallel ladders 36-28-20 / 18-14-10",
-        subSchemas: [
-          buildComposeNode(
-            {
-              order: 1,
-              rows: [
-                mkRow(
-                  1,
-                  {
-                    rowKind: "EXERCISE",
-                    exercise: { form: "atomic", exerciseId: EX.strictPullUp },
-                  },
-                  { load: bodyweightLoad() },
-                ),
-              ],
-            },
-            ladderRep([36, 28, 20]),
-            null,
-          ),
-          buildComposeNode(
-            {
-              order: 2,
-              rows: [
-                mkRow(
-                  1,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pushUp } },
-                  { load: bodyweightLoad() },
-                ),
-              ],
-            },
-            ladderRep([18, 14, 10]),
-            null,
-          ),
-        ],
-      },
-      {},
-      null,
-    ),
+    composeGroup({
+      label: "parallel ladders 36-28-20 / 18-14-10",
+      members: [
+        buildComposeNode(
+          {
+            order: 1,
+            rows: [
+              mkRow(
+                1,
+                {
+                  rowKind: "EXERCISE",
+                  exercise: { form: "atomic", exerciseId: EX.strictPullUp },
+                },
+                { load: bodyweightLoad() },
+              ),
+            ],
+          },
+          ladderRep([36, 28, 20]),
+          null,
+        ),
+        buildComposeNode(
+          {
+            order: 2,
+            rows: [
+              mkRow(
+                1,
+                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pushUp } },
+                { load: bodyweightLoad() },
+              ),
+            ],
+          },
+          ladderRep([18, 14, 10]),
+          null,
+        ),
+      ],
+    }),
   ],
 };
 
@@ -91,7 +87,7 @@ const BLOCK_LADDER_ASCENDING_WK1_SAT: CanonicalBlock = {
           ),
         ],
       },
-      { ...ladderRep([5, 10, 15]), arrangement: { kind: "ordered" } },
+      ladderRep([5, 10, 15]),
       null,
     ),
   ],
@@ -117,7 +113,7 @@ const BLOCK_LADDER_VERTEX_PYRAMID_WK1_SAT: CanonicalBlock = {
           ),
         ],
       },
-      { ...ladderRep([3, 6, 9, 6, 3]), arrangement: { kind: "ordered" } },
+      ladderRep([3, 6, 9, 6, 3]),
       null,
     ),
   ],
@@ -143,7 +139,7 @@ const BLOCK_LADDER_SPIKE_WK1_SAT: CanonicalBlock = {
           ),
         ],
       },
-      { ...ladderRep([10, 8, 6, 12]), arrangement: { kind: "ordered" } },
+      ladderRep([10, 8, 6, 12]),
       null,
     ),
   ],

@@ -16,16 +16,12 @@ const REP_NOTATION_KIND_LABELS: Record<RepNotationKind, string> = {
   range: "Range",
   unit_bound: "Time/Dist",
   max: "Max",
-  implicit: "Implicit",
-  total_flag: "Total",
-  compound_rep_unit: "Compound",
 };
 
 const COUNT_DEFAULT_VALUE = 5;
 const RANGE_DEFAULT_MIN = 5;
 const RANGE_DEFAULT_MAX = 10;
 const UNIT_BOUND_DEFAULT_VALUE = 30;
-const TOTAL_FLAG_DEFAULT_VALUE = 100;
 
 const buildDefaultRepNotation = (kind: RepNotationKind): RepNotation => {
   switch (kind) {
@@ -36,13 +32,7 @@ const buildDefaultRepNotation = (kind: RepNotationKind): RepNotation => {
     case "unit_bound":
       return { kind: "unit_bound", unit: "sec", value: UNIT_BOUND_DEFAULT_VALUE };
     case "max":
-      return { kind: "max", subForm: "bare" };
-    case "implicit":
-      return { kind: "implicit" };
-    case "total_flag":
-      return { kind: "total_flag", value: TOTAL_FLAG_DEFAULT_VALUE };
-    case "compound_rep_unit":
-      return { kind: "compound_rep_unit" };
+      return { kind: "max" };
   }
 };
 

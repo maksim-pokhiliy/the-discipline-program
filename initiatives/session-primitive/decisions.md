@@ -8,22 +8,37 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID                  | Topic                                                                            | Status   |
-| ------------------- | -------------------------------------------------------------------------------- | -------- |
-| D-1 SCOPE           | Target = the session primitive; fixed floors Session→Block→Schema→Row            | RATIFIED |
-| D-2 BOX             | Relations = explicit Group boxes; opaque coach-owned label; no derivation        | RATIFIED |
-| D-3 NO-RECURSION    | Sub-schemas die; no "group" schema-type tile; no graph                           | RATIFIED |
-| D-4 NO-TYPED-REL    | No typed relation kinds (no parallel\|choice\|superset enum); text label only    | RATIFIED |
-| D-5 CHANNELS        | Notation → structure \| typed field \| human text \| dropped syntax              | RATIFIED |
-| D-6 GRID            | `primitive-spec.md` grid = the per-notation disposition (statuses inside)        | RATIFIED |
-| D-7 PROCESS         | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review      | RATIFIED |
-| D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave       | RATIFIED |
-| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group   | **OPEN** |
-| DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate          | RATIFIED |
-| DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates | RATIFIED |
-| DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone   | RATIFIED |
-| DR-W1-4 COPY        | Checkbox copy = English "Group into one box" (Gate A)                            | RATIFIED |
-| DR-W1-5 INDEP-VALID | Unchecked path validates ladder steps client-side, coach-message parity (Gate B) | RATIFIED |
+| ID                  | Topic                                                                            | Status     |
+| ------------------- | -------------------------------------------------------------------------------- | ---------- |
+| D-1 SCOPE           | Target = the session primitive; fixed floors Session→Block→Schema→Row            | RATIFIED   |
+| D-2 BOX             | Relations = explicit Group boxes; opaque coach-owned label; no derivation        | RATIFIED   |
+| D-3 NO-RECURSION    | Sub-schemas die; no "group" schema-type tile; no graph                           | RATIFIED   |
+| D-4 NO-TYPED-REL    | No typed relation kinds (no parallel\|choice\|superset enum); text label only    | RATIFIED   |
+| D-5 CHANNELS        | Notation → structure \| typed field \| human text \| dropped syntax              | RATIFIED   |
+| D-6 GRID            | `primitive-spec.md` grid = the per-notation disposition (statuses inside)        | RATIFIED   |
+| D-7 PROCESS         | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review      | RATIFIED   |
+| D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave       | RATIFIED   |
+| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group   | RATIFIED   |
+| DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate          | RATIFIED   |
+| DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates | RATIFIED   |
+| DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone   | RATIFIED   |
+| DR-W1-4 COPY        | Checkbox copy = English "Group into one box" (Gate A)                            | RATIFIED   |
+| DR-W1-5 INDEP-VALID | Unchecked path validates ladder steps client-side, coach-message parity (Gate B) | RATIFIED   |
+| DR-W2-1 GROUP-OWN   | `SchemaGroup` block-owned; SetNull dissolution; no `order` column                | RATIFIED   |
+| DR-W2-2 ARR-DEATH   | Arrangement axis dies whole; `composition = { repetition?, rest? }`              | RATIFIED   |
+| DR-W2-3 LEAF-KILLS  | Ratified Grid A/B leaf kills (reps/load/weight/media/schema-row/compounds)       | RATIFIED   |
+| DR-W2-4 IDEM-SCOPE  | D4 was ~90% pre-built; only client stable-key threading added; base = `draft.id` | RATIFIED   |
+| DR-W2-5 PAIRED-KILL | `pairedConcreteRowId` premise false (inert, 0 producers) → killed                | RATIFIED   |
+| DR-W2-6 BLK011      | block-011 rounds-over-rounds → 1-member Group "3 rounds:"                        | RATIFIED   |
+| DR-W2-7 BLK015      | block-015 interval-then-rounds → two sibling schemas (NOT a Group)               | RATIFIED   |
+| DR-W2-8 ORDER-UNIQ  | Premise false → full unique landed at review via the raw-SQL check layer         | SUPERSEDED |
+| DR-W2-9 CONTIGUITY  | Contiguity is a server invariant (`assertGroupMembersContiguous`)                | RATIFIED   |
+| DR-W2-FORK-1        | `interleaveOrder` = validated `String`, not a Prisma enum (Gate A)               | RATIFIED   |
+| DR-W2-FORK-2        | Group-create response embed = `{ group, members }` (flat `SchemaWithBody[]`)     | RATIFIED   |
+| DR-W2-FORK-3        | Load `byProfile` reuses the dual-value two-input layout (Gate A)                 | RATIFIED   |
+| DR-W2-FORK-4        | `interleaveOrder` editing moves OFF the schema ONTO the Group box meta           | RATIFIED   |
+| DR-W2-FORK-5        | Seed block-011/015 re-expression calls (the 2 extra non-parallel shapes)         | RATIFIED   |
+| DR-W2-FORK-6        | `buildBlockItems` lives in contracts (the new one-predicate)                     | RATIFIED   |
 
 ---
 
@@ -75,11 +90,11 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Decision.** Orchestrator (this session's role): research, deep analysis, design WITH the owner, planning, writing executor prompts, reviewing executed work. Owner: discussion + ratification + transport ("взял промпт — отнес — флагнул когда модель закончила выполнение"). Mechanics: every implementation step = its own runner session wrapped in `/feature` (full or small by scope), ≤1 full (or 2 small) per session; prompts are self-contained (the runner has none of this context); the orchestrator reviews via git diff after each run — never via the runner's self-report; migration steps are aggressive/bridge-free per house style (final state green, no compat shims).
 - **Rationale.** The proven planner/executor pattern minus the shuttle ceremony; review-via-git is a standing house rule (long agent runs over-report).
 
-### D-MARKER-DEATH — `INNER_LADDER_MARKER` dies (proposal)
+### D-MARKER-DEATH — `INNER_LADDER_MARKER` dies
 
-- **Status:** **OPEN** (proposed 2026-06-10; explicitly asked, not yet answered by owner).
-- **Proposal.** The marker row kind (38 corpus occurrences, ~15 schemas, no authoring flow — MARKER-FATE inherited) is removed. Its case — per-track single-movement rep-scheme ladders (Block C `21-15-9 ‖ 9-15-21`) — re-expresses as N one-row ladder-schemas inside a Group. D-LADDER's semantic distinction (shared round-counter vs per-track rep-scheme) SURVIVES as two different STRUCTURES (one ladder-schema with N rows vs a Group of N one-row ladder-schemas) instead of two different fields; the forbidden-fusion guard and QA-001 collision die as unrepresentable.
-- **Why it needs explicit ratification.** It supersedes the "D-LADDER is sacred / do NOT remove the marker" clause carried by both predecessor initiatives — mechanism superseded, semantics preserved. Do not execute past this without the owner's yes.
+- **Status:** RATIFIED (2026-06-11, owner: "да, вырываем с корнем").
+- **Decision.** The marker row kind (38 corpus occurrences, ~15 schemas, no authoring flow — MARKER-FATE inherited) is removed. Its case — per-track single-movement rep-scheme ladders (Block C `21-15-9 ‖ 9-15-21`) — re-expresses as N one-row ladder-schemas inside a Group. D-LADDER's semantic distinction (shared round-counter vs per-track rep-scheme) SURVIVES as two different STRUCTURES (one ladder-schema with N rows vs a Group of N one-row ladder-schemas) instead of two different fields; the forbidden-fusion guard and QA-001 collision die as unrepresentable.
+- **Supersession note.** This supersedes the "D-LADDER is sacred / do NOT remove the marker" clause carried by both predecessor initiatives — mechanism superseded, semantics preserved (the distinction lives on as structure, channel-С per D-5). The cut lands in W2: contract payload variant + Prisma enum value + the forbidden-fusion superRefine + test fixtures. **Seed correction (verified at prompt-writing, 2026-06-11):** the seed contains ZERO marker rows — block-037 is already expressed as parallel ladder sub-schemas; the "38 occurrences / ~15 schemas" are CORPUS facts (grid expressibility), not seed data; `coverage-matrix.md`'s stale "marker ≥1" line dies with the cut, unsatisfied.
 
 ### D-8 JIT-FREEZE — implementation starts on the ratified core; follow-ups close just-in-time
 
@@ -124,3 +139,84 @@ W1 re-skins the live ADR-0040 mechanism and adds an explicit creation affordance
 - **Status:** RATIFIED (2026-06-10, owner at Gate B — QA-003 fix).
 - **Decision.** Before firing any create, `useCreateIndependentLadders` validates each track's ladder steps client-side against the exact `createSchemaRequestSchema` it will POST, and on the first invalid track surfaces a coach-friendly per-ladder message ("ladder N, step M: …") mirroring the parallel path's `formatCoachIssue`. A degenerate step (e.g. `0`, producible via the step input's `coerceStepValue`) is caught up-front, never as a raw server-error string. The hook's invalidate + pending-clear were wrapped in `finally` (parity with the parallel sibling) since the validation added a throw point.
 - **Rationale.** UX parity — the checked (parallel) path already validated client-side with coach-friendly messages; the unchecked path degraded to a cryptic server string for the same input. coach-daily-UX is the project's #1 bar. Validating all tracks up-front also prevents firing K good creates and then 400-ing on the (K+1)th. Owner elected the fix at Gate B over deferring.
+
+---
+
+## W2 implementation calls (DR-W2-\*) — the model core: Group entity, recursion/arrangement death, ratified leaf kills
+
+W2 makes the box REAL — a persisted `SchemaGroup` entity owns membership; `parentSchemaId` recursion dies; the composition `arrangement` axis dies whole; the ratified Grid A/B leaf kills land; the seed re-expresses; guards re-derive. After W2 the stored model is exactly the ratified skeleton `Session → Block → [Group?] → Schema → Row` (NO recursion). Ratified during the W2 `/feature` build (2026-06-11, branch `feat/session-primitive-w2-model-core`); forks routed through Gate A. Cross-initiative one-way-door framing → `docs/adr/0041-session-primitive-model-core.md` (supersedes ADR-0040). These promote the design's §8 decision record (`.feature-dev/1781171129/design.md`) with the in-build deviations actually taken folded in.
+
+### DR-W2-1 GROUP-OWN — `SchemaGroup` ownership + SetNull dissolution + no order column
+
+- **Status:** RATIFIED (2026-06-11, W2 build).
+- **Decision.** `SchemaGroup` is block-owned (`onDelete: Cascade` from Block). Members link via `Schema.groupId` with `onDelete: SetNull`, so deleting a group DISSOLVES it — members survive as plain block-level schemas, keeping their `order`. The Group has **NO `order` column**: its position among block items is DERIVED from `min(member.order)`. Membership is the ONLY sibling relation (D-2). `@@index([groupId])` on Schema (FK), `@@index([blockId])` on SchemaGroup (FK).
+- **Rationale.** D-2 verbatim — "связать мы можем только элементы идущие подряд": the box IS the structure, nothing is inferred from child count. The `min(member.order)` derivation is the ONE legitimate derivation (it derives a render position from the structural membership relation itself, not box-ness/semantics from child count). SetNull (not Cascade) so dissolving a box is non-destructive — the coach loses the grouping, never the schemas.
+- **Consequences.** A group can hold exactly 1 member (block-011, DR-W2-6) — structurally legal; the contiguity invariant trivially holds. The public create API stays 2+-track (`tracks.min(2)`); the seed authors a 1-member group directly via Prisma. Deleting the last member auto-deletes the now-empty group in the same transaction.
+
+### DR-W2-2 ARR-DEATH — the arrangement axis dies whole
+
+- **Status:** RATIFIED (2026-06-11, W2 build).
+- **Decision.** `arrangement`, `supersetPair`, the top-level `interleaveOrder` field, `ARRANGEMENT_AXIS_KINDS`, `isStructurallyParallel`, `CompositionStructure`, the `parallel`/`superset` label kinds + families, the compose-tree recursion (`z.lazy`), and the marker `superRefine` all die. `composition` becomes `{ repetition?, rest? }.strict()`. `PARALLEL_INTERLEAVE_ORDERS` + `DEFAULT_INTERLEAVE_ORDER` MOVE to the new `schema-group` module (values unchanged: `round_by_round | track_by_track`). `deriveCompositionLabel` / `deriveKind` lose the `structure` param → pure functions of `composition.repetition`.
+- **Rationale.** D-2/D-3: parallelism is no longer DERIVED (ADR-0040's `isStructurallyParallel`) — it is explicit Group membership. The arrangement axis was the last derived-relation surface; with the Group entity it has no consumer. The compose-tree recursion dies with `parentSchemaId` (containers hold rows only).
+- **Consequences.** Three `z.lazy` recursive type definitions are removed (`schemaSchema`, `schemaWithBodySchema`, the compose container) — a net type simplification. `SchemaWithBody = { schema, rows }` (no `subSchemas`). Supersedes ADR-0040 wholesale (the derive-parallelism decision) → ADR-0041.
+
+### DR-W2-3 LEAF-KILLS — the ratified Grid A/B leaf kills
+
+- **Status:** RATIFIED (2026-06-11, W2 build — Grid A/B RATIFIED/ACCEPTED rows ONLY; the OPEN F-rows are red lines, untouched).
+- **Decision.** reps: `implicit`/`total_flag`/`compound_rep_unit` die (`implicit` → `reps: null`, render resolves from ladder context; `total_flag` → plain `count`, value preserved; `compound_rep_unit` → the `compound` row form); `max` slims to `{ kind: "max", tail?: string }` (`MAX_SUB_FORMS`/`progressiveSeed`/`targetExerciseId` die → free-text tail); `compoundRepDefinitionSchema` + `COMPOUND_REP_DEFINITION_FORMS` die (REP_DEFINITION kill). load: kinds → `absolute | percentage | bodyweight | byProfile | none` (`byProfile {first, second}` = the ex-`dual_value` m/f pair PROMOTED from weight-variant; `resolver: "athlete_profile"` literal dropped; `without_weight` → `none`; `unspecified` → `null`). weight: ONLY `dual_value` removed; `single | dual | single_arm | compound_device | split_tier | with_asymmetric_arm | with_depth_modifier` ALL STAY (exotics = OPEN F-WEIGHT-EXOTICS). media: `{ url, label? }` (`MEDIA_POSITIONS`/`MEDIA_APPLIES_TO` die — placement = which node carries the media). schema-row: `RowKind` → `EXERCISE | REST | PLACEHOLDER | REST_SLOT` (FOOTNOTE/STANDALONE_LOAD/STANDALONE_URL/INNER_LADDER_MARKER/REP_DEFINITION + satellite schemas/constants die); the `compoundRep` column dies. compounds: `cyclical`/`sandwich` + their `EXERCISE_FORMS` entries die (`compoundRowSchema` is the one ratified compound form, unchanged); `atomic`/`compound`/`or_alternative`/`placeholder_ref` stay (`or_alternative` death rides W4).
+- **Rationale.** D-5 channels + D-6 owner bars: parsing residue (8-variant weight, 9 row kinds, the bracket-flag axes) was frozen as types from ONE personal plan. Each kill removes a cardinality-1 (or 0) member with no live machine reader. `byProfile` is the one PROMOTION (m/f load is real per D-5 despite corpus cardinality 1). The kept weight exotics + `or_alternative` + `perSetSubstitution*` are OPEN F-rows (red lines, JIT-frozen per D-8).
+- **Consequences.** Surviving rejection tests pin the kills (`schema-row.schema.test.ts` rejects `INNER_LADDER_MARKER`; `weight.test.ts` rejects `dual_value`; `reps.test.ts` rejects `total_flag`). The dual-value field component was renamed (DR-W2-FORK-3), not deleted.
+
+### DR-W2-4 IDEM-SCOPE — D4 corrected scope (idempotency was ~90% pre-built)
+
+- **Status:** RATIFIED (2026-06-11, W2 build).
+- **Decision.** The prompt framed D4 as a from-scratch build; the verify-pass found it ~90% already built. Server idempotency is COMPLETE (`wrapAuthHandler` baked into every `createAuth{Post,…}` factory; `prismaIdempotencyStore` bootstrapped in `bootstrap-backend-di.ts`; `POST …/schemas` and `POST …/groups` already idempotency-capable) — NO new server route work. The client `ApiClient` already attaches `Idempotency-Key = options?.idempotencyKey ?? crypto.randomUUID()`. The ONLY D4 work: (1) `api.schemas.create` accepts + forwards an `idempotencyKey`; (2) `useCreateIndependentLadders` threads a STABLE key per track, `${base}:${trackIndex}`; (3) the MT-19 client-threading unit test. **The base key = the draft-session id (`draft.id`)** — minted once when the modal seeds the draft. **QA-004 boundary (by design):** an in-modal retry replays/dedups (same `draft.id` → identical keys → server replays the already-created tracks → no duplicate); a close+reopen mints a FRESH `draft.id` → a fresh batch. Across-session re-submit is treated as NEW intent intentionally — deduping it would wrongly block intentional re-creation. The W1-DUP-RETRY acceptance scenario (in-session retry, §6.4) is satisfied.
+- **Rationale.** House pattern reuse (the dormant `@repo/api-routes` layer) over a new DB column. `draft.id` is superior to the design's literal "fresh per-`run()` uuid" — a per-run uuid would regenerate keys and DEFEAT replay, failing acceptance §6.4. The session-scoped boundary is the correct UX semantics (reopening the modal = a fresh authoring gesture).
+- **Consequences.** The api-server replay path (server integration) is owner-gated, NOT run by the pipeline; the close-out states it PENDING the owner's ritual. The close+reopen boundary is documented as a carry-forward (W2→W3 INFO) and pinned by a regression-tripwire test (MT-19 sibling) so a future "fix" is a conscious change.
+
+### DR-W2-5 PAIRED-KILL — `pairedConcreteRowId` premise-correction + kill
+
+- **Status:** RATIFIED (2026-06-11, W2 build — premise verified false in code before acting).
+- **Decision.** The prompt's §2 premise (that `pairedConcreteRowId` serves footnote role-1 pairing) is FALSE. It is an inert opaque passthrough on `placeholderPayloadSchema` (`compounds.ts:102`), used only in the platform placeholder form + draft types; ZERO seed producers; ZERO footnote linkage. It is a D-2-violating sibling-ref, currently dead. KILLED: the field + the platform carry branches + the 4 contract-test + 8 platform-test asserts. No STOP needed (the kill-or-stop gate the prompt set was cleared by verification).
+- **Rationale.** D-2 forbids sibling→sibling refs. A dead inert field is the cleanest possible kill — no live behavior to preserve. Verified-before-acting per the planner anti-pattern-specing rule.
+- **Consequences.** `placeholderPayloadSchema` keeps `placeholderKind`/`text` (OPEN F-SLOT, untouched); `perSetSubstitution*` stays (its kill rides W4's row-grouping carrier).
+
+### DR-W2-6 BLK011 — block-011 re-expression: 1-member Group "3 rounds:"
+
+- **Status:** RATIFIED (2026-06-11, W2 build — Gate-A fork resolution, see DR-W2-FORK-5).
+- **Decision.** block-011 (rounds-over-rounds: outer `rounds(3)`, no direct rows, ONE inner sub-schema = `rounds(5)` + rest + a thruster row) → a **Group labeled "3 rounds:"** (channel-3, BACKLOG-ROUNDS) with ONE member schema (the inner `rounds(5)` thruster schema). Mirrors the block-010 depth-3 treatment exactly (a Group whose label carries the outer rounds text; member = the inner repetition schema).
+- **Rationale.** Identical shape to block-010's outer-sub (rounds-over-X) → identical re-expression (label-carry). The outer rounds count survives as label text until a rounds-on-Group engine exists (BACKLOG-ROUNDS); the inner rounds + rest + row preserved verbatim. NO data loss.
+- **Consequences.** A 1-member group is NOT creatable via the public API (`tracks.min(2)`) — the SEED authors it directly via Prisma. `buildBlockItems` renders it as a single-member box carrying the label. The verified-correct re-expression: the dbSnatch `compound_rep_unit` reps drop to `null`, resolved by ladder context (the ratified implicit-reps treatment).
+
+### DR-W2-7 BLK015 — block-015 re-expression: two sibling schemas (NOT a Group)
+
+- **Status:** RATIFIED (2026-06-11, W2 build — Gate-A fork resolution, see DR-W2-FORK-5).
+- **Decision.** block-015 (interval-then-rounds: a parent with its OWN repetition `interval(1,1,4)` + ONE direct row (run) + ONE sub-schema `count(3)` with 3 rows) → **TWO ordered sibling schemas in the block, NO Group**: schema 1 = `interval(1,1,4)` + the run row; schema 2 = `count(3)` + the kbSwing/boxJump/burpee rows. Schema order IS the "then" semantics (spec connector ruling: "schema order already says 'then'"). The inner-row media reshapes to `{ url, label? }`.
+- **Rationale.** A Group holds MEMBER SCHEMAS, not loose rows + a schema — this parent mixes direct rows + a sub-schema, so it CANNOT become a single Group without inventing forbidden structure. "intervals THEN rounds" = two schemas in sequence (the parts have different repetitions + different movements — they are NOT parallel tracks). The depth-2 nesting was a recursion artifact; sequence = sibling order. NO data loss; the structure becomes flatter and MORE faithful to the ratified skeleton.
+- **Consequences.** A Group of 2 here would WRONGLY imply parallelism (one box shown together) — rejected. The dying parent's `header` ("intervals then rounds") carries no `notes`/`intensity` (verified), so dropping it loses nothing (the two-schema sequence is self-describing).
+
+### DR-W2-8 ORDER-UNIQ — no `@@unique([blockId, order])` (W2-ORDER-UNIQUE → W3)
+
+- **Status:** SUPERSEDED (2026-06-11, orchestrator review — the premise was falsified live).
+- **Original decision.** `@@unique([blockId, order])` consciously NOT added when `parentSchemaId` dies; deferred as W2-ORDER-UNIQUE → W3, on the premise that top-level order "was never DB-enforced".
+- **Why superseded.** The premise (planted by the orchestrator's prompt, carried faithfully by the runner) was FALSE: enforcement lived in the raw-SQL check layer — `prisma/sql/lms-checks.sql` ships a partial unique `schemas_block_top_order ON training_schemas ("blockId","order") WHERE "parentSchemaId" IS NULL`, applied by `apply-sql-checks.ts` at every `db:reset`. Invisible to `schema.prisma` reads, and BOTH straggler greps (prompt verify-pass + runner Priority-1) missed `.sql` under `prisma/sql/`. The owner's `db:reset` failed live (42703: column `parentSchemaId` does not exist) — the check referenced a dead column, so omitting the unique was not "no regression", it was a broken reset + a dropped invariant.
+- **The fix (review commit, same branch).** The check became a FULL unique `schemas_block_order ON ("blockId","order")` — every schema is block-level now, so this is the SAME invariant over the SAME population, not a new constraint. Mutation trace under the live unique: reorder's two-phase negative-order dance survives verbatim (negatives never meet positives); group atomic create is tail-append (safe); `resolveGroupedOrder`'s trailing shift was the one collider (`Promise.all` +`ORDER_STEP` over a 10-spaced sequence) → rewritten descending-sequential; the into-group test now pins TWO trailing schemas (the collision shape). **W2-ORDER-UNIQUE is CLOSED — nothing remains for W3.**
+- **Lesson promoted.** Straggler sweeps and "is X enforced" claims must cover the raw-SQL layer (`prisma/sql/`, `scripts/`) — tsc, vitest, and `.ts`-scoped greps are all blind to it; only `db:reset` executes it.
+
+### DR-W2-9 CONTIGUITY — contiguity is a server invariant, not a client convention
+
+- **Status:** RATIFIED (2026-06-11, W2 build).
+- **Decision.** A group's members form a CONTIGUOUS `order` run within their block. Enforced SERVER-side by `assertGroupMembersContiguous` (O(n) over the block's ordered schema list) on group create, create-into-group, and reorder (reject non-contiguous with a coach-readable `BadRequestError` + structured `details`). `buildBlockItems` TRUSTS the invariant (it clusters/positions defensively but does not re-enforce).
+- **Rationale.** D-2 contiguity is structural truth; the server is the single enforcement point. A client-side convention would let a hostile/buggy payload split a group; the assertion makes the split unrepresentable.
+- **Consequences.** On corrupt data (DB bypass), `buildBlockItems` re-clusters gracefully (group at `min(order)`, interleaved non-member ejected below the box) — no crash, no drop (QA-006, by design). The throw message is developer-readable (QA-003) — acceptable because the UI cannot produce a split (the client DnD operates at group-as-unit granularity); revisit wording if W3's ungroup/member-move UI makes it coach-reachable.
+
+### DR-W2-FORK-1..6 — the Gate-A fork resolutions
+
+The six design forks (§6 of the design doc), each ratified at Gate A; the implementer proceeded on the recommendation.
+
+- **DR-W2-FORK-1 — `interleaveOrder` storage = validated `String`** (`@default("round_by_round")`), NOT a Prisma enum, with `z.enum(PARALLEL_INTERLEAVE_ORDERS)` at the contract boundary. Matches the house Json/string convention for plan-content axes; the engine never reads it (display-only, channel-3-adjacent per D-5); a Prisma enum would couple a 2-value toggle to a migration in a db:reset-only world. The mapper parses with `z.enum(...).parse(...)` (a corrupt DB string surfaces as a parse error, like every Json column).
+- **DR-W2-FORK-2 — Group-create response embed = `{ group, members }`** where `members` is the FLAT `SchemaWithBody[]` (`{ schema, rows }`, no `subSchemas`). The client needs the created members' ids/rows to render the box immediately; the invalidate still fires. Rejected `{ group }`-only (blanks the box for a frame) — diverges from the old `createParallel` full-body contract.
+- **DR-W2-FORK-3 — Load `byProfile` reuses the two-input layout.** The ex-`weight-dual-value-fields.tsx` two-input layout is re-homed under the load editor (in-build: renamed to `load-by-profile-fields.tsx` + a sibling `load-none-fields.tsx`, NOT a literal re-home — equivalent layout, labels changed `First/Second value` → `Male (kg)` / `Female (kg)`, a coach-fidelity improvement). `dual_value` weight and `byProfile` load are the SAME m/f pair semantically. Reuse-before-invent.
+- **DR-W2-FORK-4 — `interleaveOrder` editing moves OFF the per-schema `container-inspector` ONTO the Group box meta** as a group-update mutation (`PUT …/groups/{id}` `{ interleaveOrder }`). The field is now a property of the Group, not a schema's composition; editing it on the box is where the coach reads it. There is no per-schema home for it after the field leaves `composition`.
+- **DR-W2-FORK-5 — the block-011/015 re-expression calls** = DR-W2-6 + DR-W2-7 (the two extra non-parallel `subSchemas` shapes that are neither parallel-parents nor in the prompt's 3 named classes). STOP-check cleared: neither dying parent carried `notes`/`intensity` beyond `header` (verified).
+- **DR-W2-FORK-6 — `buildBlockItems` lives in contracts** (the `schema-group` module, `block-items.ts`), signature `buildBlockItems(schemas: SchemaWithBody[], groups: SchemaGroup[]): BlockItem[]` with `BlockItem = { kind:"schema"; schema } | { kind:"group"; group; members }`. It is the SOLE clustering source (red line #4, the new one-predicate replacing `isStructurallyParallel`) — depends only on schema + schema-group (no `block/` import → no cycle; `dep:check` green). In-build: imported in EXACTLY one render site (`block-card-body.tsx`) + its test; zero hand-rolled cluster loops.

@@ -3,14 +3,12 @@ import { describe, expect, it } from "vitest";
 import { POSITIONS, ROW_KINDS } from "./schema-row.constants";
 import {
   createSchemaRowSchema,
-  footnoteMarkerSchema,
   positionSchema,
   reorderSchemaRowsSchema,
   rowKindSchema,
   schemaRowPayloadSchema,
   schemaRowSchema,
   updateSchemaRowSchema,
-  urlAppliesToSchema,
 } from "./schema-row.schema";
 
 const cuidA = "clz1234567890123456789aaa";
@@ -36,7 +34,6 @@ const baseRow = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -49,16 +46,20 @@ describe("rowKindSchema", () => {
     });
   }
 
-  it("rejects CONNECTOR (D12 regression guard)", () => {
-    expect(rowKindSchema.safeParse("CONNECTOR").success).toBe(false);
+  it("rejects the dropped FOOTNOTE kind", () => {
+    expect(rowKindSchema.safeParse("FOOTNOTE").success).toBe(false);
+  });
+
+  it("rejects the dropped INNER_LADDER_MARKER kind", () => {
+    expect(rowKindSchema.safeParse("INNER_LADDER_MARKER").success).toBe(false);
   });
 
   it("rejects lowercase variant", () => {
     expect(rowKindSchema.safeParse("exercise").success).toBe(false);
   });
 
-  it("has 9 values (post-D12; CONNECTOR removed)", () => {
-    expect(ROW_KINDS).toHaveLength(9);
+  it("has 4 surviving values", () => {
+    expect(ROW_KINDS).toHaveLength(4);
   });
 });
 
@@ -78,33 +79,7 @@ describe("positionSchema", () => {
   });
 });
 
-describe("urlAppliesToSchema / footnoteMarkerSchema", () => {
-  it("urlAppliesToSchema accepts previous_exercise_row", () => {
-    expect(urlAppliesToSchema.safeParse("previous_exercise_row").success).toBe(true);
-  });
-
-  it("urlAppliesToSchema accepts whole_schema", () => {
-    expect(urlAppliesToSchema.safeParse("whole_schema").success).toBe(true);
-  });
-
-  it("urlAppliesToSchema rejects unknown value", () => {
-    expect(urlAppliesToSchema.safeParse("anywhere").success).toBe(false);
-  });
-
-  it("footnoteMarkerSchema accepts *", () => {
-    expect(footnoteMarkerSchema.safeParse("*").success).toBe(true);
-  });
-
-  it("footnoteMarkerSchema accepts **", () => {
-    expect(footnoteMarkerSchema.safeParse("**").success).toBe(true);
-  });
-
-  it("footnoteMarkerSchema rejects ***", () => {
-    expect(footnoteMarkerSchema.safeParse("***").success).toBe(false);
-  });
-});
-
-describe("schemaRowPayloadSchema (9-variant union)", () => {
+describe("schemaRowPayloadSchema (4-variant union)", () => {
   it("accepts EXERCISE atomic", () => {
     expect(schemaRowPayloadSchema.safeParse(exercisePayload).success).toBe(true);
   });
@@ -115,54 +90,6 @@ describe("schemaRowPayloadSchema (9-variant union)", () => {
         rowKind: "REST",
         raw: "2 min",
         parsed: { duration: { value: 2, unit: "min" }, scope: "between_rounds" },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts FOOTNOTE", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "FOOTNOTE",
-        marker: "*",
-        target: "each_round",
-        content: {
-          elements: [
-            { exerciseId: cuidA, reps: { kind: "count", value: 10 } },
-            { exerciseId: cuidB, reps: { kind: "count", value: 10 } },
-          ],
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts FOOTNOTE with empty content elements (note-only footnote, C0-004)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "FOOTNOTE",
-        marker: "*",
-        target: "each_set",
-        content: { elements: [] },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts STANDALONE_LOAD", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_LOAD",
-        load: { kind: "absolute", weight: { variant: "single", valueKg: 60 } },
-        scope: "applies_to_all_preceding_rows",
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts STANDALONE_URL", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_URL",
-        url: "https://example.com/x.mp4",
-        wrapped: true,
-        appliesTo: "previous_exercise_row",
       }).success,
     ).toBe(true);
   });
@@ -179,16 +106,52 @@ describe("schemaRowPayloadSchema (9-variant union)", () => {
     ).toBe(true);
   });
 
-  it("accepts INNER_LADDER_MARKER", () => {
+  it("accepts REST_SLOT", () => {
+    expect(schemaRowPayloadSchema.safeParse({ rowKind: "REST_SLOT" }).success).toBe(true);
+  });
+
+  it("rejects the dropped FOOTNOTE variant", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "FOOTNOTE",
+        marker: "*",
+        target: "each_round",
+        content: { elements: [] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped STANDALONE_LOAD variant", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "STANDALONE_LOAD",
+        load: { kind: "bodyweight" },
+        scope: "applies_to_all_preceding_rows",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped STANDALONE_URL variant", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "STANDALONE_URL",
+        url: "https://example.com/x.mp4",
+        wrapped: true,
+        appliesTo: "previous_exercise_row",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped INNER_LADDER_MARKER variant", () => {
     expect(
       schemaRowPayloadSchema.safeParse({
         rowKind: "INNER_LADDER_MARKER",
         steps: [36, 28, 20],
       }).success,
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it("accepts REP_DEFINITION inline_equality", () => {
+  it("rejects the dropped REP_DEFINITION variant", () => {
     expect(
       schemaRowPayloadSchema.safeParse({
         rowKind: "REP_DEFINITION",
@@ -197,19 +160,6 @@ describe("schemaRowPayloadSchema (9-variant union)", () => {
           totalReps: 5,
           composition: [{ exerciseId: cuidA, count: 3 }],
         },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts REST_SLOT", () => {
-    expect(schemaRowPayloadSchema.safeParse({ rowKind: "REST_SLOT" }).success).toBe(true);
-  });
-
-  it("rejects rowKind: CONNECTOR (D12 regression guard)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "CONNECTOR",
-        form: "then",
       }).success,
     ).toBe(false);
   });
@@ -220,12 +170,6 @@ describe("schemaRowPayloadSchema (9-variant union)", () => {
 
   it("rejects EXERCISE payload missing exercise field", () => {
     expect(schemaRowPayloadSchema.safeParse({ rowKind: "EXERCISE" }).success).toBe(false);
-  });
-
-  it("rejects INNER_LADDER_MARKER with empty steps", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({ rowKind: "INNER_LADDER_MARKER", steps: [] }).success,
-    ).toBe(false);
   });
 });
 

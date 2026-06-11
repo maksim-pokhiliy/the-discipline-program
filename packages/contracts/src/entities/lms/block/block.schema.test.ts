@@ -34,7 +34,7 @@ const cuidC = "clz1234567890123456789ccc";
 const atomicSchema = {
   id: "clz1234567890123456789sa1",
   blockId: "clz1234567890123456789012",
-  parentSchemaId: null,
+  groupId: null,
   order: 1,
   header: null,
   intensity: null,
@@ -59,7 +59,6 @@ const restSlotRow = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -68,7 +67,15 @@ const restSlotRow = {
 const schemaWithBody = {
   schema: atomicSchema,
   rows: [restSlotRow],
-  subSchemas: [],
+};
+
+const schemaGroup = {
+  id: "clz1234567890123456789grp",
+  blockId: "clz1234567890123456789012",
+  label: "parallel ladders",
+  interleaveOrder: "round_by_round" as const,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 const baseBlock = {
@@ -80,6 +87,7 @@ const baseBlock = {
   notes: "block focus",
   labels: [labelOne],
   schemas: [],
+  groups: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -164,7 +172,7 @@ describe("blockSchema", () => {
     }
   });
 
-  it("accepts a populated schemas embed", () => {
+  it("accepts a populated flat schemas embed", () => {
     const result = blockSchema.safeParse({
       ...baseBlock,
       schemas: [schemaWithBody],
@@ -177,8 +185,31 @@ describe("blockSchema", () => {
       expect(result.data.schemas[0]?.schema.id).toBe(atomicSchema.id);
       expect(result.data.schemas[0]?.rows).toHaveLength(1);
       expect(result.data.schemas[0]?.rows[0]?.id).toBe(restSlotRow.id);
-      expect(result.data.schemas[0]?.subSchemas).toEqual([]);
     }
+  });
+
+  it("accepts a populated groups embed", () => {
+    const result = blockSchema.safeParse({
+      ...baseBlock,
+      schemas: [{ schema: { ...atomicSchema, groupId: schemaGroup.id }, rows: [] }],
+      groups: [schemaGroup],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.groups).toHaveLength(1);
+      expect(result.data.groups[0]?.id).toBe(schemaGroup.id);
+      expect(result.data.groups[0]?.interleaveOrder).toBe("round_by_round");
+    }
+  });
+
+  it("rejects a block missing the groups array", () => {
+    const withoutGroups: Record<string, unknown> = { ...baseBlock };
+
+    delete withoutGroups.groups;
+
+    expect(blockSchema.safeParse(withoutGroups).success).toBe(false);
   });
 
   it("does not expose name (Block.name guardrail, parallel to Session.name Q10)", () => {

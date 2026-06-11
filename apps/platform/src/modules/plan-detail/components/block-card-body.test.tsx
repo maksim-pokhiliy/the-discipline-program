@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Block } from "@repo/contracts/lms/block";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
+import type { SchemaGroup } from "@repo/contracts/lms/schema-group";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
@@ -42,6 +43,26 @@ vi.mock("./schema-card", () => {
     );
 
   return { SchemaCard: renderSchemaCardMock };
+});
+
+vi.mock("./schema-group-box", () => {
+  const renderSchemaGroupBoxMock = (props: {
+    group: SchemaGroup;
+    members: SchemaWithBody[];
+    parentIsReorderPending?: boolean;
+  }) =>
+    createElement(
+      "div",
+      {
+        "data-testid": "schema-group-box-mock",
+        "data-group-id": props.group.id,
+        "data-member-ids": props.members.map((member) => member.schema.id).join(","),
+        "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
+      },
+      `group-box:${props.group.id}`,
+    );
+
+  return { SchemaGroupBox: renderSchemaGroupBoxMock };
 });
 
 vi.mock("./add-schema-button", () => {
@@ -86,7 +107,7 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   schema: {
     id: "clp9z8x7w0000abcd1234sch1",
     blockId: BLOCK_ID,
-    parentSchemaId: null,
+    groupId: null,
     order: 1,
     header: null,
     intensity: null,
@@ -98,7 +119,16 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     ...overrides,
   },
   rows: [],
-  subSchemas: [],
+});
+
+const makeGroup = (overrides: Partial<SchemaGroup> = {}): SchemaGroup => ({
+  id: "clp9z8x7w0000abcd1234grp1",
+  blockId: BLOCK_ID,
+  label: null,
+  interleaveOrder: "round_by_round",
+  createdAt: NOW,
+  updatedAt: NOW,
+  ...overrides,
 });
 
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
@@ -110,6 +140,7 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   notes: null,
   labels: [],
   schemas: [],
+  groups: [],
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,
@@ -173,7 +204,7 @@ describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
       />,
     );
 
-    triggerDragEnd(makeDragEndEvent(s2.schema.id, s1.schema.id));
+    triggerDragEnd(makeDragEndEvent(`schema:${s2.schema.id}`, `schema:${s1.schema.id}`));
 
     expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
 
@@ -198,7 +229,7 @@ describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
       />,
     );
 
-    triggerDragEnd(makeDragEndEvent(s2.schema.id, s1.schema.id));
+    triggerDragEnd(makeDragEndEvent(`schema:${s2.schema.id}`, `schema:${s1.schema.id}`));
 
     expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
     expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
@@ -221,7 +252,7 @@ describe("BlockCardBody drag-end guards (QA-Must-01, QA-Must-02)", () => {
       />,
     );
 
-    triggerDragEnd(makeDragEndEvent(s1.schema.id, s1.schema.id));
+    triggerDragEnd(makeDragEndEvent(`schema:${s1.schema.id}`, `schema:${s1.schema.id}`));
 
     expect(reorderSchemasMutate).not.toHaveBeenCalled();
   });
@@ -238,7 +269,7 @@ describe("BlockCardBody drag-end guards (QA-Must-01, QA-Must-02)", () => {
       />,
     );
 
-    triggerDragEnd(makeDragEndEventNoOver(s1.schema.id));
+    triggerDragEnd(makeDragEndEventNoOver(`schema:${s1.schema.id}`));
 
     expect(reorderSchemasMutate).not.toHaveBeenCalled();
   });
@@ -263,13 +294,105 @@ describe("BlockCardBody D-14: optimistic + rollback", () => {
       />,
     );
 
-    triggerDragEnd(makeDragEndEvent(s2.schema.id, s1.schema.id));
+    triggerDragEnd(makeDragEndEvent(`schema:${s2.schema.id}`, `schema:${s1.schema.id}`));
+
+    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
 
     const renderedIds = Array.from(
       container.querySelectorAll('[data-testid="schema-card-mock"]'),
     ).map((node) => node.getAttribute("data-schema-id"));
 
     expect(renderedIds).toEqual([s1.schema.id, s2.schema.id]);
+  });
+});
+
+describe("BlockCardBody W1-RENDER-REPOINT: group clustering via buildBlockItems", () => {
+  it("renders a SchemaGroupBox for a group's members and a plain SchemaCard for ungrouped schemas", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12grp001";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12grm001", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12grm002", order: 2, groupId: GROUP_ID });
+    const flat = makeSchema({ id: "clp9z8x7w0000abcd12flt001", order: 3 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flat], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    const box = screen.getByTestId("schema-group-box-mock");
+
+    expect(box).toHaveAttribute("data-group-id", GROUP_ID);
+    expect(box).toHaveAttribute("data-member-ids", `${m1.schema.id},${m2.schema.id}`);
+
+    const cards = screen.getAllByTestId("schema-card-mock");
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveAttribute("data-schema-id", flat.schema.id);
+  });
+
+  it("positions a group item by its minimum member order among block items", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12grp002";
+    const flatFirst = makeSchema({ id: "clp9z8x7w0000abcd12flt010", order: 1 });
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12grm010", order: 2, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12grm011", order: 3, groupId: GROUP_ID });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flatFirst], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    const flatCard = screen.getByTestId("schema-card-mock");
+    const box = screen.getByTestId("schema-group-box-mock");
+
+    expect(flatCard.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it("flattens a group to its contiguous member ids when the group drags as a single unit", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12grp003";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12grm020", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12grm021", order: 2, groupId: GROUP_ID });
+    const flat = makeSchema({ id: "clp9z8x7w0000abcd12flt020", order: 3 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flat], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEvent(`group:${GROUP_ID}`, `schema:${flat.schema.id}`));
+
+    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
+    expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [flat.schema.id, m1.schema.id, m2.schema.id],
+    });
+  });
+
+  it("propagates effective pending to the SchemaGroupBox when parentIsReorderPending is true", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12grp004";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12grm030", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12grm031", order: 2, groupId: GROUP_ID });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        parentIsReorderPending
+      />,
+    );
+
+    expect(screen.getByTestId("schema-group-box-mock")).toHaveAttribute(
+      "data-parent-pending",
+      "true",
+    );
   });
 });
 

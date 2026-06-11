@@ -1,10 +1,9 @@
 import {
   absoluteLoad,
   buildComposeNode,
+  byProfileLoad,
   compoundDeviceWeight,
   countReps,
-  dualValueWeight,
-  inlineEqualityCompoundRep,
   rangeReps,
   rounds,
   splitTierWeight,
@@ -58,7 +57,7 @@ export const BLOCK_WEIGHT_VARIANTS_WK2_MON: CanonicalBlock = {
             3,
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.overheadSquat } },
             {
-              load: absoluteLoad(dualValueWeight({ first: 50, second: 30 })),
+              load: byProfileLoad(50, 30),
               reps: countReps(6),
               position: "HAND_ON_DB_NEUTRAL_GRIP",
             },
@@ -167,47 +166,34 @@ export const BLOCK_REP_DEFINITION_WK2_MON: CanonicalBlock = {
           mkRow(
             1,
             {
-              rowKind: "REP_DEFINITION",
-              equality: {
-                form: "inline_equality",
-                totalReps: 5,
-                composition: [
-                  { exerciseId: EX.hsWalk, count: 1 },
-                  { exerciseId: EX.strictHspu, count: 2 },
-                ],
+              rowKind: "EXERCISE",
+              exercise: {
+                form: "compound",
+                compound: {
+                  elements: [
+                    { exerciseId: EX.hsWalk, reps: { kind: "count", value: 1 } },
+                    { exerciseId: EX.strictHspu, reps: { kind: "count", value: 2 } },
+                  ],
+                },
               },
             },
-            {
-              compoundRep: inlineEqualityCompoundRep(5, [
-                { exerciseId: EX.hsWalk, count: 1 },
-                { exerciseId: EX.strictHspu, count: 2 },
-              ]),
-              position: "WITHOUT_JUMP",
-            },
+            { position: "WITHOUT_JUMP", notes: "5 reps = 1 HS walk + 2 strict HSPU" },
           ),
           mkRow(
             2,
             {
-              rowKind: "REP_DEFINITION",
-              equality: {
-                form: "inline_equality",
-                totalReps: 3,
-                composition: [
-                  { exerciseId: EX.toesToBar, count: 5 },
-                  { exerciseId: EX.pullUp, count: 5 },
-                ],
+              rowKind: "EXERCISE",
+              exercise: {
+                form: "compound",
+                compound: {
+                  elements: [
+                    { exerciseId: EX.toesToBar, reps: { kind: "count", value: 5 } },
+                    { exerciseId: EX.pullUp, reps: { kind: "count", value: 5 } },
+                  ],
+                },
               },
             },
-            {
-              compoundRep: {
-                form: "curly_brace",
-                composition: [
-                  { exerciseId: EX.toesToBar, count: 5 },
-                  { exerciseId: EX.pullUp, count: 5 },
-                ],
-              },
-              position: "HOLD_FARM_CARRY",
-            },
+            { position: "HOLD_FARM_CARRY", notes: "{ 5 toes-to-bar + 5 pull-ups } = 1 rep" },
           ),
         ],
       },

@@ -44,6 +44,7 @@ const baseBlock = {
   notes: "block focus",
   labels: [baseLabel],
   schemas: [],
+  groups: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

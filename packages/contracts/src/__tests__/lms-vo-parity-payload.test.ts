@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { schemaRowPayloadSchema } from "../entities/lms/schema-row";
 
-import { CUID_PRIMARY, CUID_SECONDARY } from "./_cuid-helper";
+import { CUID_PRIMARY } from "./_cuid-helper";
 
-describe("LMS schemaRowPayload parity — 9 RowKinds verbatim from data.js", () => {
+describe("LMS schemaRowPayload parity — 4 surviving RowKinds", () => {
   it("EXERCISE / atomic (data.js:89)", () => {
     expect(
       schemaRowPayloadSchema.safeParse({
@@ -14,59 +14,18 @@ describe("LMS schemaRowPayload parity — 9 RowKinds verbatim from data.js", () 
     ).toBe(true);
   });
 
+  it("REST (parsed rest spec)", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "REST",
+        raw: "2 min",
+        parsed: { duration: { value: 2, unit: "min" }, scope: "between_rounds" },
+      }).success,
+    ).toBe(true);
+  });
+
   it("REST_SLOT (data.js:323-328 — EMOM rest minute)", () => {
     expect(schemaRowPayloadSchema.safeParse({ rowKind: "REST_SLOT" }).success).toBe(true);
-  });
-
-  it("FOOTNOTE target=each_set empty content (data.js:102-112 — C0-004)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "FOOTNOTE",
-        marker: "*",
-        target: "each_set",
-        content: { elements: [] },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("FOOTNOTE target=each_round with 2 elements", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "FOOTNOTE",
-        marker: "*",
-        target: "each_round",
-        content: {
-          elements: [
-            { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 5 } },
-            { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 3 } },
-          ],
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("STANDALONE_LOAD applies_to_all_preceding_rows (data.js:178-189 — Mon M/F 24/16)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_LOAD",
-        load: {
-          kind: "absolute",
-          weight: { variant: "dual_value", first: 24, second: 16, resolver: "athlete_profile" },
-        },
-        scope: "applies_to_all_preceding_rows",
-      }).success,
-    ).toBe(true);
-  });
-
-  it("STANDALONE_URL whole_schema (data.js:247-255 — Fran URL)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_URL",
-        url: "https://example.com/demo/fran",
-        wrapped: true,
-        appliesTo: "whole_schema",
-      }).success,
-    ).toBe(true);
   });
 
   it("PLACEHOLDER muscle_group_reference (data.js:548-558 — Thu SHOULDER mobility)", () => {
@@ -81,28 +40,57 @@ describe("LMS schemaRowPayload parity — 9 RowKinds verbatim from data.js", () 
     ).toBe(true);
   });
 
-  it("REP_DEFINITION inline_equality (data.js:296-309 — Mon EMOM T2B 10 = 8 strict + 2 L-sit)", () => {
+  it("rejects the dropped FOOTNOTE kind", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "FOOTNOTE",
+        marker: "*",
+        target: "each_set",
+        content: { elements: [] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped STANDALONE_LOAD kind", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "STANDALONE_LOAD",
+        load: { kind: "bodyweight" },
+        scope: "applies_to_all_preceding_rows",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped STANDALONE_URL kind", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "STANDALONE_URL",
+        url: "https://example.com/demo/fran",
+        wrapped: true,
+        appliesTo: "whole_schema",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped REP_DEFINITION kind", () => {
     expect(
       schemaRowPayloadSchema.safeParse({
         rowKind: "REP_DEFINITION",
         equality: {
           form: "inline_equality",
           totalReps: 10,
-          composition: [
-            { exerciseId: CUID_PRIMARY, count: 8 },
-            { exerciseId: CUID_SECONDARY, count: 2 },
-          ],
+          composition: [{ exerciseId: CUID_PRIMARY, count: 8 }],
         },
       }).success,
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it("INNER_LADDER_MARKER synthetic (contract has shape — no data.js sample)", () => {
+  it("rejects the dropped INNER_LADDER_MARKER kind", () => {
     expect(
       schemaRowPayloadSchema.safeParse({
         rowKind: "INNER_LADDER_MARKER",
         steps: [21, 15, 9],
       }).success,
-    ).toBe(true);
+    ).toBe(false);
   });
 });

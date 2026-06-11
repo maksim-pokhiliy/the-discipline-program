@@ -1,46 +1,45 @@
 # session-primitive — state (the board)
 
-**Updated:** 2026-06-10
+**Updated:** 2026-06-11 (W2 built)
 
 Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; why → `decisions.md`; carry-forwards → `deferred.md`; the design itself → `primitive-spec.md`.
 
 ## Board
 
-| #   | Wave                                                   | Status                  | Pointer                        |
-| --- | ------------------------------------------------------ | ----------------------- | ------------------------------ |
-| 0   | Founding: review → skeleton + grid + spec              | 🟢 done                 | `primitive-spec.md` · D-1..D-8 |
-| W1  | Group/box UX on the existing model (platform-only)     | 🟢 built · PR open      | plan §W1 · DR-W1-1..5          |
-| W2  | Model core (Group entity, recursion/arrangement death) | ⚪ needs D-MARKER-DEATH | plan §W2                       |
-| W3  | Editor remap (DnD/ungroup persistence)                 | ⚪                      | plan §W3                       |
-| W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+      | plan §W4                       |
+| #   | Wave                                                   | Status                | Pointer                         |
+| --- | ------------------------------------------------------ | --------------------- | ------------------------------- |
+| 0   | Founding: review → skeleton + grid + spec              | 🟢 done               | `primitive-spec.md` · D-1..D-8  |
+| W1  | Group/box UX on the existing model (platform-only)     | 🟢 merged (PR #261)   | plan §W1 · DR-W1-1..5           |
+| W2  | Model core (Group entity, recursion/arrangement death) | 🟢 reviewed (PR #262) | `0041` · DR-W2-1..9 · FORK-1..6 |
+| W3  | Editor remap (DnD/ungroup persistence)                 | ⚪                    | plan §W3                        |
+| W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+    | plan §W4                        |
 
 ## Next action
 
-**W1 is built (PR open)** — `/feature` full ran 2026-06-10; 9 platform-only commits; box render via the live one-predicate, `header` box-label, «Group into one box» checkbox + `useCreateIndependentLadders`. Diff reviewed against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) — held; ratified calls promoted as DR-W1-1..5. **Orchestrator independent review PASSED (2026-06-10, PR #261):** scope = plan-detail + initiative docs only; one-predicate held (zero hand-rolled checks; marker untouched in code); draft transforms untouched; gates re-run independently — check-types + lint green, platform **1035/1035**; one new low carry-forward recorded (W1-SUBADD-BOX). **HANDED OFF 2026-06-10 — next planner starts here, in order:**
+**W2 BUILT 2026-06-11** — the model core shipped on `feat/session-primitive-w2-model-core` (9 commits; this close-out commit rides the SAME PR per `closeout-before-pr`). `SchemaGroup` is a real persisted entity (membership-based sibling relation, opaque label, SetNull dissolution, no `order` column); recursion + the arrangement axis are dead; the ratified leaf kills landed; the seed re-expressed; platform re-points box-ness to the `buildBlockItems` one-predicate; idempotency threaded. **All runnable gates green** (check-types 16/16, lint 16/16, dep:check 0, contracts 745/745, platform 801/801). DR-W2-1..9 + DR-W2-FORK-1..6 ratified; ADR-0041 written (supersedes 0040). **Orchestrator review PASSED (2026-06-11):** gates re-run independently (identical numbers); red lines held (OPEN F-surfaces untouched; one-predicate single-consumer; admin/marketing zero-touch); idempotency verified end-to-end (factory-wrapped per ADR-0036). **Two defects fixed in-branch** (`de0c5def` + `578365cb`): the raw-SQL order check (`prisma/sql/lms-checks.sql`) still referenced dead `parentSchemaId` — caught LIVE by the owner's first `db:reset` → now a FULL unique `schemas_block_order`; and `resolveGroupedOrder`'s `Promise.all` shift collided under that unique → descending-sequential. DR-W2-8 SUPERSEDED; **W2-ORDER-UNIQUE CLOSED**; ADR-0041 corrected. Next, in order:
 
-1. **Collect the owner's walkthrough verdict** (was in progress at handoff): the 4 seed boxes + block-010 triple frame (**W1-BOX-FRAME** — if noisy, the calmer fallback is a one-file change in `schema-group-box.tsx`), unchecked de-emphasis (dividers between steppers), label edit/clear → "group…", and the **W1-SUBADD-BOX** confusion check. Fixes, if any, ride the same branch/PR #261.
-2. **Merge PR #261** — owner's call after the walkthrough. Vercel checks in the PR are noise (deployments not configured — ignore).
-3. **Get D-MARKER-DEATH yes/no** from the owner — it gates W2; everything needed for the call is in `decisions.md`.
-4. **Write the W2 runner prompt** from plan §W2 + the runner-prompt checklist (plan.md) + the W2 obligations in `deferred.md` (W1-DUP-RETRY idempotency, W1-RENDER-REPOINT re-point, W1-SUBADD-BOX dissolution). Budget: ≤1 full `/feature` per runner session; owner transports; review the returned diff via git, never the self-report (D-7).
+1. **Owner ritual (the acceptance gate the runner cannot run):** `pnpm --filter @repo/api-server db:reset` + seed + the gated api-server SUITE (live Neon, ~10 min serial) + the **§6 9-step walkthrough** in `w2-runner-prompt.md` (the 4 ex-parallel boxes incl. block-037's multi-track; block-010/011 rounds-label boxes; EMOM slots; label round-trip; checked/unchecked batch + in-modal retry idempotency; in-box add; delete-to-dissolution; the 4 row kinds + the **footnote-LAST** and **URL-as-demo** content confirmations — W2-FOOTNOTE-LAST / W2-URL-PLACEHOLDER in `deferred.md`, 1-line seed fix if either reads wrong; group-as-unit reorder). **The reseed is a HARD prerequisite for the app to function** — the read mappers `.parse()` against the new contracts, so the app 500s on a non-reseeded DB (not just the test suite). The re-derived ≥2-member structural-parallel group count = 4 is verified statically; the reseed proves it live.
+2. **Merge** the PR (squash) once the owner's gate passes AND the owner confirms the `roadmap.md` deletion was his in-session request (Review WARN-1; runner recorded "owner-requested").
+3. Then **W3** (editor remap) planning — the **recursive-draft collapse** (W2-DRAFT-RECURSION) rides it. (W2-ORDER-UNIQUE no longer does — CLOSED at review, the unique landed in this PR.)
 
 F-ledger follow-ups stay owner-paced and gate only W4 (F-PLAQUE first when the owner has the appetite).
 
 ## Open decisions awaiting ratification
 
-- **D-MARKER-DEATH** (`decisions.md`) — gates W2.
-- The F-ledger (`deferred.md`): F-PLAQUE (gates W4, first) · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time.
+- The F-ledger (`deferred.md`): F-PLAQUE (gates W4, first) · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time. **(D-MARKER-DEATH DONE — landed in W2; no model-core decisions remain open.)**
 
 ## Live carry-forwards
 
-From W1 (`deferred.md`): **W1-DUP-RETRY** (unchecked batch dup-on-retry → W2 idempotency) · **W1-RENDER-REPOINT** (re-point box-ness from the predicate to Group membership at W2) · **W1-BOX-FRAME** (double-frame — eyeball at acceptance) · W1-INSESSION-CHECK (low) · W1-SUBADD-BOX (low, found at orchestrator review).
-Inherited: QA-004 (confirm/undo rides the editor rebuild) · MARKER-FATE (→ D-MARKER-DEATH) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale; reuse features post-primitive.
+**CLOSED in W2 (this PR):** W1-DUP-RETRY (idempotency via the existing `@repo/api-routes` layer; stable `${draft.id}:${trackIndex}` key) · W1-RENDER-REPOINT (box re-points to Group via the `buildBlockItems` one-predicate) · W1-SUBADD-BOX (in-group-add hides the «Group into one box» checkbox) · MARKER-FATE / D-MARKER-DEATH (`INNER_LADDER_MARKER` removed; the distinction survives as two structures) · **W2-ORDER-UNIQUE** (closed at review — the deferral premise was false; full unique `schemas_block_order` landed via the raw-SQL fix, DR-W2-8 SUPERSEDED).
+OPEN: **W2-FOOTNOTE-LAST / W2-URL-PLACEHOLDER** (owner-verify the two seed-content calls at the §6 walkthrough) · W2-DRAFT-RECURSION (→ W3 — the authoring draft layer is still recursive but never stored/rendered) · W2-IDEM-REMOUNT (low — close+reopen mints a fresh idempotency batch by design) · W1-INSESSION-CHECK (low) · QA-004-editor (confirm/undo rides the editor rebuild) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Low cleanup: W2-STALE-FIXTURES / W2-VESTIGIAL-EXPORTS / W2-STALE-NAMES. W1-BOX-FRAME CLOSED. Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign, now the carrier for the ex-roadmap score-type debt); reuse features post-primitive.
 
 ## Gotchas a resuming session must know
 
-- **ADR-0040 is the LIVE behavior of main** (derived parallelism, atomic `POST …/schemas/parallel`) until W2 lands. W1 builds ON it (box render gated by the live `isStructurallyParallel`), it does not fight it. D-2 supersedes the mechanism only at W2 implementation time.
-- **One-predicate rule** — any "is this a box/parallel" reader consults the shared contracts predicate; a hand-rolled child-count check is how the last CRITICAL shipped.
-- **W1 red lines:** platform-only (zero contracts/api-server/Prisma/seed); no DnD/ungroup persistence fakes (no re-parenting API exists); marker artifacts untouched (OPEN decision).
+- **ADR-0041 is now the law** — the box is a real `SchemaGroup` entity (membership-based, opaque label, no recursion, no typed relation kinds, no child-count semantics); parallelism is explicit Group membership, not derived. **ADR-0040 (derive-parallelism) is SUPERSEDED by 0041** — it is no longer the live law of main once W2 merges; `isStructurallyParallel` / the arrangement axis / `parentSchemaId` / `POST …/schemas/parallel` are deleted.
+- **The reseed is mandatory before the app runs against the new code** (aggressive bridge-free, QA-001): the read mappers reject any pre-W2 row shape and 500 the week GET. `db:reset` + seed is the stale-data remedy (ADR-0019, non-prod Neon).
+- **One-predicate rule** — box-ness/clustering ONLY via `schema.groupId` membership and the ONE shared `buildBlockItems(schemas, groups)` helper in contracts; a hand-rolled child-count/cluster check is how the last CRITICAL shipped. The Group label is opaque text the system NEVER reads.
 - **The corpus is the floor, not the ceiling** — one PERSONAL plan; m/f (`byProfile`) and RX/SC are real despite corpus cardinality 1/0 (D-5/D-6).
-- **No typed relation kinds; no chips-as-blanket-mechanism** (D-4; F-CHIPS rejected as "костыль") — channel-3 carriers decided per case in follow-ups.
+- **No typed relation kinds; no chips-as-blanket-mechanism** (D-4; F-CHIPS rejected as "костыль") — channel-3 carriers decided per case in follow-ups; a relation gains typed semantics ONLY against a real engine (ADR-0038 re-introduce-fresh).
 - **Owner verbatim bars** in `decisions.md` D-6 (TOTAL dead, footnote=ordering, per-set=row-group) — quote them in runner prompts, don't re-litigate.
+- **`docs/roadmap.md` was removed** (W2 commit `58de8394`, owner-requested) — don't expect it; the Phase-4 score-type debt it carried is re-anchored to the `Performed*`/`OneRMRecord` standing debt in `deferred.md`.
 - Predecessors (`plan-editor-compose`, `compose-authoring-ux`) are CLOSED; their decisions describe main's current code, not this redesign's constraints — except the charter's Sacred list.

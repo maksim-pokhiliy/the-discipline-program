@@ -302,7 +302,6 @@ describe("platform guards", () => {
         dayId,
         weekId,
         planId: plan.id,
-        parentSchemaId: null,
       });
     });
 
@@ -320,7 +319,6 @@ describe("platform guards", () => {
         dayId,
         weekId,
         planId: plan.id,
-        parentSchemaId: null,
       });
     });
 
@@ -398,7 +396,6 @@ describe("platform guards", () => {
       await expect(verifySchemaRowOwnership(schemaRowId, coach.user.id)).resolves.toEqual({
         status: TrainingPlanStatus.DRAFT,
         schemaId,
-        parentSchemaId: null,
         blockId,
         sessionId,
         dayId,
@@ -411,7 +408,6 @@ describe("platform guards", () => {
       await expect(verifySchemaRowOwnership(schemaRowId, headCoachUser.id)).resolves.toEqual({
         status: TrainingPlanStatus.DRAFT,
         schemaId,
-        parentSchemaId: null,
         blockId,
         sessionId,
         dayId,

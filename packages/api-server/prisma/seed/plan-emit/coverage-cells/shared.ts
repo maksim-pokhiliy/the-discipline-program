@@ -71,42 +71,26 @@ export const countDay = async (
 
 export const STRUCTURAL_PARALLEL_FLOOR = 4;
 
-const isRepetitionAbsentOrOnce = (repetition: Prisma.JsonValue | undefined): boolean =>
-  repetition === undefined ||
-  (repetition !== null &&
-    typeof repetition === "object" &&
-    !Array.isArray(repetition) &&
-    repetition.kind === "once");
+const MULTI_MEMBER_GROUP_MIN = 2;
 
-export const isDerivedParallelComposition = (composition: Prisma.JsonValue): boolean =>
-  composition !== null &&
-  typeof composition === "object" &&
-  !Array.isArray(composition) &&
-  isRepetitionAbsentOrOnce(composition.repetition) &&
-  !("arrangement" in composition);
+export const schemaGroupWhere = (planId: string): Prisma.SchemaGroupWhereInput => ({
+  block: { session: { day: { week: { planId } } } },
+});
 
-export const countStructurallyParallelParents = async (
+export const countSchemaGroup = async (
   db: PrismaClient,
   planId: string,
-): Promise<number> => {
-  const grouped = await db.schema.groupBy({
-    by: ["parentSchemaId"],
-    where: { ...schemaWhere(planId), parentSchemaId: { not: null } },
-    _count: { parentSchemaId: true },
+  extra: Prisma.SchemaGroupWhereInput = {},
+): Promise<number> =>
+  db.schemaGroup.count({
+    where: { ...schemaGroupWhere(planId), ...extra },
   });
 
-  const parentIds = grouped.flatMap((group) =>
-    group.parentSchemaId !== null && group._count.parentSchemaId >= 2 ? [group.parentSchemaId] : [],
-  );
-
-  if (parentIds.length === 0) {
-    return 0;
-  }
-
-  const parents = await db.schema.findMany({
-    where: { ...schemaWhere(planId), id: { in: parentIds } },
-    select: { id: true, composition: true },
+export const countMultiMemberGroups = async (db: PrismaClient, planId: string): Promise<number> => {
+  const groups = await db.schemaGroup.findMany({
+    where: schemaGroupWhere(planId),
+    select: { _count: { select: { members: true } } },
   });
 
-  return parents.filter((parent) => isDerivedParallelComposition(parent.composition)).length;
+  return groups.filter((group) => group._count.members >= MULTI_MEMBER_GROUP_MIN).length;
 };

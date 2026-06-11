@@ -7,8 +7,9 @@ const PERCENT_SUFFIX = "%";
 const RANGE_SEPARATOR = "–";
 const SPACE = " ";
 const BW_LABEL = "BW";
-const WITHOUT_WEIGHT_LABEL = "without weight";
-const UNSPECIFIED_LABEL = "—";
+const NONE_LABEL = "no load";
+const BY_PROFILE_SEPARATOR = " / ";
+const BY_PROFILE_SUFFIX = " (M/F)";
 
 export const formatLoad = (load: Load, exerciseById: ExerciseById): string => {
   switch (load.kind) {
@@ -25,10 +26,10 @@ export const formatLoad = (load: Load, exerciseById: ExerciseById): string => {
     }
     case "bodyweight":
       return BW_LABEL;
-    case "without_weight":
-      return WITHOUT_WEIGHT_LABEL;
-    case "unspecified":
-      return UNSPECIFIED_LABEL;
+    case "byProfile":
+      return `${load.first}${BY_PROFILE_SEPARATOR}${load.second}${BY_PROFILE_SUFFIX}`;
+    case "none":
+      return NONE_LABEL;
     default:
       load satisfies never;
 

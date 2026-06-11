@@ -71,7 +71,6 @@ describe("lmsSchemaRowApi", () => {
     const schema = await cleanupRaw.schema.create({
       data: {
         blockId: blockCtx.block.id,
-        parentSchemaId: null,
         order: 10,
       },
     });
@@ -256,88 +255,6 @@ describe("lmsSchemaRowApi", () => {
       }
     });
 
-    it("creates a FOOTNOTE row with marker + target + content compound", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "FOOTNOTE",
-          rowPayload: {
-            rowKind: "FOOTNOTE",
-            marker: "*",
-            target: "each_round",
-            content: {
-              elements: [
-                { exerciseId: exerciseAId, reps: { kind: "count", value: 5 } },
-                { exerciseId: exerciseBId, reps: { kind: "count", value: 3 } },
-              ],
-            },
-          },
-        });
-
-        expect(created.rowKind).toBe("FOOTNOTE");
-        expect(created.rowPayload).toMatchObject({
-          rowKind: "FOOTNOTE",
-          marker: "*",
-          target: "each_round",
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("creates a STANDALONE_LOAD row with load + scope", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "STANDALONE_LOAD",
-          rowPayload: {
-            rowKind: "STANDALONE_LOAD",
-            load: { kind: "absolute", weight: { variant: "single", valueKg: 60 } },
-            scope: "applies_to_all_preceding_rows",
-          },
-        });
-
-        expect(created.rowKind).toBe("STANDALONE_LOAD");
-        expect(created.rowPayload).toMatchObject({
-          rowKind: "STANDALONE_LOAD",
-          scope: "applies_to_all_preceding_rows",
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("creates a STANDALONE_URL row with url + wrapped + appliesTo", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "STANDALONE_URL",
-          rowPayload: {
-            rowKind: "STANDALONE_URL",
-            url: "https://example.com/demo.mp4",
-            wrapped: false,
-            appliesTo: "whole_schema",
-          },
-        });
-
-        expect(created.rowKind).toBe("STANDALONE_URL");
-        expect(created.rowPayload).toEqual({
-          rowKind: "STANDALONE_URL",
-          url: "https://example.com/demo.mp4",
-          wrapped: false,
-          appliesTo: "whole_schema",
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
     it("creates a PLACEHOLDER row with placeholder payload", async () => {
       const ctx = await provisionSchema();
 
@@ -358,59 +275,6 @@ describe("lmsSchemaRowApi", () => {
         expect(created.rowPayload).toMatchObject({
           rowKind: "PLACEHOLDER",
           placeholder: { placeholderKind: "coach_choice_slot", text: "Coach pick" },
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("creates an INNER_LADDER_MARKER row with steps array", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "INNER_LADDER_MARKER",
-          rowPayload: {
-            rowKind: "INNER_LADDER_MARKER",
-            steps: [1, 3, 5, 7, 9],
-          },
-        });
-
-        expect(created.rowKind).toBe("INNER_LADDER_MARKER");
-        expect(created.rowPayload).toEqual({
-          rowKind: "INNER_LADDER_MARKER",
-          steps: [1, 3, 5, 7, 9],
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("creates a REP_DEFINITION row with equality compound", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "REP_DEFINITION",
-          rowPayload: {
-            rowKind: "REP_DEFINITION",
-            equality: {
-              form: "inline_equality",
-              totalReps: 30,
-              composition: [
-                { exerciseId: exerciseAId, count: 20 },
-                { exerciseId: exerciseBId, count: 10 },
-              ],
-            },
-          },
-        });
-
-        expect(created.rowKind).toBe("REP_DEFINITION");
-        expect(created.rowPayload).toMatchObject({
-          rowKind: "REP_DEFINITION",
-          equality: { form: "inline_equality", totalReps: 30 },
         });
       } finally {
         await ctx.cleanup();
@@ -504,30 +368,46 @@ describe("lmsSchemaRowApi", () => {
       ).rejects.toThrow(NotFoundError);
     });
 
-    describe("depth-3 write-guard fetch (QA-106, DR-S2-7)", () => {
-      const provisionDepth3Tree = async () => {
+    describe("flat write-guard fetch", () => {
+      it("creates a row on a flat ladder schema — the guard validates the single flat container", async () => {
         const blockCtx = await provisionBlock();
+        const schema = await cleanupRaw.schema.create({
+          data: {
+            blockId: blockCtx.block.id,
+            order: 10,
+            composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+          },
+        });
 
-        const rounds = await cleanupRaw.schema.create({
-          data: {
-            blockId: blockCtx.block.id,
-            parentSchemaId: null,
-            order: 10,
-            composition: { repetition: { kind: "count", count: 2 } },
-          },
+        try {
+          const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+            schemaId: schema.id,
+            rowKind: "EXERCISE",
+            rowPayload: {
+              rowKind: "EXERCISE",
+              exercise: { form: "atomic", exerciseId: exerciseAId },
+            },
+          });
+
+          expect(created.schemaId).toBe(schema.id);
+
+          const count = await cleanupRaw.schemaRow.count({ where: { schemaId: schema.id } });
+
+          expect(count).toBe(1);
+        } finally {
+          await blockCtx.cleanup();
+        }
+      });
+
+      it("creates a row on a group-member schema independent of its sibling members (flat guard, no subtree)", async () => {
+        const blockCtx = await provisionBlock();
+        const group = await cleanupRaw.schemaGroup.create({
+          data: { blockId: blockCtx.block.id, label: null },
         });
-        const parallel = await cleanupRaw.schema.create({
+        const memberA = await cleanupRaw.schema.create({
           data: {
             blockId: blockCtx.block.id,
-            parentSchemaId: rounds.id,
-            order: 10,
-            composition: {},
-          },
-        });
-        const trackA = await cleanupRaw.schema.create({
-          data: {
-            blockId: blockCtx.block.id,
-            parentSchemaId: parallel.id,
+            groupId: group.id,
             order: 10,
             composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
           },
@@ -536,61 +416,26 @@ describe("lmsSchemaRowApi", () => {
         await cleanupRaw.schema.create({
           data: {
             blockId: blockCtx.block.id,
-            parentSchemaId: parallel.id,
+            groupId: group.id,
             order: 20,
-            composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } },
+            composition: { repetition: { kind: "ladder", steps: [9, 15, 21] } },
           },
         });
 
-        return { ...blockCtx, rounds, trackA };
-      };
-
-      it("creates a row on the root of a depth-3 tree — the guard projects the full subtree without truncation", async () => {
-        const ctx = await provisionDepth3Tree();
-
         try {
           const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-            schemaId: ctx.rounds.id,
+            schemaId: memberA.id,
             rowKind: "REST_SLOT",
             rowPayload: { rowKind: "REST_SLOT" },
           });
 
-          expect(created.schemaId).toBe(ctx.rounds.id);
+          expect(created.schemaId).toBe(memberA.id);
 
-          const count = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.rounds.id } });
+          const count = await cleanupRaw.schemaRow.count({ where: { schemaId: memberA.id } });
 
           expect(count).toBe(1);
         } finally {
-          await ctx.cleanup();
-        }
-      });
-
-      it("rejects a row create on the root when a level-3 track hides a ladder-marker collision (QA-106 regression witness)", async () => {
-        const ctx = await provisionDepth3Tree();
-
-        await cleanupRaw.schemaRow.create({
-          data: {
-            schemaId: ctx.trackA.id,
-            order: 10,
-            rowKind: "INNER_LADDER_MARKER",
-            rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] },
-          },
-        });
-
-        try {
-          await expect(
-            lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-              schemaId: ctx.rounds.id,
-              rowKind: "REST_SLOT",
-              rowPayload: { rowKind: "REST_SLOT" },
-            }),
-          ).rejects.toThrow(BadRequestError);
-
-          const count = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.rounds.id } });
-
-          expect(count).toBe(0);
-        } finally {
-          await ctx.cleanup();
+          await blockCtx.cleanup();
         }
       });
     });
@@ -1101,17 +946,10 @@ describe("lmsSchemaRowApi", () => {
         });
         const third = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: ctx.schema.id,
-          rowKind: "FOOTNOTE",
+          rowKind: "EXERCISE",
           rowPayload: {
-            rowKind: "FOOTNOTE",
-            marker: "**",
-            target: "each_set",
-            content: {
-              elements: [
-                { exerciseId: exerciseAId, reps: { kind: "count", value: 5 } },
-                { exerciseId: exerciseBId, reps: { kind: "count", value: 3 } },
-              ],
-            },
+            rowKind: "EXERCISE",
+            exercise: { form: "atomic", exerciseId: exerciseBId },
           },
         });
 

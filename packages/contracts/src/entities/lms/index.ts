@@ -6,6 +6,7 @@ export * from "./exercise";
 export * from "./label";
 export * from "./plan-enrollment";
 export * from "./schema";
+export * from "./schema-group";
 export * from "./schema-row";
 export * from "./session";
 export * from "./training-plan";

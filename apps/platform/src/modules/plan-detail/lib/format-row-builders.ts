@@ -1,4 +1,4 @@
-import { type CompoundRowElement, type ExerciseForm } from "@repo/contracts/lms/_shared";
+import { type ExerciseForm } from "@repo/contracts/lms/_shared";
 import { type SchemaRow, type SchemaRowPayload } from "@repo/contracts/lms/schema-row";
 
 import { formatIntensityChips, intensityHasAny } from "./format-block-meta";
@@ -14,16 +14,7 @@ import { formatSide } from "./format-side";
 import { formatTempo } from "./format-tempo";
 
 const REST_FALLBACK = "Rest";
-const URL_FALLBACK = "URL";
 const PLACEHOLDER_TEXT_FALLBACK = "any exercise";
-const FOOTNOTE_FALLBACK = "footnote";
-const UNKNOWN_EXERCISE_FALLBACK = "?";
-const STANDALONE_LOAD_SUB = "applies to all rows above";
-const STANDALONE_LOAD_FIRST_ROW_SUB = "global load";
-const STANDALONE_URL_WHOLE_SCHEMA_SUB = "schema reference";
-const STANDALONE_URL_PREVIOUS_ROW_SUB = "previous-row demo";
-const INNER_LADDER_MARKER_SUB = "ladder marker — segments rows below";
-const REP_DEFINITION_SUB = "rep definition";
 const PLACEHOLDER_SUB_PREFIX = "placeholder · ";
 const UNDERSCORE_RE = /_/g;
 const UNDERSCORE_REPLACEMENT = " ";
@@ -31,14 +22,9 @@ const UNDERSCORE_REPLACEMENT = " ";
 const FORM_PILL_BY_KIND: Record<ExerciseForm["form"], string | null> = {
   atomic: null,
   compound: "compound",
-  cyclical: "cyclical",
-  sandwich: "sandwich",
   or_alternative: "or alternative",
   placeholder_ref: "placeholder ref",
 };
-
-const lookupName = (id: string, exerciseById: ExerciseById, fallback: string): string =>
-  exerciseById.get(id)?.canonicalName ?? fallback;
 
 const isAtomicPlaceholder = (form: ExerciseForm, exerciseById: ExerciseById): boolean => {
   if (form.form !== "atomic") {
@@ -59,17 +45,6 @@ const computeDemoUrl = (form: ExerciseForm, exerciseById: ExerciseById): string 
 
   return exerciseById.get(form.exerciseId)?.defaultDemoUrls[0] ?? null;
 };
-
-const joinFootnoteElements = (
-  elements: ReadonlyArray<CompoundRowElement>,
-  exerciseById: ExerciseById,
-): string =>
-  elements
-    .map(
-      (el) =>
-        `${lookupName(el.exerciseId, exerciseById, UNKNOWN_EXERCISE_FALLBACK)} × ${formatRepNotation(el.reps)}`,
-    )
-    .join(" + ");
 
 const buildExerciseSubParts = (
   row: SchemaRow,
@@ -159,68 +134,6 @@ export const buildRest = (
   };
 };
 
-export const buildFootnote = (
-  payload: Extract<SchemaRowPayload, { rowKind: "FOOTNOTE" }>,
-  notes: string | null,
-  exerciseById: ExerciseById,
-): FormatRowResult => {
-  const elementsText = joinFootnoteElements(payload.content.elements, exerciseById);
-  const body =
-    elementsText.length > 0
-      ? elementsText
-      : notes !== null && notes.length > 0
-        ? notes
-        : FOOTNOTE_FALLBACK;
-  const target = payload.target.replace(UNDERSCORE_RE, UNDERSCORE_REPLACEMENT);
-
-  return {
-    mainText: `${payload.marker} ${body} (${target})`,
-    subParts: [],
-    kindBadge: "FN",
-    kindCls: "foot",
-    dashed: false,
-    ord: payload.marker,
-    formPillText: null,
-    demoUrl: null,
-  };
-};
-
-export const buildStandaloneLoad = (
-  payload: Extract<SchemaRowPayload, { rowKind: "STANDALONE_LOAD" }>,
-  exerciseById: ExerciseById,
-  index: number,
-): FormatRowResult => {
-  const text = formatLoad(payload.load, exerciseById);
-
-  return {
-    mainText: text.length > 0 ? text : "Load",
-    subParts: [index === 0 ? STANDALONE_LOAD_FIRST_ROW_SUB : STANDALONE_LOAD_SUB],
-    kindBadge: "LD",
-    kindCls: "load",
-    dashed: false,
-    ord: "L",
-    formPillText: null,
-    demoUrl: null,
-  };
-};
-
-export const buildStandaloneUrl = (
-  payload: Extract<SchemaRowPayload, { rowKind: "STANDALONE_URL" }>,
-): FormatRowResult => ({
-  mainText: payload.url.length > 0 ? payload.url : URL_FALLBACK,
-  subParts: [
-    payload.appliesTo === "whole_schema"
-      ? STANDALONE_URL_WHOLE_SCHEMA_SUB
-      : STANDALONE_URL_PREVIOUS_ROW_SUB,
-  ],
-  kindBadge: "URL",
-  kindCls: "url",
-  dashed: false,
-  ord: "U",
-  formPillText: null,
-  demoUrl: null,
-});
-
 export const buildPlaceholder = (
   payload: Extract<SchemaRowPayload, { rowKind: "PLACEHOLDER" }>,
 ): FormatRowResult => {
@@ -238,44 +151,6 @@ export const buildPlaceholder = (
     kindCls: "placeholder",
     dashed: true,
     ord: "?",
-    formPillText: null,
-    demoUrl: null,
-  };
-};
-
-export const buildInnerLadderMarker = (
-  payload: Extract<SchemaRowPayload, { rowKind: "INNER_LADDER_MARKER" }>,
-): FormatRowResult => {
-  const joined = payload.steps.join("-");
-  const mainText = payload.steps.length > 1 ? `${joined} :` : joined;
-
-  return {
-    mainText,
-    subParts: [INNER_LADDER_MARKER_SUB],
-    kindBadge: "↓",
-    kindCls: "ladder",
-    dashed: true,
-    ord: "—",
-    formPillText: null,
-    demoUrl: null,
-  };
-};
-
-export const buildRepDefinition = (
-  payload: Extract<SchemaRowPayload, { rowKind: "REP_DEFINITION" }>,
-  exerciseById: ExerciseById,
-): FormatRowResult => {
-  const composition = payload.equality.composition
-    .map((c) => `${c.count}× ${lookupName(c.exerciseId, exerciseById, UNKNOWN_EXERCISE_FALLBACK)}`)
-    .join(" + ");
-
-  return {
-    mainText: `${payload.equality.totalReps} reps = ${composition}`,
-    subParts: [REP_DEFINITION_SUB],
-    kindBadge: "≡",
-    kindCls: "ex",
-    dashed: false,
-    ord: "≡",
     formPillText: null,
     demoUrl: null,
   };

@@ -6,8 +6,6 @@ import { type CoverageCell } from "./types";
 const EXERCISE_FORMS: readonly string[] = [
   "atomic",
   "compound",
-  "cyclical",
-  "sandwich",
   "or_alternative",
   "placeholder_ref",
 ];
@@ -82,53 +80,9 @@ const orPurposeCell = (purpose: string): CoverageCell => ({
     }),
 });
 
-const COMPOUND_REP_FORMS: readonly string[] = ["inline_equality", "curly_brace"];
-
-const compoundRepFormCell = (form: string): CoverageCell => ({
-  id: `compoundRepDefinition.${form}`,
-  category: "compoundRepDefinition.form",
-  label: `CompoundRepDefinition.form = ${form}`,
-  required: 1,
-  sourceRef: `coverage-matrix §22 ${form}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, { compoundRep: { path: ["form"], equals: form } }),
-});
-
-const FOOTNOTE_MARKERS: readonly string[] = ["*", "**"];
-const FOOTNOTE_TARGETS: readonly string[] = ["each_round", "each_set", "each_typed_round"];
-
-const footnoteMarkerCell = (marker: string): CoverageCell => ({
-  id: `footnote.marker.${marker}`,
-  category: "footnote",
-  label: `Footnote.marker = ${marker}`,
-  required: 1,
-  sourceRef: `coverage-matrix §23 marker ${marker}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      rowKind: RowKind.FOOTNOTE,
-      rowPayload: { path: ["marker"], equals: marker },
-    }),
-});
-
-const footnoteTargetCell = (target: string): CoverageCell => ({
-  id: `footnote.target.${target}`,
-  category: "footnote",
-  label: `Footnote.target = ${target}`,
-  required: 1,
-  sourceRef: `coverage-matrix §23 target ${target}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      rowKind: RowKind.FOOTNOTE,
-      rowPayload: { path: ["target"], equals: target },
-    }),
-});
-
 export const EXERCISE_CELLS: readonly CoverageCell[] = [
   ...EXERCISE_FORMS.map(exerciseFormCell),
   ...POSITIONS.map(positionCell),
   ...PLACEHOLDER_KINDS.map(placeholderKindCell),
   ...OR_PURPOSES.map(orPurposeCell),
-  ...COMPOUND_REP_FORMS.map(compoundRepFormCell),
-  ...FOOTNOTE_MARKERS.map(footnoteMarkerCell),
-  ...FOOTNOTE_TARGETS.map(footnoteTargetCell),
 ];

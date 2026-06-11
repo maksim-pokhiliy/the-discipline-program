@@ -4,6 +4,7 @@ import {
   type Day as PrismaDay,
   type Label as PrismaLabel,
   type Schema as PrismaSchema,
+  type SchemaGroup as PrismaSchemaGroup,
   type SchemaRow as PrismaSchemaRow,
   type Session as PrismaSession,
 } from "@prisma/client";
@@ -22,6 +23,7 @@ type SchemaWithRowsRelation = PrismaSchema & {
 type BlockWithSchemasRelation = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
   schemas: SchemaWithRowsRelation[];
+  groups: PrismaSchemaGroup[];
 };
 
 type SessionWithRelations = PrismaSession & {

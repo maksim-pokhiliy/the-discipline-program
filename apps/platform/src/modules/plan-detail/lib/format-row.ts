@@ -4,13 +4,8 @@ import { type ExerciseById } from "./format-percentage-reference";
 import {
   REST_SLOT_RESULT,
   buildExercise,
-  buildFootnote,
-  buildInnerLadderMarker,
   buildPlaceholder,
-  buildRepDefinition,
   buildRest,
-  buildStandaloneLoad,
-  buildStandaloneUrl,
 } from "./format-row-builders";
 import { type FormatRowResult } from "./format-row.types";
 
@@ -29,18 +24,8 @@ const buildByKind = (
       return buildExercise(row, payload.exercise, exerciseById, index);
     case "REST":
       return buildRest(payload, index);
-    case "FOOTNOTE":
-      return buildFootnote(payload, row.notes, exerciseById);
-    case "STANDALONE_LOAD":
-      return buildStandaloneLoad(payload, exerciseById, index);
-    case "STANDALONE_URL":
-      return buildStandaloneUrl(payload);
     case "PLACEHOLDER":
       return buildPlaceholder(payload);
-    case "INNER_LADDER_MARKER":
-      return buildInnerLadderMarker(payload);
-    case "REP_DEFINITION":
-      return buildRepDefinition(payload, exerciseById);
     case "REST_SLOT":
       return REST_SLOT_RESULT;
     default:
@@ -57,7 +42,7 @@ export const formatRow = (
 ): FormatRowResult => {
   const base = buildByKind(row, exerciseById, index);
 
-  if (row.notes === null || row.notes.length === 0 || row.rowPayload.rowKind === "FOOTNOTE") {
+  if (row.notes === null || row.notes.length === 0) {
     return base;
   }
 

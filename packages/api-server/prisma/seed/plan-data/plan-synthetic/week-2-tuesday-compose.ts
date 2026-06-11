@@ -3,7 +3,7 @@ import {
   alternating,
   bodyweightLoad,
   buildComposeNode,
-  compoundRepUnitReps,
+  composeGroup,
   countReps,
   dualWeight,
   ladderRep,
@@ -26,45 +26,41 @@ export const BLOCK_ALTERNATING_SETS_WK2_TUE: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    buildComposeNode(
-      {
-        order: 1,
-        subSchemas: [
-          buildComposeNode(
-            {
-              order: 1,
-              header: "Alternating Sets A",
-              rows: [
-                mkRow(
-                  1,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
-                  { load: absoluteLoad(singleWeight(75)), reps: countReps(5) },
-                ),
-              ],
-            },
-            {},
-            null,
-          ),
-          buildComposeNode(
-            {
-              order: 2,
-              header: "Alternating Sets B",
-              rows: [
-                mkRow(
-                  1,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pendlayRow } },
-                  { load: absoluteLoad(singleWeight(70)), reps: countReps(5) },
-                ),
-              ],
-            },
-            {},
-            null,
-          ),
-        ],
-      },
-      {},
-      null,
-    ),
+    composeGroup({
+      label: null,
+      members: [
+        buildComposeNode(
+          {
+            order: 1,
+            header: "Alternating Sets A",
+            rows: [
+              mkRow(
+                1,
+                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
+                { load: absoluteLoad(singleWeight(75)), reps: countReps(5) },
+              ),
+            ],
+          },
+          {},
+          null,
+        ),
+        buildComposeNode(
+          {
+            order: 2,
+            header: "Alternating Sets B",
+            rows: [
+              mkRow(
+                1,
+                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pendlayRow } },
+                { load: absoluteLoad(singleWeight(70)), reps: countReps(5) },
+              ),
+            ],
+          },
+          {},
+          null,
+        ),
+      ],
+    }),
   ],
 };
 
@@ -76,31 +72,26 @@ export const BLOCK_NESTED_ROUNDS_OVER_ROUNDS_WK2_TUE: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    buildComposeNode(
-      {
-        order: 1,
-        header: "3 outer rounds × inner",
-        subSchemas: [
-          buildComposeNode(
-            {
-              order: 1,
-              header: "inner 5 rounds",
-              rows: [
-                mkRow(
-                  1,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.thruster } },
-                  { load: absoluteLoad(singleWeight(40)), reps: countReps(10) },
-                ),
-              ],
-            },
-            { ...rounds(5), rest: REST_BETWEEN_ROUNDS_FIXED_MIN_3 },
-            null,
-          ),
-        ],
-      },
-      rounds(3),
-      null,
-    ),
+    composeGroup({
+      label: "3 rounds:",
+      members: [
+        buildComposeNode(
+          {
+            order: 1,
+            header: "inner 5 rounds",
+            rows: [
+              mkRow(
+                1,
+                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.thruster } },
+                { load: absoluteLoad(singleWeight(40)), reps: countReps(10) },
+              ),
+            ],
+          },
+          { ...rounds(5), rest: REST_BETWEEN_ROUNDS_FIXED_MIN_3 },
+          null,
+        ),
+      ],
+    }),
   ],
 };
 
@@ -112,62 +103,47 @@ export const BLOCK_NESTED_OVER_PARALLEL_LADDER_WK2_TUE: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    buildComposeNode(
-      {
-        order: 1,
-        header: "nested rounds over parallel ladder",
-        subSchemas: [
-          buildComposeNode(
-            {
-              order: 1,
-              subSchemas: [
-                buildComposeNode(
-                  {
-                    order: 1,
-                    rows: [
-                      mkRow(
-                        1,
-                        {
-                          rowKind: "EXERCISE",
-                          exercise: { form: "atomic", exerciseId: EX.dbSnatch },
-                        },
-                        {
-                          load: absoluteLoad(dualWeight(22.5)),
-                          reps: compoundRepUnitReps(),
-                          side: alternating("[ alternative ]"),
-                        },
-                      ),
-                    ],
-                  },
-                  ladderRep([9, 6, 3]),
-                  null,
-                ),
-                buildComposeNode(
-                  {
-                    order: 2,
-                    rows: [
-                      mkRow(
-                        1,
-                        {
-                          rowKind: "EXERCISE",
-                          exercise: { form: "atomic", exerciseId: EX.boxJump },
-                        },
-                        { load: bodyweightLoad(), reps: countReps(10) },
-                      ),
-                    ],
-                  },
-                  ladderRep([3, 6, 9]),
-                  null,
-                ),
-              ],
-            },
-            {},
-            null,
-          ),
-        ],
-      },
-      rounds(2),
-      null,
-    ),
+    composeGroup({
+      label: "nested rounds over parallel ladder — 2 rounds",
+      members: [
+        buildComposeNode(
+          {
+            order: 1,
+            rows: [
+              mkRow(
+                1,
+                {
+                  rowKind: "EXERCISE",
+                  exercise: { form: "atomic", exerciseId: EX.dbSnatch },
+                },
+                {
+                  load: absoluteLoad(dualWeight(22.5)),
+                  side: alternating("[ alternative ]"),
+                },
+              ),
+            ],
+          },
+          ladderRep([9, 6, 3]),
+          null,
+        ),
+        buildComposeNode(
+          {
+            order: 2,
+            rows: [
+              mkRow(
+                1,
+                {
+                  rowKind: "EXERCISE",
+                  exercise: { form: "atomic", exerciseId: EX.boxJump },
+                },
+                { load: bodyweightLoad(), reps: countReps(10) },
+              ),
+            ],
+          },
+          ladderRep([3, 6, 9]),
+          null,
+        ),
+      ],
+    }),
   ],
 };

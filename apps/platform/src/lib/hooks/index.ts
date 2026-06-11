@@ -8,6 +8,7 @@ export * from "./use-coach-dashboard";
 export * from "./use-coach-invite";
 export * from "./use-day-metadata";
 export * from "./use-exercises";
+export * from "./use-groups";
 export * from "./use-label-options";
 export * from "./use-label-search";
 export * from "./use-schema-rows";

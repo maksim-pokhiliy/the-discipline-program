@@ -31,27 +31,5 @@ export const unitBoundReps = (input: UnitBoundRepsInput): RepNotation => {
     : { kind: "unit_bound", unit: input.unit, range: input.range };
 };
 
-export type MaxRepsInput =
-  | { subForm: "bare" }
-  | { subForm: "progressive"; progressiveSeed: string }
-  | { subForm: "in_remaining_time"; targetExerciseId?: string };
-
-export const maxReps = (input: MaxRepsInput): RepNotation => {
-  if (input.subForm === "progressive") {
-    return { kind: "max", subForm: "progressive", progressiveSeed: input.progressiveSeed };
-  }
-
-  if (input.subForm === "in_remaining_time") {
-    return input.targetExerciseId === undefined
-      ? { kind: "max", subForm: "in_remaining_time" }
-      : { kind: "max", subForm: "in_remaining_time", targetExerciseId: input.targetExerciseId };
-  }
-
-  return { kind: "max", subForm: "bare" };
-};
-
-export const implicitReps = (): RepNotation => ({ kind: "implicit" });
-
-export const totalFlagReps = (value: number): RepNotation => ({ kind: "total_flag", value });
-
-export const compoundRepUnitReps = (): RepNotation => ({ kind: "compound_rep_unit" });
+export const maxReps = (tail?: string): RepNotation =>
+  tail === undefined ? { kind: "max" } : { kind: "max", tail };

@@ -11,7 +11,6 @@ export type RowOptional = {
   sequence?: CanonicalRow["sequence"];
   intensity?: CanonicalRow["intensity"];
   media?: CanonicalRow["media"];
-  compoundRep?: CanonicalRow["compoundRep"];
   notes?: CanonicalRow["notes"];
   refId?: string;
 };
@@ -33,7 +32,6 @@ export const mkRow = (
     sequence: extras.sequence ?? null,
     intensity: extras.intensity ?? null,
     media: extras.media ?? null,
-    compoundRep: extras.compoundRep ?? null,
     notes: extras.notes ?? null,
   });
 

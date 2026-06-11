@@ -1,6 +1,6 @@
 # 0040. Derive parallelism from structure + atomic parallel materialization (continues 0038/0039; partially supersedes 0037 and 0039 §B)
 
-- **Status:** Accepted (continues the ADR-0038/0039 inert-surface drain; partially supersedes ADR-0037 — `parallel` leaves the stored arrangement-axis vocabulary and becomes a derived label; partially supersedes ADR-0039 §B — the toggle-based parallel authoring path is replaced by structure)
+- **Status:** Superseded by ADR-0041 (the session-primitive model core — derived parallelism is replaced by an explicit, persisted `SchemaGroup` entity; `isStructurallyParallel`, the arrangement axis, `parentSchemaId` recursion, and `POST …/schemas/parallel` are all deleted). Originally: Accepted (continued the ADR-0038/0039 inert-surface drain; partially superseded ADR-0037 — `parallel` left the stored arrangement-axis vocabulary and became a derived label; partially superseded ADR-0039 §B — the toggle-based parallel authoring path was replaced by structure)
 - **Date:** 2026-06-10
 - **Deciders:** Maksim (owner), Claude (co-owner)
 - **Tags:** `lms`, `plan-content`, `domain-model`, `api`, `yagni`

@@ -34,6 +34,7 @@ const DAY_INCLUDE = {
               rows: { orderBy: { order: "asc" as const } },
             },
           },
+          groups: true,
         },
       },
     },

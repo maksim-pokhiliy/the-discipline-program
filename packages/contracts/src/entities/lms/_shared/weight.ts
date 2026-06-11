@@ -6,7 +6,6 @@ export const WEIGHT_VARIANTS = [
   "single_arm",
   "compound_device",
   "split_tier",
-  "dual_value",
   "with_asymmetric_arm",
   "with_depth_modifier",
 ] as const;
@@ -61,12 +60,6 @@ export const weightSchema = z.discriminatedUnion("variant", [
         }),
       )
       .min(2),
-  }),
-  z.object({
-    variant: z.literal("dual_value"),
-    first: z.number().positive(),
-    second: z.number().positive(),
-    resolver: z.literal("athlete_profile"),
   }),
   z.object({
     variant: z.literal("with_asymmetric_arm"),

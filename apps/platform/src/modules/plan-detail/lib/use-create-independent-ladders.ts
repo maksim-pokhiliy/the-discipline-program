@@ -25,7 +25,6 @@ const STEPS_PATH_FIELD = "steps";
 
 type RunArgs = {
   blockId: string;
-  parentSchemaId?: string;
   draft: ComposeContainer;
 };
 
@@ -45,9 +44,8 @@ const toErrorMessage = (error: unknown): string =>
 const trackLadderSteps = (track: ComposeContainer): number[] =>
   track.repetition?.kind === "ladder" ? track.repetition.steps : [];
 
-const buildCreateRequest = (track: ComposeContainer, blockId: string, parentSchemaId?: string) => ({
+const buildCreateRequest = (track: ComposeContainer, blockId: string) => ({
   blockId,
-  ...(parentSchemaId !== undefined && { parentSchemaId }),
   composition: { repetition: { kind: "ladder" as const, steps: trackLadderSteps(track) } },
   header: null,
   notes: null,
@@ -64,15 +62,9 @@ const coachIssuePath = (path: ZodIssue["path"], trackIndex: number): ZodIssue["p
   return typeof stepIndex === "number" ? [`${ladder}, step ${stepIndex + 1}`] : [`${ladder} steps`];
 };
 
-const validateLadderTracks = (
-  tracks: ComposeContainer[],
-  blockId: string,
-  parentSchemaId?: string,
-): string | null => {
+const validateLadderTracks = (tracks: ComposeContainer[], blockId: string): string | null => {
   for (const [trackIndex, track] of tracks.entries()) {
-    const parsed = createSchemaRequestSchema.safeParse(
-      buildCreateRequest(track, blockId, parentSchemaId),
-    );
+    const parsed = createSchemaRequestSchema.safeParse(buildCreateRequest(track, blockId));
 
     if (parsed.success) {
       continue;
@@ -99,7 +91,7 @@ export const useCreateIndependentLadders = (
   const [isPending, setIsPending] = useState(false);
 
   const run = async (
-    { blockId, parentSchemaId, draft }: RunArgs,
+    { blockId, draft }: RunArgs,
     { onSuccess, onError }: RunOptions,
   ): Promise<void> => {
     const tracks = collectTrackChildren(draft);
@@ -110,7 +102,7 @@ export const useCreateIndependentLadders = (
       return;
     }
 
-    const validationError = validateLadderTracks(tracks, blockId, parentSchemaId);
+    const validationError = validateLadderTracks(tracks, blockId);
 
     if (validationError !== null) {
       onError(validationError);
@@ -120,13 +112,19 @@ export const useCreateIndependentLadders = (
 
     setIsPending(true);
 
+    const idempotencyBaseKey = draft.id;
+
     let failureMessage: string | null = null;
     let createdCount = 0;
 
     try {
-      for (const track of tracks) {
+      for (const [trackIndex, track] of tracks.entries()) {
         try {
-          await api.schemas.create(planId, buildCreateRequest(track, blockId, parentSchemaId));
+          await api.schemas.create(
+            planId,
+            buildCreateRequest(track, blockId),
+            `${idempotencyBaseKey}:${trackIndex}`,
+          );
           createdCount += 1;
         } catch (error) {
           failureMessage = toErrorMessage(error);

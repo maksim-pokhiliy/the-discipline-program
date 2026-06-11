@@ -20,10 +20,10 @@ const getKindButton = (name: string): HTMLElement => screen.getByRole("button", 
 const getSpinButtons = (): HTMLElement[] => screen.getAllByRole("spinbutton");
 
 describe("RepNotationEditor kind segment", () => {
-  it("renders all 7 rep-notation kind buttons", () => {
+  it("renders all 4 rep-notation kind buttons", () => {
     render(<RepNotationEditor value={{ kind: "count", value: 5 }} onChange={onChange} />);
 
-    for (const label of ["Count", "Range", "Time/Dist", "Max", "Implicit", "Total", "Compound"]) {
+    for (const label of ["Count", "Range", "Time/Dist", "Max"]) {
       expect(getKindButton(label)).toBeInTheDocument();
     }
   });
@@ -49,65 +49,25 @@ describe("RepNotationEditor kind segment", () => {
 
     fireEvent.click(getKindButton("Max"));
 
-    expect(onChange).toHaveBeenCalledWith({ kind: "max", subForm: "bare" });
-  });
-
-  it("rebuilds to the total_flag default when switching to Total", () => {
-    render(<RepNotationEditor value={{ kind: "count", value: 5 }} onChange={onChange} />);
-
-    fireEvent.click(getKindButton("Total"));
-
-    expect(onChange).toHaveBeenCalledWith({ kind: "total_flag", value: 100 });
-  });
-
-  it("rebuilds to the bare implicit kind when switching to Implicit", () => {
-    render(<RepNotationEditor value={{ kind: "count", value: 5 }} onChange={onChange} />);
-
-    fireEvent.click(getKindButton("Implicit"));
-
-    expect(onChange).toHaveBeenCalledWith({ kind: "implicit" });
-  });
-
-  it("rebuilds to the bare compound_rep_unit kind when switching to Compound", () => {
-    render(<RepNotationEditor value={{ kind: "count", value: 5 }} onChange={onChange} />);
-
-    fireEvent.click(getKindButton("Compound"));
-
-    expect(onChange).toHaveBeenCalledWith({ kind: "compound_rep_unit" });
+    expect(onChange).toHaveBeenCalledWith({ kind: "max" });
   });
 });
 
-describe("RepNotationEditor max sub-form", () => {
-  it("reveals the progressive seed field only when the progressive sub-form is picked", () => {
-    render(
-      <RepNotationEditor value={{ kind: "max", subForm: "progressive" }} onChange={onChange} />,
-    );
-
-    expect(screen.getByPlaceholderText("e.g. 3-3-3-2-2-1-1")).toBeInTheDocument();
-  });
-
+describe("RepNotationEditor max tail", () => {
   it("does not render the target-exercise field for the max kind (D-07)", () => {
-    render(<RepNotationEditor value={{ kind: "max", subForm: "bare" }} onChange={onChange} />);
+    render(<RepNotationEditor value={{ kind: "max" }} onChange={onChange} />);
 
     expect(screen.queryByText(/target exercise/i)).toBeNull();
   });
-});
 
-describe("RepNotationEditor implicit and compound hints", () => {
-  it("shows the implicit hint copy for the implicit kind", () => {
-    render(<RepNotationEditor value={{ kind: "implicit" }} onChange={onChange} />);
+  it("emits a tail on the max kind when the tail field is typed", () => {
+    render(<RepNotationEditor value={{ kind: "max" }} onChange={onChange} />);
 
-    expect(
-      screen.getByText("no reps written — defined by surrounding context (ladder marker, etc.)"),
-    ).toBeInTheDocument();
-  });
+    fireEvent.change(screen.getByPlaceholderText("e.g. in remaining time"), {
+      target: { value: "in remaining time" },
+    });
 
-  it("shows the compound hint copy for the compound_rep_unit kind", () => {
-    render(<RepNotationEditor value={{ kind: "compound_rep_unit" }} onChange={onChange} />);
-
-    expect(
-      screen.getByText("a single rep is defined elsewhere via REP_DEFINITION row."),
-    ).toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith({ kind: "max", tail: "in remaining time" });
   });
 });
 
@@ -136,22 +96,6 @@ describe("RepNotationEditor leaf-field-clear surfaces inline (QA-MT4, QA-001)", 
 
     render(
       <RepNotationEditor value={{ kind: "count", value: 0 }} onChange={onChange} error={error} />,
-    );
-
-    expect(screen.getByText("Number must be greater than 0")).toBeInTheDocument();
-  });
-
-  it("renders the too-small message on the total_flag field when value is 0", () => {
-    const error: FieldErrors<RepNotation> = {
-      value: { type: "too_small", message: "Number must be greater than 0" },
-    };
-
-    render(
-      <RepNotationEditor
-        value={{ kind: "total_flag", value: 0 }}
-        onChange={onChange}
-        error={error}
-      />,
     );
 
     expect(screen.getByText("Number must be greater than 0")).toBeInTheDocument();

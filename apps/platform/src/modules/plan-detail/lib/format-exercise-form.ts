@@ -7,15 +7,8 @@ const UNKNOWN_EXERCISE_FALLBACK = "—";
 const PLACEHOLDER_NAME_FALLBACK = "(placeholder)";
 const COMPOUND_REP_SEPARATOR = " × ";
 const COMPOUND_JOIN = " + ";
-const CYCLICAL_ARROW = " ↔ ";
-const SANDWICH_ARROW = " → ";
 const OR_ALTERNATIVE_INFIX = " · or · ";
 const COMPOUND_SUB_LABEL = "compound row";
-const CYCLICAL_SUB_PREFIX = "cyclical · ";
-const CYCLICAL_REPS_JOIN = ", ";
-const CYCLICAL_REPS_ARROW = "↔";
-const CYCLICAL_REPS_FALLBACK = "?";
-const SANDWICH_SUB_LABEL = "sandwich compound";
 const PLACEHOLDER_SUB_LABEL = "placeholder";
 const PURPOSE_UNDERSCORE_RE = /_/g;
 const PURPOSE_REPLACEMENT = " ";
@@ -60,51 +53,6 @@ export const formatExerciseForm = (
         .join(COMPOUND_JOIN);
 
       return { name, sub: [COMPOUND_SUB_LABEL] };
-    }
-    case "cyclical": {
-      const primary = lookupName(
-        form.cyclical.primaryExerciseId,
-        exerciseById,
-        UNKNOWN_EXERCISE_FALLBACK,
-      );
-      const secondary = lookupName(
-        form.cyclical.secondaryExerciseId,
-        exerciseById,
-        UNKNOWN_EXERCISE_FALLBACK,
-      );
-      const cycles = form.cyclical.cycles
-        .map(
-          (cycle) =>
-            `${cycle.primaryReps ?? CYCLICAL_REPS_FALLBACK}${CYCLICAL_REPS_ARROW}${cycle.secondaryReps}`,
-        )
-        .join(CYCLICAL_REPS_JOIN);
-
-      return {
-        name: `${primary}${CYCLICAL_ARROW}${secondary}`,
-        sub: [`${CYCLICAL_SUB_PREFIX}${cycles}`],
-      };
-    }
-    case "sandwich": {
-      const opening = lookupName(
-        form.sandwich.opening.exerciseId,
-        exerciseById,
-        UNKNOWN_EXERCISE_FALLBACK,
-      );
-      const middle = lookupName(
-        form.sandwich.middle.exerciseId,
-        exerciseById,
-        UNKNOWN_EXERCISE_FALLBACK,
-      );
-      const closing = lookupName(
-        form.sandwich.closing.exerciseId,
-        exerciseById,
-        UNKNOWN_EXERCISE_FALLBACK,
-      );
-
-      return {
-        name: `${opening}${SANDWICH_ARROW}${middle}${SANDWICH_ARROW}${closing}`,
-        sub: [SANDWICH_SUB_LABEL],
-      };
     }
     case "or_alternative": {
       const primary = lookupName(

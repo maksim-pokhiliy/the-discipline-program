@@ -53,11 +53,8 @@ describe("shouldBeContainer", () => {
     expect(shouldBeContainer(baseContainer({ children: oneChild() }))).toBe(false);
   });
 
-  it("returns false for an empty container with once/ordered axes", () => {
-    const container = baseContainer({
-      repetition: { kind: "once" },
-      arrangement: { kind: "ordered" },
-    });
+  it("returns false for an empty container with a once repetition", () => {
+    const container = baseContainer({ repetition: { kind: "once" } });
 
     expect(shouldBeContainer(container)).toBe(false);
   });
@@ -65,18 +62,6 @@ describe("shouldBeContainer", () => {
   it("returns true when repetition carries a non-once scheme", () => {
     const container = baseContainer({
       repetition: { kind: "count", count: 5 },
-      children: oneChild(),
-    });
-
-    expect(shouldBeContainer(container)).toBe(true);
-  });
-
-  it("returns true when arrangement is non-ordered", () => {
-    const container = baseContainer({
-      arrangement: {
-        kind: "superset",
-        pairs: [{ label: "A", rowIds: [asNodeId("predicate-ref-1"), asNodeId("predicate-ref-2")] }],
-      },
       children: oneChild(),
     });
 

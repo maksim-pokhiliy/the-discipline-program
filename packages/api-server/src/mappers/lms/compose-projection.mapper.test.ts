@@ -14,21 +14,17 @@ import {
 const cuidFran = "clz000000000000000000fran";
 const cuidThrusters = "clz00000000000000000thrust";
 const cuidPullups = "clz00000000000000000pullup";
-const cuidMarkerRow = "clz0000000000000markerrow1";
 const cuidNullNode = "clz0000000000000000nullnod";
 const cuidBlock = "clz00000000000000000block1";
-const cuidOuter = "clz0000000000000000outer01";
-const cuidInnerLadder = "clz0000000000000innerladd1";
-const cuidSuperset = "clz0000000000000superset01";
-const cuidDangA = "clz0000000000000danglinga1";
-const cuidDangB = "clz0000000000000danglingb1";
+const cuidGroup = "clz00000000000000000group1";
+const cuidRestSlotRow = "clz000000000000000restslot";
 
 const NOW = new Date("2026-06-03T12:00:00Z");
 
 const makeSchema = (overrides: Partial<Schema>): Schema => ({
   id: cuidFran,
   blockId: cuidBlock,
-  parentSchemaId: null,
+  groupId: null,
   order: 10,
   header: null,
   intensity: null,
@@ -54,18 +50,17 @@ const makeExerciseRow = (id: string): SchemaRow => ({
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
 });
 
-const makeLadderMarkerRow = (id: string, steps: number[]): SchemaRow => ({
+const makeRestSlotRow = (id: string): SchemaRow => ({
   id,
   schemaId: cuidFran,
-  order: 10,
-  rowKind: "INNER_LADDER_MARKER",
-  rowPayload: { rowKind: "INNER_LADDER_MARKER", steps },
+  order: 20,
+  rowKind: "REST_SLOT",
+  rowPayload: { rowKind: "REST_SLOT" },
   load: null,
   reps: null,
   side: null,
@@ -74,7 +69,6 @@ const makeLadderMarkerRow = (id: string, steps: number[]): SchemaRow => ({
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -82,70 +76,54 @@ const makeLadderMarkerRow = (id: string, steps: number[]): SchemaRow => ({
 
 const franComposition: Composition = {
   repetition: { kind: "ladder", steps: [21, 15, 9] },
-  arrangement: { kind: "ordered" },
 };
 
 const franNode: SchemaWithBody = {
   schema: makeSchema({ id: cuidFran, header: "Fran", composition: franComposition }),
   rows: [makeExerciseRow(cuidThrusters), makeExerciseRow(cuidPullups)],
-  subSchemas: [],
 };
 
-const collisionNode: SchemaWithBody = {
+const groupedMemberNode: SchemaWithBody = {
   schema: makeSchema({
     id: cuidFran,
-    header: "Collision",
-    composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+    groupId: cuidGroup,
+    header: "Track A",
+    composition: { repetition: { kind: "ladder", steps: [9, 6, 3] } },
   }),
-  rows: [makeLadderMarkerRow(cuidMarkerRow, [21, 15, 9])],
-  subSchemas: [],
+  rows: [makeExerciseRow(cuidThrusters)],
+};
+
+const restCompositionNode: SchemaWithBody = {
+  schema: makeSchema({
+    id: cuidFran,
+    header: "EMOM",
+    composition: {
+      repetition: { kind: "cadence", everyMin: 1, rounds: 12 },
+      rest: { duration: { value: 30, unit: "sec" }, scope: "between_sets" },
+    },
+  }),
+  rows: [makeRestSlotRow(cuidRestSlotRow)],
 };
 
 const nullCompositionNode: SchemaWithBody = {
   schema: makeSchema({ id: cuidNullNode, header: null, composition: null }),
   rows: [makeExerciseRow(cuidThrusters)],
-  subSchemas: [],
 };
 
-const nestedLadderCollisionNode: SchemaWithBody = {
-  schema: makeSchema({ id: cuidOuter, header: "Outer", composition: {} }),
-  rows: [],
-  subSchemas: [
-    {
-      schema: makeSchema({
-        id: cuidInnerLadder,
-        header: "Inner ladder",
-        composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-      }),
-      rows: [makeLadderMarkerRow(cuidMarkerRow, [21, 15, 9])],
-      subSchemas: [],
-    },
-  ],
-};
-
-const danglingSupersetNode: SchemaWithBody = {
+const malformedLadderNode: SchemaWithBody = {
   schema: makeSchema({
-    id: cuidSuperset,
-    header: "Superset",
-    composition: {
-      arrangement: { kind: "superset", pairs: [{ label: "A", rowIds: [cuidDangA, cuidDangB] }] },
-    },
+    id: cuidFran,
+    header: "Malformed",
+    composition: { repetition: { kind: "ladder", steps: [] } } as Composition,
   }),
-  rows: [makeExerciseRow(cuidThrusters), makeExerciseRow(cuidPullups)],
-  subSchemas: [],
+  rows: [makeExerciseRow(cuidThrusters)],
 };
 
 describe("projectSchemaWithBody", () => {
-  it("projects a valid ladder container without throwing and drops the legacy Schema fields", () => {
+  it("projects a valid flat container with row children only and drops the legacy Schema fields", () => {
     expect(() => assertComposeTreeValid(franNode)).not.toThrow();
 
     const projected = projectSchemaWithBody(franNode);
-
-    expect(projected.nodeType).toBe("container");
-
-    if (projected.nodeType !== "container") {
-      return;
-    }
 
     expect(projected).toEqual({
       nodeType: "container",
@@ -191,18 +169,33 @@ describe("projectSchemaWithBody", () => {
 
     expect(projected.children).toHaveLength(2);
     expect(projected).not.toHaveProperty("schemaId");
-    expect(projected).not.toHaveProperty("archetypeParams");
+    expect(projected).not.toHaveProperty("groupId");
     expect(projected).not.toHaveProperty("createdAt");
+  });
+
+  it("projects a group member schema the same as any other flat container (groupId is not part of the tree)", () => {
+    expect(() => assertComposeTreeValid(groupedMemberNode)).not.toThrow();
+
+    const projected = projectSchemaWithBody(groupedMemberNode);
+
+    expect(projected.nodeType).toBe("container");
+    expect(projected).not.toHaveProperty("groupId");
+    expect(projected.children).toHaveLength(1);
+    expect(projected.children[0]?.id).toBe(cuidThrusters);
+  });
+
+  it("carries the rest axis through onto the projected container composition", () => {
+    const projected = projectSchemaWithBody(restCompositionNode);
+
+    expect(projected.composition).toEqual({
+      repetition: { kind: "cadence", everyMin: 1, rounds: 12 },
+      rest: { duration: { value: 30, unit: "sec" }, scope: "between_sets" },
+    });
+    expect(() => assertComposeTreeValid(restCompositionNode)).not.toThrow();
   });
 
   it("lifts a null per-node composition to an empty-but-valid bundle and validates", () => {
     const projected = projectSchemaWithBody(nullCompositionNode);
-
-    expect(projected.nodeType).toBe("container");
-
-    if (projected.nodeType !== "container") {
-      return;
-    }
 
     expect(projected.composition).toEqual({});
     expect(() => assertComposeTreeValid(nullCompositionNode)).not.toThrow();
@@ -210,11 +203,11 @@ describe("projectSchemaWithBody", () => {
 });
 
 describe("assertComposeTreeValid", () => {
-  it("throws an InternalServerError with DbCorruption detail on a ladder collision", () => {
-    expect(() => assertComposeTreeValid(collisionNode)).toThrow(InternalServerError);
+  it("throws an InternalServerError with DbCorruption detail on a malformed composition", () => {
+    expect(() => assertComposeTreeValid(malformedLadderNode)).toThrow(InternalServerError);
 
     try {
-      assertComposeTreeValid(collisionNode);
+      assertComposeTreeValid(malformedLadderNode);
     } catch (error) {
       expect(error).toBeInstanceOf(InternalServerError);
 
@@ -227,49 +220,14 @@ describe("assertComposeTreeValid", () => {
       }
     }
   });
-
-  it("surfaces a row-child collision on a ladder container nested at depth 2 (the marker is always a row child)", () => {
-    expect(() => assertComposeTreeValid(nestedLadderCollisionNode)).toThrow(InternalServerError);
-
-    const innerLadder = nestedLadderCollisionNode.subSchemas[0];
-
-    expect(innerLadder?.schema.composition?.repetition?.kind).toBe("ladder");
-    expect(innerLadder?.rows[0]?.rowKind).toBe("INNER_LADDER_MARKER");
-  });
-
-  it("flattens rows and sub-schemas into one children array, so a row marker collides regardless of slot", () => {
-    const projectedInner = projectSchemaWithBody({
-      schema: makeSchema({
-        id: cuidInnerLadder,
-        composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-      }),
-      rows: [makeLadderMarkerRow(cuidMarkerRow, [21, 15, 9])],
-      subSchemas: [],
-    });
-
-    expect(projectedInner.nodeType).toBe("container");
-
-    if (projectedInner.nodeType !== "container") {
-      return;
-    }
-
-    expect(projectedInner.children).toHaveLength(1);
-    expect(projectedInner.children[0]?.nodeType).toBe("row");
-
-    const markerChild = projectedInner.children[0];
-
-    expect(markerChild?.nodeType === "row" && markerChild.rowPayload.rowKind).toBe(
-      "INNER_LADDER_MARKER",
-    );
-  });
 });
 
 describe("assertComposeTreeValidForWrite", () => {
-  it("throws BadRequestError (400) on a ladder collision", () => {
-    expect(() => assertComposeTreeValidForWrite(collisionNode)).toThrow(BadRequestError);
+  it("throws BadRequestError (400) on a malformed composition", () => {
+    expect(() => assertComposeTreeValidForWrite(malformedLadderNode)).toThrow(BadRequestError);
 
     try {
-      assertComposeTreeValidForWrite(collisionNode);
+      assertComposeTreeValidForWrite(malformedLadderNode);
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestError);
 
@@ -282,28 +240,8 @@ describe("assertComposeTreeValidForWrite", () => {
       }
     }
   });
-});
 
-describe("assertComposeTreeValid — arrangement reference existence is NOT validated (QA-004)", () => {
-  it("projects and validates a superset whose rowIds reference non-existent rows without throwing", () => {
-    expect(() => assertComposeTreeValid(danglingSupersetNode)).not.toThrow();
-
-    const projected = projectSchemaWithBody(danglingSupersetNode);
-
-    expect(projected.nodeType).toBe("container");
-
-    if (projected.nodeType !== "container") {
-      return;
-    }
-
-    expect(projected.composition.arrangement?.kind).toBe("superset");
-
-    if (projected.composition.arrangement?.kind !== "superset") {
-      return;
-    }
-
-    expect(projected.composition.arrangement.pairs[0]?.rowIds).toEqual([cuidDangA, cuidDangB]);
-    expect(projected.children.some((child) => child.id === cuidDangA)).toBe(false);
-    expect(projected.children.some((child) => child.id === cuidDangB)).toBe(false);
+  it("accepts a well-formed flat ladder container on the write path", () => {
+    expect(() => assertComposeTreeValidForWrite(franNode)).not.toThrow();
   });
 });

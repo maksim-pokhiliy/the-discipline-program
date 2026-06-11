@@ -43,13 +43,8 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       ).toBe(true);
     });
 
-    it("absolute / dual_value M/F 24/16 (data.js:184 — Mon STANDALONE_LOAD)", () => {
-      expect(
-        loadSchema.safeParse({
-          kind: "absolute",
-          weight: { variant: "dual_value", first: 24, second: 16, resolver: "athlete_profile" },
-        }).success,
-      ).toBe(true);
+    it("byProfile M/F 24/16 (data.js:184 — Mon M/F dumbbell pair, ex-dual_value)", () => {
+      expect(loadSchema.safeParse({ kind: "byProfile", first: 24, second: 16 }).success).toBe(true);
     });
 
     it("percentage with value + rangeMax + self ref (data.js:91 — Mon back squat 60-85%)", () => {
@@ -67,8 +62,8 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       expect(loadSchema.safeParse({ kind: "bodyweight" }).success).toBe(true);
     });
 
-    it("unspecified (data.js:651 — Fri snatch warm-up)", () => {
-      expect(loadSchema.safeParse({ kind: "unspecified" }).success).toBe(true);
+    it("none (data.js:651 — Fri snatch warm-up, ex-unspecified)", () => {
+      expect(loadSchema.safeParse({ kind: "none" }).success).toBe(true);
     });
   });
 
@@ -93,22 +88,14 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       ).toBe(true);
     });
 
-    it("max bare (data.js:367 — Tue deadlift wave stage 3)", () => {
-      expect(repNotationSchema.safeParse({ kind: "max", subForm: "bare" }).success).toBe(true);
+    it("max bare (data.js:367 — Tue deadlift wave top set)", () => {
+      expect(repNotationSchema.safeParse({ kind: "max" }).success).toBe(true);
     });
 
-    it("max progressive + progressiveSeed (data.js:650 — Fri snatch)", () => {
-      expect(
-        repNotationSchema.safeParse({
-          kind: "max",
-          subForm: "progressive",
-          progressiveSeed: "3-3-3-2-2-1-1",
-        }).success,
-      ).toBe(true);
-    });
-
-    it("implicit (data.js:224 — Mon Fran ladder)", () => {
-      expect(repNotationSchema.safeParse({ kind: "implicit" }).success).toBe(true);
+    it("max with free-text tail (data.js:650 — Fri snatch progression, ex-progressiveSeed)", () => {
+      expect(repNotationSchema.safeParse({ kind: "max", tail: "3-3-3-2-2-1-1" }).success).toBe(
+        true,
+      );
     });
   });
 
@@ -217,12 +204,17 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
   });
 
   describe("MediaReference", () => {
-    it("inline / current_row (data.js:227 — Mon Fran thruster URL)", () => {
+    it("url only (data.js:227 — Mon Fran thruster URL)", () => {
+      expect(
+        mediaReferenceSchema.safeParse({ url: "https://example.com/demo/thruster" }).success,
+      ).toBe(true);
+    });
+
+    it("url + label", () => {
       expect(
         mediaReferenceSchema.safeParse({
           url: "https://example.com/demo/thruster",
-          position: "inline",
-          appliesTo: "current_row",
+          label: "thruster demo",
         }).success,
       ).toBe(true);
     });
@@ -249,24 +241,18 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       ).toBe(true);
     });
 
-    it("sandwich with sharedModifiers.load dual_value (data.js:694-708 — Sat DT)", () => {
+    it("compound DT (data.js:694-708 — Sat DT, ex-sandwich) with byProfile shared load", () => {
       expect(
         exerciseFormSchema.safeParse({
-          form: "sandwich",
-          sandwich: {
-            opening: { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 12 } },
-            middle: { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 9 } },
-            closing: { exerciseId: CUID_TERTIARY, reps: { kind: "count", value: 6 } },
+          form: "compound",
+          compound: {
+            elements: [
+              { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 12 } },
+              { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 9 } },
+              { exerciseId: CUID_TERTIARY, reps: { kind: "count", value: 6 } },
+            ],
             sharedModifiers: {
-              load: {
-                kind: "absolute",
-                weight: {
-                  variant: "dual_value",
-                  first: 70,
-                  second: 47,
-                  resolver: "athlete_profile",
-                },
-              },
+              load: { kind: "byProfile", first: 70, second: 47 },
             },
           },
         }).success,

@@ -20,20 +20,6 @@ const repetitionContainer = (repetition: RepetitionAxis): ComposeContainer =>
   container({ repetition });
 
 describe("composeContainerToComposition flat repetition mapping", () => {
-  it("emits an empty composition for a bare container with an ordered arrangement", () => {
-    expect(composeContainerToComposition(container({ arrangement: { kind: "ordered" } }))).toEqual(
-      {},
-    );
-  });
-
-  it("never carries arrangement into the flat composition (it is folded elsewhere)", () => {
-    const composition = composeContainerToComposition(
-      container({ arrangement: { kind: "ordered" } }),
-    );
-
-    expect(composition).not.toHaveProperty("arrangement");
-  });
-
   it("round-trips a count repetition as a number", () => {
     expect(composeContainerToComposition(repetitionContainer({ kind: "count", count: 5 }))).toEqual(
       {
@@ -82,15 +68,7 @@ describe("composeContainerToComposition flat repetition mapping", () => {
     expect(composition).toEqual({ rest });
   });
 
-  it("emits a carried interleaveOrder byte-for-byte", () => {
-    const composition = composeContainerToComposition(
-      container({ interleaveOrder: "track_by_track" }),
-    );
-
-    expect(composition).toEqual({ interleaveOrder: "track_by_track" });
-  });
-
-  it("emits exactly {} for a bare container without an interleaveOrder", () => {
+  it("emits exactly {} for a bare container with no axes", () => {
     expect(composeContainerToComposition(container({}))).toEqual({});
   });
 });
@@ -108,14 +86,6 @@ describe("composeContainerToComposition produces contract-valid compositions", (
 
   it.each(valid)("safeParse accepts the composition for %j", (repetition) => {
     const composition = composeContainerToComposition(repetitionContainer(repetition));
-
-    expect(compositionSchema.safeParse(composition).success).toBe(true);
-  });
-
-  it("safeParse accepts a composition carrying an interleaveOrder", () => {
-    const composition = composeContainerToComposition(
-      container({ interleaveOrder: "round_by_round" }),
-    );
 
     expect(compositionSchema.safeParse(composition).success).toBe(true);
   });

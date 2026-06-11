@@ -16,8 +16,8 @@ import {
 import { prisma } from "../../../db/client";
 import {
   assertComposeTreeValidForWrite,
-  buildSchemaSubtree,
   mapToSchemaRow,
+  mapToSchemaWithBody,
 } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034, toInputJson } from "../../../utils";
 
@@ -57,8 +57,6 @@ export const lmsSchemaRowApi = {
             const parent = await tx.schema.findUnique({
               where: { id: data.schemaId },
               select: {
-                id: true,
-                blockId: true,
                 block: {
                   select: {
                     session: {
@@ -96,17 +94,16 @@ export const lmsSchemaRowApi = {
                 sequence: marshalNullableJson(data.sequence),
                 intensity: marshalNullableJson(data.intensity),
                 media: marshalNullableJson(data.media),
-                compoundRep: marshalNullableJson(data.compoundRep),
                 notes: data.notes ?? null,
               },
             });
 
-            const flat = await tx.schema.findMany({
-              where: { blockId: parent.blockId },
+            const schemaWithRows = await tx.schema.findUniqueOrThrow({
+              where: { id: data.schemaId },
               include: { rows: { orderBy: { order: "asc" } } },
             });
 
-            assertComposeTreeValidForWrite(buildSchemaSubtree(flat, data.schemaId));
+            assertComposeTreeValidForWrite(mapToSchemaWithBody(schemaWithRows));
 
             return createdRow;
           },
@@ -143,7 +140,7 @@ export const lmsSchemaRowApi = {
 
       const current = await prisma.schemaRow.findUnique({
         where: { id: schemaRowId },
-        select: { rowKind: true, schema: { select: { id: true, blockId: true } } },
+        select: { rowKind: true, schema: { select: { id: true } } },
       });
 
       if (!current) {
@@ -152,11 +149,11 @@ export const lmsSchemaRowApi = {
 
       assertRowKindPayloadAlignment(current.rowKind, nextRowPayload.rowKind);
 
-      const flat = await prisma.schema.findMany({
-        where: { blockId: current.schema.blockId },
+      const schemaWithRows = await prisma.schema.findUniqueOrThrow({
+        where: { id: current.schema.id },
         include: { rows: { orderBy: { order: "asc" } } },
       });
-      const node = buildSchemaSubtree(flat, current.schema.id);
+      const node = mapToSchemaWithBody(schemaWithRows);
 
       assertComposeTreeValidForWrite({
         ...node,
@@ -179,9 +176,6 @@ export const lmsSchemaRowApi = {
           ...(data.sequence !== undefined && { sequence: marshalNullableJson(data.sequence) }),
           ...(data.intensity !== undefined && { intensity: marshalNullableJson(data.intensity) }),
           ...(data.media !== undefined && { media: marshalNullableJson(data.media) }),
-          ...(data.compoundRep !== undefined && {
-            compoundRep: marshalNullableJson(data.compoundRep),
-          }),
           ...(data.notes !== undefined && { notes: data.notes }),
         },
       });

@@ -1,7 +1,6 @@
 import { type SchemaRow as PrismaSchemaRow } from "@prisma/client";
 
 import {
-  compoundRepDefinitionSchema,
   intensitySchema,
   loadSchema,
   mediaReferenceSchema,
@@ -26,7 +25,6 @@ export const mapToSchemaRow = (r: PrismaSchemaRow): SchemaRow => ({
   sequence: r.sequence === null ? null : sequenceIndicatorSchema.parse(r.sequence),
   intensity: r.intensity === null ? null : intensitySchema.parse(r.intensity),
   media: r.media === null ? null : mediaReferenceSchema.parse(r.media),
-  compoundRep: r.compoundRep === null ? null : compoundRepDefinitionSchema.parse(r.compoundRep),
   notes: r.notes,
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,

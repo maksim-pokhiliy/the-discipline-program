@@ -102,7 +102,7 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   schema: {
     id: "clp9z8x7w0000abcd1234sch1",
     blockId: BLOCK_ID,
-    parentSchemaId: null,
+    groupId: null,
     order: 1,
     header: null,
     intensity: null,
@@ -114,7 +114,6 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     ...overrides,
   },
   rows: [],
-  subSchemas: [],
 });
 
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
@@ -126,6 +125,7 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   notes: null,
   labels: [],
   schemas: [],
+  groups: [],
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,

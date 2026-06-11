@@ -9,7 +9,6 @@ import { WeightAsymmetricArmFields } from "./weight-asymmetric-arm-fields";
 import { WeightCompoundDeviceFields } from "./weight-compound-device-fields";
 import { WeightDepthModifierFields } from "./weight-depth-modifier-fields";
 import { WeightDualFields } from "./weight-dual-fields";
-import { WeightDualValueFields } from "./weight-dual-value-fields";
 import { buildDefaultWeight } from "./weight-load-defaults";
 import { WeightSingleArmFields } from "./weight-single-arm-fields";
 import { WeightSingleFields } from "./weight-single-fields";
@@ -21,7 +20,6 @@ const WEIGHT_VARIANT_LABELS: Record<WeightVariant, string> = {
   single_arm: "Single arm",
   compound_device: "Compound device",
   split_tier: "Split tier",
-  dual_value: "Dual value",
   with_asymmetric_arm: "Asymmetric arm",
   with_depth_modifier: "With depth",
 };
@@ -69,15 +67,6 @@ export const WeightEditor = ({ value, onChange, error, disabled = false }: Weigh
       case "split_tier":
         return (
           <WeightSplitTierFields
-            value={value}
-            onChange={onChange}
-            error={error}
-            disabled={disabled}
-          />
-        );
-      case "dual_value":
-        return (
-          <WeightDualValueFields
             value={value}
             onChange={onChange}
             error={error}

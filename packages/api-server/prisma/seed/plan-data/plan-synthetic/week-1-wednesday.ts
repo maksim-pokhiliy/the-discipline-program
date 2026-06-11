@@ -10,7 +10,6 @@ import {
   restBetweenRounds,
   rounds,
   singleWeight,
-  totalFlagReps,
   unitBoundReps,
 } from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
@@ -77,50 +76,41 @@ const BLOCK_COMPOSITE_INT_THEN_ROUNDS_WK1_WED: CanonicalBlock = {
             { reps: unitBoundReps({ unit: "min", value: 1 }) },
           ),
         ],
-        subSchemas: [
-          buildComposeNode(
+      },
+      { repetition: { kind: "interval", workMin: 1, offMin: 1, count: 4 } },
+      null,
+    ),
+    buildComposeNode(
+      {
+        order: 2,
+        header: null,
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.kbSwing } },
+            { load: absoluteLoad(singleWeight(24)), reps: countReps(15) },
+          ),
+          mkRow(
+            2,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
             {
-              order: 1,
-              rows: [
-                mkRow(
-                  1,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.kbSwing } },
-                  { load: absoluteLoad(singleWeight(24)), reps: countReps(15) },
-                ),
-                mkRow(
-                  2,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
-                  {
-                    load: bodyweightLoad(),
-                    reps: countReps(10),
-                    media: mediaReference({
-                      url: "https://example.com/demo/box-jump",
-                      position: "inline",
-                      appliesTo: "current_row",
-                    }),
-                  },
-                ),
-                mkRow(
-                  3,
-                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-                  {
-                    load: bodyweightLoad(),
-                    reps: countReps(10),
-                    media: mediaReference({
-                      url: "https://example.com/demo/burpee-follow",
-                      position: "inline",
-                      appliesTo: "previous_row",
-                    }),
-                  },
-                ),
-              ],
+              load: bodyweightLoad(),
+              reps: countReps(10),
+              media: mediaReference({ url: "https://example.com/demo/box-jump" }),
             },
-            { repetition: { kind: "count", count: 3 } },
-            null,
+          ),
+          mkRow(
+            3,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
+            {
+              load: bodyweightLoad(),
+              reps: countReps(10),
+              media: mediaReference({ url: "https://example.com/demo/burpee-follow" }),
+            },
           ),
         ],
       },
-      { repetition: { kind: "interval", workMin: 1, offMin: 1, count: 4 } },
+      { repetition: { kind: "count", count: 3 } },
       null,
     ),
   ],
@@ -170,7 +160,7 @@ const BLOCK_COMPOSITE_INT_WR_PROG_WK1_WED: CanonicalBlock = {
           mkRow(
             1,
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.skiCal } },
-            { reps: totalFlagReps(60) },
+            { reps: countReps(60) },
           ),
         ],
       },

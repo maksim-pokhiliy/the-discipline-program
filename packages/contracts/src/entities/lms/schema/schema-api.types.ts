@@ -1,8 +1,6 @@
 import { type z } from "zod";
 
 import {
-  type createParallelSchemasRequestSchema,
-  type createParallelSchemasResponseSchema,
   type createSchemaRequestSchema,
   type createSchemaResponseSchema,
   type deleteSchemaParamsSchema,
@@ -23,8 +21,6 @@ export type SchemaByPlanParams = z.infer<typeof schemaByPlanParamsSchema>;
 export type SchemaByIdParams = z.infer<typeof schemaByIdParamsSchema>;
 export type CreateSchemaRequest = z.infer<typeof createSchemaRequestSchema>;
 export type CreateSchemaResponse = z.infer<typeof createSchemaResponseSchema>;
-export type CreateParallelSchemasRequest = z.infer<typeof createParallelSchemasRequestSchema>;
-export type CreateParallelSchemasResponse = z.infer<typeof createParallelSchemasResponseSchema>;
 export type UpdateSchemaParams = z.infer<typeof updateSchemaParamsSchema>;
 export type UpdateSchemaRequest = z.infer<typeof updateSchemaRequestSchema>;
 export type UpdateSchemaResponse = z.infer<typeof updateSchemaResponseSchema>;

@@ -5,7 +5,6 @@ import {
   countReps,
   dualWeight,
   eachLeg,
-  implicitReps,
   restBetweenSets,
   singleWeight,
 } from "../builder";
@@ -47,11 +46,6 @@ const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
             raw: "Rest 2 min between sets",
             parsed: REST_BETWEEN_SETS_FIXED_MIN,
           }),
-          mkRow(4, {
-            rowKind: "STANDALONE_LOAD",
-            load: absoluteLoad(dualWeight(20)),
-            scope: "applies_to_all_preceding_rows",
-          }),
         ],
       },
       {
@@ -83,18 +77,17 @@ const BLOCK_LADDER_DESC_WK1_MON: CanonicalBlock = {
           mkRow(
             1,
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.airSquat } },
-            { load: bodyweightLoad(), reps: implicitReps() },
+            { load: bodyweightLoad() },
           ),
           mkRow(
             2,
             { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pushUp } },
-            { load: bodyweightLoad(), reps: implicitReps() },
+            { load: bodyweightLoad() },
           ),
         ],
       },
       {
         repetition: { kind: "ladder", steps: [15, 12, 9] },
-        arrangement: { kind: "ordered" },
       },
       null,
     ),

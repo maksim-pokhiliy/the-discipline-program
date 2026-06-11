@@ -2,17 +2,9 @@ import { z } from "zod";
 
 import { weightSchema } from "./weight";
 
-export const LOAD_KINDS = [
-  "absolute",
-  "percentage",
-  "bodyweight",
-  "without_weight",
-  "unspecified",
-] as const;
+export const LOAD_KINDS = ["absolute", "percentage", "bodyweight", "byProfile", "none"] as const;
 
 export const PERCENTAGE_REFERENCE_SCOPES = ["self", "movement_family", "other_exercise"] as const;
-
-export const WITHOUT_WEIGHT_CONTEXTS = ["drop_set_stage"] as const;
 
 export const percentageReferenceSchema = z.discriminatedUnion("scope", [
   z.object({ scope: z.literal("self") }),
@@ -30,8 +22,12 @@ export const loadSchema = z
       reference: percentageReferenceSchema,
     }),
     z.object({ kind: z.literal("bodyweight") }),
-    z.object({ kind: z.literal("without_weight"), context: z.enum(WITHOUT_WEIGHT_CONTEXTS) }),
-    z.object({ kind: z.literal("unspecified") }),
+    z.object({
+      kind: z.literal("byProfile"),
+      first: z.number().positive(),
+      second: z.number().positive(),
+    }),
+    z.object({ kind: z.literal("none") }),
   ])
   .superRefine((l, ctx) => {
     if (l.kind === "percentage" && l.rangeMax !== undefined && l.rangeMax <= l.value) {
@@ -46,4 +42,3 @@ export type Load = z.infer<typeof loadSchema>;
 export type LoadKind = (typeof LOAD_KINDS)[number];
 export type PercentageReference = z.infer<typeof percentageReferenceSchema>;
 export type PercentageReferenceScope = (typeof PERCENTAGE_REFERENCE_SCOPES)[number];
-export type WithoutWeightContext = (typeof WITHOUT_WEIGHT_CONTEXTS)[number];
