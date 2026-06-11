@@ -61,11 +61,13 @@ const resolveGroupedOrder = async (
 
   const lastMemberOrder = memberOrders[memberOrders.length - 1] ?? 0;
 
-  await Promise.all(
-    blockSchemas
-      .filter((s) => s.order > lastMemberOrder)
-      .map((s) => tx.schema.update({ where: { id: s.id }, data: { order: s.order + ORDER_STEP } })),
-  );
+  const shifted = blockSchemas
+    .filter((s) => s.order > lastMemberOrder)
+    .sort((a, b) => b.order - a.order);
+
+  for (const s of shifted) {
+    await tx.schema.update({ where: { id: s.id }, data: { order: s.order + ORDER_STEP } });
+  }
 
   return lastMemberOrder + ORDER_STEP;
 };

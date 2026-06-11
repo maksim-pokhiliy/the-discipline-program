@@ -419,6 +419,9 @@ describe("lmsSchemaApi", () => {
         const trailing = await cleanupRaw.schema.create({
           data: { blockId: ctx.block.id, order: 30 },
         });
+        const trailingB = await cleanupRaw.schema.create({
+          data: { blockId: ctx.block.id, order: 40 },
+        });
 
         try {
           const created = await lmsSchemaApi.create(
@@ -442,6 +445,7 @@ describe("lmsSchemaApi", () => {
             { id: memberB.id, order: 20, groupId: group.id },
             { id: created.id, order: 30, groupId: group.id },
             { id: trailing.id, order: 40, groupId: null },
+            { id: trailingB.id, order: 50, groupId: null },
           ]);
         } finally {
           await ctx.cleanup();
