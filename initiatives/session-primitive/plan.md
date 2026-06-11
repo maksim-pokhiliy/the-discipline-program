@@ -2,13 +2,13 @@
 
 Wave-structured per **D-8 JIT-FREEZE**: runner sessions run only on RATIFIED/ACCEPTED grid rows; OPEN items close just-in-time before the wave that needs them. Budget: ≤1 full `/feature` (or 2 small) per runner session (D-7). UI-first house rule: the box UX ships on mocks (W1) before the model lands under it (W2).
 
-| #   | Wave                                                                                                   | Needs decided first        | Gate                                                               | Status                 |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------ | ---------------------- |
-| 0   | Founding: review → skeleton + grid + spec                                                              | —                          | owner ГО                                                           | 🟢 done                |
-| W1  | Group/box UX on the existing model (platform-only)                                                     | nothing open               | coach walkthrough (boxes feel right) + platform suite green        | 🔵 launched 2026-06-10 |
-| W2  | Model core: Group entity, recursion death, arrangement death, ratified leaf kills, seed, guards        | **D-MARKER-DEATH**         | gated api-server suite + reseed + round-trips                      | ⚪                     |
-| W3  | Editor remap onto the Group model (DnD-grouping, ungroup, member add/remove — real persistence)        | — (rides W2)               | round-trips + walkthrough of the full gesture set                  | ⚪                     |
-| W4  | Row grammar + leaf residuals (plaque/rest/OR/superset carriers; position/tempo/weight/header/slot/cap) | **F-PLAQUE + leaf F-rows** | walkthrough + suites; `primitive-spec.md` has zero OPEN rows after | ⚪                     |
+| #   | Wave                                                                                                   | Needs decided first        | Gate                                                               | Status              |
+| --- | ------------------------------------------------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------ | ------------------- |
+| 0   | Founding: review → skeleton + grid + spec                                                              | —                          | owner ГО                                                           | 🟢 done             |
+| W1  | Group/box UX on the existing model (platform-only)                                                     | nothing open               | coach walkthrough (boxes feel right) + platform suite green        | 🟢 merged (PR #261) |
+| W2  | Model core: Group entity, recursion death, arrangement death, ratified leaf kills, seed, guards        | **D-MARKER-DEATH**         | gated api-server suite + reseed + round-trips                      | 🟢 merged (PR #262) |
+| W3  | Editor remap onto the Group model (DnD-grouping, ungroup, member add/remove — real persistence)        | — (rides W2)               | round-trips + walkthrough of the full gesture set                  | ⚪                  |
+| W4  | Row grammar + leaf residuals (plaque/rest/OR/superset carriers; position/tempo/weight/header/slot/cap) | **F-PLAQUE + leaf F-rows** | walkthrough + suites; `primitive-spec.md` has zero OPEN rows after | ⚪                  |
 
 ## W1 — Group/box UX on the existing model (launched 2026-06-10)
 
