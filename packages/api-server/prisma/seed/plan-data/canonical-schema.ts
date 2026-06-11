@@ -173,7 +173,7 @@ export type LabelCatalogEntry = z.infer<typeof labelCatalogEntrySchema>;
 // a PLACEHOLDER row, etc).
 // ──────────────────────────────────────────────────────────────────────────
 
-export const rowSchema = z.object({
+const rowSchemaDef = z.object({
   refId: z.string().min(1).max(48).optional(),
   order: z.number().int().positive(),
   rowKind: rowKindSchema,
@@ -188,9 +188,15 @@ export const rowSchema = z.object({
   media: mediaReferenceSchema.nullable().default(null),
   notes: z.string().max(4000).nullable().default(null),
 });
-export type CanonicalRow = z.infer<typeof rowSchema>;
 
-export const canonicalSchemaNodeSchema = z.object({
+export type CanonicalRow = z.infer<typeof rowSchemaDef>;
+export const rowSchema: z.ZodType<
+  CanonicalRow,
+  z.ZodTypeDef,
+  z.input<typeof rowSchemaDef>
+> = rowSchemaDef;
+
+const canonicalSchemaNodeSchemaDef = z.object({
   refId: z.string().min(1).max(48).optional(),
   order: z.number().int().positive(),
   composition: compositionSchema,
@@ -199,7 +205,13 @@ export const canonicalSchemaNodeSchema = z.object({
   notes: z.string().max(4000).nullable(),
   rows: z.array(rowSchema),
 });
-export type CanonicalSchemaNode = z.infer<typeof canonicalSchemaNodeSchema>;
+
+export type CanonicalSchemaNode = z.infer<typeof canonicalSchemaNodeSchemaDef>;
+export const canonicalSchemaNodeSchema: z.ZodType<
+  CanonicalSchemaNode,
+  z.ZodTypeDef,
+  z.input<typeof canonicalSchemaNodeSchemaDef>
+> = canonicalSchemaNodeSchemaDef;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Block schema item
@@ -323,7 +335,7 @@ export const phase7SessionSchema = sessionSchema.extend({
   dayOfWeek: dayOfWeekSchema,
 });
 
-export const canonicalSeedSchema = z.object({
+const canonicalSeedSchemaDef = z.object({
   meta: metaSchema,
   catalog: z.object({
     exercises: z.array(exerciseCatalogEntrySchema).min(1),
@@ -334,7 +346,13 @@ export const canonicalSeedSchema = z.object({
   phase7Examples: z.array(phase7SessionSchema).default([]),
 });
 
-export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
+export type CanonicalSeed = z.infer<typeof canonicalSeedSchemaDef>;
+
+export const canonicalSeedSchema: z.ZodType<
+  CanonicalSeed,
+  z.ZodTypeDef,
+  z.input<typeof canonicalSeedSchemaDef>
+> = canonicalSeedSchemaDef;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Cross-reference invariants (enforced after Zod parses; kept here as
