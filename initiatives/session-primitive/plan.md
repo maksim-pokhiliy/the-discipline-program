@@ -33,3 +33,15 @@ Plaque/row-group boundary per F-PLAQUE; rest/OR/superset carriers; position libr
 ## Design follow-ups (owner-paced, between waves)
 
 Order: **D-MARKER-DEATH** (yes/no — needed before W2) → **F-PLAQUE** (gates W4; one focused discussion, orchestrator brings a concrete rec) → F-POSITION-CARRIER + F-CHIPS → F-WEIGHT-EXOTICS + F-TEMPO (consult `load-representation.md` + `load-edge-cases.md`) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
+
+## Runner-prompt checklist (D-7 — how to brief a wave)
+
+Every runner prompt is SELF-CONTAINED (the runner session has no chat context; the SessionStart hook loads only `state.md`). It must carry:
+
+1. **Context block** — initiative pointer, read-first list (charter / decisions / primitive-spec §§ / plan §wave), which D/DR rules bind, and what the LIVE law of main is (vs. what this wave changes).
+2. **Deliverables**, numbered, each with the concrete surface (files/components) named where known — and corrections welcome (W1's prompt mis-located the submit fork; the runner's verify pass caught it, that's the design stage's job).
+3. **Hard red lines** — what must NOT change, incl. why (e.g. one-predicate rule + the CRITICAL it prevents; OPEN decisions whose surface is untouchable).
+4. **Verify-then-spec items** the design stage must confirm in code before locking.
+5. **Acceptance = the owner's literal walkthrough script**, numbered.
+6. **Exact verify commands:** root `pnpm check-types && pnpm lint`; platform tests ONLY via `SKIP_ENV_VALIDATION=1 pnpm exec vitest run --project platform` (`pnpm --filter platform test` silently no-ops — false green); NEVER the root `pnpm test` or any api-server suite (gated, owner-only manual run). A wave touching api-server states its gate as the OWNER's manual ritual (db:reset + seed + gated suite).
+7. **Process block** — branch name, conventional lowercase commits, no AI trailers, never `--no-verify`, full `/feature` pipeline with real forks surfaced at Gate A, close-out docs promoted into the initiative IN THE SAME PR, single `/feature` run per session (house budget).
