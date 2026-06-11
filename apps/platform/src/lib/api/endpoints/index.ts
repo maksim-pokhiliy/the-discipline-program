@@ -5,6 +5,7 @@ export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachInviteAPI } from "./coach-invite";
 export { createDayMetadataAPI } from "./day-metadata";
 export { createExercisesAPI } from "./exercises";
+export { createGroupsAPI } from "./groups";
 export { createLabelsAPI } from "./labels";
 export { createSchemaRowsAPI } from "./schema-rows";
 export { createSchemasAPI } from "./schemas";

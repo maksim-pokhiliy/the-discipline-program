@@ -11,6 +11,7 @@ export const createApi = (client: ApiClient) => ({
   coachInvite: endpoints.createCoachInviteAPI(client),
   dayMetadata: endpoints.createDayMetadataAPI(client),
   exercises: endpoints.createExercisesAPI(client),
+  groups: endpoints.createGroupsAPI(client),
   labels: endpoints.createLabelsAPI(client),
   schemaRows: endpoints.createSchemaRowsAPI(client),
   schemas: endpoints.createSchemasAPI(client),

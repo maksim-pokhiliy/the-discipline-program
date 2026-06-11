@@ -10,13 +10,12 @@ import { platformKeys } from "@app/lib/api/keys";
 
 import type { ComposeContainer } from "../components/axes/axis-draft.types";
 
-import { buildParallelCreateRequest } from "./build-parallel-schemas";
+import { buildGroupCreateRequest } from "./build-group-create-request";
 
-const SUCCESS_MESSAGE = "Parallel ladder created";
+const SUCCESS_MESSAGE = "Group created";
 
 type RunArgs = {
   blockId: string;
-  parentSchemaId?: string;
   draft: ComposeContainer;
 };
 
@@ -25,7 +24,7 @@ type RunOptions = {
   onError: (message: string) => void;
 };
 
-export type UseCreateParallelSchemasResult = {
+export type UseCreateGroupResult = {
   run: (args: RunArgs, opts: RunOptions) => Promise<void>;
   isPending: boolean;
 };
@@ -33,18 +32,15 @@ export type UseCreateParallelSchemasResult = {
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-export const useCreateParallelSchemas = (
-  planId: string,
-  startDate: string,
-): UseCreateParallelSchemasResult => {
+export const useCreateGroup = (planId: string, startDate: string): UseCreateGroupResult => {
   const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
 
   const run = async (
-    { blockId, parentSchemaId, draft }: RunArgs,
+    { blockId, draft }: RunArgs,
     { onSuccess, onError }: RunOptions,
   ): Promise<void> => {
-    const built = buildParallelCreateRequest(draft, blockId, parentSchemaId);
+    const built = buildGroupCreateRequest(draft, blockId);
 
     if (!built.ok) {
       onError(built.error);
@@ -55,7 +51,7 @@ export const useCreateParallelSchemas = (
     setIsPending(true);
 
     try {
-      await api.schemas.createParallel(planId, built.request);
+      await api.groups.create(planId, built.request);
       toast.success(SUCCESS_MESSAGE);
       onSuccess();
     } catch (error) {

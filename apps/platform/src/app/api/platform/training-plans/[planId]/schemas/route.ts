@@ -10,10 +10,9 @@ import {
 import { withCoachAuth } from "@app/lib/server/auth";
 
 const toCreateArgs = (request: CreateSchemaRequest) => {
-  const { blockId, parentSchemaId, ...data } = request;
-  const scope = parentSchemaId != null ? { parentSchemaId } : { blockId };
+  const { blockId, ...data } = request;
 
-  return { scope, data };
+  return { scope: { blockId }, data };
 };
 
 export const POST = withCoachAuth(
