@@ -29,7 +29,6 @@ const { PlaceholderRowPayloadForm, placeholderDefaultValue, toPlaceholderValue }
 const EXERCISE_ID_A = "ckxw5p7gp0000q1mnzv5cuq01";
 const EXERCISE_ID_B = "ckxw5p7gp0000q1mnzv5cuq02";
 const EXERCISE_ID_C = "ckxw5p7gp0000q1mnzv5cuq03";
-const PAIRED_ROW_ID = "ckxw5p7gp0000q1mnzv5cuq09";
 
 const baseSchemaRow = {
   id: "ckxw5p7gp0000q1mnzv5cuq0a",
@@ -43,7 +42,6 @@ const baseSchemaRow = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -227,22 +225,6 @@ describe("PlaceholderRowPayloadForm per-set add/remove affordance (scenario 12)"
   });
 });
 
-describe("PlaceholderRowPayloadForm pairedConcreteRowId opaque carry (D-02b, scenario 13)", () => {
-  it("preserves pairedConcreteRowId while dropping the per-set block on remove", () => {
-    render(
-      <PlaceholderRowPayloadForm
-        value={makePlaceholder({ perSetAssignments: PER_SET, pairedConcreteRowId: PAIRED_ROW_ID })}
-        onChange={onChange}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "remove substitutions" }));
-
-    expect(lastCallArg().placeholder.pairedConcreteRowId).toBe(PAIRED_ROW_ID);
-    expect(lastCallArg().placeholder).not.toHaveProperty("perSetAssignments");
-  });
-});
-
 describe("PlaceholderRowPayloadForm edit round-trips (scenarios 14-15)", () => {
   const coachChoiceRow: SchemaRow = {
     ...baseSchemaRow,
@@ -273,33 +255,6 @@ describe("PlaceholderRowPayloadForm edit round-trips (scenarios 14-15)", () => {
       { setIndex: 3, exerciseId: EXERCISE_ID_C },
     ]);
     expect(parseRowPayload("PLACEHOLDER", value).ok).toBe(true);
-  });
-
-  it("carries an opaque pairedConcreteRowId through the value and re-parse", () => {
-    const row: SchemaRow = {
-      ...baseSchemaRow,
-      rowKind: "PLACEHOLDER",
-      rowPayload: {
-        rowKind: "PLACEHOLDER",
-        placeholder: {
-          placeholderKind: "muscle_group_reference",
-          text: "biceps",
-          pairedConcreteRowId: PAIRED_ROW_ID,
-        },
-      },
-    };
-
-    const value = toPlaceholderValue({ kind: "edit", row });
-
-    expect(value.placeholder.pairedConcreteRowId).toBe(PAIRED_ROW_ID);
-
-    const result = parseRowPayload("PLACEHOLDER", value);
-
-    expect(result.ok).toBe(true);
-
-    if (result.ok && result.value.rowKind === "PLACEHOLDER") {
-      expect(result.value.placeholder.pairedConcreteRowId).toBe(PAIRED_ROW_ID);
-    }
   });
 });
 

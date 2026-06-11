@@ -53,18 +53,6 @@ describe("buildDefaultWeight", () => {
     expect([1, 2]).toContain(result.count);
     expect("resolver" in result).toBe(false);
   });
-
-  it("pins dual_value resolver to athlete_profile (QA-#6, T24)", () => {
-    const result = buildDefaultWeight("dual_value");
-
-    expect(result.variant).toBe("dual_value");
-
-    if (result.variant !== "dual_value") {
-      throw new Error("expected dual_value variant");
-    }
-
-    expect(result.resolver).toBe("athlete_profile");
-  });
 });
 
 describe("buildDefaultLoad", () => {
@@ -91,16 +79,17 @@ describe("buildDefaultLoad", () => {
     expect(weightSchema.safeParse(result.weight).success).toBe(true);
   });
 
-  it("pins without_weight context to drop_set_stage (QA-#2, T24)", () => {
-    const result = buildDefaultLoad("without_weight");
+  it("returns positive first/second kg for byProfile (QA-#2, T24)", () => {
+    const result = buildDefaultLoad("byProfile");
 
-    expect(result.kind).toBe("without_weight");
+    expect(result.kind).toBe("byProfile");
 
-    if (result.kind !== "without_weight") {
-      throw new Error("expected without_weight kind");
+    if (result.kind !== "byProfile") {
+      throw new Error("expected byProfile kind");
     }
 
-    expect(result.context).toBe("drop_set_stage");
+    expect(result.first).toBeGreaterThan(0);
+    expect(result.second).toBeGreaterThan(0);
   });
 
   it("sets percentage reference scope to self (QA-#2, T24)", () => {

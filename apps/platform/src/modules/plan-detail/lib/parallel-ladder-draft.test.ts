@@ -67,11 +67,10 @@ describe("materializeParallel", () => {
     expect(parent.id).toBe(SINGLE_ID);
   });
 
-  it("carries no repetition, arrangement or rest on the parent", () => {
+  it("carries no repetition or rest on the parent", () => {
     const parent = materializeParallel(flatLadder(FIRST_LADDER_STEPS), sequentialIds("t1", "t2"));
 
     expect(parent.repetition).toBeUndefined();
-    expect(parent.arrangement).toBeUndefined();
     expect(parent.rest).toBeUndefined();
   });
 

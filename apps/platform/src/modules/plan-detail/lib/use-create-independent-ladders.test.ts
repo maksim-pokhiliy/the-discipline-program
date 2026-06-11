@@ -12,13 +12,15 @@ import type { ComposeContainer, ComposeNode } from "../components/axes/axis-draf
 
 import { asNodeId } from "./axis-draft-id";
 
-const createMock = vi.fn<(planId: string, data: CreateSchemaRequest) => Promise<Schema>>();
+const createMock =
+  vi.fn<(planId: string, data: CreateSchemaRequest, idempotencyKey?: string) => Promise<Schema>>();
 const toastSuccessMock = vi.fn<(message: string) => void>();
 
 vi.mock("@app/lib/api", () => ({
   api: {
     schemas: {
-      create: (planId: string, data: CreateSchemaRequest) => createMock(planId, data),
+      create: (planId: string, data: CreateSchemaRequest, idempotencyKey?: string) =>
+        createMock(planId, data, idempotencyKey),
     },
   },
 }));
@@ -34,7 +36,7 @@ const { useCreateIndependentLadders } = await import("./use-create-independent-l
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
-const INCOMING_PARENT_ID = "clp9z8x7w0000abcd1234inc1";
+const DRAFT_ID = "parent-draft-1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 const SUCCESS_MESSAGE = "Ladders created";
 const FIRST_LADDER_STEPS = [21, 15, 9];
@@ -44,7 +46,7 @@ const THIRD_LADDER_STEPS = [10, 8, 6];
 const schemaStub = (id: string): Schema => ({
   id,
   blockId: BLOCK_ID,
-  parentSchemaId: null,
+  groupId: null,
   order: 1,
   header: null,
   intensity: null,
@@ -66,7 +68,7 @@ const ladderTrack = (id: string, steps: number[]): ComposeContainer => ({
 
 const parentDraft = (children: ComposeNode[]): ComposeContainer => ({
   nodeType: "container",
-  id: asNodeId("parent-draft-1"),
+  id: asNodeId(DRAFT_ID),
   header: null,
   notes: null,
   children,
@@ -96,7 +98,7 @@ describe("useCreateIndependentLadders", () => {
     vi.restoreAllMocks();
   });
 
-  it("fires one create per track with the per-track ladder composition and no parentSchemaId (MT-15a)", async () => {
+  it("fires one create per track with the per-track ladder composition and no groupId (MT-15a)", async () => {
     createMock.mockResolvedValue(schemaStub("created-1"));
 
     const { view, invalidateSpy } = renderRunner();
@@ -117,18 +119,29 @@ describe("useCreateIndependentLadders", () => {
     });
 
     expect(createMock).toHaveBeenCalledTimes(2);
-    expect(createMock).toHaveBeenNthCalledWith(1, PLAN_ID, {
-      blockId: BLOCK_ID,
-      composition: ladderComposition(FIRST_LADDER_STEPS),
-      header: null,
-      notes: null,
-    });
-    expect(createMock).toHaveBeenNthCalledWith(2, PLAN_ID, {
-      blockId: BLOCK_ID,
-      composition: ladderComposition(SECOND_LADDER_STEPS),
-      header: null,
-      notes: null,
-    });
+    expect(createMock).toHaveBeenNthCalledWith(
+      1,
+      PLAN_ID,
+      {
+        blockId: BLOCK_ID,
+        composition: ladderComposition(FIRST_LADDER_STEPS),
+        header: null,
+        notes: null,
+      },
+      `${DRAFT_ID}:0`,
+    );
+    expect(createMock).toHaveBeenNthCalledWith(
+      2,
+      PLAN_ID,
+      {
+        blockId: BLOCK_ID,
+        composition: ladderComposition(SECOND_LADDER_STEPS),
+        header: null,
+        notes: null,
+      },
+      `${DRAFT_ID}:1`,
+    );
+    expect(createMock.mock.calls[0]?.[1]).not.toHaveProperty("groupId");
     expect(createMock.mock.calls[0]?.[1]).not.toHaveProperty("parentSchemaId");
     expect(toastSuccessMock).toHaveBeenCalledTimes(1);
     expect(toastSuccessMock).toHaveBeenCalledWith(SUCCESS_MESSAGE);
@@ -140,40 +153,63 @@ describe("useCreateIndependentLadders", () => {
     });
   });
 
-  it("forwards an incoming parentSchemaId on every create (MT-15b)", async () => {
+  it("threads a stable index-derived idempotency key per track derived from the draft id (MT-19, W1-DUP-RETRY)", async () => {
     createMock.mockResolvedValue(schemaStub("created-1"));
 
     const { view } = renderRunner();
 
+    const draft = parentDraft([
+      ladderTrack("t1", FIRST_LADDER_STEPS),
+      ladderTrack("t2", SECOND_LADDER_STEPS),
+      ladderTrack("t3", THIRD_LADDER_STEPS),
+    ]);
+
     await act(async () => {
       await view.result.current.run(
-        {
-          blockId: BLOCK_ID,
-          parentSchemaId: INCOMING_PARENT_ID,
-          draft: parentDraft([
-            ladderTrack("t1", FIRST_LADDER_STEPS),
-            ladderTrack("t2", SECOND_LADDER_STEPS),
-          ]),
-        },
+        { blockId: BLOCK_ID, draft },
         { onSuccess: vi.fn(), onError: vi.fn() },
       );
     });
 
-    expect(createMock).toHaveBeenCalledTimes(2);
-    expect(createMock).toHaveBeenNthCalledWith(1, PLAN_ID, {
-      blockId: BLOCK_ID,
-      parentSchemaId: INCOMING_PARENT_ID,
-      composition: ladderComposition(FIRST_LADDER_STEPS),
-      header: null,
-      notes: null,
+    expect(createMock.mock.calls.map((call) => call[2])).toEqual([
+      `${DRAFT_ID}:0`,
+      `${DRAFT_ID}:1`,
+      `${DRAFT_ID}:2`,
+    ]);
+  });
+
+  it("threads IDENTICAL per-track keys on a re-run of the same draft so a retry replays (MT-19, W1-DUP-RETRY)", async () => {
+    createMock.mockResolvedValue(schemaStub("created-1"));
+
+    const { view } = renderRunner();
+
+    const draft = parentDraft([
+      ladderTrack("t1", FIRST_LADDER_STEPS),
+      ladderTrack("t2", SECOND_LADDER_STEPS),
+    ]);
+
+    await act(async () => {
+      await view.result.current.run(
+        { blockId: BLOCK_ID, draft },
+        { onSuccess: vi.fn(), onError: vi.fn() },
+      );
     });
-    expect(createMock).toHaveBeenNthCalledWith(2, PLAN_ID, {
-      blockId: BLOCK_ID,
-      parentSchemaId: INCOMING_PARENT_ID,
-      composition: ladderComposition(SECOND_LADDER_STEPS),
-      header: null,
-      notes: null,
+
+    const firstRunKeys = createMock.mock.calls.map((call) => call[2]);
+
+    createMock.mockClear();
+
+    await act(async () => {
+      await view.result.current.run(
+        { blockId: BLOCK_ID, draft },
+        { onSuccess: vi.fn(), onError: vi.fn() },
+      );
     });
+
+    const secondRunKeys = createMock.mock.calls.map((call) => call[2]);
+
+    expect(firstRunKeys).toEqual([`${DRAFT_ID}:0`, `${DRAFT_ID}:1`]);
+    expect(secondRunKeys).toEqual(firstRunKeys);
   });
 
   it("stops on the first failure with no rollback, one invalidation and a partial message (MT-16)", async () => {

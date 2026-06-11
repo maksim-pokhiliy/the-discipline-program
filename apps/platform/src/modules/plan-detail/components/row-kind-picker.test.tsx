@@ -7,22 +7,12 @@ import { render } from "@app/test/render";
 
 import { RowKindPicker } from "./row-kind-picker";
 
-const ALL_TILE_LABELS = [
-  "Exercise",
-  "Rest",
-  "Footnote",
-  "Standalone load",
-  "Standalone URL",
-  "Placeholder",
-  "Inner ladder",
-  "Rep definition",
-  "Rest slot (EMOM)",
-] as const;
+const ALL_TILE_LABELS = ["Exercise", "Rest", "Placeholder", "Rest slot (EMOM)"] as const;
 
-const UN_DEFERRED_TILES = [
-  { label: "Footnote", kind: "FOOTNOTE", hotkey: "f" },
+const PICKABLE_TILES = [
+  { label: "Exercise", kind: "EXERCISE", hotkey: "e" },
   { label: "Placeholder", kind: "PLACEHOLDER", hotkey: "p" },
-  { label: "Rep definition", kind: "REP_DEFINITION", hotkey: "d" },
+  { label: "Rest slot (EMOM)", kind: "REST_SLOT", hotkey: "s" },
 ] as const;
 
 const getTileButton = (label: string): HTMLButtonElement => {
@@ -51,31 +41,25 @@ const pressKey = (key: string): void => {
 };
 
 describe("RowKindPicker tiles (MT-14)", () => {
-  it("renders all 9 row-kind tiles", () => {
+  it("renders all 4 row-kind tiles", () => {
     renderPicker();
 
     for (const label of ALL_TILE_LABELS) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });
-});
 
-describe("RowKindPicker un-deferred tiles (MT-13)", () => {
-  it("renders the footnote, placeholder, and rep-definition tiles enabled", () => {
+  it("renders every tile enabled", () => {
     renderPicker();
 
-    for (const { label } of UN_DEFERRED_TILES) {
+    for (const label of ALL_TILE_LABELS) {
       expect(getTileButton(label)).toBeEnabled();
     }
   });
+});
 
-  it("shows no coming-soon hint now that every tile is live", () => {
-    renderPicker();
-
-    expect(screen.queryByText("needs exercise editor — coming soon")).toBeNull();
-  });
-
-  it.each(UN_DEFERRED_TILES)(
+describe("RowKindPicker pickable tiles (MT-13)", () => {
+  it.each(PICKABLE_TILES)(
     "selects $kind on click and confirms it via Continue",
     ({ label, kind }) => {
       const onSelect = vi.fn();
@@ -91,7 +75,7 @@ describe("RowKindPicker un-deferred tiles (MT-13)", () => {
     },
   );
 
-  it.each(UN_DEFERRED_TILES)(
+  it.each(PICKABLE_TILES)(
     "emits onSelect($kind) and closes when its tile is double-clicked",
     ({ label, kind }) => {
       const onSelect = vi.fn();
@@ -106,7 +90,7 @@ describe("RowKindPicker un-deferred tiles (MT-13)", () => {
     },
   );
 
-  it.each(UN_DEFERRED_TILES)(
+  it.each(PICKABLE_TILES)(
     "selects $kind on the $hotkey hotkey and confirms it on Enter",
     ({ kind, hotkey }) => {
       const onSelect = vi.fn();
@@ -121,19 +105,6 @@ describe("RowKindPicker un-deferred tiles (MT-13)", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     },
   );
-
-  it("selects EXERCISE on click and confirms it via Continue now that it is live", () => {
-    const onSelect = vi.fn();
-    const onClose = vi.fn();
-
-    renderPicker({ onSelect, onClose });
-
-    fireEvent.click(getTileButton("Exercise"));
-    fireEvent.click(getContinue());
-
-    expect(onSelect).toHaveBeenCalledWith("EXERCISE");
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
 });
 
 describe("RowKindPicker Continue gating (MT-13)", () => {
@@ -156,20 +127,6 @@ describe("RowKindPicker Continue gating (MT-13)", () => {
   });
 });
 
-describe("RowKindPicker double-click (MT-14)", () => {
-  it("emits onSelect for the double-clicked enabled tile and closes", () => {
-    const onSelect = vi.fn();
-    const onClose = vi.fn();
-
-    renderPicker({ onSelect, onClose });
-
-    fireEvent.doubleClick(getTileButton("Standalone URL"));
-
-    expect(onSelect).toHaveBeenCalledWith("STANDALONE_URL");
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-});
-
 describe("RowKindPicker hotkeys (MT-12)", () => {
   it("selects REST on the r hotkey and confirms it on Enter", () => {
     const onSelect = vi.fn();
@@ -184,29 +141,29 @@ describe("RowKindPicker hotkeys (MT-12)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("selects STANDALONE_URL on the u hotkey and confirms it on Enter", () => {
+  it("selects EXERCISE on the e hotkey and confirms it on Enter", () => {
     const onSelect = vi.fn();
     const onClose = vi.fn();
 
     renderPicker({ onSelect, onClose });
 
-    pressKey("u");
+    pressKey("e");
     pressKey("Enter");
 
-    expect(onSelect).toHaveBeenCalledWith("STANDALONE_URL");
+    expect(onSelect).toHaveBeenCalledWith("EXERCISE");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("lets a later footnote hotkey override the prior pick", () => {
+  it("lets a later hotkey override the prior pick", () => {
     const onSelect = vi.fn();
 
     renderPicker({ onSelect });
 
-    pressKey("u");
-    pressKey("f");
+    pressKey("e");
+    pressKey("p");
     pressKey("Enter");
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith("FOOTNOTE");
+    expect(onSelect).toHaveBeenCalledWith("PLACEHOLDER");
   });
 });

@@ -11,7 +11,7 @@ const makeSchema = (): SchemaWithBody => ({
   schema: {
     id: "clp9z8x7w0000abcd1234sch1",
     blockId: "clp9z8x7w0000abcd1234blk1",
-    parentSchemaId: null,
+    groupId: null,
     order: 10,
     header: null,
     intensity: null,
@@ -22,7 +22,6 @@ const makeSchema = (): SchemaWithBody => ({
     updatedAt: now,
   },
   rows: [],
-  subSchemas: [],
 });
 
 type MakeBlockOptions = {
@@ -38,6 +37,7 @@ const makeBlock = ({ schemaCount }: MakeBlockOptions): SessionWithLabel["blocks"
   notes: null,
   labels: [],
   schemas: Array.from({ length: schemaCount }, makeSchema),
+  groups: [],
   createdAt: now,
   updatedAt: now,
 });

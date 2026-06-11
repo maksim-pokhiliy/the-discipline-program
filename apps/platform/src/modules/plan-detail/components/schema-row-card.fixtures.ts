@@ -48,7 +48,6 @@ const baseRowFields = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -92,64 +91,12 @@ export const makeRestRow = (): SchemaRow => ({
   },
 });
 
-export const makeFootnoteRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "FOOTNOTE",
-  rowPayload: {
-    rowKind: "FOOTNOTE",
-    marker: "*",
-    target: "each_round",
-    content: { elements: [{ exerciseId: ID_BACK_SQUAT, reps: { kind: "count", value: 5 } }] },
-  },
-  ...overrides,
-});
-
-export const makeStandaloneLoadRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "STANDALONE_LOAD",
-  rowPayload: {
-    rowKind: "STANDALONE_LOAD",
-    load: { kind: "absolute", weight: { variant: "single", valueKg: 20 } },
-    scope: "applies_to_all_preceding_rows",
-  },
-});
-
-export const makeStandaloneUrlRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "STANDALONE_URL",
-  rowPayload: {
-    rowKind: "STANDALONE_URL",
-    url: "https://example.com/ref.pdf",
-    wrapped: false,
-    appliesTo: "whole_schema",
-  },
-});
-
 export const makePlaceholderRow = (): SchemaRow => ({
   ...baseRowFields,
   rowKind: "PLACEHOLDER",
   rowPayload: {
     rowKind: "PLACEHOLDER",
     placeholder: { placeholderKind: "coach_choice_slot", text: "ABS finisher" },
-  },
-});
-
-export const makeInnerLadderMarkerRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "INNER_LADDER_MARKER",
-  rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [12, 9, 6] },
-});
-
-export const makeRepDefinitionRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "REP_DEFINITION",
-  rowPayload: {
-    rowKind: "REP_DEFINITION",
-    equality: {
-      form: "inline_equality",
-      totalReps: 5,
-      composition: [{ exerciseId: ID_BACK_SQUAT, count: 1 }],
-    },
   },
 });
 
@@ -194,36 +141,6 @@ export const rowKindCases: RowKindCase[] = [
     sub: null,
   },
   {
-    name: "FOOTNOTE",
-    build: () => makeFootnoteRow(),
-    ord: "*",
-    badgeLabel: "FN",
-    kindCls: "foot",
-    dashed: false,
-    mainText: "* Back Squat × 5 reps (each round)",
-    sub: null,
-  },
-  {
-    name: "STANDALONE_LOAD",
-    build: () => makeStandaloneLoadRow(),
-    ord: "L",
-    badgeLabel: "LD",
-    kindCls: "load",
-    dashed: false,
-    mainText: "20 kg",
-    sub: "global load",
-  },
-  {
-    name: "STANDALONE_URL",
-    build: () => makeStandaloneUrlRow(),
-    ord: "U",
-    badgeLabel: "URL",
-    kindCls: "url",
-    dashed: false,
-    mainText: "https://example.com/ref.pdf",
-    sub: "schema reference",
-  },
-  {
     name: "PLACEHOLDER",
     build: () => makePlaceholderRow(),
     ord: "?",
@@ -232,26 +149,6 @@ export const rowKindCases: RowKindCase[] = [
     dashed: true,
     mainText: "ABS finisher",
     sub: "placeholder · coach choice slot",
-  },
-  {
-    name: "INNER_LADDER_MARKER",
-    build: () => makeInnerLadderMarkerRow(),
-    ord: "—",
-    badgeLabel: "↓",
-    kindCls: "ladder",
-    dashed: true,
-    mainText: "12-9-6 :",
-    sub: "ladder marker — segments rows below",
-  },
-  {
-    name: "REP_DEFINITION",
-    build: () => makeRepDefinitionRow(),
-    ord: "≡",
-    badgeLabel: "≡",
-    kindCls: "ex",
-    dashed: false,
-    mainText: "5 reps = 1× Back Squat",
-    sub: "rep definition",
   },
   {
     name: "REST_SLOT",

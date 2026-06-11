@@ -16,8 +16,6 @@ import {
   exerciseById,
   makeCompoundExerciseRow,
   makeExerciseRow,
-  makeFootnoteRow,
-  makeRestRow,
   rowKindCases,
 } from "./schema-row-card.fixtures";
 
@@ -90,48 +88,6 @@ describe("SchemaRowCard per-ExerciseForm rendering", () => {
     expect(screen.getByText("compound")).toBeInTheDocument();
   });
 
-  it("renders EXERCISE cyclical: '↔' name and 'cyclical' FormPill", () => {
-    renderRow(
-      makeExerciseRow({
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: {
-            form: "cyclical",
-            cyclical: {
-              primaryExerciseId: ID_BACK_SQUAT,
-              secondaryExerciseId: ID_DEADLIFT,
-              cycles: [{ primaryReps: 3, secondaryReps: 5 }],
-            },
-          },
-        },
-      }),
-    );
-
-    expect(screen.getByText("Back Squat ↔ Deadlift")).toBeInTheDocument();
-    expect(screen.getByText("cyclical")).toBeInTheDocument();
-  });
-
-  it("renders EXERCISE sandwich: '→' name and 'sandwich' FormPill", () => {
-    renderRow(
-      makeExerciseRow({
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: {
-            form: "sandwich",
-            sandwich: {
-              opening: { exerciseId: ID_BACK_SQUAT, reps: { kind: "count", value: 5 } },
-              middle: { exerciseId: ID_DEADLIFT, reps: { kind: "count", value: 3 } },
-              closing: { exerciseId: ID_BACK_SQUAT, reps: { kind: "count", value: 5 } },
-            },
-          },
-        },
-      }),
-    );
-
-    expect(screen.getByText("Back Squat → Deadlift → Back Squat")).toBeInTheDocument();
-    expect(screen.getByText("sandwich")).toBeInTheDocument();
-  });
-
   it("renders EXERCISE or_alternative: '· or ·' name and 'or alternative' FormPill", () => {
     renderRow(
       makeExerciseRow({
@@ -171,70 +127,17 @@ describe("SchemaRowCard per-ExerciseForm rendering", () => {
 
   it("does NOT render any FormPill for atomic form", () => {
     renderRow(makeExerciseRow());
-    const formPillCandidates = screen.queryAllByText(
-      /^(compound|cyclical|sandwich|or alternative|placeholder ref)$/,
-    );
+    const formPillCandidates = screen.queryAllByText(/^(compound|or alternative|placeholder ref)$/);
 
     expect(formPillCandidates).toHaveLength(0);
   });
 });
 
 describe("SchemaRowCard notes append", () => {
-  it("appends notes in single quotes to subParts for non-FOOTNOTE rows", () => {
+  it("appends notes in single quotes to subParts for a row", () => {
     renderRow(makeExerciseRow({ notes: "explosive" }));
 
     expect(screen.getByText("'explosive'")).toBeInTheDocument();
-  });
-
-  it("does NOT append notes for FOOTNOTE rows (folded into elementsJoin path)", () => {
-    renderRow(makeFootnoteRow({ notes: "be careful" }));
-
-    expect(screen.queryByText("'be careful'")).toBeNull();
-  });
-});
-
-describe("SchemaRowCard FOOTNOTE italic cascade", () => {
-  it("applies italic fontStyle on the row shell for FOOTNOTE", () => {
-    const { container } = renderRow(makeFootnoteRow());
-    const shell = container.firstChild;
-
-    expect(shell).toHaveStyle({ fontStyle: "italic" });
-  });
-
-  it("does NOT apply italic fontStyle for non-FOOTNOTE rows (REST)", () => {
-    const { container } = renderRow(makeRestRow());
-    const shell = container.firstChild;
-
-    if (!(shell instanceof HTMLElement)) {
-      throw new Error("expected row shell to be an HTMLElement");
-    }
-
-    expect(shell.style.fontStyle).not.toBe("italic");
-  });
-});
-
-describe("SchemaRowCard superset pair chip (T2-2)", () => {
-  it("renders the pair-label chip when supersetLabel is set", () => {
-    render(
-      <CatalogContext.Provider value={catalogValue}>
-        <SchemaRowCard
-          row={makeExerciseRow()}
-          planId={PLAN_ID}
-          startDate={START_DATE}
-          index={0}
-          isReorderPending={false}
-          supersetLabel="Pair A"
-        />
-      </CatalogContext.Provider>,
-    );
-
-    expect(screen.getByText("Pair A")).toBeInTheDocument();
-  });
-
-  it("does NOT render a pair chip when supersetLabel is absent", () => {
-    renderRow(makeExerciseRow());
-
-    expect(screen.queryByText("Pair A")).toBeNull();
   });
 });
 

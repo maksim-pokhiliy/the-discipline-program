@@ -37,17 +37,9 @@ const COMPOUND_VALUE: ExerciseFormValue = {
 };
 
 const COMPOUND_SEED_REPS = 10;
-const MULTI_FORM_NOTICE_FRAGMENT = /coming soon/;
 const FULL_PICKER_PLACEHOLDER = "search by name, family, or modality…";
 
-const ALL_TILE_LABELS = [
-  "Atomic",
-  "Compound",
-  "Cyclical",
-  "Sandwich",
-  "OR alternative",
-  "Placeholder ref",
-] as const;
+const ALL_TILE_LABELS = ["Atomic", "Compound", "OR alternative", "Placeholder ref"] as const;
 
 const getTileButton = (label: string): HTMLButtonElement => {
   const node = screen.getByText(label).closest("button");
@@ -66,7 +58,7 @@ afterEach(() => {
 });
 
 describe("ExerciseFormPicker tiles", () => {
-  it("renders all 6 exercise-form tiles", () => {
+  it("renders all 4 exercise-form tiles", () => {
     render(<ExerciseFormPicker value={ATOMIC_VALUE} onChange={onChange} />);
 
     for (const label of ALL_TILE_LABELS) {
@@ -108,12 +100,10 @@ describe("ExerciseFormPicker atomic body", () => {
 });
 
 describe("ExerciseFormPicker non-atomic body", () => {
-  it("renders the compound editor without the read-only notice for a compound value", () => {
+  it("renders the compound editor for a compound value", () => {
     render(<ExerciseFormPicker value={COMPOUND_VALUE} onChange={onChange} />);
 
     expect(screen.getByText("add element")).toBeInTheDocument();
     expect(screen.getAllByText("element")).toHaveLength(2);
-
-    expect(screen.queryByText(MULTI_FORM_NOTICE_FRAGMENT)).toBeNull();
   });
 });

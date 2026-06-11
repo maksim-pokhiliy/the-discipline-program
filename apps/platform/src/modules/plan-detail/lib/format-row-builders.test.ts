@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { SchemaRow, SchemaRowPayload } from "@repo/contracts/lms/schema-row";
+import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { type ExerciseById, formatRow } from "./format-row";
-import { buildExercise, buildInnerLadderMarker, buildStandaloneLoad } from "./format-row-builders";
+import { buildExercise } from "./format-row-builders";
 import {
   ID_BACK_SQUAT,
   ID_DEADLIFT,
@@ -12,7 +12,6 @@ import {
   exerciseById,
   makeExercise,
   makeExerciseRow,
-  makeFootnoteRow,
 } from "./format-row.fixtures";
 
 const ID_PLACEHOLDER_ATOMIC = "ckplaceh1234567890abcdef01";
@@ -32,22 +31,6 @@ const exerciseByIdWithPlaceholder: ExerciseById = new Map([
     }),
   ],
 ]);
-
-const makeStandaloneLoadPayload = (): Extract<
-  SchemaRowPayload,
-  { rowKind: "STANDALONE_LOAD" }
-> => ({
-  rowKind: "STANDALONE_LOAD",
-  load: { kind: "absolute", weight: { variant: "single", valueKg: 20 } },
-  scope: "applies_to_all_preceding_rows",
-});
-
-const makeInnerLadderMarkerPayload = (
-  steps: number[],
-): Extract<SchemaRowPayload, { rowKind: "INNER_LADDER_MARKER" }> => ({
-  rowKind: "INNER_LADDER_MARKER",
-  steps,
-});
 
 describe("EXERCISE builder permutations", () => {
   it("returns null demoUrl when atomic exercise lookup misses", () => {
@@ -122,78 +105,6 @@ describe("REST builder", () => {
     const result = formatRow(row, exerciseById, 0);
 
     expect(result.mainText).toBe("rest 60s between rounds");
-  });
-});
-
-describe("FOOTNOTE builder", () => {
-  it("falls back to row notes when content has no elements", () => {
-    const row = makeFootnoteRow({
-      notes: "as feels",
-      rowPayload: {
-        rowKind: "FOOTNOTE",
-        marker: "**",
-        target: "each_set",
-        content: { elements: [] },
-      },
-    });
-
-    const result = formatRow(row, exerciseById, 0);
-
-    expect(result.mainText).toBe("** as feels (each set)");
-    expect(result.ord).toBe("**");
-  });
-});
-
-describe("STANDALONE_URL builder", () => {
-  it("renders 'previous-row demo' sub for previous_exercise_row scope", () => {
-    const row: SchemaRow = {
-      ...baseRowFields,
-      rowKind: "STANDALONE_URL",
-      rowPayload: {
-        rowKind: "STANDALONE_URL",
-        url: "https://example.com/clip.mp4",
-        wrapped: false,
-        appliesTo: "previous_exercise_row",
-      },
-    };
-
-    const result = formatRow(row, exerciseById, 0);
-
-    expect(result.subParts).toEqual(["previous-row demo"]);
-  });
-});
-
-describe("STANDALONE_LOAD builder", () => {
-  it("returns global load sub at index 0", () => {
-    const result = buildStandaloneLoad(makeStandaloneLoadPayload(), exerciseById, 0);
-
-    expect(result.subParts).toEqual(["global load"]);
-    expect(result.mainText).toBe("20 kg");
-    expect(result.kindBadge).toBe("LD");
-  });
-
-  it("returns applies-to-all-rows-above sub at index 2", () => {
-    const result = buildStandaloneLoad(makeStandaloneLoadPayload(), exerciseById, 2);
-
-    expect(result.subParts).toEqual(["applies to all rows above"]);
-    expect(result.mainText).toBe("20 kg");
-    expect(result.kindBadge).toBe("LD");
-  });
-});
-
-describe("INNER_LADDER_MARKER builder", () => {
-  it("appends colon suffix for multi-step ladder", () => {
-    const result = buildInnerLadderMarker(makeInnerLadderMarkerPayload([12, 9, 6]));
-
-    expect(result.mainText).toBe("12-9-6 :");
-    expect(result.dashed).toBe(true);
-  });
-
-  it("omits colon suffix for single-step ladder", () => {
-    const result = buildInnerLadderMarker(makeInnerLadderMarkerPayload([10]));
-
-    expect(result.mainText).toBe("10");
-    expect(result.dashed).toBe(true);
   });
 });
 

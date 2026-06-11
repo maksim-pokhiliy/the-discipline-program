@@ -46,56 +46,16 @@ describe("formatRepNotation", () => {
   });
 
   describe("max kind", () => {
-    it("renders 'max' for bare subForm", () => {
-      const r: RepNotation = { kind: "max", subForm: "bare" };
+    it("renders bare 'max' when no tail is set", () => {
+      const r: RepNotation = { kind: "max" };
 
       expect(formatRepNotation(r)).toBe("max");
     });
 
-    it("renders 'max (in remaining time)' for in_remaining_time subForm", () => {
-      const r: RepNotation = { kind: "max", subForm: "in_remaining_time" };
+    it("appends the tail after 'max ' when set", () => {
+      const r: RepNotation = { kind: "max", tail: "in remaining time" };
 
-      expect(formatRepNotation(r)).toBe("max (in remaining time)");
-    });
-
-    it("renders 'max · progressive' for progressive subForm without seed", () => {
-      const r: RepNotation = { kind: "max", subForm: "progressive" };
-
-      expect(formatRepNotation(r)).toBe("max · progressive");
-    });
-
-    it("appends seed in parentheses for progressive subForm with seed", () => {
-      const r: RepNotation = {
-        kind: "max",
-        subForm: "progressive",
-        progressiveSeed: "5RM",
-      };
-
-      expect(formatRepNotation(r)).toBe("max · progressive (5RM)");
-    });
-  });
-
-  describe("implicit kind", () => {
-    it("renders 'implicit'", () => {
-      const r: RepNotation = { kind: "implicit" };
-
-      expect(formatRepNotation(r)).toBe("implicit");
-    });
-  });
-
-  describe("total_flag kind", () => {
-    it("renders 'total <value>'", () => {
-      const r: RepNotation = { kind: "total_flag", value: 100 };
-
-      expect(formatRepNotation(r)).toBe("total 100");
-    });
-  });
-
-  describe("compound_rep_unit kind", () => {
-    it("renders 'compound rep'", () => {
-      const r: RepNotation = { kind: "compound_rep_unit" };
-
-      expect(formatRepNotation(r)).toBe("compound rep");
+      expect(formatRepNotation(r)).toBe("max in remaining time");
     });
   });
 });

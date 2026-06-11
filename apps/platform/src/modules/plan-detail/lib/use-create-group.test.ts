@@ -4,11 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { Schema, SchemaWithBody } from "@repo/contracts/lms/schema";
 import type {
-  CreateParallelSchemasRequest,
-  Schema,
-  SchemaWithBody,
-} from "@repo/contracts/lms/schema";
+  CreateGroupRequest,
+  CreateGroupResponse,
+  SchemaGroup,
+} from "@repo/contracts/lms/schema-group";
 
 import { platformKeys } from "@app/lib/api/keys";
 
@@ -16,15 +17,14 @@ import type { ComposeContainer, ComposeNode } from "../components/axes/axis-draf
 
 import { asNodeId } from "./axis-draft-id";
 
-const createParallelMock =
-  vi.fn<(planId: string, data: CreateParallelSchemasRequest) => Promise<SchemaWithBody>>();
+const createGroupMock =
+  vi.fn<(planId: string, data: CreateGroupRequest) => Promise<CreateGroupResponse>>();
 const toastSuccessMock = vi.fn<(message: string) => void>();
 
 vi.mock("@app/lib/api", () => ({
   api: {
-    schemas: {
-      createParallel: (planId: string, data: CreateParallelSchemasRequest) =>
-        createParallelMock(planId, data),
+    groups: {
+      create: (planId: string, data: CreateGroupRequest) => createGroupMock(planId, data),
     },
   },
 }));
@@ -35,33 +35,43 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const { useCreateParallelSchemas } = await import("./use-create-parallel-schemas");
+const { useCreateGroup } = await import("./use-create-group");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
-const PARENT_CUID = "clp9z8x7w0000abcd1234par1";
-const INCOMING_PARENT_ID = "clp9z8x7w0000abcd1234inc1";
+const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
+const MEMBER_ID = "clp9z8x7w0000abcd1234mem1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
+const SUCCESS_MESSAGE = "Group created";
 
-const schemaStub = (id: string): Schema => ({
-  id,
-  blockId: BLOCK_ID,
-  parentSchemaId: null,
-  order: 1,
-  header: null,
-  intensity: null,
-  composition: null,
-  label: null,
-  notes: null,
-  createdAt: NOW,
-  updatedAt: NOW,
+const memberStub = (id: string): SchemaWithBody => ({
+  schema: {
+    id,
+    blockId: BLOCK_ID,
+    groupId: GROUP_ID,
+    order: 1,
+    header: null,
+    intensity: null,
+    composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+    label: null,
+    notes: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+  } satisfies Schema,
+  rows: [],
 });
 
-const subtreeStub = (id: string): SchemaWithBody => ({
-  schema: schemaStub(id),
-  rows: [],
-  subSchemas: [],
+const groupResponse = (): CreateGroupResponse => ({
+  group: {
+    id: GROUP_ID,
+    blockId: BLOCK_ID,
+    label: null,
+    interleaveOrder: "round_by_round",
+    createdAt: NOW,
+    updatedAt: NOW,
+  } satisfies SchemaGroup,
+  members: [memberStub(MEMBER_ID)],
 });
 
 const ladderTrack = (id: string, steps: number[]): ComposeContainer => ({
@@ -86,14 +96,14 @@ const renderSubmitter = () => {
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
-  const view = renderHook(() => useCreateParallelSchemas(PLAN_ID, START_DATE), { wrapper });
+  const view = renderHook(() => useCreateGroup(PLAN_ID, START_DATE), { wrapper });
 
   return { view, invalidateSpy };
 };
 
-describe("useCreateParallelSchemas", () => {
+describe("useCreateGroup", () => {
   beforeEach(() => {
-    createParallelMock.mockReset();
+    createGroupMock.mockReset();
     toastSuccessMock.mockReset();
   });
 
@@ -101,8 +111,8 @@ describe("useCreateParallelSchemas", () => {
     vi.restoreAllMocks();
   });
 
-  it("sends exactly one createParallel request carrying every track", async () => {
-    createParallelMock.mockResolvedValueOnce(subtreeStub(PARENT_CUID));
+  it("sends exactly one group-create request carrying every track and the draft header as label", async () => {
+    createGroupMock.mockResolvedValueOnce(groupResponse());
 
     const { view, invalidateSpy } = renderSubmitter();
     const onSuccess = vi.fn();
@@ -112,16 +122,19 @@ describe("useCreateParallelSchemas", () => {
       await view.result.current.run(
         {
           blockId: BLOCK_ID,
-          draft: parentDraft([ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [15, 12, 9])]),
+          draft: parentDraft(
+            [ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [15, 12, 9])],
+            "WOD A",
+          ),
         },
         { onSuccess, onError },
       );
     });
 
-    expect(createParallelMock).toHaveBeenCalledTimes(1);
-    expect(createParallelMock).toHaveBeenCalledWith(PLAN_ID, {
+    expect(createGroupMock).toHaveBeenCalledTimes(1);
+    expect(createGroupMock).toHaveBeenCalledWith(PLAN_ID, {
       blockId: BLOCK_ID,
-      header: null,
+      label: "WOD A",
       tracks: [
         { header: null, steps: [21, 15, 9] },
         { header: null, steps: [15, 12, 9] },
@@ -132,6 +145,7 @@ describe("useCreateParallelSchemas", () => {
       queryKey: platformKeys.weeks.byDate(PLAN_ID, START_DATE),
     });
     expect(toastSuccessMock).toHaveBeenCalledTimes(1);
+    expect(toastSuccessMock).toHaveBeenCalledWith(SUCCESS_MESSAGE);
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(onError).not.toHaveBeenCalled();
   });
@@ -151,7 +165,7 @@ describe("useCreateParallelSchemas", () => {
       );
     });
 
-    expect(createParallelMock).not.toHaveBeenCalled();
+    expect(createGroupMock).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0]?.[0]).toMatch(/^ladder 2 steps: /);
     expect(invalidateSpy).not.toHaveBeenCalled();
@@ -160,7 +174,7 @@ describe("useCreateParallelSchemas", () => {
   });
 
   it("surfaces the failure without a toast and still invalidates once when the request rejects", async () => {
-    createParallelMock.mockRejectedValueOnce(new Error("network exploded"));
+    createGroupMock.mockRejectedValueOnce(new Error("network exploded"));
 
     const { view, invalidateSpy } = renderSubmitter();
     const onSuccess = vi.fn();
@@ -176,7 +190,7 @@ describe("useCreateParallelSchemas", () => {
       );
     });
 
-    expect(createParallelMock).toHaveBeenCalledTimes(1);
+    expect(createGroupMock).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledWith("network exploded");
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
@@ -185,12 +199,12 @@ describe("useCreateParallelSchemas", () => {
   });
 
   it("toggles isPending true while running then back to false", async () => {
-    let resolveRequest: ((subtree: SchemaWithBody) => void) | undefined;
-    const pendingRequest = new Promise<SchemaWithBody>((resolve) => {
+    let resolveRequest: ((response: CreateGroupResponse) => void) | undefined;
+    const pendingRequest = new Promise<CreateGroupResponse>((resolve) => {
       resolveRequest = resolve;
     });
 
-    createParallelMock.mockReturnValueOnce(pendingRequest);
+    createGroupMock.mockReturnValueOnce(pendingRequest);
 
     const { view } = renderSubmitter();
 
@@ -211,38 +225,10 @@ describe("useCreateParallelSchemas", () => {
     expect(view.result.current.isPending).toBe(true);
 
     await act(async () => {
-      resolveRequest?.(subtreeStub(PARENT_CUID));
+      resolveRequest?.(groupResponse());
       await runPromise;
     });
 
     expect(view.result.current.isPending).toBe(false);
-  });
-
-  it("forwards an incoming parentSchemaId on the single request", async () => {
-    createParallelMock.mockResolvedValueOnce(subtreeStub(PARENT_CUID));
-
-    const { view } = renderSubmitter();
-
-    await act(async () => {
-      await view.result.current.run(
-        {
-          blockId: BLOCK_ID,
-          parentSchemaId: INCOMING_PARENT_ID,
-          draft: parentDraft([ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [15, 12, 9])]),
-        },
-        { onSuccess: vi.fn(), onError: vi.fn() },
-      );
-    });
-
-    expect(createParallelMock).toHaveBeenCalledTimes(1);
-    expect(createParallelMock).toHaveBeenCalledWith(PLAN_ID, {
-      blockId: BLOCK_ID,
-      parentSchemaId: INCOMING_PARENT_ID,
-      header: null,
-      tracks: [
-        { header: null, steps: [21, 15, 9] },
-        { header: null, steps: [15, 12, 9] },
-      ],
-    });
   });
 });

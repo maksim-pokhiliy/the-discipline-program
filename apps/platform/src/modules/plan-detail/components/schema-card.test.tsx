@@ -1,5 +1,3 @@
-import { createElement } from "react";
-
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -39,8 +37,8 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
-vi.mock("../lib/use-create-parallel-schemas", () => ({
-  useCreateParallelSchemas: () => ({ run: vi.fn(), isPending: false }),
+vi.mock("../lib/use-create-group", () => ({
+  useCreateGroup: () => ({ run: vi.fn(), isPending: false }),
 }));
 
 vi.mock("../lib/use-create-independent-ladders", () => ({
@@ -54,41 +52,20 @@ vi.mock("./schema-row-list", () => {
     planId: string;
     startDate: string;
     parentIsReorderPending?: boolean;
-  }) =>
-    createElement(
-      "div",
-      {
-        "data-testid": "schema-row-list-mock",
-        "data-rows": String(props.rows.length),
-        "data-schema-id": props.schemaId,
-        "data-plan-id": props.planId,
-        "data-start-date": props.startDate,
-        "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
-      },
-      `row-list:${String(props.rows.length)}`,
-    );
+  }) => (
+    <div
+      data-testid="schema-row-list-mock"
+      data-rows={String(props.rows.length)}
+      data-schema-id={props.schemaId}
+      data-plan-id={props.planId}
+      data-start-date={props.startDate}
+      data-parent-pending={props.parentIsReorderPending === true ? "true" : "false"}
+    >
+      {`row-list:${String(props.rows.length)}`}
+    </div>
+  );
 
   return { SchemaRowList: renderRowListMock };
-});
-
-vi.mock("./schema-list", () => {
-  const renderSchemaListMock = (props: {
-    schemas: SchemaWithBody[];
-    parentSchemaId: string;
-    parentIsReorderPending?: boolean;
-  }) =>
-    createElement(
-      "div",
-      {
-        "data-testid": "schema-list-mock",
-        "data-schemas-count": String(props.schemas.length),
-        "data-parent-schema-id": props.parentSchemaId,
-        "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
-      },
-      `schema-list:${props.parentSchemaId}:${String(props.schemas.length)}`,
-    );
-
-  return { SchemaList: renderSchemaListMock };
 });
 
 const { SchemaCard } = await import("./schema-card");
@@ -98,17 +75,11 @@ const START_DATE = "2026-01-06";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
-const PARENT_SCHEMA_ID = "clp9z8x7w0000abcd1234psc1";
-const SUB_SCHEMA_ID_A = "clp9z8x7w0000abcd1234ssa1";
-const SUB_SCHEMA_ID_B = "clp9z8x7w0000abcd1234ssb1";
+const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const DRAG_LABEL = "Drag schema";
 const DELETE_LABEL = "Delete schema";
 const TITLE_LABEL = "Schema title";
 const EDIT_LABEL = "Edit axes";
-const ADD_SUB_LABEL = "Add sub-schema";
-const GROUP_BOX_TESTID = "schema-group-box";
-const GROUP_LABEL = "Group label";
-const GROUP_PLACEHOLDER = "group…";
 
 const COUNT_5: SchemaWithBody["schema"]["composition"] = {
   repetition: { kind: "count", count: 5 },
@@ -116,17 +87,16 @@ const COUNT_5: SchemaWithBody["schema"]["composition"] = {
 
 type MakeSchemaOverrides = Partial<SchemaWithBody["schema"]> & {
   rows?: SchemaWithBody["rows"];
-  subSchemas?: SchemaWithBody[];
 };
 
 const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
-  const { rows, subSchemas, ...schemaOverrides } = overrides;
+  const { rows, ...schemaOverrides } = overrides;
 
   return {
     schema: {
       id: SCHEMA_ID,
       blockId: BLOCK_ID,
-      parentSchemaId: null,
+      groupId: null,
       order: 1,
       header: null,
       intensity: null,
@@ -138,14 +108,8 @@ const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
       ...schemaOverrides,
     },
     rows: rows ?? [],
-    subSchemas: subSchemas ?? [],
   };
 };
-
-const makeParallelSubs = (): SchemaWithBody[] => [
-  makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-  makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-];
 
 const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
   intensity: null,
@@ -153,36 +117,18 @@ const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
   ...overrides,
 });
 
-const makeRestSlotRow = (id: string): SchemaWithBody["rows"][number] => ({
-  id,
-  schemaId: SCHEMA_ID,
-  order: 1,
-  rowKind: "REST_SLOT",
-  rowPayload: { rowKind: "REST_SLOT" },
-  load: null,
-  reps: null,
-  side: null,
-  tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
-  media: null,
-  compoundRep: null,
-  notes: null,
-  createdAt: NOW,
-  updatedAt: NOW,
-});
-
 type RenderOptions = {
   schema?: SchemaWithBody;
   blockCtx?: BlockCtx;
   parentIsReorderPending?: boolean;
+  isBoxed?: boolean;
 };
 
 const renderSchemaCard = ({
   schema = makeSchema(),
   blockCtx = makeBlockCtx(),
   parentIsReorderPending = false,
+  isBoxed = false,
 }: RenderOptions = {}) =>
   render(
     <SchemaCard
@@ -191,6 +137,7 @@ const renderSchemaCard = ({
       startDate={START_DATE}
       blockCtx={blockCtx}
       parentIsReorderPending={parentIsReorderPending}
+      isBoxed={isBoxed}
     />,
   );
 
@@ -212,7 +159,7 @@ describe("SchemaCard chrome", () => {
     expect(shell).toHaveStyle({ flexDirection: "column" });
   });
 
-  it("renders head, meta, body sections in the documented order (no sub-schemas)", () => {
+  it("renders head then body in the documented order with no nested schema list (leaf)", () => {
     renderSchemaCard();
 
     const dragBtn = screen.getByRole("button", { name: DRAG_LABEL });
@@ -232,29 +179,10 @@ describe("SchemaCard chrome", () => {
       expect(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     }
   });
-
-  it("renders sub-schema SchemaList BETWEEN head and body when subSchemas non-empty", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
-      }),
-    });
-
-    const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
-    const subSchemaList = screen.getByTestId("schema-list-mock");
-    const parentRowList = screen.getByTestId("schema-row-list-mock");
-
-    expect(
-      titleInput.compareDocumentPosition(subSchemaList) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
-    expect(
-      subSchemaList.compareDocumentPosition(parentRowList) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
-  });
 });
 
 describe("SchemaCard drag handle", () => {
-  it("renders an IconButton with aria 'Drag schema', grab cursor and touchAction:none on a top-level schema", () => {
+  it("renders an IconButton with aria 'Drag schema', grab cursor and touchAction:none", () => {
     renderSchemaCard();
 
     const dragBtn = screen.getByRole("button", { name: DRAG_LABEL });
@@ -263,10 +191,8 @@ describe("SchemaCard drag handle", () => {
     expect(dragBtn).toHaveStyle({ cursor: "grab", touchAction: "none" });
   });
 
-  it("DOES render the drag handle when schema.parentSchemaId is non-null (D-03 sub-schemas draggable)", () => {
-    renderSchemaCard({
-      schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
-    });
+  it("renders the drag handle for a grouped member schema (groupId non-null)", () => {
+    renderSchemaCard({ schema: makeSchema({ groupId: GROUP_ID }), isBoxed: true });
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeInTheDocument();
   });
@@ -303,76 +229,6 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByText("ladder")).toBeInTheDocument();
   });
 
-  it("boxes a structurally-parallel parent and drops the 'parallel' chip while keeping the summary (MT-2, MT-3)", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        composition: {},
-        subSchemas: [
-          makeSchema({
-            id: SUB_SCHEMA_ID_A,
-            parentSchemaId: SCHEMA_ID,
-            composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-          }),
-          makeSchema({
-            id: SUB_SCHEMA_ID_B,
-            parentSchemaId: SCHEMA_ID,
-            composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } },
-          }),
-        ],
-      }),
-    });
-
-    const box = screen.getByTestId(GROUP_BOX_TESTID);
-
-    expect(box.querySelector(".MuiCard-root")).not.toBeNull();
-    expect(screen.queryByText("parallel")).toBeNull();
-    expect(screen.queryByRole("textbox", { name: TITLE_LABEL })).toBeNull();
-    expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
-    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-schemas-count", "2");
-  });
-
-  it("renders the 'cadence' tag, not a box, for an EMOM parent with sub-schemas (MT-4 predicate gating)", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } },
-        subSchemas: [
-          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-        ],
-      }),
-    });
-
-    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
-    expect(screen.getByText("cadence")).toBeInTheDocument();
-    expect(screen.queryByText("parallel")).toBeNull();
-    expect(screen.getAllByText("EMOM 1’×12").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("boxes a `once`-repetition parent but suppresses a parent with explicit ordered arrangement (MT-5)", () => {
-    const subs = [
-      makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-      makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-    ];
-
-    const { rerender } = renderSchemaCard({
-      schema: makeSchema({ composition: { repetition: { kind: "once" } }, subSchemas: subs }),
-    });
-
-    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
-
-    rerender(
-      <SchemaCard
-        schema={makeSchema({ composition: { arrangement: { kind: "ordered" } }, subSchemas: subs })}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        blockCtx={makeBlockCtx()}
-        parentIsReorderPending={false}
-      />,
-    );
-
-    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
-  });
-
   it("renders no composition-kind tag when composition is null", () => {
     renderSchemaCard({ schema: makeSchema({ composition: null }) });
 
@@ -381,192 +237,14 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
   });
 
-  it("removes the box and shows the 'flat' chip when a re-render leaves one sub-schema and a stranded interleaveOrder (MT-6)", () => {
-    const trackA = makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID });
-    const trackB = makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID });
-    const twoTracks = makeSchema({ composition: {}, subSchemas: [trackA, trackB] });
-    const oneTrackLeft = makeSchema({
-      composition: { interleaveOrder: "track_by_track" },
-      subSchemas: [trackA],
-    });
-
-    const { rerender } = renderSchemaCard({ schema: twoTracks });
-
-    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
-
-    rerender(
-      <SchemaCard
-        schema={oneTrackLeft}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        blockCtx={makeBlockCtx()}
-        parentIsReorderPending={false}
-      />,
-    );
-
-    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
-    expect(screen.queryByText("parallel")).toBeNull();
-    expect(screen.queryByText(/track by track/)).toBeNull();
-    expect(screen.getByText("flat")).toBeInTheDocument();
-  });
-
-  it("renders the box and summary alongside direct rows — rows neither count nor suppress (MT-7a)", () => {
+  it("suppresses the title row and its composition tag when isBoxed (head-dedup, DR-W1-3)", () => {
     renderSchemaCard({
-      schema: makeSchema({
-        composition: {},
-        rows: [
-          makeRestSlotRow("clp9z8x7w0000abcd1234rsa1"),
-          makeRestSlotRow("clp9z8x7w0000abcd1234rsb1"),
-        ],
-        subSchemas: [
-          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-        ],
-      }),
+      schema: makeSchema({ composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } } }),
+      isBoxed: true,
     });
 
-    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
-    expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
-    expect(screen.getByTestId("schema-row-list-mock")).toHaveAttribute("data-rows", "2");
-  });
-});
-
-describe("SchemaCard group box", () => {
-  const renderBoxed = (header: string | null = null) =>
-    renderSchemaCard({
-      schema: makeSchema({ composition: {}, header, subSchemas: makeParallelSubs() }),
-    });
-
-  it("shows an empty 'Group label' textbox with the neutral placeholder when header is null (MT-9)", () => {
-    renderBoxed(null);
-
-    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
-
-    expect(label).toBeInstanceOf(HTMLInputElement);
-
-    if (!(label instanceof HTMLInputElement)) {
-      throw new Error("group label is not an HTMLInputElement");
-    }
-
-    expect(label.value).toBe("");
-    expect(label).toHaveAttribute("placeholder", GROUP_PLACEHOLDER);
-    expect(screen.queryByText("parallel")).toBeNull();
-  });
-
-  it("commits a non-empty box label as { header: <value> } via useUpdateSchema.mutate (MT-8)", () => {
-    renderBoxed(null);
-
-    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
-
-    fireEvent.focus(label);
-    fireEvent.change(label, { target: { value: "WOD A" } });
-    fireEvent.blur(label);
-
-    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(updateSchemaMutate).toHaveBeenCalledWith({
-      schemaId: SCHEMA_ID,
-      data: { header: "WOD A" },
-    });
-  });
-
-  it("commits a cleared box label as { header: null } via useUpdateSchema.mutate (MT-8)", () => {
-    renderBoxed("WOD A");
-
-    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
-
-    fireEvent.focus(label);
-    fireEvent.change(label, { target: { value: "" } });
-    fireEvent.blur(label);
-
-    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(updateSchemaMutate).toHaveBeenCalledWith({
-      schemaId: SCHEMA_ID,
-      data: { header: null },
-    });
-  });
-
-  it("does NOT fire mutate on a whitespace-only box label edit with no prior header (MT-8)", () => {
-    renderBoxed(null);
-
-    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
-
-    fireEvent.focus(label);
-    fireEvent.change(label, { target: { value: "   " } });
-    fireEvent.blur(label);
-
-    expect(updateSchemaMutate).not.toHaveBeenCalled();
-  });
-
-  it("does NOT fire mutate when the box label is committed unchanged (MT-8)", () => {
-    renderBoxed("Keep me");
-
-    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
-
-    fireEvent.focus(label);
-    fireEvent.change(label, { target: { value: "Keep me" } });
-    fireEvent.blur(label);
-
-    expect(updateSchemaMutate).not.toHaveBeenCalled();
-  });
-
-  it("keeps the Add-sub-schema button inside the box and fires create with parentSchemaId (MT-10)", () => {
-    renderBoxed(null);
-
-    const box = screen.getByTestId(GROUP_BOX_TESTID);
-    const addButton = within(box).getByRole("button", { name: ADD_SUB_LABEL });
-
-    expect(addButton).toBeInTheDocument();
-
-    fireEvent.click(addButton);
-    fireEvent.click(screen.getByRole("button", { name: "Count" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add schema" }));
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
-      blockId: BLOCK_ID,
-      parentSchemaId: SCHEMA_ID,
-      composition: { repetition: { kind: "count", count: 3 } },
-      header: null,
-      notes: null,
-    });
-  });
-
-  it("keeps a plain count parent unboxed while its structurally-parallel child boxes itself (MT-7b depth-3)", () => {
-    const grandchildA = makeSchema({
-      id: "clp9z8x7w0000abcd1234gca1",
-      parentSchemaId: SUB_SCHEMA_ID_A,
-    });
-    const grandchildB = makeSchema({
-      id: "clp9z8x7w0000abcd1234gcb1",
-      parentSchemaId: SUB_SCHEMA_ID_A,
-    });
-    const boxedChild: SchemaWithBody = {
-      ...makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID, composition: {} }),
-      subSchemas: [grandchildA, grandchildB],
-    };
-
-    const { rerender } = renderSchemaCard({
-      schema: makeSchema({
-        composition: { repetition: { kind: "count", count: 2 } },
-        subSchemas: [boxedChild],
-      }),
-    });
-
-    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
-    expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
-    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-schemas-count", "1");
-
-    rerender(
-      <SchemaCard
-        schema={boxedChild}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        blockCtx={makeBlockCtx()}
-        parentIsReorderPending={false}
-      />,
-    );
-
-    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: TITLE_LABEL })).toBeNull();
+    expect(screen.queryByText("ladder")).toBeNull();
   });
 });
 
@@ -575,8 +253,6 @@ describe("SchemaCard title", () => {
     renderSchemaCard();
 
     const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
-
-    expect(titleInput).toBeInstanceOf(HTMLInputElement);
 
     if (!(titleInput instanceof HTMLInputElement)) {
       throw new Error("title input not an HTMLInputElement");
@@ -791,24 +467,17 @@ describe("SchemaCard delete action", () => {
     expect(within(dialog).getByText("EMOM 1’×12")).toBeInTheDocument();
   });
 
-  it("DOES render the Delete IconButton when schema.parentSchemaId is non-null (F5 — sub-schemas deletable)", () => {
+  it("fires useDeleteSchema.mutate on confirm for a grouped member (groupId non-null)", () => {
     renderSchemaCard({
-      schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
-    });
-
-    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeInTheDocument();
-  });
-
-  it("fires useDeleteSchema.mutate on confirm for a sub-schema (F5 — sub-schemas deletable)", () => {
-    renderSchemaCard({
-      schema: makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: PARENT_SCHEMA_ID }),
+      schema: makeSchema({ id: SCHEMA_ID, groupId: GROUP_ID }),
+      isBoxed: true,
     });
 
     fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(deleteSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(deleteSchemaMutate.mock.calls[0]?.[0]).toEqual({ schemaId: SUB_SCHEMA_ID_A });
+    expect(deleteSchemaMutate.mock.calls[0]?.[0]).toEqual({ schemaId: SCHEMA_ID });
   });
 
   it("disables the Delete IconButton when useDeleteSchema is pending", () => {
@@ -821,153 +490,18 @@ describe("SchemaCard delete action", () => {
 });
 
 describe("SchemaCard edit-axes affordance", () => {
-  it("enables the Edit axes IconButton for a top-level schema", () => {
+  it("enables the Edit axes IconButton", () => {
     renderSchemaCard();
 
     expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
   });
 
-  it("renders the Edit axes IconButton for a sub-schema (F5 — sub-schemas tunable)", () => {
-    renderSchemaCard({
-      schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
-    });
-
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
-  });
-
-  it("opens the edit AxisEditorModal (title 'Container composition') when Edit axes is clicked on a sub-schema", () => {
-    renderSchemaCard({
-      schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
-    });
+  it("opens the edit AxisEditorModal (title 'Container composition') when Edit axes is clicked", () => {
+    renderSchemaCard();
 
     fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
 
     expect(screen.getByRole("dialog", { name: "Container composition" })).toBeInTheDocument();
-  });
-});
-
-describe("SchemaCard add-sub-schema affordance (F5)", () => {
-  it("renders the Add-sub-schema button on a card with zero sub-schemas", () => {
-    renderSchemaCard({ schema: makeSchema({ subSchemas: [] }) });
-
-    expect(screen.getByRole("button", { name: ADD_SUB_LABEL })).toBeInTheDocument();
-  });
-
-  it("renders the Add-sub-schema button on a card that already has sub-schemas", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
-      }),
-    });
-
-    expect(screen.getByRole("button", { name: ADD_SUB_LABEL })).toBeInTheDocument();
-  });
-
-  it("opens the create AxisEditorModal (title 'Add schema') when Add-sub-schema is clicked", () => {
-    renderSchemaCard();
-
-    fireEvent.click(screen.getByRole("button", { name: ADD_SUB_LABEL }));
-
-    expect(screen.getByRole("dialog", { name: "Add schema" })).toBeInTheDocument();
-  });
-
-  it("submits createSchema carrying parentSchemaId (parent id) and the parent's blockId", () => {
-    renderSchemaCard();
-
-    fireEvent.click(screen.getByRole("button", { name: ADD_SUB_LABEL }));
-    fireEvent.click(screen.getByRole("button", { name: "Count" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add schema" }));
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
-      blockId: BLOCK_ID,
-      parentSchemaId: SCHEMA_ID,
-      composition: { repetition: { kind: "count", count: 3 } },
-      header: null,
-      notes: null,
-    });
-  });
-});
-
-describe("SchemaCard sub-schemas", () => {
-  it("renders a nested SchemaList (parentSchemaId = parent schema id) with schema.subSchemas when non-empty", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        subSchemas: [
-          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-        ],
-      }),
-    });
-
-    const subSchemaList = screen.getByTestId("schema-list-mock");
-
-    expect(subSchemaList).toHaveAttribute("data-parent-schema-id", SCHEMA_ID);
-    expect(subSchemaList).toHaveAttribute("data-schemas-count", "2");
-  });
-
-  it("renders the parent's drag handle and Delete IconButton exactly once when subSchemas non-empty (D-03 sub-schema drag lives inside nested SchemaList mock)", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
-      }),
-    });
-
-    const dragHandles = screen.getAllByRole("button", { name: DRAG_LABEL });
-    const deleteButtons = screen.getAllByRole("button", { name: DELETE_LABEL });
-
-    expect(dragHandles).toHaveLength(1);
-    expect(deleteButtons).toHaveLength(1);
-  });
-
-  it("renders nothing for sub-schemas when schema.subSchemas is an empty array", () => {
-    renderSchemaCard({ schema: makeSchema({ subSchemas: [] }) });
-
-    const dragHandles = screen.getAllByRole("button", { name: DRAG_LABEL });
-    const deleteButtons = screen.getAllByRole("button", { name: DELETE_LABEL });
-    const rowLists = screen.getAllByTestId("schema-row-list-mock");
-
-    expect(dragHandles).toHaveLength(1);
-    expect(deleteButtons).toHaveLength(1);
-    expect(rowLists).toHaveLength(1);
-    expect(screen.queryByTestId("schema-list-mock")).toBeNull();
-  });
-
-  it("renders the cap cascade chip on the parent meta row when blockCtx has a timeCap (sub-schema row lives inside nested SchemaList mock)", () => {
-    const timeCap: TimeCap = { min: 10, unit: "min" };
-
-    renderSchemaCard({
-      schema: makeSchema({
-        subSchemas: [
-          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-        ],
-      }),
-      blockCtx: makeBlockCtx({ timeCap }),
-    });
-
-    expect(screen.getAllByText("cap 10:00")).toHaveLength(1);
-  });
-
-  it("renders without throwing when sub-schemas are pre-populated; SchemaList mock terminates recursion (MT-7 + QA-006)", () => {
-    const GRANDCHILD_ID = "clp9z8x7w0000abcd1234grc1";
-
-    const grandchild = makeSchema({ id: GRANDCHILD_ID, parentSchemaId: SUB_SCHEMA_ID_A });
-    const child: SchemaWithBody = {
-      ...makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-      subSchemas: [grandchild],
-    };
-
-    expect(() =>
-      renderSchemaCard({
-        schema: makeSchema({ subSchemas: [child] }),
-      }),
-    ).not.toThrow();
-
-    const subSchemaList = screen.getByTestId("schema-list-mock");
-
-    expect(subSchemaList).toHaveAttribute("data-parent-schema-id", SCHEMA_ID);
-    expect(subSchemaList).toHaveAttribute("data-schemas-count", "1");
   });
 });
 
@@ -990,7 +524,6 @@ describe("SchemaCard body / SchemaRowList wiring", () => {
       sequence: null,
       intensity: null,
       media: null,
-      compoundRep: null,
       notes: null,
       createdAt: NOW,
       updatedAt: NOW,
@@ -1033,17 +566,6 @@ describe("SchemaCard parentIsReorderPending cascade (D-10)", () => {
       "data-parent-pending",
       "true",
     );
-  });
-
-  it("passes effective pending down to nested SchemaList when parentIsReorderPending is true", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
-      }),
-      parentIsReorderPending: true,
-    });
-
-    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-parent-pending", "true");
   });
 
   it("passes data-parent-pending='false' to SchemaRowList when parentIsReorderPending is false", () => {

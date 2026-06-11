@@ -110,58 +110,6 @@ describe("formatExerciseForm", () => {
     });
   });
 
-  describe("cyclical form", () => {
-    it("renders 'primary ↔ secondary' and joins cycles with ', '", () => {
-      const form: ExerciseForm = {
-        form: "cyclical",
-        cyclical: {
-          primaryExerciseId: ID_A,
-          secondaryExerciseId: ID_B,
-          cycles: [
-            { primaryReps: 5, secondaryReps: 5 },
-            { primaryReps: 3, secondaryReps: 3 },
-          ],
-        },
-      };
-
-      expect(formatExerciseForm(form, exerciseById)).toEqual({
-        name: "Back Squat ↔ Deadlift",
-        sub: ["cyclical · 5↔5, 3↔3"],
-      });
-    });
-
-    it("uses '?' fallback for missing primaryReps", () => {
-      const form: ExerciseForm = {
-        form: "cyclical",
-        cyclical: {
-          primaryExerciseId: ID_A,
-          secondaryExerciseId: ID_B,
-          cycles: [{ secondaryReps: 5 }],
-        },
-      };
-
-      expect(formatExerciseForm(form, exerciseById).sub).toEqual(["cyclical · ?↔5"]);
-    });
-  });
-
-  describe("sandwich form", () => {
-    it("renders 'opening → middle → closing' with sandwich sub label", () => {
-      const form: ExerciseForm = {
-        form: "sandwich",
-        sandwich: {
-          opening: { exerciseId: ID_A, reps: { kind: "count", value: 1 } },
-          middle: { exerciseId: ID_B, reps: { kind: "count", value: 3 } },
-          closing: { exerciseId: ID_C, reps: { kind: "count", value: 1 } },
-        },
-      };
-
-      expect(formatExerciseForm(form, exerciseById)).toEqual({
-        name: "Back Squat → Deadlift → Bench Press",
-        sub: ["sandwich compound"],
-      });
-    });
-  });
-
   describe("or_alternative form", () => {
     it("renders 'primary · or · alternative' with purpose underscore-replaced", () => {
       const form: ExerciseForm = {

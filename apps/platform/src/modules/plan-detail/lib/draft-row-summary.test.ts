@@ -31,7 +31,6 @@ const exerciseById = new Map<string, Exercise>([
 
 const KG_24: Load = { kind: "absolute", weight: { variant: "single", valueKg: 24 } };
 const COUNT_10: RepNotation = { kind: "count", value: 10 };
-const IMPLICIT: RepNotation = { kind: "implicit" };
 
 const baseRow = (id: string): Omit<ComposeRow, "rowKind" | "rowPayload"> => ({
   nodeType: "row",
@@ -46,7 +45,12 @@ const baseRow = (id: string): Omit<ComposeRow, "rowKind" | "rowPayload"> => ({
   editorDraft: undefined,
 });
 
-const atomicRow = (id: string, exerciseId: string, load: Load, reps: RepNotation): ComposeRow => ({
+const atomicRow = (
+  id: string,
+  exerciseId: string,
+  load: Load,
+  reps: RepNotation | null,
+): ComposeRow => ({
   ...baseRow(id),
   rowKind: "EXERCISE",
   rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId } },
@@ -93,8 +97,8 @@ describe("buildRowSummary", () => {
     expect(buildRowSummary(row, exerciseById).label).toBe(`5 ${NAME_PULL_UP} + 10 ${NAME_DIP}`);
   });
 
-  it("hides implicit reps so a container-driven scheme is not duplicated on the row", () => {
-    const row = atomicRow("t-implicit", ID_THRUSTERS, KG_24, IMPLICIT);
+  it("omits null reps so a container-driven scheme is not duplicated on the row", () => {
+    const row = atomicRow("t-no-reps", ID_THRUSTERS, KG_24, null);
 
     expect(buildRowSummary(row, exerciseById).label).toBe(`${NAME_THRUSTERS} · 24 kg`);
   });
