@@ -11,6 +11,25 @@
 > (`composition.programKind`) plus the `window` repetition kind were removed in the
 > compose-axis cleanup (ADR-0039); a full rewrite of the remaining dead
 > archetype/schemaKind/connectorForm tables is still deferred (low-priority).
+>
+> **⚠️ FURTHER SUPERSEDED (2026-06-11, session-primitive W2 — ADR-0041).** The
+> session-primitive model core killed the leaf surface these tables describe. NOW
+> DEAD (the contract rejects them — see `decisions.md` DR-W2-2/DR-W2-3): the §2
+> `parentSchemaId` (sub-schema) invariant — recursion is gone, the carrier is the
+> `SchemaGroup` member count (live gate: `coverage-cells/shared.ts` > `_count.members >= 2`, floored at 4 in `seed-coverage.test.ts`); the §2
+> `alternatingGroupRef` / `trailingConnector` rows; the §4 `FOOTNOTE` /
+> `STANDALONE_LOAD` / `STANDALONE_URL` / `REP_DEFINITION` RowKinds (RowKind is now
+> `EXERCISE | REST | PLACEHOLDER | REST_SLOT`); the §5 `cyclical` / `sandwich`
+> exercise forms (only `compound` survives among the multi-element forms); the §6.1
+> `without_weight` / `unspecified` load kinds (now `byProfile` / `none` / `null`);
+> the §6.2 `dual_value` weight (moved to `load.byProfile`); the §7 `implicit` /
+> `total_flag` / `compound_rep_unit` rep kinds + the §22 CompoundRepDefinition;
+> the §19 MediaReference `position` / `appliesTo` axes (media is now
+> `{ url, label? }`); the §23 Footnote and §15 ConnectorForm tables. The remaining
+> sections (catalog, intensity, rest-spec, tempo, position, the surviving load
+> kinds + weight exotics) stay valid. A full rewrite of the dead tables is still
+> deferred (low-priority); the runnable gate is `seed-coverage.test.ts`, not this
+> doc.
 
 Single source of truth for **what Session B must emit** so the seeded DB
 covers 100% of the training-domain discriminator space. Session A's emit
