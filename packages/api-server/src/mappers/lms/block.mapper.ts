@@ -2,6 +2,7 @@ import {
   type Block as PrismaBlock,
   type BlockLabelAssignment as PrismaBlockLabelAssignment,
   type Label as PrismaLabel,
+  type SchemaGroup as PrismaSchemaGroup,
 } from "@prisma/client";
 
 import { intensitySchema, timeCapSchema } from "@repo/contracts/lms/_shared";
@@ -10,7 +11,8 @@ import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { assertComposeTreeValid } from "./compose-projection.mapper";
 import { mapToLabel } from "./label.mapper";
-import { buildSchemaForest, type PrismaSchemaWithRows } from "./schema.mapper";
+import { mapToSchemaGroup } from "./schema-group.mapper";
+import { mapSchemas, type PrismaSchemaWithRows } from "./schema.mapper";
 
 type BlockWithLabels = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
@@ -18,6 +20,7 @@ type BlockWithLabels = PrismaBlock & {
 
 type BlockWithSchemas = BlockWithLabels & {
   schemas: PrismaSchemaWithRows[];
+  groups: PrismaSchemaGroup[];
 };
 
 export const mapToBlock = (b: PrismaBlock): Block => ({
@@ -29,6 +32,7 @@ export const mapToBlock = (b: PrismaBlock): Block => ({
   notes: b.notes,
   labels: [],
   schemas: [],
+  groups: [],
   createdAt: b.createdAt,
   updatedAt: b.updatedAt,
 });
@@ -40,13 +44,14 @@ export const mapToBlockWithLabels = (b: BlockWithLabels): Block => ({
     .map((la) => mapToLabel(la.label)),
 });
 
-const validateSchemaTree = (tree: SchemaWithBody): SchemaWithBody => {
-  assertComposeTreeValid(tree);
+const validateSchema = (schema: SchemaWithBody): SchemaWithBody => {
+  assertComposeTreeValid(schema);
 
-  return tree;
+  return schema;
 };
 
 export const mapToBlockWithSchemas = (b: BlockWithSchemas): Block => ({
   ...mapToBlockWithLabels(b),
-  schemas: buildSchemaForest(b.schemas).map(validateSchemaTree),
+  schemas: mapSchemas(b.schemas).map(validateSchema),
+  groups: b.groups.map(mapToSchemaGroup),
 });

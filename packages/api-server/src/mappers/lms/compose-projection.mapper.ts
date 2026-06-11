@@ -1,5 +1,5 @@
 import {
-  type ComposeNode,
+  type ComposeContainer,
   type ComposeRow,
   composeContainerSchema,
 } from "@repo/contracts/lms/composition";
@@ -21,13 +21,13 @@ export const projectSchemaRow = (row: SchemaRow): ComposeRow => ({
   notes: row.notes,
 });
 
-export const projectSchemaWithBody = (node: SchemaWithBody): ComposeNode => ({
+export const projectSchemaWithBody = (node: SchemaWithBody): ComposeContainer => ({
   nodeType: "container",
   id: node.schema.id,
   header: node.schema.header,
   notes: node.schema.notes,
   composition: node.schema.composition ?? {},
-  children: [...node.rows.map(projectSchemaRow), ...node.subSchemas.map(projectSchemaWithBody)],
+  children: node.rows.map(projectSchemaRow),
 });
 
 export const assertComposeTreeValid = (node: SchemaWithBody): void => {

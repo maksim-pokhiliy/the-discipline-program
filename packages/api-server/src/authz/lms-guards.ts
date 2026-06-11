@@ -164,13 +164,11 @@ export const verifySchemaOwnership = async (
   dayId: string;
   weekId: string;
   planId: string;
-  parentSchemaId: string | null;
 }> => {
   const schema = await prisma.schema.findUnique({
     where: { id: schemaId },
     select: {
       blockId: true,
-      parentSchemaId: true,
       block: {
         select: {
           sessionId: true,
@@ -209,7 +207,6 @@ export const verifySchemaOwnership = async (
       dayId: schema.block.session.dayId,
       weekId: schema.block.session.day.weekId,
       planId: schema.block.session.day.week.planId,
-      parentSchemaId: schema.parentSchemaId,
     };
   }
 
@@ -223,7 +220,6 @@ export const verifySchemaOwnership = async (
       dayId: schema.block.session.dayId,
       weekId: schema.block.session.day.weekId,
       planId: schema.block.session.day.week.planId,
-      parentSchemaId: schema.parentSchemaId,
     };
   }
 
@@ -236,7 +232,6 @@ export const verifySchemaRowOwnership = async (
 ): Promise<{
   status: TrainingPlanStatus;
   schemaId: string;
-  parentSchemaId: string | null;
   blockId: string;
   sessionId: string;
   dayId: string;
@@ -249,7 +244,6 @@ export const verifySchemaRowOwnership = async (
       schemaId: true,
       schema: {
         select: {
-          parentSchemaId: true,
           blockId: true,
           block: {
             select: {
@@ -286,7 +280,6 @@ export const verifySchemaRowOwnership = async (
   const buildResponse = () => ({
     status: TRAINING_PLAN_STATUS_MAP[plan.status],
     schemaId: row.schemaId,
-    parentSchemaId: row.schema.parentSchemaId,
     blockId: row.schema.blockId,
     sessionId: row.schema.block.sessionId,
     dayId: row.schema.block.session.dayId,

@@ -45,6 +45,7 @@ export const lmsWeekApi = {
                           rows: { orderBy: { order: "asc" } },
                         },
                       },
+                      groups: true,
                     },
                   },
                 },

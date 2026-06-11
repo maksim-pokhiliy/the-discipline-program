@@ -535,12 +535,7 @@ enum CanonicalCompoundType {
 enum RowKind {
   EXERCISE
   REST
-  FOOTNOTE
-  STANDALONE_LOAD
-  STANDALONE_URL
   PLACEHOLDER
-  INNER_LADDER_MARKER
-  REP_DEFINITION
   REST_SLOT
 }
 
@@ -637,10 +632,26 @@ model Block {
   session          Session                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   labelAssignments BlockLabelAssignment[]
   schemas          Schema[]
+  groups           SchemaGroup[]
 
   @@unique([sessionId, order])
   @@index([sessionId, order])
   @@map("training_blocks")
+}
+
+model SchemaGroup {
+  id              String   @id @default(cuid())
+  blockId         String
+  label           String?
+  interleaveOrder String   @default("round_by_round")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  block   Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  members Schema[]
+
+  @@index([blockId])
+  @@map("training_schema_groups")
 }
 
 model BlockLabelAssignment {
@@ -659,25 +670,23 @@ model BlockLabelAssignment {
 }
 
 model Schema {
-  id             String   @id @default(cuid())
-  blockId        String
-  parentSchemaId String?
-  order          Int
-  header         String?
-  composition    Json?
-  intensity      Json?
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String   @id @default(cuid())
+  blockId     String
+  groupId     String?
+  order       Int
+  header      String?
+  composition Json?
+  intensity   Json?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  block        Block       @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  parentSchema Schema?     @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
-  subSchemas   Schema[]    @relation("SchemaSubSchemas")
-  rows         SchemaRow[]
+  block Block        @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  group SchemaGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rows  SchemaRow[]
 
-  @@unique([parentSchemaId, order])
   @@index([blockId, order])
-  @@index([parentSchemaId, order])
+  @@index([groupId])
   @@map("training_schemas")
 }
 
@@ -695,7 +704,6 @@ model SchemaRow {
   sequence    Json?
   intensity   Json?
   media       Json?
-  compoundRep Json?
   notes       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
