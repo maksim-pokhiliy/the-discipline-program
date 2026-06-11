@@ -1,13 +1,7 @@
 import { type PrismaClient as PrismaClientType, Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { compositionSchema, isStructurallyParallel } from "@repo/contracts/lms/composition";
-
-import {
-  COVERAGE_CELLS,
-  isDerivedParallelComposition,
-  tallyCoverage,
-} from "../../prisma/seed/plan-emit";
+import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/plan-emit";
 import { lmsWeekApi } from "../endpoints/lms/week/admin";
 
 import {
@@ -39,11 +33,10 @@ const ALL_POSITIONS = [
   "HANDS_ON_DB",
   "HAND_ON_DB_NEUTRAL_GRIP",
 ] as const;
-const MEDIA_POSITIONS = ["inline", "standalone_row", "bare"] as const;
-const MEDIA_APPLIES_TO = ["previous_row", "current_row", "whole_schema", "drop_stage"] as const;
 const COMPOSITION_REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
-const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "superset"] as const;
+const MULTI_MEMBER_GROUP_MIN = 2;
 const EXPECTED_STRUCTURAL_PARALLEL_COUNT = 4;
+const EXPECTED_SCHEMA_GROUP_MIN = 5;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {
   const db: PrismaClientType = new PrismaClient();
@@ -202,54 +195,31 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(implicitBlocks).toBeGreaterThanOrEqual(1);
   });
 
-  it("structural parallel: seed helper agrees with the contracts predicate on every parent; canonical count pinned; cells mirror it (QA-303, DR-S2-1)", async () => {
-    const grouped = await db.schema.groupBy({
-      by: ["parentSchemaId"],
-      where: { ...scopes.schemaScope, parentSchemaId: { not: null } },
-      _count: { parentSchemaId: true },
+  it("structural parallel: the ≥2-member SchemaGroup count is pinned and the cells mirror it (DR-W2-1)", async () => {
+    const groups = await db.schemaGroup.findMany({
+      where: { block: scopes.blockScope },
+      select: { _count: { select: { members: true } } },
     });
 
-    const childCounts = new Map<string, number>();
+    expect(groups.length).toBeGreaterThanOrEqual(EXPECTED_SCHEMA_GROUP_MIN);
 
-    for (const group of grouped) {
-      if (group.parentSchemaId !== null) {
-        childCounts.set(group.parentSchemaId, group._count.parentSchemaId);
-      }
-    }
+    const multiMemberGroupCount = groups.filter(
+      (group) => group._count.members >= MULTI_MEMBER_GROUP_MIN,
+    ).length;
 
-    const parents = await db.schema.findMany({
-      where: { ...scopes.schemaScope, id: { in: [...childCounts.keys()] } },
-      select: { id: true, composition: true },
-    });
-
-    expect(parents.length).toBeGreaterThan(0);
-
-    const verdicts = parents.map((parent) => {
-      const containerChildCount = childCounts.get(parent.id) ?? 0;
-
-      return {
-        id: parent.id,
-        seed: containerChildCount >= 2 && isDerivedParallelComposition(parent.composition),
-        contracts: isStructurallyParallel(compositionSchema.parse(parent.composition), {
-          containerChildCount,
-        }),
-      };
-    });
-
-    expect(verdicts.filter((v) => v.seed !== v.contracts).map((v) => v.id)).toEqual([]);
-
-    const contractsParallelCount = verdicts.filter((v) => v.contracts).length;
-
-    expect(contractsParallelCount).toBe(EXPECTED_STRUCTURAL_PARALLEL_COUNT);
+    expect(multiMemberGroupCount).toBe(EXPECTED_STRUCTURAL_PARALLEL_COUNT);
 
     const report = await tallyCoverage(db, demoPlanId);
     const structuralCell = report.cells.find((c) => c.cell.id === "structural.parallel");
-    const alternatingCell = report.cells.find((c) => c.cell.id === "entity.alternatingGroup");
+    const multiMemberCell = report.cells.find((c) => c.cell.id === "entity.multiMemberGroup");
+    const groupPresenceCell = report.cells.find((c) => c.cell.id === "entity.schemaGroup");
 
-    expect(structuralCell?.count).toBe(contractsParallelCount);
+    expect(structuralCell?.count).toBe(multiMemberGroupCount);
     expect(structuralCell?.satisfied).toBe(true);
-    expect(alternatingCell?.count).toBe(contractsParallelCount);
-    expect(alternatingCell?.satisfied).toBe(true);
+    expect(multiMemberCell?.count).toBe(multiMemberGroupCount);
+    expect(multiMemberCell?.satisfied).toBe(true);
+    expect(groupPresenceCell?.count).toBe(groups.length);
+    expect(groupPresenceCell?.satisfied).toBe(true);
   });
 
   it("every coverage-matrix cell is hit at least Required count — 100% gate (QA-1, MT-21)", async () => {
@@ -276,11 +246,12 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
       "catalog.label",
       ...ALL_POSITIONS.map((p) => `position.${p}`),
       ...COMPOSITION_REPETITION_KINDS.map((k) => `repetition.kind.${k}`),
-      ...COMPOSITION_ARRANGEMENT_KINDS.map((k) => `arrangement.kind.${k}`),
       "structural.parallel",
+      "entity.schemaGroup",
+      "entity.groupMember",
+      "entity.multiMemberGroup",
       "rest.present",
-      ...MEDIA_POSITIONS.map((p) => `mediaReference.position.${p}`),
-      ...MEDIA_APPLIES_TO.map((a) => `mediaReference.appliesTo.${a}`),
+      "mediaReference.present",
     ];
 
     const missing = requiredCellIds.filter((id) => !cellIds.has(id));
@@ -331,17 +302,31 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(weekCount).toBe(0);
   });
 
-  it("§2: every sub-schema parentSchemaId resolves and shares the parent's blockId", async () => {
-    const subSchemas = await db.schema.findMany({
-      where: { ...scopes.schemaScope, parentSchemaId: { not: null } },
-      select: { blockId: true, parentSchema: { select: { blockId: true } } },
+  it("§2: every group member is a flat block-level schema whose groupId resolves to a group in the same block (DR-W2-1)", async () => {
+    const members = await db.schema.findMany({
+      where: { ...scopes.schemaScope, NOT: { groupId: null } },
+      select: { blockId: true, group: { select: { blockId: true } } },
     });
 
-    expect(subSchemas.length).toBeGreaterThan(0);
+    expect(members.length).toBeGreaterThan(0);
 
-    for (const sub of subSchemas) {
-      expect(sub.parentSchema).not.toBeNull();
-      expect(sub.parentSchema?.blockId).toBe(sub.blockId);
+    for (const member of members) {
+      expect(member.group).not.toBeNull();
+      expect(member.group?.blockId).toBe(member.blockId);
+    }
+  });
+
+  it("§2: every SchemaGroup has at least one member and is owned by a block in the plan (DR-W2-1)", async () => {
+    const groups = await db.schemaGroup.findMany({
+      where: { block: scopes.blockScope },
+      select: { blockId: true, _count: { select: { members: true } } },
+    });
+
+    expect(groups.length).toBeGreaterThanOrEqual(EXPECTED_SCHEMA_GROUP_MIN);
+
+    for (const group of groups) {
+      expect(group.blockId).not.toBe("");
+      expect(group._count.members).toBeGreaterThanOrEqual(1);
     }
   });
 });

@@ -322,9 +322,10 @@ describe("lmsDayMetadataApi", () => {
         expect(embedded?.id).toBe(block.id);
         expect(embedded?.schemas).toHaveLength(1);
         expect(embedded?.schemas[0]?.schema.id).toBe(schema.id);
+        expect(embedded?.schemas[0]?.schema.groupId).toBeNull();
         expect(embedded?.schemas[0]?.rows).toHaveLength(1);
         expect(embedded?.schemas[0]?.rows[0]?.id).toBe(row.id);
-        expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
+        expect(embedded?.groups).toEqual([]);
       } finally {
         await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});
