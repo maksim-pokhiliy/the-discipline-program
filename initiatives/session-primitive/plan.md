@@ -2,13 +2,13 @@
 
 Wave-structured per **D-8 JIT-FREEZE**: runner sessions run only on RATIFIED/ACCEPTED grid rows; OPEN items close just-in-time before the wave that needs them. Budget: ≤1 full `/feature` (or 2 small) per runner session (D-7). UI-first house rule: the box UX ships on mocks (W1) before the model lands under it (W2).
 
-| #   | Wave                                                                                                   | Needs decided first        | Gate                                                               | Status              |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------ | ------------------- |
-| 0   | Founding: review → skeleton + grid + spec                                                              | —                          | owner ГО                                                           | 🟢 done             |
-| W1  | Group/box UX on the existing model (platform-only)                                                     | nothing open               | coach walkthrough (boxes feel right) + platform suite green        | 🟢 merged (PR #261) |
-| W2  | Model core: Group entity, recursion death, arrangement death, ratified leaf kills, seed, guards        | **D-MARKER-DEATH**         | gated api-server suite + reseed + round-trips                      | 🟢 merged (PR #262) |
-| W3  | Editor remap onto the Group model (proto fidelity, gesture set, draft collapse)                        | — (rides W2)               | round-trips + walkthrough of the full gesture set                  | 🟢 merged (PR #263) |
-| W4  | Row grammar + leaf residuals (plaque/rest/OR/superset carriers; position/tempo/weight/header/slot/cap) | **F-PLAQUE + leaf F-rows** | walkthrough + suites; `primitive-spec.md` has zero OPEN rows after | ⚪                  |
+| #   | Wave                                                                                                   | Needs decided first                    | Gate                                                               | Status              |
+| --- | ------------------------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------ | ------------------- |
+| 0   | Founding: review → skeleton + grid + spec                                                              | —                                      | owner ГО                                                           | 🟢 done             |
+| W1  | Group/box UX on the existing model (platform-only)                                                     | nothing open                           | coach walkthrough (boxes feel right) + platform suite green        | 🟢 merged (PR #261) |
+| W2  | Model core: Group entity, recursion death, arrangement death, ratified leaf kills, seed, guards        | **D-MARKER-DEATH**                     | gated api-server suite + reseed + round-trips                      | 🟢 merged (PR #262) |
+| W3  | Editor remap onto the Group model (proto fidelity, gesture set, draft collapse)                        | — (rides W2)                           | round-trips + walkthrough of the full gesture set                  | 🟢 merged (PR #263) |
+| W4  | Row grammar + leaf residuals (plaque/rest/OR/superset carriers; position/tempo/weight/header/slot/cap) | **leaf F-rows** (F-PLAQUE ✅ D-PLAQUE) | walkthrough + suites; `primitive-spec.md` has zero OPEN rows after | ⚪                  |
 
 ## W1 — Group/box UX on the existing model (launched 2026-06-10)
 
@@ -28,11 +28,11 @@ The editor caught up to the Group model with the owner's hi-fi prototype (`plan-
 
 ## W4 — row grammar + leaf residuals
 
-Plaque/row-group boundary per F-PLAQUE; rest/OR/superset carriers; position library (F-POSITION-CARRIER), tempo (F-TEMPO), weight exotics (F-WEIGHT-EXOTICS), header (F-HEADER), slot (F-SLOT), Block.timeCap (F-BLOCK-TIMECAP). After W4 the spec has zero OPEN rows.
+The D-PLAQUE implementation set lands here: `RowKind.REST` + `raw` kill (seed rest lines → the schema rest setting; the dual-rest corpus rule 2 → a note), notes columns → ordered multi-lists (+ notes on both group entities), the row-group entity + editor (OR / per-set / superset carriers), the sequence VO death (only-once corpus case → its own schema). Plus the remaining leaf F-rows: position library (F-POSITION-CARRIER), tempo (F-TEMPO), weight exotics (F-WEIGHT-EXOTICS), header (F-HEADER), slot (F-SLOT), Block.timeCap (F-BLOCK-TIMECAP). After W4 the spec has zero OPEN rows.
 
 ## Design follow-ups (owner-paced, between waves)
 
-Order: **D-MARKER-DEATH** (yes/no — needed before W2) → **F-PLAQUE** (gates W4; one focused discussion, orchestrator brings a concrete rec) → F-POSITION-CARRIER + F-CHIPS → F-WEIGHT-EXOTICS + F-TEMPO (consult `load-representation.md` + `load-edge-cases.md`) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
+Order: **D-MARKER-DEATH** ✅ (landed W2) → **F-PLAQUE** ✅ (D-PLAQUE, 2026-06-12) → **F-POSITION-CARRIER + F-CHIPS** (next touch) → F-WEIGHT-EXOTICS + F-TEMPO (consult `load-representation.md` + `load-edge-cases.md`) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
 
 ## Runner-prompt checklist (D-7 — how to brief a wave)
 

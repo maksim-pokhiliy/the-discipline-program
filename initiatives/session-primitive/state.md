@@ -1,18 +1,18 @@
 # session-primitive — state (the board)
 
-**Updated:** 2026-06-12 (W3 MERGED — main `9a9dfb8e`)
+**Updated:** 2026-06-12 (W3 merged `9a9dfb8e` · D-PLAQUE RATIFIED · one-liners collected · suite confirmed green)
 
 Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; why → `decisions.md`; carry-forwards → `deferred.md`; the design itself → `primitive-spec.md`.
 
 ## Board
 
-| #   | Wave                                                   | Status              | Pointer                         |
-| --- | ------------------------------------------------------ | ------------------- | ------------------------------- |
-| 0   | Founding: review → skeleton + grid + spec              | 🟢 done             | `primitive-spec.md` · D-1..D-8  |
-| W1  | Group/box UX on the existing model (platform-only)     | 🟢 merged (PR #261) | plan §W1 · DR-W1-1..5           |
-| W2  | Model core (Group entity, recursion/arrangement death) | 🟢 merged (PR #262) | `0041` · DR-W2-1..9 · FORK-1..6 |
-| W3  | Editor remap (proto fidelity + gestures + draft flat)  | 🟢 merged (PR #263) | DR-W3-1..12 · FORK-2/3          |
-| W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+  | plan §W4                        |
+| #   | Wave                                                   | Status                             | Pointer                         |
+| --- | ------------------------------------------------------ | ---------------------------------- | ------------------------------- |
+| 0   | Founding: review → skeleton + grid + spec              | 🟢 done                            | `primitive-spec.md` · D-1..D-8  |
+| W1  | Group/box UX on the existing model (platform-only)     | 🟢 merged (PR #261)                | plan §W1 · DR-W1-1..5           |
+| W2  | Model core (Group entity, recursion/arrangement death) | 🟢 merged (PR #262)                | `0041` · DR-W2-1..9 · FORK-1..6 |
+| W3  | Editor remap (proto fidelity + gestures + draft flat)  | 🟢 merged (PR #263)                | DR-W3-1..12 · FORK-2/3          |
+| W4  | Row grammar + leaf residuals                           | ⚪ needs leaf F-rows (F-PLAQUE ✅) | plan §W4 · D-PLAQUE             |
 
 ## Next action
 
@@ -24,20 +24,20 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 
 **MERGED 2026-06-12 — main `9a9dfb8e`** (branch deleted), after a TWO-ROUND owner walkthrough that caught what jsdom structurally cannot (the pointer-capture / collision-geometry layer — fireEvent.click bypasses both). **Round 1** (fixed `c6008b9d` / `66cf5a60` / `096d98f0`): the group head was 100% dead (drag listeners spread on the whole head Stack) → proto-faithful dedicated head drag handle (the owner refreshed the prototype with top-left handles; in-group `useTrackDrag` from that refresh deliberately NOT taken — W3-TRACK-DRAG); standalone schemas never dragged (raw-cuid `useSortable` id vs composite `schema:${id}` context) → ONE shared id source `block-item-sortable-id.ts`; row `media` never rendered (`formatRow` read only the exercise catalog) → row media now feeds the ▶ demo link. **Round 2** (fixed `32f5b5bc` / `5687c1df` / `46d4c2f2`): group confirmations closed before the callback (re-entry-ref velosiped) → re-aligned to the house modal pending pattern (DR-W3-12 — modal waits with Processing…, component refs removed); group↔schema reorder flapped/snapped → root cause: the block-items list is the app's ONLY mixed-height list and `closest*` metrics flap on heterogeneous heights → **pointer-first collision** (`pointerWithin` → `closestCorners` fallback — DR-W3-11; block-list got `closestCorners` en route). Final gates: platform **861/861**, types/lint 16/16, dep:check 0. **Next planner starts here, in order:**
 
-1. **Collect the owner's pending one-liners** (unanswered at merge; dispositions → `deferred.md`): **W3-TRACK-DRAG** (refreshed-proto in-group member drag — next wave / follow-up / drop until need?) · **W2-FOOTNOTE-LAST** (block-183: ex-footnote rows already sit AFTER the single base row — ok as-is or strictly tail?) · **W2-URL-PLACEHOLDER** (the ▶ demo link now renders — reads as a demo?) · **W3-DND-POLISH** (taste: DragOverlay compact ghost? `restrictToVerticalAxis`?) · **gated-suite 2694/2694 confirmation** (pending since the W2 pin-flip; rides the owner's next ritual).
-2. **F-PLAQUE design discussion — THE W4 gate.** One focused topic per touch (owner-paced); orchestrator brings a CONCRETE rec built from the corpus strip-lines (~93–130: rest `- … -` 71 · connectors 16 · EXAMPLE 4 · only-once 2) + `primitive-spec.md` §3/§5/§8 — verify-then-spec against `analysis/`, never memory. Decide: which floors the plaque lives on; its boundary with row-level grouping; whether REST rows ARE plaques (typed payload). Ratify → `decisions.md`, update the grid.
-3. The remaining leaf F-rows follow per plan order (F-POSITION-CARRIER + F-CHIPS → F-WEIGHT-EXOTICS + F-TEMPO → F-HEADER + F-BLOCK-TIMECAP + F-SLOT). **The W4 prompt is authored only after F-PLAQUE + the leaf F-rows close (D-8 JIT)** — likely several owner-paced touches away; do not author it early.
+1. **DONE 2026-06-12 (design session):** the one-liners collected — **W3-TRACK-DRAG + W3-DND-POLISH** → ONE `/feature small` (SCHEDULED, owner-paced, independent of W4; both polish items accepted) · **W2-FOOTNOTE-LAST CLOSED** (owner: "это же просто строка с упражнением… НЕ УНИКАЛЬНАЯ СТРОКА" — block-183 correct as-is) · **gated suite CONFIRMED green by the owner** · **W2-URL-PLACEHOLDER seed made coach-readable** ("Yoga time" / "Follow the yoga video" / "Warm up for feet — follow the video"; api-server type-check green; **UNCOMMITTED working-tree edit** in `week-1-saturday-modality.ts` — rides the next PR; owner looks at the reseed → close). **F-PLAQUE CLOSED → D-PLAQUE ratified:** plaque = render vocabulary, no stored node; rest single-carrier (`RowKind.REST` + `raw` die; ONE rest per schema, multi-rest rejected); notes = MULTIPLE ordered texts on ANY element (block/schema/row/both groups), rendered as a plaque stack; row-group = mirror of Group (contiguous, 2+, opaque label); only-once → its own schema via order. Grid + kill list updated.
+2. **Leaf F-rows next (owner-paced, one topic per touch): F-POSITION-CARRIER + F-CHIPS** (orchestrator brings a corpus-grounded rec; position data = `schema-content-primitives.md` §6.3 + `modifier-scope.md`) → F-WEIGHT-EXOTICS + F-TEMPO (consult `load-representation.md` + `load-edge-cases.md`, NOT re-read at founding) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
+3. **The W4 prompt is authored only after the leaf F-rows close (D-8 JIT).** W4 already carries (per D-PLAQUE): the `RowKind.REST` + `raw` kill (seed rest lines → schema setting; dual-rest rule 2 → note), notes columns → ordered lists (+ notes on both group entities), the row-group entity + editor, the sequence VO death (only-once corpus case → own schema), plus whatever the remaining F-rows ratify.
 
 ## Open decisions awaiting ratification
 
-- The F-ledger (`deferred.md`): F-PLAQUE (gates W4, first) · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time. **(D-MARKER-DEATH DONE — landed in W2; no model-core decisions remain open.)**
+- The F-ledger (`deferred.md`): F-POSITION-CARRIER + F-CHIPS (next touch) · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time. **(F-PLAQUE CLOSED → D-PLAQUE 2026-06-12; D-MARKER-DEATH landed in W2; no model-core decisions remain open.)**
 
 ## Live carry-forwards
 
 **CLOSED in W3 (this PR):** **W2-UX-POLISH** (D1 idempotency-key bug + D2 proto card — DR-W3-1..6) · **W2-DRAFT-RECURSION** (D4 flat draft collapse — DR-W3-7; `arrangement-tree.ts` deleted) · **QA-004** (D5 kind-switch confirm — DR-W3-8; keep-confirm-always per QA-114) · **W2-STALE-FIXTURES / W2-VESTIGIAL-EXPORTS / W2-STALE-NAMES** (D6 hygiene — DR-W3-10; caption fixed, seed const renamed, contracts dead-exports deleted).
 **CLOSED earlier (W2 PR):** W1-DUP-RETRY · W1-RENDER-REPOINT · W1-SUBADD-BOX · MARKER-FATE / D-MARKER-DEATH · W2-ORDER-UNIQUE (DR-W2-8 SUPERSEDED).
-**STAYS OPEN past W3:** **W2-FOOTNOTE-LAST / W2-URL-PLACEHOLDER** — the W3 runner-prompt scoped W2-UX-POLISH to EXACTLY D1+D2; these two §6.7 seed-content re-confirms were NOT in W3 scope and W3 changed zero seed data (the only seed touch was a pure const rename) → still owed at the next seed walkthrough (their "CLOSED 2026-06-11" was premised on the polish pass covering them; W3 narrowed it).
-OPEN (W3-new, owner-paced, none blocking): **W3-TRACK-DRAG** (refreshed-proto in-group member drag — owner call pending) · **W3-DND-POLISH** (DragOverlay compact ghost / `restrictToVerticalAxis` — taste, offered, unanswered) · OQ1-DEMOTE-DEAD (the dead demote feature — owner chose CARRY) · QA-106 (materialize 2nd-ladder default `[15,12,9]` ≠ proto `[9,15,21]`) · QA-108 (materialize drops the header — latent) · W3-REV-002 (un-shared `TRACK_GAP`) · W3-REV-003 (in-group-add empty-schema — W2-IDENTICAL, not a W3 regression) · W3-REV-004 (`[21,15,9]` literal ×3) · QA-101 / QA-107 (test-stage CLOSED pins — kept for the trail).
+**CLOSED 2026-06-12 (design session):** **F-PLAQUE → D-PLAQUE** · **W2-FOOTNOTE-LAST** (owner: plain row, expression correct) · the gated-suite confirmation (owner ran it green). **W2-URL-PLACEHOLDER** — seed fixed to coach-readable content (UNCOMMITTED, rides the next PR); owner looks at the reseed → close.
+SCHEDULED (one `/feature small`, owner-paced): **W3-TRACK-DRAG + W3-DND-POLISH** (member drag in group + compact ghost + vertical-axis restraint). OPEN (W3-new, none blocking): OQ1-DEMOTE-DEAD (the dead demote feature — owner chose CARRY) · QA-106 (materialize 2nd-ladder default `[15,12,9]` ≠ proto `[9,15,21]`) · QA-108 (materialize drops the header — latent) · W3-REV-002 (un-shared `TRACK_GAP`) · W3-REV-003 (in-group-add empty-schema — W2-IDENTICAL, not a W3 regression) · W3-REV-004 (`[21,15,9]` literal ×3) · QA-101 / QA-107 (test-stage CLOSED pins — kept for the trail).
 OPEN (prior): W2-IDEM-REMOUNT (low — by-design; W3 deliberately kept it, red line #6) · W1-INSESSION-CHECK (low) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). W1-BOX-FRAME CLOSED (and the W3 proto restyle replaced the dashed look with the solid-tint frame anyway). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign, now the carrier for the ex-roadmap score-type debt); reuse features post-primitive.
 
 ## Gotchas a resuming session must know
