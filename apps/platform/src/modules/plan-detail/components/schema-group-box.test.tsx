@@ -1,7 +1,7 @@
 import { createElement } from "react";
 
 import { alpha } from "@mui/material";
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitForElementToBeRemoved, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
@@ -339,20 +339,32 @@ describe("SchemaGroupBox ungroup gesture", () => {
     expect(deleteGroupWithMembersRun).not.toHaveBeenCalled();
   });
 
-  it("fires a single dissolve on a synchronous double-click of the Ungroup confirm (QA-105)", () => {
+  it("keeps the dialog open until the dissolve succeeds (house modal pattern)", async () => {
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Ungroup" }));
+
+    expect(deleteGroupMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    const options = deleteGroupMutate.mock.calls[0]?.[1] as { onSuccess: () => void };
+
+    act(() => options.onSuccess());
+
+    await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
+  });
+
+  it("disables the Ungroup confirm while the dissolve is pending (QA-105)", () => {
+    deleteGroupState.isPending = true;
+
     renderBox();
 
     fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
 
-    const confirm = within(screen.getByRole("dialog")).getByRole("button", { name: "Ungroup" });
+    const dialog = screen.getByRole("dialog");
 
-    act(() => {
-      confirm.click();
-      confirm.click();
-    });
-
-    expect(deleteGroupMutate).toHaveBeenCalledTimes(1);
-    expect(deleteGroupMutate.mock.calls[0]?.[0]).toEqual({ groupId: GROUP_ID });
+    expect(within(dialog).getByRole("button", { name: "Processing..." })).toBeDisabled();
   });
 });
 
@@ -378,24 +390,39 @@ describe("SchemaGroupBox delete-group gesture", () => {
     expect(deleteGroupMutate).not.toHaveBeenCalled();
   });
 
-  it("runs the delete-with-members sequence once on a synchronous double-click of the Delete confirm (QA-104)", () => {
-    const members = [
-      makeSchema("clp9z8x7w0000abcd1234dd01", 1),
-      makeSchema("clp9z8x7w0000abcd1234dd02", 2),
-    ];
+  it("keeps the dialog open while the delete runs and closes after it settles", async () => {
+    let resolveRun: () => void = () => {};
 
-    renderBox({ members });
+    deleteGroupWithMembersRun.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveRun = resolve;
+      }),
+    );
+
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }));
+
+    expect(deleteGroupWithMembersRun).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await act(async () => {
+      resolveRun();
+    });
+
+    await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
+  });
+
+  it("disables the Delete confirm while the run is pending (QA-104)", () => {
+    deleteGroupWithMembersState.isPending = true;
+
+    renderBox();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
 
-    const confirm = within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" });
+    const dialog = screen.getByRole("dialog");
 
-    act(() => {
-      confirm.click();
-      confirm.click();
-    });
-
-    expect(deleteGroupWithMembersRun).toHaveBeenCalledTimes(1);
-    expect(deleteGroupWithMembersRun.mock.calls[0]?.[0]).toEqual({ members });
+    expect(within(dialog).getByRole("button", { name: "Processing..." })).toBeDisabled();
   });
 });

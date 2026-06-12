@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement, useRef, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -63,9 +63,6 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   const [isUngroupOpen, setIsUngroupOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const isUngroupingRef = useRef(false);
-  const isDeletingRef = useRef(false);
-
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: groupSortableId(group.id),
     disabled: parentIsReorderPending,
@@ -96,36 +93,12 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
     updateGroup.mutate({ groupId: group.id, data: { interleaveOrder: next } });
   };
 
-  const handleUngroupConfirm = () => {
-    if (isUngroupingRef.current || deleteGroup.isPending) {
-      return;
-    }
-
-    isUngroupingRef.current = true;
-    setIsUngroupOpen(false);
-    deleteGroup.mutate(
-      { groupId: group.id },
-      {
-        onSettled: () => {
-          isUngroupingRef.current = false;
-        },
-      },
-    );
-  };
+  const handleUngroupConfirm = () =>
+    deleteGroup.mutate({ groupId: group.id }, { onSuccess: () => setIsUngroupOpen(false) });
 
   const handleDeleteConfirm = async () => {
-    if (isDeletingRef.current || deleteGroupWithMembers.isPending) {
-      return;
-    }
-
-    isDeletingRef.current = true;
+    await deleteGroupWithMembers.run({ members });
     setIsDeleteOpen(false);
-
-    try {
-      await deleteGroupWithMembers.run({ members });
-    } finally {
-      isDeletingRef.current = false;
-    }
   };
 
   return (
