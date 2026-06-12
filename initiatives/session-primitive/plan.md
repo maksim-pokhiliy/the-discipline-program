@@ -28,11 +28,11 @@ The editor caught up to the Group model with the owner's hi-fi prototype (`plan-
 
 ## W4 — row grammar + leaf residuals
 
-The D-PLAQUE + D-POSITION implementation set lands here: `RowKind.REST` + `raw` kill (seed rest lines → the schema rest setting; the dual-rest corpus rule 2 → a note), notes columns → ordered multi-lists (+ notes on both group entities), the row-group entity + editor (OR / per-set / superset carriers), the sequence VO death (only-once corpus case → its own schema), the `Position` enum + column + editor kill → row notes (no library — D-POSITION). Plus the remaining leaf F-rows: tempo (F-TEMPO), weight exotics (F-WEIGHT-EXOTICS), header (F-HEADER), slot (F-SLOT), Block.timeCap (F-BLOCK-TIMECAP). After W4 the spec has zero OPEN rows.
+The D-PLAQUE + D-POSITION implementation set lands here: `RowKind.REST` + `raw` kill (seed rest lines → the schema rest setting; the dual-rest corpus rule 2 → a note), notes columns → ordered multi-lists (+ notes on both group entities), the row-group entity + editor (OR / per-set / superset carriers), the sequence VO death (only-once corpus case → its own schema), the `Position` enum + column + editor kill → the row-MODIFIER library entity + multi-ref on rows + the searchable create-on-the-fly picker (D-MODIFIER — supersedes D-POSITION; picker component shared with LABEL-FLOW-UX). Plus the remaining leaf F-rows: tempo (F-TEMPO), weight exotics (F-WEIGHT-EXOTICS), header (F-HEADER), slot (F-SLOT), Block.timeCap (F-BLOCK-TIMECAP). After W4 the spec has zero OPEN rows.
 
 ## Design follow-ups (owner-paced, between waves)
 
-Order: **D-MARKER-DEATH** ✅ (landed W2) → **F-PLAQUE** ✅ (D-PLAQUE, 2026-06-12) → **F-POSITION-CARRIER + F-CHIPS** ✅ (D-POSITION + D-CHIPS, 2026-06-12) → **F-WEIGHT-EXOTICS + F-TEMPO** (next touch; consult `load-representation.md` + `load-edge-cases.md`) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
+Order: **D-MARKER-DEATH** ✅ (landed W2) → **F-PLAQUE** ✅ (D-PLAQUE, 2026-06-12) → **F-POSITION-CARRIER + F-CHIPS** ✅ (D-MODIFIER + D-CHIPS, 2026-06-12; D-POSITION superseded same day) → **F-WEIGHT-EXOTICS + F-TEMPO** (next touch; consult `load-representation.md` + `load-edge-cases.md`) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
 
 ## Runner-prompt checklist (D-7 — how to brief a wave)
 
