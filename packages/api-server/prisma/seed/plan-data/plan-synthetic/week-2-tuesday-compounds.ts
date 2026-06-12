@@ -173,7 +173,7 @@ export const BLOCK_COMPOUND_ROWS_WK2_TUE: CanonicalBlock = {
   ],
 };
 
-export const BLOCK_FOOTNOTES_WK2_TUE: CanonicalBlock = {
+export const BLOCK_PER_ROUND_MARKERS_WK2_TUE: CanonicalBlock = {
   blockInstanceRef: "block-183",
   order: 9,
   labels: [LBL.gymnastics],
