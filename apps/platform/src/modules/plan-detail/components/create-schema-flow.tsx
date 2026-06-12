@@ -1,87 +1,70 @@
 "use client";
 
+import { useState } from "react";
+
 import { Stack } from "@mui/material";
 
-import { collectTrackChildren } from "../lib/arrangement-tree";
+import { isRepetitionDirty } from "../lib/is-repetition-dirty";
 import {
   appendTrack,
   dematerializeToFlat,
-  isParallelDraft,
   materializeParallel,
 } from "../lib/parallel-ladder-draft";
 
-import type { ComposeContainer, ComposeNode, RepetitionAxis } from "./axes/axis-draft.types";
+import type { DraftSeed, GroupDraft, RepetitionAxis, SchemaDraft } from "./axes/axis-draft.types";
 import { AxisFieldSection } from "./axes/axis-field-section";
 import { AxisModeButtonGrid } from "./axes/axis-mode-button-grid";
 import { REPETITION_TILES } from "./axes/axis-modes";
 import { type LadderTrack, LadderTrackStack } from "./axes/ladder-track-stack";
-import { REPETITION_DEFAULTS, RepetitionAxisField } from "./axes/repetition-axis-field";
+import { RepetitionAxisField } from "./axes/repetition-axis-field";
+import { REPETITION_DEFAULTS } from "./axes/repetition-defaults";
 import { GroupIntoBoxCheckbox } from "./group-into-box-checkbox";
+import { KindSwitchConfirm } from "./kind-switch-confirm";
 
 const REPETITION_LABEL = "repetition";
 const LADDER_KIND = "ladder";
 const FALLBACK_KIND: RepetitionAxis["kind"] = "once";
 
-const ladderSteps = (container: ComposeContainer): number[] =>
-  container.repetition?.kind === LADDER_KIND ? container.repetition.steps : [];
+const ladderSteps = (schema: SchemaDraft): number[] =>
+  schema.repetition?.kind === LADDER_KIND ? schema.repetition.steps : [];
 
 const ladderRepetition = (steps: number[]): RepetitionAxis => ({ kind: LADDER_KIND, steps });
 
-const flattenToKind = (
-  draft: ComposeContainer,
-  kind: RepetitionAxis["kind"],
-): ComposeContainer => ({
-  nodeType: "container",
-  id: draft.id,
-  header: draft.header,
-  notes: draft.notes,
+const flattenToKind = (group: GroupDraft, kind: RepetitionAxis["kind"]): SchemaDraft => ({
+  id: group.id,
+  header: group.header,
+  notes: null,
   repetition: REPETITION_DEFAULTS[kind],
-  children: [],
+  rows: [],
 });
 
-const patchTrackSteps = (
-  draft: ComposeContainer,
-  trackIndex: number,
-  steps: number[],
-): ComposeContainer => {
-  let cursor = -1;
+const patchTrackSteps = (group: GroupDraft, trackIndex: number, steps: number[]): GroupDraft => ({
+  ...group,
+  tracks: group.tracks.map((track, index) => (index === trackIndex ? { ...track, steps } : track)),
+});
+
+const applyKind = (draft: DraftSeed, nextKind: RepetitionAxis["kind"]): DraftSeed => {
+  if (draft.mode === "group") {
+    return { mode: "schema", schema: flattenToKind(draft.group, nextKind) };
+  }
 
   return {
-    ...draft,
-    children: draft.children.map((child): ComposeNode => {
-      if (child.nodeType !== "container") {
-        return child;
-      }
-
-      cursor += 1;
-
-      return cursor === trackIndex ? { ...child, repetition: ladderRepetition(steps) } : child;
-    }),
+    mode: "schema",
+    schema: { ...draft.schema, repetition: REPETITION_DEFAULTS[nextKind] },
   };
 };
 
-const removeTrack = (draft: ComposeContainer, trackIndex: number): ComposeContainer => {
-  let cursor = -1;
+const discardsAuthoredContent = (draft: DraftSeed): boolean => {
+  if (draft.mode === "group") {
+    return true;
+  }
 
-  const remaining: ComposeContainer = {
-    ...draft,
-    children: draft.children.filter((child) => {
-      if (child.nodeType !== "container") {
-        return true;
-      }
-
-      cursor += 1;
-
-      return cursor !== trackIndex;
-    }),
-  };
-
-  return collectTrackChildren(remaining).length === 1 ? dematerializeToFlat(remaining) : remaining;
+  return draft.schema.repetition !== undefined && isRepetitionDirty(draft.schema.repetition);
 };
 
 type CreateSchemaFlowProps = {
-  draft: ComposeContainer;
-  onDraftChange: (next: ComposeContainer) => void;
+  draft: DraftSeed;
+  onDraftChange: (next: DraftSeed) => void;
   linkIntoBox?: boolean;
   onLinkIntoBoxChange?: ((checked: boolean) => void) | undefined;
 };
@@ -92,51 +75,98 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
   linkIntoBox = true,
   onLinkIntoBoxChange,
 }) => {
-  const activeKind: RepetitionAxis["kind"] = isParallelDraft(draft)
+  const [pendingKind, setPendingKind] = useState<RepetitionAxis["kind"] | null>(null);
+
+  const isGroup = draft.mode === "group";
+  const activeKind: RepetitionAxis["kind"] = isGroup
     ? LADDER_KIND
-    : (draft.repetition?.kind ?? FALLBACK_KIND);
+    : (draft.schema.repetition?.kind ?? FALLBACK_KIND);
 
   const handleKind = (nextKind: RepetitionAxis["kind"]): void => {
     if (nextKind === activeKind) {
       return;
     }
 
-    if (nextKind !== LADDER_KIND && isParallelDraft(draft)) {
-      onDraftChange(flattenToKind(draft, nextKind));
+    if (discardsAuthoredContent(draft)) {
+      setPendingKind(nextKind);
 
       return;
     }
 
-    onDraftChange({ ...draft, repetition: REPETITION_DEFAULTS[nextKind] });
+    onDraftChange(applyKind(draft, nextKind));
   };
 
-  const handleRepetitionChange = (next: RepetitionAxis): void =>
-    onDraftChange({ ...draft, repetition: next });
+  const handleConfirmKind = (): void => {
+    if (pendingKind !== null) {
+      onDraftChange(applyKind(draft, pendingKind));
+    }
 
-  const handleChangeTrack = (index: number, steps: number[]): void =>
-    onDraftChange(
-      isParallelDraft(draft)
-        ? patchTrackSteps(draft, index, steps)
-        : { ...draft, repetition: ladderRepetition(steps) },
-    );
+    setPendingKind(null);
+  };
+
+  const handleCancelKind = (): void => setPendingKind(null);
+
+  const handleRepetitionChange = (next: RepetitionAxis): void => {
+    if (draft.mode === "schema") {
+      onDraftChange({ mode: "schema", schema: { ...draft.schema, repetition: next } });
+    }
+  };
+
+  const handleChangeTrack = (index: number, steps: number[]): void => {
+    if (draft.mode === "group") {
+      onDraftChange({ mode: "group", group: patchTrackSteps(draft.group, index, steps) });
+
+      return;
+    }
+
+    onDraftChange({
+      mode: "schema",
+      schema: { ...draft.schema, repetition: ladderRepetition(steps) },
+    });
+  };
 
   const handleAppendTrack = (): void =>
-    onDraftChange(isParallelDraft(draft) ? appendTrack(draft) : materializeParallel(draft));
+    onDraftChange(
+      draft.mode === "group"
+        ? { mode: "group", group: appendTrack(draft.group) }
+        : { mode: "group", group: materializeParallel(draft.schema) },
+    );
 
-  const handleRemoveTrack = (index: number): void => onDraftChange(removeTrack(draft, index));
+  const handleRemoveTrack = (index: number): void => {
+    if (draft.mode !== "group") {
+      return;
+    }
 
-  if (activeKind !== LADDER_KIND) {
+    const remaining: GroupDraft = {
+      ...draft.group,
+      tracks: draft.group.tracks.filter((_, trackIndex) => trackIndex !== index),
+    };
+
+    if (remaining.tracks.length !== 1) {
+      onDraftChange({ mode: "group", group: remaining });
+
+      return;
+    }
+
+    const flat = dematerializeToFlat(remaining);
+
+    onDraftChange(
+      "rows" in flat ? { mode: "schema", schema: flat } : { mode: "group", group: flat },
+    );
+  };
+
+  if (activeKind !== LADDER_KIND && draft.mode === "schema") {
     return (
       <RepetitionAxisField
-        value={draft.repetition ?? REPETITION_DEFAULTS[FALLBACK_KIND]}
+        value={draft.schema.repetition ?? REPETITION_DEFAULTS[FALLBACK_KIND]}
         onChange={handleRepetitionChange}
       />
     );
   }
 
-  const tracks: LadderTrack[] = isParallelDraft(draft)
-    ? collectTrackChildren(draft).map((child) => ({ id: child.id, steps: ladderSteps(child) }))
-    : [{ id: draft.id, steps: ladderSteps(draft) }];
+  const tracks: LadderTrack[] = isGroup
+    ? draft.group.tracks.map((track) => ({ id: track.id, steps: track.steps }))
+    : [{ id: draft.schema.id, steps: ladderSteps(draft.schema) }];
 
   const ladderHint = REPETITION_TILES.find((tile) => tile.kind === LADDER_KIND)?.hint;
 
@@ -159,9 +189,15 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
         isBoxed={linkIntoBox}
       />
 
-      {isParallelDraft(draft) && onLinkIntoBoxChange !== undefined ? (
+      {isGroup && onLinkIntoBoxChange !== undefined ? (
         <GroupIntoBoxCheckbox checked={linkIntoBox} onChange={onLinkIntoBoxChange} />
       ) : null}
+
+      <KindSwitchConfirm
+        open={pendingKind !== null}
+        onConfirm={handleConfirmKind}
+        onCancel={handleCancelKind}
+      />
     </Stack>
   );
 };

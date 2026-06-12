@@ -3,7 +3,7 @@ import type {
   RepetitionAxis as ContractRepetitionAxis,
 } from "@repo/contracts/lms/composition";
 
-import type { ComposeContainer, RepetitionAxis } from "../components/axes/axis-draft.types";
+import type { RepetitionAxis, SchemaDraft } from "../components/axes/axis-draft.types";
 
 const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
   switch (repetition.kind) {
@@ -29,7 +29,7 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
   }
 };
 
-export const composeContainerToComposition = (container: ComposeContainer): Composition => ({
-  ...(container.repetition !== undefined && { repetition: mapRepetition(container.repetition) }),
-  ...(container.rest !== undefined && { rest: container.rest }),
+export const composeContainerToComposition = (schema: SchemaDraft): Composition => ({
+  ...(schema.repetition !== undefined && { repetition: mapRepetition(schema.repetition) }),
+  ...(schema.rest !== undefined && { rest: schema.rest }),
 });

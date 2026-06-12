@@ -159,4 +159,24 @@ describe("formatRow", () => {
       expect(formatRow(makeRestRow(), exerciseById, 1).ord).toBe("2");
     });
   });
+
+  describe("row media as the demo link", () => {
+    const ROW_MEDIA_URL = "https://example.com/demo/row-level.mp4";
+
+    it("surfaces row media for a PLACEHOLDER row", () => {
+      const row = { ...makePlaceholderRow(), media: { url: ROW_MEDIA_URL } };
+
+      expect(formatRow(row, exerciseById, 0).demoUrl).toBe(ROW_MEDIA_URL);
+    });
+
+    it("prefers row media over the catalog demo for an EXERCISE row", () => {
+      const row = { ...makeExerciseRow(), media: { url: ROW_MEDIA_URL } };
+
+      expect(formatRow(row, exerciseById, 0).demoUrl).toBe(ROW_MEDIA_URL);
+    });
+
+    it("falls back to the catalog demo when media is null", () => {
+      expect(formatRow(makeExerciseRow(), exerciseById, 0).demoUrl).toBe(DEMO_URL);
+    });
+  });
 });

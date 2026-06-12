@@ -1,14 +1,11 @@
-import type { ComposeNode } from "../components/axes/axis-draft.types";
+import type { SchemaDraft } from "../components/axes/axis-draft.types";
 
-const MULTI_CHILD_THRESHOLD = 1;
+const MULTI_ROW_THRESHOLD = 1;
 
-export const shouldBeContainer = (node: ComposeNode): boolean => {
-  if (node.nodeType === "row") {
-    return false;
-  }
+export const shouldBeContainer = (schema: SchemaDraft): boolean => {
+  const hasRepetitionSemantics =
+    schema.repetition !== undefined && schema.repetition.kind !== "once";
+  const hasMultipleRows = schema.rows.length > MULTI_ROW_THRESHOLD;
 
-  const hasRepetitionSemantics = node.repetition !== undefined && node.repetition.kind !== "once";
-  const hasMultipleChildren = node.children.length > MULTI_CHILD_THRESHOLD;
-
-  return hasRepetitionSemantics || hasMultipleChildren;
+  return hasRepetitionSemantics || hasMultipleRows;
 };

@@ -1,6 +1,6 @@
 import { type Composition, compositionSchema } from "@repo/contracts/lms/composition";
 
-import type { ComposeContainer } from "../components/axes/axis-draft.types";
+import type { SchemaDraft } from "../components/axes/axis-draft.types";
 
 import { composeContainerToComposition } from "./compose-container-to-composition";
 import { formatZodIssue } from "./format-zod-issue";
@@ -11,10 +11,10 @@ export type CompositionResult =
   | { ok: true; composition: Composition }
   | { ok: false; error: string };
 
-export const previewComposition = (draft: ComposeContainer): Composition =>
+export const previewComposition = (draft: SchemaDraft): Composition =>
   composeContainerToComposition(draft);
 
-export const buildComposition = (draft: ComposeContainer): CompositionResult => {
+export const buildComposition = (draft: SchemaDraft): CompositionResult => {
   const composition = composeContainerToComposition(draft);
   const parsed = compositionSchema.safeParse(composition);
 

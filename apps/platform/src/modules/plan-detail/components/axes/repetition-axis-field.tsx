@@ -1,12 +1,12 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { FormHelperText, Stack } from "@mui/material";
 
-import type { TimeCap } from "@repo/contracts/lms/_shared";
-
+import { isRepetitionDirty } from "../../lib/is-repetition-dirty";
 import { CountOrRange } from "../count-or-range-field";
+import { KindSwitchConfirm } from "../kind-switch-confirm";
 import { StepArrayFields } from "../step-array-fields";
 import { TimeCapFields } from "../time-cap-fields";
 
@@ -16,19 +16,9 @@ import { AxisModeButtonGrid } from "./axis-mode-button-grid";
 import { REPETITION_TILES } from "./axis-modes";
 import { CadenceAxisField } from "./cadence-axis-field";
 import { IntervalAxisField } from "./interval-axis-field";
+import { DEFAULT_TIME_CAP, REPETITION_DEFAULTS } from "./repetition-defaults";
 
 const LABEL = "repetition";
-
-const DEFAULT_TIME_CAP: TimeCap = { min: 12, unit: "min" };
-
-export const REPETITION_DEFAULTS: Record<RepetitionAxis["kind"], RepetitionAxis> = {
-  once: { kind: "once" },
-  count: { kind: "count", count: 3 },
-  ladder: { kind: "ladder", steps: [21, 15, 9] },
-  timeCap: { kind: "timeCap", cap: DEFAULT_TIME_CAP },
-  cadence: { kind: "cadence", everyMin: 1, rounds: 4 },
-  interval: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-};
 
 type RepetitionAxisFieldProps = {
   value: RepetitionAxis;
@@ -43,6 +33,8 @@ export const RepetitionAxisField: React.FC<RepetitionAxisFieldProps> = ({
   error,
   disabled = false,
 }) => {
+  const [pendingNext, setPendingNext] = useState<RepetitionAxis["kind"] | null>(null);
+
   const activeHint = REPETITION_TILES.find((tile) => tile.kind === value.kind)?.hint;
 
   const handleKindChange = (next: RepetitionAxis["kind"]) => {
@@ -50,8 +42,24 @@ export const RepetitionAxisField: React.FC<RepetitionAxisFieldProps> = ({
       return;
     }
 
+    if (isRepetitionDirty(value)) {
+      setPendingNext(next);
+
+      return;
+    }
+
     onChange(REPETITION_DEFAULTS[next]);
   };
+
+  const handleConfirmSwitch = (): void => {
+    if (pendingNext !== null) {
+      onChange(REPETITION_DEFAULTS[pendingNext]);
+    }
+
+    setPendingNext(null);
+  };
+
+  const handleCancelSwitch = (): void => setPendingNext(null);
 
   const renderVariantBody = (): ReactNode => {
     switch (value.kind) {
@@ -118,6 +126,12 @@ export const RepetitionAxisField: React.FC<RepetitionAxisFieldProps> = ({
       {error !== undefined ? <FormHelperText error>{error}</FormHelperText> : null}
 
       {renderVariantBody()}
+
+      <KindSwitchConfirm
+        open={pendingNext !== null}
+        onConfirm={handleConfirmSwitch}
+        onCancel={handleCancelSwitch}
+      />
     </Stack>
   );
 };

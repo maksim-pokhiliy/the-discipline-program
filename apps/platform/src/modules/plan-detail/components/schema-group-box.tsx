@@ -1,39 +1,43 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, MenuItem, Select, Stack, Typography } from "@mui/material";
+import { Box, Stack, alpha } from "@mui/material";
 
-import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
-import {
-  PARALLEL_INTERLEAVE_ORDERS,
-  type ParallelInterleaveOrder,
-  type SchemaGroup,
-} from "@repo/contracts/lms/schema-group";
-import { AccentGroupCard, InlineEditText } from "@repo/ui";
+import { type ParallelInterleaveOrder, type SchemaGroup } from "@repo/contracts/lms/schema-group";
+import { ConfirmationModal } from "@repo/ui";
 
-import { useUpdateGroup } from "@app/lib/hooks";
+import { useDeleteGroup, useUpdateGroup } from "@app/lib/hooks";
 
+import { groupSortableId } from "../lib/block-item-sortable-id";
 import { type BlockCtx } from "../lib/build-cascade-chips";
+import { useDeleteGroupWithMembers } from "../lib/use-delete-group-with-members";
 
-import { AddSubSchemaButton } from "./add-sub-schema-button";
-import { SchemaCard } from "./schema-card";
+import { AddTrackButton } from "./add-track-button";
+import { GroupTrackWrapper } from "./group-track-wrapper";
+import { SchemaGroupBoxHead } from "./schema-group-box-head";
 
 const GROUP_BOX_TEST_ID = "schema-group-box";
-const BOX_LABEL_ARIA = "Group label";
-const BOX_LABEL_PLACEHOLDER = "group…";
-const INTERLEAVE_ARIA = "Interleave order";
-const INTERLEAVE_PREFIX = "interleave:";
+const FRAME_BORDER_ALPHA = 0.35;
+const FRAME_BG_ALPHA = 0.03;
+const FRAME_BORDER_RADIUS_FACTOR = 0.5;
+const TRACK_GAP_FACTOR = 1;
+const TRACKS_PADDING_BLOCK_FACTOR = 1.5;
+const TRACKS_PADDING_RAIL_FACTOR = 1.25;
+const FOOTER_PADDING_X_FACTOR = 1.5;
+const FOOTER_PADDING_BOTTOM_FACTOR = 1.5;
 const DRAG_OPACITY_DRAGGING = 0.5;
 const DRAG_OPACITY_DEFAULT = 1;
+const FIRST_TRACK_INDEX = 0;
 
-const INTERLEAVE_ORDER_LABELS: Record<ParallelInterleaveOrder, string> = {
-  round_by_round: "round by round",
-  track_by_track: "track by track",
-};
+const UNGROUP_TITLE = "Ungroup";
+const UNGROUP_MESSAGE = "Ungroup these tracks? Schemas stay in the block as standalone.";
+const UNGROUP_CONFIRM = "Ungroup";
+const DELETE_TITLE = "Delete group";
+const DELETE_MESSAGE = "Delete the group AND its member schemas?";
 
 type SchemaGroupBoxProps = {
   group: SchemaGroup;
@@ -53,9 +57,14 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   parentIsReorderPending = false,
 }): ReactElement => {
   const updateGroup = useUpdateGroup(planId, startDate);
+  const deleteGroup = useDeleteGroup(planId, startDate);
+  const deleteGroupWithMembers = useDeleteGroupWithMembers(planId, startDate);
+
+  const [isUngroupOpen, setIsUngroupOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: `group:${group.id}`,
+    id: groupSortableId(group.id),
     disabled: parentIsReorderPending,
   });
 
@@ -84,74 +93,92 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
     updateGroup.mutate({ groupId: group.id, data: { interleaveOrder: next } });
   };
 
-  const header = (
-    <Stack
-      direction="row"
-      alignItems="center"
-      spacing={1}
-      useFlexGap
-      flexWrap="wrap"
-      {...attributes}
-      {...listeners}
-    >
-      <InlineEditText
-        value={group.label ?? ""}
-        onCommit={handleLabelCommit}
-        variant="h4"
-        ariaLabel={BOX_LABEL_ARIA}
-        emptyIsValid
-        maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
-        placeholder={BOX_LABEL_PLACEHOLDER}
-        sx={{ flex: 1, minWidth: 0 }}
-      />
+  const handleUngroupConfirm = () =>
+    deleteGroup.mutate({ groupId: group.id }, { onSuccess: () => setIsUngroupOpen(false) });
 
-      <Typography variant="caption" color="text.subtle">
-        {INTERLEAVE_PREFIX}
-      </Typography>
-
-      <Select
-        value={group.interleaveOrder}
-        onChange={(event) => handleInterleaveChange(event.target.value as ParallelInterleaveOrder)}
-        size="small"
-        variant="standard"
-        disableUnderline
-        aria-label={INTERLEAVE_ARIA}
-        disabled={updateGroup.isPending}
-        sx={{ fontSize: "caption.fontSize" }}
-      >
-        {PARALLEL_INTERLEAVE_ORDERS.map((order) => (
-          <MenuItem key={order} value={order}>
-            {INTERLEAVE_ORDER_LABELS[order]}
-          </MenuItem>
-        ))}
-      </Select>
-    </Stack>
-  );
+  const handleDeleteConfirm = async () => {
+    await deleteGroupWithMembers.run({ members });
+    setIsDeleteOpen(false);
+  };
 
   return (
-    <Box ref={setNodeRef} style={style} data-testid={GROUP_BOX_TEST_ID}>
-      <AccentGroupCard header={header}>
-        <Stack direction="column" spacing={0.75}>
-          {members.map((member) => (
-            <SchemaCard
-              key={member.schema.id}
-              schema={member}
-              planId={planId}
-              startDate={startDate}
-              blockCtx={blockCtx}
-              parentIsReorderPending={parentIsReorderPending}
-              isBoxed
-            />
-          ))}
+    <Box
+      ref={setNodeRef}
+      style={style}
+      data-testid={GROUP_BOX_TEST_ID}
+      sx={(theme) => ({
+        border: `1px solid ${alpha(theme.palette.primary.main, FRAME_BORDER_ALPHA)}`,
+        borderRadius: theme.spacing(FRAME_BORDER_RADIUS_FACTOR),
+        bgcolor: alpha(theme.palette.primary.main, FRAME_BG_ALPHA),
+        overflow: "hidden",
+      })}
+    >
+      <SchemaGroupBoxHead
+        group={group}
+        isUpdatePending={updateGroup.isPending}
+        dragAttributes={attributes}
+        dragListeners={listeners}
+        onLabelCommit={handleLabelCommit}
+        onInterleaveChange={handleInterleaveChange}
+        onUngroupOpen={() => setIsUngroupOpen(true)}
+        onDeleteOpen={() => setIsDeleteOpen(true)}
+      />
 
-          <AddSubSchemaButton
+      <Stack
+        direction="column"
+        spacing={TRACK_GAP_FACTOR}
+        sx={(theme) => ({
+          p: theme.spacing(
+            TRACKS_PADDING_BLOCK_FACTOR,
+            TRACKS_PADDING_BLOCK_FACTOR,
+            TRACKS_PADDING_BLOCK_FACTOR,
+            TRACKS_PADDING_RAIL_FACTOR,
+          ),
+        })}
+      >
+        {members.map((member, index) => (
+          <GroupTrackWrapper
+            key={member.schema.id}
+            member={member}
+            index={index}
+            isContinuation={index > FIRST_TRACK_INDEX}
             planId={planId}
             startDate={startDate}
-            blockId={group.blockId}
-            groupId={group.id}
+            blockCtx={blockCtx}
+            parentIsReorderPending={parentIsReorderPending}
           />
-        </Stack>
-      </AccentGroupCard>
+        ))}
+      </Stack>
+
+      <Box sx={{ px: FOOTER_PADDING_X_FACTOR, pb: FOOTER_PADDING_BOTTOM_FACTOR, pt: 0 }}>
+        <AddTrackButton
+          planId={planId}
+          startDate={startDate}
+          blockId={group.blockId}
+          groupId={group.id}
+        />
+      </Box>
+
+      <ConfirmationModal
+        open={isUngroupOpen}
+        onClose={() => setIsUngroupOpen(false)}
+        title={UNGROUP_TITLE}
+        type="warning"
+        message={UNGROUP_MESSAGE}
+        confirmText={UNGROUP_CONFIRM}
+        onConfirm={handleUngroupConfirm}
+        isConfirming={deleteGroup.isPending}
+      />
+
+      <ConfirmationModal
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title={DELETE_TITLE}
+        type="danger"
+        message={DELETE_MESSAGE}
+        onConfirm={handleDeleteConfirm}
+        isConfirming={deleteGroupWithMembers.isPending}
+      />
     </Box>
   );
 };

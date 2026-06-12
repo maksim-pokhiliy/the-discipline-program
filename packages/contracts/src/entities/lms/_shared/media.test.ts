@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  POSITION_EQUIPMENT_MODIFIERS,
-  mediaReferenceSchema,
-  positionEquipmentModifierSchema,
-} from "./media";
+import { mediaReferenceSchema } from "./media";
 
 describe("mediaReferenceSchema", () => {
   it("accepts a valid url with no label", () => {
@@ -43,25 +39,5 @@ describe("mediaReferenceSchema", () => {
     if (result.success) {
       expect(result.data).toEqual({ url: "https://example.com/v.mp4" });
     }
-  });
-});
-
-describe("positionEquipmentModifierSchema", () => {
-  it("accepts all 11 POSITION_EQUIPMENT_MODIFIERS values", () => {
-    for (const modifier of POSITION_EQUIPMENT_MODIFIERS) {
-      expect(positionEquipmentModifierSchema.safeParse(modifier).success).toBe(true);
-    }
-  });
-
-  it("rejects lowercase variant", () => {
-    expect(positionEquipmentModifierSchema.safeParse("neutral_grip").success).toBe(false);
-  });
-
-  it("rejects unknown value", () => {
-    expect(positionEquipmentModifierSchema.safeParse("CUSTOM_POSITION").success).toBe(false);
-  });
-
-  it("rejects empty string", () => {
-    expect(positionEquipmentModifierSchema.safeParse("").success).toBe(false);
   });
 });

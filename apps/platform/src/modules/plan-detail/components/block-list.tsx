@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import {
-  closestCenter,
+  closestCorners,
   DndContext,
   KeyboardSensor,
   PointerSensor,
@@ -84,7 +84,7 @@ export const BlockList: React.FC<BlockListProps> = ({
   return (
     <Stack spacing={1.25}>
       {sortedBlocks.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
           <SortableContext
             items={sortedBlocks.map((b) => b.id)}
             strategy={verticalListSortingStrategy}

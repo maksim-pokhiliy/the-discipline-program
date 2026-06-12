@@ -64,6 +64,7 @@ export {
   IDEMPOTENCY_HEADER_REQUEST,
   IDEMPOTENCY_HEADER_REPLAYED,
   IDEMPOTENCY_HEADER_CREATED_AT,
+  IDEMPOTENCY_KEY_REGEX,
 } from "./idempotency";
 export type {
   CachedResponse,

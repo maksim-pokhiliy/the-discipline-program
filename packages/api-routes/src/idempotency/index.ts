@@ -11,6 +11,7 @@ export {
   IDEMPOTENCY_HEADER_REQUEST,
   IDEMPOTENCY_HEADER_REPLAYED,
   IDEMPOTENCY_HEADER_CREATED_AT,
+  IDEMPOTENCY_KEY_REGEX,
 } from "./constants";
 export { wrapHandler, wrapAuthHandler } from "./with-idempotency";
 export type { IdempotencyBodyMode, IdempotencyConfig } from "./with-idempotency";

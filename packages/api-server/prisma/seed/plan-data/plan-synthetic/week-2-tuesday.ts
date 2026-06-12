@@ -13,8 +13,8 @@ import {
 } from "./week-2-tuesday-compose-2";
 import {
   BLOCK_COMPOUND_ROWS_WK2_TUE,
-  BLOCK_FOOTNOTES_WK2_TUE,
   BLOCK_IMPLICIT_LABEL_WK2_TUE,
+  BLOCK_PER_ROUND_MARKERS_WK2_TUE,
 } from "./week-2-tuesday-compounds";
 
 const SESSION_WK2_TUE: CanonicalSession = {
@@ -29,7 +29,7 @@ const SESSION_WK2_TUE: CanonicalSession = {
     BLOCK_PULL_UPS_DIPS_CYCLE_WK2_TUE,
     BLOCK_PARALLEL_PYRAMIDS_WK2_TUE,
     BLOCK_COMPOUND_ROWS_WK2_TUE,
-    BLOCK_FOOTNOTES_WK2_TUE,
+    BLOCK_PER_ROUND_MARKERS_WK2_TUE,
     BLOCK_IMPLICIT_LABEL_WK2_TUE,
   ],
 };

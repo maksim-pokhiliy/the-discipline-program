@@ -42,6 +42,7 @@ type SchemaCardHeadProps = {
   onDeleteOpen: () => void;
   onEditOpen: () => void;
   isBoxed?: boolean;
+  isDraggable?: boolean;
 };
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
@@ -54,6 +55,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   onDeleteOpen,
   onEditOpen,
   isBoxed = false,
+  isDraggable = true,
 }): ReactElement => {
   return (
     <Stack
@@ -62,24 +64,26 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
       spacing={HEAD_SPACING}
       sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
     >
-      <IconButton
-        {...dragAttributes}
-        {...dragListeners}
-        size="small"
-        aria-label={DRAG_ARIA}
-        disabled={isMutationPending}
-        sx={{
-          cursor: "grab",
-          touchAction: "none",
-          "&.Mui-focusVisible": {
-            outline: "2px solid",
-            outlineColor: "primary.main",
-            outlineOffset: 2,
-          },
-        }}
-      >
-        <DragIndicatorIcon fontSize="small" />
-      </IconButton>
+      {isDraggable ? (
+        <IconButton
+          {...dragAttributes}
+          {...dragListeners}
+          size="small"
+          aria-label={DRAG_ARIA}
+          disabled={isMutationPending}
+          sx={{
+            cursor: "grab",
+            touchAction: "none",
+            "&.Mui-focusVisible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <DragIndicatorIcon fontSize="small" />
+        </IconButton>
+      ) : null}
 
       <Stack direction="column" spacing={INFO_SPACING} sx={{ flex: 1, minWidth: 0 }}>
         {!isBoxed ? (

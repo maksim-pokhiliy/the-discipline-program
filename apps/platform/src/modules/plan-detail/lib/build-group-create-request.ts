@@ -5,11 +5,10 @@ import {
   createGroupRequestSchema,
 } from "@repo/contracts/lms/schema-group";
 
-import type { ComposeContainer } from "../components/axes/axis-draft.types";
+import type { GroupDraft } from "../components/axes/axis-draft.types";
 
-import { collectTrackChildren } from "./arrangement-tree";
 import { formatZodIssue } from "./format-zod-issue";
-import { isParallelDraft } from "./parallel-ladder-draft";
+import { hasParallelTracks } from "./parallel-ladder-draft";
 
 const NOT_PARALLEL_ERROR = "Expected a parallel draft with at least two ladder tracks.";
 
@@ -18,9 +17,6 @@ const REQUEST_BUILD_FALLBACK = "could not build the group create request.";
 export type GroupCreateRequestResult =
   | { ok: true; request: CreateGroupRequest }
   | { ok: false; error: string };
-
-const trackLadderSteps = (track: ComposeContainer): number[] =>
-  track.repetition?.kind === "ladder" ? track.repetition.steps : [];
 
 const coachIssuePath = (path: ZodIssue["path"]): ZodIssue["path"] => {
   const [root, trackIndex, field, stepIndex] = path;
@@ -50,21 +46,21 @@ const formatCoachIssue = (issue: ZodIssue): string =>
   formatZodIssue({ ...issue, path: coachIssuePath(issue.path) });
 
 export const buildGroupCreateRequest = (
-  parent: ComposeContainer,
+  group: GroupDraft,
   blockId: string,
 ): GroupCreateRequestResult => {
-  if (!isParallelDraft(parent)) {
+  if (!hasParallelTracks(group)) {
     return { ok: false, error: NOT_PARALLEL_ERROR };
   }
 
-  const tracks = collectTrackChildren(parent).map((track) => ({
+  const tracks = group.tracks.map((track) => ({
     header: track.header,
-    steps: trackLadderSteps(track),
+    steps: track.steps,
   }));
 
   const parsed = createGroupRequestSchema.safeParse({
     blockId,
-    label: parent.header,
+    label: group.header,
     tracks,
   });
 

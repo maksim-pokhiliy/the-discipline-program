@@ -40,7 +40,6 @@ const baseRow = {
   sequence: null,
   intensity: null,
   media: null,
-  compoundRep: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,

@@ -5,42 +5,45 @@ import { describe, expect, it } from "vitest";
 
 import { render } from "@app/test/render";
 
-import { collectTrackChildren } from "../lib/arrangement-tree";
 import { asNodeId } from "../lib/axis-draft-id";
-import { isParallelDraft } from "../lib/parallel-ladder-draft";
 
-import type { ComposeContainer } from "./axes/axis-draft.types";
+import type { DraftSeed } from "./axes/axis-draft.types";
 import { CreateSchemaFlow } from "./create-schema-flow";
 
 const REPETITION_GROUP = "repetition";
 const ANOTHER_LADDER = "another ladder";
 const FIRST_LADDER_STEPS = [21, 15, 9];
+const EDITED_LADDER_STEPS = [20, 15, 9];
 const STEPS_PER_DEFAULT_LADDER = 3;
+
+const SWITCH_CONFIRM = "Switch & discard";
+const SWITCH_CANCEL = "Keep editing";
 
 const NON_LADDER_TILE_LABELS = ["Once", "Count", "Time cap", "EMOM", "Interval"];
 
-const draftRef: { current: ComposeContainer | undefined } = { current: undefined };
+const draftRef: { current: DraftSeed | undefined } = { current: undefined };
 const linkRef: { current: boolean } = { current: true };
 
-const freshDraft = (): ComposeContainer => ({
-  nodeType: "container",
-  id: asNodeId("draft-fresh"),
-  header: null,
-  notes: null,
-  children: [],
+const freshDraft = (): DraftSeed => ({
+  mode: "schema",
+  schema: { id: asNodeId("draft-fresh"), header: null, notes: null, rows: [] },
 });
 
-const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): ComposeContainer => ({
-  nodeType: "container",
-  id: asNodeId("draft-flat"),
-  header: null,
-  notes: null,
-  repetition: { kind: "ladder", steps },
-  children: [],
+const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): DraftSeed => ({
+  mode: "schema",
+  schema: {
+    id: asNodeId("draft-flat"),
+    header: null,
+    notes: null,
+    repetition: { kind: "ladder", steps },
+    rows: [],
+  },
 });
 
-const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
-  const [draft, setDraft] = useState<ComposeContainer>(seed);
+const dirtyLadderDraft = (): DraftSeed => flatLadderDraft(EDITED_LADDER_STEPS);
+
+const StatefulFlow: React.FC<{ seed: DraftSeed }> = ({ seed }) => {
+  const [draft, setDraft] = useState<DraftSeed>(seed);
   const [linkIntoBox, setLinkIntoBox] = useState(true);
 
   draftRef.current = draft;
@@ -62,7 +65,7 @@ const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
   );
 };
 
-const renderFlow = (seed: ComposeContainer): RenderResult => {
+const renderFlow = (seed: DraftSeed): RenderResult => {
   draftRef.current = seed;
   linkRef.current = true;
 
@@ -91,6 +94,17 @@ const clickAnotherLadder = (): void => {
   fireEvent.click(screen.getByRole("button", { name: ANOTHER_LADDER }));
 };
 
+const switchConfirmButton = (): HTMLElement | null =>
+  screen.queryByRole("button", { name: SWITCH_CONFIRM });
+
+const confirmSwitch = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: SWITCH_CONFIRM }));
+};
+
+const cancelSwitch = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: SWITCH_CANCEL }));
+};
+
 const anotherLadderButton = (): HTMLElement | null =>
   screen.queryByRole("button", { name: ANOTHER_LADDER });
 
@@ -117,7 +131,7 @@ const trackCaptions = (): string[] =>
 const removeTrackButtons = (): HTMLElement[] =>
   screen.queryAllByRole("button", { name: /^Remove ladder \d+$/ });
 
-const currentDraft = (): ComposeContainer => {
+const currentSeed = (): DraftSeed => {
   const draft = draftRef.current;
 
   if (draft === undefined) {
@@ -127,10 +141,10 @@ const currentDraft = (): ComposeContainer => {
   return draft;
 };
 
-const trackSteps = (container: ComposeContainer): number[][] =>
-  collectTrackChildren(container).map((track) =>
-    track.repetition?.kind === "ladder" ? track.repetition.steps : [],
-  );
+const isParallelSeed = (seed: DraftSeed): boolean => seed.mode === "group";
+
+const trackSteps = (seed: DraftSeed): number[][] =>
+  seed.mode === "group" ? seed.group.tracks.map((track) => track.steps) : [];
 
 const expectSingleGridAndPress = (): void => {
   expect(repetitionGroups()).toHaveLength(1);
@@ -172,7 +186,7 @@ describe("CreateSchemaFlow track-2 editing after materialize (Must-Test #3)", ()
     clickAnotherLadder();
     editStepCell(STEPS_PER_DEFAULT_LADDER, "12");
 
-    expect(trackSteps(currentDraft())[1]).toEqual([12, 12, 9]);
+    expect(trackSteps(currentSeed())[1]).toEqual([12, 12, 9]);
   });
 });
 
@@ -207,7 +221,7 @@ describe("CreateSchemaFlow remove-track collapses 2 to 1 (Must-Test #5)", () => 
     expect(trackCaptions()).toEqual([]);
     expect(removeTrackButtons()).toEqual([]);
     expect(stepperCount()).toBe(STEPS_PER_DEFAULT_LADDER);
-    expect(isParallelDraft(currentDraft())).toBe(false);
+    expect(isParallelSeed(currentSeed())).toBe(false);
   });
 });
 
@@ -225,32 +239,55 @@ describe("CreateSchemaFlow append grows to three tracks (Must-Test #6)", () => {
 });
 
 describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #10)", () => {
-  it("collapses to a single count container with no stray repetition alongside children", () => {
+  it("asks before discarding, then collapses to a single count schema on confirm", () => {
     renderFlow(flatLadderDraft());
 
     clickAnotherLadder();
     clickTile("Count");
 
-    const collapsed = currentDraft();
+    expect(isParallelSeed(currentSeed())).toBe(true);
+    expect(switchConfirmButton()).toBeInTheDocument();
 
-    expect(isParallelDraft(collapsed)).toBe(false);
-    expect(collapsed.children).toEqual([]);
-    expect(collapsed.repetition).toEqual({ kind: "count", count: 3 });
+    confirmSwitch();
+
+    const collapsed = currentSeed();
+
+    expect(isParallelSeed(collapsed)).toBe(false);
+
+    if (collapsed.mode === "schema") {
+      expect(collapsed.schema.rows).toEqual([]);
+      expect(collapsed.schema.repetition).toEqual({ kind: "count", count: 3 });
+    }
   });
 
-  it("never produces a parent carrying both repetition.ladder and container children", () => {
+  it("keeps the parallel draft intact when the discard is cancelled", () => {
     renderFlow(flatLadderDraft());
 
     clickAnotherLadder();
     clickTile("Count");
+    cancelSwitch();
+
+    const preserved = currentSeed();
+
+    expect(isParallelSeed(preserved)).toBe(true);
+    expect(trackSteps(preserved)).toEqual([FIRST_LADDER_STEPS, [15, 12, 9]]);
+  });
+
+  it("never produces a draft carrying both a ladder repetition and tracks", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    clickTile("Count");
+    confirmSwitch();
     clickTile("Ladder");
 
-    const reladdered = currentDraft();
+    const reladdered = currentSeed();
 
-    const carriesBoth =
-      reladdered.repetition?.kind === "ladder" && collectTrackChildren(reladdered).length > 0;
+    expect(reladdered.mode).toBe("schema");
 
-    expect(carriesBoth).toBe(false);
+    if (reladdered.mode === "schema") {
+      expect(reladdered.schema.repetition).toEqual({ kind: "ladder", steps: [21, 15, 9] });
+    }
   });
 
   it("treats re-selecting Ladder while parallel as a no-op (QA-003 unreachable)", () => {
@@ -259,10 +296,54 @@ describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #1
     clickAnotherLadder();
     clickTile("Ladder");
 
-    const stillParallel = currentDraft();
+    const stillParallel = currentSeed();
 
-    expect(isParallelDraft(stillParallel)).toBe(true);
-    expect(stillParallel.repetition).toBeUndefined();
+    expect(isParallelSeed(stillParallel)).toBe(true);
+    expect(stillParallel).not.toHaveProperty("schema");
+    expect(switchConfirmButton()).toBeNull();
+  });
+});
+
+describe("CreateSchemaFlow gates a dirty single-ladder kind-switch (QA-004)", () => {
+  it("defers the switch and keeps the edited ladder until the coach confirms", () => {
+    renderFlow(dirtyLadderDraft());
+
+    clickTile("Count");
+
+    expect(trackSteps(currentSeed())).toEqual([]);
+    expect(currentSeed().mode).toBe("schema");
+    expect(switchConfirmButton()).toBeInTheDocument();
+
+    confirmSwitch();
+
+    const switched = currentSeed();
+
+    if (switched.mode === "schema") {
+      expect(switched.schema.repetition).toEqual({ kind: "count", count: 3 });
+    }
+  });
+
+  it("keeps the edited single ladder when the switch is cancelled", () => {
+    renderFlow(dirtyLadderDraft());
+
+    clickTile("Count");
+    cancelSwitch();
+
+    const preserved = currentSeed();
+
+    expect(preserved.mode).toBe("schema");
+
+    if (preserved.mode === "schema") {
+      expect(preserved.schema.repetition).toEqual({ kind: "ladder", steps: EDITED_LADDER_STEPS });
+    }
+  });
+
+  it("shows exactly one confirm for a single-schema switch (no double-prompt)", () => {
+    renderFlow(dirtyLadderDraft());
+
+    clickTile("Count");
+
+    expect(screen.getAllByRole("button", { name: SWITCH_CONFIRM })).toHaveLength(1);
   });
 });
 

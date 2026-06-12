@@ -6,11 +6,10 @@ import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type {
-  ComposeContainer,
-  ComposeNode,
   ComposeRow,
   RepetitionAxis,
   RestAxis,
+  SchemaDraft,
 } from "../components/axes/axis-draft.types";
 
 import { asNodeId } from "./axis-draft-id";
@@ -56,19 +55,16 @@ const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
   editorDraft: undefined,
 });
 
-export const schemaWithBodyToDraftContainer = (schema: SchemaWithBody): ComposeContainer => {
+export const schemaWithBodyToDraft = (schema: SchemaWithBody): SchemaDraft => {
   const composition = schema.schema.composition ?? {};
   const { repetition, rest } = composition;
 
-  const children: ComposeNode[] = schema.rows.map(rowFromSchemaRow);
-
   return {
-    nodeType: "container",
     id: asNodeId(schema.schema.id),
     header: schema.schema.header,
     notes: schema.schema.notes,
     ...(repetition !== undefined && { repetition: repetitionFromComposition(repetition) }),
     ...(rest !== undefined && { rest: restFromComposition(rest) }),
-    children,
+    rows: schema.rows.map(rowFromSchemaRow),
   };
 };

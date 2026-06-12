@@ -2,22 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import { compositionSchema } from "@repo/contracts/lms/composition";
 
-import type { ComposeContainer, RepetitionAxis } from "../components/axes/axis-draft.types";
+import type { RepetitionAxis, SchemaDraft } from "../components/axes/axis-draft.types";
 
 import { asNodeId } from "./axis-draft-id";
 import { composeContainerToComposition } from "./compose-container-to-composition";
 
-const container = (overrides: Partial<ComposeContainer>): ComposeContainer => ({
-  nodeType: "container",
+const container = (overrides: Partial<SchemaDraft>): SchemaDraft => ({
   id: asNodeId("flat-container"),
   header: null,
   notes: null,
-  children: [],
+  rows: [],
   ...overrides,
 });
 
-const repetitionContainer = (repetition: RepetitionAxis): ComposeContainer =>
-  container({ repetition });
+const repetitionContainer = (repetition: RepetitionAxis): SchemaDraft => container({ repetition });
 
 describe("composeContainerToComposition flat repetition mapping", () => {
   it("round-trips a count repetition as a number", () => {

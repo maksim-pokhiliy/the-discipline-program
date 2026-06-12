@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { api } from "@app/lib/api";
 import { platformKeys } from "@app/lib/api/keys";
 
-import type { ComposeContainer } from "../components/axes/axis-draft.types";
+import type { GroupDraft } from "../components/axes/axis-draft.types";
 
 import { buildGroupCreateRequest } from "./build-group-create-request";
 
@@ -16,7 +16,7 @@ const SUCCESS_MESSAGE = "Group created";
 
 type RunArgs = {
   blockId: string;
-  draft: ComposeContainer;
+  draft: GroupDraft;
 };
 
 type RunOptions = {

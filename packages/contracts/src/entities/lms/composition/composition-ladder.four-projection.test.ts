@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { schemaRowPayloadSchema } from "../schema-row";
 
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
-import type { ComposeNode, ComposeRow } from "./composition.types";
+import type { ComposeContainer, ComposeRow } from "./composition.types";
 
 const cuidFran = "clz000000000000000000fran";
 const cuidThrusters = "clz00000000000000000thrust";
@@ -29,7 +29,7 @@ const franComposition = {
   repetition: { kind: "ladder", steps: [21, 15, 9] },
 } as const;
 
-const franContainer: ComposeNode = {
+const franContainer: ComposeContainer = {
   nodeType: "container",
   id: cuidFran,
   header: "Fran",

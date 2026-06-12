@@ -11,9 +11,8 @@ import { createSchemaRequestSchema } from "@repo/contracts/lms/schema";
 import { api } from "@app/lib/api";
 import { platformKeys } from "@app/lib/api/keys";
 
-import type { ComposeContainer } from "../components/axes/axis-draft.types";
+import type { GroupDraft, TrackDraft } from "../components/axes/axis-draft.types";
 
-import { collectTrackChildren } from "./arrangement-tree";
 import { formatZodIssue } from "./format-zod-issue";
 import { MIN_TRACKS_FOR_PARALLEL } from "./parallel-ladder-draft";
 
@@ -25,7 +24,7 @@ const STEPS_PATH_FIELD = "steps";
 
 type RunArgs = {
   blockId: string;
-  draft: ComposeContainer;
+  draft: GroupDraft;
 };
 
 type RunOptions = {
@@ -41,12 +40,9 @@ export type UseCreateIndependentLaddersResult = {
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-const trackLadderSteps = (track: ComposeContainer): number[] =>
-  track.repetition?.kind === "ladder" ? track.repetition.steps : [];
-
-const buildCreateRequest = (track: ComposeContainer, blockId: string) => ({
+const buildCreateRequest = (track: TrackDraft, blockId: string) => ({
   blockId,
-  composition: { repetition: { kind: "ladder" as const, steps: trackLadderSteps(track) } },
+  composition: { repetition: { kind: "ladder" as const, steps: track.steps } },
   header: null,
   notes: null,
 });
@@ -62,7 +58,7 @@ const coachIssuePath = (path: ZodIssue["path"], trackIndex: number): ZodIssue["p
   return typeof stepIndex === "number" ? [`${ladder}, step ${stepIndex + 1}`] : [`${ladder} steps`];
 };
 
-const validateLadderTracks = (tracks: ComposeContainer[], blockId: string): string | null => {
+const validateLadderTracks = (tracks: TrackDraft[], blockId: string): string | null => {
   for (const [trackIndex, track] of tracks.entries()) {
     const parsed = createSchemaRequestSchema.safeParse(buildCreateRequest(track, blockId));
 
@@ -94,7 +90,7 @@ export const useCreateIndependentLadders = (
     { blockId, draft }: RunArgs,
     { onSuccess, onError }: RunOptions,
   ): Promise<void> => {
-    const tracks = collectTrackChildren(draft);
+    const tracks = draft.tracks;
 
     if (tracks.length < MIN_TRACKS_FOR_PARALLEL) {
       onError(NOT_PARALLEL_ERROR);
@@ -123,7 +119,7 @@ export const useCreateIndependentLadders = (
           await api.schemas.create(
             planId,
             buildCreateRequest(track, blockId),
-            `${idempotencyBaseKey}:${trackIndex}`,
+            `${idempotencyBaseKey}-${trackIndex}`,
           );
           createdCount += 1;
         } catch (error) {

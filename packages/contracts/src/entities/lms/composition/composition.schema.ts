@@ -74,5 +74,3 @@ export const composeContainerSchema = z
     children: z.array(composeRowSchema),
   })
   .strict();
-
-export const composeNodeSchema = z.union([composeContainerSchema, composeRowSchema]);
