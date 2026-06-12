@@ -48,15 +48,15 @@ export const BLOCK_URL_ONLY_BODY_WRAPPED_WK1_SAT: CanonicalBlock = {
     buildComposeNode(
       {
         order: 1,
-        header: "URL only body",
+        header: "Yoga time",
         rows: [
           mkRow(
             1,
             {
               rowKind: "PLACEHOLDER",
-              placeholder: { placeholderKind: "coach_choice_slot", text: "Demo (see video)" },
+              placeholder: { placeholderKind: "coach_choice_slot", text: "Follow the yoga video" },
             },
-            { media: mediaReference({ url: "https://example.com/demo/wrapped-url" }) },
+            { media: mediaReference({ url: "https://example.com/demo/yoga-flow" }) },
           ),
         ],
       },
@@ -83,9 +83,12 @@ export const BLOCK_URL_ONLY_BODY_BARE_WK1_SAT: CanonicalBlock = {
             1,
             {
               rowKind: "PLACEHOLDER",
-              placeholder: { placeholderKind: "coach_choice_slot", text: "Demo (see video)" },
+              placeholder: {
+                placeholderKind: "coach_choice_slot",
+                text: "Warm up for feet — follow the video",
+              },
             },
-            { media: mediaReference({ url: "https://example.com/demo/bare-url" }) },
+            { media: mediaReference({ url: "https://example.com/demo/warm-up-feet" }) },
           ),
         ],
       },
