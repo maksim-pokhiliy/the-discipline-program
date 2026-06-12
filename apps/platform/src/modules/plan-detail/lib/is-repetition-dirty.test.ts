@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { RepetitionAxis } from "../components/axes/axis-draft.types";
-import { REPETITION_DEFAULTS } from "../components/axes/repetition-axis-field";
+import { REPETITION_DEFAULTS } from "../components/axes/repetition-defaults";
 
 import { isRepetitionDirty, repetitionEquals } from "./is-repetition-dirty";
 

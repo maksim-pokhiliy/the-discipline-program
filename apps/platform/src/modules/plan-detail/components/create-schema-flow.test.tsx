@@ -13,7 +13,11 @@ import { CreateSchemaFlow } from "./create-schema-flow";
 const REPETITION_GROUP = "repetition";
 const ANOTHER_LADDER = "another ladder";
 const FIRST_LADDER_STEPS = [21, 15, 9];
+const EDITED_LADDER_STEPS = [20, 15, 9];
 const STEPS_PER_DEFAULT_LADDER = 3;
+
+const SWITCH_CONFIRM = "Switch & discard";
+const SWITCH_CANCEL = "Keep editing";
 
 const NON_LADDER_TILE_LABELS = ["Once", "Count", "Time cap", "EMOM", "Interval"];
 
@@ -35,6 +39,8 @@ const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): DraftSeed => ({
     rows: [],
   },
 });
+
+const dirtyLadderDraft = (): DraftSeed => flatLadderDraft(EDITED_LADDER_STEPS);
 
 const StatefulFlow: React.FC<{ seed: DraftSeed }> = ({ seed }) => {
   const [draft, setDraft] = useState<DraftSeed>(seed);
@@ -86,6 +92,17 @@ const clickTile = (label: string): void => {
 
 const clickAnotherLadder = (): void => {
   fireEvent.click(screen.getByRole("button", { name: ANOTHER_LADDER }));
+};
+
+const switchConfirmButton = (): HTMLElement | null =>
+  screen.queryByRole("button", { name: SWITCH_CONFIRM });
+
+const confirmSwitch = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: SWITCH_CONFIRM }));
+};
+
+const cancelSwitch = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: SWITCH_CANCEL }));
 };
 
 const anotherLadderButton = (): HTMLElement | null =>
@@ -222,11 +239,16 @@ describe("CreateSchemaFlow append grows to three tracks (Must-Test #6)", () => {
 });
 
 describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #10)", () => {
-  it("collapses to a single count schema with no stray tracks", () => {
+  it("asks before discarding, then collapses to a single count schema on confirm", () => {
     renderFlow(flatLadderDraft());
 
     clickAnotherLadder();
     clickTile("Count");
+
+    expect(isParallelSeed(currentSeed())).toBe(true);
+    expect(switchConfirmButton()).toBeInTheDocument();
+
+    confirmSwitch();
 
     const collapsed = currentSeed();
 
@@ -238,11 +260,25 @@ describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #1
     }
   });
 
+  it("keeps the parallel draft intact when the discard is cancelled", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    clickTile("Count");
+    cancelSwitch();
+
+    const preserved = currentSeed();
+
+    expect(isParallelSeed(preserved)).toBe(true);
+    expect(trackSteps(preserved)).toEqual([FIRST_LADDER_STEPS, [15, 12, 9]]);
+  });
+
   it("never produces a draft carrying both a ladder repetition and tracks", () => {
     renderFlow(flatLadderDraft());
 
     clickAnotherLadder();
     clickTile("Count");
+    confirmSwitch();
     clickTile("Ladder");
 
     const reladdered = currentSeed();
@@ -264,6 +300,50 @@ describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #1
 
     expect(isParallelSeed(stillParallel)).toBe(true);
     expect(stillParallel).not.toHaveProperty("schema");
+    expect(switchConfirmButton()).toBeNull();
+  });
+});
+
+describe("CreateSchemaFlow gates a dirty single-ladder kind-switch (QA-004)", () => {
+  it("defers the switch and keeps the edited ladder until the coach confirms", () => {
+    renderFlow(dirtyLadderDraft());
+
+    clickTile("Count");
+
+    expect(trackSteps(currentSeed())).toEqual([]);
+    expect(currentSeed().mode).toBe("schema");
+    expect(switchConfirmButton()).toBeInTheDocument();
+
+    confirmSwitch();
+
+    const switched = currentSeed();
+
+    if (switched.mode === "schema") {
+      expect(switched.schema.repetition).toEqual({ kind: "count", count: 3 });
+    }
+  });
+
+  it("keeps the edited single ladder when the switch is cancelled", () => {
+    renderFlow(dirtyLadderDraft());
+
+    clickTile("Count");
+    cancelSwitch();
+
+    const preserved = currentSeed();
+
+    expect(preserved.mode).toBe("schema");
+
+    if (preserved.mode === "schema") {
+      expect(preserved.schema.repetition).toEqual({ kind: "ladder", steps: EDITED_LADDER_STEPS });
+    }
+  });
+
+  it("shows exactly one confirm for a single-schema switch (no double-prompt)", () => {
+    renderFlow(dirtyLadderDraft());
+
+    clickTile("Count");
+
+    expect(screen.getAllByRole("button", { name: SWITCH_CONFIRM })).toHaveLength(1);
   });
 });
 

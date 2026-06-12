@@ -1,5 +1,5 @@
 import type { RepetitionAxis } from "../components/axes/axis-draft.types";
-import { REPETITION_DEFAULTS } from "../components/axes/repetition-axis-field";
+import { REPETITION_DEFAULTS } from "../components/axes/repetition-defaults";
 import type { CountOrRangeValue } from "../components/count-or-range-field";
 
 const countOrRangeEquals = (a: CountOrRangeValue, b: CountOrRangeValue): boolean => {

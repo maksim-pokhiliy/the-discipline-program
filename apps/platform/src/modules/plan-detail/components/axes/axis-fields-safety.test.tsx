@@ -53,6 +53,8 @@ const spinbuttonByLabel = (name: string): HTMLElement => screen.getByRole("spinb
 const POSITIVE_MESSAGE = "Number must be greater than 0";
 const NONNEGATIVE_MESSAGE = "Number must be greater than or equal to 0";
 const REST_RANGE_MESSAGE = "rangeMax is required and must be greater than value for range units";
+const SWITCH_CONFIRM = "Switch & discard";
+const SWITCH_CANCEL = "Keep editing";
 
 describe("cadence/interval axis fields surface contract errors while storing the typed value (T2-5)", () => {
   it("shows the positivity error on cadence everyMin when cleared, still storing everyMin 0", () => {
@@ -137,7 +139,7 @@ describe("rest axis field surfaces the refine error while storing the typed valu
 });
 
 describe("switching repetition variant wholesale-replaces the body (QA-14, no stale fields)", () => {
-  it("drops ladder steps when switching ladder → cadence", () => {
+  it("drops ladder steps immediately when a pristine ladder switches to cadence", () => {
     render(<InspectorHarness initial={baseContainer({ kind: "ladder", steps: [21, 15, 9] })} />);
 
     fireEvent.click(screen.getByRole("button", { name: "EMOM" }));
@@ -146,6 +148,43 @@ describe("switching repetition variant wholesale-replaces the body (QA-14, no st
 
     expect(stored?.kind).toBe("cadence");
     expect(stored).not.toHaveProperty("steps");
+    expect(screen.queryByRole("button", { name: SWITCH_CONFIRM })).toBeNull();
+  });
+});
+
+describe("a dirty repetition kind-switch is gated by a confirm (QA-004)", () => {
+  it("defers the switch and keeps the edited ladder until the coach confirms", () => {
+    render(<InspectorHarness initial={baseContainer({ kind: "ladder", steps: [20, 15, 9] })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "EMOM" }));
+
+    expect(readRepetition()).toStrictEqual({ kind: "ladder", steps: [20, 15, 9] });
+    expect(screen.getByRole("button", { name: SWITCH_CONFIRM })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: SWITCH_CONFIRM }));
+
+    const stored = readRepetition();
+
+    expect(stored?.kind).toBe("cadence");
+    expect(stored).not.toHaveProperty("steps");
+  });
+
+  it("keeps the edited ladder and the active kind when the switch is cancelled", () => {
+    render(<InspectorHarness initial={baseContainer({ kind: "ladder", steps: [20, 15, 9] })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "EMOM" }));
+    fireEvent.click(screen.getByRole("button", { name: SWITCH_CANCEL }));
+
+    expect(readRepetition()).toStrictEqual({ kind: "ladder", steps: [20, 15, 9] });
+  });
+
+  it("switches a pristine non-ladder kind silently with no confirm", () => {
+    render(<InspectorHarness initial={baseContainer({ kind: "count", count: 3 })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "EMOM" }));
+
+    expect(readRepetition()).toStrictEqual({ kind: "cadence", everyMin: 1, rounds: 4 });
+    expect(screen.queryByRole("button", { name: SWITCH_CONFIRM })).toBeNull();
   });
 });
 

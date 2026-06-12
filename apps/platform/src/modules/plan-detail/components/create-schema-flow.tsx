@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
+
 import { Stack } from "@mui/material";
 
+import { isRepetitionDirty } from "../lib/is-repetition-dirty";
 import {
   appendTrack,
   dematerializeToFlat,
@@ -13,8 +16,10 @@ import { AxisFieldSection } from "./axes/axis-field-section";
 import { AxisModeButtonGrid } from "./axes/axis-mode-button-grid";
 import { REPETITION_TILES } from "./axes/axis-modes";
 import { type LadderTrack, LadderTrackStack } from "./axes/ladder-track-stack";
-import { REPETITION_DEFAULTS, RepetitionAxisField } from "./axes/repetition-axis-field";
+import { RepetitionAxisField } from "./axes/repetition-axis-field";
+import { REPETITION_DEFAULTS } from "./axes/repetition-defaults";
 import { GroupIntoBoxCheckbox } from "./group-into-box-checkbox";
+import { KindSwitchConfirm } from "./kind-switch-confirm";
 
 const REPETITION_LABEL = "repetition";
 const LADDER_KIND = "ladder";
@@ -38,6 +43,25 @@ const patchTrackSteps = (group: GroupDraft, trackIndex: number, steps: number[])
   tracks: group.tracks.map((track, index) => (index === trackIndex ? { ...track, steps } : track)),
 });
 
+const applyKind = (draft: DraftSeed, nextKind: RepetitionAxis["kind"]): DraftSeed => {
+  if (draft.mode === "group") {
+    return { mode: "schema", schema: flattenToKind(draft.group, nextKind) };
+  }
+
+  return {
+    mode: "schema",
+    schema: { ...draft.schema, repetition: REPETITION_DEFAULTS[nextKind] },
+  };
+};
+
+const discardsAuthoredContent = (draft: DraftSeed): boolean => {
+  if (draft.mode === "group") {
+    return true;
+  }
+
+  return draft.schema.repetition !== undefined && isRepetitionDirty(draft.schema.repetition);
+};
+
 type CreateSchemaFlowProps = {
   draft: DraftSeed;
   onDraftChange: (next: DraftSeed) => void;
@@ -51,6 +75,8 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
   linkIntoBox = true,
   onLinkIntoBoxChange,
 }) => {
+  const [pendingKind, setPendingKind] = useState<RepetitionAxis["kind"] | null>(null);
+
   const isGroup = draft.mode === "group";
   const activeKind: RepetitionAxis["kind"] = isGroup
     ? LADDER_KIND
@@ -61,19 +87,24 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
       return;
     }
 
-    if (nextKind !== LADDER_KIND && draft.mode === "group") {
-      onDraftChange({ mode: "schema", schema: flattenToKind(draft.group, nextKind) });
+    if (discardsAuthoredContent(draft)) {
+      setPendingKind(nextKind);
 
       return;
     }
 
-    if (draft.mode === "schema") {
-      onDraftChange({
-        mode: "schema",
-        schema: { ...draft.schema, repetition: REPETITION_DEFAULTS[nextKind] },
-      });
-    }
+    onDraftChange(applyKind(draft, nextKind));
   };
+
+  const handleConfirmKind = (): void => {
+    if (pendingKind !== null) {
+      onDraftChange(applyKind(draft, pendingKind));
+    }
+
+    setPendingKind(null);
+  };
+
+  const handleCancelKind = (): void => setPendingKind(null);
 
   const handleRepetitionChange = (next: RepetitionAxis): void => {
     if (draft.mode === "schema") {
@@ -161,6 +192,12 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
       {isGroup && onLinkIntoBoxChange !== undefined ? (
         <GroupIntoBoxCheckbox checked={linkIntoBox} onChange={onLinkIntoBoxChange} />
       ) : null}
+
+      <KindSwitchConfirm
+        open={pendingKind !== null}
+        onConfirm={handleConfirmKind}
+        onCancel={handleCancelKind}
+      />
     </Stack>
   );
 };
