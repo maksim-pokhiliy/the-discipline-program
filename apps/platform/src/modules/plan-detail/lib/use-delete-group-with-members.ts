@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -32,9 +32,15 @@ export const useDeleteGroupWithMembers = (
   startDate: string,
 ): UseDeleteGroupWithMembersResult => {
   const queryClient = useQueryClient();
+  const isRunningRef = useRef(false);
   const [isPending, setIsPending] = useState(false);
 
   const run = async ({ members }: RunArgs): Promise<void> => {
+    if (isRunningRef.current) {
+      return;
+    }
+
+    isRunningRef.current = true;
     setIsPending(true);
 
     let failureMessage: string | null = null;
@@ -55,6 +61,7 @@ export const useDeleteGroupWithMembers = (
         queryKey: platformKeys.weeks.byDate(planId, startDate),
       });
       setIsPending(false);
+      isRunningRef.current = false;
     }
 
     if (failureMessage !== null) {

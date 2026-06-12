@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { type ReactElement, useRef } from "react";
 
 import { PlusRowButton } from "@repo/ui";
 
@@ -23,15 +23,28 @@ export const AddTrackButton: React.FC<AddTrackButtonProps> = ({
   groupId,
 }): ReactElement => {
   const createSchema = useCreateSchema(planId, startDate);
+  const isFiredRef = useRef(false);
 
   const handleClick = () => {
-    createSchema.mutate({
-      blockId,
-      groupId,
-      composition: { repetition: { kind: "ladder", steps: PROTO_FIRST_LADDER } },
-      header: null,
-      notes: null,
-    });
+    if (isFiredRef.current || createSchema.isPending) {
+      return;
+    }
+
+    isFiredRef.current = true;
+    createSchema.mutate(
+      {
+        blockId,
+        groupId,
+        composition: { repetition: { kind: "ladder", steps: PROTO_FIRST_LADDER } },
+        header: null,
+        notes: null,
+      },
+      {
+        onSettled: () => {
+          isFiredRef.current = false;
+        },
+      },
+    );
   };
 
   return (

@@ -72,4 +72,15 @@ describe("AddTrackButton", () => {
 
     expect(screen.getByRole("button", { name: BUTTON_LABEL })).toBeDisabled();
   });
+
+  it("fires a single create on a synchronous double-click (QA-102)", () => {
+    renderButton();
+
+    const trigger = screen.getByRole("button", { name: BUTTON_LABEL });
+
+    fireEvent.click(trigger);
+    fireEvent.click(trigger);
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+  });
 });

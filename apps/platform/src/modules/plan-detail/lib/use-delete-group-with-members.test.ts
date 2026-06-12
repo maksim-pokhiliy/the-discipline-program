@@ -186,4 +186,39 @@ describe("useDeleteGroupWithMembers", () => {
 
     expect(view.result.current.isPending).toBe(false);
   });
+
+  it("runs the delete sequence once on a synchronous double-fire, never the contradictory toast (QA-104)", async () => {
+    let resolveDelete: (() => void) | undefined;
+    const pendingDelete = new Promise<void>((resolve) => {
+      resolveDelete = resolve;
+    });
+
+    deleteMock.mockReturnValueOnce(pendingDelete).mockResolvedValue(undefined);
+
+    const { view, invalidateSpy } = renderRunner();
+    const members = [memberStub(FIRST_MEMBER_ID, 1), memberStub(SECOND_MEMBER_ID, 2)];
+
+    let firstRun: Promise<void> = Promise.resolve();
+    let secondRun: Promise<void> = Promise.resolve();
+
+    await act(async () => {
+      firstRun = view.result.current.run({ members });
+      secondRun = view.result.current.run({ members });
+    });
+
+    expect(deleteMock).toHaveBeenCalledTimes(1);
+    expect(deleteMock).toHaveBeenNthCalledWith(1, PLAN_ID, FIRST_MEMBER_ID);
+
+    await act(async () => {
+      resolveDelete?.();
+      await Promise.all([firstRun, secondRun]);
+    });
+
+    expect(deleteMock).toHaveBeenCalledTimes(2);
+    expect(deleteMock).toHaveBeenNthCalledWith(2, PLAN_ID, SECOND_MEMBER_ID);
+    expect(toastSuccessMock).toHaveBeenCalledTimes(1);
+    expect(toastSuccessMock).toHaveBeenCalledWith(SUCCESS_MESSAGE);
+    expect(toastErrorMock).not.toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+  });
 });

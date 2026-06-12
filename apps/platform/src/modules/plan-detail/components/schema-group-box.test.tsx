@@ -1,7 +1,7 @@
 import { createElement } from "react";
 
 import { alpha } from "@mui/material";
-import { fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
@@ -329,6 +329,22 @@ describe("SchemaGroupBox ungroup gesture", () => {
     expect(deleteGroupMutate.mock.calls[0]?.[0]).toEqual({ groupId: GROUP_ID });
     expect(deleteGroupWithMembersRun).not.toHaveBeenCalled();
   });
+
+  it("fires a single dissolve on a synchronous double-click of the Ungroup confirm (QA-105)", () => {
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+
+    const confirm = within(screen.getByRole("dialog")).getByRole("button", { name: "Ungroup" });
+
+    act(() => {
+      confirm.click();
+      confirm.click();
+    });
+
+    expect(deleteGroupMutate).toHaveBeenCalledTimes(1);
+    expect(deleteGroupMutate.mock.calls[0]?.[0]).toEqual({ groupId: GROUP_ID });
+  });
 });
 
 describe("SchemaGroupBox delete-group gesture", () => {
@@ -351,5 +367,26 @@ describe("SchemaGroupBox delete-group gesture", () => {
     expect(deleteGroupWithMembersRun).toHaveBeenCalledTimes(1);
     expect(deleteGroupWithMembersRun.mock.calls[0]?.[0]).toEqual({ members });
     expect(deleteGroupMutate).not.toHaveBeenCalled();
+  });
+
+  it("runs the delete-with-members sequence once on a synchronous double-click of the Delete confirm (QA-104)", () => {
+    const members = [
+      makeSchema("clp9z8x7w0000abcd1234dd01", 1),
+      makeSchema("clp9z8x7w0000abcd1234dd02", 2),
+    ];
+
+    renderBox({ members });
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
+
+    const confirm = within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" });
+
+    act(() => {
+      confirm.click();
+      confirm.click();
+    });
+
+    expect(deleteGroupWithMembersRun).toHaveBeenCalledTimes(1);
+    expect(deleteGroupWithMembersRun.mock.calls[0]?.[0]).toEqual({ members });
   });
 });

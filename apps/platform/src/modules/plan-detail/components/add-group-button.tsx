@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { type ReactElement, useRef } from "react";
 
 import { toast } from "sonner";
 
@@ -25,9 +25,15 @@ export const AddGroupButton: React.FC<AddGroupButtonProps> = ({
   blockId,
 }): ReactElement => {
   const createGroup = useCreateGroup(planId, startDate);
+  const isFiredRef = useRef(false);
 
   const handleClick = () => {
-    createGroup.run(
+    if (isFiredRef.current || createGroup.isPending) {
+      return;
+    }
+
+    isFiredRef.current = true;
+    void createGroup.run(
       {
         blockId,
         draft: {
@@ -40,8 +46,13 @@ export const AddGroupButton: React.FC<AddGroupButtonProps> = ({
         },
       },
       {
-        onSuccess: () => undefined,
-        onError: (message) => toast.error(message),
+        onSuccess: () => {
+          isFiredRef.current = false;
+        },
+        onError: (message) => {
+          isFiredRef.current = false;
+          toast.error(message);
+        },
       },
     );
   };
