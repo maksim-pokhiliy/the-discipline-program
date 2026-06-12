@@ -123,7 +123,7 @@ export const useCreateIndependentLadders = (
           await api.schemas.create(
             planId,
             buildCreateRequest(track, blockId),
-            `${idempotencyBaseKey}:${trackIndex}`,
+            `${idempotencyBaseKey}-${trackIndex}`,
           );
           createdCount += 1;
         } catch (error) {

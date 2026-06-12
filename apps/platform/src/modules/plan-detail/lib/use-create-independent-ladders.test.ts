@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { IDEMPOTENCY_KEY_REGEX } from "@repo/api-routes";
 import type { CreateSchemaRequest, Schema } from "@repo/contracts/lms/schema";
 
 import { platformKeys } from "@app/lib/api/keys";
@@ -128,7 +129,7 @@ describe("useCreateIndependentLadders", () => {
         header: null,
         notes: null,
       },
-      `${DRAFT_ID}:0`,
+      `${DRAFT_ID}-0`,
     );
     expect(createMock).toHaveBeenNthCalledWith(
       2,
@@ -139,7 +140,7 @@ describe("useCreateIndependentLadders", () => {
         header: null,
         notes: null,
       },
-      `${DRAFT_ID}:1`,
+      `${DRAFT_ID}-1`,
     );
     expect(createMock.mock.calls[0]?.[1]).not.toHaveProperty("groupId");
     expect(createMock.mock.calls[0]?.[1]).not.toHaveProperty("parentSchemaId");
@@ -172,9 +173,9 @@ describe("useCreateIndependentLadders", () => {
     });
 
     expect(createMock.mock.calls.map((call) => call[2])).toEqual([
-      `${DRAFT_ID}:0`,
-      `${DRAFT_ID}:1`,
-      `${DRAFT_ID}:2`,
+      `${DRAFT_ID}-0`,
+      `${DRAFT_ID}-1`,
+      `${DRAFT_ID}-2`,
     ]);
   });
 
@@ -208,7 +209,7 @@ describe("useCreateIndependentLadders", () => {
 
     const secondRunKeys = createMock.mock.calls.map((call) => call[2]);
 
-    expect(firstRunKeys).toEqual([`${DRAFT_ID}:0`, `${DRAFT_ID}:1`]);
+    expect(firstRunKeys).toEqual([`${DRAFT_ID}-0`, `${DRAFT_ID}-1`]);
     expect(secondRunKeys).toEqual(firstRunKeys);
   });
 
@@ -327,5 +328,66 @@ describe("useCreateIndependentLadders", () => {
     });
 
     expect(view.result.current.isPending).toBe(false);
+  });
+});
+
+describe("useCreateIndependentLadders idempotency key format", () => {
+  beforeEach(() => {
+    createMock.mockReset();
+    toastSuccessMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const runWithTracks = async (tracks: ComposeNode[]): Promise<(string | undefined)[]> => {
+    createMock.mockResolvedValue(schemaStub("created"));
+
+    const { view } = renderRunner();
+
+    await act(async () => {
+      await view.result.current.run(
+        { blockId: BLOCK_ID, draft: parentDraft(tracks) },
+        { onSuccess: vi.fn(), onError: vi.fn() },
+      );
+    });
+
+    return createMock.mock.calls.map((call) => call[2]);
+  };
+
+  const expectAllKeysMatchServerRegex = (keys: (string | undefined)[]): void => {
+    expect(keys.length).toBeGreaterThan(0);
+
+    for (const key of keys) {
+      expect(typeof key).toBe("string");
+
+      if (typeof key !== "string") {
+        continue;
+      }
+
+      expect(key).toMatch(IDEMPOTENCY_KEY_REGEX);
+    }
+  };
+
+  it("emits keys matching the server IDEMPOTENCY_KEY_REGEX for a two-track run (D1 format-pin)", async () => {
+    const keys = await runWithTracks([
+      ladderTrack("t1", FIRST_LADDER_STEPS),
+      ladderTrack("t2", SECOND_LADDER_STEPS),
+    ]);
+
+    expect(keys).toHaveLength(2);
+    expectAllKeysMatchServerRegex(keys);
+  });
+
+  it("emits keys matching the server IDEMPOTENCY_KEY_REGEX for a three-track run (D1 format-pin)", async () => {
+    const keys = await runWithTracks([
+      ladderTrack("t1", FIRST_LADDER_STEPS),
+      ladderTrack("t2", SECOND_LADDER_STEPS),
+      ladderTrack("t3", THIRD_LADDER_STEPS),
+    ]);
+
+    expect(keys).toHaveLength(3);
+    expectAllKeysMatchServerRegex(keys);
   });
 });
