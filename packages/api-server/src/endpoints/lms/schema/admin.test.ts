@@ -1121,29 +1121,27 @@ describe("lmsSchemaApi", () => {
   });
 
   describe("cross-cutting", () => {
-    it("allows two block-level schemas to share an order (no DB unique on blockId+order, DR-W2-8)", async () => {
+    it("rejects two block-level schemas sharing an order (full unique schemas_block_order, ex-DR-W2-8)", async () => {
       const ctx = await provisionBlock();
 
       try {
-        const first = await cleanupRaw.schema.create({
-          data: { blockId: ctx.block.id, order: 10 },
-        });
-        const second = await cleanupRaw.schema.create({
+        await cleanupRaw.schema.create({
           data: { blockId: ctx.block.id, order: 10 },
         });
 
-        expect(first.order).toBe(10);
-        expect(second.order).toBe(10);
+        await expect(
+          cleanupRaw.schema.create({ data: { blockId: ctx.block.id, order: 10 } }),
+        ).rejects.toMatchObject({ code: "P2002" });
 
         const stored = await cleanupRaw.schema.count({ where: { blockId: ctx.block.id } });
 
-        expect(stored).toBe(2);
+        expect(stored).toBe(1);
       } finally {
         await ctx.cleanup();
       }
     });
 
-    it("allows a member to share an order with an ungrouped schema across the block (no order unique)", async () => {
+    it("rejects a member sharing an order with an ungrouped schema (the unique spans the whole block)", async () => {
       const ctx = await provisionBlock();
       const group = await cleanupRaw.schemaGroup.create({
         data: { blockId: ctx.block.id, label: null },
@@ -1153,13 +1151,12 @@ describe("lmsSchemaApi", () => {
         const member = await cleanupRaw.schema.create({
           data: { blockId: ctx.block.id, groupId: group.id, order: 10 },
         });
-        const ungrouped = await cleanupRaw.schema.create({
-          data: { blockId: ctx.block.id, order: 10 },
-        });
 
         expect(member.groupId).toBe(group.id);
-        expect(ungrouped.groupId).toBeNull();
-        expect(member.order).toBe(ungrouped.order);
+
+        await expect(
+          cleanupRaw.schema.create({ data: { blockId: ctx.block.id, order: 10 } }),
+        ).rejects.toMatchObject({ code: "P2002" });
       } finally {
         await ctx.cleanup();
       }
