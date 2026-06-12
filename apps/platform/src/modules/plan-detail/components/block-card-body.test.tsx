@@ -72,6 +72,13 @@ vi.mock("./add-schema-button", () => {
   return { AddSchemaButton: renderAddSchemaButtonMock };
 });
 
+vi.mock("./add-group-button", () => {
+  const renderAddGroupButtonMock = () =>
+    createElement("div", { "data-testid": "add-group-button-mock" });
+
+  return { AddGroupButton: renderAddGroupButtonMock };
+});
+
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
 
 vi.mock("@dnd-kit/core", async () => {

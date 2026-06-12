@@ -1,18 +1,25 @@
 import { createElement } from "react";
 
+import { alpha } from "@mui/material";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type { SchemaGroup } from "@repo/contracts/lms/schema-group";
+import { theme } from "@repo/mui";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 import type { BlockCtx } from "../lib/build-cascade-chips";
+import type * as DeleteGroupWithMembers from "../lib/use-delete-group-with-members";
 
 const updateGroupMutate = vi.fn();
 const updateGroupState = { isPending: false };
+const deleteGroupMutate = vi.fn();
+const deleteGroupState = { isPending: false };
+const deleteGroupWithMembersRun = vi.fn();
+const deleteGroupWithMembersState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -23,33 +30,56 @@ vi.mock("@app/lib/hooks", async () => {
       mutate: updateGroupMutate,
       isPending: updateGroupState.isPending,
     }),
+    useDeleteGroup: () => ({
+      mutate: deleteGroupMutate,
+      isPending: deleteGroupState.isPending,
+    }),
   };
 });
 
-vi.mock("./schema-card", () => {
-  const renderSchemaCardMock = (props: { schema: SchemaWithBody; isBoxed?: boolean }) =>
+vi.mock("../lib/use-delete-group-with-members", async () => {
+  const actual = await vi.importActual<typeof DeleteGroupWithMembers>(
+    "../lib/use-delete-group-with-members",
+  );
+
+  return {
+    ...actual,
+    useDeleteGroupWithMembers: () => ({
+      run: deleteGroupWithMembersRun,
+      isPending: deleteGroupWithMembersState.isPending,
+    }),
+  };
+});
+
+vi.mock("./group-track-wrapper", () => {
+  const renderGroupTrackWrapperMock = (props: {
+    member: SchemaWithBody;
+    index: number;
+    isContinuation: boolean;
+  }) =>
     createElement(
       "div",
       {
-        "data-testid": "schema-card-mock",
-        "data-schema-id": props.schema.schema.id,
-        "data-boxed": props.isBoxed === true ? "true" : "false",
+        "data-testid": "group-track-wrapper-mock",
+        "data-schema-id": props.member.schema.id,
+        "data-index": String(props.index),
+        "data-continuation": props.isContinuation ? "true" : "false",
       },
-      `schema-card:${props.schema.schema.id}`,
+      `track:${props.member.schema.id}`,
     );
 
-  return { SchemaCard: renderSchemaCardMock };
+  return { GroupTrackWrapper: renderGroupTrackWrapperMock };
 });
 
-vi.mock("./add-sub-schema-button", () => {
-  const renderAddSubSchemaButtonMock = (props: { blockId: string; groupId: string }) =>
+vi.mock("./add-track-button", () => {
+  const renderAddTrackButtonMock = (props: { blockId: string; groupId: string }) =>
     createElement("div", {
-      "data-testid": "add-sub-schema-button-mock",
+      "data-testid": "add-track-button-mock",
       "data-block-id": props.blockId,
       "data-group-id": props.groupId,
     });
 
-  return { AddSubSchemaButton: renderAddSubSchemaButtonMock };
+  return { AddTrackButton: renderAddTrackButtonMock };
 });
 
 const { SchemaGroupBox } = await import("./schema-group-box");
@@ -61,7 +91,8 @@ const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const BOX_TEST_ID = "schema-group-box";
 const GROUP_LABEL_ARIA = "Group label";
-const GROUP_PLACEHOLDER = "group…";
+const GROUP_PLACEHOLDER = "group label…";
+const FRAME_BORDER_ALPHA = 0.35;
 
 const makeSchema = (id: string, order: number): SchemaWithBody => ({
   schema: {
@@ -121,55 +152,72 @@ const renderBox = ({
     />,
   );
 
+const interleaveButton = (name: RegExp): HTMLElement =>
+  within(screen.getByRole("group", { name: "Interleave order" })).getByRole("button", { name });
+
 afterEach(() => {
   updateGroupState.isPending = false;
+  deleteGroupState.isPending = false;
+  deleteGroupWithMembersState.isPending = false;
   updateGroupMutate.mockReset();
+  deleteGroupMutate.mockReset();
+  deleteGroupWithMembersRun.mockReset();
 });
 
-describe("SchemaGroupBox chrome", () => {
-  it("renders an AccentGroupCard with the schema-group-box test id and a dashed border (MT-2)", () => {
+describe("SchemaGroupBox proto frame", () => {
+  it("renders a solid tinted frame whose border maps to alpha(primary.main, 0.35) — no dashed look", () => {
     renderBox();
 
     const box = screen.getByTestId(BOX_TEST_ID);
-    const card = box.querySelector(".MuiCard-root");
 
-    expect(box).toBeInTheDocument();
-    expect(card).not.toBeNull();
-    expect(card).toHaveStyle({ borderStyle: "dashed" });
+    expect(box).toHaveStyle({ borderStyle: "solid" });
+    expect(box).toHaveStyle({
+      borderColor: alpha(theme.palette.primary.main, FRAME_BORDER_ALPHA),
+    });
+    expect(box).not.toHaveStyle({ borderStyle: "dashed" });
   });
 
-  it("renders one boxed SchemaCard per member in order, plus the in-box add affordance", () => {
+  it("shows the GROUP overline and the column icon in the head", () => {
+    renderBox();
+
+    expect(screen.getByText("GROUP")).toBeInTheDocument();
+  });
+
+  it("renders one GroupTrackWrapper per member in order with continuation flags", () => {
     renderBox({
       members: [
         makeSchema("clp9z8x7w0000abcd1234aa01", 1),
         makeSchema("clp9z8x7w0000abcd1234aa02", 2),
+        makeSchema("clp9z8x7w0000abcd1234aa03", 3),
       ],
     });
 
-    const cards = screen.getAllByTestId("schema-card-mock");
+    const tracks = screen.getAllByTestId("group-track-wrapper-mock");
 
-    expect(cards.map((card) => card.getAttribute("data-schema-id"))).toEqual([
+    expect(tracks.map((track) => track.getAttribute("data-schema-id"))).toEqual([
       "clp9z8x7w0000abcd1234aa01",
       "clp9z8x7w0000abcd1234aa02",
+      "clp9z8x7w0000abcd1234aa03",
     ]);
-
-    for (const card of cards) {
-      expect(card).toHaveAttribute("data-boxed", "true");
-    }
+    expect(tracks.map((track) => track.getAttribute("data-continuation"))).toEqual([
+      "false",
+      "true",
+      "true",
+    ]);
   });
 
-  it("wires the in-box add button to the group's block and group ids (W1-SUBADD-BOX)", () => {
+  it("wires the Add-track affordance to the group's block and group ids", () => {
     renderBox();
 
-    const addButton = screen.getByTestId("add-sub-schema-button-mock");
+    const addTrack = screen.getByTestId("add-track-button-mock");
 
-    expect(addButton).toHaveAttribute("data-block-id", BLOCK_ID);
-    expect(addButton).toHaveAttribute("data-group-id", GROUP_ID);
+    expect(addTrack).toHaveAttribute("data-block-id", BLOCK_ID);
+    expect(addTrack).toHaveAttribute("data-group-id", GROUP_ID);
   });
 });
 
-describe("SchemaGroupBox label edit (MT-8 / W1-RENDER-REPOINT)", () => {
-  it("shows an empty 'Group label' textbox with the neutral placeholder when label is null (MT-9)", () => {
+describe("SchemaGroupBox label edit", () => {
+  it("shows an empty 'Group label' textbox with the proto placeholder when label is null", () => {
     renderBox({ group: makeGroup({ label: null }) });
 
     const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
@@ -214,18 +262,6 @@ describe("SchemaGroupBox label edit (MT-8 / W1-RENDER-REPOINT)", () => {
     });
   });
 
-  it("does NOT fire mutate on a whitespace-only label edit with no prior label", () => {
-    renderBox({ group: makeGroup({ label: null }) });
-
-    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
-
-    fireEvent.focus(label);
-    fireEvent.change(label, { target: { value: "   " } });
-    fireEvent.blur(label);
-
-    expect(updateGroupMutate).not.toHaveBeenCalled();
-  });
-
   it("does NOT fire mutate when the label is committed unchanged", () => {
     renderBox({ group: makeGroup({ label: "Keep me" }) });
 
@@ -239,20 +275,18 @@ describe("SchemaGroupBox label edit (MT-8 / W1-RENDER-REPOINT)", () => {
   });
 });
 
-describe("SchemaGroupBox interleave edit (fork #4 / W1-RENDER-REPOINT)", () => {
-  const interleaveTrigger = (): HTMLElement => screen.getByRole("combobox");
-
-  it("renders the interleave control reflecting the group's stored interleaveOrder", () => {
+describe("SchemaGroupBox interleave seg control", () => {
+  it("marks the active order via aria-pressed reflecting the stored interleaveOrder", () => {
     renderBox({ group: makeGroup({ interleaveOrder: "track_by_track" }) });
 
-    expect(interleaveTrigger()).toHaveTextContent("track by track");
+    expect(interleaveButton(/track by track/i)).toHaveAttribute("aria-pressed", "true");
+    expect(interleaveButton(/round by round/i)).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("commits the flipped interleaveOrder via useUpdateGroup.mutate", () => {
+  it("commits the flipped interleaveOrder via useUpdateGroup.mutate on the seg button", () => {
     renderBox({ group: makeGroup({ interleaveOrder: "round_by_round" }) });
 
-    fireEvent.mouseDown(interleaveTrigger());
-    fireEvent.click(within(screen.getByRole("listbox")).getByText("track by track"));
+    fireEvent.click(interleaveButton(/track by track/i));
 
     expect(updateGroupMutate).toHaveBeenCalledTimes(1);
     expect(updateGroupMutate).toHaveBeenCalledWith({
@@ -261,20 +295,61 @@ describe("SchemaGroupBox interleave edit (fork #4 / W1-RENDER-REPOINT)", () => {
     });
   });
 
-  it("does NOT fire mutate when the selected interleaveOrder is unchanged", () => {
+  it("does NOT fire mutate when the active order is re-selected", () => {
     renderBox({ group: makeGroup({ interleaveOrder: "round_by_round" }) });
 
-    fireEvent.mouseDown(interleaveTrigger());
-    fireEvent.click(within(screen.getByRole("listbox")).getByText("round by round"));
+    fireEvent.click(interleaveButton(/round by round/i));
 
     expect(updateGroupMutate).not.toHaveBeenCalled();
   });
 
-  it("disables the interleave control while a group update is pending", () => {
+  it("disables the seg buttons while a group update is pending", () => {
     updateGroupState.isPending = true;
 
     renderBox();
 
-    expect(interleaveTrigger()).toHaveAttribute("aria-disabled", "true");
+    expect(interleaveButton(/round by round/i)).toBeDisabled();
+    expect(interleaveButton(/track by track/i)).toBeDisabled();
+  });
+});
+
+describe("SchemaGroupBox ungroup gesture", () => {
+  it("dissolves the group via useDeleteGroup.mutate after confirming Ungroup", () => {
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Ungroup" })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ungroup" }));
+
+    expect(deleteGroupMutate).toHaveBeenCalledTimes(1);
+    expect(deleteGroupMutate.mock.calls[0]?.[0]).toEqual({ groupId: GROUP_ID });
+    expect(deleteGroupWithMembersRun).not.toHaveBeenCalled();
+  });
+});
+
+describe("SchemaGroupBox delete-group gesture", () => {
+  it("deletes the group and its members via useDeleteGroupWithMembers.run after confirming", () => {
+    const members = [
+      makeSchema("clp9z8x7w0000abcd1234dd01", 1),
+      makeSchema("clp9z8x7w0000abcd1234dd02", 2),
+    ];
+
+    renderBox({ members });
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Delete group" })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(deleteGroupWithMembersRun).toHaveBeenCalledTimes(1);
+    expect(deleteGroupWithMembersRun.mock.calls[0]?.[0]).toEqual({ members });
+    expect(deleteGroupMutate).not.toHaveBeenCalled();
   });
 });

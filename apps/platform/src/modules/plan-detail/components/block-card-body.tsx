@@ -26,6 +26,7 @@ import { useReorderSchemas } from "@app/lib/hooks";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
 
+import { AddGroupButton } from "./add-group-button";
 import { AddSchemaButton } from "./add-schema-button";
 import { SchemaCard } from "./schema-card";
 import { SchemaGroupBox } from "./schema-group-box";
@@ -130,6 +131,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />
+            <AddGroupButton planId={planId} startDate={startDate} blockId={block.id} />
           </Stack>
         </Stack>
       </SortableContext>

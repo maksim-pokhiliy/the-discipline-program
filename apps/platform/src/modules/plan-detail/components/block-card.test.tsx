@@ -78,6 +78,13 @@ vi.mock("./add-schema-button", () => {
   return { AddSchemaButton: renderAddSchemaButtonMock };
 });
 
+vi.mock("./add-group-button", () => {
+  const renderAddGroupButtonMock = () =>
+    createElement("div", { "data-testid": "add-group-button-mock" });
+
+  return { AddGroupButton: renderAddGroupButtonMock };
+});
+
 const { BlockCard } = await import("./block-card");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
