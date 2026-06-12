@@ -8,37 +8,50 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID                  | Topic                                                                            | Status     |
-| ------------------- | -------------------------------------------------------------------------------- | ---------- |
-| D-1 SCOPE           | Target = the session primitive; fixed floors Session→Block→Schema→Row            | RATIFIED   |
-| D-2 BOX             | Relations = explicit Group boxes; opaque coach-owned label; no derivation        | RATIFIED   |
-| D-3 NO-RECURSION    | Sub-schemas die; no "group" schema-type tile; no graph                           | RATIFIED   |
-| D-4 NO-TYPED-REL    | No typed relation kinds (no parallel\|choice\|superset enum); text label only    | RATIFIED   |
-| D-5 CHANNELS        | Notation → structure \| typed field \| human text \| dropped syntax              | RATIFIED   |
-| D-6 GRID            | `primitive-spec.md` grid = the per-notation disposition (statuses inside)        | RATIFIED   |
-| D-7 PROCESS         | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review      | RATIFIED   |
-| D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave       | RATIFIED   |
-| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group   | RATIFIED   |
-| DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate          | RATIFIED   |
-| DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates | RATIFIED   |
-| DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone   | RATIFIED   |
-| DR-W1-4 COPY        | Checkbox copy = English "Group into one box" (Gate A)                            | RATIFIED   |
-| DR-W1-5 INDEP-VALID | Unchecked path validates ladder steps client-side, coach-message parity (Gate B) | RATIFIED   |
-| DR-W2-1 GROUP-OWN   | `SchemaGroup` block-owned; SetNull dissolution; no `order` column                | RATIFIED   |
-| DR-W2-2 ARR-DEATH   | Arrangement axis dies whole; `composition = { repetition?, rest? }`              | RATIFIED   |
-| DR-W2-3 LEAF-KILLS  | Ratified Grid A/B leaf kills (reps/load/weight/media/schema-row/compounds)       | RATIFIED   |
-| DR-W2-4 IDEM-SCOPE  | D4 was ~90% pre-built; only client stable-key threading added; base = `draft.id` | RATIFIED   |
-| DR-W2-5 PAIRED-KILL | `pairedConcreteRowId` premise false (inert, 0 producers) → killed                | RATIFIED   |
-| DR-W2-6 BLK011      | block-011 rounds-over-rounds → 1-member Group "3 rounds:"                        | RATIFIED   |
-| DR-W2-7 BLK015      | block-015 interval-then-rounds → two sibling schemas (NOT a Group)               | RATIFIED   |
-| DR-W2-8 ORDER-UNIQ  | Premise false → full unique landed at review via the raw-SQL check layer         | SUPERSEDED |
-| DR-W2-9 CONTIGUITY  | Contiguity is a server invariant (`assertGroupMembersContiguous`)                | RATIFIED   |
-| DR-W2-FORK-1        | `interleaveOrder` = validated `String`, not a Prisma enum (Gate A)               | RATIFIED   |
-| DR-W2-FORK-2        | Group-create response embed = `{ group, members }` (flat `SchemaWithBody[]`)     | RATIFIED   |
-| DR-W2-FORK-3        | Load `byProfile` reuses the dual-value two-input layout (Gate A)                 | RATIFIED   |
-| DR-W2-FORK-4        | `interleaveOrder` editing moves OFF the schema ONTO the Group box meta           | RATIFIED   |
-| DR-W2-FORK-5        | Seed block-011/015 re-expression calls (the 2 extra non-parallel shapes)         | RATIFIED   |
-| DR-W2-FORK-6        | `buildBlockItems` lives in contracts (the new one-predicate)                     | RATIFIED   |
+| ID                  | Topic                                                                             | Status     |
+| ------------------- | --------------------------------------------------------------------------------- | ---------- |
+| D-1 SCOPE           | Target = the session primitive; fixed floors Session→Block→Schema→Row             | RATIFIED   |
+| D-2 BOX             | Relations = explicit Group boxes; opaque coach-owned label; no derivation         | RATIFIED   |
+| D-3 NO-RECURSION    | Sub-schemas die; no "group" schema-type tile; no graph                            | RATIFIED   |
+| D-4 NO-TYPED-REL    | No typed relation kinds (no parallel\|choice\|superset enum); text label only     | RATIFIED   |
+| D-5 CHANNELS        | Notation → structure \| typed field \| human text \| dropped syntax               | RATIFIED   |
+| D-6 GRID            | `primitive-spec.md` grid = the per-notation disposition (statuses inside)         | RATIFIED   |
+| D-7 PROCESS         | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review       | RATIFIED   |
+| D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave        | RATIFIED   |
+| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group    | RATIFIED   |
+| DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate           | RATIFIED   |
+| DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates  | RATIFIED   |
+| DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone    | RATIFIED   |
+| DR-W1-4 COPY        | Checkbox copy = English "Group into one box" (Gate A)                             | RATIFIED   |
+| DR-W1-5 INDEP-VALID | Unchecked path validates ladder steps client-side, coach-message parity (Gate B)  | RATIFIED   |
+| DR-W2-1 GROUP-OWN   | `SchemaGroup` block-owned; SetNull dissolution; no `order` column                 | RATIFIED   |
+| DR-W2-2 ARR-DEATH   | Arrangement axis dies whole; `composition = { repetition?, rest? }`               | RATIFIED   |
+| DR-W2-3 LEAF-KILLS  | Ratified Grid A/B leaf kills (reps/load/weight/media/schema-row/compounds)        | RATIFIED   |
+| DR-W2-4 IDEM-SCOPE  | D4 was ~90% pre-built; only client stable-key threading added; base = `draft.id`  | RATIFIED   |
+| DR-W2-5 PAIRED-KILL | `pairedConcreteRowId` premise false (inert, 0 producers) → killed                 | RATIFIED   |
+| DR-W2-6 BLK011      | block-011 rounds-over-rounds → 1-member Group "3 rounds:"                         | RATIFIED   |
+| DR-W2-7 BLK015      | block-015 interval-then-rounds → two sibling schemas (NOT a Group)                | RATIFIED   |
+| DR-W2-8 ORDER-UNIQ  | Premise false → full unique landed at review via the raw-SQL check layer          | SUPERSEDED |
+| DR-W2-9 CONTIGUITY  | Contiguity is a server invariant (`assertGroupMembersContiguous`)                 | RATIFIED   |
+| DR-W2-FORK-1        | `interleaveOrder` = validated `String`, not a Prisma enum (Gate A)                | RATIFIED   |
+| DR-W2-FORK-2        | Group-create response embed = `{ group, members }` (flat `SchemaWithBody[]`)      | RATIFIED   |
+| DR-W2-FORK-3        | Load `byProfile` reuses the dual-value two-input layout (Gate A)                  | RATIFIED   |
+| DR-W2-FORK-4        | `interleaveOrder` editing moves OFF the schema ONTO the Group box meta            | RATIFIED   |
+| DR-W2-FORK-5        | Seed block-011/015 re-expression calls (the 2 extra non-parallel shapes)          | RATIFIED   |
+| DR-W2-FORK-6        | `buildBlockItems` lives in contracts (the new one-predicate)                      | RATIFIED   |
+| DR-W3-1 IDEM-DASH   | Idempotency key separator `-`; format-pin test imports the REAL regex             | RATIFIED   |
+| DR-W3-2 PROTO-LOCAL | Proto group card built platform-local; `AccentGroupCard` dropped, not modified    | RATIFIED   |
+| DR-W3-3 SEG-CONTROL | Interleave editing = platform-local `.seg`; same `PUT /groups` mutation           | RATIFIED   |
+| DR-W3-4 ADD-TRACK   | "Add track" = instant `POST /schemas` + `groupId` + default ladder (FORK-1a)      | RATIFIED   |
+| DR-W3-5 DEL-CLIENT  | Delete-group-and-tracks = client-orchestrated sequential `DELETE /schemas`        | RATIFIED   |
+| DR-W3-6 ADD-GROUP   | Block-level "Add group" reuses `useCreateGroup` w/ seeded 2-track draft (FORK-4a) | RATIFIED   |
+| DR-W3-7 DRAFT-FLAT  | Recursive draft collapses to `SchemaDraft`/`TrackDraft`/`GroupDraft`; flat        | RATIFIED   |
+| DR-W3-8 KIND-CONF   | `ConfirmationModal` gates a DIRTY repetition-kind switch; clean switches silent   | RATIFIED   |
+| DR-W3-9 DEMOTE-KEPT | `should-be-container` + demote hint retyped, NOT deleted (owner follow-up)        | RATIFIED   |
+| DR-W3-10 HYGIENE    | Stale fixtures + vestigial contracts exports + caption + seed const rename        | RATIFIED   |
+| DR-W3-FORK-2 EXPORT | `IDEMPOTENCY_KEY_REGEX` barrel-exported from `@repo/api-routes` (additive 1-line) | RATIFIED   |
+| DR-W3-FORK-3 SEED   | Seed const renamed `…FOOTNOTES…`→`…PER_ROUND_MARKERS…` (owner-delegated)          | RATIFIED   |
+| DR-W3-REENTRY       | Synchronous re-entry guard on all new gesture surfaces (QA-104 double-fire)       | RATIFIED   |
 
 ---
 
@@ -220,3 +233,97 @@ The six design forks (§6 of the design doc), each ratified at Gate A; the imple
 - **DR-W2-FORK-4 — `interleaveOrder` editing moves OFF the per-schema `container-inspector` ONTO the Group box meta** as a group-update mutation (`PUT …/groups/{id}` `{ interleaveOrder }`). The field is now a property of the Group, not a schema's composition; editing it on the box is where the coach reads it. There is no per-schema home for it after the field leaves `composition`.
 - **DR-W2-FORK-5 — the block-011/015 re-expression calls** = DR-W2-6 + DR-W2-7 (the two extra non-parallel `subSchemas` shapes that are neither parallel-parents nor in the prompt's 3 named classes). STOP-check cleared: neither dying parent carried `notes`/`intensity` beyond `header` (verified).
 - **DR-W2-FORK-6 — `buildBlockItems` lives in contracts** (the `schema-group` module, `block-items.ts`), signature `buildBlockItems(schemas: SchemaWithBody[], groups: SchemaGroup[]): BlockItem[]` with `BlockItem = { kind:"schema"; schema } | { kind:"group"; group; members }`. It is the SOLE clustering source (red line #4, the new one-predicate replacing `isStructurallyParallel`) — depends only on schema + schema-group (no `block/` import → no cycle; `dep:check` green). In-build: imported in EXACTLY one render site (`block-card-body.tsx`) + its test; zero hand-rolled cluster loops.
+
+---
+
+## W3 implementation calls (DR-W3-\*) — the editor remap: prototype fidelity, gesture set, draft collapse
+
+W3 makes the EDITOR catch up to the W2 model. Nothing in the data model, the API surface, or the `buildBlockItems` clustering predicate changes — W3 is a UI/UX remap onto ADR-0041 plus an internal authoring-draft refactor (NOT a new one-way door, so no new ADR). The owner's hi-fi prototype (`plan-editor-hi-fi-v-2`) is the UX law for the group card: a solid tinted frame, GROUP overline, continuous accent rail, numbered track badges, segmented interleave, and a button gesture set (Add group / Add track / Ungroup / Delete-with-tracks) replacing drag-one-onto-another. One LIVE idempotency 400 dies; the last recursion in the codebase (the authoring draft) collapses; QA-004 gets its confirm; the W2-STALE-\* hygiene riders land. Ratified during the W3 `/feature` build (2026-06-12, branch `feat/session-primitive-w3-editor-remap`, 10 commits). All runnable gates green: `check-types` 16/16, `lint` 16/16, `dep:check` 0, platform vitest 844+, `@repo/contracts` 741. These promote the design's §7 decision record (`.feature-dev/1781247806/design.md`) with the in-build deviations actually taken folded in honestly.
+
+**Single api-server touch — the seed const rename (DR-W3-FORK-3), flagged for audit:** the wave's ONLY change outside platform/`@repo/api-routes` is a PURE identifier rename of one seed const (`BLOCK_FOOTNOTES_WK2_TUE` → `BLOCK_PER_ROUND_MARKERS_WK2_TUE`, 3 sites: def + import + array reference). The seed DATA is byte-identical (`blockInstanceRef: "block-183"`, order, labels, rows all untouched) — verified by `git show` and compiled by `pnpm check-types` (which type-checks api-server). Because there is NO behavior or data change, the gated api-server suite is NOT required for this wave; the owner may OPTIONALLY run it at merge for belt-and-suspenders. See DR-W3-FORK-3.
+
+### DR-W3-1 IDEM-DASH — the idempotency key separator is a dash; the FORMAT is pinned against the server's real regex
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D1, W2-UX-POLISH item 1).
+- **Decision.** The per-track idempotency key separator changes from `:` to `-`: `` `${idempotencyBaseKey}-${trackIndex}` `` (uuid chars + `-` are all inside `IDEMPOTENCY_KEY_REGEX = /^[A-Za-z0-9_-]{1,256}$/`). The stability property is preserved (same key per (GroupDraft.id, trackIndex) within the modal session — the retry-dedup mechanism, DR-W2-4). A new format-pin test imports the REAL `IDEMPOTENCY_KEY_REGEX` from `@repo/api-routes` (via FORK-2's barrel export) and asserts every key the hook emits matches it; the existing stability tests updated for the new separator.
+- **Rationale.** This was a LIVE prod-shape bug: the unchecked independent-ladders path 400'd with "Idempotency-Key header malformed" on every `POST /schemas` (the COLON is outside the charset — length 38 was a red herring; the client's default `crypto.randomUUID()` passes, which is why ONLY this custom-key path broke). W2's MT-19 pinned key STABILITY against a mocked client but never key FORMAT against the server contract — that is the seam the format-pin test closes. The hook is the only custom-key producer (verified by `grep idempotencyKey` across `apps/`).
+
+### DR-W3-2 PROTO-CARD-LOCAL — the proto group card is built platform-local; `AccentGroupCard` is dropped, not modified
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D2, W2-UX-POLISH item 2).
+- **Decision.** The hi-fi prototype card is built PLATFORM-LOCAL under `apps/platform/src/modules/plan-detail/components/` (the `schema-group-box.tsx` rewrite + new sub-components, one component per file: head, track wrapper, track badge, seg control). `@repo/ui`'s `AccentGroupCard` is DROPPED from the box, NOT restyled — its def + test + the one Storybook showcase stay untouched (research §9.2: the group box was its only PRODUCT consumer).
+- **Rationale.** Restyling a shared `@repo/ui` primitive for a platform-local need would have a wider blast radius and needs a Gate-A fork; the box is the only product consumer, so a local rebuild is the cleaner, lower-coupling move (reuse-before-invent does not mean restyle-shared-for-one-caller). All colors map to `palette` slots + `alpha` (no hex): `#E07B35` → `primary.main`, frame border `alpha(primary.main, 0.35)` SOLID (the W1 dashed look dies), frame bg `0.03`, rail `0.45`, head-border `0.25`.
+- **Consequences.** The member `SchemaCard` gains a minimal additive `isDraggable` prop (default true; the box passes `false`) so the in-group member card has no drag handle (numbered track badges replace member handles) without forking a second card component — keeps `schema-card.tsx` the single member-card shell.
+
+### DR-W3-3 SEG-CONTROL — interleave editing uses a platform-local segmented control
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D2).
+- **Decision.** Interleave-order editing uses a platform-local `.seg` segmented control (the 2 `PARALLEL_INTERLEAVE_ORDERS` as joined `aria-pressed` buttons), replacing the W2 MUI `Select` on the box meta. Same `PUT /groups/{id}` `{ interleaveOrder }` mutation (DR-W2-FORK-4 unchanged); `onChange` fires only when the value actually changes.
+- **Rationale.** Prototype fidelity (the proto's `.seg`); a 2-value toggle reads better as a segment than a dropdown. The W2 test reached the control via `getByRole("combobox")` — that seam disappears; the rewritten test asserts on the buttons by text + `aria-pressed`.
+
+### DR-W3-4 ADD-TRACK-INSTANT — "Add track" is an instant create, the modal stays for standalone
+
+- **Status:** RATIFIED (2026-06-12, Gate A — FORK-1a).
+- **Decision.** "Add track" fires an INSTANT `POST /schemas` with `{ groupId, composition: { repetition: { kind:"ladder", steps:[21,15,9] } }, header:null, notes:null }` via `useCreateSchema`; a new numbered ladder member appears at the group tail (contiguity safe — server tail-appends), refined inline on the member card afterward. The axis modal stays the path for STANDALONE schema creation (the block-level "Add schema").
+- **Rationale.** It is literally the prototype's interaction and the lower-friction daily gesture on the hottest in-box surface; `POST /schemas` already forwards `groupId`. FORK-1b (keep a relabeled 4-click modal on the hottest gesture) was rejected — friction for no benefit.
+
+### DR-W3-5 DELETE-GROUP-CLIENT — Delete-group-and-tracks is client-orchestrated; no server flag
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D3).
+- **Decision.** "Delete group + tracks" is client-orchestrated sequential `DELETE /schemas/{id}` over the members (a bespoke `useDeleteGroupWithMembers` `{run, isPending}` hook mirroring `useCreateIndependentLadders`). The LAST delete auto-removes the now-empty group server-side (existing behavior). Mid-failure → toast + single `finally`-invalidate (the survivors are still a valid group). NO server `?withMembers` flag.
+- **Rationale.** A `?withMembers` server flag would break the no-api-server-change boundary and re-arm the gated-suite ritual for a gesture the client can orchestrate (spec rec + research agree). The box is a pure render of `buildBlockItems` output, so it unmounts automatically when its last member vanishes — no local "is alive" state, no `useEffect` cleanup.
+
+### DR-W3-6 ADD-GROUP-REUSE — block-level "Add group" reuses the group-create path
+
+- **Status:** RATIFIED (2026-06-12, Gate A — FORK-4a).
+- **Decision.** The block-level "Add group" affordance (a `PlusRowButton` next to "Add schema" in the block footer) reuses `useCreateGroup.run` with a seeded 2-track default `GroupDraft` (`{ tracks: [{ steps:[21,15,9] }, { steps:[9,15,21] }] }` — the proto's `21-15-9` / `9-15-21`) through the validated `buildGroupCreateRequest` path. Atomic `POST /groups`.
+- **Rationale.** Reuses the existing validation + coach-message + invalidation path; zero parallel code. After the D4 collapse the draft IS the flat `GroupDraft`, so seeding two default tracks is trivial — a from-scratch creator constructs the flat draft directly (no schema-to-draft round-trip). FORK-4b (a thin new hook with a hardcoded request) was rejected as a parallel code path.
+
+### DR-W3-7 DRAFT-FLAT — the recursive authoring draft collapses to flat types
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D4, W2-DRAFT-RECURSION).
+- **Decision.** The recursive `ComposeContainer.children: ComposeNode[]` (where a child could itself be a container — the last recursion in the codebase) collapses to two NON-recursive types in `axis-draft.types.ts`: `SchemaDraft { id, header, notes, repetition?, rest?, rows: ComposeRow[] }` (single-schema authoring — flat-create + edit; `children` renamed `rows` for honesty, NEVER contains containers) and `GroupDraft { id, header, tracks: TrackDraft[] }` with `TrackDraft { id, header, steps }` (a track is always a bare ladder; `steps` is the only axis it carries). `ComposeNode`/`ComposeContainer` are DELETED from the platform layer; the modal's draft state becomes a `DraftSeed` union (`{ mode:"schema", schema } | { mode:"group", group }`). The `nodeType` discriminator dies entirely (no node is polymorphic anymore). DR-W1-2 / DR-W1-5 semantics survive byte-for-byte (checkbox default-checked at ≥2 tracks, per-track client-side validation with coach-message parity, non-atomic unchecked path).
+- **Rationale.** Red line #3 forbids recursion "anywhere"; the draft was the last holdout — fully isolated to the authoring layer (never stored, never on the render path), but the red line is the red line. The flat split is strictly flatter than the spec's fallback ("container children rows-only + a separate group draft"): a `TrackDraft` collapses to `{ id, header, steps }` because tracks get their rows AFTER creation via the member card, not in the modal.
+- **Consequences / deviations (recorded honestly).**
+  - `DraftSeed` was hoisted INTO `axis-draft.types.ts` (not kept modal-local) to avoid a circular import.
+  - `arrangement-tree.ts` was **DELETED, not renamed** (the runner-prompt §7.3 said rename to a "track/row splitter"). The flat collapse made `collectTrackChildren`/`collectDirectRows` dead — tracks are `GroupDraft.tracks` (a direct array) and rows are `SchemaDraft.rows` (a direct array), so there is nothing left to split. Deletion > rename — this resolves the `arrangement-tree` half of W2-STALE-NAMES by deletion (the file's reason-to-exist evaporated).
+  - A cycle-break: `REPETITION_DEFAULTS` / `DEFAULT_TIME_CAP` were extracted into a new leaf `axes/repetition-defaults.ts` (14 lines). Wiring D5 directly would have created a `repetition-axis-field ↔ is-repetition-dirty` import cycle; extracting the shared consts breaks it at the source (manifesto 2.1 — fixed, not silenced).
+
+### DR-W3-8 KIND-SWITCH-CONFIRM — a dirty repetition-kind switch confirms before discarding
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D5, QA-004; the keep-confirm-always edge ratified by the owner, QA-114).
+- **Decision.** A `ConfirmationModal` gates a DIRTY repetition-kind switch (would discard authored content beyond the kind's default); clean switches stay silent. Two discard points, both flowing through a kind change: (1) edit/single-axis in `RepetitionAxisField` — dirty iff the current `value` is not deep-equal to `REPETITION_DEFAULTS[value.kind]`; (2) create-mode parallel→non-ladder in `create-schema-flow` — `flattenToKind` discards `GroupDraft.tracks` (a materialized parallel is always "authored" → always dirty). One shared `kind-switch-confirm.tsx` dialog + an `is-repetition-dirty.ts` predicate, consumed at both sites. Pristine just-seeded axes and re-selecting Ladder while parallel (a no-op) stay silent.
+- **Rationale.** QA-004 (carried since compose-authoring-ux) — switching kinds silently nuked authored ladder steps; the editor rebuild is its scheduled home. The gate sits at each discard SITE (not one central place) because `RepetitionAxisField` is reused in contexts with different discard semantics (single axis vs parallel group).
+- **The QA-114 owner edge.** A kind-switch on a PRISTINE parallel group still confirms — RATIFIED as **keep-confirm-always**. Rationale: it collapses the 2-track STRUCTURE (`GroupDraft.tracks`), not just per-axis content, so even an unedited parallel is "authored structure" worth a confirm. (Owner call.)
+
+### DR-W3-9 DEMOTE-HINT-KEPT — `should-be-container` + the demote hint are retyped, not deleted
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D4 scope-tightening).
+- **Decision.** `should-be-container.ts` + the `container-inspector` demote hint are RETYPED to `SchemaDraft` (`rows.length`), NOT deleted, even though both appear fully dead post-collapse: the "Demote to row" BUTTON never renders (the modal passes `onDemoteNode={undefined}`), and the demote-hint ALERT is unreachable in create mode (post-collapse `SchemaDraft.rows` is always `[]` in create — rows are added on the card after creation, so `rows.length===1` can't occur).
+- **Rationale.** Deleting a coach-facing affordance — even a dead one — is a product call, not a refactor call (manifesto: don't refactor-beyond-scope without a green light). Retyping is mechanical and in-scope.
+- **Consequence (follow-up flagged).** The demote hint + `should-be-container` + `DEMOTE_BUTTON_LABEL` are candidates for a clean ~3-file deletion. The owner chose CARRY at Gate A → carried as the OQ1 follow-up in `deferred.md`.
+
+### DR-W3-10 HYGIENE — the W2-STALE-\* riders land
+
+- **Status:** RATIFIED (2026-06-12, W3 build — D6).
+- **Decision.** (1) **W2-STALE-FIXTURES:** the dead `compoundRep: null` line dropped from `exercise-row-payload-form.test.tsx` + `rest-row-form-schema.test.ts`. (2) **W2-VESTIGIAL-EXPORTS:** `composeNodeSchema` + `ComposeNode` deleted from contracts `composition` (a 1-line four-projection retype `ComposeNode` → `ComposeContainer`, which survives); the self-referential `POSITION_EQUIPMENT_MODIFIERS` / `positionEquipmentModifierSchema` / `PositionEquipmentModifier` trio + their test `describe` block deleted from `_shared/media.ts` (zero consumers verified). (3) **W2-STALE-NAMES:** the `DerivedLabelCard` caption fixed `"computed (arrangement-first)"` → `"computed (repetition-derived)"` (the one coach-visible item — labels derive from repetition only post-arrangement-death); `arrangement-tree.ts` resolved by deletion (DR-W3-7); the seed const renamed (FORK-3, owner-delegated).
+- **Rationale.** All scheduled W2 hygiene; each deletion verified zero-consumer before removal. The two sanctioned contracts touches (the dead-export deletions) are within the runner-prompt's allowed exceptions.
+
+### DR-W3-FORK-2 EXPORT — `IDEMPOTENCY_KEY_REGEX` is barrel-exported from `@repo/api-routes`
+
+- **Status:** RATIFIED (2026-06-12, Gate A — FORK-2a).
+- **Decision.** An additive 1-line export `export { IDEMPOTENCY_KEY_REGEX }` is added to the `@repo/api-routes` barrel (and the `idempotency/index.ts` sub-barrel for internal consistency), so the D1 format-pin test imports the REAL regex (DR-W3-1).
+- **Rationale.** `IDEMPOTENCY_KEY_REGEX` lived ONLY at `idempotency/constants.ts` and was NOT exposed on the `.` barrel — the owner's red line ASSUMED a read-only import existed; it didn't, so the spec's "import the REAL regex" was impossible without this export. `@repo/api-routes` is NOT in the hard red-line list (which is contracts/Prisma/api-server/seed); its suite is ungated and fast; `dep:check` already permits `apps/platform → @repo/api-routes`. This touches `@repo/api-routes`, NOT api-server → no gated-suite ritual. FORK-2b (re-home into contracts) and FORK-2c (duplicate the literal in the test) were rejected (bigger blast radius / defeats the pin-against-source-of-truth point).
+
+### DR-W3-FORK-3 SEED — the seed const rename (owner-delegated; the wave's single api-server touch)
+
+- **Status:** RATIFIED (2026-06-12, owner-delegated — "реши сам" + "сид не охраняю, как раз думал его чистить").
+- **Decision.** The misleadingly-named seed const `BLOCK_FOOTNOTES_WK2_TUE` (it holds plain EXERCISE rows now, not FOOTNOTE rows, after the W2 footnote-kind death) is RENAMED `BLOCK_PER_ROUND_MARKERS_WK2_TUE`. 3 sites: the `export const` def (`week-2-tuesday-compounds.ts`) + the import + the array reference (`week-2-tuesday.ts`).
+- **Rationale.** The design's §FORK-3 rec was "LEAVE IT" on the standing red line (re-touching the seed re-arms the boundary the owner guards). The owner BROKE THE TIE the other way: delegated the call ("реши сам") and explicitly de-armed the boundary ("сид не охраняю, как раз думал его чистить"). The rename is the SINGLE api-server touch of the wave — a PURE identifier change, seed DATA byte-identical (`blockInstanceRef`, order, labels, rows untouched — verified by `git show`), fully type-checked by `pnpm check-types` (which compiles api-server).
+- **Consequence (flagged for audit).** Because there is NO behavior or data change, the gated api-server suite is NOT required for this wave; the owner may OPTIONALLY run it at merge for belt-and-suspenders. This is the one place the platform-only boundary is crossed, and it is crossed only cosmetically with owner sign-off.
+
+### DR-W3-REENTRY — a synchronous re-entry guard on every new gesture surface (post-QA CRITICAL)
+
+- **Status:** RATIFIED (2026-06-12, W3 build — post-QA fix; QA-104 + siblings QA-102/103/105).
+- **Decision.** A synchronous re-entry guard (an `isRunningRef`/`isFiredRef` mirroring the existing `isSubmittingRef` pattern) is added to ALL new gesture surfaces: delete-group (`useDeleteGroupWithMembers`), add-track (`add-track-button`), add-group (`add-group-button`), and the box-level ungroup/delete confirms (`schema-group-box`). Pinned by double-fire tests on each.
+- **Rationale.** A post-QA CRITICAL (QA-104): a double-click on "Delete group" double-fired the sequential delete → a contradictory toast (the second run sees the already-deleted members). The async `isPending` flag flips a render too late to block a synchronous second click; a ref guard blocks re-entry within the same tick. Siblings QA-102/103/105 are the same class on the other new gestures — fixed uniformly. (Pattern reuse: the codebase's existing `isSubmittingRef` already solved this for the modal submit.)
