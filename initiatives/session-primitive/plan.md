@@ -22,9 +22,9 @@ Prompt issued 2026-06-10; runner session via `/feature` full; orchestrator revie
 
 Group persisted (entity + membership), `parentSchemaId` dies, arrangement axis dies (`interleaveOrder` → Group display setting), ratified leaf kills (STANDALONE_URL/LOAD, REP_DEFINITION + `compoundRep`, cyclical+sandwich → compound, footnote markers, reps/load slim incl. `byProfile`), seed re-expression (4 parallels + block-010 + EMOM slots-as-rows), guards re-derived. Marker cut rides here if D-MARKER-DEATH = yes. Aggressive, bridge-free, `db:reset` world.
 
-## W3 — editor remap
+## W3 — editor remap (prompt issued 2026-06-12 — `w3-runner-prompt.md`)
 
-The editor reads/writes Groups natively; DnD-grouping, one-click ungroup, member add/remove get real persistence; the draft↔contract mapper layer collapses.
+The editor catches up to the Group model with the owner's hi-fi prototype (`plan-editor-hi-fi-v-2`) as the UX law: the LIVE idempotency-key 400 on the unchecked batch dies (colon vs key charset); the group card restyles to the proto (solid tinted frame, GROUP overline, accent rail, track-no badges, segmented interleave); the gesture set (Add group / Add track / Ungroup / Delete-with-tracks, label/interleave round-trip) wires onto the EXISTING W2 API — zero new endpoints, platform-only wave; the recursive authoring draft layer collapses (W2-DRAFT-RECURSION); QA-004 kind-switch confirm + W2-STALE-\* hygiene ride along. Cross-boundary DnD-grouping explicitly OUT (proto uses buttons; the standing cross-scope-drag deferral holds — revisit on real coach need).
 
 ## W4 — row grammar + leaf residuals
 
