@@ -183,6 +183,15 @@ describe("SchemaGroupBox proto frame", () => {
     expect(screen.getByText("GROUP")).toBeInTheDocument();
   });
 
+  it("puts the drag listeners on a dedicated handle, never on the head container", () => {
+    renderBox();
+
+    const handle = screen.getByRole("button", { name: "Drag group" });
+
+    expect(handle).toHaveAttribute("aria-roledescription");
+    expect(screen.getByText("GROUP").parentElement).not.toHaveAttribute("aria-roledescription");
+  });
+
   it("renders one GroupTrackWrapper per member in order with continuation flags", () => {
     renderBox({
       members: [
