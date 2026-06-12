@@ -31,6 +31,7 @@ type SchemaCardProps = {
   blockCtx: BlockCtx;
   parentIsReorderPending?: boolean;
   isBoxed?: boolean;
+  isDraggable?: boolean;
 };
 
 export const SchemaCard: React.FC<SchemaCardProps> = ({
@@ -40,6 +41,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   blockCtx,
   parentIsReorderPending = false,
   isBoxed = false,
+  isDraggable = true,
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
@@ -49,7 +51,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: schema.schema.id,
-    disabled: isMutationPending,
+    disabled: !isDraggable || isMutationPending,
   });
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
@@ -107,6 +109,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onDeleteOpen={handleDeleteOpen}
         onEditOpen={handleEditOpen}
         isBoxed={isBoxed}
+        isDraggable={isDraggable}
       />
 
       <SchemaRowList
