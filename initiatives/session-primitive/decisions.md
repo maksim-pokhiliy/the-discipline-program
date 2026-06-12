@@ -51,7 +51,9 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | DR-W3-10 HYGIENE    | Stale fixtures + vestigial contracts exports + caption + seed const rename        | RATIFIED   |
 | DR-W3-FORK-2 EXPORT | `IDEMPOTENCY_KEY_REGEX` barrel-exported from `@repo/api-routes` (additive 1-line) | RATIFIED   |
 | DR-W3-FORK-3 SEED   | Seed const renamed `…FOOTNOTES…`→`…PER_ROUND_MARKERS…` (owner-delegated)          | RATIFIED   |
-| DR-W3-REENTRY       | Synchronous re-entry guard on all new gesture surfaces (QA-104 double-fire)       | RATIFIED   |
+| DR-W3-REENTRY       | Re-entry guard — narrowed to modal-less buttons by DR-W3-12                       | RATIFIED   |
+| DR-W3-11 PTR-COLL   | Mixed-height lists use pointer-first collision (`pointerWithin` → corners)        | RATIFIED   |
+| DR-W3-12 MODAL-PAT  | Group confirmations follow the house modal pending pattern; refs removed          | RATIFIED   |
 
 ---
 
@@ -327,3 +329,16 @@ W3 makes the EDITOR catch up to the W2 model. Nothing in the data model, the API
 - **Status:** RATIFIED (2026-06-12, W3 build — post-QA fix; QA-104 + siblings QA-102/103/105).
 - **Decision.** A synchronous re-entry guard (an `isRunningRef`/`isFiredRef` mirroring the existing `isSubmittingRef` pattern) is added to ALL new gesture surfaces: delete-group (`useDeleteGroupWithMembers`), add-track (`add-track-button`), add-group (`add-group-button`), and the box-level ungroup/delete confirms (`schema-group-box`). Pinned by double-fire tests on each.
 - **Rationale.** A post-QA CRITICAL (QA-104): a double-click on "Delete group" double-fired the sequential delete → a contradictory toast (the second run sees the already-deleted members). The async `isPending` flag flips a render too late to block a synchronous second click; a ref guard blocks re-entry within the same tick. Siblings QA-102/103/105 are the same class on the other new gestures — fixed uniformly. (Pattern reuse: the codebase's existing `isSubmittingRef` already solved this for the modal submit.)
+- **Narrowed at the owner walkthrough (2026-06-12, DR-W3-12):** the component-level refs on the two MODAL confirms (ungroup / delete-group) were removed — the modal pending pattern guards those; the refs remain ONLY on the modal-less buttons (add-track, add-group) and inside `useDeleteGroupWithMembers` (batch idempotency).
+
+### DR-W3-11 PTR-COLL — mixed-height sortable lists use pointer-first collision
+
+- **Status:** RATIFIED (2026-06-12, owner-walkthrough fix round 2).
+- **Decision.** The block-items list (`block-card-body` DndContext) uses `pointerFirstCollision` (`lib/pointer-first-collision.ts`): `pointerWithin` first, `closestCorners` fallback for the gaps. Any FUTURE list mixing item heights (a small schema next to a tall group) uses the same composite. Uniform-height lists (sessions / blocks / rows / schemas-only) keep their simple metric (`block-list` moved to `closestCorners` en route — harmless, kept).
+- **Rationale.** The owner's walkthrough found group↔schema reorder "flapping": drops snapped back, targets only registered at deep accidental overlap, different-sized items behaved differently — while every UNIFORM list worked. Root cause: `closestCenter`/`closestCorners` measure rect geometry, and on heterogeneous heights the `over` candidate flaps as a small dragged rect crosses a huge target. `pointerWithin` makes the target THE element under the cursor — deterministic, size-independent, and it matches the hand's mental model ("куда указываю — туда и встанет"). jsdom cannot catch this class (no real pointer geometry); the browser walkthrough is the gate for the DnD layer.
+
+### DR-W3-12 MODAL-PAT — group confirmations follow the house modal pending pattern
+
+- **Status:** RATIFIED (2026-06-12, owner-walkthrough fix round 2 — owner: "придуман мини-велосипед вместо существующего паттерна").
+- **Decision.** The ungroup and delete-group `ConfirmationModal`s behave exactly like every other confirm in the app (the schema-delete canon): the dialog STAYS OPEN until the operation settles (`onSuccess` close for the react-query mutate; await-then-close for the batch hook), `isConfirming` drives the disabled Processing… button + blocked backdrop/Escape. The early `setOpen(false)` + component-level re-entry refs are REMOVED on these two surfaces (see DR-W3-REENTRY narrowing).
+- **Rationale.** Consistency is the feature: a coach learns ONE confirm behavior. The early-close + ref combo duplicated, worse, what `isConfirming` already provides — and visibly diverged (the dialog vanished while work was still running). Double-fire protection on modal confirms now comes from the same place as everywhere else (disabled button while pending); the batch hook keeps its internal idempotency for the sequential delete.
