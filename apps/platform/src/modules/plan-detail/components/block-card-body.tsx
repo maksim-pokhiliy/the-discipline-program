@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  closestCenter,
   DndContext,
   KeyboardSensor,
   PointerSensor,
@@ -26,6 +25,7 @@ import { useReorderSchemas } from "@app/lib/hooks";
 
 import { blockItemSortableId } from "../lib/block-item-sortable-id";
 import { type BlockCtx } from "../lib/build-cascade-chips";
+import { pointerFirstCollision } from "../lib/pointer-first-collision";
 
 import { AddGroupButton } from "./add-group-button";
 import { AddSchemaButton } from "./add-schema-button";
@@ -98,7 +98,11 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerFirstCollision}
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext
         items={sortedItems.map(blockItemSortableId)}
         strategy={verticalListSortingStrategy}
