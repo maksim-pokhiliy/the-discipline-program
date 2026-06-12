@@ -12,6 +12,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteGroup, useUpdateGroup } from "@app/lib/hooks";
 
+import { groupSortableId } from "../lib/block-item-sortable-id";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { useDeleteGroupWithMembers } from "../lib/use-delete-group-with-members";
 
@@ -66,7 +67,7 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   const isDeletingRef = useRef(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: `group:${group.id}`,
+    id: groupSortableId(group.id),
     disabled: parentIsReorderPending,
   });
 

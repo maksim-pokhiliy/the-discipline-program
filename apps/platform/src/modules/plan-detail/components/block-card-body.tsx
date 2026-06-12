@@ -24,6 +24,7 @@ import { buildBlockItems, type BlockItem } from "@repo/contracts/lms/schema-grou
 
 import { useReorderSchemas } from "@app/lib/hooks";
 
+import { blockItemSortableId } from "../lib/block-item-sortable-id";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 
 import { AddGroupButton } from "./add-group-button";
@@ -37,9 +38,6 @@ type BlockCardBodyProps = {
   startDate: string;
   parentIsReorderPending?: boolean;
 };
-
-const itemSortableId = (item: BlockItem): string =>
-  item.kind === "group" ? `group:${item.group.id}` : `schema:${item.schema.schema.id}`;
 
 const itemMemberIds = (item: BlockItem): string[] =>
   item.kind === "group" ? item.members.map((member) => member.schema.id) : [item.schema.schema.id];
@@ -81,8 +79,8 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
       return;
     }
 
-    const oldIndex = sortedItems.findIndex((item) => itemSortableId(item) === active.id);
-    const newIndex = sortedItems.findIndex((item) => itemSortableId(item) === over.id);
+    const oldIndex = sortedItems.findIndex((item) => blockItemSortableId(item) === active.id);
+    const newIndex = sortedItems.findIndex((item) => blockItemSortableId(item) === over.id);
 
     if (oldIndex < 0 || newIndex < 0) {
       return;
@@ -102,14 +100,14 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext
-        items={sortedItems.map(itemSortableId)}
+        items={sortedItems.map(blockItemSortableId)}
         strategy={verticalListSortingStrategy}
       >
         <Stack direction="column" spacing={1.25} sx={(theme) => ({ p: theme.spacing(1.5) })}>
           {sortedItems.map((item) =>
             item.kind === "group" ? (
               <SchemaGroupBox
-                key={itemSortableId(item)}
+                key={blockItemSortableId(item)}
                 group={item.group}
                 members={item.members}
                 planId={planId}
@@ -119,7 +117,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
               />
             ) : (
               <SchemaCard
-                key={itemSortableId(item)}
+                key={blockItemSortableId(item)}
                 schema={item.schema}
                 planId={planId}
                 startDate={startDate}

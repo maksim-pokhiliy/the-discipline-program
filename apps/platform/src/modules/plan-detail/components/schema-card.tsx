@@ -11,6 +11,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
+import { schemaSortableId } from "../lib/block-item-sortable-id";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
@@ -50,7 +51,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     updateSchema.isPending || deleteSchema.isPending || parentIsReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: schema.schema.id,
+    id: schemaSortableId(schema.schema.id),
     disabled: !isDraggable || isMutationPending,
   });
 
