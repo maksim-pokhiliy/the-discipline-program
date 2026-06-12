@@ -12,7 +12,7 @@ const CARD_PADDING_Y = 1.25;
 const CARD_PADDING_X = 1.5;
 const ROW_SPACING = 1;
 const PREFIX_LABEL = "Derived label";
-const LABEL_CAPTION = "computed (arrangement-first)";
+const LABEL_CAPTION = "computed (repetition-derived)";
 const FLAT_HINT = "flat — plain container";
 const PART_SEPARATOR = "·";
 
