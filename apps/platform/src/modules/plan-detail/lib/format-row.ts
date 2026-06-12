@@ -40,7 +40,8 @@ export const formatRow = (
   exerciseById: ExerciseById,
   index: number,
 ): FormatRowResult => {
-  const base = buildByKind(row, exerciseById, index);
+  const byKind = buildByKind(row, exerciseById, index);
+  const base = row.media === null ? byKind : { ...byKind, demoUrl: row.media.url };
 
   if (row.notes === null || row.notes.length === 0) {
     return base;
