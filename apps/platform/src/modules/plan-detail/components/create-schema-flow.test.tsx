@@ -5,11 +5,9 @@ import { describe, expect, it } from "vitest";
 
 import { render } from "@app/test/render";
 
-import { collectTrackChildren } from "../lib/arrangement-tree";
 import { asNodeId } from "../lib/axis-draft-id";
-import { isParallelDraft } from "../lib/parallel-ladder-draft";
 
-import type { ComposeContainer } from "./axes/axis-draft.types";
+import type { DraftSeed } from "./axes/axis-draft.types";
 import { CreateSchemaFlow } from "./create-schema-flow";
 
 const REPETITION_GROUP = "repetition";
@@ -19,28 +17,27 @@ const STEPS_PER_DEFAULT_LADDER = 3;
 
 const NON_LADDER_TILE_LABELS = ["Once", "Count", "Time cap", "EMOM", "Interval"];
 
-const draftRef: { current: ComposeContainer | undefined } = { current: undefined };
+const draftRef: { current: DraftSeed | undefined } = { current: undefined };
 const linkRef: { current: boolean } = { current: true };
 
-const freshDraft = (): ComposeContainer => ({
-  nodeType: "container",
-  id: asNodeId("draft-fresh"),
-  header: null,
-  notes: null,
-  children: [],
+const freshDraft = (): DraftSeed => ({
+  mode: "schema",
+  schema: { id: asNodeId("draft-fresh"), header: null, notes: null, rows: [] },
 });
 
-const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): ComposeContainer => ({
-  nodeType: "container",
-  id: asNodeId("draft-flat"),
-  header: null,
-  notes: null,
-  repetition: { kind: "ladder", steps },
-  children: [],
+const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): DraftSeed => ({
+  mode: "schema",
+  schema: {
+    id: asNodeId("draft-flat"),
+    header: null,
+    notes: null,
+    repetition: { kind: "ladder", steps },
+    rows: [],
+  },
 });
 
-const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
-  const [draft, setDraft] = useState<ComposeContainer>(seed);
+const StatefulFlow: React.FC<{ seed: DraftSeed }> = ({ seed }) => {
+  const [draft, setDraft] = useState<DraftSeed>(seed);
   const [linkIntoBox, setLinkIntoBox] = useState(true);
 
   draftRef.current = draft;
@@ -62,7 +59,7 @@ const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
   );
 };
 
-const renderFlow = (seed: ComposeContainer): RenderResult => {
+const renderFlow = (seed: DraftSeed): RenderResult => {
   draftRef.current = seed;
   linkRef.current = true;
 
@@ -117,7 +114,7 @@ const trackCaptions = (): string[] =>
 const removeTrackButtons = (): HTMLElement[] =>
   screen.queryAllByRole("button", { name: /^Remove ladder \d+$/ });
 
-const currentDraft = (): ComposeContainer => {
+const currentSeed = (): DraftSeed => {
   const draft = draftRef.current;
 
   if (draft === undefined) {
@@ -127,10 +124,10 @@ const currentDraft = (): ComposeContainer => {
   return draft;
 };
 
-const trackSteps = (container: ComposeContainer): number[][] =>
-  collectTrackChildren(container).map((track) =>
-    track.repetition?.kind === "ladder" ? track.repetition.steps : [],
-  );
+const isParallelSeed = (seed: DraftSeed): boolean => seed.mode === "group";
+
+const trackSteps = (seed: DraftSeed): number[][] =>
+  seed.mode === "group" ? seed.group.tracks.map((track) => track.steps) : [];
 
 const expectSingleGridAndPress = (): void => {
   expect(repetitionGroups()).toHaveLength(1);
@@ -172,7 +169,7 @@ describe("CreateSchemaFlow track-2 editing after materialize (Must-Test #3)", ()
     clickAnotherLadder();
     editStepCell(STEPS_PER_DEFAULT_LADDER, "12");
 
-    expect(trackSteps(currentDraft())[1]).toEqual([12, 12, 9]);
+    expect(trackSteps(currentSeed())[1]).toEqual([12, 12, 9]);
   });
 });
 
@@ -207,7 +204,7 @@ describe("CreateSchemaFlow remove-track collapses 2 to 1 (Must-Test #5)", () => 
     expect(trackCaptions()).toEqual([]);
     expect(removeTrackButtons()).toEqual([]);
     expect(stepperCount()).toBe(STEPS_PER_DEFAULT_LADDER);
-    expect(isParallelDraft(currentDraft())).toBe(false);
+    expect(isParallelSeed(currentSeed())).toBe(false);
   });
 });
 
@@ -225,32 +222,36 @@ describe("CreateSchemaFlow append grows to three tracks (Must-Test #6)", () => {
 });
 
 describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #10)", () => {
-  it("collapses to a single count container with no stray repetition alongside children", () => {
+  it("collapses to a single count schema with no stray tracks", () => {
     renderFlow(flatLadderDraft());
 
     clickAnotherLadder();
     clickTile("Count");
 
-    const collapsed = currentDraft();
+    const collapsed = currentSeed();
 
-    expect(isParallelDraft(collapsed)).toBe(false);
-    expect(collapsed.children).toEqual([]);
-    expect(collapsed.repetition).toEqual({ kind: "count", count: 3 });
+    expect(isParallelSeed(collapsed)).toBe(false);
+
+    if (collapsed.mode === "schema") {
+      expect(collapsed.schema.rows).toEqual([]);
+      expect(collapsed.schema.repetition).toEqual({ kind: "count", count: 3 });
+    }
   });
 
-  it("never produces a parent carrying both repetition.ladder and container children", () => {
+  it("never produces a draft carrying both a ladder repetition and tracks", () => {
     renderFlow(flatLadderDraft());
 
     clickAnotherLadder();
     clickTile("Count");
     clickTile("Ladder");
 
-    const reladdered = currentDraft();
+    const reladdered = currentSeed();
 
-    const carriesBoth =
-      reladdered.repetition?.kind === "ladder" && collectTrackChildren(reladdered).length > 0;
+    expect(reladdered.mode).toBe("schema");
 
-    expect(carriesBoth).toBe(false);
+    if (reladdered.mode === "schema") {
+      expect(reladdered.schema.repetition).toEqual({ kind: "ladder", steps: [21, 15, 9] });
+    }
   });
 
   it("treats re-selecting Ladder while parallel as a no-op (QA-003 unreachable)", () => {
@@ -259,10 +260,10 @@ describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #1
     clickAnotherLadder();
     clickTile("Ladder");
 
-    const stillParallel = currentDraft();
+    const stillParallel = currentSeed();
 
-    expect(isParallelDraft(stillParallel)).toBe(true);
-    expect(stillParallel.repetition).toBeUndefined();
+    expect(isParallelSeed(stillParallel)).toBe(true);
+    expect(stillParallel).not.toHaveProperty("schema");
   });
 });
 

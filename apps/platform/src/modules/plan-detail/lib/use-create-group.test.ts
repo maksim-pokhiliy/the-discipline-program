@@ -13,7 +13,7 @@ import type {
 
 import { platformKeys } from "@app/lib/api/keys";
 
-import type { ComposeContainer, ComposeNode } from "../components/axes/axis-draft.types";
+import type { GroupDraft, TrackDraft } from "../components/axes/axis-draft.types";
 
 import { asNodeId } from "./axis-draft-id";
 
@@ -74,21 +74,16 @@ const groupResponse = (): CreateGroupResponse => ({
   members: [memberStub(MEMBER_ID)],
 });
 
-const ladderTrack = (id: string, steps: number[]): ComposeContainer => ({
-  nodeType: "container",
+const ladderTrack = (id: string, steps: number[]): TrackDraft => ({
   id: asNodeId(id),
   header: null,
-  notes: null,
-  repetition: { kind: "ladder", steps },
-  children: [],
+  steps,
 });
 
-const parentDraft = (children: ComposeNode[], header: string | null = null): ComposeContainer => ({
-  nodeType: "container",
+const parentDraft = (tracks: TrackDraft[], header: string | null = null): GroupDraft => ({
   id: asNodeId("parent-draft-1"),
   header,
-  notes: null,
-  children,
+  tracks,
 });
 
 const renderSubmitter = () => {

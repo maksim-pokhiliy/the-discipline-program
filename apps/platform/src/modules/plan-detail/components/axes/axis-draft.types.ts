@@ -23,16 +23,6 @@ export type RepetitionAxis =
 
 export type RestAxis = RestSpec;
 
-export type ComposeContainer = {
-  nodeType: "container";
-  id: NodeId;
-  header: string | null;
-  notes: string | null;
-  repetition?: RepetitionAxis;
-  rest?: RestAxis;
-  children: ComposeNode[];
-};
-
 export type ComposeRow = {
   nodeType: "row";
   id: NodeId;
@@ -48,4 +38,27 @@ export type ComposeRow = {
   editorDraft: unknown;
 };
 
-export type ComposeNode = ComposeContainer | ComposeRow;
+export type SchemaDraft = {
+  id: NodeId;
+  header: string | null;
+  notes: string | null;
+  repetition?: RepetitionAxis;
+  rest?: RestAxis;
+  rows: ComposeRow[];
+};
+
+export type TrackDraft = {
+  id: NodeId;
+  header: string | null;
+  steps: number[];
+};
+
+export type GroupDraft = {
+  id: NodeId;
+  header: string | null;
+  tracks: TrackDraft[];
+};
+
+export type DraftSeed =
+  | { mode: "schema"; schema: SchemaDraft }
+  | { mode: "group"; group: GroupDraft };

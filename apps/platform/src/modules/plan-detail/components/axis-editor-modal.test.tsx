@@ -6,7 +6,6 @@ import { SCHEMA_CONSTANTS, type SchemaWithBody } from "@repo/contracts/lms/schem
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
-import { collectTrackChildren } from "../lib/arrangement-tree";
 import type { UseCreateGroupResult } from "../lib/use-create-group";
 import type { UseCreateIndependentLaddersResult } from "../lib/use-create-independent-ladders";
 
@@ -452,7 +451,7 @@ describe("AxisEditorModal group-into-box submit routing (MT-18, DR-W1-2)", () =>
     submit();
 
     expect(groupRun).toHaveBeenCalledTimes(1);
-    expect(collectTrackChildren(capturedGroupArgs().draft)).toHaveLength(2);
+    expect(capturedGroupArgs().draft.tracks).toHaveLength(2);
     expect(createSchemaMutate).not.toHaveBeenCalled();
     expect(independentRun).not.toHaveBeenCalled();
   });
@@ -464,9 +463,9 @@ describe("AxisEditorModal group-into-box submit routing (MT-18, DR-W1-2)", () =>
     editStepCell(3, "12");
     submit();
 
-    const [, secondTrack] = collectTrackChildren(capturedGroupArgs().draft);
+    const [, secondTrack] = capturedGroupArgs().draft.tracks;
 
-    expect(secondTrack?.repetition).toEqual({ kind: "ladder", steps: [12, 12, 9] });
+    expect(secondTrack?.steps).toEqual([12, 12, 9]);
   });
 
   it("routes a parallel draft to the independent create when Group-into-box is unchecked", () => {
@@ -481,7 +480,7 @@ describe("AxisEditorModal group-into-box submit routing (MT-18, DR-W1-2)", () =>
 
     expect(independentRun).toHaveBeenCalledTimes(1);
     expect(groupRun).not.toHaveBeenCalled();
-    expect(collectTrackChildren(capturedIndependentArgs().draft)).toHaveLength(2);
+    expect(capturedIndependentArgs().draft.tracks).toHaveLength(2);
   });
 
   it("submits a single ladder through the flat create and never calls the group create", () => {

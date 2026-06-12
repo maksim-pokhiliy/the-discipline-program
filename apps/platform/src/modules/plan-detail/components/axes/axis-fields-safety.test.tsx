@@ -7,31 +7,22 @@ import { render } from "@app/test/render";
 
 import { asNodeId } from "../../lib/axis-draft-id";
 
-import type { ComposeContainer, ComposeNode, NodeId, RepetitionAxis } from "./axis-draft.types";
+import type { NodeId, RepetitionAxis, SchemaDraft } from "./axis-draft.types";
 import { ContainerInspector } from "./container-inspector";
 
-const baseContainer = (repetition?: RepetitionAxis): ComposeContainer => ({
-  nodeType: "container",
+const baseContainer = (repetition?: RepetitionAxis): SchemaDraft => ({
   id: asNodeId("axis-container"),
   header: "Axis probe",
   notes: null,
   ...(repetition !== undefined && { repetition }),
-  children: [],
+  rows: [],
 });
 
-const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElement => {
-  const [container, setContainer] = useState<ComposeContainer>(initial);
+const InspectorHarness = ({ initial }: { initial: SchemaDraft }): ReactElement => {
+  const [container, setContainer] = useState<SchemaDraft>(initial);
 
-  const handleUpdateNode = (id: NodeId, patch: (node: ComposeNode) => ComposeNode): void => {
-    setContainer((current) => {
-      if (current.id !== id) {
-        return current;
-      }
-
-      const next = patch(current);
-
-      return next.nodeType === "container" ? next : current;
-    });
+  const handleUpdateNode = (id: NodeId, patch: (schema: SchemaDraft) => SchemaDraft): void => {
+    setContainer((current) => (current.id === id ? patch(current) : current));
   };
 
   return (

@@ -4,10 +4,10 @@ import type { Composition } from "@repo/contracts/lms/composition";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import type { ComposeNode } from "../components/axes/axis-draft.types";
+import type { ComposeRow } from "../components/axes/axis-draft.types";
 
 import { composeContainerToComposition } from "./compose-container-to-composition";
-import { schemaWithBodyToDraftContainer } from "./schema-to-draft-container";
+import { schemaWithBodyToDraft } from "./schema-to-draft";
 
 const EPOCH = new Date(0);
 const TOP_ID = "cktop1234567890abcdef01234";
@@ -54,45 +54,42 @@ const schema = (
   rows,
 });
 
-const onlyRowIds = (children: ComposeNode[]): string[] =>
-  children.filter((child) => child.nodeType === "row").map((child) => child.id);
+const rowIds = (rows: ComposeRow[]): string[] => rows.map((row) => row.id);
 
-describe("schemaWithBodyToDraftContainer rebuilds the draft container", () => {
-  it("rebuilds the container axes from the stored composition", () => {
+describe("schemaWithBodyToDraft rebuilds the draft schema", () => {
+  it("rebuilds the schema axes from the stored composition", () => {
     const composition: Composition = {
       repetition: { kind: "count", count: 5 },
       rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
     };
 
-    const container = schemaWithBodyToDraftContainer(schema(TOP_ID, composition, []));
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, composition, []));
 
-    expect(container.id).toBe(TOP_ID);
-    expect(container.repetition).toEqual({ kind: "count", count: 5 });
-    expect(container.rest).toEqual({
+    expect(draft.id).toBe(TOP_ID);
+    expect(draft.repetition).toEqual({ kind: "count", count: 5 });
+    expect(draft.rest).toEqual({
       duration: { value: 90, unit: "sec" },
       scope: "between_sets",
     });
   });
 
-  it("rebuilds direct rows as row children carrying the persisted id", () => {
-    const container = schemaWithBodyToDraftContainer(
-      schema(TOP_ID, null, [restSlotRow(ROW_ID, TOP_ID)]),
-    );
+  it("rebuilds direct rows carrying the persisted id", () => {
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, null, [restSlotRow(ROW_ID, TOP_ID)]));
 
-    expect(onlyRowIds(container.children)).toEqual([ROW_ID]);
+    expect(rowIds(draft.rows)).toEqual([ROW_ID]);
   });
 
-  it("leaves the container axis-free when the stored composition is null", () => {
-    const container = schemaWithBodyToDraftContainer(schema(TOP_ID, null, []));
+  it("leaves the schema axis-free when the stored composition is null", () => {
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, null, []));
 
-    expect(container.repetition).toBeUndefined();
-    expect(container.rest).toBeUndefined();
+    expect(draft.repetition).toBeUndefined();
+    expect(draft.rest).toBeUndefined();
   });
 });
 
-describe("schemaWithBodyToDraftContainer round-trips stored compositions through emission", () => {
+describe("schemaWithBodyToDraft round-trips stored compositions through emission", () => {
   it("re-emits an empty composition as exactly {}", () => {
-    const draft = schemaWithBodyToDraftContainer(schema(TOP_ID, {}, []));
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, {}, []));
 
     expect(composeContainerToComposition(draft)).toEqual({});
   });
@@ -103,7 +100,7 @@ describe("schemaWithBodyToDraftContainer round-trips stored compositions through
       rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
     };
 
-    const draft = schemaWithBodyToDraftContainer(schema(TOP_ID, stored, []));
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, stored, []));
 
     expect(composeContainerToComposition(draft)).toEqual(stored);
   });

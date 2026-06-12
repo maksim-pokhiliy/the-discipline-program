@@ -10,7 +10,7 @@ import { InlineEditText } from "@repo/ui";
 import { shouldBeContainer } from "../../lib/should-be-container";
 import { RestSpecFields, restSpecFormSchema, type RestSpecFormValue } from "../rest-spec-fields";
 
-import type { ComposeContainer, ComposeNode, NodeId, RepetitionAxis } from "./axis-draft.types";
+import type { NodeId, RepetitionAxis, SchemaDraft } from "./axis-draft.types";
 import { AxisFieldSection } from "./axis-field-section";
 import { RepetitionAxisField } from "./repetition-axis-field";
 
@@ -61,18 +61,13 @@ const restErrorsFromParse = (rest: RestSpec): FieldErrors<RestSpecFormValue> | u
 };
 
 type ContainerInspectorProps = {
-  container: ComposeContainer;
+  container: SchemaDraft;
   isCreateMode: boolean;
   headerEditable?: boolean;
-  onUpdateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
+  onUpdateNode: (id: NodeId, patch: (schema: SchemaDraft) => SchemaDraft) => void;
   onRename: (id: NodeId, header: string) => void;
   onDemoteNode?: ((id: NodeId) => void) | undefined;
 };
-
-const asContainerPatch =
-  (patch: (container: ComposeContainer) => ComposeContainer) =>
-  (node: ComposeNode): ComposeNode =>
-    node.nodeType === "container" ? patch(node) : node;
 
 export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
   container,
@@ -83,22 +78,14 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
   onDemoteNode,
 }) => {
   const setRepetition = (repetition: RepetitionAxis): void =>
-    onUpdateNode(
-      container.id,
-      asContainerPatch((node) => ({ ...node, repetition })),
-    );
+    onUpdateNode(container.id, (schema) => ({ ...schema, repetition }));
 
   const setRest = (rest: RestSpec): void =>
-    onUpdateNode(
-      container.id,
-      asContainerPatch((node) => ({ ...node, rest })),
-    );
+    onUpdateNode(container.id, (schema) => ({ ...schema, rest }));
 
-  const showsDemoteHint =
-    isCreateMode && !shouldBeContainer(container) && container.children.length === 1;
-  const isSingleRowChild =
-    container.children.length === 1 && container.children[0]?.nodeType === "row";
-  const showsDemote = isCreateMode && !shouldBeContainer(container) && isSingleRowChild;
+  const hasSingleRow = container.rows.length === 1;
+  const showsDemoteHint = isCreateMode && !shouldBeContainer(container) && hasSingleRow;
+  const showsDemote = showsDemoteHint;
 
   return (
     <Stack direction="column" spacing={PANEL_SPACING}>

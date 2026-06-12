@@ -9,7 +9,7 @@ import type { CreateSchemaRequest, Schema } from "@repo/contracts/lms/schema";
 
 import { platformKeys } from "@app/lib/api/keys";
 
-import type { ComposeContainer, ComposeNode } from "../components/axes/axis-draft.types";
+import type { GroupDraft, TrackDraft } from "../components/axes/axis-draft.types";
 
 import { asNodeId } from "./axis-draft-id";
 
@@ -58,21 +58,16 @@ const schemaStub = (id: string): Schema => ({
   updatedAt: NOW,
 });
 
-const ladderTrack = (id: string, steps: number[]): ComposeContainer => ({
-  nodeType: "container",
+const ladderTrack = (id: string, steps: number[]): TrackDraft => ({
   id: asNodeId(id),
   header: null,
-  notes: null,
-  repetition: { kind: "ladder", steps },
-  children: [],
+  steps,
 });
 
-const parentDraft = (children: ComposeNode[]): ComposeContainer => ({
-  nodeType: "container",
+const parentDraft = (tracks: TrackDraft[]): GroupDraft => ({
   id: asNodeId(DRAFT_ID),
   header: null,
-  notes: null,
-  children,
+  tracks,
 });
 
 const ladderComposition = (steps: number[]): CreateSchemaRequest["composition"] => ({
@@ -341,7 +336,7 @@ describe("useCreateIndependentLadders idempotency key format", () => {
     vi.restoreAllMocks();
   });
 
-  const runWithTracks = async (tracks: ComposeNode[]): Promise<(string | undefined)[]> => {
+  const runWithTracks = async (tracks: TrackDraft[]): Promise<(string | undefined)[]> => {
     createMock.mockResolvedValue(schemaStub("created"));
 
     const { view } = renderRunner();
