@@ -386,3 +386,62 @@ describe("useCreateIndependentLadders idempotency key format", () => {
     expectAllKeysMatchServerRegex(keys);
   });
 });
+
+describe("useCreateIndependentLadders remount mints fresh keys (W2-IDEM-REMOUNT, DR-W2-4)", () => {
+  const FIRST_MOUNT_DRAFT_ID = "draft-mount-a";
+  const SECOND_MOUNT_DRAFT_ID = "draft-mount-b";
+
+  const draftWithId = (id: string, tracks: TrackDraft[]): GroupDraft => ({
+    id: asNodeId(id),
+    header: null,
+    tracks,
+  });
+
+  beforeEach(() => {
+    createMock.mockReset();
+    toastSuccessMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const runOnFreshMount = async (draft: GroupDraft): Promise<(string | undefined)[]> => {
+    createMock.mockResolvedValue(schemaStub("created"));
+
+    const { view } = renderRunner();
+
+    await act(async () => {
+      await view.result.current.run(
+        { blockId: BLOCK_ID, draft },
+        { onSuccess: vi.fn(), onError: vi.fn() },
+      );
+    });
+
+    const keys = createMock.mock.calls.map((call) => call[2]);
+
+    view.unmount();
+
+    return keys;
+  };
+
+  it("derives a DIFFERENT base key after a close+reopen so keys never survive a remount", async () => {
+    const tracks = (): TrackDraft[] => [
+      ladderTrack("t1", FIRST_LADDER_STEPS),
+      ladderTrack("t2", SECOND_LADDER_STEPS),
+    ];
+
+    const firstMountKeys = await runOnFreshMount(draftWithId(FIRST_MOUNT_DRAFT_ID, tracks()));
+
+    createMock.mockReset();
+
+    const secondMountKeys = await runOnFreshMount(draftWithId(SECOND_MOUNT_DRAFT_ID, tracks()));
+
+    expect(firstMountKeys).toEqual([`${FIRST_MOUNT_DRAFT_ID}-0`, `${FIRST_MOUNT_DRAFT_ID}-1`]);
+    expect(secondMountKeys).toEqual([`${SECOND_MOUNT_DRAFT_ID}-0`, `${SECOND_MOUNT_DRAFT_ID}-1`]);
+
+    for (const key of secondMountKeys) {
+      expect(firstMountKeys).not.toContain(key);
+    }
+  });
+});
