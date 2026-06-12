@@ -20,6 +20,8 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave        | RATIFIED   |
 | D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group    | RATIFIED   |
 | D-PLAQUE            | Plaque = render vocabulary, no stored node; rest single-carrier; notes stack      | RATIFIED   |
+| D-POSITION          | `Position` enum + column die into ROW NOTES; no library                           | RATIFIED   |
+| D-CHIPS             | "Chips as a mechanism" dissolved — notes cover it; chip = MUI render word         | RATIFIED   |
 | DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate           | RATIFIED   |
 | DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates  | RATIFIED   |
 | DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone    | RATIFIED   |
@@ -131,6 +133,19 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Row-group mechanics.** The mirror of the schema Group one floor down, inside the schema card: CONTIGUOUS member rows, **2+ members** (not exactly 2 — owner: "учесть, что OR может связывать 2+ строки"), schema-owned, opaque coach-editable label ("OR"), membership is the only relation, no typed kinds (D-2/D-4 by symmetry). Gestures mirror the schema-group set (group rows / one-click ungroup keeping the rows / inline label edit). Per-set substitution = the same box (slot row + variant rows under one label). Pixel-level UX rides the W4 design stage.
 - **Rationale.** After the grid's own ratified rulings (footnote = ordering, per-set = row-group, TOTAL dead, connectors = order), a stored plaque had ZERO corpus lines left to carry; a free-text plaque row would be the blanket mechanism F-CHIPS already rejected one floor up, at cardinality 0. If a real coach strip ever appears that fits neither a label nor a note, an instruction row kind is an additive re-introduce-fresh (ADR-0038) — cheap to add, expensive to remove (W2/W3 just spent two waves removing such residue).
 - **Consequences.** W4 carries the implementation: `RowKind.REST` + `raw` kill (seed rest lines re-express onto the schema setting; the dual-rest block's second rule → note), notes columns → ordered lists (+ notes on both group entities), the row-group entity + editor, the only-once corpus case re-seeded as its own schema. The schema rest setting becomes the single rest carrier; its strip render lands with the W4 editor work.
+
+### D-POSITION — position dies into row notes; no library
+
+- **Status:** RATIFIED (2026-06-12, owner counter to the orchestrator's library rec — accepted after an honest defense attempt failed).
+- **Decision.** The `Position` Postgres enum, the `SchemaRow.position` column, the platform `position-editor.tsx` + `formatPosition` die. The corpus "how to execute" strings (`from sofa`/`from box/sofa` 27 incl. word-order variants, `neutral grip` 13, `WITHOUT JUMP` 5, `hold farm carry` 2, `hands on DB`, `WITHOUT BENCH`, `kind of wall balls`) become **row notes** — the D-PLAQUE multi-note model carries them for free (the corpus 2–3-modifier rows = several notes). **NO position library** — the founding-session "library à la Label/Exercise" lean is dropped (owner: "а почему это должно быть чем-то бОльшим чем заметка?").
+- **Rationale.** Channel-Ч by the legitimacy lens: nothing machine-reads position (the only consumer is the display-only `formatPosition` text); a library would be storage infrastructure for a hypothetical projection — the exact pattern this initiative kills. Consistent with the owner's per-set ("уникальности ноль") and footnote ("НЕ УНИКАЛЬНАЯ СТРОКА") rulings. **Eyes-open losses, named at ratification:** no autocomplete reuse while typing, no propagating rename — both conveniences, not load-bearing (and history-rewriting renames were argued AGAINST anyway: plans are documents athletes already trained by). If real vocabulary pain surfaces, a library can be layered LATER as pure input-UX over the same note texts (re-introduce-fresh, ADR-0038).
+- **Consequences.** W4 carries: the enum + column + `positionSchema`/`POSITIONS` + editor + formatter kills; seed re-expression of `position` values into row notes.
+
+### D-CHIPS — "chips as a mechanism" formally dissolved
+
+- **Status:** RATIFIED (2026-06-12, owner).
+- **Decision.** There is NO blanket "attach a free-text chip to anything" mechanism. Owner verbatim: "Chip это вообще компонент из МЮИ, сам по себе значит 'цветную штучку'. механизм 'прицепи текстик' это уже notes на уровне схем и строк, поэтому обсуждать 'чипсы' уже смысла нет." Every channel-Ч item has a concrete per-case home: structure (groups/order) · typed settings (rest) · the catalogs (Exercise/Label) · the notes stack (D-PLAQUE) · opaque box labels. "Chip" survives only as a render word (the MUI component).
+- **Rationale.** The founding instinct confirmed: chips-as-mechanism = "костыль который появляется когда кто-то устал дизайнить модель". With D-PLAQUE + D-POSITION every channel-Ч grid row is carried; a generic attach-anything mechanism would re-open the untyped-smear door.
 
 ---
 
