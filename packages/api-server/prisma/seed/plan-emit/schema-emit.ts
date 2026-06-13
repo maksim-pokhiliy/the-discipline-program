@@ -31,7 +31,7 @@ const emitSchemaRow = async (
     data: {
       schemaId,
       order: row.order,
-      exerciseId: ctx.resolver.getExercise(row.exerciseId),
+      exerciseId: row.exerciseId,
       ...(row.sets !== null && { sets: row.sets }),
       ...(row.load !== null && { load: row.load }),
       ...(row.reps !== null && { reps: row.reps }),
