@@ -16,7 +16,6 @@ export const perLimbDistributionSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("explicit_split"),
     side: z.enum(EXPLICIT_SPLIT_SIDES),
-    pairedRowId: z.string().cuid().optional(),
   }),
   z.object({
     kind: z.literal("alternating"),

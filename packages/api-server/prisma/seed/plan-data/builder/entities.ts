@@ -9,6 +9,7 @@ import type {
   CanonicalWeek,
   ExerciseCatalogEntry,
   LabelCatalogEntry,
+  ModifierCatalogEntry,
 } from "../canonical-schema";
 import { type phase7SessionSchema } from "../canonical-schema";
 
@@ -16,6 +17,7 @@ export type Phase7Session = z.infer<typeof phase7SessionSchema>;
 
 export type ExerciseInput = ExerciseCatalogEntry;
 export type LabelInput = LabelCatalogEntry;
+export type ModifierInput = ModifierCatalogEntry;
 export type WeekInput = CanonicalWeek;
 export type DayInput = CanonicalDay;
 export type SessionInput = CanonicalSession;
@@ -52,6 +54,13 @@ export const label = (input: LabelInput): LabelCatalogEntry => {
       'label: applicableLevels must contain at least one level (ref="' + input.ref + '")',
     );
   }
+
+  return input;
+};
+
+export const modifier = (input: ModifierInput): ModifierCatalogEntry => {
+  requireNonEmpty(input.ref, "ref", "modifier");
+  requireNonEmpty(input.name, "name", "modifier");
 
   return input;
 };

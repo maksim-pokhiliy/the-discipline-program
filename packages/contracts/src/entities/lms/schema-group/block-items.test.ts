@@ -23,6 +23,7 @@ function makeSchema(id: string, order: number, groupId: string | null): SchemaWi
       updatedAt: new Date(),
     },
     rows: [],
+    rowGroups: [],
   };
 }
 
@@ -30,7 +31,7 @@ function makeGroup(id: string): SchemaGroup {
   return {
     id: cuid(id),
     blockId: cuid("block"),
-    label: null,
+    notes: null,
     interleaveOrder: "round_by_round",
     createdAt: new Date(),
     updatedAt: new Date(),

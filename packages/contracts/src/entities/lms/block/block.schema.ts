@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { intensitySchema, timeCapSchema } from "../_shared";
+import { notesListSchema } from "../_shared";
 import { labelSchema } from "../label";
 import { schemaWithBodySchema } from "../schema";
 import { schemaGroupSchema } from "../schema-group";
@@ -11,9 +11,7 @@ export const blockSchema = z.object({
   id: z.string().cuid(),
   sessionId: z.string().cuid(),
   order: z.number().int().positive(),
-  intensity: intensitySchema.nullable(),
-  timeCap: timeCapSchema.nullable(),
-  notes: z.string().nullable(),
+  notes: notesListSchema.nullable(),
   labels: z.array(labelSchema),
   schemas: z.array(schemaWithBodySchema),
   groups: z.array(schemaGroupSchema),
@@ -22,9 +20,7 @@ export const blockSchema = z.object({
 });
 
 export const createBlockSchema = z.object({
-  intensity: intensitySchema.nullable().optional(),
-  timeCap: timeCapSchema.nullable().optional(),
-  notes: z.string().max(BLOCK_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
+  notes: notesListSchema.nullable().optional(),
   labelIds: z
     .array(z.string().cuid())
     .max(BLOCK_CONSTANTS.MAX_LABELS_PER_BLOCK)

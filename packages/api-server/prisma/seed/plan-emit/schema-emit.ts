@@ -7,6 +7,7 @@ import {
   type CanonicalBlock,
   type CanonicalGroupItem,
   type CanonicalRow,
+  type CanonicalRowGroup,
   type CanonicalSchemaNode,
   type CanonicalSeed,
   isCanonicalGroupItem,
@@ -25,23 +26,66 @@ const emitSchemaRow = async (
   ctx: SchemaEmitContext,
   schemaId: string,
   row: CanonicalRow,
-): Promise<void> => {
-  await ctx.db.schemaRow.create({
+): Promise<string> => {
+  const created = await ctx.db.schemaRow.create({
     data: {
       schemaId,
       order: row.order,
-      rowKind: row.rowKind,
-      rowPayload: row.rowPayload,
+      exerciseId: ctx.resolver.getExercise(row.exerciseId),
+      ...(row.sets !== null && { sets: row.sets }),
       ...(row.load !== null && { load: row.load }),
       ...(row.reps !== null && { reps: row.reps }),
       ...(row.side !== null && { side: row.side }),
       ...(row.tempo !== null && { tempo: row.tempo }),
-      position: row.position,
-      ...(row.sequence !== null && { sequence: row.sequence }),
-      ...(row.intensity !== null && { intensity: row.intensity }),
       ...(row.media !== null && { media: row.media }),
-      notes: row.notes,
+      ...(row.notes !== null && { notes: row.notes }),
     },
+  });
+
+  const rowId = requireId(created);
+
+  if (row.modifierRefs.length > 0) {
+    await ctx.db.rowModifierAssignment.createMany({
+      data: row.modifierRefs.map((ref, index) => ({
+        rowId,
+        modifierId: ctx.resolver.getModifier(ref),
+        order: index,
+      })),
+    });
+  }
+
+  return rowId;
+};
+
+const emitRowGroup = async (
+  ctx: SchemaEmitContext,
+  schemaId: string,
+  rowIdsByRef: ReadonlyMap<string, string>,
+  rowGroup: CanonicalRowGroup,
+): Promise<void> => {
+  const created = await ctx.db.rowGroup.create({
+    data: {
+      schemaId,
+      ...(rowGroup.notes !== null && { notes: rowGroup.notes }),
+    },
+  });
+
+  const rowGroupId = requireId(created);
+  const memberIds = rowGroup.memberRowRefIds.map((refId) => {
+    const id = rowIdsByRef.get(refId);
+
+    if (id === undefined) {
+      throw new Error(
+        `schema-emit: row-group "${rowGroup.refId}" references unknown row refId "${refId}" — member rows must declare a matching refId within the same schema node`,
+      );
+    }
+
+    return id;
+  });
+
+  await ctx.db.schemaRow.updateMany({
+    where: { id: { in: memberIds } },
+    data: { rowGroupId },
   });
 };
 
@@ -60,14 +104,23 @@ const emitSchemaNode = async (
       header: node.header,
       ...(node.intensity !== null && { intensity: node.intensity }),
       composition: node.composition,
-      notes: node.notes,
+      ...(node.notes !== null && { notes: node.notes }),
     },
   });
 
   const schemaId = requireId(created);
+  const rowIdsByRef = new Map<string, string>();
 
   for (const row of node.rows) {
-    await emitSchemaRow(ctx, schemaId, row);
+    const rowId = await emitSchemaRow(ctx, schemaId, row);
+
+    if (row.refId !== undefined) {
+      rowIdsByRef.set(row.refId, rowId);
+    }
+  }
+
+  for (const rowGroup of node.rowGroups) {
+    await emitRowGroup(ctx, schemaId, rowIdsByRef, rowGroup);
   }
 };
 
@@ -80,7 +133,7 @@ const emitGroup = async (
   const group = await ctx.db.schemaGroup.create({
     data: {
       blockId,
-      label: item.group.label,
+      ...(item.group.notes !== null && { notes: item.group.notes }),
       interleaveOrder: item.group.interleaveOrder ?? DEFAULT_INTERLEAVE_ORDER,
     },
   });

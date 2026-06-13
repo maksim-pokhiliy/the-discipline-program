@@ -47,9 +47,7 @@ const emitOneBlock = async (
     data: {
       sessionId,
       order: block.order,
-      ...(block.intensity !== null && { intensity: block.intensity }),
-      ...(block.timeCap !== null && { timeCap: block.timeCap }),
-      notes: block.notes,
+      ...(block.notes !== null && { notes: block.notes }),
       labelAssignments: { create: [...labelAssignmentData] },
     },
   });

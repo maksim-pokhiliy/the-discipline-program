@@ -11,6 +11,7 @@ const CATALOG_EMIT_BATCH_SIZE = 10;
 type CatalogCounts = {
   exerciseCount: number;
   labelCount: number;
+  modifierCount: number;
 };
 
 const emitInBatches = async <T>(
@@ -67,6 +68,22 @@ const emitLabel = async (
   resolver.setLabel(entry.ref, requireId(row));
 };
 
+const emitModifier = async (
+  db: PrismaClient,
+  entry: CanonicalSeed["catalog"]["modifiers"][number],
+  resolver: RefResolver,
+): Promise<void> => {
+  const row = await db.modifier.create({
+    data: {
+      name: entry.name,
+      nameLower: entry.name.toLowerCase(),
+      ...(entry.notes !== null && { notes: entry.notes }),
+    },
+  });
+
+  resolver.setModifier(entry.ref, requireId(row));
+};
+
 export const seedCanonicalCatalog = async (
   db: PrismaClient,
   catalog: CanonicalSeed["catalog"],
@@ -74,14 +91,16 @@ export const seedCanonicalCatalog = async (
 ): Promise<CatalogCounts> => {
   await emitInBatches(catalog.exercises, (entry) => emitExercise(db, entry, resolver));
   await emitInBatches(catalog.labels, (entry) => emitLabel(db, entry, resolver));
+  await emitInBatches(catalog.modifiers, (entry) => emitModifier(db, entry, resolver));
 
   const counts: CatalogCounts = {
     exerciseCount: catalog.exercises.length,
     labelCount: catalog.labels.length,
+    modifierCount: catalog.modifiers.length,
   };
 
   console.log(
-    `  Canonical catalog: ${counts.exerciseCount} exercises + ${counts.labelCount} labels`,
+    `  Canonical catalog: ${counts.exerciseCount} exercises + ${counts.labelCount} labels + ${counts.modifierCount} modifiers`,
   );
 
   return counts;

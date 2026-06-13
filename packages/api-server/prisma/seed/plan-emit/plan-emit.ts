@@ -1,5 +1,7 @@
 import { type DayOfWeek, type PrismaClient, TrainingPlanStatus } from "@prisma/client";
 
+import type { NotesList } from "@repo/contracts/lms/_shared";
+
 import { daysAgo } from "../_helpers";
 import { requireId } from "../_id-helpers";
 import { type CanonicalSeed, type CanonicalSession } from "../plan-data/canonical-schema";
@@ -55,11 +57,11 @@ type EmitWeekInput = {
   planId: string;
   weekIndex: number;
   startDate: Date;
-  notes: string | null;
+  notes: NotesList | null;
   days: ReadonlyArray<{
     dayOfWeek: DayOfWeek;
     labelId: string | null;
-    notes: string | null;
+    notes: NotesList | null;
     sessions: ReadonlyArray<CanonicalSession>;
   }>;
 };
@@ -83,7 +85,7 @@ const emitSession = async (
       dayId,
       order: session.order,
       labelId,
-      notes: session.notes,
+      ...(session.notes !== null && { notes: session.notes }),
     },
   });
 
@@ -101,7 +103,7 @@ const emitDay = async (
       weekId,
       dayOfWeek: day.dayOfWeek,
       labelId: day.labelId,
-      notes: day.notes,
+      ...(day.notes !== null && { notes: day.notes }),
     },
   });
 
@@ -117,7 +119,7 @@ const emitWeek = async (ctx: EmitContext, input: EmitWeekInput): Promise<void> =
     data: {
       planId: input.planId,
       startDate: input.startDate,
-      notes: input.notes,
+      ...(input.notes !== null && { notes: input.notes }),
     },
   });
 
@@ -191,7 +193,7 @@ const buildPhase7WeekInput = (
     planId,
     weekIndex,
     startDate: weekStartDate(baseMonday, weekOffsetWeeks),
-    notes: "Phase 7 conceptual examples (out-of-sample)",
+    notes: ["Phase 7 conceptual examples (out-of-sample)"],
     days,
   };
 };

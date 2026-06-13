@@ -31,12 +31,11 @@ describe("perLimbDistributionSchema", () => {
     ).toBe(true);
   });
 
-  it("accepts explicit_split with side right and pairedRowId cuid", () => {
+  it("accepts explicit_split with side right", () => {
     expect(
       perLimbDistributionSchema.safeParse({
         kind: "explicit_split",
         side: "right",
-        pairedRowId: CUID,
       }).success,
     ).toBe(true);
   });
@@ -47,14 +46,18 @@ describe("perLimbDistributionSchema", () => {
     ).toBe(false);
   });
 
-  it("rejects explicit_split with invalid pairedRowId", () => {
-    expect(
-      perLimbDistributionSchema.safeParse({
-        kind: "explicit_split",
-        side: "left",
-        pairedRowId: "abc",
-      }).success,
-    ).toBe(false);
+  it("strips the dropped pairedRowId field (sibling-ref killed, DR-W4-PAIRED)", () => {
+    const result = perLimbDistributionSchema.safeParse({
+      kind: "explicit_split",
+      side: "left",
+      pairedRowId: CUID,
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).toEqual({ kind: "explicit_split", side: "left" });
+    }
   });
 
   it("accepts alternating with no extras", () => {

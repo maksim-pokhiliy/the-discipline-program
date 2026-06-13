@@ -16,8 +16,8 @@ import {
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToSchemaGroup, mapToSchemaWithBody } from "../../../mappers/lms";
-import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
-import { type TxClient } from "../_shared";
+import { handlePrismaError, marshalNullableJson, retryOnP2034, toInputJson } from "../../../utils";
+import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
 import { assertGroupMembersContiguous } from "../schema/assertions";
 import { assertPlanWritable } from "../schema/create-steps";
 
@@ -33,7 +33,7 @@ const createGroupWithMembers = async (
   const group = await tx.schemaGroup.create({
     data: {
       blockId: data.blockId,
-      label: data.label ?? null,
+      notes: marshalNullableJson(data.notes),
       ...(data.interleaveOrder !== undefined && { interleaveOrder: data.interleaveOrder }),
     },
   });
@@ -57,7 +57,7 @@ const createGroupWithMembers = async (
           repetition: { kind: "ladder", steps: track.steps },
         } satisfies Composition),
       },
-      include: { rows: { orderBy: { order: "asc" } } },
+      include: SCHEMA_BODY_INCLUDE,
     });
 
     members.push(member);
@@ -114,7 +114,7 @@ export const lmsSchemaGroupApi = {
       const updated = await prisma.schemaGroup.update({
         where: { id: groupId },
         data: {
-          ...(data.label !== undefined && { label: data.label }),
+          ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
           ...(data.interleaveOrder !== undefined && { interleaveOrder: data.interleaveOrder }),
         },
       });

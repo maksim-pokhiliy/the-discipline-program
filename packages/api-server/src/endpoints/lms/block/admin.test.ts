@@ -196,7 +196,7 @@ describe("lmsBlockApi", () => {
       }
     });
 
-    it("creates an empty Block with order 10 and null intensity/timeCap/notes/labels", async () => {
+    it("creates an empty Block with order 10 and null notes/labels", async () => {
       const ctx = await provisionSession();
 
       try {
@@ -204,8 +204,6 @@ describe("lmsBlockApi", () => {
 
         expect(block.sessionId).toBe(ctx.session.id);
         expect(block.order).toBe(10);
-        expect(block.intensity).toBeNull();
-        expect(block.timeCap).toBeNull();
         expect(block.notes).toBeNull();
         expect(block.labels).toEqual([]);
       } finally {
@@ -330,10 +328,10 @@ describe("lmsBlockApi", () => {
       try {
         const [first, second] = await Promise.allSettled([
           lmsBlockApi.create(coach.user.id, activePlanId, ctx.session.id, {
-            notes: "first concurrent",
+            notes: ["first concurrent"],
           }),
           lmsBlockApi.create(coach.user.id, activePlanId, ctx.session.id, {
-            notes: "second concurrent",
+            notes: ["second concurrent"],
           }),
         ]);
 
@@ -411,7 +409,7 @@ describe("lmsBlockApi", () => {
   });
 
   describe("update", () => {
-    it("updates intensity, timeCap, and notes via conditional spread", async () => {
+    it("updates notes via conditional spread", async () => {
       const ctx = await provisionSession();
       const block = await cleanupRaw.block.create({
         data: { sessionId: ctx.session.id, order: 10 },
@@ -419,43 +417,14 @@ describe("lmsBlockApi", () => {
 
       try {
         const updated = await lmsBlockApi.update(coach.user.id, block.id, {
-          intensity: { rpe: { value: 8 } },
-          timeCap: { min: 10, unit: "min" },
-          notes: "hard set",
+          notes: ["hard set"],
         });
 
-        expect(updated.intensity).toEqual({ rpe: { value: 8 } });
-        expect(updated.timeCap).toEqual({ min: 10, unit: "min" });
-        expect(updated.notes).toBe("hard set");
+        expect(updated.notes).toEqual(["hard set"]);
 
         const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
 
-        expect(stored?.intensity).toEqual({ rpe: { value: 8 } });
-        expect(stored?.timeCap).toEqual({ min: 10, unit: "min" });
-        expect(stored?.notes).toBe("hard set");
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("clears intensity by writing JSON null when payload sets intensity: null", async () => {
-      const ctx = await provisionSession();
-      const block = await cleanupRaw.block.create({
-        data: {
-          sessionId: ctx.session.id,
-          order: 10,
-          intensity: { rpe: { value: 7 } },
-        },
-      });
-
-      try {
-        const updated = await lmsBlockApi.update(coach.user.id, block.id, { intensity: null });
-
-        expect(updated.intensity).toBeNull();
-
-        const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
-
-        expect(stored?.intensity).toBeNull();
+        expect(stored?.notes).toEqual(["hard set"]);
       } finally {
         await ctx.cleanup();
       }
@@ -499,17 +468,17 @@ describe("lmsBlockApi", () => {
     it("rejects non-owner update", async () => {
       const ctx = await provisionSession();
       const block = await cleanupRaw.block.create({
-        data: { sessionId: ctx.session.id, order: 10, notes: "original" },
+        data: { sessionId: ctx.session.id, order: 10, notes: ["original"] },
       });
 
       try {
         await expect(
-          lmsBlockApi.update(otherCoach.user.id, block.id, { notes: "tamper" }),
+          lmsBlockApi.update(otherCoach.user.id, block.id, { notes: ["tamper"] }),
         ).rejects.toThrow(ForbiddenError);
 
         const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
 
-        expect(stored?.notes).toBe("original");
+        expect(stored?.notes).toEqual(["original"]);
       } finally {
         await ctx.cleanup();
       }

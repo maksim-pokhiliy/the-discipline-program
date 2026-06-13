@@ -8,8 +8,6 @@ const BLOCK_EMOM_NESTED_WK1_TUE: CanonicalBlock = {
   blockInstanceRef: "block-080",
   order: 1,
   labels: [LBL.metcon],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
@@ -17,17 +15,13 @@ const BLOCK_EMOM_NESTED_WK1_TUE: CanonicalBlock = {
         order: 1,
         header: "EMOM 12 min, 3 rounds of 4 slots",
         rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-            { load: bodyweightLoad(), reps: maxReps(), notes: "1 min" },
-          ),
-          mkRow(
-            2,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
-            { load: bodyweightLoad(), reps: countReps(10), notes: "2nd & 3rd min" },
-          ),
-          mkRow(3, { rowKind: "REST_SLOT" }, { notes: "4 min" }),
+          mkRow(1, EX.burpee, { load: bodyweightLoad(), reps: maxReps(), notes: ["1 min"] }),
+          mkRow(2, EX.pullUp, {
+            load: bodyweightLoad(),
+            reps: countReps(10),
+            notes: ["2nd & 3rd min"],
+          }),
+          mkRow(3, EX.restSlot, { notes: ["4 min"] }),
         ],
       },
       {

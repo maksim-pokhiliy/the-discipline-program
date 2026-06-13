@@ -1,50 +1,26 @@
-import {
-  absoluteLoad,
-  bodyweightLoad,
-  buildComposeNode,
-  countReps,
-  dualWeight,
-  eachLeg,
-  restBetweenSets,
-  singleWeight,
-} from "../builder";
+import { absoluteLoad, bodyweightLoad, buildComposeNode, countReps, eachLeg } from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
 
 import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
 
-const REST_BETWEEN_SETS_FIXED_MIN = restBetweenSets({ value: 2, unit: "min" }, "fixed");
-
 const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
   blockInstanceRef: "block-001",
   order: 1,
   labels: [LBL.strength],
-  intensity: null,
-  timeCap: null,
-  notes: "Week 1 MON strength block",
+  notes: ["Week 1 MON strength block"],
   schemas: [
     buildComposeNode(
       {
         order: 1,
         header: "5 rounds for strength",
+        notes: ["Rest 2 min between sets"],
         rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.backSquat } },
-            { load: absoluteLoad(singleWeight(80)), reps: countReps(5) },
-          ),
-          mkRow(
-            2,
-            {
-              rowKind: "EXERCISE",
-              exercise: { form: "atomic", exerciseId: EX.dbBulgarianSplitSquat },
-            },
-            { load: absoluteLoad(dualWeight(20)), reps: countReps(8), side: eachLeg(8) },
-          ),
-          mkRow(3, {
-            rowKind: "REST",
-            raw: "Rest 2 min between sets",
-            parsed: REST_BETWEEN_SETS_FIXED_MIN,
+          mkRow(1, EX.backSquat, { load: absoluteLoad({ count: 1, kg: 80 }), reps: countReps(5) }),
+          mkRow(2, EX.dbBulgarianSplitSquat, {
+            load: absoluteLoad({ count: 2, kg: 20 }),
+            reps: countReps(8),
+            side: eachLeg(8),
           }),
         ],
       },
@@ -65,8 +41,6 @@ const BLOCK_LADDER_DESC_WK1_MON: CanonicalBlock = {
   blockInstanceRef: "block-006",
   order: 2,
   labels: [LBL.warmUpFeet, LBL.warmUpRun],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
@@ -74,16 +48,8 @@ const BLOCK_LADDER_DESC_WK1_MON: CanonicalBlock = {
         order: 1,
         header: "15-12-9 ladder",
         rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.airSquat } },
-            { load: bodyweightLoad() },
-          ),
-          mkRow(
-            2,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pushUp } },
-            { load: bodyweightLoad() },
-          ),
+          mkRow(1, EX.airSquat, { load: bodyweightLoad() }),
+          mkRow(2, EX.pushUp, { load: bodyweightLoad() }),
         ],
       },
       {

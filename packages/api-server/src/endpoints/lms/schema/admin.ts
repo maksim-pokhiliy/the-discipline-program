@@ -108,7 +108,7 @@ export const lmsSchemaApi = {
                 header: data.header ?? null,
                 intensity: marshalNullableJson(data.intensity),
                 composition: marshalNullableJson(data.composition),
-                notes: data.notes ?? null,
+                notes: marshalNullableJson(data.notes),
               },
             });
 
@@ -166,7 +166,7 @@ export const lmsSchemaApi = {
           ...(data.composition !== undefined && {
             composition: marshalNullableJson(data.composition),
           }),
-          ...(data.notes !== undefined && { notes: data.notes }),
+          ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
         },
       });
 

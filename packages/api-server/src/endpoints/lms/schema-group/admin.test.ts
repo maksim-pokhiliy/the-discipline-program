@@ -218,13 +218,13 @@ describe("lmsSchemaGroupApi", () => {
       try {
         const result = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
           blockId: ctx.block.id,
-          label: "parallel ladders",
+          notes: ["parallel ladders"],
           interleaveOrder: "track_by_track",
           tracks: TRACKS,
         });
 
         expect(result.group.blockId).toBe(ctx.block.id);
-        expect(result.group.label).toBe("parallel ladders");
+        expect(result.group.notes).toEqual(["parallel ladders"]);
         expect(result.group.interleaveOrder).toBe("track_by_track");
 
         expect(result.members).toHaveLength(2);
@@ -285,7 +285,7 @@ describe("lmsSchemaGroupApi", () => {
       }
     });
 
-    it("defaults interleaveOrder to round_by_round and label to null when omitted", async () => {
+    it("defaults interleaveOrder to round_by_round and notes to null when omitted", async () => {
       const ctx = await provisionBlock();
 
       try {
@@ -294,7 +294,7 @@ describe("lmsSchemaGroupApi", () => {
           tracks: TRACKS,
         });
 
-        expect(result.group.label).toBeNull();
+        expect(result.group.notes).toBeNull();
         expect(result.group.interleaveOrder).toBe("round_by_round");
       } finally {
         await ctx.cleanup();
@@ -343,50 +343,50 @@ describe("lmsSchemaGroupApi", () => {
   });
 
   describe("update", () => {
-    it("updates the label and interleaveOrder", async () => {
+    it("updates the notes and interleaveOrder", async () => {
       const ctx = await provisionBlock();
       const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
         blockId: ctx.block.id,
-        label: "before",
+        notes: ["before"],
         tracks: TRACKS,
       });
 
       try {
         const updated = await lmsSchemaGroupApi.update(coach.user.id, created.group.id, {
-          label: "after",
+          notes: ["after"],
           interleaveOrder: "track_by_track",
         });
 
-        expect(updated.label).toBe("after");
+        expect(updated.notes).toEqual(["after"]);
         expect(updated.interleaveOrder).toBe("track_by_track");
 
         const stored = await cleanupRaw.schemaGroup.findUnique({ where: { id: created.group.id } });
 
-        expect(stored?.label).toBe("after");
+        expect(stored?.notes).toEqual(["after"]);
         expect(stored?.interleaveOrder).toBe("track_by_track");
       } finally {
         await ctx.cleanup();
       }
     });
 
-    it("clears the label by writing null", async () => {
+    it("clears the notes by writing null", async () => {
       const ctx = await provisionBlock();
       const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
         blockId: ctx.block.id,
-        label: "before",
+        notes: ["before"],
         tracks: TRACKS,
       });
 
       try {
         const updated = await lmsSchemaGroupApi.update(coach.user.id, created.group.id, {
-          label: null,
+          notes: null,
         });
 
-        expect(updated.label).toBeNull();
+        expect(updated.notes).toBeNull();
 
         const stored = await cleanupRaw.schemaGroup.findUnique({ where: { id: created.group.id } });
 
-        expect(stored?.label).toBeNull();
+        expect(stored?.notes).toBeNull();
       } finally {
         await ctx.cleanup();
       }
@@ -396,18 +396,18 @@ describe("lmsSchemaGroupApi", () => {
       const ctx = await provisionBlock();
       const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
         blockId: ctx.block.id,
-        label: "original",
+        notes: ["original"],
         tracks: TRACKS,
       });
 
       try {
         await expect(
-          lmsSchemaGroupApi.update(otherCoach.user.id, created.group.id, { label: "tamper" }),
+          lmsSchemaGroupApi.update(otherCoach.user.id, created.group.id, { notes: ["tamper"] }),
         ).rejects.toThrow(ForbiddenError);
 
         const stored = await cleanupRaw.schemaGroup.findUnique({ where: { id: created.group.id } });
 
-        expect(stored?.label).toBe("original");
+        expect(stored?.notes).toEqual(["original"]);
       } finally {
         await ctx.cleanup();
       }
@@ -415,7 +415,7 @@ describe("lmsSchemaGroupApi", () => {
 
     it("rejects update on a non-existent group", async () => {
       await expect(
-        lmsSchemaGroupApi.update(coach.user.id, "clz0000000000000000000000", { label: "x" }),
+        lmsSchemaGroupApi.update(coach.user.id, "clz0000000000000000000000", { notes: ["x"] }),
       ).rejects.toThrow(NotFoundError);
     });
   });

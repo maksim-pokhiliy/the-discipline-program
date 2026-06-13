@@ -67,7 +67,7 @@ const assertExerciseRefsResolve = (seed: CanonicalSeed): void => {
 
     throw new Error(
       `Canonical seed has ${orphans.length} orphan exercise ref(s) (showing first ${MAX_ORPHAN_REFS_SHOWN}): ${shown}\n` +
-        `Hint: exercise ref embedded in rowPayload has no catalog entry whose exerciseCuid(canonicalName) matches; add the catalog entry or fix the ref.`,
+        `Hint: a row.exerciseId (or percentage targetExerciseId) has no catalog entry whose exerciseCuid(canonicalName) matches; add the catalog entry or fix the ref.`,
     );
   }
 };

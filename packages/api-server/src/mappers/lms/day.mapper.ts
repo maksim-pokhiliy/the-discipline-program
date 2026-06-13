@@ -3,26 +3,21 @@ import {
   type BlockLabelAssignment as PrismaBlockLabelAssignment,
   type Day as PrismaDay,
   type Label as PrismaLabel,
-  type Schema as PrismaSchema,
   type SchemaGroup as PrismaSchemaGroup,
-  type SchemaRow as PrismaSchemaRow,
   type Session as PrismaSession,
 } from "@prisma/client";
 
-import { type DayOfWeek } from "@repo/contracts/lms/_shared";
+import { type DayOfWeek, notesListSchema } from "@repo/contracts/lms/_shared";
 import { type DaySlot, type SessionWithLabel } from "@repo/contracts/lms/day";
 
 import { mapToBlockWithSchemas } from "./block.mapper";
 import { mapToLabel } from "./label.mapper";
+import { type PrismaSchemaWithRows } from "./schema.mapper";
 import { mapToSession } from "./session.mapper";
-
-type SchemaWithRowsRelation = PrismaSchema & {
-  rows: PrismaSchemaRow[];
-};
 
 type BlockWithSchemasRelation = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
-  schemas: SchemaWithRowsRelation[];
+  schemas: PrismaSchemaWithRows[];
   groups: PrismaSchemaGroup[];
 };
 
@@ -45,6 +40,6 @@ export const mapToSessionWithLabelAndBlocks = (s: SessionWithRelations): Session
 export const mapToDaySlot = (dayOfWeek: DayOfWeek, day: DayWithRelations | null): DaySlot => ({
   dayOfWeek,
   label: day?.label ? mapToLabel(day.label) : null,
-  notes: day?.notes ?? null,
+  notes: day?.notes == null ? null : notesListSchema.parse(day.notes),
   sessions: (day?.sessions ?? []).map(mapToSessionWithLabelAndBlocks),
 });

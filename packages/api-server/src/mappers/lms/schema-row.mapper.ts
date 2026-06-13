@@ -1,31 +1,41 @@
-import { type SchemaRow as PrismaSchemaRow } from "@prisma/client";
+import {
+  type Modifier as PrismaModifier,
+  type RowModifierAssignment as PrismaRowModifierAssignment,
+  type SchemaRow as PrismaSchemaRow,
+} from "@prisma/client";
 
 import {
-  intensitySchema,
   loadSchema,
   mediaReferenceSchema,
+  notesListSchema,
   perLimbDistributionSchema,
   repNotationSchema,
-  sequenceIndicatorSchema,
   tempoModifierSchema,
 } from "@repo/contracts/lms/_shared";
-import { type SchemaRow, schemaRowPayloadSchema } from "@repo/contracts/lms/schema-row";
+import { type SchemaRow } from "@repo/contracts/lms/schema-row";
 
-export const mapToSchemaRow = (r: PrismaSchemaRow): SchemaRow => ({
+import { mapToModifier } from "./modifier.mapper";
+
+export type PrismaSchemaRowWithModifiers = PrismaSchemaRow & {
+  modifierAssignments: (PrismaRowModifierAssignment & { modifier: PrismaModifier })[];
+};
+
+export const mapToSchemaRow = (r: PrismaSchemaRowWithModifiers): SchemaRow => ({
   id: r.id,
   schemaId: r.schemaId,
   order: r.order,
-  rowKind: r.rowKind,
-  rowPayload: schemaRowPayloadSchema.parse(r.rowPayload),
+  exerciseId: r.exerciseId,
+  sets: r.sets,
+  rowGroupId: r.rowGroupId,
   load: r.load === null ? null : loadSchema.parse(r.load),
   reps: r.reps === null ? null : repNotationSchema.parse(r.reps),
   side: r.side === null ? null : perLimbDistributionSchema.parse(r.side),
   tempo: r.tempo === null ? null : tempoModifierSchema.parse(r.tempo),
-  position: r.position,
-  sequence: r.sequence === null ? null : sequenceIndicatorSchema.parse(r.sequence),
-  intensity: r.intensity === null ? null : intensitySchema.parse(r.intensity),
   media: r.media === null ? null : mediaReferenceSchema.parse(r.media),
-  notes: r.notes,
+  modifiers: [...r.modifierAssignments]
+    .sort((a, b) => a.order - b.order)
+    .map((a) => mapToModifier(a.modifier)),
+  notes: r.notes === null ? null : notesListSchema.parse(r.notes),
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,
 });

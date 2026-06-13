@@ -375,8 +375,7 @@ describe("platform guards", () => {
         data: {
           schemaId,
           order: 10,
-          rowKind: "REST_SLOT",
-          rowPayload: { rowKind: "REST_SLOT" },
+          exerciseId: "clz0000000000000000guardex",
         },
       });
 

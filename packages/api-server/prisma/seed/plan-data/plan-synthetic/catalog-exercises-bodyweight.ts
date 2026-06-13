@@ -162,6 +162,7 @@ const PLACEHOLDER_EXERCISES: ExerciseCatalogEntry[] = [
   placeholder("placeholder-abs", "Placeholder Abs", "core"),
   placeholder("placeholder-shoulder-accessory", "Placeholder Shoulder Accessory", "shoulder"),
   placeholder("placeholder-warm-up", "Placeholder Warm Up", null),
+  placeholder("rest-slot", "Rest", null),
 ];
 
 export const BODYWEIGHT_AND_COMPOUND_EXERCISES: ExerciseCatalogEntry[] = [

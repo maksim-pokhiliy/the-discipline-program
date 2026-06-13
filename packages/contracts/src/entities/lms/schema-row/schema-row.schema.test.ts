@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { POSITIONS, ROW_KINDS } from "./schema-row.constants";
+import { SCHEMA_ROW_CONSTANTS } from "./schema-row.constants";
 import {
   createSchemaRowSchema,
-  positionSchema,
   reorderSchemaRowsSchema,
-  rowKindSchema,
-  schemaRowPayloadSchema,
   schemaRowSchema,
   updateSchemaRowSchema,
 } from "./schema-row.schema";
@@ -15,181 +12,54 @@ const cuidA = "clz1234567890123456789aaa";
 const cuidB = "clz1234567890123456789bbb";
 const cuidC = "clz1234567890123456789ccc";
 
-const exercisePayload = {
-  rowKind: "EXERCISE" as const,
-  exercise: { form: "atomic" as const, exerciseId: cuidA },
+const baseModifier = {
+  id: cuidC,
+  name: "from sofa",
+  nameLower: "from sofa",
+  notes: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 const baseRow = {
   id: cuidA,
   schemaId: cuidB,
   order: 1,
-  rowKind: "EXERCISE" as const,
-  rowPayload: exercisePayload,
+  exerciseId: cuidA,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
+  modifiers: [],
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
-describe("rowKindSchema", () => {
-  for (const k of ROW_KINDS) {
-    it(`accepts RowKind "${k}"`, () => {
-      expect(rowKindSchema.safeParse(k).success).toBe(true);
-    });
-  }
-
-  it("rejects the dropped FOOTNOTE kind", () => {
-    expect(rowKindSchema.safeParse("FOOTNOTE").success).toBe(false);
-  });
-
-  it("rejects the dropped INNER_LADDER_MARKER kind", () => {
-    expect(rowKindSchema.safeParse("INNER_LADDER_MARKER").success).toBe(false);
-  });
-
-  it("rejects lowercase variant", () => {
-    expect(rowKindSchema.safeParse("exercise").success).toBe(false);
-  });
-
-  it("has 4 surviving values", () => {
-    expect(ROW_KINDS).toHaveLength(4);
-  });
-});
-
-describe("positionSchema", () => {
-  for (const p of POSITIONS) {
-    it(`accepts Position "${p}"`, () => {
-      expect(positionSchema.safeParse(p).success).toBe(true);
-    });
-  }
-
-  it("rejects unknown position", () => {
-    expect(positionSchema.safeParse("UNKNOWN").success).toBe(false);
-  });
-
-  it("has 11 values", () => {
-    expect(POSITIONS).toHaveLength(11);
-  });
-});
-
-describe("schemaRowPayloadSchema (4-variant union)", () => {
-  it("accepts EXERCISE atomic", () => {
-    expect(schemaRowPayloadSchema.safeParse(exercisePayload).success).toBe(true);
-  });
-
-  it("accepts REST", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "REST",
-        raw: "2 min",
-        parsed: { duration: { value: 2, unit: "min" }, scope: "between_rounds" },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts PLACEHOLDER", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "PLACEHOLDER",
-        placeholder: {
-          placeholderKind: "muscle_group_reference",
-          text: "biceps / triceps",
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts REST_SLOT", () => {
-    expect(schemaRowPayloadSchema.safeParse({ rowKind: "REST_SLOT" }).success).toBe(true);
-  });
-
-  it("rejects the dropped FOOTNOTE variant", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "FOOTNOTE",
-        marker: "*",
-        target: "each_round",
-        content: { elements: [] },
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped STANDALONE_LOAD variant", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_LOAD",
-        load: { kind: "bodyweight" },
-        scope: "applies_to_all_preceding_rows",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped STANDALONE_URL variant", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_URL",
-        url: "https://example.com/x.mp4",
-        wrapped: true,
-        appliesTo: "previous_exercise_row",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped INNER_LADDER_MARKER variant", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "INNER_LADDER_MARKER",
-        steps: [36, 28, 20],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped REP_DEFINITION variant", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "REP_DEFINITION",
-        equality: {
-          form: "inline_equality",
-          totalReps: 5,
-          composition: [{ exerciseId: cuidA, count: 3 }],
-        },
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects unknown rowKind", () => {
-    expect(schemaRowPayloadSchema.safeParse({ rowKind: "FAKE" }).success).toBe(false);
-  });
-
-  it("rejects EXERCISE payload missing exercise field", () => {
-    expect(schemaRowPayloadSchema.safeParse({ rowKind: "EXERCISE" }).success).toBe(false);
-  });
-});
-
 describe("schemaRowSchema", () => {
-  it("accepts a fully-populated minimal row (EXERCISE)", () => {
+  it("accepts a minimal exercise row", () => {
     expect(schemaRowSchema.safeParse(baseRow).success).toBe(true);
   });
 
-  it("accepts row with all VO fields populated", () => {
+  it("accepts a row with all VO fields + sets + modifiers populated", () => {
     expect(
       schemaRowSchema.safeParse({
         ...baseRow,
-        load: { kind: "absolute", weight: { variant: "single", valueKg: 24 } },
+        sets: 3,
+        rowGroupId: cuidB,
+        load: { kind: "absolute", count: 1, kg: 24 },
         reps: { kind: "count", value: 12 },
-        position: "NEUTRAL_GRIP",
+        tempo: { eccentric: 3, pauseBottom: 1, concentric: "X", pauseTop: 0 },
+        modifiers: [baseModifier],
+        notes: ["keep the chest up"],
       }).success,
     ).toBe(true);
   });
 
-  it("rejects non-cuid id", () => {
+  it("rejects a non-cuid id", () => {
     expect(schemaRowSchema.safeParse({ ...baseRow, id: "x" }).success).toBe(false);
   });
 
@@ -197,55 +67,120 @@ describe("schemaRowSchema", () => {
     expect(schemaRowSchema.safeParse({ ...baseRow, order: 0 }).success).toBe(false);
   });
 
-  it("rejects notes beyond MAX length", () => {
-    expect(schemaRowSchema.safeParse({ ...baseRow, notes: "x".repeat(2001) }).success).toBe(false);
+  it("rejects a missing exerciseId", () => {
+    const withoutExerciseId: Record<string, unknown> = { ...baseRow };
+
+    delete withoutExerciseId.exerciseId;
+
+    expect(schemaRowSchema.safeParse(withoutExerciseId).success).toBe(false);
+  });
+
+  it("rejects sets: 0 (positive int)", () => {
+    expect(schemaRowSchema.safeParse({ ...baseRow, sets: 0 }).success).toBe(false);
+  });
+
+  it("strips the dropped rowKind/rowPayload/position fields", () => {
+    const result = schemaRowSchema.safeParse({
+      ...baseRow,
+      rowKind: "EXERCISE",
+      rowPayload: { rowKind: "EXERCISE" },
+      position: "NEUTRAL_GRIP",
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("rowKind");
+      expect(result.data).not.toHaveProperty("rowPayload");
+      expect(result.data).not.toHaveProperty("position");
+    }
+  });
+
+  it("rejects notes with an empty-string entry", () => {
+    expect(schemaRowSchema.safeParse({ ...baseRow, notes: [""] }).success).toBe(false);
   });
 });
 
 describe("createSchemaRowSchema", () => {
-  it("accepts minimal valid create payload", () => {
+  it("accepts a minimal valid create payload", () => {
+    expect(createSchemaRowSchema.safeParse({ schemaId: cuidA, exerciseId: cuidB }).success).toBe(
+      true,
+    );
+  });
+
+  it("accepts a create payload with modifierIds", () => {
     expect(
-      createSchemaRowSchema.safeParse({
-        schemaId: cuidA,
-        rowKind: "EXERCISE",
-        rowPayload: exercisePayload,
-      }).success,
+      createSchemaRowSchema.safeParse({ schemaId: cuidA, exerciseId: cuidB, modifierIds: [cuidC] })
+        .success,
     ).toBe(true);
   });
 
-  it("rejects missing schemaId", () => {
+  it("rejects duplicate modifierIds", () => {
     expect(
       createSchemaRowSchema.safeParse({
-        rowKind: "EXERCISE",
-        rowPayload: exercisePayload,
+        schemaId: cuidA,
+        exerciseId: cuidB,
+        modifierIds: [cuidC, cuidC],
       }).success,
     ).toBe(false);
   });
 
-  it("accepts explicit null for VO fields", () => {
+  it("rejects more modifierIds than the cap", () => {
+    const tooMany = Array.from(
+      { length: SCHEMA_ROW_CONSTANTS.MAX_MODIFIERS_PER_ROW + 1 },
+      (_, i) => `clz123456789012345678${i.toString().padStart(4, "x")}`,
+    );
+
     expect(
-      createSchemaRowSchema.safeParse({
-        schemaId: cuidA,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
-        load: null,
-        reps: null,
-      }).success,
-    ).toBe(true);
+      createSchemaRowSchema.safeParse({ schemaId: cuidA, exerciseId: cuidB, modifierIds: tooMany })
+        .success,
+    ).toBe(false);
+  });
+
+  it("rejects missing schemaId", () => {
+    expect(createSchemaRowSchema.safeParse({ exerciseId: cuidB }).success).toBe(false);
+  });
+
+  it("rejects missing exerciseId", () => {
+    expect(createSchemaRowSchema.safeParse({ schemaId: cuidA }).success).toBe(false);
+  });
+
+  it("does not accept a rowGroupId on create (membership set via the row-group route)", () => {
+    const result = createSchemaRowSchema.safeParse({
+      schemaId: cuidA,
+      exerciseId: cuidB,
+      rowGroupId: cuidC,
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("rowGroupId");
+    }
   });
 });
 
 describe("updateSchemaRowSchema", () => {
-  it("accepts empty object", () => {
+  it("accepts an empty object", () => {
     expect(updateSchemaRowSchema.safeParse({}).success).toBe(true);
   });
 
-  it("accepts position-only update", () => {
-    expect(updateSchemaRowSchema.safeParse({ position: "NEUTRAL_GRIP" }).success).toBe(true);
+  it("accepts a notes-list-only update", () => {
+    expect(updateSchemaRowSchema.safeParse({ notes: ["tempo cue"] }).success).toBe(true);
   });
 
-  it("accepts notes-only update", () => {
-    expect(updateSchemaRowSchema.safeParse({ notes: "tempo cue" }).success).toBe(true);
+  it("accepts a modifierIds-only update", () => {
+    expect(updateSchemaRowSchema.safeParse({ modifierIds: [cuidC] }).success).toBe(true);
+  });
+
+  it("strips exerciseId (immutable — omitted from the update shape)", () => {
+    const result = updateSchemaRowSchema.safeParse({ exerciseId: cuidB });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("exerciseId");
+    }
   });
 });
 

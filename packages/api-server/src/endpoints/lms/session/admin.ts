@@ -17,7 +17,7 @@ import {
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToSession } from "../../../mappers/lms";
-import { handlePrismaError, retryOnP2034 } from "../../../utils";
+import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
 export const lmsSessionApi = {
@@ -96,7 +96,7 @@ export const lmsSessionApi = {
                 dayId: day.id,
                 order: nextOrder,
                 labelId: data.labelId ?? null,
-                notes: data.notes ?? null,
+                notes: marshalNullableJson(data.notes),
               },
             });
           },
@@ -140,7 +140,7 @@ export const lmsSessionApi = {
         where: { id: sessionId },
         data: {
           ...(data.labelId !== undefined && { labelId: data.labelId }),
-          ...(data.notes !== undefined && { notes: data.notes }),
+          ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
         },
       });
 

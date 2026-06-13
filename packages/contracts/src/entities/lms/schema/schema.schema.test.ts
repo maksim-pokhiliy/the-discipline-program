@@ -31,16 +31,15 @@ const baseRow = {
   id: cuidD,
   schemaId: cuidA,
   order: 1,
-  rowKind: "REST_SLOT" as const,
-  rowPayload: { rowKind: "REST_SLOT" as const },
+  exerciseId: cuidD,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
+  modifiers: [],
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -95,6 +94,7 @@ describe("schemaWithBodySchema", () => {
     const result = schemaWithBodySchema.safeParse({
       schema: baseSchema,
       rows: [baseRow],
+      rowGroups: [],
     });
 
     expect(result.success).toBe(true);
@@ -110,6 +110,7 @@ describe("schemaWithBodySchema", () => {
     const result = schemaWithBodySchema.safeParse({
       schema: baseSchema,
       rows: [],
+      rowGroups: [],
     });
 
     expect(result.success).toBe(true);
@@ -119,8 +120,36 @@ describe("schemaWithBodySchema", () => {
     }
   });
 
+  it("accepts a schema carrying a row-group", () => {
+    const result = schemaWithBodySchema.safeParse({
+      schema: baseSchema,
+      rows: [baseRow],
+      rowGroups: [
+        {
+          id: cuidB,
+          schemaId: cuidA,
+          notes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.rowGroups).toHaveLength(1);
+    }
+  });
+
   it("rejects a missing rows field", () => {
-    const result = schemaWithBodySchema.safeParse({ schema: baseSchema });
+    const result = schemaWithBodySchema.safeParse({ schema: baseSchema, rowGroups: [] });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing rowGroups field", () => {
+    const result = schemaWithBodySchema.safeParse({ schema: baseSchema, rows: [] });
 
     expect(result.success).toBe(false);
   });
@@ -129,7 +158,8 @@ describe("schemaWithBodySchema", () => {
     const result = schemaWithBodySchema.safeParse({
       schema: baseSchema,
       rows: [],
-      subSchemas: [{ schema: baseSchema, rows: [] }],
+      rowGroups: [],
+      subSchemas: [{ schema: baseSchema, rows: [], rowGroups: [] }],
     });
 
     expect(result.success).toBe(true);
@@ -171,7 +201,7 @@ describe("updateSchemaSchema", () => {
   });
 
   it("accepts notes update", () => {
-    expect(updateSchemaSchema.safeParse({ notes: "focus" }).success).toBe(true);
+    expect(updateSchemaSchema.safeParse({ notes: ["focus"] }).success).toBe(true);
   });
 });
 

@@ -25,7 +25,7 @@ const expectEmptySlot = (
   expect(slot.sessions).toEqual([]);
 };
 
-const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
+const ROW_EXERCISE_ID = "clz00000000000000000weekex";
 
 describe("lmsWeekApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -91,13 +91,13 @@ describe("lmsWeekApi", () => {
 
     it("returns a materialized week with notes only and 7 empty days", async () => {
       const week = await cleanupRaw.week.create({
-        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY, notes: "test" },
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY, notes: ["test"] },
       });
 
       try {
         const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
 
-        expect(result.week?.notes).toBe("test");
+        expect(result.week?.notes).toEqual(["test"]);
         expect(result.days).toHaveLength(7);
         result.days.forEach((slot, index) => {
           expectEmptySlot(slot, dayOfWeekValues[index] ?? "");
@@ -156,7 +156,7 @@ describe("lmsWeekApi", () => {
           weekId: week.id,
           dayOfWeek: "TUESDAY",
           labelId: dayLabel.id,
-          notes: "tuesday focus",
+          notes: ["tuesday focus"],
         },
       });
       const sessionA = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
@@ -169,7 +169,7 @@ describe("lmsWeekApi", () => {
 
         expect(result.days[1]?.dayOfWeek).toBe("TUESDAY");
         expect(result.days[1]?.label?.id).toBe(dayLabel.id);
-        expect(result.days[1]?.notes).toBe("tuesday focus");
+        expect(result.days[1]?.notes).toEqual(["tuesday focus"]);
         expect(result.days[1]?.sessions).toHaveLength(2);
         expect(result.days[1]?.sessions[0]?.order).toBe(10);
         expect(result.days[1]?.sessions[0]?.label).toBeNull();
@@ -239,9 +239,7 @@ describe("lmsWeekApi", () => {
         data: {
           sessionId: session.id,
           order: 10,
-          intensity: { rpe: { value: 7 } },
-          timeCap: { min: 10, max: 15, unit: "min" },
-          notes: "first block",
+          notes: ["first block"],
         },
       });
       const blockSecond = await cleanupRaw.block.create({
@@ -274,17 +272,13 @@ describe("lmsWeekApi", () => {
         expect(blocks).toHaveLength(2);
         expect(blocks[0]?.id).toBe(blockFirst.id);
         expect(blocks[0]?.order).toBe(10);
-        expect(blocks[0]?.intensity).toEqual({ rpe: { value: 7 } });
-        expect(blocks[0]?.timeCap).toEqual({ min: 10, max: 15, unit: "min" });
-        expect(blocks[0]?.notes).toBe("first block");
+        expect(blocks[0]?.notes).toEqual(["first block"]);
         expect(blocks[0]?.labels).toHaveLength(2);
         expect(blocks[0]?.labels[0]?.id).toBe(blockLabelFirst.id);
         expect(blocks[0]?.labels[1]?.id).toBe(blockLabelSecond.id);
 
         expect(blocks[1]?.id).toBe(blockSecond.id);
         expect(blocks[1]?.order).toBe(20);
-        expect(blocks[1]?.intensity).toBeNull();
-        expect(blocks[1]?.timeCap).toBeNull();
         expect(blocks[1]?.notes).toBeNull();
         expect(blocks[1]?.labels).toHaveLength(1);
         expect(blocks[1]?.labels[0]?.id).toBe(blockLabelFirst.id);
@@ -403,16 +397,14 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schema.id,
           order: 10,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_SLOT_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         },
       });
       const rowSecond = await cleanupRaw.schemaRow.create({
         data: {
           schemaId: schema.id,
           order: 20,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_SLOT_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         },
       });
 
@@ -450,7 +442,11 @@ describe("lmsWeekApi", () => {
         data: { sessionId: session.id, order: 10 },
       });
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: block.id, label: "parallel ladders", interleaveOrder: "track_by_track" },
+        data: {
+          blockId: block.id,
+          notes: ["parallel ladders"],
+          interleaveOrder: "track_by_track",
+        },
       });
       const memberA = await cleanupRaw.schema.create({
         data: {
@@ -481,7 +477,7 @@ describe("lmsWeekApi", () => {
 
         expect(embedded?.groups).toHaveLength(1);
         expect(embedded?.groups[0]?.id).toBe(group.id);
-        expect(embedded?.groups[0]?.label).toBe("parallel ladders");
+        expect(embedded?.groups[0]?.notes).toEqual(["parallel ladders"]);
         expect(embedded?.groups[0]?.interleaveOrder).toBe("track_by_track");
         expect(embedded?.groups[0]?.blockId).toBe(block.id);
       } finally {
@@ -507,7 +503,7 @@ describe("lmsWeekApi", () => {
         data: { sessionId: session.id, order: 10 },
       });
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: block.id, label: null },
+        data: { blockId: block.id },
       });
       const trackA = await cleanupRaw.schema.create({
         data: {
@@ -529,22 +525,14 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: trackA.id,
           order: 10,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: "clz00000000000000exercisea" },
-          },
+          exerciseId: "clz00000000000000exercisea",
         },
       });
       const rowB = await cleanupRaw.schemaRow.create({
         data: {
           schemaId: trackB.id,
           order: 10,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: "clz00000000000000exerciseb" },
-          },
+          exerciseId: "clz00000000000000exerciseb",
         },
       });
 
@@ -622,7 +610,7 @@ describe("lmsWeekApi", () => {
         },
       });
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: block.id, label: null },
+        data: { blockId: block.id },
       });
       const memberLater = await cleanupRaw.schema.create({
         data: {
@@ -642,16 +630,14 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schemaEarlier.id,
           order: 20,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_SLOT_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         },
       });
       const rowEarlier = await cleanupRaw.schemaRow.create({
         data: {
           schemaId: schemaEarlier.id,
           order: 10,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_SLOT_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         },
       });
 
@@ -751,7 +737,6 @@ describe("lmsWeekApi", () => {
     const CADENCE_COMPOSITION: Composition = {
       repetition: { kind: "cadence", everyMin: 1, rounds: 4 },
     };
-    const REST_ROW_PAYLOAD = { rowKind: "REST_SLOT" as const };
 
     const provisionCompositionWeek = async () => {
       const week = await cleanupRaw.week.create({
@@ -812,13 +797,11 @@ describe("lmsWeekApi", () => {
 
         await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: created.id,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_ROW_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         });
         await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: created.id,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_ROW_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         });
 
         const result = await lmsWeekApi.getByPlanAndDate(
@@ -846,7 +829,7 @@ describe("lmsWeekApi", () => {
   describe("upsertNotes", () => {
     it("rejects a non-owner and materializes no Week row as a side effect", async () => {
       await expect(
-        lmsWeekApi.upsertNotes(otherCoach.user.id, activePlanId, MONDAY_PARAM, { notes: "x" }),
+        lmsWeekApi.upsertNotes(otherCoach.user.id, activePlanId, MONDAY_PARAM, { notes: ["x"] }),
       ).rejects.toThrow(ForbiddenError);
 
       const after = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
@@ -857,7 +840,7 @@ describe("lmsWeekApi", () => {
 
     it("rejects on an archived plan and materializes no Week row as a side effect", async () => {
       await expect(
-        lmsWeekApi.upsertNotes(coach.user.id, archivedPlanId, MONDAY_PARAM, { notes: "x" }),
+        lmsWeekApi.upsertNotes(coach.user.id, archivedPlanId, MONDAY_PARAM, { notes: ["x"] }),
       ).rejects.toThrow(ForbiddenError);
 
       const after = await lmsWeekApi.getByPlanAndDate(coach.user.id, archivedPlanId, MONDAY_PARAM);
@@ -869,7 +852,7 @@ describe("lmsWeekApi", () => {
     it("rejects with BadRequestError for a regex-passing but impossible startDate", async () => {
       for (const param of IMPOSSIBLE_DATE_PARAMS) {
         await expect(
-          lmsWeekApi.upsertNotes(coach.user.id, activePlanId, param, { notes: "x" }),
+          lmsWeekApi.upsertNotes(coach.user.id, activePlanId, param, { notes: ["x"] }),
         ).rejects.toThrow(BadRequestError);
       }
     });
@@ -894,18 +877,18 @@ describe("lmsWeekApi", () => {
 
     it("creates the row on the first call and updates it on the second", async () => {
       const first = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, MONDAY_PARAM, {
-        notes: "first note",
+        notes: ["first note"],
       });
 
       try {
-        expect(first.notes).toBe("first note");
+        expect(first.notes).toEqual(["first note"]);
 
         const second = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, MONDAY_PARAM, {
-          notes: "second note",
+          notes: ["second note"],
         });
 
         expect(second.id).toBe(first.id);
-        expect(second.notes).toBe("second note");
+        expect(second.notes).toEqual(["second note"]);
       } finally {
         await cleanupRaw.week.delete({ where: { id: first.id } }).catch(() => {});
       }
@@ -913,7 +896,7 @@ describe("lmsWeekApi", () => {
 
     it("snaps a non-Monday param to that week's Monday", async () => {
       const created = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, WEDNESDAY_PARAM, {
-        notes: "wednesday note",
+        notes: ["wednesday note"],
       });
 
       try {
@@ -926,7 +909,7 @@ describe("lmsWeekApi", () => {
         expect(byMonday.week?.id).toBe(created.id);
 
         const reupserted = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, MONDAY_PARAM, {
-          notes: "monday note",
+          notes: ["monday note"],
         });
 
         expect(reupserted.id).toBe(created.id);
@@ -937,7 +920,7 @@ describe("lmsWeekApi", () => {
 
     it("persists startDate as the intended Monday regardless of server timezone", async () => {
       const created = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, WEDNESDAY_PARAM, {
-        notes: "tz round-trip note",
+        notes: ["tz round-trip note"],
       });
 
       try {

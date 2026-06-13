@@ -1,4 +1,4 @@
-import { Prisma, RowKind } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { countSchemaRow } from "./shared";
 import { type CoverageCell } from "./types";
@@ -34,49 +34,4 @@ const MEDIA_PRESENT_CELL: CoverageCell = {
   tally: (db, planId) => countSchemaRow(db, planId, { media: { not: Prisma.AnyNull } }),
 };
 
-const COMPOUND_FORM_CELLS: readonly CoverageCell[] = [
-  {
-    id: "compoundForm.compoundRow",
-    category: "compoundForm",
-    label: "CompoundRow (exercise.form = compound)",
-    required: 1,
-    sourceRef: "coverage-matrix §21 CompoundRow",
-    tally: (db, planId) =>
-      countSchemaRow(db, planId, {
-        rowKind: RowKind.EXERCISE,
-        rowPayload: { path: ["exercise", "form"], equals: "compound" },
-      }),
-  },
-  {
-    id: "compoundForm.compoundRow.sharedModifiers",
-    category: "compoundForm",
-    label: "CompoundRow.sharedModifiers present",
-    required: 1,
-    sourceRef: "coverage-matrix §21 CompoundRow.sharedModifiers",
-    tally: (db, planId) =>
-      countSchemaRow(db, planId, {
-        rowKind: RowKind.EXERCISE,
-        rowPayload: { path: ["exercise", "compound", "sharedModifiers"], not: { equals: null } },
-      }),
-  },
-];
-
-const PER_SET_SUBSTITUTION_CELL: CoverageCell = {
-  id: "perSetSubstitution.assignments",
-  category: "perSetSubstitution",
-  label: "PLACEHOLDER row with per-set substitution assignments",
-  required: 1,
-  sourceRef: "coverage-matrix §20 placeholder + per-set assignments",
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      rowKind: RowKind.PLACEHOLDER,
-      rowPayload: { path: ["placeholder", "perSetAssignments"], not: { equals: null } },
-    }),
-};
-
-export const CATALOG_MEDIA_CELLS: readonly CoverageCell[] = [
-  ...CATALOG_CELLS,
-  MEDIA_PRESENT_CELL,
-  ...COMPOUND_FORM_CELLS,
-  PER_SET_SUBSTITUTION_CELL,
-];
+export const CATALOG_MEDIA_CELLS: readonly CoverageCell[] = [...CATALOG_CELLS, MEDIA_PRESENT_CELL];

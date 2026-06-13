@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { schemaRowPayloadSchema } from "../schema-row";
-
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
 import type { ComposeContainer, ComposeRow } from "./composition.types";
 
@@ -13,14 +11,12 @@ function exerciseRow(id: string): ComposeRow {
   return {
     nodeType: "row",
     id,
-    rowKind: "EXERCISE",
-    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: id } },
+    exerciseId: id,
     reps: null,
     load: null,
     side: null,
     tempo: null,
-    position: null,
-    intensity: null,
+    media: null,
     notes: null,
   };
 }
@@ -39,27 +35,20 @@ const franContainer: ComposeContainer = {
 };
 
 describe("Fran — round-counter ladder (container repetition axis)", () => {
-  it("validates a container ladder over two ordered EXERCISE rows", () => {
+  it("validates a container ladder over two ordered exercise rows", () => {
     expect(compositionSchema.safeParse(franComposition).success).toBe(true);
     expect(composeContainerSchema.safeParse(franContainer).success).toBe(true);
   });
 
-  it("carries EXERCISE rows only — no marker row kind survives", () => {
+  it("carries plain exercise rows only — no marker row kind survives", () => {
     for (const child of franContainer.children) {
-      expect(child.nodeType === "row" && child.rowKind).toBe("EXERCISE");
+      expect(child.nodeType).toBe("row");
     }
   });
 });
 
 describe("D-MARKER-DEATH — the rep-scheme marker is unrepresentable", () => {
-  it("rejects the dropped INNER_LADDER_MARKER row payload", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({ rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] })
-        .success,
-    ).toBe(false);
-  });
-
-  it("rejects a ladder container that tries to carry a marker child (fusion bug now unbuildable)", () => {
+  it("rejects a ladder container that tries to carry a marker child (strict rejects unknown keys)", () => {
     expect(
       composeContainerSchema.safeParse({
         nodeType: "container",
@@ -71,15 +60,14 @@ describe("D-MARKER-DEATH — the rep-scheme marker is unrepresentable", () => {
           {
             nodeType: "row",
             id: cuidThrusters,
-            rowKind: "INNER_LADDER_MARKER",
-            rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] },
+            exerciseId: cuidThrusters,
             reps: null,
             load: null,
             side: null,
             tempo: null,
-            position: null,
-            intensity: null,
+            media: null,
             notes: null,
+            steps: [21, 15, 9],
           },
         ],
       }).success,

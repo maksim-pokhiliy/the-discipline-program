@@ -1,20 +1,21 @@
 import { z } from "zod";
 
-import { weightSchema } from "./weight";
+export const LOAD_KINDS = ["absolute", "percentage", "bodyweight", "byProfile"] as const;
 
-export const LOAD_KINDS = ["absolute", "percentage", "bodyweight", "byProfile", "none"] as const;
-
-export const PERCENTAGE_REFERENCE_SCOPES = ["self", "movement_family", "other_exercise"] as const;
+export const PERCENTAGE_REFERENCE_SCOPES = ["self", "other_exercise"] as const;
 
 export const percentageReferenceSchema = z.discriminatedUnion("scope", [
   z.object({ scope: z.literal("self") }),
-  z.object({ scope: z.literal("movement_family"), movementFamily: z.string().min(1) }),
   z.object({ scope: z.literal("other_exercise"), targetExerciseId: z.string().cuid() }),
 ]);
 
 export const loadSchema = z
   .discriminatedUnion("kind", [
-    z.object({ kind: z.literal("absolute"), weight: weightSchema }),
+    z.object({
+      kind: z.literal("absolute"),
+      count: z.union([z.literal(1), z.literal(2)]),
+      kg: z.number().positive(),
+    }),
     z.object({
       kind: z.literal("percentage"),
       value: z.number().min(0).max(200),
@@ -24,10 +25,10 @@ export const loadSchema = z
     z.object({ kind: z.literal("bodyweight") }),
     z.object({
       kind: z.literal("byProfile"),
-      first: z.number().positive(),
-      second: z.number().positive(),
+      entries: z
+        .array(z.object({ label: z.string().trim().min(1), kg: z.number().positive() }))
+        .min(1),
     }),
-    z.object({ kind: z.literal("none") }),
   ])
   .superRefine((l, ctx) => {
     if (l.kind === "percentage" && l.rangeMax !== undefined && l.rangeMax <= l.value) {

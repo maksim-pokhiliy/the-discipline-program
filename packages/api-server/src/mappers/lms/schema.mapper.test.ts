@@ -1,12 +1,10 @@
-import {
-  type SchemaGroup as PrismaSchemaGroup,
-  type SchemaRow as PrismaSchemaRow,
-} from "@prisma/client";
+import { type SchemaGroup as PrismaSchemaGroup } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 
 import { mapToSchemaGroup } from "./schema-group.mapper";
+import { type PrismaSchemaRowWithModifiers } from "./schema-row.mapper";
 import {
   mapSchemas,
   mapToSchema,
@@ -26,7 +24,7 @@ const makeFlatSchema = (overrides: {
   order: number;
   header?: string | null;
   composition?: Composition | null;
-  rows?: PrismaSchemaRow[];
+  rows?: PrismaSchemaRowWithModifiers[];
 }): PrismaSchemaWithRows => ({
   id: overrides.id,
   blockId: BLOCK_ID,
@@ -39,31 +37,35 @@ const makeFlatSchema = (overrides: {
   createdAt: NOW,
   updatedAt: NOW,
   rows: overrides.rows ?? [],
+  rowGroups: [],
 });
 
-const makeExerciseRow = (id: string, schemaId: string, order: number): PrismaSchemaRow => ({
+const makeExerciseRow = (
+  id: string,
+  schemaId: string,
+  order: number,
+): PrismaSchemaRowWithModifiers => ({
   id,
   schemaId,
   order,
-  rowKind: "EXERCISE",
-  rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: id } },
+  exerciseId: id,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
+  modifierAssignments: [],
 });
 
 const makePrismaGroup = (overrides: Partial<PrismaSchemaGroup>): PrismaSchemaGroup => ({
   id: GROUP_ID,
   blockId: BLOCK_ID,
-  label: null,
+  notes: null,
   interleaveOrder: "round_by_round",
   createdAt: NOW,
   updatedAt: NOW,
@@ -170,23 +172,23 @@ describe("mapSchemas", () => {
 describe("mapToSchemaGroup", () => {
   it("maps the group row and parses interleaveOrder", () => {
     const mapped = mapToSchemaGroup(
-      makePrismaGroup({ label: "parallel ladders", interleaveOrder: "track_by_track" }),
+      makePrismaGroup({ notes: ["parallel ladders"], interleaveOrder: "track_by_track" }),
     );
 
     expect(mapped).toEqual({
       id: GROUP_ID,
       blockId: BLOCK_ID,
-      label: "parallel ladders",
+      notes: ["parallel ladders"],
       interleaveOrder: "track_by_track",
       createdAt: NOW,
       updatedAt: NOW,
     });
   });
 
-  it("carries a null label through", () => {
-    const mapped = mapToSchemaGroup(makePrismaGroup({ label: null }));
+  it("carries a null notes value through", () => {
+    const mapped = mapToSchemaGroup(makePrismaGroup({ notes: null }));
 
-    expect(mapped.label).toBeNull();
+    expect(mapped.notes).toBeNull();
     expect(mapped.interleaveOrder).toBe("round_by_round");
   });
 });

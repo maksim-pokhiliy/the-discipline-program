@@ -1,96 +1,80 @@
 import { describe, expect, it } from "vitest";
 
-import { schemaRowPayloadSchema } from "../entities/lms/schema-row";
+import { schemaRowSchema } from "../entities/lms/schema-row";
 
-import { CUID_PRIMARY } from "./_cuid-helper";
+import { CUID_PRIMARY, CUID_SECONDARY } from "./_cuid-helper";
 
-describe("LMS schemaRowPayload parity — 4 surviving RowKinds", () => {
-  it("EXERCISE / atomic (data.js:89)", () => {
+const baseRow = {
+  id: CUID_PRIMARY,
+  schemaId: CUID_SECONDARY,
+  order: 1,
+  exerciseId: CUID_PRIMARY,
+  sets: null,
+  rowGroupId: null,
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  media: null,
+  modifiers: [],
+  notes: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+describe("LMS row parity — exercise-only row grammar (rowKind/rowPayload collapsed)", () => {
+  it("accepts a minimal exercise row carrying exerciseId directly", () => {
+    expect(schemaRowSchema.safeParse(baseRow).success).toBe(true);
+  });
+
+  it("accepts a row with sets + a rowGroupId membership", () => {
     expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "EXERCISE",
-        exercise: { form: "atomic", exerciseId: CUID_PRIMARY },
-      }).success,
+      schemaRowSchema.safeParse({ ...baseRow, sets: 3, rowGroupId: CUID_SECONDARY }).success,
     ).toBe(true);
   });
 
-  it("REST (parsed rest spec)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "REST",
-        raw: "2 min",
-        parsed: { duration: { value: 2, unit: "min" }, scope: "between_rounds" },
-      }).success,
-    ).toBe(true);
+  it("strips the dropped rowKind discriminator (no payload union survives)", () => {
+    const result = schemaRowSchema.safeParse({ ...baseRow, rowKind: "EXERCISE" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("rowKind");
+    }
   });
 
-  it("REST_SLOT (data.js:323-328 — EMOM rest minute)", () => {
-    expect(schemaRowPayloadSchema.safeParse({ rowKind: "REST_SLOT" }).success).toBe(true);
+  it("strips the dropped rowPayload field", () => {
+    const result = schemaRowSchema.safeParse({
+      ...baseRow,
+      rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: CUID_PRIMARY } },
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("rowPayload");
+    }
   });
 
-  it("PLACEHOLDER muscle_group_reference (data.js:548-558 — Thu SHOULDER mobility)", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "PLACEHOLDER",
-        placeholder: {
-          placeholderKind: "muscle_group_reference",
-          text: "any SHOULDER mobility drill (3 min)",
-        },
-      }).success,
-    ).toBe(true);
+  it("strips the dropped position field", () => {
+    const result = schemaRowSchema.safeParse({ ...baseRow, position: "NEUTRAL_GRIP" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("position");
+    }
   });
 
-  it("rejects the dropped FOOTNOTE kind", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "FOOTNOTE",
-        marker: "*",
-        target: "each_set",
-        content: { elements: [] },
-      }).success,
-    ).toBe(false);
+  it("rejects a row missing exerciseId", () => {
+    const withoutExerciseId: Record<string, unknown> = { ...baseRow };
+
+    delete withoutExerciseId.exerciseId;
+
+    expect(schemaRowSchema.safeParse(withoutExerciseId).success).toBe(false);
   });
 
-  it("rejects the dropped STANDALONE_LOAD kind", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_LOAD",
-        load: { kind: "bodyweight" },
-        scope: "applies_to_all_preceding_rows",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped STANDALONE_URL kind", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "STANDALONE_URL",
-        url: "https://example.com/demo/fran",
-        wrapped: true,
-        appliesTo: "whole_schema",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped REP_DEFINITION kind", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "REP_DEFINITION",
-        equality: {
-          form: "inline_equality",
-          totalReps: 10,
-          composition: [{ exerciseId: CUID_PRIMARY, count: 8 }],
-        },
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped INNER_LADDER_MARKER kind", () => {
-    expect(
-      schemaRowPayloadSchema.safeParse({
-        rowKind: "INNER_LADDER_MARKER",
-        steps: [21, 15, 9],
-      }).success,
-    ).toBe(false);
+  it("rejects a row with a non-cuid exerciseId", () => {
+    expect(schemaRowSchema.safeParse({ ...baseRow, exerciseId: "not-a-cuid" }).success).toBe(false);
   });
 });

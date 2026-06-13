@@ -45,31 +45,21 @@ describe("Seed invariants — training-domain referential integrity", () => {
     expect(existingLabels.length).toBe(labelIds.size);
   });
 
-  it("T3: every atomic EXERCISE row references an existing Exercise (resolved via rowPayload.exercise.exerciseId)", async () => {
+  it("T3: every row references an existing Exercise (resolved via the SchemaRow.exerciseId column)", async () => {
     if (seedPlanId === null) {
       throw new Error("seed plan missing; cannot validate invariant");
     }
 
     const rows = await db.schemaRow.findMany({
       where: {
-        rowKind: "EXERCISE",
         schema: { block: { session: { day: { week: { planId: seedPlanId } } } } },
       },
-      select: { id: true, rowPayload: true },
+      select: { id: true, exerciseId: true },
     });
 
     expect(rows.length).toBeGreaterThan(0);
 
-    const referencedExerciseIds = new Set<string>();
-
-    for (const row of rows) {
-      const payload = row.rowPayload as { exercise?: { form?: string; exerciseId?: string } };
-      const exercise = payload.exercise;
-
-      if (exercise?.form === "atomic" && typeof exercise.exerciseId === "string") {
-        referencedExerciseIds.add(exercise.exerciseId);
-      }
-    }
+    const referencedExerciseIds = new Set(rows.map((row) => row.exerciseId));
 
     expect(referencedExerciseIds.size).toBeGreaterThan(0);
 
@@ -79,5 +69,47 @@ describe("Seed invariants — training-domain referential integrity", () => {
     });
 
     expect(existing.length).toBe(referencedExerciseIds.size);
+  });
+
+  it("T4: every RowModifierAssignment.modifierId references an existing Modifier", async () => {
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
+    }
+
+    const assignments = await db.rowModifierAssignment.findMany({
+      where: { row: { schema: { block: { session: { day: { week: { planId: seedPlanId } } } } } } },
+      select: { modifierId: true },
+    });
+
+    expect(assignments.length).toBeGreaterThan(0);
+
+    const modifierIds = new Set(assignments.map((a) => a.modifierId));
+    const existing = await db.modifier.findMany({
+      where: { id: { in: Array.from(modifierIds) } },
+      select: { id: true },
+    });
+
+    expect(existing.length).toBe(modifierIds.size);
+  });
+
+  it("T5: every RowGroup-member row's rowGroupId resolves to a RowGroup in the same schema", async () => {
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
+    }
+
+    const members = await db.schemaRow.findMany({
+      where: {
+        rowGroupId: { not: null },
+        schema: { block: { session: { day: { week: { planId: seedPlanId } } } } },
+      },
+      select: { schemaId: true, rowGroup: { select: { schemaId: true } } },
+    });
+
+    expect(members.length).toBeGreaterThan(0);
+
+    for (const member of members) {
+      expect(member.rowGroup).not.toBeNull();
+      expect(member.rowGroup?.schemaId).toBe(member.schemaId);
+    }
   });
 });

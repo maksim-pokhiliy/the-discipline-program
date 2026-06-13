@@ -13,14 +13,14 @@ const baseSession = {
   dayId: "clz1234567890123456789aaa",
   order: 10,
   labelId: "clz1234567890123456789bbb",
-  notes: "warmup focus",
+  notes: ["warmup focus"],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
 const baseCreateInput = {
   labelId: "clz1234567890123456789bbb",
-  notes: "warmup focus",
+  notes: ["warmup focus"],
 };
 
 describe("sessionSchema", () => {
@@ -34,7 +34,7 @@ describe("sessionSchema", () => {
       expect(result.data.dayId).toBe(baseSession.dayId);
       expect(result.data.order).toBe(10);
       expect(result.data.labelId).toBe(baseSession.labelId);
-      expect(result.data.notes).toBe("warmup focus");
+      expect(result.data.notes).toEqual(["warmup focus"]);
     }
   });
 
@@ -93,12 +93,12 @@ describe("createSessionSchema", () => {
   });
 
   it("accepts { notes } alone", () => {
-    const result = createSessionSchema.safeParse({ notes: "warmup focus" });
+    const result = createSessionSchema.safeParse({ notes: ["warmup focus"] });
 
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data.notes).toBe("warmup focus");
+      expect(result.data.notes).toEqual(["warmup focus"]);
     }
   });
 
@@ -115,7 +115,7 @@ describe("createSessionSchema", () => {
 
   it("accepts notes at MAX_NOTES_LENGTH", () => {
     const result = createSessionSchema.safeParse({
-      notes: "x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH),
+      notes: ["x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH)],
     });
 
     expect(result.success).toBe(true);
@@ -123,7 +123,7 @@ describe("createSessionSchema", () => {
 
   it("rejects notes longer than MAX_NOTES_LENGTH", () => {
     const result = createSessionSchema.safeParse({
-      notes: "x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH + 1),
+      notes: ["x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH + 1)],
     });
 
     expect(result.success).toBe(false);
@@ -158,7 +158,7 @@ describe("updateSessionSchema", () => {
   });
 
   it("accepts { notes } alone", () => {
-    const result = updateSessionSchema.safeParse({ notes: "updated note" });
+    const result = updateSessionSchema.safeParse({ notes: ["updated note"] });
 
     expect(result.success).toBe(true);
   });
@@ -171,7 +171,7 @@ describe("updateSessionSchema", () => {
 
   it("accepts notes at MAX_NOTES_LENGTH", () => {
     const result = updateSessionSchema.safeParse({
-      notes: "x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH),
+      notes: ["x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH)],
     });
 
     expect(result.success).toBe(true);
@@ -179,7 +179,7 @@ describe("updateSessionSchema", () => {
 
   it("rejects notes longer than MAX_NOTES_LENGTH", () => {
     const result = updateSessionSchema.safeParse({
-      notes: "x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH + 1),
+      notes: ["x".repeat(SESSION_CONSTANTS.MAX_NOTES_LENGTH + 1)],
     });
 
     expect(result.success).toBe(false);

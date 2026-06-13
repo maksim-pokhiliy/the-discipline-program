@@ -1,88 +1,57 @@
-import { Position, RowKind } from "@prisma/client";
+import { type PrismaClient } from "@prisma/client";
 
-import { countSchemaRow } from "./shared";
+import { schemaWhere } from "./shared";
 import { type CoverageCell } from "./types";
 
-const EXERCISE_FORMS: readonly string[] = [
-  "atomic",
-  "compound",
-  "or_alternative",
-  "placeholder_ref",
-];
+const MODIFIER_CATALOG_FLOOR = 5;
 
-const exerciseFormCell = (form: string): CoverageCell => ({
-  id: `exerciseForm.${form}`,
-  category: "exerciseForm",
-  label: `Exercise.form = ${form}`,
+const countRowsWithModifier = async (db: PrismaClient, planId: string): Promise<number> =>
+  db.schemaRow.count({
+    where: { schema: schemaWhere(planId), modifierAssignments: { some: {} } },
+  });
+
+const countRowsWithMultipleModifiers = async (
+  db: PrismaClient,
+  planId: string,
+): Promise<number> => {
+  const grouped = await db.rowModifierAssignment.groupBy({
+    by: ["rowId"],
+    where: { row: { schema: schemaWhere(planId) } },
+    _count: { rowId: true },
+  });
+
+  return grouped.filter((g) => g._count.rowId >= 2).length;
+};
+
+const MODIFIER_CATALOG_CELL: CoverageCell = {
+  id: "modifier.catalog",
+  category: "modifier",
+  label: `Modifier catalog ≥ ${MODIFIER_CATALOG_FLOOR} distinct modifiers`,
+  required: MODIFIER_CATALOG_FLOOR,
+  sourceRef: "session-primitive D-MODIFIER catalog presence",
+  tally: (db) => db.modifier.count(),
+};
+
+const MODIFIER_ASSIGNMENT_CELL: CoverageCell = {
+  id: "modifier.assignment",
+  category: "modifier",
+  label: "SchemaRow with ≥1 modifier assignment",
   required: 1,
-  sourceRef: `coverage-matrix §5 ${form}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      rowKind: RowKind.EXERCISE,
-      rowPayload: { path: ["exercise", "form"], equals: form },
-    }),
-});
+  sourceRef: "session-primitive D-MODIFIER assignment present",
+  tally: countRowsWithModifier,
+};
 
-const POSITIONS: readonly Position[] = [
-  Position.NEUTRAL_GRIP,
-  Position.FROM_SOFA,
-  Position.FROM_BOX,
-  Position.FROM_BOX_OR_SOFA,
-  Position.FROM_SOFA_BOX,
-  Position.WITHOUT_BENCH,
-  Position.WITHOUT_JUMP,
-  Position.HOLD_FARM_CARRY,
-  Position.HAND_ON_DB,
-  Position.HANDS_ON_DB,
-  Position.HAND_ON_DB_NEUTRAL_GRIP,
-];
-
-const positionCell = (position: Position): CoverageCell => ({
-  id: `position.${position}`,
-  category: "position",
-  label: `Position = ${position}`,
+const MODIFIER_MULTI_ASSIGNMENT_CELL: CoverageCell = {
+  id: "modifier.multiAssignment",
+  category: "modifier",
+  label: "SchemaRow with ≥2 ordered modifier assignments",
   required: 1,
-  sourceRef: `coverage-matrix §16 ${position}`,
-  tally: (db, planId) => countSchemaRow(db, planId, { position }),
-});
-
-const PLACEHOLDER_KINDS: readonly string[] = [
-  "muscle_group_reference",
-  "purpose_category",
-  "coach_choice_slot",
-];
-
-const placeholderKindCell = (kind: string): CoverageCell => ({
-  id: `perSetSubstitution.placeholder.${kind}`,
-  category: "perSetSubstitution",
-  label: `PlaceholderKind = ${kind}`,
-  required: 1,
-  sourceRef: `coverage-matrix §20 ${kind}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      rowKind: RowKind.PLACEHOLDER,
-      rowPayload: { path: ["placeholder", "placeholderKind"], equals: kind },
-    }),
-});
-
-const OR_PURPOSES: readonly string[] = ["scale_down", "equipment_substitute", "coach_choice"];
-
-const orPurposeCell = (purpose: string): CoverageCell => ({
-  id: `compoundForm.orAlternative.${purpose}`,
-  category: "compoundForm",
-  label: `OrAlternative.purpose = ${purpose}`,
-  required: 1,
-  sourceRef: `coverage-matrix §21 ${purpose}`,
-  tally: (db, planId) =>
-    countSchemaRow(db, planId, {
-      rowKind: RowKind.EXERCISE,
-      rowPayload: { path: ["exercise", "orAlternative", "purpose"], equals: purpose },
-    }),
-});
+  sourceRef: "session-primitive D-MODIFIER ordered multi-ref",
+  tally: countRowsWithMultipleModifiers,
+};
 
 export const EXERCISE_CELLS: readonly CoverageCell[] = [
-  ...EXERCISE_FORMS.map(exerciseFormCell),
-  ...POSITIONS.map(positionCell),
-  ...PLACEHOLDER_KINDS.map(placeholderKindCell),
-  ...OR_PURPOSES.map(orPurposeCell),
+  MODIFIER_CATALOG_CELL,
+  MODIFIER_ASSIGNMENT_CELL,
+  MODIFIER_MULTI_ASSIGNMENT_CELL,
 ];

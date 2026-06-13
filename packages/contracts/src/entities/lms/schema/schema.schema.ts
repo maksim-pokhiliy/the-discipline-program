@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-import { intensitySchema } from "../_shared";
+import { intensitySchema, notesListSchema } from "../_shared";
 import { compositionLabelSchema, compositionSchema } from "../composition";
+import { rowGroupSchema } from "../row-group";
 import { schemaRowSchema } from "../schema-row";
 
 import { SCHEMA_CONSTANTS } from "./schema.constants";
@@ -15,7 +16,7 @@ export const schemaSchema = z.object({
   intensity: intensitySchema.nullable(),
   composition: compositionSchema.nullable(),
   label: compositionLabelSchema.nullable(),
-  notes: z.string().max(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
+  notes: notesListSchema.nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -23,6 +24,7 @@ export const schemaSchema = z.object({
 export const schemaWithBodySchema = z.object({
   schema: schemaSchema,
   rows: z.array(schemaRowSchema),
+  rowGroups: z.array(rowGroupSchema),
 });
 
 const createSchemaBaseSchema = z.object({
@@ -31,7 +33,7 @@ const createSchemaBaseSchema = z.object({
   header: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable().optional(),
   intensity: intensitySchema.nullable().optional(),
   composition: compositionSchema.nullable().optional(),
-  notes: z.string().max(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
+  notes: notesListSchema.nullable().optional(),
 });
 
 export const createSchemaSchema = createSchemaBaseSchema;

@@ -253,12 +253,12 @@ describe("lmsSchemaApi", () => {
           { blockId: ctx.block.id },
           {
             intensity: { rpe: { value: 7 } },
-            notes: "outer block",
+            notes: ["outer block"],
           },
         );
 
         expect(created.intensity).toEqual({ rpe: { value: 7 } });
-        expect(created.notes).toBe("outer block");
+        expect(created.notes).toEqual(["outer block"]);
 
         const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
 
@@ -401,7 +401,7 @@ describe("lmsSchemaApi", () => {
     describe("create into a group", () => {
       const provisionGroup = async (blockId: string) => {
         const group = await cleanupRaw.schemaGroup.create({
-          data: { blockId, label: "parallel ladders" },
+          data: { blockId, notes: ["parallel ladders"] },
         });
         const memberA = await cleanupRaw.schema.create({
           data: { blockId, groupId: group.id, order: 10 },
@@ -484,7 +484,7 @@ describe("lmsSchemaApi", () => {
         const ctx = await provisionBlock();
         const otherCtx = await provisionBlock();
         const foreignGroup = await cleanupRaw.schemaGroup.create({
-          data: { blockId: otherCtx.block.id, label: null },
+          data: { blockId: otherCtx.block.id },
         });
 
         try {
@@ -522,18 +522,18 @@ describe("lmsSchemaApi", () => {
         const updated = await lmsSchemaApi.update(coach.user.id, schema.id, {
           header: "new header",
           intensity: { rpe: { value: 8 } },
-          notes: "set 1",
+          notes: ["set 1"],
         });
 
         expect(updated.header).toBe("new header");
         expect(updated.intensity).toEqual({ rpe: { value: 8 } });
-        expect(updated.notes).toBe("set 1");
+        expect(updated.notes).toEqual(["set 1"]);
 
         const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
 
         expect(stored?.header).toBe("new header");
         expect(stored?.intensity).toEqual({ rpe: { value: 8 } });
-        expect(stored?.notes).toBe("set 1");
+        expect(stored?.notes).toEqual(["set 1"]);
       } finally {
         await ctx.cleanup();
       }
@@ -663,18 +663,18 @@ describe("lmsSchemaApi", () => {
         activePlanId,
         { blockId: ctx.block.id },
         {
-          notes: "original",
+          notes: ["original"],
         },
       );
 
       try {
         await expect(
-          lmsSchemaApi.update(otherCoach.user.id, schema.id, { notes: "tamper" }),
+          lmsSchemaApi.update(otherCoach.user.id, schema.id, { notes: ["tamper"] }),
         ).rejects.toThrow(ForbiddenError);
 
         const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
 
-        expect(stored?.notes).toBe("original");
+        expect(stored?.notes).toEqual(["original"]);
       } finally {
         await ctx.cleanup();
       }
@@ -700,11 +700,7 @@ describe("lmsSchemaApi", () => {
         data: {
           schemaId: target.id,
           order: 10,
-          rowKind: "PLACEHOLDER",
-          rowPayload: {
-            rowKind: "PLACEHOLDER",
-            placeholder: { placeholderKind: "coach_choice_slot" },
-          },
+          exerciseId: "clz0000000000000schemaex1",
         },
       });
 
@@ -726,7 +722,7 @@ describe("lmsSchemaApi", () => {
     it("deletes the group when its last member is deleted (dissolution)", async () => {
       const ctx = await provisionBlock();
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: ctx.block.id, label: null },
+        data: { blockId: ctx.block.id },
       });
       const onlyMember = await cleanupRaw.schema.create({
         data: { blockId: ctx.block.id, groupId: group.id, order: 10 },
@@ -748,7 +744,7 @@ describe("lmsSchemaApi", () => {
     it("keeps the group alive when a non-last member is deleted, surviving members retain groupId", async () => {
       const ctx = await provisionBlock();
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: ctx.block.id, label: null },
+        data: { blockId: ctx.block.id },
       });
       const memberA = await cleanupRaw.schema.create({
         data: { blockId: ctx.block.id, groupId: group.id, order: 10 },
@@ -850,7 +846,7 @@ describe("lmsSchemaApi", () => {
     it("accepts a reorder that keeps a group's members contiguous", async () => {
       const ctx = await provisionBlock();
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: ctx.block.id, label: null },
+        data: { blockId: ctx.block.id },
       });
       const leading = await cleanupRaw.schema.create({
         data: { blockId: ctx.block.id, order: 10 },
@@ -891,7 +887,7 @@ describe("lmsSchemaApi", () => {
     it("rejects a reorder that splits a group's members and leaves orders untouched", async () => {
       const ctx = await provisionBlock();
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: ctx.block.id, label: null },
+        data: { blockId: ctx.block.id },
       });
       const memberA = await cleanupRaw.schema.create({
         data: { blockId: ctx.block.id, groupId: group.id, order: 10 },
@@ -1144,7 +1140,7 @@ describe("lmsSchemaApi", () => {
     it("rejects a member sharing an order with an ungrouped schema (the unique spans the whole block)", async () => {
       const ctx = await provisionBlock();
       const group = await cleanupRaw.schemaGroup.create({
-        data: { blockId: ctx.block.id, label: null },
+        data: { blockId: ctx.block.id },
       });
 
       try {
