@@ -137,9 +137,13 @@ export const ModifierPicker = ({
     const mintedIds: string[] = [];
 
     for (const query of createQueries) {
-      const minted = await createModifier.mutateAsync({ name: query, notes: null });
+      const minted = await createModifier
+        .mutateAsync({ name: query, notes: null })
+        .catch(() => null);
 
-      mintedIds.push(minted.id);
+      if (minted !== null) {
+        mintedIds.push(minted.id);
+      }
     }
 
     onChange(dedupeCapped([...existingIds, ...mintedIds], maxCount));
