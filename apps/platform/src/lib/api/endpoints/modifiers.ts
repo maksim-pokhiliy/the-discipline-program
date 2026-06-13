@@ -1,5 +1,9 @@
 import { type ApiClient } from "@repo/api-client";
-import type { Modifier, ModifierSearchParams } from "@repo/contracts/lms/modifier";
+import type {
+  CreateModifierData,
+  Modifier,
+  ModifierSearchParams,
+} from "@repo/contracts/lms/modifier";
 
 export const createModifiersAPI = (client: ApiClient) => ({
   search: (query?: ModifierSearchParams): Promise<Modifier[]> => {
@@ -14,4 +18,7 @@ export const createModifiersAPI = (client: ApiClient) => ({
       Object.keys(queryParams).length > 0 ? queryParams : undefined,
     );
   },
+
+  create: (data: CreateModifierData): Promise<Modifier> =>
+    client.request("/api/platform/modifiers", "POST", data),
 });

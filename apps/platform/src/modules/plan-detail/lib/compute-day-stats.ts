@@ -1,8 +1,7 @@
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 
-import { notesListToText } from "./notes-list-text";
-
 const EST_MINUTES_PATTERN = /(\d+)\s*min(?![a-z])/i;
+const NOTES_JOIN = "\n";
 
 export type DayStats = {
   blocks: number;
@@ -11,7 +10,7 @@ export type DayStats = {
 };
 
 const parseSessionEstMinutes = (notes: string[] | null): number => {
-  const text = notesListToText(notes);
+  const text = notes === null ? "" : notes.join(NOTES_JOIN);
 
   if (text === "") {
     return 0;

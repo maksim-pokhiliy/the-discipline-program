@@ -51,7 +51,6 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   onTitleCommit,
   onDeleteOpen,
   onEditOpen,
-  isBoxed = false,
   isDraggable = true,
 }): ReactElement => {
   return (
@@ -83,31 +82,27 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
       ) : null}
 
       <Stack direction="column" spacing={INFO_SPACING} sx={{ flex: 1, minWidth: 0 }}>
-        {!isBoxed ? (
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={TITLE_ROW_SPACING}
-            useFlexGap
-            flexWrap="wrap"
-            sx={{ minWidth: 0 }}
-          >
-            {schema.schema.composition !== null ? (
-              <SchemaCompositionTag
-                label={deriveCompositionLabel(schema.schema.composition).kind}
-              />
-            ) : null}
-            <InlineEditText
-              value={formatSchemaHeader(schema)}
-              onCommit={onTitleCommit}
-              variant="h4"
-              ariaLabel={TITLE_ARIA}
-              emptyIsValid
-              maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
-              sx={{ flex: 1, minWidth: 0 }}
-            />
-          </Stack>
-        ) : null}
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={TITLE_ROW_SPACING}
+          useFlexGap
+          flexWrap="wrap"
+          sx={{ minWidth: 0 }}
+        >
+          {schema.schema.composition !== null ? (
+            <SchemaCompositionTag label={deriveCompositionLabel(schema.schema.composition).kind} />
+          ) : null}
+          <InlineEditText
+            value={formatSchemaHeader(schema)}
+            onCommit={onTitleCommit}
+            variant="h4"
+            ariaLabel={TITLE_ARIA}
+            emptyIsValid
+            maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
+            sx={{ flex: 1, minWidth: 0 }}
+          />
+        </Stack>
         <SchemaCardMeta schema={schema} />
       </Stack>
 

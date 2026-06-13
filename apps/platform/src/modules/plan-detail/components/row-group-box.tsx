@@ -1,20 +1,36 @@
 "use client";
 
-import { Box, Stack, Typography, alpha } from "@mui/material";
+import { type ReactElement, useState } from "react";
+
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Box, Stack, alpha } from "@mui/material";
 
 import type { RowGroup } from "@repo/contracts/lms/row-group";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
+import { ConfirmationModal } from "@repo/ui";
 
+import { useDeleteRowGroup, useUpdateRowGroup } from "@app/lib/hooks";
+
+import { rowGroupSortableId } from "../lib/row-item-sortable-id";
+import { useDeleteRowGroupWithMembers } from "../lib/use-delete-row-group-with-members";
+
+import { RowGroupBoxHead } from "./row-group-box-head";
 import { SchemaRowCard } from "./schema-row-card";
 
+const ROW_GROUP_BOX_TEST_ID = "row-group-box";
 const FRAME_BORDER_ALPHA = 0.35;
 const FRAME_BG_ALPHA = 0.03;
 const FRAME_BORDER_RADIUS_FACTOR = 0.5;
-const LABEL_PX_FACTOR = 1.5;
-const LABEL_PY_FACTOR = 0.75;
-const LABEL_BORDER_ALPHA = 0.25;
-const LABEL_FALLBACK = "GROUP";
 const FIRST_NOTE_INDEX = 0;
+const DRAG_OPACITY_DRAGGING = 0.5;
+const DRAG_OPACITY_DEFAULT = 1;
+
+const UNGROUP_TITLE = "Ungroup";
+const UNGROUP_MESSAGE = "Ungroup these rows? They stay in the schema as standalone rows.";
+const UNGROUP_CONFIRM = "Ungroup";
+const DELETE_TITLE = "Delete group";
+const DELETE_MESSAGE = "Delete the group AND its member rows?";
 
 type RowGroupBoxProps = {
   group: RowGroup;
@@ -32,11 +48,54 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
   startDate,
   startIndex,
   isReorderPending,
-}) => {
-  const label = group.notes?.[FIRST_NOTE_INDEX] ?? LABEL_FALLBACK;
+}): ReactElement => {
+  const updateRowGroup = useUpdateRowGroup(planId, startDate);
+  const deleteRowGroup = useDeleteRowGroup(planId, startDate);
+  const deleteRowGroupWithMembers = useDeleteRowGroupWithMembers(planId, startDate);
+
+  const [isUngroupOpen, setIsUngroupOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: rowGroupSortableId(group.id),
+    disabled: isReorderPending,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
+  };
+
+  const currentLabel = group.notes?.[FIRST_NOTE_INDEX] ?? null;
+
+  const handleLabelCommit = (next: string) => {
+    const trimmed = next.trim();
+    const nextLabel = trimmed === "" ? null : trimmed;
+
+    if (nextLabel === currentLabel) {
+      return;
+    }
+
+    updateRowGroup.mutate({
+      rowGroupId: group.id,
+      data: { notes: nextLabel === null ? null : [nextLabel] },
+    });
+  };
+
+  const handleUngroupConfirm = () =>
+    deleteRowGroup.mutate({ rowGroupId: group.id }, { onSuccess: () => setIsUngroupOpen(false) });
+
+  const handleDeleteConfirm = async () => {
+    await deleteRowGroupWithMembers.run({ members });
+    setIsDeleteOpen(false);
+  };
 
   return (
     <Box
+      ref={setNodeRef}
+      style={style}
+      data-testid={ROW_GROUP_BOX_TEST_ID}
       sx={(theme) => ({
         border: `1px solid ${alpha(theme.palette.primary.main, FRAME_BORDER_ALPHA)}`,
         borderRadius: theme.spacing(FRAME_BORDER_RADIUS_FACTOR),
@@ -44,19 +103,15 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
         overflow: "hidden",
       })}
     >
-      <Stack
-        direction="row"
-        alignItems="center"
-        sx={(theme) => ({
-          px: theme.spacing(LABEL_PX_FACTOR),
-          py: theme.spacing(LABEL_PY_FACTOR),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, LABEL_BORDER_ALPHA)}`,
-        })}
-      >
-        <Typography variant="overline" color="primary.main">
-          {label}
-        </Typography>
-      </Stack>
+      <RowGroupBoxHead
+        group={group}
+        isUpdatePending={updateRowGroup.isPending}
+        dragAttributes={attributes}
+        dragListeners={listeners}
+        onLabelCommit={handleLabelCommit}
+        onUngroupOpen={() => setIsUngroupOpen(true)}
+        onDeleteOpen={() => setIsDeleteOpen(true)}
+      />
 
       <Stack>
         {members.map((member, offset) => (
@@ -67,9 +122,31 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
             startDate={startDate}
             index={startIndex + offset}
             isReorderPending={isReorderPending}
+            isDraggable={false}
           />
         ))}
       </Stack>
+
+      <ConfirmationModal
+        open={isUngroupOpen}
+        onClose={() => setIsUngroupOpen(false)}
+        title={UNGROUP_TITLE}
+        type="warning"
+        message={UNGROUP_MESSAGE}
+        confirmText={UNGROUP_CONFIRM}
+        onConfirm={handleUngroupConfirm}
+        isConfirming={deleteRowGroup.isPending}
+      />
+
+      <ConfirmationModal
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title={DELETE_TITLE}
+        type="danger"
+        message={DELETE_MESSAGE}
+        onConfirm={handleDeleteConfirm}
+        isConfirming={deleteRowGroupWithMembers.isPending}
+      />
     </Box>
   );
 };

@@ -10,17 +10,16 @@ import type { DayOfWeek } from "@repo/contracts/lms/_shared";
 import { DAY_CONSTANTS, type SessionWithLabel } from "@repo/contracts/lms/day";
 import type { Label } from "@repo/contracts/lms/label";
 import { isSameDay } from "@repo/shared";
-import { InlineEditText, LabelPickerChip } from "@repo/ui";
+import { LabelPickerChip } from "@repo/ui";
 
 import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
-
-import { notesListToText, textToNotesList } from "../lib/notes-list-text";
 
 import { AddSessionButton } from "./add-session-button";
 import { DayRowEmpty } from "./day-row-empty";
 import { DayRowHead } from "./day-row-head";
 import { DayRowRest } from "./day-row-rest";
 import { DayRowSummary } from "./day-row-summary";
+import { NotesListField } from "./notes-list-field";
 import { SessionList } from "./session-list";
 
 const DAY_HEAD_WIDTH_PX = 96;
@@ -81,13 +80,10 @@ export const DayRow: React.FC<DayRowProps> = ({
             ariaLabel="Day label"
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <InlineEditText
-              value={notesListToText(notes)}
-              onCommit={(next) => updateNotes.mutate({ notes: textToNotesList(next) })}
-              variant="body2"
+            <NotesListField
+              value={notes}
+              onCommit={(next) => updateNotes.mutate({ notes: next })}
               ariaLabel="Day notes"
-              multiline
-              emptyIsValid
               placeholder="day note (cues, focus)…"
               maxLength={DAY_CONSTANTS.MAX_NOTES_LENGTH}
             />

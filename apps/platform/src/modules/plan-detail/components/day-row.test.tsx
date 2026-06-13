@@ -111,14 +111,24 @@ const renderDayRow = ({
   );
 };
 
-const getNotesInput = (): HTMLInputElement | HTMLTextAreaElement => {
-  const el = screen.getByRole("textbox", { name: "Day notes" });
+const getNoteInputs = (): (HTMLInputElement | HTMLTextAreaElement)[] =>
+  screen
+    .queryAllByRole("textbox", { name: /^Day notes/ })
+    .filter(
+      (el): el is HTMLInputElement | HTMLTextAreaElement =>
+        el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement,
+    );
 
-  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) {
-    throw new Error("expected an input/textarea element for Day notes");
+const addNoteButton = (): HTMLElement => screen.getByRole("button", { name: "add note" });
+
+const blurNoteField = (): void => {
+  const root = addNoteButton().closest(".MuiBox-root");
+
+  if (!(root instanceof HTMLElement)) {
+    throw new Error("expected the NotesListField root for Day notes");
   }
 
-  return el;
+  fireEvent.blur(root, { relatedTarget: document.body });
 };
 
 beforeEach(() => {
@@ -251,31 +261,42 @@ describe("DayRow", () => {
     expect(updateLabelMutate).toHaveBeenCalledWith({ labelId: recovery.id });
   });
 
-  it("fires useUpdateDayNotes.mutate with the trimmed notes on blur", () => {
+  it("fires useUpdateDayNotes.mutate with the authored multi-note list on focus-leave (W4R-005)", () => {
     updateNotesMutate.mockClear();
 
     renderDayRow();
 
-    const input = getNotesInput();
-
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "  focus on bar path  " } });
-    fireEvent.blur(input);
+    fireEvent.click(addNoteButton());
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, {
+      target: { value: "  focus on bar path  " },
+    });
+    fireEvent.click(addNoteButton());
+    fireEvent.change(getNoteInputs()[1] as HTMLElement, { target: { value: "stay tight" } });
+    blurNoteField();
 
     expect(updateNotesMutate).toHaveBeenCalledTimes(1);
-    expect(updateNotesMutate).toHaveBeenCalledWith({ notes: ["focus on bar path"] });
+    expect(updateNotesMutate).toHaveBeenCalledWith({
+      notes: ["focus on bar path", "stay tight"],
+    });
   });
 
-  it("commits null instead of an empty string when the day note is cleared on blur", () => {
+  it("reopens a stored multi-note day list as separate rows without collapsing", () => {
+    renderDayRow({ notes: ["cue one", "cue two"] });
+
+    const inputs = getNoteInputs();
+
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]?.value).toBe("cue one");
+    expect(inputs[1]?.value).toBe("cue two");
+  });
+
+  it("commits null instead of an empty list when the only day note is cleared on focus-leave", () => {
     updateNotesMutate.mockClear();
 
     renderDayRow({ notes: ["previous note"] });
 
-    const input = getNotesInput();
-
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "" } });
-    fireEvent.blur(input);
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "" } });
+    blurNoteField();
 
     expect(updateNotesMutate).toHaveBeenCalledTimes(1);
     expect(updateNotesMutate).toHaveBeenCalledWith({ notes: null });

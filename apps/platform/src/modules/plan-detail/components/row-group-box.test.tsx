@@ -1,11 +1,54 @@
 import { createElement } from "react";
 
-import { describe, expect, it, vi } from "vitest";
+import { alpha } from "@mui/material";
+import { act, fireEvent, screen, waitForElementToBeRemoved, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { RowGroup } from "@repo/contracts/lms/row-group";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
+import { theme } from "@repo/mui";
 
+import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
+
+import type * as DeleteRowGroupWithMembers from "../lib/use-delete-row-group-with-members";
+
+const updateRowGroupMutate = vi.fn();
+const updateRowGroupState = { isPending: false };
+const deleteRowGroupMutate = vi.fn();
+const deleteRowGroupState = { isPending: false };
+const deleteRowGroupWithMembersRun = vi.fn();
+const deleteRowGroupWithMembersState = { isPending: false };
+
+vi.mock("@app/lib/hooks", async () => {
+  const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
+
+  return {
+    ...actual,
+    useUpdateRowGroup: () => ({
+      mutate: updateRowGroupMutate,
+      isPending: updateRowGroupState.isPending,
+    }),
+    useDeleteRowGroup: () => ({
+      mutate: deleteRowGroupMutate,
+      isPending: deleteRowGroupState.isPending,
+    }),
+  };
+});
+
+vi.mock("../lib/use-delete-row-group-with-members", async () => {
+  const actual = await vi.importActual<typeof DeleteRowGroupWithMembers>(
+    "../lib/use-delete-row-group-with-members",
+  );
+
+  return {
+    ...actual,
+    useDeleteRowGroupWithMembers: () => ({
+      run: deleteRowGroupWithMembersRun,
+      isPending: deleteRowGroupWithMembersState.isPending,
+    }),
+  };
+});
 
 vi.mock("./schema-row-card", () => {
   const renderSchemaRowCardMock = (props: { row: SchemaRow; index: number }) =>
@@ -27,11 +70,16 @@ const { RowGroupBox } = await import("./row-group-box");
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
+const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const EXERCISE_ID = "clp9z8x7w0000abcd1234ex001";
+const BOX_TEST_ID = "row-group-box";
+const GROUP_LABEL_ARIA = "Group label";
+const GROUP_PLACEHOLDER = "group label…";
+const FRAME_BORDER_ALPHA = 0.35;
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 
 const makeGroup = (overrides: Partial<RowGroup> = {}): RowGroup => ({
-  id: "clp9z8x7w0000abcd1234grp1",
+  id: GROUP_ID,
   schemaId: SCHEMA_ID,
   notes: null,
   createdAt: NOW,
@@ -45,7 +93,7 @@ const makeRow = (id: string, order: number): SchemaRow => ({
   order,
   exerciseId: EXERCISE_ID,
   sets: null,
-  rowGroupId: "clp9z8x7w0000abcd1234grp1",
+  rowGroupId: GROUP_ID,
   load: null,
   reps: null,
   side: null,
@@ -57,7 +105,9 @@ const makeRow = (id: string, order: number): SchemaRow => ({
   updatedAt: NOW,
 });
 
-const renderBox = (group: RowGroup, members: SchemaRow[]) =>
+const DEFAULT_MEMBERS = [makeRow("m1", 1), makeRow("m2", 2)];
+
+const renderBox = (group: RowGroup = makeGroup(), members: SchemaRow[] = DEFAULT_MEMBERS) =>
   render(
     <RowGroupBox
       group={group}
@@ -69,33 +119,215 @@ const renderBox = (group: RowGroup, members: SchemaRow[]) =>
     />,
   );
 
+afterEach(() => {
+  updateRowGroupState.isPending = false;
+  deleteRowGroupState.isPending = false;
+  deleteRowGroupWithMembersState.isPending = false;
+  updateRowGroupMutate.mockReset();
+  deleteRowGroupMutate.mockReset();
+  deleteRowGroupWithMembersRun.mockReset();
+});
+
+describe("RowGroupBox frame", () => {
+  it("renders a solid tinted frame whose border maps to alpha(primary.main, 0.35) — no dashed look", () => {
+    renderBox();
+
+    const box = screen.getByTestId(BOX_TEST_ID);
+
+    expect(box).toHaveStyle({ borderStyle: "solid" });
+    expect(box).toHaveStyle({
+      borderColor: alpha(theme.palette.primary.main, FRAME_BORDER_ALPHA),
+    });
+    expect(box).not.toHaveStyle({ borderStyle: "dashed" });
+  });
+
+  it("shows the GROUP overline in the head", () => {
+    renderBox();
+
+    expect(screen.getByText("GROUP")).toBeInTheDocument();
+  });
+});
+
 describe("RowGroupBox label", () => {
-  it("uses the first note as the box label (QA-#16)", () => {
-    const { getByText } = renderBox(makeGroup({ notes: ["OR"] }), [makeRow("r1", 1)]);
+  it("seeds the label textbox from the first note", () => {
+    renderBox(makeGroup({ notes: ["OR"] }));
 
-    expect(getByText("OR")).toBeInTheDocument();
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
+
+    if (!(label instanceof HTMLInputElement)) {
+      throw new Error("group label is not an HTMLInputElement");
+    }
+
+    expect(label.value).toBe("OR");
   });
 
-  it("falls back to GROUP when notes is null (QA-#16)", () => {
-    const { getByText } = renderBox(makeGroup({ notes: null }), [makeRow("r1", 1)]);
+  it("shows an empty label textbox with the proto placeholder when notes is null", () => {
+    renderBox(makeGroup({ notes: null }));
 
-    expect(getByText("GROUP")).toBeInTheDocument();
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
+
+    if (!(label instanceof HTMLInputElement)) {
+      throw new Error("group label is not an HTMLInputElement");
+    }
+
+    expect(label.value).toBe("");
+    expect(label).toHaveAttribute("placeholder", GROUP_PLACEHOLDER);
   });
 
-  it("falls back to GROUP when notes is an empty list (QA-#16)", () => {
-    const { getByText } = renderBox(makeGroup({ notes: [] }), [makeRow("r1", 1)]);
+  it("commits a non-empty label as { notes: [<value>] } via useUpdateRowGroup.mutate", () => {
+    renderBox(makeGroup({ notes: null }));
 
-    expect(getByText("GROUP")).toBeInTheDocument();
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "OR" } });
+    fireEvent.blur(label);
+
+    expect(updateRowGroupMutate).toHaveBeenCalledTimes(1);
+    expect(updateRowGroupMutate).toHaveBeenCalledWith({
+      rowGroupId: GROUP_ID,
+      data: { notes: ["OR"] },
+    });
+  });
+
+  it("commits a cleared label as { notes: null } via useUpdateRowGroup.mutate", () => {
+    renderBox(makeGroup({ notes: ["OR"] }));
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "" } });
+    fireEvent.blur(label);
+
+    expect(updateRowGroupMutate).toHaveBeenCalledTimes(1);
+    expect(updateRowGroupMutate).toHaveBeenCalledWith({
+      rowGroupId: GROUP_ID,
+      data: { notes: null },
+    });
+  });
+
+  it("does NOT fire mutate when the label is committed unchanged", () => {
+    renderBox(makeGroup({ notes: ["Keep me"] }));
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "Keep me" } });
+    fireEvent.blur(label);
+
+    expect(updateRowGroupMutate).not.toHaveBeenCalled();
   });
 });
 
 describe("RowGroupBox members", () => {
-  it("renders each member card with a continuous index from startIndex (QA-#16)", () => {
+  it("renders each member card with a continuous index from startIndex", () => {
     const { container } = renderBox(makeGroup(), [makeRow("m1", 1), makeRow("m2", 2)]);
 
     const cards = Array.from(container.querySelectorAll('[data-testid="schema-row-card-mock"]'));
 
     expect(cards.map((c) => c.getAttribute("data-row-id"))).toEqual(["m1", "m2"]);
     expect(cards.map((c) => c.getAttribute("data-index"))).toEqual(["0", "1"]);
+  });
+});
+
+describe("RowGroupBox ungroup gesture", () => {
+  it("dissolves the group via useDeleteRowGroup.mutate after confirming Ungroup", () => {
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Ungroup" })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ungroup" }));
+
+    expect(deleteRowGroupMutate).toHaveBeenCalledTimes(1);
+    expect(deleteRowGroupMutate.mock.calls[0]?.[0]).toEqual({ rowGroupId: GROUP_ID });
+    expect(deleteRowGroupWithMembersRun).not.toHaveBeenCalled();
+  });
+
+  it("keeps the dialog open until the dissolve succeeds (house modal pattern)", async () => {
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Ungroup" }));
+
+    expect(deleteRowGroupMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    const options = deleteRowGroupMutate.mock.calls[0]?.[1] as { onSuccess: () => void };
+
+    act(() => options.onSuccess());
+
+    await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
+  });
+
+  it("disables the Ungroup confirm while the dissolve is pending", () => {
+    deleteRowGroupState.isPending = true;
+
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ungroup" }));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("button", { name: "Processing..." })).toBeDisabled();
+  });
+});
+
+describe("RowGroupBox delete-group gesture", () => {
+  it("deletes the group and its members via useDeleteRowGroupWithMembers.run after confirming", () => {
+    const members = [makeRow("d1", 1), makeRow("d2", 2)];
+
+    renderBox(makeGroup(), members);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Delete group" })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(deleteRowGroupWithMembersRun).toHaveBeenCalledTimes(1);
+    expect(deleteRowGroupWithMembersRun.mock.calls[0]?.[0]).toEqual({ members });
+    expect(deleteRowGroupMutate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the dialog open while the delete runs and closes after it settles", async () => {
+    let resolveRun: () => void = () => {};
+
+    deleteRowGroupWithMembersRun.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveRun = resolve;
+      }),
+    );
+
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }));
+
+    expect(deleteRowGroupWithMembersRun).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await act(async () => {
+      resolveRun();
+    });
+
+    await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
+  });
+
+  it("disables the Delete confirm while the run is pending", () => {
+    deleteRowGroupWithMembersState.isPending = true;
+
+    renderBox();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete group" }));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("button", { name: "Processing..." })).toBeDisabled();
   });
 });

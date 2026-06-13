@@ -2,17 +2,16 @@
 
 import { alpha, Box, Stack, Typography } from "@mui/material";
 
-import { notesListToText } from "../lib/notes-list-text";
-
 const STRIPE_ALPHA = 0.06;
 const SURFACE_ALPHA = 0.025;
+const NOTES_JOIN = "\n";
 
 type DayRowRestProps = {
   notes: string[] | null;
 };
 
 export const DayRowRest: React.FC<DayRowRestProps> = ({ notes }) => {
-  const notesText = notesListToText(notes);
+  const notesText = notes === null ? "" : notes.join(NOTES_JOIN);
   const hasNotes = notesText !== "";
 
   return (

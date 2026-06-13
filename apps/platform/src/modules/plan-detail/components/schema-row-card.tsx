@@ -8,7 +8,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import TuneIcon from "@mui/icons-material/Tune";
-import { Box, IconButton, Link, Tooltip, Typography } from "@mui/material";
+import { Box, Checkbox, IconButton, Link, Tooltip, Typography } from "@mui/material";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal, RowKindBadge } from "@repo/ui";
@@ -16,10 +16,13 @@ import { ConfirmationModal, RowKindBadge } from "@repo/ui";
 import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
 
 import { formatRow } from "../lib/format-row";
+import { rowSortableId } from "../lib/row-item-sortable-id";
 
+import { RowEditorModal } from "./row-editor-modal";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
+const GRID_TEMPLATE_COLUMNS_SELECT = "32px 24px 24px 32px 1fr auto auto auto";
 const GRID_GAP_FACTOR = 1.25;
 const PADDING_X_FACTOR = 1.5;
 const PADDING_Y_FACTOR = 1;
@@ -34,9 +37,10 @@ const DELETE_TITLE = "Delete row";
 const DELETE_MESSAGE = "Delete this row?";
 const DRAG_ARIA = "Drag row";
 const EDIT_ARIA = "Edit row";
-const EDIT_TOOLTIP = "Edit row (coming in W4-editor)";
+const EDIT_TOOLTIP = "Edit row";
 const DELETE_ARIA = "Delete row";
 const DELETE_TOOLTIP = "Delete row";
+const SELECT_ARIA = "Select row";
 
 const tooltipChildSx = { display: "inline-flex" };
 
@@ -47,6 +51,10 @@ type SchemaRowCardProps = {
   index: number;
   minuteLabel?: string | null;
   isReorderPending: boolean;
+  isDraggable?: boolean;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (rowId: string) => void;
 };
 
 export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
@@ -56,6 +64,10 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   index,
   minuteLabel = null,
   isReorderPending,
+  isDraggable = true,
+  isSelectMode = false,
+  isSelected = false,
+  onToggleSelect,
 }) => {
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
   const { exerciseById } = useCatalog();
@@ -63,11 +75,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const isMutationPending = deleteSchemaRow.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: row.id,
-    disabled: isMutationPending,
+    id: rowSortableId(row.id),
+    disabled: !isDraggable || isMutationPending,
   });
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
 
   const fmt = useMemo(() => formatRow(row, exerciseById, index), [row, exerciseById, index]);
 
@@ -90,7 +103,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
       style={style}
       sx={(theme) => ({
         display: "grid",
-        gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
+        gridTemplateColumns: isSelectMode ? GRID_TEMPLATE_COLUMNS_SELECT : GRID_TEMPLATE_COLUMNS,
         gap: theme.spacing(GRID_GAP_FACTOR),
         alignItems: "center",
         px: theme.spacing(PADDING_X_FACTOR),
@@ -102,24 +115,38 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         "&:last-of-type": { borderBottom: 0 },
       })}
     >
-      <IconButton
-        {...attributes}
-        {...listeners}
-        size="small"
-        aria-label={DRAG_ARIA}
-        disabled={isMutationPending}
-        sx={{
-          cursor: "grab",
-          touchAction: "none",
-          "&.Mui-focusVisible": {
-            outline: "2px solid",
-            outlineColor: "primary.main",
-            outlineOffset: 2,
-          },
-        }}
-      >
-        <DragIndicatorIcon fontSize="small" />
-      </IconButton>
+      {isSelectMode ? (
+        <Checkbox
+          size="small"
+          checked={isSelected}
+          onChange={() => onToggleSelect?.(row.id)}
+          inputProps={{ "aria-label": SELECT_ARIA }}
+          sx={{ p: 0 }}
+        />
+      ) : null}
+
+      {isDraggable ? (
+        <IconButton
+          {...attributes}
+          {...listeners}
+          size="small"
+          aria-label={DRAG_ARIA}
+          disabled={isMutationPending}
+          sx={{
+            cursor: "grab",
+            touchAction: "none",
+            "&.Mui-focusVisible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <DragIndicatorIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <span />
+      )}
 
       <Typography
         variant="caption"
@@ -169,7 +196,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
 
       <Tooltip title={EDIT_TOOLTIP}>
         <span style={tooltipChildSx}>
-          <IconButton size="small" disabled aria-label={EDIT_ARIA}>
+          <IconButton
+            size="small"
+            onClick={() => setIsEditOpen(true)}
+            disabled={isMutationPending}
+            aria-label={EDIT_ARIA}
+          >
             <TuneIcon fontSize="small" />
           </IconButton>
         </span>
@@ -199,6 +231,16 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         onConfirm={handleDeleteConfirm}
         isConfirming={deleteSchemaRow.isPending}
       />
+
+      {isEditOpen ? (
+        <RowEditorModal
+          open={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          planId={planId}
+          startDate={startDate}
+          mode={{ kind: "edit", row }}
+        />
+      ) : null}
     </Box>
   );
 };
