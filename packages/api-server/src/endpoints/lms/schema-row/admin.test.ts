@@ -312,6 +312,26 @@ describe("lmsSchemaRowApi", () => {
       ).rejects.toThrow(NotFoundError);
     });
 
+    it("rejects a non-existent modifierId on create (P2003) and persists no row (atomicity, QA-#11)", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        await expect(
+          lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+            schemaId: ctx.schema.id,
+            exerciseId: exerciseAId,
+            modifierIds: ["clz0000000000000000000000"],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const rowCount = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
+
+        expect(rowCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     describe("flat write-guard fetch", () => {
       it("creates a row on a flat ladder schema — the guard validates the single flat container", async () => {
         const blockCtx = await provisionBlock();
@@ -414,6 +434,80 @@ describe("lmsSchemaRowApi", () => {
         });
 
         expect(updated.modifiers.map((m) => m.id)).toEqual([modifierBId]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("clears every assignment when modifierIds is [] (set-replace semantics, QA-#11)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        modifierIds: [modifierAId, modifierBId],
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
+          modifierIds: [],
+        });
+
+        expect(updated.modifiers).toEqual([]);
+
+        const assignmentCount = await cleanupRaw.rowModifierAssignment.count({
+          where: { rowId: created.id },
+        });
+
+        expect(assignmentCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("leaves the existing assignment set untouched when modifierIds is omitted (QA-#11)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        modifierIds: [modifierAId],
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, { sets: 4 });
+
+        expect(updated.modifiers.map((m) => m.id)).toEqual([modifierAId]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects a non-existent modifierId (P2003) and rolls back the assignment clear AND the column write (atomicity, QA-#11)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        sets: 3,
+        modifierIds: [modifierAId],
+      });
+
+      try {
+        await expect(
+          lmsSchemaRowApi.update(coach.user.id, created.id, {
+            sets: 9,
+            modifierIds: ["clz0000000000000000000000"],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.sets).toBe(3);
+
+        const assignments = await cleanupRaw.rowModifierAssignment.findMany({
+          where: { rowId: created.id },
+          select: { modifierId: true },
+        });
+
+        expect(assignments.map((a) => a.modifierId)).toEqual([modifierAId]);
       } finally {
         await ctx.cleanup();
       }

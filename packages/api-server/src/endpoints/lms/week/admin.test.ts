@@ -430,6 +430,84 @@ describe("lmsWeekApi", () => {
       }
     });
 
+    it("embeds rows.modifiers[] sorted by assignment order and schemas.rowGroups[] on the week read (QA-#12)", async () => {
+      const unique = crypto.randomUUID().slice(0, 8);
+      const modifierFirst = await cleanupRaw.modifier.create({
+        data: { name: `Week Modifier First ${unique}`, nameLower: `week modifier first ${unique}` },
+      });
+      const modifierSecond = await cleanupRaw.modifier.create({
+        data: {
+          name: `Week Modifier Second ${unique}`,
+          nameLower: `week modifier second ${unique}`,
+        },
+      });
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({ data: { sessionId: session.id, order: 10 } });
+      const schema = await cleanupRaw.schema.create({ data: { blockId: block.id, order: 10 } });
+      const rowGroup = await cleanupRaw.rowGroup.create({
+        data: { schemaId: schema.id, notes: ["OR"] },
+      });
+      const memberA = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 10,
+          exerciseId: ROW_EXERCISE_ID,
+          rowGroupId: rowGroup.id,
+        },
+      });
+      const memberB = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 20,
+          exerciseId: ROW_EXERCISE_ID,
+          rowGroupId: rowGroup.id,
+        },
+      });
+
+      await cleanupRaw.rowModifierAssignment.create({
+        data: { rowId: memberA.id, modifierId: modifierSecond.id, order: 1 },
+      });
+      await cleanupRaw.rowModifierAssignment.create({
+        data: { rowId: memberA.id, modifierId: modifierFirst.id, order: 0 },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+        const embedded = result.days[1]?.sessions[0]?.blocks[0]?.schemas[0];
+
+        expect(embedded?.rows.map((r) => r.id)).toEqual([memberA.id, memberB.id]);
+        expect(embedded?.rows[0]?.modifiers.map((m) => m.id)).toEqual([
+          modifierFirst.id,
+          modifierSecond.id,
+        ]);
+        expect(embedded?.rows[1]?.modifiers).toEqual([]);
+
+        expect(embedded?.rowGroups).toHaveLength(1);
+        expect(embedded?.rowGroups[0]?.id).toBe(rowGroup.id);
+        expect(embedded?.rowGroups[0]?.schemaId).toBe(schema.id);
+        expect(embedded?.rowGroups[0]?.notes).toEqual(["OR"]);
+      } finally {
+        await cleanupRaw.rowModifierAssignment
+          .deleteMany({ where: { rowId: { in: [memberA.id, memberB.id] } } })
+          .catch(() => {});
+        await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
+        await cleanupRaw.rowGroup.delete({ where: { id: rowGroup.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+        await cleanupRaw.modifier.delete({ where: { id: modifierFirst.id } }).catch(() => {});
+        await cleanupRaw.modifier.delete({ where: { id: modifierSecond.id } }).catch(() => {});
+      }
+    });
+
     it("embeds a group's members FLAT in schemas (each carrying groupId) and surfaces the group in groups", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
@@ -717,6 +795,38 @@ describe("lmsWeekApi", () => {
 
         try {
           await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM);
+        } catch (error) {
+          expect(error).toBeInstanceOf(InternalServerError);
+
+          if (error instanceof InternalServerError) {
+            expect(error.statusCode).toBe(500);
+            expect(error.details?.kind).toBe("DbCorruption");
+          }
+        }
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("surfaces a stale row leaf shape (dropped load.none) as a 500 DbCorruption, not a partial render (QA-#13)", async () => {
+      const ctx = await provisionCollisionWeek();
+      const schema = await cleanupRaw.schema.create({
+        data: { blockId: ctx.block.id, order: 10 },
+      });
+
+      await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 10,
+          exerciseId: ROW_EXERCISE_ID,
+          load: { kind: "none" },
+        },
+      });
+
+      try {
+        try {
+          await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM);
+          throw new Error("expected the stale row to surface a DbCorruption 500");
         } catch (error) {
           expect(error).toBeInstanceOf(InternalServerError);
 

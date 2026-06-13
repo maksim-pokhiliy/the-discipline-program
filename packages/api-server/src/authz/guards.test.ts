@@ -18,6 +18,7 @@ import {
   verifyAthleteBelongsToCoach,
   verifyBlockOwnership,
   verifyPlanOwnership,
+  verifyRowGroupOwnership,
   verifySchemaOwnership,
   verifySchemaRowOwnership,
 } from "./guards";
@@ -435,6 +436,116 @@ describe("platform guards", () => {
 
       try {
         await expect(verifySchemaRowOwnership(schemaRowId, coach.user.id)).rejects.toThrow(
+          NotFoundError,
+        );
+      } finally {
+        await cleanupRaw.trainingPlan.update({
+          where: { id: plan.id },
+          data: { deletedAt: null },
+        });
+      }
+    });
+  });
+
+  describe("verifyRowGroupOwnership", () => {
+    let weekId: string;
+    let dayId: string;
+    let sessionId: string;
+    let blockId: string;
+    let schemaId: string;
+    let rowGroupId: string;
+
+    beforeAll(async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: plan.id, startDate: new Date(Date.UTC(2026, 5, 8)) },
+      });
+
+      weekId = week.id;
+
+      const day = await cleanupRaw.day.create({
+        data: { weekId, dayOfWeek: "FRIDAY" },
+      });
+
+      dayId = day.id;
+
+      const session = await cleanupRaw.session.create({
+        data: { dayId, order: 10 },
+      });
+
+      sessionId = session.id;
+
+      const block = await cleanupRaw.block.create({
+        data: { sessionId, order: 10 },
+      });
+
+      blockId = block.id;
+
+      const schema = await cleanupRaw.schema.create({
+        data: { blockId, order: 10 },
+      });
+
+      schemaId = schema.id;
+
+      const rowGroup = await cleanupRaw.rowGroup.create({
+        data: { schemaId },
+      });
+
+      rowGroupId = rowGroup.id;
+    });
+
+    afterAll(async () => {
+      await cleanupRaw.rowGroup.delete({ where: { id: rowGroupId } }).catch(() => {});
+      await cleanupRaw.schema.delete({ where: { id: schemaId } }).catch(() => {});
+      await cleanupRaw.block.delete({ where: { id: blockId } }).catch(() => {});
+      await cleanupRaw.session.delete({ where: { id: sessionId } }).catch(() => {});
+      await cleanupRaw.day.delete({ where: { id: dayId } }).catch(() => {});
+      await cleanupRaw.week.delete({ where: { id: weekId } }).catch(() => {});
+    });
+
+    it("returns the full chain ids and status for the plan creator (QA-#14)", async () => {
+      await expect(verifyRowGroupOwnership(rowGroupId, coach.user.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+        schemaId,
+        blockId,
+        sessionId,
+        dayId,
+        weekId,
+        planId: plan.id,
+      });
+    });
+
+    it("returns the chain for a HEAD_COACH bypass (QA-#14)", async () => {
+      await expect(verifyRowGroupOwnership(rowGroupId, headCoachUser.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+        schemaId,
+        blockId,
+        sessionId,
+        dayId,
+        weekId,
+        planId: plan.id,
+      });
+    });
+
+    it("throws ForbiddenError for an unrelated coach (QA-#14)", async () => {
+      await expect(verifyRowGroupOwnership(rowGroupId, otherCoach.user.id)).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+
+    it("throws NotFoundError when the row group does not exist", async () => {
+      await expect(
+        verifyRowGroupOwnership("clz0000000000000000000000", coach.user.id),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it("throws NotFoundError when the parent plan is soft-deleted", async () => {
+      await cleanupRaw.trainingPlan.update({
+        where: { id: plan.id },
+        data: { deletedAt: new Date() },
+      });
+
+      try {
+        await expect(verifyRowGroupOwnership(rowGroupId, coach.user.id)).rejects.toThrow(
           NotFoundError,
         );
       } finally {
