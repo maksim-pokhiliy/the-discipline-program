@@ -90,6 +90,19 @@ describe("createRowGroupRequestSchema", () => {
     ).toBe(false);
   });
 
+  it("rejects duplicate rowIds", () => {
+    const result = createRowGroupRequestSchema.safeParse({
+      ...baseRequest,
+      rowIds: [cuidA, cuidA],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("rowIds must be unique");
+    }
+  });
+
   it("rejects an unknown root key (strict)", () => {
     expect(
       createRowGroupRequestSchema.safeParse({ ...baseRequest, interleaveOrder: "round_by_round" })

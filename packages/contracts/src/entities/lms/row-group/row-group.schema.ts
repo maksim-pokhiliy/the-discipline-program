@@ -15,7 +15,13 @@ export const rowGroupSchema = z.object({
 export const createRowGroupRequestSchema = z
   .object({
     schemaId: z.string().cuid(),
-    rowIds: z.array(z.string().cuid()).min(2).max(ROW_GROUP_CONSTANTS.MAX_ROWS_PER_GROUP),
+    rowIds: z
+      .array(z.string().cuid())
+      .min(2)
+      .max(ROW_GROUP_CONSTANTS.MAX_ROWS_PER_GROUP)
+      .refine((ids) => new Set(ids).size === ids.length, {
+        message: "rowIds must be unique",
+      }),
     notes: notesListSchema.nullable().optional(),
   })
   .strict();
