@@ -2,6 +2,8 @@
 
 A big feature spans many sessions. Without a durable home, each new session re-derives context and drifts. An **initiative** is that home: a fixed set of files per big feature + a resume protocol + a **promotion discipline**, so work — and the _reasoning behind it_ — survives across sessions.
 
+> **Where this sits.** Initiatives are the MIDDLE of the planning stack: **`docs/roadmap.md`** (phases from now to MVP launch — read first, every session) → **an initiative** (this — one epic, usually one phase) → **`docs/adr/`** (cross-cutting architecture). The full team-of-one-plus-AI workflow and the Definition of Done discipline live in **`docs/process.md`**.
+
 This **replaces the two-session planner/executor workflow** (`implementation/`, now superseded history). One session does both halves: plan the step, run the code through `/feature` (or an ultracode workflow), validate, close out. The `/feature` pipeline stays the quality gate — the single-session model drops the _shuttle ceremony_, not the quality bar, and (since 2026-06-03) **not the structured board either**.
 
 ## An initiative
