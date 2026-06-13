@@ -23,15 +23,16 @@ describe("cmsModifierAdminApi", () => {
 
   describe("createModifier", () => {
     it("creates a modifier and lowercases the name into nameLower", async () => {
-      const created = await cmsModifierAdminApi.createModifier({ name: "From Sofa" });
+      const name = `From Sofa ${crypto.randomUUID().slice(0, 8)}`;
+      const created = await cmsModifierAdminApi.createModifier({ name });
 
       trackModifier(created.id);
 
-      expect(created.name).toBe("From Sofa");
+      expect(created.name).toBe(name);
 
       const stored = await cleanupRaw.modifier.findUnique({ where: { id: created.id } });
 
-      expect(stored?.nameLower).toBe("from sofa");
+      expect(stored?.nameLower).toBe(name.toLowerCase());
     });
 
     it("persists an optional notes list", async () => {
