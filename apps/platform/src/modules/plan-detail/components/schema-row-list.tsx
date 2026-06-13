@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Button, Stack } from "@mui/material";
 
@@ -10,6 +10,7 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { deriveMinuteView } from "../lib/derive-minute-view";
 
+import { RowEditorModal } from "./row-editor-modal";
 import { RowGroupBox } from "./row-group-box";
 import { SchemaRowCard } from "./schema-row-card";
 
@@ -34,6 +35,8 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   composition = null,
   parentIsReorderPending = false,
 }) => {
+  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
+
   const items = useMemo(() => buildRowItems(rows, rowGroups), [rows, rowGroups]);
 
   const minuteLabelById = useMemo<Map<string, string>>(() => {
@@ -103,15 +106,25 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
         })}
       >
         <Button
-          disabled
           size="tiny"
           variant="text"
+          onClick={() => setIsCreateOpen(true)}
           sx={{ alignSelf: "flex-start" }}
           data-schema-id={schemaId}
         >
           {ADD_ROW_LABEL}
         </Button>
       </Stack>
+
+      {isCreateOpen ? (
+        <RowEditorModal
+          open={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          planId={planId}
+          startDate={startDate}
+          mode={{ kind: "create", schemaId }}
+        />
+      ) : null}
     </Stack>
   );
 };

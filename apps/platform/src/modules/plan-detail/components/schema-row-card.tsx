@@ -17,6 +17,7 @@ import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
 
 import { formatRow } from "../lib/format-row";
 
+import { RowEditorModal } from "./row-editor-modal";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
@@ -34,7 +35,7 @@ const DELETE_TITLE = "Delete row";
 const DELETE_MESSAGE = "Delete this row?";
 const DRAG_ARIA = "Drag row";
 const EDIT_ARIA = "Edit row";
-const EDIT_TOOLTIP = "Edit row (coming in W4-editor)";
+const EDIT_TOOLTIP = "Edit row";
 const DELETE_ARIA = "Delete row";
 const DELETE_TOOLTIP = "Delete row";
 
@@ -68,6 +69,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   });
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
 
   const fmt = useMemo(() => formatRow(row, exerciseById, index), [row, exerciseById, index]);
 
@@ -169,7 +171,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
 
       <Tooltip title={EDIT_TOOLTIP}>
         <span style={tooltipChildSx}>
-          <IconButton size="small" disabled aria-label={EDIT_ARIA}>
+          <IconButton
+            size="small"
+            onClick={() => setIsEditOpen(true)}
+            disabled={isMutationPending}
+            aria-label={EDIT_ARIA}
+          >
             <TuneIcon fontSize="small" />
           </IconButton>
         </span>
@@ -199,6 +206,16 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         onConfirm={handleDeleteConfirm}
         isConfirming={deleteSchemaRow.isPending}
       />
+
+      {isEditOpen ? (
+        <RowEditorModal
+          open={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          planId={planId}
+          startDate={startDate}
+          mode={{ kind: "edit", row }}
+        />
+      ) : null}
     </Box>
   );
 };

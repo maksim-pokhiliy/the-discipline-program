@@ -1,5 +1,6 @@
 import { createElement } from "react";
 
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Composition } from "@repo/contracts/lms/composition";
@@ -27,6 +28,19 @@ vi.mock("./schema-row-card", () => {
 
   return { SchemaRowCard: renderSchemaRowCardMock };
 });
+
+vi.mock("./row-editor-modal", () => ({
+  RowEditorModal: (props: { mode: { kind: string; schemaId?: string } }) =>
+    createElement(
+      "div",
+      {
+        "data-testid": "row-editor-modal-mock",
+        "data-mode-kind": props.mode.kind,
+        "data-schema-id": props.mode.schemaId ?? "",
+      },
+      "row-editor-modal",
+    ),
+}));
 
 const { SchemaRowList } = await import("./schema-row-list");
 
@@ -170,5 +184,40 @@ describe("SchemaRowList cadence minute labels", () => {
     );
 
     expect(minuteLabelsOf(container)).toEqual([""]);
+  });
+});
+
+describe("SchemaRowList add row", () => {
+  const renderList = () =>
+    render(
+      <SchemaRowList
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        schemaId={SCHEMA_ID}
+        rows={[]}
+        rowGroups={[]}
+      />,
+    );
+
+  it("renders the Add row button enabled and tagged with the schema id", () => {
+    renderList();
+
+    const addButton = screen.getByRole("button", { name: /add row/i });
+
+    expect(addButton).toBeEnabled();
+    expect(addButton).toHaveAttribute("data-schema-id", SCHEMA_ID);
+  });
+
+  it("opens the row editor modal in create mode for the schema when Add row is clicked", () => {
+    renderList();
+
+    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /add row/i }));
+
+    const modal = screen.getByTestId("row-editor-modal-mock");
+
+    expect(modal).toHaveAttribute("data-mode-kind", "create");
+    expect(modal).toHaveAttribute("data-schema-id", SCHEMA_ID);
   });
 });

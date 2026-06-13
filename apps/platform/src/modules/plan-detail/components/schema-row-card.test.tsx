@@ -1,3 +1,5 @@
+import { createElement } from "react";
+
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -32,6 +34,19 @@ vi.mock("@app/lib/hooks", async () => {
     }),
   };
 });
+
+vi.mock("./row-editor-modal", () => ({
+  RowEditorModal: (props: { mode: { kind: string; row?: SchemaRow } }) =>
+    createElement(
+      "div",
+      {
+        "data-testid": "row-editor-modal-mock",
+        "data-mode-kind": props.mode.kind,
+        "data-row-id": props.mode.row?.id ?? "",
+      },
+      "row-editor-modal",
+    ),
+}));
 
 const { SchemaRowCard } = await import("./schema-row-card");
 
@@ -120,7 +135,28 @@ describe("SchemaRowCard chrome", () => {
     expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeInTheDocument();
   });
 
-  it("renders the Edit IconButton as a disabled stub (W4-editor)", () => {
+  it("renders the Edit IconButton enabled (W4-editor wired)", () => {
+    renderRowCard();
+
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
+  });
+
+  it("opens the row editor modal in edit mode seeded from the row when Edit is clicked", () => {
+    renderRowCard();
+
+    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
+
+    const modal = screen.getByTestId("row-editor-modal-mock");
+
+    expect(modal).toHaveAttribute("data-mode-kind", "edit");
+    expect(modal).toHaveAttribute("data-row-id", ROW_ID);
+  });
+
+  it("disables the Edit IconButton when a mutation is pending (QA-004)", () => {
+    deleteSchemaRowState.isPending = true;
+
     renderRowCard();
 
     expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
