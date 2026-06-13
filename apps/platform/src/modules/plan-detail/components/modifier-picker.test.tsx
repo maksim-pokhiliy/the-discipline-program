@@ -1,3 +1,5 @@
+import { useState, type ReactElement } from "react";
+
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -49,6 +51,12 @@ const chipLabels = (): string[] =>
 
     return label?.textContent ? [label.textContent] : [];
   });
+
+const ControlledPicker = (): ReactElement => {
+  const [value, setValue] = useState<string[]>([]);
+
+  return <ModifierPicker value={value} onChange={setValue} />;
+};
 
 beforeEach(() => {
   searchState.data = [];
@@ -132,6 +140,21 @@ describe("ModifierPicker create-on-the-fly", () => {
 
     expect(createModifierMock).toHaveBeenCalledWith({ name: "from sofa", notes: null });
     expect(onChange).toHaveBeenCalledWith([BANDED.id, minted.id]);
+  });
+
+  it("resolves a freshly minted modifier's name on its chip, not the raw id", async () => {
+    const minted = makeModifier({ id: "clp9z8x7w0000abcd12mod0011", name: "from sofa" });
+
+    createModifierMock.mockResolvedValueOnce(minted);
+    searchState.data = [];
+
+    render(<ControlledPicker />);
+
+    openListbox();
+    typeQuery("from sofa");
+    fireEvent.click(screen.getByText('Create "from sofa"'));
+
+    await vi.waitFor(() => expect(chipLabels()).toEqual(["from sofa"]));
   });
 
   it("appends a freeSolo-committed name through the same mint path", async () => {

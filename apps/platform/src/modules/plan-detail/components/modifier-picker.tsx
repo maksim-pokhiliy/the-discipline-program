@@ -111,6 +111,7 @@ export const ModifierPicker = ({
   disabled = false,
 }: CreatableMultiPickerProps) => {
   const [inputValue, setInputValue] = useState("");
+  const [mintedNames, setMintedNames] = useState<ReadonlyMap<string, string>>(() => new Map());
   const debouncedQuery = useDebouncedValue(inputValue.trim(), SEARCH_DEBOUNCE_MS);
   const searchQuery = useModifierSearch(debouncedQuery === "" ? undefined : debouncedQuery);
   const createModifier = useCreateModifier();
@@ -118,10 +119,15 @@ export const ModifierPicker = ({
   const searchResults = useMemo(() => searchQuery.data ?? [], [searchQuery.data]);
   const isAtCap = value.length >= maxCount;
 
-  const nameById = useMemo(
-    () => buildResolvedNameMap(searchResults, resolvedRefs ?? []),
-    [searchResults, resolvedRefs],
-  );
+  const nameById = useMemo(() => {
+    const byId = buildResolvedNameMap(searchResults, resolvedRefs ?? []);
+
+    for (const [id, name] of mintedNames) {
+      byId.set(id, name);
+    }
+
+    return byId;
+  }, [searchResults, resolvedRefs, mintedNames]);
   const valueOptions = useMemo(() => buildValueOptions(value, nameById), [value, nameById]);
 
   const handleChange = async (_event: SyntheticEvent, chosen: ChosenValue): Promise<void> => {
@@ -135,6 +141,7 @@ export const ModifierPicker = ({
     }
 
     const mintedIds: string[] = [];
+    const mintedEntries: Array<[string, string]> = [];
 
     for (const query of createQueries) {
       const minted = await createModifier
@@ -143,7 +150,20 @@ export const ModifierPicker = ({
 
       if (minted !== null) {
         mintedIds.push(minted.id);
+        mintedEntries.push([minted.id, minted.name]);
       }
+    }
+
+    if (mintedEntries.length > 0) {
+      setMintedNames((prev) => {
+        const next = new Map(prev);
+
+        for (const [id, name] of mintedEntries) {
+          next.set(id, name);
+        }
+
+        return next;
+      });
     }
 
     onChange(dedupeCapped([...existingIds, ...mintedIds], maxCount));
