@@ -121,14 +121,24 @@ const renderSessionCard = ({
   );
 };
 
-const getNotesInput = (): HTMLInputElement | HTMLTextAreaElement => {
-  const el = screen.getByRole("textbox", { name: "Session notes" });
+const getNoteInputs = (): (HTMLInputElement | HTMLTextAreaElement)[] =>
+  screen
+    .queryAllByRole("textbox", { name: /^Session notes/ })
+    .filter(
+      (el): el is HTMLInputElement | HTMLTextAreaElement =>
+        el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement,
+    );
 
-  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) {
-    throw new Error("expected an input/textarea element for Session notes");
+const addNoteButton = (): HTMLElement => screen.getByRole("button", { name: "add note" });
+
+const blurNoteField = (): void => {
+  const root = addNoteButton().closest(".MuiBox-root");
+
+  if (!(root instanceof HTMLElement)) {
+    throw new Error("expected the NotesListField root for Session notes");
   }
 
-  return el;
+  fireEvent.blur(root, { relatedTarget: document.body });
 };
 
 describe("SessionCard", () => {
@@ -219,34 +229,43 @@ describe("SessionCard", () => {
     });
   });
 
-  it("fires useUpdateSession.mutate with the trimmed notes on blur", () => {
+  it("fires useUpdateSession.mutate with the authored multi-note list on focus-leave (W4R-005)", () => {
     updateSessionMutate.mockClear();
 
     renderSessionCard();
 
-    const input = getNotesInput();
-
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "  focus on bar path  " } });
-    fireEvent.blur(input);
+    fireEvent.click(addNoteButton());
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, {
+      target: { value: "  focus on bar path  " },
+    });
+    fireEvent.click(addNoteButton());
+    fireEvent.change(getNoteInputs()[1] as HTMLElement, { target: { value: "~ 45 min" } });
+    blurNoteField();
 
     expect(updateSessionMutate).toHaveBeenCalledTimes(1);
     expect(updateSessionMutate).toHaveBeenCalledWith({
       sessionId: "clp9z8x7w0000abcd1234ses1",
-      data: { notes: ["focus on bar path"] },
+      data: { notes: ["focus on bar path", "~ 45 min"] },
     });
   });
 
-  it("commits null instead of an empty string when the session note is cleared on blur", () => {
+  it("reopens a stored multi-note session list as separate rows without collapsing", () => {
+    renderSessionCard({ session: makeSession({ notes: ["cue one", "cue two"] }) });
+
+    const inputs = getNoteInputs();
+
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]?.value).toBe("cue one");
+    expect(inputs[1]?.value).toBe("cue two");
+  });
+
+  it("commits null instead of an empty list when the only session note is cleared on focus-leave", () => {
     updateSessionMutate.mockClear();
 
     renderSessionCard({ session: makeSession({ notes: ["previous note"] }) });
 
-    const input = getNotesInput();
-
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "" } });
-    fireEvent.blur(input);
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "" } });
+    blurNoteField();
 
     expect(updateSessionMutate).toHaveBeenCalledTimes(1);
     expect(updateSessionMutate).toHaveBeenCalledWith({
@@ -315,22 +334,21 @@ describe("SessionCard", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("wires maxLength=2000 on the inline notes input from SESSION_CONSTANTS (Q-10)", () => {
+  it("wires maxLength=2000 on each notes input from SESSION_CONSTANTS (Q-10)", () => {
     renderSessionCard();
 
-    expect(getNotesInput()).toHaveAttribute("maxlength", "2000");
+    fireEvent.click(addNoteButton());
+
+    expect(getNoteInputs()[0]).toHaveAttribute("maxlength", "2000");
   });
 
-  it("commits null on blur when only whitespace remains over a non-empty prior note (Q-4)", () => {
+  it("commits null on focus-leave when only whitespace remains over a non-empty prior note (Q-4)", () => {
     updateSessionMutate.mockClear();
 
     renderSessionCard({ session: makeSession({ notes: ["RPE 9 focus"] }) });
 
-    const input = getNotesInput();
-
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "   " } });
-    fireEvent.blur(input);
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "   " } });
+    blurNoteField();
 
     expect(updateSessionMutate).toHaveBeenCalledTimes(1);
     expect(updateSessionMutate).toHaveBeenCalledWith({

@@ -3,18 +3,19 @@
 import { Stack, alpha } from "@mui/material";
 
 import { BLOCK_CONSTANTS } from "@repo/contracts/lms/block";
-import { InlineEditText } from "@repo/ui";
+
+import { NotesListField } from "./notes-list-field";
 
 const NOTES_PLACEHOLDER = "block notes — coaching cues, intent…";
 const NOTES_ARIA = "Block notes";
 const NOTE_BG_ALPHA = 0.015;
 
 type BlockCardNoteProps = {
-  value: string;
-  onCommit: (next: string) => void;
+  notes: string[] | null;
+  onCommit: (next: string[] | null) => void;
 };
 
-export const BlockCardNote: React.FC<BlockCardNoteProps> = ({ value, onCommit }) => (
+export const BlockCardNote: React.FC<BlockCardNoteProps> = ({ notes, onCommit }) => (
   <Stack
     direction="row"
     alignItems="center"
@@ -26,16 +27,12 @@ export const BlockCardNote: React.FC<BlockCardNoteProps> = ({ value, onCommit })
       borderColor: "divider",
     })}
   >
-    <InlineEditText
-      value={value}
+    <NotesListField
+      value={notes}
       onCommit={onCommit}
-      variant="body2"
-      multiline
-      emptyIsValid
       placeholder={NOTES_PLACEHOLDER}
-      maxLength={BLOCK_CONSTANTS.MAX_NOTES_LENGTH}
       ariaLabel={NOTES_ARIA}
-      sx={{ flex: 1, minWidth: 0 }}
+      maxLength={BLOCK_CONSTANTS.MAX_NOTES_LENGTH}
     />
   </Stack>
 );

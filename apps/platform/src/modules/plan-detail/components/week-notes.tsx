@@ -1,12 +1,15 @@
 "use client";
 
-import { InputBase, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 import { formatDateParam } from "@repo/shared";
 
-import { useBlurCommit, useUpdateWeekNotes } from "@app/lib/hooks";
+import { useUpdateWeekNotes } from "@app/lib/hooks";
 
-import { notesListToText, textToNotesList } from "../lib/notes-list-text";
+import { NotesListField } from "./notes-list-field";
+
+const NOTES_PLACEHOLDER = "optional — coach reminder";
+const NOTES_ARIA = "Week notes";
 
 type WeekNotesProps = {
   planId: string;
@@ -16,34 +19,20 @@ type WeekNotesProps = {
 
 export const WeekNotes: React.FC<WeekNotesProps> = ({ planId, monday, notes }) => {
   const updateNotes = useUpdateWeekNotes(planId);
-  const { draft, setDraft, handleFocus, handleBlur } = useBlurCommit({
-    value: notesListToText(notes),
-    onCommit: (next) =>
-      updateNotes.mutate({
-        startDate: formatDateParam(monday),
-        data: { notes: textToNotesList(next) },
-      }),
-  });
+
+  const handleCommit = (next: string[] | null) =>
+    updateNotes.mutate({ startDate: formatDateParam(monday), data: { notes: next } });
 
   return (
     <Stack direction="row" alignItems="flex-start" spacing={1.25} sx={{ px: 0.5 }}>
       <Typography variant="overline" color="primary" sx={{ flexShrink: 0, pt: 0.5 }}>
         Week note
       </Typography>
-      <InputBase
-        multiline
-        fullWidth
-        placeholder="optional — coach reminder"
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        inputProps={{ "aria-label": "Week notes" }}
-        sx={{
-          flex: 1,
-          p: 0,
-          ".MuiInputBase-input": { p: 0, typography: "body2", color: "text.secondary" },
-        }}
+      <NotesListField
+        value={notes}
+        onCommit={handleCommit}
+        placeholder={NOTES_PLACEHOLDER}
+        ariaLabel={NOTES_ARIA}
       />
     </Stack>
   );

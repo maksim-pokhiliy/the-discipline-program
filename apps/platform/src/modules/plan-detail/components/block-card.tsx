@@ -12,8 +12,6 @@ import { ConfirmationModal } from "@repo/ui";
 import { useLabelOptions } from "@app/lib/hooks";
 import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
 
-import { notesListToText, textToNotesList } from "../lib/notes-list-text";
-
 import { BlockCardBody } from "./block-card-body";
 import { BlockCardHead } from "./block-card-head";
 import { BlockCardNote } from "./block-card-note";
@@ -57,10 +55,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const handleLabelsChange = (labelIds: string[]) =>
     assignLabels.mutate({ blockId: block.id, data: { labelIds } });
 
-  const handleNotesCommit = (next: string) =>
+  const handleNotesCommit = (next: string[] | null) =>
     updateBlock.mutate({
       blockId: block.id,
-      data: { notes: textToNotesList(next) },
+      data: { notes: next },
     });
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
@@ -104,7 +102,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         onLabelsChange={handleLabelsChange}
         onDeleteOpen={handleDeleteOpen}
       />
-      <BlockCardNote value={notesListToText(block.notes)} onCommit={handleNotesCommit} />
+      <BlockCardNote notes={block.notes} onCommit={handleNotesCommit} />
       <BlockCardBody
         block={block}
         planId={planId}

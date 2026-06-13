@@ -5,16 +5,15 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import { IconButton, Stack, Tooltip } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { SESSION_CONSTANTS } from "@repo/contracts/lms/session";
-import { InlineEditText, LabelPickerChip } from "@repo/ui";
+import { LabelPickerChip } from "@repo/ui";
 
 import { useLabelOptions } from "@app/lib/hooks";
 
-import { notesListToText } from "../lib/notes-list-text";
-
+import { NotesListField } from "./notes-list-field";
 import { SessionCardCollapsedStats } from "./session-card-collapsed-stats";
 
 const DRAG_ARIA = "Drag session";
@@ -28,7 +27,7 @@ type SessionCardHeadProps = {
   isExpanded: boolean;
   onToggleExpanded: () => void;
   onLabelChange: (labelId: string | null) => void;
-  onNotesCommit: (next: string) => void;
+  onNotesCommit: (next: string[] | null) => void;
   onDeleteOpen: () => void;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -115,16 +114,15 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
         ariaLabel="Session label"
       />
 
-      <InlineEditText
-        value={notesListToText(session.notes)}
-        onCommit={onNotesCommit}
-        variant="body2"
-        ariaLabel="Session notes"
-        emptyIsValid
-        placeholder="session note (~ duration, focus)…"
-        maxLength={SESSION_CONSTANTS.MAX_NOTES_LENGTH}
-        sx={{ flex: 1, minWidth: 0 }}
-      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <NotesListField
+          value={session.notes}
+          onCommit={onNotesCommit}
+          ariaLabel="Session notes"
+          placeholder="session note (~ duration, focus)…"
+          maxLength={SESSION_CONSTANTS.MAX_NOTES_LENGTH}
+        />
+      </Box>
 
       {!isExpanded && hasBlocks ? <SessionCardCollapsedStats blockCount={blockCount} /> : null}
 

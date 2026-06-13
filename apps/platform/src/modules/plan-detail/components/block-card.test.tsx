@@ -165,14 +165,28 @@ const renderBlockCard = ({
   );
 };
 
-const getNotesInput = (): HTMLInputElement | HTMLTextAreaElement => {
-  const el = screen.getByRole("textbox", { name: "Block notes" });
+const getNoteInputs = (): (HTMLInputElement | HTMLTextAreaElement)[] =>
+  screen
+    .queryAllByRole("textbox", { name: /^Block notes/ })
+    .filter(
+      (el): el is HTMLInputElement | HTMLTextAreaElement =>
+        el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement,
+    );
 
-  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) {
-    throw new Error("expected an input/textarea element for Block notes");
+const addNoteButton = (): HTMLElement => screen.getByRole("button", { name: "add note" });
+
+const noteFieldRoot = (): HTMLElement => {
+  const root = addNoteButton().closest(".MuiBox-root");
+
+  if (!(root instanceof HTMLElement)) {
+    throw new Error("expected the NotesListField root for Block notes");
   }
 
-  return el;
+  return root;
+};
+
+const blurNoteField = (): void => {
+  fireEvent.blur(noteFieldRoot(), { relatedTarget: document.body });
 };
 
 afterEach(() => {
@@ -199,10 +213,10 @@ describe("BlockCard chrome", () => {
     renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
 
     const dragBtn = screen.getByRole("button", { name: "Drag block" });
-    const noteInput = getNotesInput();
+    const noteAnchor = addNoteButton();
     const schemaCardMock = screen.getByTestId("schema-card-mock");
 
-    const sectionOrder = [dragBtn, noteInput, schemaCardMock];
+    const sectionOrder = [dragBtn, noteAnchor, schemaCardMock];
 
     for (let i = 0; i < sectionOrder.length - 1; i += 1) {
       const earlier = sectionOrder[i];
@@ -311,39 +325,55 @@ describe("BlockCard multi-label", () => {
 });
 
 describe("BlockCard note row", () => {
-  it("renders the note row always with placeholder copy when block.notes === null", () => {
+  it("renders the note row with an add-note affordance and no rows when block.notes === null", () => {
     renderBlockCard();
 
-    const input = getNotesInput();
-
-    expect(input).toHaveAttribute("placeholder", "block notes — coaching cues, intent…");
-    expect(input.value).toBe("");
+    expect(addNoteButton()).toBeInTheDocument();
+    expect(getNoteInputs()).toHaveLength(0);
   });
 
-  it("fires useUpdateBlock with { data: { notes: <value> } } when a non-empty value is committed", () => {
+  it("seeds the placeholder copy on a freshly added empty note", () => {
     renderBlockCard();
 
-    const input = getNotesInput();
+    fireEvent.click(addNoteButton());
 
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "focus on bar path" } });
-    fireEvent.blur(input);
+    expect(getNoteInputs()[0]).toHaveAttribute(
+      "placeholder",
+      "block notes — coaching cues, intent…",
+    );
+  });
+
+  it("fires useUpdateBlock with the authored multi-note list on focus-leave (W4R-005)", () => {
+    renderBlockCard();
+
+    fireEvent.click(addNoteButton());
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "focus on bar path" } });
+    fireEvent.click(addNoteButton());
+    fireEvent.change(getNoteInputs()[1] as HTMLElement, { target: { value: "brace hard" } });
+    blurNoteField();
 
     expect(updateBlockMutate).toHaveBeenCalledTimes(1);
     expect(updateBlockMutate).toHaveBeenCalledWith({
       blockId: BLOCK_ID,
-      data: { notes: ["focus on bar path"] },
+      data: { notes: ["focus on bar path", "brace hard"] },
     });
   });
 
-  it("fires useUpdateBlock with { data: { notes: null } } when an empty string is committed", () => {
+  it("reopens a stored multi-note list as separate rows without collapsing", () => {
+    renderBlockCard({ block: makeBlock({ notes: ["cue one", "cue two"] }) });
+
+    const inputs = getNoteInputs();
+
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]?.value).toBe("cue one");
+    expect(inputs[1]?.value).toBe("cue two");
+  });
+
+  it("fires useUpdateBlock with { data: { notes: null } } when the only note is cleared", () => {
     renderBlockCard({ block: makeBlock({ notes: ["previous note"] }) });
 
-    const input = getNotesInput();
-
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "" } });
-    fireEvent.blur(input);
+    fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "" } });
+    blurNoteField();
 
     expect(updateBlockMutate).toHaveBeenCalledTimes(1);
     expect(updateBlockMutate).toHaveBeenCalledWith({

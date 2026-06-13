@@ -55,10 +55,9 @@ export const NotesListEditor = ({
             multiline
             minRows={NOTE_ROWS}
             size="small"
-            aria-label={`${ariaLabel} ${index + 1}`}
             value={note}
             onChange={(e) => updateNote(index, e.target.value)}
-            inputProps={{ maxLength }}
+            inputProps={{ maxLength, "aria-label": `${ariaLabel} ${index + 1}` }}
             disabled={disabled}
             {...(placeholder !== undefined && { placeholder })}
           />
