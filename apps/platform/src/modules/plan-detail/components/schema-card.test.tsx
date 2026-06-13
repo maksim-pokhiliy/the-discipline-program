@@ -227,14 +227,14 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
   });
 
-  it("suppresses the title row and its composition tag when isBoxed (head-dedup, DR-W1-3)", () => {
+  it("renders the title row and its composition tag when isBoxed (header parity, D7/D-HEADER-KEEP supersedes DR-W1-3)", () => {
     renderSchemaCard({
       schema: makeSchema({ composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } } }),
       isBoxed: true,
     });
 
-    expect(screen.queryByRole("textbox", { name: TITLE_LABEL })).toBeNull();
-    expect(screen.queryByText("ladder")).toBeNull();
+    expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
+    expect(screen.getByText("ladder")).toBeInTheDocument();
   });
 });
 
