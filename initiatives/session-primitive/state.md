@@ -1,18 +1,18 @@
 # session-primitive — state (the board)
 
-**Updated:** 2026-06-12 (W3 merged `9a9dfb8e` · D-PLAQUE + D-CHIPS + D-MODIFIER ratified; D-POSITION superseded same day · suite green)
+**Updated:** 2026-06-12 (W3 merged `9a9dfb8e` · **W4 DESIGN FROZEN** — full F-ledger closed, `primitive-spec.md` zero OPEN rows · next = the W4 `/feature` prompt)
 
 Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; why → `decisions.md`; carry-forwards → `deferred.md`; the design itself → `primitive-spec.md`.
 
 ## Board
 
-| #   | Wave                                                   | Status                             | Pointer                         |
-| --- | ------------------------------------------------------ | ---------------------------------- | ------------------------------- |
-| 0   | Founding: review → skeleton + grid + spec              | 🟢 done                            | `primitive-spec.md` · D-1..D-8  |
-| W1  | Group/box UX on the existing model (platform-only)     | 🟢 merged (PR #261)                | plan §W1 · DR-W1-1..5           |
-| W2  | Model core (Group entity, recursion/arrangement death) | 🟢 merged (PR #262)                | `0041` · DR-W2-1..9 · FORK-1..6 |
-| W3  | Editor remap (proto fidelity + gestures + draft flat)  | 🟢 merged (PR #263)                | DR-W3-1..12 · FORK-2/3          |
-| W4  | Row grammar + leaf residuals                           | ⚪ needs leaf F-rows (F-PLAQUE ✅) | plan §W4 · D-PLAQUE             |
+| #   | Wave                                                   | Status                         | Pointer                           |
+| --- | ------------------------------------------------------ | ------------------------------ | --------------------------------- |
+| 0   | Founding: review → skeleton + grid + spec              | 🟢 done                        | `primitive-spec.md` · D-1..D-8    |
+| W1  | Group/box UX on the existing model (platform-only)     | 🟢 merged (PR #261)            | plan §W1 · DR-W1-1..5             |
+| W2  | Model core (Group entity, recursion/arrangement death) | 🟢 merged (PR #262)            | `0041` · DR-W2-1..9 · FORK-1..6   |
+| W3  | Editor remap (proto fidelity + gestures + draft flat)  | 🟢 merged (PR #263)            | DR-W3-1..12 · FORK-2/3            |
+| W4  | Row grammar + leaf residuals                           | 🟡 design FROZEN — prompt next | plan §W4 · D-FLOORS…D-HEADER-KEEP |
 
 ## Next action
 
@@ -22,15 +22,25 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 
 **Orchestrator review PASSED (2026-06-12, PR #263 — zero defects found).** Verified against the diff, not the self-report: scope = platform + EXACTLY the three sanctioned touches (api-routes barrel export — additive 2 lines; contracts dead-export deletions — 0 remaining consumers repo-wide; seed const rename — identifier-only at 3 sites, byte-identical data, verified via raw diff); admin/marketing/`@repo/ui` zero-touch. D1 confirmed in code (`-` separator at the call site; the format-pin test imports the REAL `IDEMPOTENCY_KEY_REGEX`). No hex in any changed platform file. One-predicate held (`buildBlockItems` — still exactly one consumer). Re-entry guard = synchronous `useRef` + `isPending` with settle-reset, double-fire pins on every gesture. Clean one-component-per-file leaf decomposition. Gates re-run independently — identical: check-types 16/16, lint 16/16, dep:check 0 (1636 modules), contracts **741/741**, platform **851/851**. **The runner's REOPEN of W2-FOOTNOTE-LAST / W2-URL-PLACEHOLDER was reviewed and ACCEPTED** — contentful correction: the 2026-06-12 closure was premised on "re-confirm inside the polish pass", and the polish pass itself narrowed to D1+D2; the two §6.7 seed-content re-confirms are still owed (one-line owner answers — collect at the §10 walkthrough).
 
-**MERGED 2026-06-12 — main `9a9dfb8e`** (branch deleted), after a TWO-ROUND owner walkthrough that caught what jsdom structurally cannot (the pointer-capture / collision-geometry layer — fireEvent.click bypasses both). **Round 1** (fixed `c6008b9d` / `66cf5a60` / `096d98f0`): the group head was 100% dead (drag listeners spread on the whole head Stack) → proto-faithful dedicated head drag handle (the owner refreshed the prototype with top-left handles; in-group `useTrackDrag` from that refresh deliberately NOT taken — W3-TRACK-DRAG); standalone schemas never dragged (raw-cuid `useSortable` id vs composite `schema:${id}` context) → ONE shared id source `block-item-sortable-id.ts`; row `media` never rendered (`formatRow` read only the exercise catalog) → row media now feeds the ▶ demo link. **Round 2** (fixed `32f5b5bc` / `5687c1df` / `46d4c2f2`): group confirmations closed before the callback (re-entry-ref velosiped) → re-aligned to the house modal pending pattern (DR-W3-12 — modal waits with Processing…, component refs removed); group↔schema reorder flapped/snapped → root cause: the block-items list is the app's ONLY mixed-height list and `closest*` metrics flap on heterogeneous heights → **pointer-first collision** (`pointerWithin` → `closestCorners` fallback — DR-W3-11; block-list got `closestCorners` en route). Final gates: platform **861/861**, types/lint 16/16, dep:check 0. **Next planner starts here, in order:**
+W3 history → `journal.md` (merged `9a9dfb8e` after a two-round owner walkthrough — dead group head, sortable-id mismatch, row-media; then modal pending pattern + pointer-first collision DR-W3-11/12). **The 2026-06-12 design session then CLOSED the entire W4 leaf design — the spec is FROZEN.** Next planner starts here:
 
-1. **DONE 2026-06-12 (design session):** the one-liners collected — **W3-TRACK-DRAG + W3-DND-POLISH** → ONE `/feature small` (SCHEDULED, owner-paced, independent of W4; both polish items accepted) · **W2-FOOTNOTE-LAST CLOSED** (owner: "это же просто строка с упражнением… НЕ УНИКАЛЬНАЯ СТРОКА" — block-183 correct as-is) · **gated suite CONFIRMED green by the owner** · **W2-URL-PLACEHOLDER CLOSED** — seed made coach-readable ("Yoga time" / "Follow the yoga video" / "Warm up for feet — follow the video"); owner reseeded + accepted; committed to main. **F-PLAQUE CLOSED → D-PLAQUE ratified:** plaque = render vocabulary, no stored node; rest single-carrier (`RowKind.REST` + `raw` die; ONE rest per schema, multi-rest rejected); notes = MULTIPLE ordered texts on ANY element (block/schema/row/both groups), rendered as a plaque stack; row-group = mirror of Group (contiguous, 2+, opaque label); only-once → its own schema via order. Grid + kill list updated.
-2. **F-POSITION-CARRIER + F-CHIPS CLOSED same session — with a same-day reversal:** D-POSITION (position = row notes) lived a few hours and was SUPERSEDED by **D-MODIFIER** after the owner re-opened position as a MODEL concept: the row MODIFIER is a coach-owned library entity (à la Label/Exercise; ordered multi-REF on rows — corpus carries 2–3 at once; searchable create-on-the-fly picker shared with the new LABEL-FLOW-UX item; rename = wording not prescription; delete-in-use refused). The 3-layer boundary is ratified: machine-read → typed · dictionary how-to-execute → modifier · situational text → note. Chips dissolved (D-CHIPS: "chip" = MUI render word; "прицепи текстик" = notes). **Leaf F-rows next (owner-paced, one topic per touch): F-WEIGHT-EXOTICS + F-TEMPO** (consult `load-representation.md` + `load-edge-cases.md`, NOT re-read at founding; run each through the 3-layer boundary) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.
-3. **The W4 prompt is authored only after the leaf F-rows close (D-8 JIT).** W4 already carries (per D-PLAQUE + D-POSITION): the `RowKind.REST` + `raw` kill (seed rest lines → schema setting; dual-rest rule 2 → note), notes columns → ordered lists (+ notes on both group entities), the row-group entity + editor, the sequence VO death (only-once corpus case → own schema), the `Position` enum + column + editor kill → the row-MODIFIER library entity + multi-ref on rows + the searchable create-on-the-fly picker (D-MODIFIER), plus whatever the remaining F-rows ratify.
+**THE NEXT ACTION = author the W4 `/feature` prompt** (no open decision gates it; D-8 JIT satisfied — the whole F-ledger is ratified). W4 = the row-grammar + model build + the coach-platform page. Per the owner's roadmap sequence (in `plan.md`): **W4 (model + coach page) → catalog pass (equipment library, `concrete\|placeholder\|rest` nature, snos movement types) → e2e (orchestrator writes evil CrossFit workouts, owner builds them by hand) → "ОК" → next roadmap phase.**
+
+W4 carries (the full ratified set):
+
+- **D-FLOORS** — block loses intensity+timeCap (→ schema / `repetition.timeCap`); intensity is schema-only (row override removed); `SchemaGroup.label` + row-group label → notes.
+- **D-ROW-GRAMMAR** — one row kind (exercise); `RowKind` REST/PLACEHOLDER/REST_SLOT die → catalog nature (inferred, not picked); exercise-form → atomic-only (compound/OR/per-set → the row-group entity + editor); `sets` is a free row property; EMOM slot = top-level list element (row|box).
+- **D-LOAD-FINAL** — absolute load `{count:1\|2, kg}` (count explicit; implement type → equipment library); `%` self|other (1RM resolver → Phase 3); `none` killed; `byProfile` → label-map list; weight exotics die (split→row-group, asymmetric/depth→modifiers, single_arm→side, BOX/SOFA trim).
+- **D-TEMPO** — 4-digit typed (position `int|"X"`); verbal forms → modifiers.
+- **D-MODIFIER** — row modifier library entity + multi-ref + searchable create-on-the-fly picker (shared w/ LABEL-FLOW-UX); position enum/column/editor die.
+- **D-PLAQUE** — `RowKind.REST` kill (rest → schema setting; dual-rest rule 2 → note); notes → ordered multi-list on every element + both group entities; only-once → own schema; the plaque-strip render.
+- **D-HEADER-KEEP** — header stays; in-group render parity (W4-HEADER-PARITY).
+- **D-EXEC-DEFER** — execution/scoring semantics stay notes (W4-EXEC-DEFER known-loss).
+- Deferred to the catalog pass (NOT W4): the full `concrete\|placeholder\|rest` nature enum + equipment library (CATALOG-NATURE / EQUIPMENT-LIBRARY) — W4 bridges via existing `placeholderFlag` + a seed Rest-natured exercise.
 
 ## Open decisions awaiting ratification
 
-- The F-ledger (`deferred.md`): **F-WEIGHT-EXOTICS + F-TEMPO (next touch)** · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time. **(CLOSED 2026-06-12: F-PLAQUE → D-PLAQUE · F-POSITION-CARRIER → D-MODIFIER (D-POSITION superseded same day) · F-CHIPS → D-CHIPS. D-MARKER-DEATH landed in W2; no model-core decisions remain open. NEW item: LABEL-FLOW-UX — searchable create-on-the-fly label dropdowns, shares the picker component with the W4 modifier work.)**
+- **NONE — the F-ledger is fully closed; `primitive-spec.md` is FROZEN (zero OPEN grid rows).** Closed 2026-06-12: F-PLAQUE→D-PLAQUE · F-CHIPS→D-CHIPS · F-POSITION-CARRIER→D-MODIFIER (D-POSITION superseded same day) · **F-WEIGHT-EXOTICS→D-LOAD-FINAL · F-TEMPO→D-TEMPO · F-BLOCK-TIMECAP+block-intensity→D-FLOORS · F-SLOT→D-ROW-GRAMMAR · F-HEADER→D-HEADER-KEEP** + D-EXEC-DEFER. D-MARKER-DEATH landed W2. The spec-freeze gate (plan step 1) is MET → **the W4 `/feature` prompt is the next action** (no open decision gates it). New ledger items (owner-paced, NOT gating W4): LABEL-FLOW-UX · EQUIPMENT-LIBRARY · CATALOG-NATURE · W4-HEADER-PARITY · W4-EXEC-DEFER.
 
 ## Live carry-forwards
 
