@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Intensity } from "@repo/contracts/lms/_shared";
 
-import { formatIntensityChips, formatTimeCap, intensityHasAny } from "./format-block-meta";
+import { formatIntensityChips } from "./format-block-meta";
 
 const makeIntensity = (overrides: Partial<Intensity> = {}): Intensity => ({
   rpe: { value: 7 },
@@ -95,37 +95,5 @@ describe("formatIntensityChips", () => {
     };
 
     expect(formatIntensityChips(intensity)).toHaveLength(5);
-  });
-});
-
-describe("formatTimeCap", () => {
-  it("formats min-only with the :00 suffix", () => {
-    expect(formatTimeCap({ min: 5, unit: "min" })).toBe("5:00");
-  });
-
-  it("formats min with a max as <min>:00–<max>:00 using EN DASH", () => {
-    expect(formatTimeCap({ min: 5, max: 10, unit: "min" })).toBe("5:00–10:00");
-  });
-
-  it("formats sec-only with the s suffix", () => {
-    expect(formatTimeCap({ min: 30, unit: "sec" })).toBe("30s");
-  });
-
-  it("formats sec with a max as <min>–<max>s using EN DASH", () => {
-    expect(formatTimeCap({ min: 30, max: 60, unit: "sec" })).toBe("30–60s");
-  });
-
-  it("formats fractional minutes verbatim as '<min>:00' (latent — see QA-005)", () => {
-    expect(formatTimeCap({ min: 0.5, unit: "min" })).toBe("0.5:00");
-  });
-});
-
-describe("intensityHasAny", () => {
-  it("returns false when intensity is null", () => {
-    expect(intensityHasAny(null)).toBe(false);
-  });
-
-  it("returns true when intensity has at least one dimension populated", () => {
-    expect(intensityHasAny(makeIntensity())).toBe(true);
   });
 });

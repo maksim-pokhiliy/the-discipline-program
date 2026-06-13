@@ -13,21 +13,21 @@ const EPOCH = new Date(0);
 const TOP_ID = "cktop1234567890abcdef01234";
 const ROW_ID = "ckrow1234567890abcdef01234";
 const BLOCK_ID = "ckblk1234567890abcdef01234";
+const EXERCISE_ID = "ckexr1234567890abcdef01234";
 
-const restSlotRow = (id: string, schemaId: string): SchemaRow => ({
+const exerciseRow = (id: string, schemaId: string): SchemaRow => ({
   id,
   schemaId,
   order: 1,
-  rowKind: "REST_SLOT",
-  rowPayload: { rowKind: "REST_SLOT" },
+  exerciseId: EXERCISE_ID,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
+  modifiers: [],
   notes: null,
   createdAt: EPOCH,
   updatedAt: EPOCH,
@@ -52,6 +52,7 @@ const schema = (
     updatedAt: EPOCH,
   },
   rows,
+  rowGroups: [],
 });
 
 const rowIds = (rows: ComposeRow[]): string[] => rows.map((row) => row.id);
@@ -74,7 +75,7 @@ describe("schemaWithBodyToDraft rebuilds the draft schema", () => {
   });
 
   it("rebuilds direct rows carrying the persisted id", () => {
-    const draft = schemaWithBodyToDraft(schema(TOP_ID, null, [restSlotRow(ROW_ID, TOP_ID)]));
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, null, [exerciseRow(ROW_ID, TOP_ID)]));
 
     expect(rowIds(draft.rows)).toEqual([ROW_ID]);
   });

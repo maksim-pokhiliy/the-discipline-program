@@ -1,5 +1,4 @@
 import type {
-  Intensity,
   Load,
   PerLimbDistribution,
   RepNotation,
@@ -7,7 +6,7 @@ import type {
   TempoModifier,
   TimeCap,
 } from "@repo/contracts/lms/_shared";
-import type { Position, RowKind, SchemaRowPayload } from "@repo/contracts/lms/schema-row";
+import type { ModifierRef } from "@repo/contracts/lms/modifier";
 
 import type { CountOrRangeValue } from "../count-or-range-field";
 
@@ -26,22 +25,22 @@ export type RestAxis = RestSpec;
 export type ComposeRow = {
   nodeType: "row";
   id: NodeId;
-  rowKind: RowKind;
-  rowPayload: SchemaRowPayload;
+  exerciseId: string;
+  sets: number | null;
+  rowGroupId: string | null;
   reps: RepNotation | null;
   load: Load | null;
   side: PerLimbDistribution | null;
   tempo: TempoModifier | null;
-  position: Position | null;
-  intensity: Intensity | null;
-  notes: string | null;
+  modifiers: ModifierRef[];
+  notes: string[] | null;
   editorDraft: unknown;
 };
 
 export type SchemaDraft = {
   id: NodeId;
   header: string | null;
-  notes: string | null;
+  notes: string[] | null;
   repetition?: RepetitionAxis;
   rest?: RestAxis;
   rows: ComposeRow[];

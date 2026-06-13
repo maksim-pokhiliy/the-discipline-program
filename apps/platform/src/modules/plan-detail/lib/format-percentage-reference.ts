@@ -15,8 +15,6 @@ export const formatPercentageReference = (
   switch (reference.scope) {
     case "self":
       return SELF_LABEL;
-    case "movement_family":
-      return `${OF_PREFIX}${reference.movementFamily}${ONE_RM_SUFFIX}`;
     case "other_exercise": {
       const exercise = exerciseById.get(reference.targetExerciseId);
       const name = exercise?.canonicalName ?? UNKNOWN_EXERCISE_FALLBACK;

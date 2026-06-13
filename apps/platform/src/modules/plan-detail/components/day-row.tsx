@@ -14,6 +14,8 @@ import { InlineEditText, LabelPickerChip } from "@repo/ui";
 
 import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
 
+import { notesListToText, textToNotesList } from "../lib/notes-list-text";
+
 import { AddSessionButton } from "./add-session-button";
 import { DayRowEmpty } from "./day-row-empty";
 import { DayRowHead } from "./day-row-head";
@@ -30,7 +32,7 @@ type DayRowProps = {
   startDate: string;
   dayOfWeek: DayOfWeek;
   label: Label | null;
-  notes: string | null;
+  notes: string[] | null;
   sessions: SessionWithLabel[];
 };
 
@@ -80,8 +82,8 @@ export const DayRow: React.FC<DayRowProps> = ({
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <InlineEditText
-              value={notes ?? ""}
-              onCommit={(next) => updateNotes.mutate({ notes: next === "" ? null : next })}
+              value={notesListToText(notes)}
+              onCommit={(next) => updateNotes.mutate({ notes: textToNotesList(next) })}
               variant="body2"
               ariaLabel="Day notes"
               multiline

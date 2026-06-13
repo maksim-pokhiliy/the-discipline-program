@@ -27,6 +27,7 @@ const LABEL_ARIA = "Group label";
 const LABEL_PLACEHOLDER = "group label…";
 const UNGROUP_LABEL = "Ungroup";
 const DELETE_LABEL = "Delete group";
+const FIRST_NOTE_INDEX = 0;
 
 const tooltipChildSx = { display: "inline-flex" };
 
@@ -89,7 +90,7 @@ export const SchemaGroupBoxHead: React.FC<SchemaGroupBoxHeadProps> = ({
     </Typography>
 
     <InlineEditText
-      value={group.label ?? ""}
+      value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}
       onCommit={onLabelCommit}
       variant="subtitle1"
       ariaLabel={LABEL_ARIA}

@@ -12,7 +12,6 @@ import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
-import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
 import { SchemaCardMeta } from "./schema-card-meta";
@@ -34,7 +33,6 @@ const tooltipChildSx = { display: "inline-flex" };
 
 type SchemaCardHeadProps = {
   schema: SchemaWithBody;
-  blockCtx: BlockCtx;
   isMutationPending: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -47,7 +45,6 @@ type SchemaCardHeadProps = {
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   schema,
-  blockCtx,
   isMutationPending,
   dragAttributes,
   dragListeners,
@@ -111,7 +108,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
             />
           </Stack>
         ) : null}
-        <SchemaCardMeta schema={schema} blockCtx={blockCtx} />
+        <SchemaCardMeta schema={schema} />
       </Stack>
 
       <Tooltip title={EDIT_TOOLTIP}>

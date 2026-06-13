@@ -27,32 +27,22 @@ const EMPTY_MAP: ExerciseById = new Map();
 
 describe("formatLoad", () => {
   describe("absolute kind", () => {
-    it("delegates to formatWeight for single variant", () => {
-      const load: Load = {
-        kind: "absolute",
-        weight: { variant: "single", valueKg: 15 },
-      };
+    it("renders '<kg> kg' for a single implement", () => {
+      const load: Load = { kind: "absolute", count: 1, kg: 15 };
 
       expect(formatLoad(load, EMPTY_MAP)).toBe("15 kg");
     });
 
-    it("delegates to formatWeight for compound_device variant", () => {
-      const load: Load = {
-        kind: "absolute",
-        weight: { variant: "compound_device", equipment: "KETTLEBELL", count: 2, valueKg: 16 },
-      };
+    it("renders '2× <kg> kg' for a paired implement", () => {
+      const load: Load = { kind: "absolute", count: 2, kg: 16 };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("2 × 16 kg kettlebell");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("2× 16 kg");
     });
   });
 
   describe("percentage kind", () => {
     it("renders '<value>% of 1RM' for self scope, no range", () => {
-      const load: Load = {
-        kind: "percentage",
-        value: 75,
-        reference: { scope: "self" },
-      };
+      const load: Load = { kind: "percentage", value: 75, reference: { scope: "self" } };
 
       expect(formatLoad(load, EMPTY_MAP)).toBe("75% of 1RM");
     });
@@ -66,16 +56,6 @@ describe("formatLoad", () => {
       };
 
       expect(formatLoad(load, EMPTY_MAP)).toBe("60–70% of 1RM");
-    });
-
-    it("renders '<value>% of <family> 1RM' for movement_family scope", () => {
-      const load: Load = {
-        kind: "percentage",
-        value: 80,
-        reference: { scope: "movement_family", movementFamily: "deadlift" },
-      };
-
-      expect(formatLoad(load, EMPTY_MAP)).toBe("80% of deadlift 1RM");
     });
 
     it("renders '<value>% of <canonicalName> 1RM' for resolved other_exercise scope", () => {
@@ -96,10 +76,7 @@ describe("formatLoad", () => {
       const load: Load = {
         kind: "percentage",
         value: 50,
-        reference: {
-          scope: "other_exercise",
-          targetExerciseId: "ckmissing1234567890abcdef0",
-        },
+        reference: { scope: "other_exercise", targetExerciseId: "ckmissing1234567890abcdef0" },
       };
 
       expect(formatLoad(load, EMPTY_MAP)).toBe("50% of — 1RM");
@@ -115,18 +92,16 @@ describe("formatLoad", () => {
   });
 
   describe("byProfile kind", () => {
-    it("renders '<first> / <second> (M/F)'", () => {
-      const load: Load = { kind: "byProfile", first: 24, second: 16 };
+    it("renders 'label: kg' entries joined by ' / '", () => {
+      const load: Load = {
+        kind: "byProfile",
+        entries: [
+          { label: "M", kg: 24 },
+          { label: "F", kg: 16 },
+        ],
+      };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("24 / 16 (M/F)");
-    });
-  });
-
-  describe("none kind", () => {
-    it("renders 'no load'", () => {
-      const load: Load = { kind: "none" };
-
-      expect(formatLoad(load, EMPTY_MAP)).toBe("no load");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("M: 24 / F: 16");
     });
   });
 });

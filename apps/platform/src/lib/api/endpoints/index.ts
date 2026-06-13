@@ -7,6 +7,8 @@ export { createDayMetadataAPI } from "./day-metadata";
 export { createExercisesAPI } from "./exercises";
 export { createGroupsAPI } from "./groups";
 export { createLabelsAPI } from "./labels";
+export { createModifiersAPI } from "./modifiers";
+export { createRowGroupsAPI } from "./row-groups";
 export { createSchemaRowsAPI } from "./schema-rows";
 export { createSchemasAPI } from "./schemas";
 export { createSessionsAPI } from "./sessions";

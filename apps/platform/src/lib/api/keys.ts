@@ -28,4 +28,10 @@ export const platformKeys = {
   exercises: {
     all: () => [...ROOT, "exercises"] as const,
   },
+  modifiers: {
+    search: (q?: string) => [...ROOT, "modifiers", "search", q ?? null] as const,
+  },
+  rowGroups: {
+    all: () => [...ROOT, "row-groups"] as const,
+  },
 } as const;

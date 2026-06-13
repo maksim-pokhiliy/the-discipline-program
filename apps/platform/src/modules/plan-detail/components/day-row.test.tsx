@@ -78,7 +78,7 @@ const makeSession = (overrides: Partial<SessionWithLabel> = {}): SessionWithLabe
 type RenderOptions = {
   date?: Date;
   label?: Label | null;
-  notes?: string | null;
+  notes?: string[] | null;
   sessions?: SessionWithLabel[];
   options?: Label[];
 };
@@ -159,7 +159,7 @@ describe("DayRow", () => {
   it("renders DayRowRest when label.rest is true and there are no sessions", () => {
     const label = makeLabel({ name: "REST DAY", rest: true });
 
-    renderDayRow({ label, notes: "active recovery" });
+    renderDayRow({ label, notes: ["active recovery"] });
 
     const restHeading = screen.getByRole("heading", { level: 3, name: "REST DAY" });
     const restPanel = restHeading.parentElement?.parentElement;
@@ -263,13 +263,13 @@ describe("DayRow", () => {
     fireEvent.blur(input);
 
     expect(updateNotesMutate).toHaveBeenCalledTimes(1);
-    expect(updateNotesMutate).toHaveBeenCalledWith({ notes: "focus on bar path" });
+    expect(updateNotesMutate).toHaveBeenCalledWith({ notes: ["focus on bar path"] });
   });
 
   it("commits null instead of an empty string when the day note is cleared on blur", () => {
     updateNotesMutate.mockClear();
 
-    renderDayRow({ notes: "previous note" });
+    renderDayRow({ notes: ["previous note"] });
 
     const input = getNotesInput();
 

@@ -12,11 +12,11 @@ import { ConfirmationModal } from "@repo/ui";
 import { useLabelOptions } from "@app/lib/hooks";
 import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
 
+import { notesListToText, textToNotesList } from "../lib/notes-list-text";
+
 import { BlockCardBody } from "./block-card-body";
 import { BlockCardHead } from "./block-card-head";
-import { BlockCardMeta } from "./block-card-meta";
 import { BlockCardNote } from "./block-card-note";
-import { BlockEditorModal } from "./block-editor-modal";
 
 const DELETE_TITLE = "Delete block";
 const DELETE_MESSAGE = "Delete this block?";
@@ -52,7 +52,6 @@ export const BlockCard: React.FC<BlockCardProps> = ({
     disabled: isMutationPending,
   });
 
-  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 
   const handleLabelsChange = (labelIds: string[]) =>
@@ -61,11 +60,9 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const handleNotesCommit = (next: string) =>
     updateBlock.mutate({
       blockId: block.id,
-      data: { notes: next === "" ? null : next },
+      data: { notes: textToNotesList(next) },
     });
 
-  const handleEditOpen = () => setIsEditOpen(true);
-  const handleEditClose = () => setIsEditOpen(false);
   const handleDeleteOpen = () => setIsDeleteOpen(true);
   const handleDeleteClose = () => setIsDeleteOpen(false);
 
@@ -105,24 +102,14 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         dragAttributes={attributes}
         dragListeners={listeners}
         onLabelsChange={handleLabelsChange}
-        onEditOpen={handleEditOpen}
         onDeleteOpen={handleDeleteOpen}
       />
-      <BlockCardMeta intensity={block.intensity} timeCap={block.timeCap} />
-      <BlockCardNote value={block.notes ?? ""} onCommit={handleNotesCommit} />
+      <BlockCardNote value={notesListToText(block.notes)} onCommit={handleNotesCommit} />
       <BlockCardBody
         block={block}
         planId={planId}
         startDate={startDate}
         parentIsReorderPending={isMutationPending}
-      />
-
-      <BlockEditorModal
-        open={isEditOpen}
-        onClose={handleEditClose}
-        block={block}
-        planId={planId}
-        startDate={startDate}
       />
 
       <ConfirmationModal

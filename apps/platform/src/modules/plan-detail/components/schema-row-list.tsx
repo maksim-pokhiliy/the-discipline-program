@@ -1,39 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { Stack } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import type { Composition } from "@repo/contracts/lms/composition";
+import { buildRowItems, type RowGroup } from "@repo/contracts/lms/row-group";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
-
-import { useReorderSchemaRows } from "@app/lib/hooks";
 
 import { deriveMinuteView } from "../lib/derive-minute-view";
 
-import { AddRowButton } from "./add-row-button";
+import { RowGroupBox } from "./row-group-box";
 import { SchemaRowCard } from "./schema-row-card";
+
+const ADD_ROW_LABEL = "+ Add row";
 
 type SchemaRowListProps = {
   planId: string;
   startDate: string;
   schemaId: string;
   rows: SchemaRow[];
+  rowGroups: RowGroup[];
   composition?: Composition | null;
   parentIsReorderPending?: boolean;
 };
@@ -43,15 +30,11 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   startDate,
   schemaId,
   rows,
+  rowGroups,
   composition = null,
   parentIsReorderPending = false,
 }) => {
-  const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
-  const [sortedRows, setSortedRows] = useState<SchemaRow[]>(rows);
-
-  useEffect(() => {
-    setSortedRows(rows);
-  }, [rows]);
+  const items = useMemo(() => buildRowItems(rows, rowGroups), [rows, rowGroups]);
 
   const minuteLabelById = useMemo<Map<string, string>>(() => {
     if (composition === null) {
@@ -60,7 +43,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
 
     const view = deriveMinuteView(
       composition,
-      sortedRows.map((row) => row.id),
+      rows.map((row) => row.id),
     );
 
     if (view.kind === "none") {
@@ -70,70 +53,64 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
     return new Map(
       view.assignments.map((assignment) => [assignment.rowId, assignment.minuteLabel]),
     );
-  }, [composition, sortedRows]);
+  }, [composition, rows]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = sortedRows.findIndex((r) => r.id === active.id);
-    const newIndex = sortedRows.findIndex((r) => r.id === over.id);
-
-    if (oldIndex < 0 || newIndex < 0) {
-      return;
-    }
-
-    const previousOrder = sortedRows;
-    const nextOrder = arrayMove(sortedRows, oldIndex, newIndex);
-
-    setSortedRows(nextOrder);
-    reorderSchemaRows.mutate(
-      { schemaId, orderedIds: nextOrder.map((r) => r.id) },
-      {
-        onError: () => setSortedRows(previousOrder),
-      },
-    );
-  };
+  let runningIndex = 0;
 
   return (
     <Stack direction="column">
-      {sortedRows.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={sortedRows.map((r) => r.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
-              {sortedRows.map((row, index) => (
-                <SchemaRowCard
-                  key={row.id}
-                  row={row}
-                  planId={planId}
-                  startDate={startDate}
-                  index={index}
-                  minuteLabel={minuteLabelById.get(row.id) ?? null}
-                  isReorderPending={parentIsReorderPending || reorderSchemaRows.isPending}
-                />
-              ))}
-            </Stack>
-          </SortableContext>
-        </DndContext>
-      ) : null}
+      <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
+        {items.map((item) => {
+          if (item.kind === "group") {
+            const startIndex = runningIndex;
+
+            runningIndex += item.members.length;
+
+            return (
+              <RowGroupBox
+                key={`group-${item.group.id}`}
+                group={item.group}
+                members={item.members}
+                planId={planId}
+                startDate={startDate}
+                startIndex={startIndex}
+                isReorderPending={parentIsReorderPending}
+              />
+            );
+          }
+
+          const index = runningIndex;
+
+          runningIndex += 1;
+
+          return (
+            <SchemaRowCard
+              key={item.row.id}
+              row={item.row}
+              planId={planId}
+              startDate={startDate}
+              index={index}
+              minuteLabel={minuteLabelById.get(item.row.id) ?? null}
+              isReorderPending={parentIsReorderPending}
+            />
+          );
+        })}
+      </Stack>
 
       <Stack
         sx={(theme) => ({
           p: theme.spacing(1),
         })}
       >
-        <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />
+        <Button
+          disabled
+          size="tiny"
+          variant="text"
+          sx={{ alignSelf: "flex-start" }}
+          data-schema-id={schemaId}
+        >
+          {ADD_ROW_LABEL}
+        </Button>
       </Stack>
     </Stack>
   );

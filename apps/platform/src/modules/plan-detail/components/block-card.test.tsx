@@ -64,13 +64,6 @@ vi.mock("./schema-card", () => ({
   ),
 }));
 
-vi.mock("./block-editor-modal", () => {
-  const renderEditorMock = (props: { open: boolean }) =>
-    props.open ? createElement("div", { "data-testid": "block-editor-modal-mock" }) : null;
-
-  return { BlockEditorModal: renderEditorMock };
-});
-
 vi.mock("./add-schema-button", () => {
   const renderAddSchemaButtonMock = () =>
     createElement("div", { "data-testid": "add-schema-button-mock" });
@@ -121,14 +114,13 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     ...overrides,
   },
   rows: [],
+  rowGroups: [],
 });
 
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: BLOCK_ID,
   sessionId: SESSION_ID,
   order: 1,
-  intensity: null,
-  timeCap: null,
   notes: null,
   labels: [],
   schemas: [],
@@ -203,15 +195,14 @@ describe("BlockCard chrome", () => {
     expect(shell).toHaveStyle({ flexDirection: "column" });
   });
 
-  it("renders all four sections (head, meta, note, body) in order", () => {
+  it("renders the head, note and body sections in order", () => {
     renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
 
     const dragBtn = screen.getByRole("button", { name: "Drag block" });
-    const metaPlaceholder = screen.getByText("no intensity / cap set");
     const noteInput = getNotesInput();
     const schemaCardMock = screen.getByTestId("schema-card-mock");
 
-    const sectionOrder = [dragBtn, metaPlaceholder, noteInput, schemaCardMock];
+    const sectionOrder = [dragBtn, noteInput, schemaCardMock];
 
     for (let i = 0; i < sectionOrder.length - 1; i += 1) {
       const earlier = sectionOrder[i];
@@ -319,56 +310,6 @@ describe("BlockCard multi-label", () => {
   });
 });
 
-describe("BlockCard meta row", () => {
-  it("renders the muted 'no intensity / cap set' placeholder when both intensity and timeCap are null", () => {
-    renderBlockCard();
-
-    expect(screen.getByText("no intensity / cap set")).toBeInTheDocument();
-  });
-
-  it("renders one IndicatorChip per intensity dimension (effortPercent.value → primary, rpe → info)", () => {
-    const block = makeBlock({
-      intensity: {
-        effortPercent: { value: 75 },
-        rpe: { value: 8 },
-      },
-    });
-    const { container } = renderBlockCard({ block });
-
-    const effortChip = screen.getByText("@ 75%");
-    const rpeChip = screen.getByText("RPE 8");
-    const effortRoot = effortChip.closest(".MuiChip-root");
-    const rpeRoot = rpeChip.closest(".MuiChip-root");
-
-    expect(effortRoot).not.toBeNull();
-    expect(rpeRoot).not.toBeNull();
-    expect(effortRoot).toHaveClass("MuiChip-colorPrimary");
-    expect(rpeRoot).toHaveClass("MuiChip-colorInfo");
-
-    const chips = container.querySelectorAll(".MuiChip-root");
-
-    expect(chips.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("renders the cap chip 'cap 5:00' when timeCap is {min:5, unit:'min'} with no max", () => {
-    renderBlockCard({ block: makeBlock({ timeCap: { min: 5, unit: "min" } }) });
-
-    expect(screen.getByText("cap 5:00")).toBeInTheDocument();
-  });
-
-  it("renders the cap range 'cap 5:00–10:00' when timeCap has max", () => {
-    renderBlockCard({ block: makeBlock({ timeCap: { min: 5, max: 10, unit: "min" } }) });
-
-    expect(screen.getByText("cap 5:00–10:00")).toBeInTheDocument();
-  });
-
-  it("renders the cascade-note 'cascades to schemas ↧' unconditionally inside the meta row", () => {
-    renderBlockCard();
-
-    expect(screen.getByText("cascades to schemas ↧")).toBeInTheDocument();
-  });
-});
-
 describe("BlockCard note row", () => {
   it("renders the note row always with placeholder copy when block.notes === null", () => {
     renderBlockCard();
@@ -391,12 +332,12 @@ describe("BlockCard note row", () => {
     expect(updateBlockMutate).toHaveBeenCalledTimes(1);
     expect(updateBlockMutate).toHaveBeenCalledWith({
       blockId: BLOCK_ID,
-      data: { notes: "focus on bar path" },
+      data: { notes: ["focus on bar path"] },
     });
   });
 
   it("fires useUpdateBlock with { data: { notes: null } } when an empty string is committed", () => {
-    renderBlockCard({ block: makeBlock({ notes: "previous note" }) });
+    renderBlockCard({ block: makeBlock({ notes: ["previous note"] }) });
 
     const input = getNotesInput();
 
@@ -432,16 +373,6 @@ describe("BlockCard body / schema rendering", () => {
 });
 
 describe("BlockCard mutation pending / actions", () => {
-  it("opens the BlockEditorModal when the Tune IconButton is clicked", () => {
-    renderBlockCard();
-
-    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Edit block details" }));
-
-    expect(screen.getByTestId("block-editor-modal-mock")).toBeInTheDocument();
-  });
-
   it("opens the ConfirmationModal when the Delete IconButton is clicked and fires useDeleteBlock on confirm", () => {
     renderBlockCard();
 
@@ -456,13 +387,12 @@ describe("BlockCard mutation pending / actions", () => {
     expect(deleteBlockMutate.mock.calls[0]?.[0]).toEqual({ blockId: BLOCK_ID });
   });
 
-  it("disables the drag IconButton, Tune, Delete and the LabelPickerChip trigger when any mutation is pending", () => {
+  it("disables the drag IconButton, Delete and the LabelPickerChip trigger when any mutation is pending", () => {
     updateBlockState.isPending = true;
 
     renderBlockCard({ blockOptions: [makeLabel({ id: "lab-1", name: "STRENGTH" })] });
 
     expect(screen.getByRole("button", { name: "Drag block" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Edit block details" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Delete block" })).toBeDisabled();
     expect(screen.getByLabelText("Add block label")).toBeDisabled();
   });
@@ -472,13 +402,12 @@ describe("BlockCard mutation pending / actions", () => {
     { name: "useDeleteBlock", flip: () => (deleteBlockState.isPending = true) },
     { name: "useAssignBlockLabels", flip: () => (assignLabelsState.isPending = true) },
   ])("isMutationPending derived from $name (QA-014)", ({ flip }) => {
-    it("disables drag IconButton, Tune, Delete and the LabelPickerChip trigger", () => {
+    it("disables drag IconButton, Delete and the LabelPickerChip trigger", () => {
       flip();
 
       renderBlockCard({ blockOptions: [makeLabel({ id: "lab-1", name: "STRENGTH" })] });
 
       expect(screen.getByRole("button", { name: "Drag block" })).toBeDisabled();
-      expect(screen.getByRole("button", { name: "Edit block details" })).toBeDisabled();
       expect(screen.getByRole("button", { name: "Delete block" })).toBeDisabled();
       expect(screen.getByLabelText("Add block label")).toBeDisabled();
     });
@@ -514,13 +443,12 @@ describe("BlockCard isReorderPending cascade (D-10)", () => {
     expect(screen.getByRole("button", { name: "Drag block" })).toBeDisabled();
   });
 
-  it("disables Tune, Delete and LabelPickerChip trigger when isReorderPending is true", () => {
+  it("disables Delete and LabelPickerChip trigger when isReorderPending is true", () => {
     renderBlockCard({
       isReorderPending: true,
       blockOptions: [makeLabel({ id: "lab-1", name: "STRENGTH" })],
     });
 
-    expect(screen.getByRole("button", { name: "Edit block details" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Delete block" })).toBeDisabled();
     expect(screen.getByLabelText("Add block label")).toBeDisabled();
   });

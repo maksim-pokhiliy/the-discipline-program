@@ -11,7 +11,6 @@ import { theme } from "@repo/mui";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
-import type { BlockCtx } from "../lib/build-cascade-chips";
 import type * as DeleteGroupWithMembers from "../lib/use-delete-group-with-members";
 
 const updateGroupMutate = vi.fn();
@@ -109,21 +108,16 @@ const makeSchema = (id: string, order: number): SchemaWithBody => ({
     updatedAt: NOW,
   },
   rows: [],
+  rowGroups: [],
 });
 
 const makeGroup = (overrides: Partial<SchemaGroup> = {}): SchemaGroup => ({
   id: GROUP_ID,
   blockId: BLOCK_ID,
-  label: null,
+  notes: null,
   interleaveOrder: "round_by_round",
   createdAt: NOW,
   updatedAt: NOW,
-  ...overrides,
-});
-
-const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
-  intensity: null,
-  timeCap: null,
   ...overrides,
 });
 
@@ -147,7 +141,6 @@ const renderBox = ({
       members={members}
       planId={PLAN_ID}
       startDate={START_DATE}
-      blockCtx={makeBlockCtx()}
       parentIsReorderPending={parentIsReorderPending}
     />,
   );
@@ -226,8 +219,8 @@ describe("SchemaGroupBox proto frame", () => {
 });
 
 describe("SchemaGroupBox label edit", () => {
-  it("shows an empty 'Group label' textbox with the proto placeholder when label is null", () => {
-    renderBox({ group: makeGroup({ label: null }) });
+  it("shows an empty 'Group label' textbox with the proto placeholder when notes is null", () => {
+    renderBox({ group: makeGroup({ notes: null }) });
 
     const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
 
@@ -239,8 +232,8 @@ describe("SchemaGroupBox label edit", () => {
     expect(label).toHaveAttribute("placeholder", GROUP_PLACEHOLDER);
   });
 
-  it("commits a non-empty label as { label: <value> } via useUpdateGroup.mutate", () => {
-    renderBox({ group: makeGroup({ label: null }) });
+  it("commits a non-empty label as { notes: [<value>] } via useUpdateGroup.mutate", () => {
+    renderBox({ group: makeGroup({ notes: null }) });
 
     const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
 
@@ -251,12 +244,12 @@ describe("SchemaGroupBox label edit", () => {
     expect(updateGroupMutate).toHaveBeenCalledTimes(1);
     expect(updateGroupMutate).toHaveBeenCalledWith({
       groupId: GROUP_ID,
-      data: { label: "WOD A" },
+      data: { notes: ["WOD A"] },
     });
   });
 
-  it("commits a cleared label as { label: null } via useUpdateGroup.mutate", () => {
-    renderBox({ group: makeGroup({ label: "WOD A" }) });
+  it("commits a cleared label as { notes: null } via useUpdateGroup.mutate", () => {
+    renderBox({ group: makeGroup({ notes: ["WOD A"] }) });
 
     const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
 
@@ -267,12 +260,12 @@ describe("SchemaGroupBox label edit", () => {
     expect(updateGroupMutate).toHaveBeenCalledTimes(1);
     expect(updateGroupMutate).toHaveBeenCalledWith({
       groupId: GROUP_ID,
-      data: { label: null },
+      data: { notes: null },
     });
   });
 
   it("does NOT fire mutate when the label is committed unchanged", () => {
-    renderBox({ group: makeGroup({ label: "Keep me" }) });
+    renderBox({ group: makeGroup({ notes: ["Keep me"] }) });
 
     const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
 

@@ -22,7 +22,7 @@ const { WeekNotes } = await import("./week-notes");
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const MONDAY = new Date(2026, 4, 4);
 
-const renderNotes = (notes: string | null) =>
+const renderNotes = (notes: string[] | null) =>
   render(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes={notes} />);
 
 const getNotesInput = (): HTMLInputElement | HTMLTextAreaElement => {
@@ -49,19 +49,19 @@ describe("WeekNotes", () => {
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mutate).toHaveBeenCalledWith({
       startDate: formatDateParam(MONDAY),
-      data: { notes: "light squat day" },
+      data: { notes: ["light squat day"] },
     });
   });
 
   it("preserves the in-progress draft when the notes prop changes while focused (MT-11)", () => {
     mutate.mockClear();
-    const { rerender } = render(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes="initial" />);
+    const { rerender } = render(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes={["initial"]} />);
     const input = getNotesInput();
 
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "user draft" } });
 
-    rerender(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes="background refetch" />);
+    rerender(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes={["background refetch"]} />);
 
     expect(input.value).toBe("user draft");
 
@@ -70,13 +70,13 @@ describe("WeekNotes", () => {
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mutate).toHaveBeenCalledWith({
       startDate: formatDateParam(MONDAY),
-      data: { notes: "user draft" },
+      data: { notes: ["user draft"] },
     });
   });
 
   it("commits null instead of an empty string when blur happens on a cleared field (MT-12)", () => {
     mutate.mockClear();
-    renderNotes("previous notes");
+    renderNotes(["previous notes"]);
 
     const input = getNotesInput();
 
@@ -105,7 +105,7 @@ describe("WeekNotes", () => {
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mutate).toHaveBeenCalledWith({
       startDate: formatDateParam(MONDAY),
-      data: { notes: pasted },
+      data: { notes: [pasted] },
     });
   });
 
@@ -117,11 +117,11 @@ describe("WeekNotes", () => {
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "coach typing" } });
 
-    rerender(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes="server returned this" />);
+    rerender(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes={["server returned this"]} />);
 
     expect(input.value).toBe("coach typing");
 
-    rerender(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes="another sibling write" />);
+    rerender(<WeekNotes planId={PLAN_ID} monday={MONDAY} notes={["another sibling write"]} />);
 
     expect(input.value).toBe("coach typing");
   });

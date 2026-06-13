@@ -22,6 +22,7 @@ const makeSchema = (): SchemaWithBody => ({
     updatedAt: now,
   },
   rows: [],
+  rowGroups: [],
 });
 
 type MakeBlockOptions = {
@@ -32,8 +33,6 @@ const makeBlock = ({ schemaCount }: MakeBlockOptions): SessionWithLabel["blocks"
   id: "clp9z8x7w0000abcd1234blk1",
   sessionId: "clp9z8x7w0000abcd1234ses1",
   order: 10,
-  intensity: null,
-  timeCap: null,
   notes: null,
   labels: [],
   schemas: Array.from({ length: schemaCount }, makeSchema),
@@ -44,7 +43,7 @@ const makeBlock = ({ schemaCount }: MakeBlockOptions): SessionWithLabel["blocks"
 
 type MakeSessionOptions = {
   blockSchemaCounts?: number[];
-  notes?: string | null;
+  notes?: string[] | null;
 };
 
 const makeSession = ({
@@ -83,41 +82,41 @@ describe("computeDayStats", () => {
   });
 
   it("parses the estimated minutes from a session notes string", () => {
-    const session = makeSession({ notes: "warmup, ~75 min, then cooldown" });
+    const session = makeSession({ notes: ["warmup, ~75 min, then cooldown"] });
 
     expect(computeDayStats([session]).estMinutes).toBe(75);
   });
 
   it("returns zero minutes when no min substring is present in notes", () => {
-    const session = makeSession({ notes: "minimal cues only" });
+    const session = makeSession({ notes: ["minimal cues only"] });
 
     expect(computeDayStats([session]).estMinutes).toBe(0);
   });
 
   it("matches mixed-case MIN suffix and sums across mixed sessions", () => {
     const sessions = [
-      makeSession({ notes: "30 MIN" }),
+      makeSession({ notes: ["30 MIN"] }),
       makeSession({ notes: null }),
-      makeSession({ notes: "60 min" }),
+      makeSession({ notes: ["60 min"] }),
     ];
 
     expect(computeDayStats(sessions).estMinutes).toBe(90);
   });
 
   it("rejects partial 'min' prefix inside a longer word like 'minute' (QA-006)", () => {
-    const session = makeSession({ notes: "45 minute walk" });
+    const session = makeSession({ notes: ["45 minute walk"] });
 
     expect(computeDayStats([session]).estMinutes).toBe(0);
   });
 
   it("accepts 'min' as the trailing token of the notes string (QA-006)", () => {
-    const session = makeSession({ notes: "60 min" });
+    const session = makeSession({ notes: ["60 min"] });
 
     expect(computeDayStats([session]).estMinutes).toBe(60);
   });
 
   it("accepts 'min' followed by trailing non-alpha tokens (QA-006)", () => {
-    const session = makeSession({ notes: "45 min total" });
+    const session = makeSession({ notes: ["45 min total"] });
 
     expect(computeDayStats([session]).estMinutes).toBe(45);
   });

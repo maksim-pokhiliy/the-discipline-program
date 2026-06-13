@@ -6,8 +6,6 @@ import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
-import type { BlockCtx } from "../lib/build-cascade-chips";
-
 const updateSchemaState = { isPending: false };
 const deleteSchemaState = { isPending: false };
 
@@ -52,12 +50,7 @@ const makeMember = (id: string): SchemaWithBody => ({
     updatedAt: NOW,
   },
   rows: [],
-});
-
-const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
-  intensity: null,
-  timeCap: null,
-  ...overrides,
+  rowGroups: [],
 });
 
 type RenderOptions = {
@@ -78,7 +71,6 @@ const renderWrapper = ({
       isContinuation={isContinuation}
       planId={PLAN_ID}
       startDate={START_DATE}
-      blockCtx={makeBlockCtx()}
       parentIsReorderPending={false}
     />,
   );
@@ -150,7 +142,6 @@ describe("GroupTrackWrapper member card has no drag handle (QA-107, proto no-mem
         schema={makeMember("clp9z8x7w0000abcd1234mm09")}
         planId={PLAN_ID}
         startDate={START_DATE}
-        blockCtx={makeBlockCtx()}
       />,
     );
 

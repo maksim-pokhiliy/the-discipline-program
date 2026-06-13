@@ -1,39 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { type ExerciseById, formatRow } from "./format-row";
+import { formatRow } from "./format-row";
 import {
   DEMO_URL,
   ID_DEADLIFT,
   ID_MISS,
   exerciseById,
-  makeExercise,
   makeExerciseRow,
   makePlaceholderRow,
-  makeRestRow,
-  makeRestSlotRow,
 } from "./format-row.fixtures";
 
-const ID_PLACEHOLDER_ATOMIC = "ckplaceh1234567890abcdef01";
-const PLACEHOLDER_CANONICAL_NAME = "Any squat";
-const PLACEHOLDER_DEMO_URL = "https://example.com/should-not-render.mp4";
-
-const exerciseByIdWithPlaceholder: ExerciseById = new Map([
-  ...exerciseById,
-  [
-    ID_PLACEHOLDER_ATOMIC,
-    makeExercise({
-      id: ID_PLACEHOLDER_ATOMIC,
-      canonicalName: PLACEHOLDER_CANONICAL_NAME,
-      canonicalCompoundType: "PLACEHOLDER",
-      placeholderFlag: true,
-      defaultDemoUrls: [PLACEHOLDER_DEMO_URL],
-    }),
-  ],
-]);
-
 describe("formatRow", () => {
-  describe("EXERCISE row kind", () => {
-    it("renders the canonical name for atomic exercise as mainText", () => {
+  describe("exercise row", () => {
+    it("renders the canonical name as mainText with the EX badge", () => {
       const result = formatRow(makeExerciseRow(), exerciseById, 0);
 
       expect(result.mainText).toBe("Back Squat");
@@ -43,84 +22,76 @@ describe("formatRow", () => {
       expect(result.ord).toBe("1");
     });
 
-    it("returns null formPillText for atomic form", () => {
+    it("returns null formPillText", () => {
       const result = formatRow(makeExerciseRow(), exerciseById, 0);
 
       expect(result.formPillText).toBeNull();
     });
 
-    it("returns the first demo url for atomic form when present", () => {
+    it("returns the first demo url when present", () => {
       const result = formatRow(makeExerciseRow(), exerciseById, 0);
 
       expect(result.demoUrl).toBe(DEMO_URL);
     });
 
     it("returns null demoUrl when defaultDemoUrls is empty", () => {
+      const result = formatRow(makeExerciseRow({ exerciseId: ID_DEADLIFT }), exerciseById, 0);
+
+      expect(result.demoUrl).toBeNull();
+    });
+
+    it("falls back to 'exercise' for a missing exercise id", () => {
+      const result = formatRow(makeExerciseRow({ exerciseId: ID_MISS }), exerciseById, 0);
+
+      expect(result.mainText).toBe("exercise");
+    });
+  });
+
+  describe("placeholder exercise row", () => {
+    it("renders the placeholder name with dashed=true and null demoUrl", () => {
+      const result = formatRow(makePlaceholderRow(), exerciseById, 0);
+
+      expect(result.mainText).toBe("Coach choice");
+      expect(result.dashed).toBe(true);
+      expect(result.demoUrl).toBeNull();
+    });
+  });
+
+  describe("sub-parts", () => {
+    it("renders sets, reps, load, side, tempo and modifiers in order", () => {
       const row = makeExerciseRow({
-        rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: ID_DEADLIFT } },
+        sets: 3,
+        reps: { kind: "count", value: 5 },
+        load: { kind: "bodyweight" },
+        side: { kind: "each_leg" },
+        tempo: { eccentric: 3, pauseBottom: 1, concentric: 1, pauseTop: 0 },
+        modifiers: [
+          {
+            id: "ckmod01234567890abcdef0123",
+            name: "from sofa",
+            nameLower: "from sofa",
+            notes: null,
+            createdAt: new Date("2025-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2025-01-01T00:00:00.000Z"),
+          },
+        ],
       });
       const result = formatRow(row, exerciseById, 0);
 
-      expect(result.demoUrl).toBeNull();
-    });
-
-    it("renders placeholder-ref chrome for atomic-form row pointing at placeholderFlag exercise", () => {
-      const row = makeExerciseRow({
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
-        },
-      });
-      const result = formatRow(row, exerciseByIdWithPlaceholder, 0);
-
-      expect(result.formPillText).toBe("placeholder ref");
-      expect(result.dashed).toBe(true);
-      expect(result.demoUrl).toBeNull();
-      expect(result.subParts).toContain("placeholder");
-      expect(result.mainText).toBe(PLACEHOLDER_CANONICAL_NAME);
-    });
-  });
-
-  describe("REST row kind", () => {
-    it("renders formatted rest spec as mainText", () => {
-      const result = formatRow(makeRestRow(), exerciseById, 2);
-
-      expect(result.mainText).toBe("rest 90s between sets");
-      expect(result.kindBadge).toBe("RST");
-      expect(result.kindCls).toBe("rest");
-      expect(result.ord).toBe("3");
-      expect(result.subParts).toEqual([]);
-    });
-  });
-
-  describe("PLACEHOLDER row kind", () => {
-    it("renders placeholder text + 'placeholder · <kind>' sub with dashed=true and ord='?'", () => {
-      const result = formatRow(makePlaceholderRow(), exerciseById, 0);
-
-      expect(result.mainText).toBe("ABS finisher");
-      expect(result.subParts).toEqual(["placeholder · coach choice slot"]);
-      expect(result.kindBadge).toBe("?");
-      expect(result.kindCls).toBe("placeholder");
-      expect(result.dashed).toBe(true);
-      expect(result.ord).toBe("?");
-    });
-  });
-
-  describe("REST_SLOT row kind", () => {
-    it("renders the static 'Rest slot' main and 'EMOM minute · rest' sub with ord='R'", () => {
-      const result = formatRow(makeRestSlotRow(), exerciseById, 0);
-
-      expect(result.mainText).toBe("Rest slot");
-      expect(result.subParts).toEqual(["EMOM minute · rest"]);
-      expect(result.kindBadge).toBe("RS");
-      expect(result.kindCls).toBe("rest");
-      expect(result.ord).toBe("R");
+      expect(result.subParts).toEqual([
+        "×3",
+        "5 reps",
+        "BW",
+        "each leg",
+        "Tempo 3-1-1-0",
+        "from sofa",
+      ]);
     });
   });
 
   describe("notes append", () => {
-    it("appends quoted notes to subParts when notes is present", () => {
-      const result = formatRow(makeExerciseRow({ notes: "explosive" }), exerciseById, 0);
+    it("appends each quoted note when notes is present", () => {
+      const result = formatRow(makeExerciseRow({ notes: ["explosive"] }), exerciseById, 0);
 
       expect(result.subParts).toContain("'explosive'");
     });
@@ -131,46 +102,25 @@ describe("formatRow", () => {
       expect(result.subParts).toEqual([]);
     });
 
-    it("does NOT append notes when notes is empty string", () => {
-      const result = formatRow(makeExerciseRow({ notes: "" }), exerciseById, 0);
+    it("does NOT append notes when notes is an empty list", () => {
+      const result = formatRow(makeExerciseRow({ notes: [] }), exerciseById, 0);
 
       expect(result.subParts).toEqual([]);
     });
   });
 
-  describe("exerciseById miss fallback", () => {
-    it("falls back to '—' for missing atomic exercise in EXERCISE row", () => {
-      const row = makeExerciseRow({
-        rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: ID_MISS } },
-      });
-      const result = formatRow(row, exerciseById, 0);
-
-      expect(result.mainText).toBe("—");
-    });
-  });
-
-  describe("per-RowKind ord values", () => {
-    it("uses 1-based index for EXERCISE", () => {
+  describe("ord values", () => {
+    it("uses the 1-based index", () => {
       expect(formatRow(makeExerciseRow(), exerciseById, 0).ord).toBe("1");
       expect(formatRow(makeExerciseRow(), exerciseById, 4).ord).toBe("5");
-    });
-
-    it("uses 1-based index for REST", () => {
-      expect(formatRow(makeRestRow(), exerciseById, 1).ord).toBe("2");
     });
   });
 
   describe("row media as the demo link", () => {
     const ROW_MEDIA_URL = "https://example.com/demo/row-level.mp4";
 
-    it("surfaces row media for a PLACEHOLDER row", () => {
-      const row = { ...makePlaceholderRow(), media: { url: ROW_MEDIA_URL } };
-
-      expect(formatRow(row, exerciseById, 0).demoUrl).toBe(ROW_MEDIA_URL);
-    });
-
-    it("prefers row media over the catalog demo for an EXERCISE row", () => {
-      const row = { ...makeExerciseRow(), media: { url: ROW_MEDIA_URL } };
+    it("prefers row media over the catalog demo", () => {
+      const row = makeExerciseRow({ media: { url: ROW_MEDIA_URL } });
 
       expect(formatRow(row, exerciseById, 0).demoUrl).toBe(ROW_MEDIA_URL);
     });
