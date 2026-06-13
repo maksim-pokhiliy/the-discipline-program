@@ -14,7 +14,7 @@ import {
   updateSchemaRowSchema,
 } from "@repo/contracts/lms/schema-row";
 
-import { formatZodIssue } from "./format-zod-issue";
+import { coachRowIssue } from "./coach-row-issue";
 import { parseTempo } from "./parse-tempo";
 import type { RowFormState, RowRequestMode } from "./row-form-state.types";
 
@@ -57,7 +57,7 @@ const buildNotes = (notes: string[]): string[] | null => {
 const issueToError = (issues: ZodIssue[]): string => {
   const [issue] = issues;
 
-  return issue === undefined ? REQUEST_BUILD_FALLBACK : formatZodIssue(issue);
+  return issue === undefined ? REQUEST_BUILD_FALLBACK : coachRowIssue(issue);
 };
 
 export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowRequestResult => {

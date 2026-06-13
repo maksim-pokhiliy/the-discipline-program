@@ -18,10 +18,10 @@ const LABEL_FIELD_WIDTH = 140;
 const KG_FIELD_MIN = 0;
 const KG_FIELD_STEP = 0.5;
 const KG_FIELD_WIDTH = 110;
-const DEFAULT_KG = 0;
+const EMPTY_KG = Number.NaN;
 const EMPTY_LABEL = "";
 
-const makeEntry = (): ProfileEntry => ({ label: EMPTY_LABEL, kg: DEFAULT_KG });
+const makeEntry = (): ProfileEntry => ({ label: EMPTY_LABEL, kg: EMPTY_KG });
 
 type LoadByProfileFieldsProps = {
   value: ByProfileLoad;

@@ -13,9 +13,8 @@ import { LoadPercentageFields } from "./load-percentage-fields";
 
 const LABEL = "load";
 const CLEAR_LABEL = "no load";
-const DEFAULT_KG = 0;
-const DEFAULT_PERCENT = 0;
-const DEFAULT_PROFILE_KG = 0;
+const EMPTY_KG = Number.NaN;
+const EMPTY_PERCENT = Number.NaN;
 const SINGLE_COUNT = 1;
 const EMPTY_PROFILE_LABEL = "";
 
@@ -27,12 +26,12 @@ const KIND_LABELS: Record<LoadKind, string> = {
 };
 
 const KIND_DEFAULTS: Record<LoadKind, Load> = {
-  absolute: { kind: "absolute", count: SINGLE_COUNT, kg: DEFAULT_KG },
-  percentage: { kind: "percentage", value: DEFAULT_PERCENT, reference: { scope: "self" } },
+  absolute: { kind: "absolute", count: SINGLE_COUNT, kg: EMPTY_KG },
+  percentage: { kind: "percentage", value: EMPTY_PERCENT, reference: { scope: "self" } },
   bodyweight: { kind: "bodyweight" },
   byProfile: {
     kind: "byProfile",
-    entries: [{ label: EMPTY_PROFILE_LABEL, kg: DEFAULT_PROFILE_KG }],
+    entries: [{ label: EMPTY_PROFILE_LABEL, kg: EMPTY_KG }],
   },
 };
 

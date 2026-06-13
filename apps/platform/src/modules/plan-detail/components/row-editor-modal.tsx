@@ -83,9 +83,6 @@ const seedState = (mode: RowEditorMode): RowFormState =>
 const modeKey = (mode: RowEditorMode): string =>
   mode.kind === "edit" ? `edit:${mode.row.id}` : `create:${mode.schemaId}`;
 
-const mapRequestMode = (mode: RowEditorMode): RowRequestMode =>
-  mode.kind === "edit" ? { kind: "edit" } : { kind: "create", schemaId: mode.schemaId };
-
 const resolvedRefsFor = (mode: RowEditorMode): SchemaRow["modifiers"] =>
   mode.kind === "edit" ? mode.row.modifiers : [];
 
@@ -135,6 +132,13 @@ export const RowEditorModal = ({
 
   const isCreate = mode.kind === "create";
   const isPending = createRow.isPending || updateRow.isPending;
+  const createSchemaId = mode.kind === "create" ? mode.schemaId : null;
+  const requestMode = useMemo<RowRequestMode>(
+    () =>
+      createSchemaId === null ? { kind: "edit" } : { kind: "create", schemaId: createSchemaId },
+    [createSchemaId],
+  );
+  const requestResult = useMemo(() => buildRowRequest(state, requestMode), [state, requestMode]);
   const selectedExercise = useMemo(
     () => exercises.find((exercise) => exercise.id === state.exerciseId),
     [exercises, state.exerciseId],
@@ -159,24 +163,24 @@ export const RowEditorModal = ({
 
     setError(null);
 
-    const result = buildRowRequest(state, mapRequestMode(mode));
-
-    if (!result.ok) {
-      setError(result.error);
+    if (!requestResult.ok) {
+      setError(requestResult.error);
 
       return;
     }
+
+    const { data } = requestResult;
 
     isSubmittingRef.current = true;
 
     if (mode.kind === "edit") {
-      updateRow.mutate({ schemaRowId: mode.row.id, data: result.data }, mutationCallbacks);
+      updateRow.mutate({ schemaRowId: mode.row.id, data }, mutationCallbacks);
 
       return;
     }
 
-    if ("exerciseId" in result.data) {
-      createRow.mutate(result.data, mutationCallbacks);
+    if ("exerciseId" in data) {
+      createRow.mutate(data, mutationCallbacks);
     }
   };
 
@@ -192,6 +196,7 @@ export const RowEditorModal = ({
       }}
       isSubmitting={isPending}
       submitText={isCreate ? CREATE_SUBMIT : EDIT_SUBMIT}
+      submitDisabled={!requestResult.ok}
       error={error}
     >
       <Stack spacing={1}>
@@ -221,7 +226,7 @@ export const RowEditorModal = ({
 
         <NumberField
           value={state.sets ?? Number.NaN}
-          onChange={(sets) => patch({ sets: Number.isFinite(sets) ? sets : null })}
+          onChange={(sets) => patch({ sets: sets > 0 ? sets : null })}
           min={SETS_FIELD_MIN}
           maxWidth={SETS_FIELD_WIDTH}
         />

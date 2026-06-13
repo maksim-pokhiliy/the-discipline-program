@@ -146,12 +146,15 @@ describe("RowEditorModal chrome", () => {
 });
 
 describe("RowEditorModal submit", () => {
-  it("surfaces a form error and does not fire create when no exercise is picked", () => {
+  it("disables submit and does not fire create when no exercise is picked", () => {
     renderCreate();
 
-    fireEvent.click(screen.getByRole("button", { name: "Add row" }));
+    const submit = screen.getByRole("button", { name: "Add row" });
 
-    expect(screen.getByRole("alert")).toHaveTextContent(/exercise/i);
+    expect(submit).toBeDisabled();
+
+    fireEvent.click(submit);
+
     expect(createRowMutate).not.toHaveBeenCalled();
   });
 

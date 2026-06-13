@@ -95,7 +95,7 @@ export const SideField = ({
       return;
     }
 
-    onChange({ kind: value.kind, countPerLimb });
+    onChange(countPerLimb > 0 ? { kind: value.kind, countPerLimb } : { kind: value.kind });
   };
 
   return (
