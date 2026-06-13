@@ -72,17 +72,19 @@ vi.mock("./schema-row-card", () => {
   return { SchemaRowCard: renderSchemaRowCardMock };
 });
 
-vi.mock("./row-group-box", () => ({
-  RowGroupBox: (props: { group: RowGroup }) =>
+vi.mock("./row-group-box", () => {
+  const renderRowGroupBoxMock = (props: { group: RowGroup }) =>
     createElement(
       "div",
       { "data-testid": "row-group-box-mock", "data-group-id": props.group.id },
       "row-group-box",
-    ),
-}));
+    );
 
-vi.mock("./row-editor-modal", () => ({
-  RowEditorModal: (props: { mode: { kind: string; schemaId?: string } }) =>
+  return { RowGroupBox: renderRowGroupBoxMock };
+});
+
+vi.mock("./row-editor-modal", () => {
+  const renderRowEditorModalMock = (props: { mode: { kind: string; schemaId?: string } }) =>
     createElement(
       "div",
       {
@@ -91,8 +93,10 @@ vi.mock("./row-editor-modal", () => ({
         "data-schema-id": props.mode.schemaId ?? "",
       },
       "row-editor-modal",
-    ),
-}));
+    );
+
+  return { RowEditorModal: renderRowEditorModalMock };
+});
 
 const { SchemaRowList } = await import("./schema-row-list");
 
