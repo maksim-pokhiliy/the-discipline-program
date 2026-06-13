@@ -5,7 +5,7 @@ import {
   type SchemaGroup as PrismaSchemaGroup,
 } from "@prisma/client";
 
-import { intensitySchema, timeCapSchema } from "@repo/contracts/lms/_shared";
+import { notesListSchema } from "@repo/contracts/lms/_shared";
 import { type Block } from "@repo/contracts/lms/block";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
@@ -27,9 +27,7 @@ export const mapToBlock = (b: PrismaBlock): Block => ({
   id: b.id,
   sessionId: b.sessionId,
   order: b.order,
-  intensity: b.intensity === null ? null : intensitySchema.parse(b.intensity),
-  timeCap: b.timeCap === null ? null : timeCapSchema.parse(b.timeCap),
-  notes: b.notes,
+  notes: b.notes === null ? null : notesListSchema.parse(b.notes),
   labels: [],
   schemas: [],
   groups: [],

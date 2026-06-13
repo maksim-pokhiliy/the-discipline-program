@@ -1,13 +1,11 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { Intensity, TimeCap } from "@repo/contracts/lms/_shared";
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
-
-import type { BlockCtx } from "../lib/build-cascade-chips";
 
 const updateSchemaMutate = vi.fn();
 const deleteSchemaMutate = vi.fn();
@@ -108,25 +106,18 @@ const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
       ...schemaOverrides,
     },
     rows: rows ?? [],
+    rowGroups: [],
   };
 };
 
-const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
-  intensity: null,
-  timeCap: null,
-  ...overrides,
-});
-
 type RenderOptions = {
   schema?: SchemaWithBody;
-  blockCtx?: BlockCtx;
   parentIsReorderPending?: boolean;
   isBoxed?: boolean;
 };
 
 const renderSchemaCard = ({
   schema = makeSchema(),
-  blockCtx = makeBlockCtx(),
   parentIsReorderPending = false,
   isBoxed = false,
 }: RenderOptions = {}) =>
@@ -135,7 +126,6 @@ const renderSchemaCard = ({
       schema={schema}
       planId={PLAN_ID}
       startDate={START_DATE}
-      blockCtx={blockCtx}
       parentIsReorderPending={parentIsReorderPending}
       isBoxed={isBoxed}
     />,
@@ -387,51 +377,7 @@ describe("SchemaCard meta row", () => {
     expect(chips.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders a CascadeChip for a block dim NOT overridden by the schema (rpe cascades, effortPercent stays own)", () => {
-    const schemaIntensity: Intensity = { effortPercent: { value: 75 } };
-    const blockIntensity: Intensity = { effortPercent: { value: 60 }, rpe: { value: 8 } };
-
-    renderSchemaCard({
-      schema: makeSchema({ intensity: schemaIntensity }),
-      blockCtx: makeBlockCtx({ intensity: blockIntensity }),
-    });
-
-    expect(screen.getByText("@ 75%")).toBeInTheDocument();
-    expect(screen.getByText("RPE 8")).toBeInTheDocument();
-  });
-
-  it("renders multiple cascade chips when block has 3 dims and schema overrides none", () => {
-    const blockIntensity: Intensity = {
-      effortPercent: { value: 70 },
-      rpe: { value: 7 },
-      pace: "moderate",
-    };
-
-    renderSchemaCard({
-      schema: makeSchema(),
-      blockCtx: makeBlockCtx({ intensity: blockIntensity }),
-    });
-
-    expect(screen.getByText("@ 70%")).toBeInTheDocument();
-    expect(screen.getByText("RPE 7")).toBeInTheDocument();
-    expect(screen.getByText("pace · moderate")).toBeInTheDocument();
-  });
-
-  it("renders the cap cascade chip 'cap 5:00' when blockCtx.timeCap is set", () => {
-    const timeCap: TimeCap = { min: 5, unit: "min" };
-
-    renderSchemaCard({ blockCtx: makeBlockCtx({ timeCap }) });
-
-    expect(screen.getByText("cap 5:00")).toBeInTheDocument();
-  });
-
-  it("does NOT render the cap cascade chip when blockCtx.timeCap is null", () => {
-    renderSchemaCard({ blockCtx: makeBlockCtx({ timeCap: null }) });
-
-    expect(screen.queryByText(/^cap /)).toBeNull();
-  });
-
-  it("renders the 'no params' italic fallback when the composition, intensity and cascade are all empty", () => {
+  it("renders the 'no params' italic fallback when the composition and intensity are both empty", () => {
     renderSchemaCard({ schema: makeSchema({ composition: {} }) });
 
     expect(screen.getByText("no params")).toBeInTheDocument();
@@ -511,19 +457,15 @@ describe("SchemaCard body / SchemaRowList wiring", () => {
       id: "clp9z8x7w0000abcd1234row1",
       schemaId: SCHEMA_ID,
       order: 1,
-      rowKind: "EXERCISE",
-      rowPayload: {
-        rowKind: "EXERCISE",
-        exercise: { form: "atomic", exerciseId: "clp9z8x7w0000abcd1234exe1" },
-      },
+      exerciseId: "clp9z8x7w0000abcd1234exe1",
+      sets: null,
+      rowGroupId: null,
       load: null,
       reps: null,
       side: null,
       tempo: null,
-      position: null,
-      sequence: null,
-      intensity: null,
       media: null,
+      modifiers: [],
       notes: null,
       createdAt: NOW,
       updatedAt: NOW,

@@ -22,48 +22,51 @@ export const BLOCK_REST_COVERAGE: CanonicalBlock = {
   blockInstanceRef: "block-170",
   order: 4,
   labels: [LBL.conditioning],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
       {
         order: 1,
-        header: "rest-spec coverage block",
-        rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-            { load: bodyweightLoad(), reps: countReps(10) },
-          ),
-          mkRow(2, {
-            rowKind: "REST",
-            raw: "Rest 2-3 min between rounds",
-            parsed: REST_BR_RANGE_MIN,
-          }),
-          mkRow(3, {
-            rowKind: "REST",
-            raw: "Rest 60-90 sec between sets",
-            parsed: REST_BS_RANGE_SEC,
-          }),
-          mkRow(4, {
-            rowKind: "REST",
-            raw: "Rest between sets until recovery",
-            parsed: REST_BS_UNTIL_RECOVERY,
-          }),
-          mkRow(5, {
-            rowKind: "REST",
-            raw: "Rest 3 min between rounds",
-            parsed: REST_BR_FIXED_MIN,
-          }),
-          mkRow(6, {
-            rowKind: "REST",
-            raw: "Rest 30 sec between intervals",
-            parsed: REST_BI_FIXED_SEC,
-          }),
-        ],
+        header: "rest-spec coverage — 2-3 min between rounds",
+        rows: [mkRow(1, EX.burpee, { load: bodyweightLoad(), reps: countReps(10) })],
       },
-      rounds(5),
+      { ...rounds(5), rest: REST_BR_RANGE_MIN },
+      null,
+    ),
+    buildComposeNode(
+      {
+        order: 2,
+        header: "rest-spec coverage — 60-90 sec between sets",
+        rows: [mkRow(1, EX.burpee, { load: bodyweightLoad(), reps: countReps(10) })],
+      },
+      { ...rounds(5), rest: REST_BS_RANGE_SEC },
+      null,
+    ),
+    buildComposeNode(
+      {
+        order: 3,
+        header: "rest-spec coverage — between sets until recovery",
+        rows: [mkRow(1, EX.burpee, { load: bodyweightLoad(), reps: countReps(10) })],
+      },
+      { ...rounds(5), rest: REST_BS_UNTIL_RECOVERY },
+      null,
+    ),
+    buildComposeNode(
+      {
+        order: 4,
+        header: "rest-spec coverage — 3 min between rounds",
+        rows: [mkRow(1, EX.burpee, { load: bodyweightLoad(), reps: countReps(10) })],
+      },
+      { ...rounds(5), rest: REST_BR_FIXED_MIN },
+      null,
+    ),
+    buildComposeNode(
+      {
+        order: 5,
+        header: "rest-spec coverage — 30 sec between intervals",
+        rows: [mkRow(1, EX.burpee, { load: bodyweightLoad(), reps: countReps(10) })],
+      },
+      { ...rounds(5), rest: REST_BI_FIXED_SEC },
       null,
     ),
   ],

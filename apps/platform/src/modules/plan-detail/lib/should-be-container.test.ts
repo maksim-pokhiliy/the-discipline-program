@@ -7,20 +7,22 @@ import { shouldBeContainer } from "./should-be-container";
 
 let rowCounter = 0;
 
-const makeRestSlotRow = (): ComposeRow => {
+const EXERCISE_ID = "ckexr1234567890abcdef01234";
+
+const makeRow = (): ComposeRow => {
   rowCounter += 1;
 
   return {
     nodeType: "row",
     id: asNodeId(`predicate-row-${String(rowCounter)}`),
-    rowKind: "REST_SLOT",
-    rowPayload: { rowKind: "REST_SLOT" },
+    exerciseId: EXERCISE_ID,
+    sets: null,
+    rowGroupId: null,
     reps: null,
     load: null,
     side: null,
     tempo: null,
-    position: null,
-    intensity: null,
+    modifiers: [],
     notes: null,
     editorDraft: undefined,
   };
@@ -34,8 +36,8 @@ const schemaDraft = (overrides: Partial<SchemaDraft>): SchemaDraft => ({
   ...overrides,
 });
 
-const oneRow = (): ComposeRow[] => [makeRestSlotRow()];
-const twoRows = (): ComposeRow[] => [makeRestSlotRow(), makeRestSlotRow()];
+const oneRow = (): ComposeRow[] => [makeRow()];
+const twoRows = (): ComposeRow[] => [makeRow(), makeRow()];
 
 describe("shouldBeContainer", () => {
   it("returns false for a bare single-row schema with no axes", () => {

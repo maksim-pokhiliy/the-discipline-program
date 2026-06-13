@@ -31,15 +31,6 @@ describe("formatPercentageReference", () => {
     expect(formatPercentageReference(ref, EMPTY_MAP)).toBe("of 1RM");
   });
 
-  it("renders 'of <family> 1RM' for movement_family scope", () => {
-    const ref: PercentageReference = {
-      scope: "movement_family",
-      movementFamily: "squat",
-    };
-
-    expect(formatPercentageReference(ref, EMPTY_MAP)).toBe("of squat 1RM");
-  });
-
   it("renders 'of <canonicalName> 1RM' when other_exercise is resolved", () => {
     const exerciseId = "ckabc1234567890abcdef012345";
     const exerciseById: ExerciseById = new Map([

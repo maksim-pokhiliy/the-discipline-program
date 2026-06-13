@@ -2,6 +2,7 @@ import type { CanonicalSeed } from "../canonical-schema";
 
 import { DEMO_EXERCISES } from "./catalog-exercises";
 import { DEMO_LABELS } from "./catalog-labels";
+import { DEMO_MODIFIERS } from "./catalog-modifiers";
 import { PHASE_7_EXAMPLES } from "./phase-7";
 import { WEEK_1 } from "./week-1";
 import { WEEK_2 } from "./week-2";
@@ -28,7 +29,7 @@ const DEMO_PLAN_SHELL: CanonicalSeed["plan"] = {
 
 export const SYNTHETIC_DEMO_PLAN: CanonicalSeed = {
   meta: DEMO_PLAN_META,
-  catalog: { exercises: DEMO_EXERCISES, labels: DEMO_LABELS },
+  catalog: { exercises: DEMO_EXERCISES, labels: DEMO_LABELS, modifiers: DEMO_MODIFIERS },
   plan: DEMO_PLAN_SHELL,
   weeks: [WEEK_1, WEEK_TRAVEL_GAP, WEEK_2],
   phase7Examples: PHASE_7_EXAMPLES,

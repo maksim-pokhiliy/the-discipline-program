@@ -70,8 +70,6 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: "clp9z8x7w0000abcd1234blk1",
   sessionId: "clp9z8x7w0000abcd1234ses1",
   order: 1,
-  intensity: null,
-  timeCap: null,
   notes: null,
   labels: [],
   schemas: [],
@@ -235,14 +233,14 @@ describe("SessionCard", () => {
     expect(updateSessionMutate).toHaveBeenCalledTimes(1);
     expect(updateSessionMutate).toHaveBeenCalledWith({
       sessionId: "clp9z8x7w0000abcd1234ses1",
-      data: { notes: "focus on bar path" },
+      data: { notes: ["focus on bar path"] },
     });
   });
 
   it("commits null instead of an empty string when the session note is cleared on blur", () => {
     updateSessionMutate.mockClear();
 
-    renderSessionCard({ session: makeSession({ notes: "previous note" }) });
+    renderSessionCard({ session: makeSession({ notes: ["previous note"] }) });
 
     const input = getNotesInput();
 
@@ -326,7 +324,7 @@ describe("SessionCard", () => {
   it("commits null on blur when only whitespace remains over a non-empty prior note (Q-4)", () => {
     updateSessionMutate.mockClear();
 
-    renderSessionCard({ session: makeSession({ notes: "RPE 9 focus" }) });
+    renderSessionCard({ session: makeSession({ notes: ["RPE 9 focus"] }) });
 
     const input = getNotesInput();
 

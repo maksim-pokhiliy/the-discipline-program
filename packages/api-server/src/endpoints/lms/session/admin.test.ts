@@ -292,11 +292,11 @@ describe("lmsSessionApi", () => {
         const [first, second] = await Promise.allSettled([
           lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "FRIDAY", {
             labelId: null,
-            notes: "first concurrent",
+            notes: ["first concurrent"],
           }),
           lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "FRIDAY", {
             labelId: null,
-            notes: "second concurrent",
+            notes: ["second concurrent"],
           }),
         ]);
 
@@ -339,23 +339,23 @@ describe("lmsSessionApi", () => {
       try {
         const updated = await lmsSessionApi.update(coach.user.id, session.id, {
           labelId: sessionLabelId,
-          notes: "test notes",
+          notes: ["test notes"],
         });
 
         expect(updated.labelId).toBe(sessionLabelId);
-        expect(updated.notes).toBe("test notes");
+        expect(updated.notes).toEqual(["test notes"]);
 
         await expect(
           lmsSessionApi.update(otherCoach.user.id, session.id, {
             labelId: null,
-            notes: "tamper",
+            notes: ["tamper"],
           }),
         ).rejects.toThrow(ForbiddenError);
 
         const stored = await cleanupRaw.session.findUnique({ where: { id: session.id } });
 
         expect(stored?.labelId).toBe(sessionLabelId);
-        expect(stored?.notes).toBe("test notes");
+        expect(stored?.notes).toEqual(["test notes"]);
       } finally {
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});

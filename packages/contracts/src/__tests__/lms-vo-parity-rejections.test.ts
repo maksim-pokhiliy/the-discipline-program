@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  exerciseFormSchema,
   loadSchema,
   perLimbDistributionSchema,
   repNotationSchema,
   restSpecSchema,
   tempoModifierSchema,
 } from "../entities/lms/_shared";
-
-import { CUID_PRIMARY, CUID_SECONDARY } from "./_cuid-helper";
 
 describe("LMS VO parity — rejection coverage (negative space)", () => {
   describe("Load", () => {
@@ -39,8 +36,10 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
       );
     });
 
-    it("rejects byProfile with a non-positive value", () => {
-      expect(loadSchema.safeParse({ kind: "byProfile", first: 0, second: 16 }).success).toBe(false);
+    it("rejects byProfile with a non-positive entry kg", () => {
+      expect(
+        loadSchema.safeParse({ kind: "byProfile", entries: [{ label: "M", kg: 0 }] }).success,
+      ).toBe(false);
     });
   });
 
@@ -90,28 +89,36 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
   });
 
   describe("TempoModifier", () => {
-    it("rejects empty object (at-least-one-axis refine)", () => {
-      expect(tempoModifierSchema.safeParse({}).success).toBe(false);
+    it("rejects the dropped verbal-form wrapper object", () => {
+      expect(tempoModifierSchema.safeParse({ pauseInUp: { durationSec: 2 } }).success).toBe(false);
     });
 
-    it("rejects fullTempo with eccentric > 60 (max-clamp)", () => {
+    it("rejects a quad with eccentric > 60 (max-clamp)", () => {
       expect(
         tempoModifierSchema.safeParse({
-          fullTempo: { eccentric: 61, pauseBottom: 0, concentric: 0, pauseTop: 0 },
+          eccentric: 61,
+          pauseBottom: 0,
+          concentric: 0,
+          pauseTop: 0,
         }).success,
       ).toBe(false);
     });
 
-    it("rejects fullTempo with non-integer field", () => {
+    it("rejects a quad with a non-integer numeric field", () => {
       expect(
         tempoModifierSchema.safeParse({
-          fullTempo: { eccentric: 3.5, pauseBottom: 0, concentric: 0, pauseTop: 0 },
+          eccentric: 3.5,
+          pauseBottom: 0,
+          concentric: 0,
+          pauseTop: 0,
         }).success,
       ).toBe(false);
     });
 
-    it("rejects pauseInUp with negative durationSec", () => {
-      expect(tempoModifierSchema.safeParse({ pauseInUp: { durationSec: -1 } }).success).toBe(false);
+    it("rejects a quad missing a position field", () => {
+      expect(
+        tempoModifierSchema.safeParse({ eccentric: 3, pauseBottom: 0, concentric: 0 }).success,
+      ).toBe(false);
     });
   });
 
@@ -141,54 +148,6 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
           scope: "between_sets",
         }).success,
       ).toBe(false);
-    });
-  });
-
-  describe("ExerciseForm", () => {
-    it("rejects atomic form with non-cuid exerciseId", () => {
-      expect(
-        exerciseFormSchema.safeParse({ form: "atomic", exerciseId: "not-a-cuid" }).success,
-      ).toBe(false);
-    });
-
-    it("rejects compound form with 1-element compound (semantic = atomic)", () => {
-      expect(
-        exerciseFormSchema.safeParse({
-          form: "compound",
-          compound: { elements: [{ exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 5 } }] },
-        }).success,
-      ).toBe(false);
-    });
-
-    it("rejects sandwich with missing middle element", () => {
-      expect(
-        exerciseFormSchema.safeParse({
-          form: "sandwich",
-          sandwich: {
-            opening: { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 12 } },
-            closing: { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 6 } },
-          },
-        }).success,
-      ).toBe(false);
-    });
-
-    it("documents .strip() passthrough: atomic with extra compound fields ACCEPTS (Zod default; tracked under QA-002 for .strict() posture)", () => {
-      const result = exerciseFormSchema.safeParse({
-        form: "atomic",
-        exerciseId: CUID_PRIMARY,
-        compound: {
-          elements: [
-            { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 5 } },
-            { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 5 } },
-          ],
-        },
-      });
-
-      expect(result.success).toBe(true);
-
-      if (result.success) {
-        expect(result.data).toEqual({ form: "atomic", exerciseId: CUID_PRIMARY });
-      }
     });
   });
 });

@@ -5,10 +5,9 @@ import { Fragment, type ReactElement, useMemo } from "react";
 import { Stack, Typography } from "@mui/material";
 
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
-import { CascadeChip, IndicatorChip } from "@repo/ui";
+import { IndicatorChip } from "@repo/ui";
 
-import { type BlockCtx, buildCascadeChips } from "../lib/build-cascade-chips";
-import { formatIntensityChips, formatTimeCap } from "../lib/format-block-meta";
+import { formatIntensityChips } from "../lib/format-block-meta";
 import {
   type CompositionSummaryPart,
   formatCompositionSummary,
@@ -18,17 +17,12 @@ const EMPTY_PARTS: CompositionSummaryPart[] = [];
 
 const NO_PARAMS_LABEL = "no params";
 const PARAM_SEPARATOR = "·";
-const CAP_PREFIX = "cap ";
 
 type SchemaCardMetaProps = {
   schema: SchemaWithBody;
-  blockCtx: BlockCtx;
 };
 
-export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
-  schema,
-  blockCtx,
-}): ReactElement => {
+export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({ schema }): ReactElement => {
   const composition = schema.schema.composition;
   const schemaIntensity = schema.schema.intensity;
 
@@ -42,21 +36,7 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
     [schemaIntensity],
   );
 
-  const cascadeChips = useMemo(
-    () => buildCascadeChips(schemaIntensity, blockCtx.intensity),
-    [schemaIntensity, blockCtx.intensity],
-  );
-
-  const capCascadeText = useMemo(
-    () => (blockCtx.timeCap !== null ? `${CAP_PREFIX}${formatTimeCap(blockCtx.timeCap)}` : null),
-    [blockCtx.timeCap],
-  );
-
-  const isEmpty =
-    metaParts.length === 0 &&
-    ownChips.length === 0 &&
-    cascadeChips.length === 0 &&
-    capCascadeText === null;
+  const isEmpty = metaParts.length === 0 && ownChips.length === 0;
 
   return (
     <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
@@ -76,12 +56,6 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
       {ownChips.map((c, i) => (
         <IndicatorChip key={`${String(i)}-${c.text}`} tone={c.tone} label={c.text} dot={false} />
       ))}
-
-      {cascadeChips.map((c, i) => (
-        <CascadeChip key={`${String(i)}-${c.text}`} text={c.text} />
-      ))}
-
-      {capCascadeText !== null ? <CascadeChip text={capCascadeText} /> : null}
 
       {isEmpty ? (
         <Typography variant="caption" color="text.subtle" fontStyle="italic">

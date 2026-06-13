@@ -9,6 +9,7 @@ export const ROW_ID = "ckrow1234567890abcdef01234";
 export const SCHEMA_ID = "cksch1234567890abcdef01234";
 export const ID_BACK_SQUAT = "ckabc1234567890abcdef01234";
 export const ID_DEADLIFT = "ckxyz1234567890abcdef01234";
+export const ID_PLACEHOLDER = "ckph01234567890abcdef01234";
 export const DEMO_URL = "https://example.com/back-squat.mp4";
 
 export const makeExercise = (overrides: Partial<Exercise> & Pick<Exercise, "id">): Exercise => ({
@@ -34,77 +35,39 @@ export const exerciseById: ReadonlyMap<string, Exercise> = new Map([
     makeExercise({ id: ID_BACK_SQUAT, canonicalName: "Back Squat", defaultDemoUrls: [DEMO_URL] }),
   ],
   [ID_DEADLIFT, makeExercise({ id: ID_DEADLIFT, canonicalName: "Deadlift" })],
+  [
+    ID_PLACEHOLDER,
+    makeExercise({ id: ID_PLACEHOLDER, canonicalName: "Coach choice", placeholderFlag: true }),
+  ],
 ]);
 
-const baseRowFields = {
+const baseRowFields: Omit<SchemaRow, "exerciseId"> = {
   id: ROW_ID,
   schemaId: SCHEMA_ID,
   order: 1,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
+  modifiers: [],
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
-} as const;
+};
 
 export const makeExerciseRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   ...baseRowFields,
-  rowKind: "EXERCISE",
-  rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: ID_BACK_SQUAT } },
+  exerciseId: ID_BACK_SQUAT,
   ...overrides,
 });
 
-export const makeCompoundExerciseRow = (): SchemaRow =>
-  makeExerciseRow({
-    rowPayload: {
-      rowKind: "EXERCISE",
-      exercise: {
-        form: "compound",
-        compound: {
-          elements: [
-            { exerciseId: ID_BACK_SQUAT, reps: { kind: "count", value: 5 } },
-            { exerciseId: ID_DEADLIFT, reps: { kind: "count", value: 3 } },
-          ],
-        },
-      },
-    },
-  });
-
 export const makeAtomicExerciseNoDemoRow = (): SchemaRow =>
-  makeExerciseRow({
-    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: ID_DEADLIFT } },
-  });
+  makeExerciseRow({ exerciseId: ID_DEADLIFT });
 
-export const makeRestRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "REST",
-  rowPayload: {
-    rowKind: "REST",
-    raw: "rest 90s",
-    parsed: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
-  },
-});
-
-export const makePlaceholderRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "PLACEHOLDER",
-  rowPayload: {
-    rowKind: "PLACEHOLDER",
-    placeholder: { placeholderKind: "coach_choice_slot", text: "ABS finisher" },
-  },
-});
-
-export const makeRestSlotRow = (): SchemaRow => ({
-  ...baseRowFields,
-  rowKind: "REST_SLOT",
-  rowPayload: { rowKind: "REST_SLOT" },
-});
+export const makePlaceholderRow = (): SchemaRow => makeExerciseRow({ exerciseId: ID_PLACEHOLDER });
 
 export type RowKindCase = {
   name: string;
@@ -120,7 +83,7 @@ export type RowKindCase = {
 
 export const rowKindCases: RowKindCase[] = [
   {
-    name: "EXERCISE atomic",
+    name: "atomic exercise",
     build: () => makeExerciseRow(),
     ord: "1",
     badgeLabel: "EX",
@@ -130,34 +93,13 @@ export const rowKindCases: RowKindCase[] = [
     sub: null,
   },
   {
-    name: "REST",
-    build: () => makeRestRow(),
-    index: 4,
-    ord: "5",
-    badgeLabel: "RST",
-    kindCls: "rest",
-    dashed: false,
-    mainText: "rest 90s between sets",
-    sub: null,
-  },
-  {
-    name: "PLACEHOLDER",
+    name: "placeholder exercise",
     build: () => makePlaceholderRow(),
-    ord: "?",
-    badgeLabel: "?",
-    kindCls: "placeholder",
+    ord: "1",
+    badgeLabel: "EX",
+    kindCls: "ex",
     dashed: true,
-    mainText: "ABS finisher",
-    sub: "placeholder · coach choice slot",
-  },
-  {
-    name: "REST_SLOT",
-    build: () => makeRestSlotRow(),
-    ord: "R",
-    badgeLabel: "RS",
-    kindCls: "rest",
-    dashed: false,
-    mainText: "Rest slot",
-    sub: "EMOM minute · rest",
+    mainText: "Coach choice",
+    sub: null,
   },
 ];

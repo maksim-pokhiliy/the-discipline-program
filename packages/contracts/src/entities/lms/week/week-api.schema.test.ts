@@ -43,8 +43,8 @@ describe("weekSchema", () => {
 });
 
 describe("updateWeekNotesSchema", () => {
-  it("accepts a string notes value", () => {
-    const result = updateWeekNotesSchema.safeParse({ notes: "deload week" });
+  it("accepts a notes list value", () => {
+    const result = updateWeekNotesSchema.safeParse({ notes: ["deload week"] });
 
     expect(result.success).toBe(true);
   });
@@ -55,9 +55,9 @@ describe("updateWeekNotesSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects a notes string over MAX_NOTES_LENGTH", () => {
+  it("rejects a note over NOTE_MAX_LENGTH", () => {
     const result = updateWeekNotesSchema.safeParse({
-      notes: "x".repeat(WEEK_CONSTANTS.MAX_NOTES_LENGTH + 1),
+      notes: ["x".repeat(WEEK_CONSTANTS.MAX_NOTES_LENGTH + 1)],
     });
 
     expect(result.success).toBe(false);

@@ -11,6 +11,8 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
 
+import { textToNotesList } from "../lib/notes-list-text";
+
 import { BlockList } from "./block-list";
 import { SessionCardHead } from "./session-card-head";
 
@@ -53,7 +55,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   const handleNotesCommit = (next: string) =>
     updateSession.mutate({
       sessionId: session.id,
-      data: { notes: next === "" ? null : next },
+      data: { notes: textToNotesList(next) },
     });
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);

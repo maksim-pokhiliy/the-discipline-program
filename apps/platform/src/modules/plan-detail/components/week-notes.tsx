@@ -6,20 +6,22 @@ import { formatDateParam } from "@repo/shared";
 
 import { useBlurCommit, useUpdateWeekNotes } from "@app/lib/hooks";
 
+import { notesListToText, textToNotesList } from "../lib/notes-list-text";
+
 type WeekNotesProps = {
   planId: string;
   monday: Date;
-  notes: string | null;
+  notes: string[] | null;
 };
 
 export const WeekNotes: React.FC<WeekNotesProps> = ({ planId, monday, notes }) => {
   const updateNotes = useUpdateWeekNotes(planId);
   const { draft, setDraft, handleFocus, handleBlur } = useBlurCommit({
-    value: notes,
+    value: notesListToText(notes),
     onCommit: (next) =>
       updateNotes.mutate({
         startDate: formatDateParam(monday),
-        data: { notes: next },
+        data: { notes: textToNotesList(next) },
       }),
   });
 

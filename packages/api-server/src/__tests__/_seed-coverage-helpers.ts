@@ -41,21 +41,7 @@ export const expectWeeksAreMondayMonotonic = (weeks: ReadonlyArray<{ startDate: 
   }
 };
 
-export type ExerciseRefWalkResult = {
-  refs: ReadonlySet<string>;
-  count: number;
-};
-
-const EXERCISE_REF_KEYS = new Set<string>([
-  "exerciseId",
-  "tailExerciseId",
-  "primaryExerciseId",
-  "secondaryExerciseId",
-  "alternativeExerciseId",
-  "optionalRotationStepExerciseId",
-  "placeholderExerciseId",
-  "targetExerciseId",
-]);
+const EXERCISE_REF_KEYS = new Set<string>(["exerciseId", "targetExerciseId"]);
 
 export const collectExerciseRefs = (node: unknown, sink: Set<string>): void => {
   if (Array.isArray(node)) {
@@ -77,16 +63,4 @@ export const collectExerciseRefs = (node: unknown, sink: Set<string>): void => {
 
     collectExerciseRefs(value, sink);
   }
-};
-
-export const extractRowPayloadExerciseRefs = (
-  rows: ReadonlyArray<{ rowPayload: unknown }>,
-): ExerciseRefWalkResult => {
-  const refs = new Set<string>();
-
-  for (const row of rows) {
-    collectExerciseRefs(row.rowPayload, refs);
-  }
-
-  return { refs, count: refs.size };
 };

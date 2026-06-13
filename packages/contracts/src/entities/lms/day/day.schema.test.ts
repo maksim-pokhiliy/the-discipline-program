@@ -39,9 +39,7 @@ const baseBlock = {
   id: "clp9z8x7w0000abcd1234dddd",
   sessionId: "clp9z8x7w0000abcd1234abcd",
   order: 10,
-  intensity: { rpe: { value: 7 } },
-  timeCap: { min: 10, max: 15, unit: "min" as const },
-  notes: "block focus",
+  notes: ["block focus"],
   labels: [baseLabel],
   schemas: [],
   groups: [],
@@ -87,7 +85,7 @@ describe("daySlotSchema", () => {
     const result = daySlotSchema.safeParse({
       dayOfWeek: "WEDNESDAY",
       label: baseLabel,
-      notes: "rest before push",
+      notes: ["rest before push"],
       sessions: [
         { ...baseSessionWithLabel, order: 10, label: null },
         { ...baseSessionWithLabel, id: "clp9z8x7w0000abcd1234abce", order: 20, label: baseLabel },
@@ -195,8 +193,8 @@ describe("updateDayLabelSchema", () => {
 });
 
 describe("updateDayNotesSchema", () => {
-  it("accepts a string under MAX_NOTES_LENGTH", () => {
-    const result = updateDayNotesSchema.safeParse({ notes: "deload day" });
+  it("accepts a notes list", () => {
+    const result = updateDayNotesSchema.safeParse({ notes: ["deload day"] });
 
     expect(result.success).toBe(true);
   });
@@ -207,17 +205,17 @@ describe("updateDayNotesSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts notes at MAX_NOTES_LENGTH", () => {
+  it("accepts a note at NOTE_MAX_LENGTH", () => {
     const result = updateDayNotesSchema.safeParse({
-      notes: "x".repeat(DAY_CONSTANTS.MAX_NOTES_LENGTH),
+      notes: ["x".repeat(DAY_CONSTANTS.MAX_NOTES_LENGTH)],
     });
 
     expect(result.success).toBe(true);
   });
 
-  it("rejects notes over MAX_NOTES_LENGTH", () => {
+  it("rejects a note over NOTE_MAX_LENGTH", () => {
     const result = updateDayNotesSchema.safeParse({
-      notes: "x".repeat(DAY_CONSTANTS.MAX_NOTES_LENGTH + 1),
+      notes: ["x".repeat(DAY_CONSTANTS.MAX_NOTES_LENGTH + 1)],
     });
 
     expect(result.success).toBe(false);

@@ -8,17 +8,15 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import TuneIcon from "@mui/icons-material/Tune";
-import { Box, IconButton, Link, Tooltip, Typography, alpha, type Theme } from "@mui/material";
+import { Box, IconButton, Link, Tooltip, Typography } from "@mui/material";
 
-import type { RowKind, SchemaRow } from "@repo/contracts/lms/schema-row";
+import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal, RowKindBadge } from "@repo/ui";
 
-import { useCatalog, useDeleteSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
+import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
 
 import { formatRow } from "../lib/format-row";
 
-import { RowEditorModal } from "./row-editor-modal";
-import { type RowEditorMode } from "./row-editor-types";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
@@ -29,7 +27,6 @@ const DEMO_GAP_FACTOR = 0.5;
 const DEMO_PX_FACTOR = 0.75;
 const DEMO_PY_FACTOR = 0.5;
 const DEMO_BORDER_RADIUS_FACTOR = 0.5;
-const TINT_ALPHA = 0.04;
 const DRAG_OPACITY_DRAGGING = 0.5;
 const DRAG_OPACITY_DEFAULT = 1;
 const TRANSITION_BG = "background-color 150ms";
@@ -37,7 +34,7 @@ const DELETE_TITLE = "Delete row";
 const DELETE_MESSAGE = "Delete this row?";
 const DRAG_ARIA = "Drag row";
 const EDIT_ARIA = "Edit row";
-const EDIT_TOOLTIP = "Edit row";
+const EDIT_TOOLTIP = "Edit row (coming in W4-editor)";
 const DELETE_ARIA = "Delete row";
 const DELETE_TOOLTIP = "Delete row";
 
@@ -52,26 +49,6 @@ type SchemaRowCardProps = {
   isReorderPending: boolean;
 };
 
-type RowTintSx = {
-  bgcolor?: string;
-  "&:hover"?: { bgcolor: string };
-};
-
-const getRowTintSx = (rowKind: RowKind, theme: Theme): RowTintSx => {
-  switch (rowKind) {
-    case "REST":
-    case "REST_SLOT":
-      return { bgcolor: alpha(theme.palette.kind.rest, TINT_ALPHA) };
-    case "EXERCISE":
-    case "PLACEHOLDER":
-      return {};
-    default:
-      rowKind satisfies never;
-
-      return {};
-  }
-};
-
 export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   row,
   planId,
@@ -80,30 +57,19 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   minuteLabel = null,
   isReorderPending,
 }) => {
-  const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
   const { exerciseById } = useCatalog();
 
-  const isMutationPending =
-    updateSchemaRow.isPending || deleteSchemaRow.isPending || isReorderPending;
+  const isMutationPending = deleteSchemaRow.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
     disabled: isMutationPending,
   });
 
-  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 
   const fmt = useMemo(() => formatRow(row, exerciseById, index), [row, exerciseById, index]);
-
-  const editorMode = useMemo<RowEditorMode>(() => ({ kind: "edit", row }), [row]);
-
-  const rowKind = row.rowPayload.rowKind;
-
-  const handleEditOpen = () => setIsEditOpen(true);
-
-  const handleEditClose = () => setIsEditOpen(false);
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
 
@@ -133,7 +99,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         borderColor: "divider",
         transition: TRANSITION_BG,
         "&:hover": { bgcolor: "action.hover" },
-        ...getRowTintSx(rowKind, theme),
         "&:last-of-type": { borderBottom: 0 },
       })}
     >
@@ -204,12 +169,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
 
       <Tooltip title={EDIT_TOOLTIP}>
         <span style={tooltipChildSx}>
-          <IconButton
-            size="small"
-            onClick={handleEditOpen}
-            disabled={isMutationPending}
-            aria-label={EDIT_ARIA}
-          >
+          <IconButton size="small" disabled aria-label={EDIT_ARIA}>
             <TuneIcon fontSize="small" />
           </IconButton>
         </span>
@@ -228,14 +188,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           </IconButton>
         </span>
       </Tooltip>
-
-      <RowEditorModal
-        open={isEditOpen}
-        onClose={handleEditClose}
-        mode={editorMode}
-        planId={planId}
-        startDate={startDate}
-      />
 
       <ConfirmationModal
         open={isDeleteOpen}

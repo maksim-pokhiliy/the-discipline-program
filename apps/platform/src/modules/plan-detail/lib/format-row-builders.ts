@@ -1,57 +1,38 @@
-import { type ExerciseForm } from "@repo/contracts/lms/_shared";
-import { type SchemaRow, type SchemaRowPayload } from "@repo/contracts/lms/schema-row";
+import { type SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import { formatIntensityChips, intensityHasAny } from "./format-block-meta";
-import { formatExerciseForm } from "./format-exercise-form";
 import { formatLoad } from "./format-load";
 import { type ExerciseById } from "./format-percentage-reference";
-import { formatPosition } from "./format-position";
 import { formatRepNotation } from "./format-rep-notation";
-import { formatRestSpec } from "./format-rest-spec";
 import { type FormatRowResult } from "./format-row.types";
-import { formatSequenceIndicator } from "./format-sequence-indicator";
 import { formatSide } from "./format-side";
 import { formatTempo } from "./format-tempo";
 
-const REST_FALLBACK = "Rest";
-const PLACEHOLDER_TEXT_FALLBACK = "any exercise";
-const PLACEHOLDER_SUB_PREFIX = "placeholder · ";
-const UNDERSCORE_RE = /_/g;
-const UNDERSCORE_REPLACEMENT = " ";
+const EXERCISE_FALLBACK = "exercise";
+const SETS_PREFIX = "×";
+const MODIFIER_SEPARATOR = ", ";
 
-const FORM_PILL_BY_KIND: Record<ExerciseForm["form"], string | null> = {
-  atomic: null,
-  compound: "compound",
-  or_alternative: "or alternative",
-  placeholder_ref: "placeholder ref",
-};
+const resolveExerciseName = (exerciseId: string, exerciseById: ExerciseById): string =>
+  exerciseById.get(exerciseId)?.canonicalName ?? EXERCISE_FALLBACK;
 
-const isAtomicPlaceholder = (form: ExerciseForm, exerciseById: ExerciseById): boolean => {
-  if (form.form !== "atomic") {
-    return false;
-  }
+const isPlaceholder = (exerciseId: string, exerciseById: ExerciseById): boolean =>
+  exerciseById.get(exerciseId)?.placeholderFlag === true;
 
-  return exerciseById.get(form.exerciseId)?.placeholderFlag === true;
-};
+const resolveDemoUrl = (exerciseId: string, exerciseById: ExerciseById): string | null => {
+  const exercise = exerciseById.get(exerciseId);
 
-const computeDemoUrl = (form: ExerciseForm, exerciseById: ExerciseById): string | null => {
-  if (form.form !== "atomic") {
+  if (exercise === undefined || exercise.placeholderFlag) {
     return null;
   }
 
-  if (exerciseById.get(form.exerciseId)?.placeholderFlag === true) {
-    return null;
-  }
-
-  return exerciseById.get(form.exerciseId)?.defaultDemoUrls[0] ?? null;
+  return exercise.defaultDemoUrls[0] ?? null;
 };
 
-const buildExerciseSubParts = (
-  row: SchemaRow,
-  form: ExerciseForm,
-  exerciseById: ExerciseById,
-): string[] => {
+const buildSubParts = (row: SchemaRow, exerciseById: ExerciseById): string[] => {
   const out: string[] = [];
+
+  if (row.sets !== null) {
+    out.push(`${SETS_PREFIX}${row.sets}`);
+  }
 
   if (row.reps !== null) {
     out.push(formatRepNotation(row.reps));
@@ -66,103 +47,31 @@ const buildExerciseSubParts = (
   }
 
   if (row.tempo !== null) {
-    const text = formatTempo(row.tempo);
-
-    if (text.length > 0) {
-      out.push(text);
-    }
+    out.push(formatTempo(row.tempo));
   }
 
-  if (row.position !== null) {
-    out.push(formatPosition(row.position));
-  }
-
-  if (intensityHasAny(row.intensity)) {
-    for (const chip of formatIntensityChips(row.intensity)) {
-      out.push(chip.text);
-    }
-  }
-
-  if (row.sequence !== null) {
-    out.push(formatSequenceIndicator(row.sequence));
-  }
-
-  for (const part of formatExerciseForm(form, exerciseById).sub) {
-    out.push(part);
+  if (row.modifiers.length > 0) {
+    out.push(row.modifiers.map((modifier) => modifier.name).join(MODIFIER_SEPARATOR));
   }
 
   return out;
 };
 
-export const buildExercise = (
+export const buildRow = (
   row: SchemaRow,
-  form: ExerciseForm,
   exerciseById: ExerciseById,
   index: number,
 ): FormatRowResult => {
-  const placeholderAtomic = isAtomicPlaceholder(form, exerciseById);
+  const placeholder = isPlaceholder(row.exerciseId, exerciseById);
 
   return {
-    mainText: formatExerciseForm(form, exerciseById).name,
-    subParts: buildExerciseSubParts(row, form, exerciseById),
+    mainText: resolveExerciseName(row.exerciseId, exerciseById),
+    subParts: buildSubParts(row, exerciseById),
     kindBadge: "EX",
     kindCls: "ex",
-    dashed: placeholderAtomic,
-    ord: String(index + 1),
-    formPillText: placeholderAtomic ? "placeholder ref" : FORM_PILL_BY_KIND[form.form],
-    demoUrl: computeDemoUrl(form, exerciseById),
-  };
-};
-
-export const buildRest = (
-  payload: Extract<SchemaRowPayload, { rowKind: "REST" }>,
-  index: number,
-): FormatRowResult => {
-  const restText = formatRestSpec(payload.parsed);
-  const mainText =
-    restText.length > 0 ? restText : payload.raw.length > 0 ? payload.raw : REST_FALLBACK;
-
-  return {
-    mainText,
-    subParts: [],
-    kindBadge: "RST",
-    kindCls: "rest",
-    dashed: false,
+    dashed: placeholder,
     ord: String(index + 1),
     formPillText: null,
-    demoUrl: null,
+    demoUrl: resolveDemoUrl(row.exerciseId, exerciseById),
   };
-};
-
-export const buildPlaceholder = (
-  payload: Extract<SchemaRowPayload, { rowKind: "PLACEHOLDER" }>,
-): FormatRowResult => {
-  const text =
-    payload.placeholder.text.length > 0 ? payload.placeholder.text : PLACEHOLDER_TEXT_FALLBACK;
-  const kindLabel = payload.placeholder.placeholderKind.replace(
-    UNDERSCORE_RE,
-    UNDERSCORE_REPLACEMENT,
-  );
-
-  return {
-    mainText: text,
-    subParts: [`${PLACEHOLDER_SUB_PREFIX}${kindLabel}`],
-    kindBadge: "?",
-    kindCls: "placeholder",
-    dashed: true,
-    ord: "?",
-    formPillText: null,
-    demoUrl: null,
-  };
-};
-
-export const REST_SLOT_RESULT: FormatRowResult = {
-  mainText: "Rest slot",
-  subParts: ["EMOM minute · rest"],
-  kindBadge: "RS",
-  kindCls: "rest",
-  dashed: false,
-  ord: "R",
-  formPillText: null,
-  demoUrl: null,
 };

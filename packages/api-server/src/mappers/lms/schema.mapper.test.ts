@@ -1,12 +1,10 @@
-import {
-  type SchemaGroup as PrismaSchemaGroup,
-  type SchemaRow as PrismaSchemaRow,
-} from "@prisma/client";
+import { type SchemaGroup as PrismaSchemaGroup } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 
 import { mapToSchemaGroup } from "./schema-group.mapper";
+import { type PrismaSchemaRowWithModifiers } from "./schema-row.mapper";
 import {
   mapSchemas,
   mapToSchema,
@@ -26,7 +24,7 @@ const makeFlatSchema = (overrides: {
   order: number;
   header?: string | null;
   composition?: Composition | null;
-  rows?: PrismaSchemaRow[];
+  rows?: PrismaSchemaRowWithModifiers[];
 }): PrismaSchemaWithRows => ({
   id: overrides.id,
   blockId: BLOCK_ID,
@@ -39,35 +37,64 @@ const makeFlatSchema = (overrides: {
   createdAt: NOW,
   updatedAt: NOW,
   rows: overrides.rows ?? [],
+  rowGroups: [],
 });
 
-const makeExerciseRow = (id: string, schemaId: string, order: number): PrismaSchemaRow => ({
+const makeExerciseRow = (
+  id: string,
+  schemaId: string,
+  order: number,
+): PrismaSchemaRowWithModifiers => ({
   id,
   schemaId,
   order,
-  rowKind: "EXERCISE",
-  rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: id } },
+  exerciseId: id,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
+  modifierAssignments: [],
 });
 
 const makePrismaGroup = (overrides: Partial<PrismaSchemaGroup>): PrismaSchemaGroup => ({
   id: GROUP_ID,
   blockId: BLOCK_ID,
-  label: null,
+  notes: null,
   interleaveOrder: "round_by_round",
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,
+});
+
+const makeModifier = (id: string, name: string) => ({
+  id,
+  name,
+  nameLower: name.toLowerCase(),
+  notes: null,
+  createdAt: NOW,
+  updatedAt: NOW,
+});
+
+const makeRowWithModifiers = (
+  id: string,
+  schemaId: string,
+  order: number,
+  assignments: { modifierId: string; name: string; order: number }[],
+): PrismaSchemaRowWithModifiers => ({
+  ...makeExerciseRow(id, schemaId, order),
+  modifierAssignments: assignments.map((a) => ({
+    id: cuid(`asg${a.order}`),
+    rowId: id,
+    modifierId: a.modifierId,
+    order: a.order,
+    modifier: makeModifier(a.modifierId, a.name),
+  })),
 });
 
 const LADDER_COMPOSITION: Composition = { repetition: { kind: "ladder", steps: [21, 15, 9] } };
@@ -127,6 +154,46 @@ describe("mapToSchemaWithBody", () => {
     expect(node.rows.map((r) => r.id)).toEqual([cuid("rowone")]);
     expect(node).not.toHaveProperty("subSchemas");
   });
+
+  it("returns each row's modifiers sorted by assignment order (QA-#12)", () => {
+    const schemaId = cuid("modbody");
+    const node = mapToSchemaWithBody(
+      makeFlatSchema({
+        id: schemaId,
+        order: 10,
+        rows: [
+          makeRowWithModifiers(cuid("rowmod"), schemaId, 10, [
+            { modifierId: cuid("modb"), name: "neutral grip", order: 1 },
+            { modifierId: cuid("moda"), name: "from sofa", order: 0 },
+          ]),
+        ],
+      }),
+    );
+
+    expect(node.rows[0]?.modifiers.map((m) => m.id)).toEqual([cuid("moda"), cuid("modb")]);
+    expect(node.rows[0]?.modifiers.map((m) => m.name)).toEqual(["from sofa", "neutral grip"]);
+  });
+
+  it("returns the schema's rowGroups embed mapped from Prisma rows (QA-#12, DR-W4-SWB)", () => {
+    const schemaId = cuid("rgbody");
+    const node = mapToSchemaWithBody({
+      ...makeFlatSchema({ id: schemaId, order: 10 }),
+      rowGroups: [
+        {
+          id: cuid("rg1"),
+          schemaId,
+          notes: ["OR"],
+          createdAt: NOW,
+          updatedAt: NOW,
+        },
+      ],
+    });
+
+    expect(node.rowGroups).toHaveLength(1);
+    expect(node.rowGroups[0]?.id).toBe(cuid("rg1"));
+    expect(node.rowGroups[0]?.schemaId).toBe(schemaId);
+    expect(node.rowGroups[0]?.notes).toEqual(["OR"]);
+  });
 });
 
 describe("mapSchemas", () => {
@@ -170,23 +237,23 @@ describe("mapSchemas", () => {
 describe("mapToSchemaGroup", () => {
   it("maps the group row and parses interleaveOrder", () => {
     const mapped = mapToSchemaGroup(
-      makePrismaGroup({ label: "parallel ladders", interleaveOrder: "track_by_track" }),
+      makePrismaGroup({ notes: ["parallel ladders"], interleaveOrder: "track_by_track" }),
     );
 
     expect(mapped).toEqual({
       id: GROUP_ID,
       blockId: BLOCK_ID,
-      label: "parallel ladders",
+      notes: ["parallel ladders"],
       interleaveOrder: "track_by_track",
       createdAt: NOW,
       updatedAt: NOW,
     });
   });
 
-  it("carries a null label through", () => {
-    const mapped = mapToSchemaGroup(makePrismaGroup({ label: null }));
+  it("carries a null notes value through", () => {
+    const mapped = mapToSchemaGroup(makePrismaGroup({ notes: null }));
 
-    expect(mapped.label).toBeNull();
+    expect(mapped.notes).toBeNull();
     expect(mapped.interleaveOrder).toBe("round_by_round");
   });
 });

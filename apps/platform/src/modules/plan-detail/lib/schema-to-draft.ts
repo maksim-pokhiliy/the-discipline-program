@@ -43,14 +43,14 @@ const restFromComposition = (rest: ContractRestAxis): RestAxis => rest;
 const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
   nodeType: "row",
   id: asNodeId(row.id),
-  rowKind: row.rowKind,
-  rowPayload: row.rowPayload,
+  exerciseId: row.exerciseId,
+  sets: row.sets,
+  rowGroupId: row.rowGroupId,
   reps: row.reps,
   load: row.load,
   side: row.side,
   tempo: row.tempo,
-  position: row.position,
-  intensity: row.intensity,
+  modifiers: row.modifiers,
   notes: row.notes,
   editorDraft: undefined,
 });

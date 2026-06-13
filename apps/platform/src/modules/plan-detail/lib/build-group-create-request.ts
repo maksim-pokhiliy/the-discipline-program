@@ -60,7 +60,7 @@ export const buildGroupCreateRequest = (
 
   const parsed = createGroupRequestSchema.safeParse({
     blockId,
-    label: group.header,
+    notes: group.header === null ? null : [group.header],
     tracks,
   });
 

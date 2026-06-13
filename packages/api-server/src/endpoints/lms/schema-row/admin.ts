@@ -19,11 +19,40 @@ import {
   mapToSchemaRow,
   mapToSchemaWithBody,
 } from "../../../mappers/lms";
-import { handlePrismaError, marshalNullableJson, retryOnP2034, toInputJson } from "../../../utils";
+import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
+import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
 
-import { assertRowKindPayloadAlignment } from "./assertions";
+const replaceRowModifiers = async (
+  tx: TxClient,
+  rowId: string,
+  modifierIds: readonly string[],
+): Promise<void> => {
+  await tx.rowModifierAssignment.deleteMany({ where: { rowId } });
 
-const STRUCTURAL_UPDATE_KEYS = ["rowKind", "schemaId"] as const;
+  if (modifierIds.length > 0) {
+    await tx.rowModifierAssignment.createMany({
+      data: modifierIds.map((modifierId, i) => ({ rowId, modifierId, order: i })),
+    });
+  }
+};
+
+const loadRowWithModifiers = async (tx: TxClient, rowId: string): Promise<SchemaRow> => {
+  const row = await tx.schemaRow.findUniqueOrThrow({
+    where: { id: rowId },
+    include: SCHEMA_BODY_INCLUDE.rows.include,
+  });
+
+  return mapToSchemaRow(row);
+};
+
+const revalidateSchemaTree = async (tx: TxClient, schemaId: string): Promise<void> => {
+  const schemaWithBody = await tx.schema.findUniqueOrThrow({
+    where: { id: schemaId },
+    include: SCHEMA_BODY_INCLUDE,
+  });
+
+  assertComposeTreeValidForWrite(mapToSchemaWithBody(schemaWithBody));
+};
 
 export const lmsSchemaRowApi = {
   create: async (userId: string, planId: string, data: CreateSchemaRowData): Promise<SchemaRow> => {
@@ -34,8 +63,6 @@ export const lmsSchemaRowApi = {
     }
 
     verifyPlanEditable(owner);
-
-    assertRowKindPayloadAlignment(data.rowKind, data.rowPayload.rowKind);
 
     try {
       const created = await retryOnP2034(() =>
@@ -84,34 +111,28 @@ export const lmsSchemaRowApi = {
               data: {
                 schemaId: data.schemaId,
                 order: nextOrder,
-                rowKind: data.rowKind,
-                rowPayload: toInputJson(data.rowPayload),
+                exerciseId: data.exerciseId,
+                sets: data.sets ?? null,
                 load: marshalNullableJson(data.load),
                 reps: marshalNullableJson(data.reps),
                 side: marshalNullableJson(data.side),
                 tempo: marshalNullableJson(data.tempo),
-                position: data.position ?? null,
-                sequence: marshalNullableJson(data.sequence),
-                intensity: marshalNullableJson(data.intensity),
                 media: marshalNullableJson(data.media),
-                notes: data.notes ?? null,
+                notes: marshalNullableJson(data.notes),
               },
             });
 
-            const schemaWithRows = await tx.schema.findUniqueOrThrow({
-              where: { id: data.schemaId },
-              include: { rows: { orderBy: { order: "asc" } } },
-            });
+            await replaceRowModifiers(tx, createdRow.id, data.modifierIds ?? []);
 
-            assertComposeTreeValidForWrite(mapToSchemaWithBody(schemaWithRows));
+            await revalidateSchemaTree(tx, data.schemaId);
 
-            return createdRow;
+            return loadRowWithModifiers(tx, createdRow.id);
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
         ),
       );
 
-      return mapToSchemaRow(created);
+      return created;
     } catch (error) {
       return handlePrismaError(error, { entity: "SchemaRow" });
     }
@@ -126,61 +147,36 @@ export const lmsSchemaRowApi = {
 
     verifyPlanEditable(owner);
 
-    const mutatedStructural = STRUCTURAL_UPDATE_KEYS.filter((k) => data[k] !== undefined);
-
-    if (mutatedStructural.length > 0) {
-      throw new BadRequestError(
-        "SchemaRow structural fields are immutable; delete + recreate to change",
-        { fields: mutatedStructural },
-      );
-    }
-
-    if (data.rowPayload !== undefined) {
-      const nextRowPayload = data.rowPayload;
-
-      const current = await prisma.schemaRow.findUnique({
-        where: { id: schemaRowId },
-        select: { rowKind: true, schema: { select: { id: true } } },
-      });
-
-      if (!current) {
-        throw new NotFoundError("SchemaRow not found", { schemaRowId });
-      }
-
-      assertRowKindPayloadAlignment(current.rowKind, nextRowPayload.rowKind);
-
-      const schemaWithRows = await prisma.schema.findUniqueOrThrow({
-        where: { id: current.schema.id },
-        include: { rows: { orderBy: { order: "asc" } } },
-      });
-      const node = mapToSchemaWithBody(schemaWithRows);
-
-      assertComposeTreeValidForWrite({
-        ...node,
-        rows: node.rows.map((row) =>
-          row.id === schemaRowId ? { ...row, rowPayload: nextRowPayload } : row,
-        ),
-      });
-    }
-
     try {
-      const updated = await prisma.schemaRow.update({
-        where: { id: schemaRowId },
-        data: {
-          ...(data.rowPayload !== undefined && { rowPayload: toInputJson(data.rowPayload) }),
-          ...(data.load !== undefined && { load: marshalNullableJson(data.load) }),
-          ...(data.reps !== undefined && { reps: marshalNullableJson(data.reps) }),
-          ...(data.side !== undefined && { side: marshalNullableJson(data.side) }),
-          ...(data.tempo !== undefined && { tempo: marshalNullableJson(data.tempo) }),
-          ...(data.position !== undefined && { position: data.position }),
-          ...(data.sequence !== undefined && { sequence: marshalNullableJson(data.sequence) }),
-          ...(data.intensity !== undefined && { intensity: marshalNullableJson(data.intensity) }),
-          ...(data.media !== undefined && { media: marshalNullableJson(data.media) }),
-          ...(data.notes !== undefined && { notes: data.notes }),
-        },
-      });
+      const updated = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            await tx.schemaRow.update({
+              where: { id: schemaRowId },
+              data: {
+                ...(data.sets !== undefined && { sets: data.sets }),
+                ...(data.load !== undefined && { load: marshalNullableJson(data.load) }),
+                ...(data.reps !== undefined && { reps: marshalNullableJson(data.reps) }),
+                ...(data.side !== undefined && { side: marshalNullableJson(data.side) }),
+                ...(data.tempo !== undefined && { tempo: marshalNullableJson(data.tempo) }),
+                ...(data.media !== undefined && { media: marshalNullableJson(data.media) }),
+                ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
+              },
+            });
 
-      return mapToSchemaRow(updated);
+            if (data.modifierIds !== undefined) {
+              await replaceRowModifiers(tx, schemaRowId, data.modifierIds);
+            }
+
+            await revalidateSchemaTree(tx, owner.schemaId);
+
+            return loadRowWithModifiers(tx, schemaRowId);
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      );
+
+      return updated;
     } catch (error) {
       return handlePrismaError(error, { entity: "SchemaRow" });
     }
@@ -241,7 +237,7 @@ export const lmsSchemaRowApi = {
     }
 
     try {
-      const updated = await prisma.$transaction([
+      await prisma.$transaction([
         ...data.orderedIds.map((id, i) =>
           prisma.schemaRow.update({ where: { id }, data: { order: -(i + 1) } }),
         ),
@@ -250,7 +246,13 @@ export const lmsSchemaRowApi = {
         ),
       ]);
 
-      return updated.slice(data.orderedIds.length).map(mapToSchemaRow);
+      const reordered = await prisma.schemaRow.findMany({
+        where: { schemaId },
+        orderBy: { order: "asc" },
+        include: SCHEMA_BODY_INCLUDE.rows.include,
+      });
+
+      return reordered.map(mapToSchemaRow);
     } catch (error) {
       return handlePrismaError(error, { entity: "SchemaRow" });
     }

@@ -6,12 +6,12 @@ import { lmsWeekApi } from "../endpoints/lms/week/admin";
 
 import {
   buildPlanScopes,
-  collectExerciseRefs,
   expectWeeksAreMondayMonotonic,
   type PlanScopes,
 } from "./_seed-coverage-helpers";
 
 const DEMO_PLAN_TITLE = "CFG Quarter Build";
+const PHASE_7_WEEK_NOTE = "Phase 7 conceptual examples (out-of-sample)";
 const ARCHIVED_PLAN_NAME = "2025 Open Prep";
 const EXPECTED_WEEK_COUNT = 4;
 const EXPECTED_PHASE_7_DAYS = 6;
@@ -20,19 +20,6 @@ const EXPECTED_LABEL_MIN = 20;
 const EXPECTED_EXERCISE_MIN = 149;
 const EXPECTED_ACTIVE_PLANS = 3;
 const EXPECTED_COMPOSITION_MIN = 5;
-const ALL_POSITIONS = [
-  "NEUTRAL_GRIP",
-  "FROM_SOFA",
-  "FROM_BOX",
-  "FROM_BOX_OR_SOFA",
-  "FROM_SOFA_BOX",
-  "WITHOUT_BENCH",
-  "WITHOUT_JUMP",
-  "HOLD_FARM_CARRY",
-  "HAND_ON_DB",
-  "HANDS_ON_DB",
-  "HAND_ON_DB_NEUTRAL_GRIP",
-] as const;
 const COMPOSITION_REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
 const MULTI_MEMBER_GROUP_MIN = 2;
 const EXPECTED_STRUCTURAL_PARALLEL_COUNT = 4;
@@ -100,7 +87,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
   it("§24/§X9: Phase 7 week is last; 6 distinct days × 1 session each", async () => {
     const [phase7, last] = await Promise.all([
       db.week.findFirst({
-        where: { planId: demoPlanId, notes: { contains: "Phase 7" } },
+        where: { planId: demoPlanId, notes: { array_contains: PHASE_7_WEEK_NOTE } },
         select: { id: true },
       }),
       db.week.findFirst({
@@ -113,7 +100,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(phase7?.id).toBe(last?.id);
 
     const days = await db.day.findMany({
-      where: { week: { planId: demoPlanId, notes: { contains: "Phase 7" } } },
+      where: { week: { planId: demoPlanId, notes: { array_contains: PHASE_7_WEEK_NOTE } } },
       select: { dayOfWeek: true, sessions: { select: { id: true } } },
     });
 
@@ -244,7 +231,10 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     const requiredCellIds = [
       "catalog.exercise",
       "catalog.label",
-      ...ALL_POSITIONS.map((p) => `position.${p}`),
+      "modifier.catalog",
+      "modifier.assignment",
+      "rowGroup.present",
+      "rowGroup.member",
       ...COMPOSITION_REPETITION_KINDS.map((k) => `repetition.kind.${k}`),
       "structural.parallel",
       "entity.schemaGroup",
@@ -280,7 +270,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
         session: {
           day: {
             dayOfWeek: "THURSDAY",
-            week: { planId: demoPlanId, notes: { contains: "Phase 7" } },
+            week: { planId: demoPlanId, notes: { array_contains: PHASE_7_WEEK_NOTE } },
           },
         },
       },
@@ -353,19 +343,15 @@ describe("Exercise-ref resolution — DB side (QA-001 regression)", () => {
     await db.$disconnect();
   });
 
-  it("every rowPayload exercise ref resolves to a real Exercise.id (QA-2, the Plan Editor render contract)", async () => {
+  it("every row's exerciseId column resolves to a real Exercise.id (QA-2, the Plan Editor render contract)", async () => {
     const rows = await db.schemaRow.findMany({
       where: { schema: scopes.schemaScope },
-      select: { rowPayload: true },
+      select: { exerciseId: true },
     });
 
     expect(rows.length).toBeGreaterThan(0);
 
-    const referenced = new Set<string>();
-
-    for (const row of rows) {
-      collectExerciseRefs(row.rowPayload, referenced);
-    }
+    const referenced = new Set(rows.map((row) => row.exerciseId));
 
     expect(referenced.size).toBeGreaterThan(0);
 
@@ -377,28 +363,17 @@ describe("Exercise-ref resolution — DB side (QA-001 regression)", () => {
     expect(existing.length).toBe(referenced.size);
   });
 
-  it("a sampled atomic EXERCISE row resolves its exerciseId via findUnique (proves emit wrote the deterministic id)", async () => {
-    const atomicRow = await db.schemaRow.findFirst({
-      where: {
-        schema: scopes.schemaScope,
-        rowKind: "EXERCISE",
-        rowPayload: { path: ["exercise", "form"], equals: "atomic" },
-      },
-      select: { rowPayload: true },
+  it("a sampled row resolves its exerciseId via findUnique (proves emit wrote the deterministic id)", async () => {
+    const row = await db.schemaRow.findFirstOrThrow({
+      where: { schema: scopes.schemaScope },
+      select: { exerciseId: true },
     });
 
-    expect(atomicRow).not.toBeNull();
+    const exercise = await db.exercise.findUnique({
+      where: { id: row.exerciseId },
+      select: { id: true },
+    });
 
-    const refs = new Set<string>();
-
-    collectExerciseRefs(atomicRow?.rowPayload, refs);
-
-    expect(refs.size).toBeGreaterThanOrEqual(1);
-
-    for (const ref of refs) {
-      const exercise = await db.exercise.findUnique({ where: { id: ref }, select: { id: true } });
-
-      expect(exercise).not.toBeNull();
-    }
+    expect(exercise).not.toBeNull();
   });
 });

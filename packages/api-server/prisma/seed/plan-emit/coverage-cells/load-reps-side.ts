@@ -1,7 +1,7 @@
 import { countSchemaRow } from "./shared";
 import { type CoverageCell } from "./types";
 
-const LOAD_KINDS: readonly string[] = ["absolute", "percentage", "bodyweight", "byProfile", "none"];
+const LOAD_KINDS: readonly string[] = ["absolute", "percentage", "bodyweight", "byProfile"];
 
 const loadKindCell = (kind: string): CoverageCell => ({
   id: `load.kind.${kind}`,
@@ -12,29 +12,35 @@ const loadKindCell = (kind: string): CoverageCell => ({
   tally: (db, planId) => countSchemaRow(db, planId, { load: { path: ["kind"], equals: kind } }),
 });
 
-const WEIGHT_VARIANTS: readonly string[] = [
-  "single",
-  "dual",
-  "single_arm",
-  "compound_device",
-  "split_tier",
-  "with_asymmetric_arm",
-  "with_depth_modifier",
-];
+const ABSOLUTE_COUNTS: readonly number[] = [1, 2];
 
-const weightVariantCell = (variant: string): CoverageCell => ({
-  id: `weight.variant.${variant}`,
-  category: "weight.variant",
-  label: `Weight.variant = ${variant}`,
+const absoluteCountCell = (count: number): CoverageCell => ({
+  id: `load.absolute.count.${count}`,
+  category: "load.kind",
+  label: `Load.absolute.count = ${count}`,
   required: 1,
-  sourceRef: `coverage-matrix §6.2 ${variant}`,
+  sourceRef: `coverage-matrix §6.1 absolute count=${count}`,
   tally: (db, planId) =>
     countSchemaRow(db, planId, {
-      load: { path: ["weight", "variant"], equals: variant },
+      load: { path: ["kind"], equals: "absolute" },
+      AND: [{ load: { path: ["count"], equals: count } }],
     }),
 });
 
-const PERCENTAGE_SCOPES: readonly string[] = ["self", "movement_family", "other_exercise"];
+const BY_PROFILE_ENTRIES_CELL: CoverageCell = {
+  id: "load.byProfile.entries",
+  category: "load.kind",
+  label: "Load.byProfile.entries present (label→kg list)",
+  required: 1,
+  sourceRef: "coverage-matrix §6.1 byProfile entries",
+  tally: (db, planId) =>
+    countSchemaRow(db, planId, {
+      load: { path: ["kind"], equals: "byProfile" },
+      AND: [{ load: { path: ["entries"], not: { equals: null } } }],
+    }),
+};
+
+const PERCENTAGE_SCOPES: readonly string[] = ["self", "other_exercise"];
 
 const percentageScopeCell = (scope: string): CoverageCell => ({
   id: `percentageReference.scope.${scope}`,
@@ -59,9 +65,9 @@ const repKindCell = (kind: string): CoverageCell => ({
   tally: (db, planId) => countSchemaRow(db, planId, { reps: { path: ["kind"], equals: kind } }),
 });
 
-const UNIT_BOUND_FORMS: readonly { form: "value" | "range"; key: "value" | "range" }[] = [
-  { form: "value", key: "value" },
-  { form: "range", key: "range" },
+const UNIT_BOUND_FORMS: readonly { form: "value" | "range" }[] = [
+  { form: "value" },
+  { form: "range" },
 ];
 
 const unitBoundFormCell = ({ form }: { form: "value" | "range" }): CoverageCell => ({
@@ -105,7 +111,8 @@ const explicitSplitSideCell = (side: string): CoverageCell => ({
 
 export const LOAD_REPS_SIDE_CELLS: readonly CoverageCell[] = [
   ...LOAD_KINDS.map(loadKindCell),
-  ...WEIGHT_VARIANTS.map(weightVariantCell),
+  ...ABSOLUTE_COUNTS.map(absoluteCountCell),
+  BY_PROFILE_ENTRIES_CELL,
   ...PERCENTAGE_SCOPES.map(percentageScopeCell),
   ...REP_KINDS.map(repKindCell),
   ...UNIT_BOUND_FORMS.map(unitBoundFormCell),

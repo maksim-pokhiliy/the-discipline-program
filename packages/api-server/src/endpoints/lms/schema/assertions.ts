@@ -2,7 +2,7 @@ import { type Composition } from "@repo/contracts/lms/composition";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { assertComposeTreeValidForWrite, mapToSchemaWithBody } from "../../../mappers/lms";
-import { type TxClient } from "../_shared";
+import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
 
 type BlockSchemaOrder = { id: string; groupId: string | null; order: number };
 
@@ -42,7 +42,7 @@ export const assertCompositionUpdateValid = async (
 ): Promise<void> => {
   const current = await client.schema.findUnique({
     where: { id: schemaId },
-    include: { rows: { orderBy: { order: "asc" } } },
+    include: SCHEMA_BODY_INCLUDE,
   });
 
   if (!current) {

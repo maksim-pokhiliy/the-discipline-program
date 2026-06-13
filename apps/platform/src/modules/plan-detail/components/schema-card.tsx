@@ -12,7 +12,6 @@ import { ConfirmationModal } from "@repo/ui";
 import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
 import { schemaSortableId } from "../lib/block-item-sortable-id";
-import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
 import { AxisEditorModal } from "./axis-editor-modal";
@@ -29,7 +28,6 @@ type SchemaCardProps = {
   schema: SchemaWithBody;
   planId: string;
   startDate: string;
-  blockCtx: BlockCtx;
   parentIsReorderPending?: boolean;
   isBoxed?: boolean;
   isDraggable?: boolean;
@@ -39,7 +37,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   schema,
   planId,
   startDate,
-  blockCtx,
   parentIsReorderPending = false,
   isBoxed = false,
   isDraggable = true,
@@ -102,7 +99,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     >
       <SchemaCardHead
         schema={schema}
-        blockCtx={blockCtx}
         isMutationPending={isMutationPending}
         dragAttributes={attributes}
         dragListeners={listeners}
@@ -115,6 +111,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
       <SchemaRowList
         rows={schema.rows}
+        rowGroups={schema.rowGroups}
         schemaId={schema.schema.id}
         composition={schema.schema.composition}
         planId={planId}

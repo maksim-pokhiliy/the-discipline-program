@@ -1,11 +1,7 @@
-import { createElement } from "react";
-
-import { alpha } from "@mui/material";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
-import { theme } from "@repo/mui";
 
 import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import type * as Hooks from "@app/lib/hooks";
@@ -18,17 +14,11 @@ import {
   START_DATE,
   exerciseById,
   makeAtomicExerciseNoDemoRow,
-  makeCompoundExerciseRow,
   makeExerciseRow,
   makePlaceholderRow,
-  makeRestRow,
 } from "./schema-row-card.fixtures";
 
-const TINT_ALPHA = 0.04;
-
-const updateSchemaRowMutate = vi.fn();
 const deleteSchemaRowMutate = vi.fn();
-const updateSchemaRowState = { isPending: false };
 const deleteSchemaRowState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
@@ -36,27 +26,11 @@ vi.mock("@app/lib/hooks", async () => {
 
   return {
     ...actual,
-    useUpdateSchemaRow: () => ({
-      mutate: updateSchemaRowMutate,
-      isPending: updateSchemaRowState.isPending,
-    }),
     useDeleteSchemaRow: () => ({
       mutate: deleteSchemaRowMutate,
       isPending: deleteSchemaRowState.isPending,
     }),
   };
-});
-
-vi.mock("./row-editor-modal", () => {
-  const renderEditorMock = (props: { open: boolean }) =>
-    props.open
-      ? createElement("div", {
-          "data-testid": "row-editor-modal-mock",
-          "data-open": String(props.open),
-        })
-      : null;
-
-  return { RowEditorModal: renderEditorMock };
 });
 
 const { SchemaRowCard } = await import("./schema-row-card");
@@ -93,9 +67,7 @@ const renderRowCard = ({
   );
 
 afterEach(() => {
-  updateSchemaRowState.isPending = false;
   deleteSchemaRowState.isPending = false;
-  updateSchemaRowMutate.mockReset();
   deleteSchemaRowMutate.mockReset();
 });
 
@@ -147,42 +119,16 @@ describe("SchemaRowCard chrome", () => {
     expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeInTheDocument();
   });
-});
 
-describe("SchemaRowCard per-RowKind tint", () => {
-  it("applies kind.rest tint at 0.04 alpha for REST", () => {
-    const { container } = renderRowCard({ row: makeRestRow() });
-    const shell = container.firstChild;
-    const expectedBgColor = alpha(theme.palette.kind.rest, TINT_ALPHA);
+  it("renders the Edit IconButton as a disabled stub (W4-editor)", () => {
+    renderRowCard();
 
-    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
-  });
-
-  it("applies no kind tint for EXERCISE rows (empty backgroundColor inline)", () => {
-    const { container } = renderRowCard();
-    const shell = container.firstChild;
-
-    if (!(shell instanceof HTMLElement)) {
-      throw new Error("expected row shell to be an HTMLElement");
-    }
-
-    expect(shell.style.backgroundColor).toBe("");
-  });
-
-  it("applies no kind tint for PLACEHOLDER rows (empty backgroundColor inline)", () => {
-    const { container } = renderRowCard({ row: makePlaceholderRow() });
-    const shell = container.firstChild;
-
-    if (!(shell instanceof HTMLElement)) {
-      throw new Error("expected row shell to be an HTMLElement");
-    }
-
-    expect(shell.style.backgroundColor).toBe("");
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
   });
 });
 
 describe("SchemaRowCard demo link", () => {
-  it("renders the demo link when EXERCISE is atomic and defaultDemoUrls has entries", () => {
+  it("renders the demo link when the exercise has defaultDemoUrls entries", () => {
     renderRowCard();
 
     const link = screen.getByRole("link", { name: /demo/ });
@@ -192,20 +138,14 @@ describe("SchemaRowCard demo link", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("does NOT render the demo link when EXERCISE is atomic but defaultDemoUrls is empty", () => {
+  it("does NOT render the demo link when the exercise has no defaultDemoUrls", () => {
     renderRowCard({ row: makeAtomicExerciseNoDemoRow() });
 
     expect(screen.queryByRole("link", { name: /demo/ })).toBeNull();
   });
 
-  it("does NOT render the demo link when EXERCISE form is compound", () => {
-    renderRowCard({ row: makeCompoundExerciseRow() });
-
-    expect(screen.queryByRole("link", { name: /demo/ })).toBeNull();
-  });
-
-  it("does NOT render the demo link for non-EXERCISE rows (REST)", () => {
-    renderRowCard({ row: makeRestRow() });
+  it("does NOT render the demo link for a placeholder exercise", () => {
+    renderRowCard({ row: makePlaceholderRow() });
 
     expect(screen.queryByRole("link", { name: /demo/ })).toBeNull();
   });
@@ -228,17 +168,7 @@ describe("SchemaRowCard demo link", () => {
   });
 });
 
-describe("SchemaRowCard edit + delete actions", () => {
-  it("opens the RowEditorModal when the Edit IconButton is clicked", () => {
-    renderRowCard();
-
-    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
-
-    expect(screen.getByTestId("row-editor-modal-mock")).toBeInTheDocument();
-  });
-
+describe("SchemaRowCard delete action", () => {
   it("opens the ConfirmationModal with the row mainText as details when the Delete IconButton is clicked", () => {
     renderRowCard({ row: makePlaceholderRow() });
 
@@ -248,7 +178,7 @@ describe("SchemaRowCard edit + delete actions", () => {
 
     expect(within(dialog).getByRole("heading", { name: "Delete row" })).toBeInTheDocument();
     expect(within(dialog).getByText("Delete this row?")).toBeInTheDocument();
-    expect(within(dialog).getByText("ABS finisher")).toBeInTheDocument();
+    expect(within(dialog).getByText("Coach choice")).toBeInTheDocument();
   });
 
   it("fires useDeleteSchemaRow.mutate with the schemaRowId when Confirm is clicked", () => {
@@ -272,31 +202,19 @@ describe("SchemaRowCard edit + delete actions", () => {
 });
 
 describe("SchemaRowCard mutation-pending", () => {
-  it("disables drag handle, edit and delete buttons when useUpdateSchemaRow is pending", () => {
-    updateSchemaRowState.isPending = true;
-
-    renderRowCard();
-
-    expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
-  });
-
-  it("disables drag handle, edit and delete buttons when useDeleteSchemaRow is pending", () => {
+  it("disables the drag handle and delete button when useDeleteSchemaRow is pending", () => {
     deleteSchemaRowState.isPending = true;
 
     renderRowCard();
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
     expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 
-  it("disables drag handle, edit and delete buttons when isReorderPending is true (QA-004)", () => {
+  it("disables the drag handle and delete button when isReorderPending is true (QA-004)", () => {
     renderRowCard({ isReorderPending: true });
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
     expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 });

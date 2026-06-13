@@ -4,12 +4,11 @@ import {
   buildComposeNode,
   countReps,
   percentageLoad,
-  percentageRefMovementFamily,
   percentageRefOtherExercise,
+  percentageRefSelf,
   restBetweenRounds,
   rounds,
   rpe,
-  singleWeight,
 } from "../builder";
 import type { CanonicalBlock } from "../canonical-schema";
 
@@ -22,32 +21,22 @@ export const BLOCK_SUPER_SET_PAIR_A: CanonicalBlock = {
   blockInstanceRef: "block-165",
   order: 1,
   labels: [LBL.accessory],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
       {
         order: 1,
         header: "super-set A",
+        intensity: rpe(8),
         rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbStrictPress } },
-            {
-              load: percentageLoad(60, percentageRefMovementFamily("press")),
-              reps: countReps(10),
-              intensity: rpe(8),
-            },
-          ),
-          mkRow(
-            2,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbCurl } },
-            {
-              load: percentageLoad(50, percentageRefOtherExercise(EX.backSquat)),
-              reps: countReps(12),
-            },
-          ),
+          mkRow(1, EX.dbStrictPress, {
+            load: percentageLoad(60, percentageRefSelf()),
+            reps: countReps(10),
+          }),
+          mkRow(2, EX.dbCurl, {
+            load: percentageLoad(50, percentageRefOtherExercise(EX.backSquat)),
+            reps: countReps(12),
+          }),
         ],
       },
       {
@@ -63,8 +52,6 @@ export const BLOCK_SUPER_SET_PAIR_B: CanonicalBlock = {
   blockInstanceRef: "block-166",
   order: 2,
   labels: [LBL.accessory],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
@@ -72,25 +59,14 @@ export const BLOCK_SUPER_SET_PAIR_B: CanonicalBlock = {
         order: 1,
         header: "super-set B",
         rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbHammerCurl } },
-            {
-              load: absoluteLoad(singleWeight(15)),
-              reps: countReps(12),
-            },
-          ),
-          mkRow(
-            2,
-            {
-              rowKind: "EXERCISE",
-              exercise: { form: "atomic", exerciseId: EX.bandTricepPushdown },
-            },
-            {
-              load: bodyweightLoad(),
-              reps: countReps(12),
-            },
-          ),
+          mkRow(1, EX.dbHammerCurl, {
+            load: absoluteLoad({ count: 1, kg: 15 }),
+            reps: countReps(12),
+          }),
+          mkRow(2, EX.bandTricepPushdown, {
+            load: bodyweightLoad(),
+            reps: countReps(12),
+          }),
         ],
       },
       {

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  exerciseFormSchema,
   intensitySchema,
   loadSchema,
   mediaReferenceSchema,
@@ -12,39 +11,26 @@ import {
   timeCapSchema,
 } from "../entities/lms/_shared";
 
-import { CUID_PRIMARY, CUID_SECONDARY, CUID_TERTIARY } from "./_cuid-helper";
-
 describe("LMS VO parity — prototype data.js edge cases", () => {
   describe("Load", () => {
-    it("absolute / single", () => {
-      expect(
-        loadSchema.safeParse({
-          kind: "absolute",
-          weight: { variant: "single", valueKg: 60 },
-        }).success,
-      ).toBe(true);
+    it("absolute single-implement (data.js:134 — Mon back squat 60kg)", () => {
+      expect(loadSchema.safeParse({ kind: "absolute", count: 1, kg: 60 }).success).toBe(true);
     });
 
-    it("absolute / dual (data.js:134 — Mon Bulgarian split squat 24kg)", () => {
-      expect(
-        loadSchema.safeParse({
-          kind: "absolute",
-          weight: { variant: "dual", valueKg: 24 },
-        }).success,
-      ).toBe(true);
-    });
-
-    it("absolute / single_arm (data.js:160 — Mon DB row 22.5kg)", () => {
-      expect(
-        loadSchema.safeParse({
-          kind: "absolute",
-          weight: { variant: "single_arm", valueKg: 22.5 },
-        }).success,
-      ).toBe(true);
+    it("absolute dual-implement (data.js:184 — Mon dumbbell pair 22.5kg)", () => {
+      expect(loadSchema.safeParse({ kind: "absolute", count: 2, kg: 22.5 }).success).toBe(true);
     });
 
     it("byProfile M/F 24/16 (data.js:184 — Mon M/F dumbbell pair, ex-dual_value)", () => {
-      expect(loadSchema.safeParse({ kind: "byProfile", first: 24, second: 16 }).success).toBe(true);
+      expect(
+        loadSchema.safeParse({
+          kind: "byProfile",
+          entries: [
+            { label: "M", kg: 24 },
+            { label: "F", kg: 16 },
+          ],
+        }).success,
+      ).toBe(true);
     });
 
     it("percentage with value + rangeMax + self ref (data.js:91 — Mon back squat 60-85%)", () => {
@@ -62,8 +48,8 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       expect(loadSchema.safeParse({ kind: "bodyweight" }).success).toBe(true);
     });
 
-    it("none (data.js:651 — Fri snatch warm-up, ex-unspecified)", () => {
-      expect(loadSchema.safeParse({ kind: "none" }).success).toBe(true);
+    it("rejects the dropped none kind (data.js:651 — ex-unspecified, now bodyweight)", () => {
+      expect(loadSchema.safeParse({ kind: "none" }).success).toBe(false);
     });
   });
 
@@ -121,17 +107,20 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
   });
 
   describe("TempoModifier", () => {
-    it("fullTempo with concentric=0 / X explosive (data.js:93 — Mon back squat)", () => {
+    it("full-tempo quad with explosive X concentric (data.js:93 — Mon back squat)", () => {
       expect(
         tempoModifierSchema.safeParse({
-          fullTempo: { eccentric: 3, pauseBottom: 1, concentric: 0, pauseTop: 0 },
+          eccentric: 3,
+          pauseBottom: 1,
+          concentric: "X",
+          pauseTop: 0,
         }).success,
       ).toBe(true);
     });
 
-    it("slowEccentric (data.js:653 — Fri snatch)", () => {
+    it("rejects the dropped verbal slowEccentric form (data.js:653 — Fri snatch)", () => {
       expect(tempoModifierSchema.safeParse({ slowEccentric: { durationSec: 3 } }).success).toBe(
-        true,
+        false,
       );
     });
   });
@@ -215,61 +204,6 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
         mediaReferenceSchema.safeParse({
           url: "https://example.com/demo/thruster",
           label: "thruster demo",
-        }).success,
-      ).toBe(true);
-    });
-  });
-
-  describe("ExerciseForm", () => {
-    it("atomic (data.js:89 — Mon back squat)", () => {
-      expect(
-        exerciseFormSchema.safeParse({ form: "atomic", exerciseId: CUID_PRIMARY }).success,
-      ).toBe(true);
-    });
-
-    it("compound 2-element (data.js:579-587 — Thu push-up + air squat)", () => {
-      expect(
-        exerciseFormSchema.safeParse({
-          form: "compound",
-          compound: {
-            elements: [
-              { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 10 } },
-              { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 15 } },
-            ],
-          },
-        }).success,
-      ).toBe(true);
-    });
-
-    it("compound DT (data.js:694-708 — Sat DT, ex-sandwich) with byProfile shared load", () => {
-      expect(
-        exerciseFormSchema.safeParse({
-          form: "compound",
-          compound: {
-            elements: [
-              { exerciseId: CUID_PRIMARY, reps: { kind: "count", value: 12 } },
-              { exerciseId: CUID_SECONDARY, reps: { kind: "count", value: 9 } },
-              { exerciseId: CUID_TERTIARY, reps: { kind: "count", value: 6 } },
-            ],
-            sharedModifiers: {
-              load: { kind: "byProfile", first: 70, second: 47 },
-            },
-          },
-        }).success,
-      ).toBe(true);
-    });
-
-    it("or_alternative purpose=scale_down (data.js:521-535 — Thu HSPU OR push-up)", () => {
-      expect(
-        exerciseFormSchema.safeParse({
-          form: "or_alternative",
-          orAlternative: {
-            primaryExerciseId: CUID_PRIMARY,
-            primaryReps: { kind: "count", value: 5 },
-            alternativeExerciseId: CUID_SECONDARY,
-            alternativeReps: { kind: "count", value: 10 },
-            purpose: "scale_down",
-          },
         }).success,
       ).toBe(true);
     });

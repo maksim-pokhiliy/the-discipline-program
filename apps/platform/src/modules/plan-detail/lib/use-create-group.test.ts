@@ -60,13 +60,14 @@ const memberStub = (id: string): SchemaWithBody => ({
     updatedAt: NOW,
   } satisfies Schema,
   rows: [],
+  rowGroups: [],
 });
 
 const groupResponse = (): CreateGroupResponse => ({
   group: {
     id: GROUP_ID,
     blockId: BLOCK_ID,
-    label: null,
+    notes: null,
     interleaveOrder: "round_by_round",
     createdAt: NOW,
     updatedAt: NOW,
@@ -129,7 +130,7 @@ describe("useCreateGroup", () => {
     expect(createGroupMock).toHaveBeenCalledTimes(1);
     expect(createGroupMock).toHaveBeenCalledWith(PLAN_ID, {
       blockId: BLOCK_ID,
-      label: "WOD A",
+      notes: ["WOD A"],
       tracks: [
         { header: null, steps: [21, 15, 9] },
         { header: null, steps: [15, 12, 9] },

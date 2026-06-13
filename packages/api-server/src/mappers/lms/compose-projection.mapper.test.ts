@@ -40,35 +40,15 @@ const makeExerciseRow = (id: string): SchemaRow => ({
   id,
   schemaId: cuidFran,
   order: 10,
-  rowKind: "EXERCISE",
-  rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: id } },
+  exerciseId: id,
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
-  notes: null,
-  createdAt: NOW,
-  updatedAt: NOW,
-});
-
-const makeRestSlotRow = (id: string): SchemaRow => ({
-  id,
-  schemaId: cuidFran,
-  order: 20,
-  rowKind: "REST_SLOT",
-  rowPayload: { rowKind: "REST_SLOT" },
-  load: null,
-  reps: null,
-  side: null,
-  tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
-  media: null,
+  modifiers: [],
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -81,6 +61,7 @@ const franComposition: Composition = {
 const franNode: SchemaWithBody = {
   schema: makeSchema({ id: cuidFran, header: "Fran", composition: franComposition }),
   rows: [makeExerciseRow(cuidThrusters), makeExerciseRow(cuidPullups)],
+  rowGroups: [],
 };
 
 const groupedMemberNode: SchemaWithBody = {
@@ -91,6 +72,7 @@ const groupedMemberNode: SchemaWithBody = {
     composition: { repetition: { kind: "ladder", steps: [9, 6, 3] } },
   }),
   rows: [makeExerciseRow(cuidThrusters)],
+  rowGroups: [],
 };
 
 const restCompositionNode: SchemaWithBody = {
@@ -102,12 +84,14 @@ const restCompositionNode: SchemaWithBody = {
       rest: { duration: { value: 30, unit: "sec" }, scope: "between_sets" },
     },
   }),
-  rows: [makeRestSlotRow(cuidRestSlotRow)],
+  rows: [makeExerciseRow(cuidRestSlotRow)],
+  rowGroups: [],
 };
 
 const nullCompositionNode: SchemaWithBody = {
   schema: makeSchema({ id: cuidNullNode, header: null, composition: null }),
   rows: [makeExerciseRow(cuidThrusters)],
+  rowGroups: [],
 };
 
 const malformedLadderNode: SchemaWithBody = {
@@ -117,6 +101,7 @@ const malformedLadderNode: SchemaWithBody = {
     composition: { repetition: { kind: "ladder", steps: [] } } as Composition,
   }),
   rows: [makeExerciseRow(cuidThrusters)],
+  rowGroups: [],
 };
 
 describe("projectSchemaWithBody", () => {
@@ -135,33 +120,23 @@ describe("projectSchemaWithBody", () => {
         {
           nodeType: "row",
           id: cuidThrusters,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: cuidThrusters },
-          },
+          exerciseId: cuidThrusters,
           reps: null,
           load: null,
           side: null,
           tempo: null,
-          position: null,
-          intensity: null,
+          media: null,
           notes: null,
         },
         {
           nodeType: "row",
           id: cuidPullups,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: cuidPullups },
-          },
+          exerciseId: cuidPullups,
           reps: null,
           load: null,
           side: null,
           tempo: null,
-          position: null,
-          intensity: null,
+          media: null,
           notes: null,
         },
       ],

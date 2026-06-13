@@ -6,8 +6,6 @@ import { Box, Stack, alpha } from "@mui/material";
 
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
-import { type BlockCtx } from "../lib/build-cascade-chips";
-
 import { GroupTrackBadge } from "./group-track-badge";
 import { SchemaCard } from "./schema-card";
 
@@ -25,7 +23,6 @@ type GroupTrackWrapperProps = {
   isContinuation: boolean;
   planId: string;
   startDate: string;
-  blockCtx: BlockCtx;
   parentIsReorderPending: boolean;
 };
 
@@ -35,7 +32,6 @@ export const GroupTrackWrapper: React.FC<GroupTrackWrapperProps> = ({
   isContinuation,
   planId,
   startDate,
-  blockCtx,
   parentIsReorderPending,
 }): ReactElement => (
   <Box
@@ -62,7 +58,6 @@ export const GroupTrackWrapper: React.FC<GroupTrackWrapperProps> = ({
           schema={member}
           planId={planId}
           startDate={startDate}
-          blockCtx={blockCtx}
           parentIsReorderPending={parentIsReorderPending}
           isBoxed
           isDraggable={false}

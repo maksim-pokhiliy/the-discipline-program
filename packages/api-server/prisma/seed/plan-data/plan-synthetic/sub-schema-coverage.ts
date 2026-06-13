@@ -33,17 +33,11 @@ const EMOM_MINUTES = 22;
 const SLOT_REPS = 10;
 
 const buildSlotRow = (minute: number): CanonicalRow =>
-  mkRow(
-    minute,
-    {
-      rowKind: "EXERCISE",
-      exercise: {
-        form: "atomic",
-        exerciseId: SLOT_EXERCISES[(minute - 1) % SLOT_EXERCISES.length] ?? EX.burpee,
-      },
-    },
-    { load: bodyweightLoad(), reps: countReps(SLOT_REPS), notes: `Min ${minute}` },
-  );
+  mkRow(minute, SLOT_EXERCISES[(minute - 1) % SLOT_EXERCISES.length] ?? EX.burpee, {
+    load: bodyweightLoad(),
+    reps: countReps(SLOT_REPS),
+    notes: [`Min ${minute}`],
+  });
 
 const SLOT_ROWS: CanonicalRow[] = Array.from({ length: EMOM_MINUTES }, (_, i) =>
   buildSlotRow(i + 1),
@@ -53,8 +47,6 @@ export const BLOCK_EMOM_22_SUBSCHEMAS: CanonicalBlock = {
   blockInstanceRef: "block-180",
   order: 2,
   labels: [LBL.conditioning],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(

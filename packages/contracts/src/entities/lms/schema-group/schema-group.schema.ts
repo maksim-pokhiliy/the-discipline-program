@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { notesListSchema } from "../_shared";
 import { SCHEMA_CONSTANTS } from "../schema";
 
 import { PARALLEL_INTERLEAVE_ORDERS } from "./schema-group.constants";
@@ -7,7 +8,7 @@ import { PARALLEL_INTERLEAVE_ORDERS } from "./schema-group.constants";
 export const schemaGroupSchema = z.object({
   id: z.string().cuid(),
   blockId: z.string().cuid(),
-  label: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable(),
+  notes: notesListSchema.nullable(),
   interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -26,7 +27,7 @@ export const groupTrackSchema = z
 export const createGroupRequestSchema = z
   .object({
     blockId: z.string().cuid(),
-    label: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable().optional(),
+    notes: notesListSchema.nullable().optional(),
     interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS).optional(),
     tracks: z.array(groupTrackSchema).min(2).max(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS),
   })
@@ -34,7 +35,7 @@ export const createGroupRequestSchema = z
 
 export const updateGroupRequestSchema = z
   .object({
-    label: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable().optional(),
+    notes: notesListSchema.nullable().optional(),
     interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS).optional(),
   })
   .strict();

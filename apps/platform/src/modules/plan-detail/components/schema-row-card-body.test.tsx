@@ -9,12 +9,9 @@ import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 import {
-  ID_BACK_SQUAT,
-  ID_DEADLIFT,
   PLAN_ID,
   START_DATE,
   exerciseById,
-  makeCompoundExerciseRow,
   makeExerciseRow,
   rowKindCases,
 } from "./schema-row-card.fixtures";
@@ -24,12 +21,9 @@ vi.mock("@app/lib/hooks", async () => {
 
   return {
     ...actual,
-    useUpdateSchemaRow: () => ({ mutate: vi.fn(), isPending: false }),
     useDeleteSchemaRow: () => ({ mutate: vi.fn(), isPending: false }),
   };
 });
-
-vi.mock("./row-editor-modal", () => ({ RowEditorModal: () => null }));
 
 const { SchemaRowCard } = await import("./schema-row-card");
 
@@ -80,62 +74,9 @@ describe("SchemaRowCard per-RowKind rendering", () => {
   }
 });
 
-describe("SchemaRowCard per-ExerciseForm rendering", () => {
-  it("renders EXERCISE compound: joined text and 'compound' FormPill", () => {
-    renderRow(makeCompoundExerciseRow());
-
-    expect(screen.getByText("Back Squat × 5 reps + Deadlift × 3 reps")).toBeInTheDocument();
-    expect(screen.getByText("compound")).toBeInTheDocument();
-  });
-
-  it("renders EXERCISE or_alternative: '· or ·' name and 'or alternative' FormPill", () => {
-    renderRow(
-      makeExerciseRow({
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: {
-            form: "or_alternative",
-            orAlternative: {
-              primaryExerciseId: ID_BACK_SQUAT,
-              primaryReps: { kind: "count", value: 5 },
-              alternativeExerciseId: ID_DEADLIFT,
-              alternativeReps: { kind: "count", value: 5 },
-              purpose: "scale_down",
-            },
-          },
-        },
-      }),
-    );
-
-    expect(screen.getByText("Back Squat · or · Deadlift")).toBeInTheDocument();
-    expect(screen.getByText("or alternative")).toBeInTheDocument();
-  });
-
-  it("renders EXERCISE placeholder_ref: fallback name and 'placeholder ref' FormPill", () => {
-    renderRow(
-      makeExerciseRow({
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: { form: "placeholder_ref", placeholderExerciseId: ID_DEADLIFT },
-        },
-      }),
-    );
-
-    expect(screen.getByText("Deadlift")).toBeInTheDocument();
-    expect(screen.getByText("placeholder ref")).toBeInTheDocument();
-  });
-
-  it("does NOT render any FormPill for atomic form", () => {
-    renderRow(makeExerciseRow());
-    const formPillCandidates = screen.queryAllByText(/^(compound|or alternative|placeholder ref)$/);
-
-    expect(formPillCandidates).toHaveLength(0);
-  });
-});
-
 describe("SchemaRowCard notes append", () => {
   it("appends notes in single quotes to subParts for a row", () => {
-    renderRow(makeExerciseRow({ notes: "explosive" }));
+    renderRow(makeExerciseRow({ notes: ["explosive"] }));
 
     expect(screen.getByText("'explosive'")).toBeInTheDocument();
   });
@@ -150,7 +91,7 @@ describe("SchemaRowCard duplicate-string sub-parts (anti-pattern #45)", () => {
         makeExerciseRow({
           reps: { kind: "count", value: 5 },
           load: { kind: "bodyweight" },
-          notes: "BW",
+          notes: ["BW"],
         }),
       );
 

@@ -13,6 +13,8 @@ import { InlineEditText, LabelPickerChip } from "@repo/ui";
 
 import { useLabelOptions } from "@app/lib/hooks";
 
+import { notesListToText } from "../lib/notes-list-text";
+
 import { SessionCardCollapsedStats } from "./session-card-collapsed-stats";
 
 const DRAG_ARIA = "Drag session";
@@ -114,7 +116,7 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
       />
 
       <InlineEditText
-        value={session.notes ?? ""}
+        value={notesListToText(session.notes)}
         onCommit={onNotesCommit}
         variant="body2"
         ariaLabel="Session notes"

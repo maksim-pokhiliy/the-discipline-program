@@ -13,6 +13,8 @@ export const createApi = (client: ApiClient) => ({
   exercises: endpoints.createExercisesAPI(client),
   groups: endpoints.createGroupsAPI(client),
   labels: endpoints.createLabelsAPI(client),
+  modifiers: endpoints.createModifiersAPI(client),
+  rowGroups: endpoints.createRowGroupsAPI(client),
   schemaRows: endpoints.createSchemaRowsAPI(client),
   schemas: endpoints.createSchemasAPI(client),
   sessions: endpoints.createSessionsAPI(client),

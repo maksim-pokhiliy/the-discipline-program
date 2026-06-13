@@ -3,6 +3,8 @@ export type RefResolver = {
   getExercise: (ref: string) => string;
   setLabel: (ref: string, id: string) => void;
   getLabel: (ref: string) => string;
+  setModifier: (ref: string, id: string) => void;
+  getModifier: (ref: string) => string;
 
   enterBlock: (blockKey: string, referencedRowRefs?: ReadonlySet<string>) => void;
   exitBlock: () => void;
@@ -12,6 +14,7 @@ export type RefResolver = {
   stats: () => {
     exerciseCount: number;
     labelCount: number;
+    modifierCount: number;
     currentBlockKey: string | null;
   };
 };
@@ -50,6 +53,7 @@ const requireValue = (
 export const createRefResolver = (): RefResolver => {
   const exercises = new Map<string, string>();
   const labels = new Map<string, string>();
+  const modifiers = new Map<string, string>();
   let blockScope: BlockScope | null = null;
 
   const setExercise = (ref: string, id: string): void => {
@@ -75,6 +79,18 @@ export const createRefResolver = (): RefResolver => {
   };
 
   const getLabel = (ref: string): string => requireValue(labels, ref, "label", "catalog");
+
+  const setModifier = (ref: string, id: string): void => {
+    if (modifiers.has(ref)) {
+      throw new Error(
+        `RefResolver: duplicate setModifier for ref "${ref}" — modifier refs must be unique within the catalog`,
+      );
+    }
+
+    modifiers.set(ref, id);
+  };
+
+  const getModifier = (ref: string): string => requireValue(modifiers, ref, "modifier", "catalog");
 
   const enterBlock = (
     blockKey: string,
@@ -112,10 +128,12 @@ export const createRefResolver = (): RefResolver => {
   const stats = (): {
     exerciseCount: number;
     labelCount: number;
+    modifierCount: number;
     currentBlockKey: string | null;
   } => ({
     exerciseCount: exercises.size,
     labelCount: labels.size,
+    modifierCount: modifiers.size,
     currentBlockKey: blockScope === null ? null : blockScope.blockKey,
   });
 
@@ -124,6 +142,8 @@ export const createRefResolver = (): RefResolver => {
     getExercise,
     setLabel,
     getLabel,
+    setModifier,
+    getModifier,
     enterBlock,
     exitBlock,
     setRow,

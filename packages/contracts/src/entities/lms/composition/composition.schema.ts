@@ -2,15 +2,15 @@ import { z } from "zod";
 
 import {
   exactOrRangeSchema,
-  intensitySchema,
   loadSchema,
+  mediaReferenceSchema,
+  notesListSchema,
   perLimbDistributionSchema,
   repNotationSchema,
   restSpecSchema,
   tempoModifierSchema,
   timeCapSchema,
 } from "../_shared";
-import { positionSchema, rowKindSchema, schemaRowPayloadSchema } from "../schema-row";
 
 export const repetitionAxisSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("once") }).strict(),
@@ -52,15 +52,13 @@ export const composeRowSchema = z
   .object({
     nodeType: z.literal("row"),
     id: z.string().cuid(),
-    rowKind: rowKindSchema,
-    rowPayload: schemaRowPayloadSchema,
+    exerciseId: z.string().cuid(),
     reps: repNotationSchema.nullable(),
     load: loadSchema.nullable(),
     side: perLimbDistributionSchema.nullable(),
     tempo: tempoModifierSchema.nullable(),
-    position: positionSchema.nullable(),
-    intensity: intensitySchema.nullable(),
-    notes: z.string().nullable(),
+    media: mediaReferenceSchema.nullable(),
+    notes: notesListSchema.nullable(),
   })
   .strict();
 
@@ -69,7 +67,7 @@ export const composeContainerSchema = z
     nodeType: z.literal("container"),
     id: z.string().cuid(),
     header: z.string().nullable(),
-    notes: z.string().nullable(),
+    notes: notesListSchema.nullable(),
     composition: compositionSchema,
     children: z.array(composeRowSchema),
   })

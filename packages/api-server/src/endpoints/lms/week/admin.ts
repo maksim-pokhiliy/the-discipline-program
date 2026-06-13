@@ -8,8 +8,8 @@ import {
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToDaySlot, mapToWeek } from "../../../mappers/lms";
-import { handlePrismaError } from "../../../utils";
-import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
+import { handlePrismaError, marshalNullableJson } from "../../../utils";
+import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate, SCHEMA_BODY_INCLUDE } from "../_shared";
 
 export const lmsWeekApi = {
   getByPlanAndDate: async (
@@ -41,9 +41,7 @@ export const lmsWeekApi = {
                       },
                       schemas: {
                         orderBy: { order: "asc" },
-                        include: {
-                          rows: { orderBy: { order: "asc" } },
-                        },
+                        include: SCHEMA_BODY_INCLUDE,
                       },
                       groups: true,
                     },
@@ -81,8 +79,8 @@ export const lmsWeekApi = {
     try {
       const week = await prisma.week.upsert({
         where: { planId_startDate: { planId, startDate } },
-        create: { planId, startDate, notes: data.notes },
-        update: { notes: data.notes },
+        create: { planId, startDate, notes: marshalNullableJson(data.notes) },
+        update: { notes: marshalNullableJson(data.notes) },
       });
 
       return mapToWeek(week);

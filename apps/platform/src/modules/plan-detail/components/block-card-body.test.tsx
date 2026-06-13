@@ -126,12 +126,13 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     ...overrides,
   },
   rows: [],
+  rowGroups: [],
 });
 
 const makeGroup = (overrides: Partial<SchemaGroup> = {}): SchemaGroup => ({
   id: "clp9z8x7w0000abcd1234grp1",
   blockId: BLOCK_ID,
-  label: null,
+  notes: null,
   interleaveOrder: "round_by_round",
   createdAt: NOW,
   updatedAt: NOW,
@@ -142,8 +143,6 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: BLOCK_ID,
   sessionId: SESSION_ID,
   order: 1,
-  intensity: null,
-  timeCap: null,
   notes: null,
   labels: [],
   schemas: [],

@@ -121,6 +121,25 @@ export const EX = {
   placeholderAbs: exerciseCuid("Placeholder Abs"),
   placeholderShoulderAccessory: exerciseCuid("Placeholder Shoulder Accessory"),
   placeholderWarmUp: exerciseCuid("Placeholder Warm Up"),
+  restSlot: exerciseCuid("Rest"),
+} as const;
+
+export const MOD = {
+  handsOnDB: "hands-on-db",
+  neutralGrip: "neutral-grip",
+  withoutBench: "without-bench",
+  fromBox: "from-box",
+  fromBoxOrSofa: "from-box-or-sofa",
+  fromSofa: "from-sofa",
+  withoutJump: "without-jump",
+  holdFarmerCarry: "hold-farmer-carry",
+  leftArmWorking: "left-arm-working",
+  passiveHoldInUp: "passive-hold-in-up",
+  toParallel: "to-parallel",
+  slowEccentric4s: "slow-eccentric-4s",
+  pauseInUp2s: "pause-in-up-2s",
+  holdAfterLast10s: "hold-after-last-10s",
+  pauseEvery3Reps: "pause-every-3-reps",
 } as const;
 
 export const LBL = {

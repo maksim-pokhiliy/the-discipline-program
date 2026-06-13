@@ -12,8 +12,8 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToDaySlot } from "../../../mappers/lms";
-import { handlePrismaError, retryOnP2034 } from "../../../utils";
-import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
+import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
+import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate, SCHEMA_BODY_INCLUDE } from "../_shared";
 
 const DAY_INCLUDE = {
   label: true,
@@ -30,9 +30,7 @@ const DAY_INCLUDE = {
           },
           schemas: {
             orderBy: { order: "asc" as const },
-            include: {
-              rows: { orderBy: { order: "asc" as const } },
-            },
+            include: SCHEMA_BODY_INCLUDE,
           },
           groups: true,
         },
@@ -177,8 +175,12 @@ export const lmsDayMetadataApi = {
 
             return tx.day.upsert({
               where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
-              create: { weekId: week.id, dayOfWeek: prismaDayOfWeek, notes: data.notes },
-              update: { notes: data.notes },
+              create: {
+                weekId: week.id,
+                dayOfWeek: prismaDayOfWeek,
+                notes: marshalNullableJson(data.notes),
+              },
+              update: { notes: marshalNullableJson(data.notes) },
               include: DAY_INCLUDE,
             });
           },

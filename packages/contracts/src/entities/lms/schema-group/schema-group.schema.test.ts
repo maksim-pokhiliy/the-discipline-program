@@ -15,7 +15,7 @@ const cuidB = "clz1234567890123456789bbb";
 const baseGroup = {
   id: cuidA,
   blockId: cuidB,
-  label: "parallel ladders",
+  notes: ["parallel ladders"],
   interleaveOrder: "round_by_round" as const,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -33,8 +33,18 @@ describe("schemaGroupSchema", () => {
     }
   });
 
-  it("accepts a null label", () => {
-    expect(schemaGroupSchema.safeParse({ ...baseGroup, label: null }).success).toBe(true);
+  it("accepts null notes", () => {
+    expect(schemaGroupSchema.safeParse({ ...baseGroup, notes: null }).success).toBe(true);
+  });
+
+  it("strips the dropped label field (D-FLOORS — box label is now the first note)", () => {
+    const result = schemaGroupSchema.safeParse({ ...baseGroup, label: "parallel ladders" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("label");
+    }
   });
 
   it("accepts the track_by_track interleave order", () => {
@@ -53,11 +63,11 @@ describe("schemaGroupSchema", () => {
     expect(schemaGroupSchema.safeParse({ ...baseGroup, id: "not-a-cuid" }).success).toBe(false);
   });
 
-  it("rejects a label over MAX_HEADER_LENGTH", () => {
+  it("rejects a notes entry over NOTE_MAX_LENGTH", () => {
     expect(
       schemaGroupSchema.safeParse({
         ...baseGroup,
-        label: "x".repeat(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH + 1),
+        notes: ["x".repeat(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH + 1)],
       }).success,
     ).toBe(false);
   });
@@ -91,11 +101,11 @@ describe("createGroupRequestSchema", () => {
     expect(createGroupRequestSchema.safeParse(baseRequest).success).toBe(true);
   });
 
-  it("accepts an optional label + interleaveOrder", () => {
+  it("accepts optional notes + interleaveOrder", () => {
     expect(
       createGroupRequestSchema.safeParse({
         ...baseRequest,
-        label: "parallel ladders",
+        notes: ["parallel ladders"],
         interleaveOrder: "track_by_track",
       }).success,
     ).toBe(true);
@@ -196,12 +206,12 @@ describe("updateGroupRequestSchema", () => {
     expect(updateGroupRequestSchema.safeParse({}).success).toBe(true);
   });
 
-  it("accepts a label-only update", () => {
-    expect(updateGroupRequestSchema.safeParse({ label: "renamed" }).success).toBe(true);
+  it("accepts a notes-only update", () => {
+    expect(updateGroupRequestSchema.safeParse({ notes: ["renamed"] }).success).toBe(true);
   });
 
-  it("accepts a null label (clear)", () => {
-    expect(updateGroupRequestSchema.safeParse({ label: null }).success).toBe(true);
+  it("accepts null notes (clear)", () => {
+    expect(updateGroupRequestSchema.safeParse({ notes: null }).success).toBe(true);
   });
 
   it("accepts an interleaveOrder-only update", () => {

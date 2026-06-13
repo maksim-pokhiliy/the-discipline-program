@@ -54,6 +54,7 @@ const memberStub = (id: string, order: number): SchemaWithBody => ({
     updatedAt: NOW,
   } satisfies Schema,
   rows: [],
+  rowGroups: [],
 });
 
 const renderRunner = () => {

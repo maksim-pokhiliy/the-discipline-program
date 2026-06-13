@@ -24,7 +24,6 @@ import { buildBlockItems, type BlockItem } from "@repo/contracts/lms/schema-grou
 import { useReorderSchemas } from "@app/lib/hooks";
 
 import { blockItemSortableId } from "../lib/block-item-sortable-id";
-import { type BlockCtx } from "../lib/build-cascade-chips";
 import { pointerFirstCollision } from "../lib/pointer-first-collision";
 
 import { AddGroupButton } from "./add-group-button";
@@ -63,11 +62,6 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  const blockCtx = useMemo<BlockCtx>(
-    () => ({ intensity: block.intensity, timeCap: block.timeCap }),
-    [block.intensity, block.timeCap],
   );
 
   const effectiveReorderPending = parentIsReorderPending || reorderSchemas.isPending;
@@ -116,7 +110,6 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 members={item.members}
                 planId={planId}
                 startDate={startDate}
-                blockCtx={blockCtx}
                 parentIsReorderPending={effectiveReorderPending}
               />
             ) : (
@@ -125,7 +118,6 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 schema={item.schema}
                 planId={planId}
                 startDate={startDate}
-                blockCtx={blockCtx}
                 parentIsReorderPending={effectiveReorderPending}
               />
             ),

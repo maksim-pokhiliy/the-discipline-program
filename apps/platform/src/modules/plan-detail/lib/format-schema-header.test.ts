@@ -25,6 +25,7 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     ...overrides,
   },
   rows: [],
+  rowGroups: [],
 });
 
 describe("formatSchemaHeader", () => {

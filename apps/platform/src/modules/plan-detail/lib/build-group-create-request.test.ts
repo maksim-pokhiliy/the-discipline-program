@@ -32,7 +32,7 @@ describe("buildGroupCreateRequest", () => {
       ok: true,
       request: {
         blockId: BLOCK_ID,
-        label: null,
+        notes: null,
         tracks: [
           { header: null, steps: [21, 15, 9] },
           { header: null, steps: [15, 12, 9] },
@@ -54,7 +54,7 @@ describe("buildGroupCreateRequest", () => {
     }
   });
 
-  it("carries the group header as the group label and each track's header onto the request", () => {
+  it("carries the group header as the group notes and each track's header onto the request", () => {
     const result = buildGroupCreateRequest(
       group(
         [ladderTrack("t1", [21, 15, 9]), { ...ladderTrack("t2", [15, 12, 9]), header: "B" }],
@@ -66,7 +66,7 @@ describe("buildGroupCreateRequest", () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      expect(result.request.label).toBe("parent header");
+      expect(result.request.notes).toEqual(["parent header"]);
       expect(result.request.tracks.map((track) => track.header)).toEqual([null, "B"]);
     }
   });

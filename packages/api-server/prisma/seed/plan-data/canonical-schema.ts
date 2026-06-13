@@ -43,19 +43,13 @@ import {
   intensitySchema,
   loadSchema,
   mediaReferenceSchema,
+  notesListSchema,
   perLimbDistributionSchema,
   repNotationSchema,
-  sequenceIndicatorSchema,
   tempoModifierSchema,
-  timeCapSchema,
 } from "@repo/contracts/lms/_shared";
 import { compositionSchema } from "@repo/contracts/lms/composition";
 import { PARALLEL_INTERLEAVE_ORDERS } from "@repo/contracts/lms/schema-group";
-import {
-  positionSchema,
-  rowKindSchema,
-  schemaRowPayloadSchema,
-} from "@repo/contracts/lms/schema-row";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Reference IDs
@@ -164,29 +158,36 @@ export const labelCatalogEntrySchema = z.object({
 });
 export type LabelCatalogEntry = z.infer<typeof labelCatalogEntrySchema>;
 
+export const modifierRefSchema = z.string().min(1).max(64);
+
+export const modifierCatalogEntrySchema = z.object({
+  ref: modifierRefSchema,
+  name: z.string().min(1).max(200),
+  notes: notesListSchema.nullable().default(null),
+});
+export type ModifierCatalogEntry = z.infer<typeof modifierCatalogEntrySchema>;
+
 // ──────────────────────────────────────────────────────────────────────────
 // Row
 //
-// Mirrors Prisma `SchemaRow`. `rowPayload` is the discriminated union from
-// contracts. Top-level VO fields are nullable per existing schema (they may
-// be present on ANY rowKind, not only EXERCISE — coach can attach a load to
-// a PLACEHOLDER row, etc).
+// Mirrors Prisma `SchemaRow`. The row is ALWAYS an exercise (one row kind —
+// D-ROW-GRAMMAR); `exerciseId` is a catalog ref resolved to a cuid at emit
+// time. `modifierRefs` reference the modifier catalog (ordered). Row-group
+// membership is expressed by the schema node's `rowGroups` (member refIds).
 // ──────────────────────────────────────────────────────────────────────────
 
 const rowSchemaDef = z.object({
   refId: z.string().min(1).max(48).optional(),
   order: z.number().int().positive(),
-  rowKind: rowKindSchema,
-  rowPayload: schemaRowPayloadSchema,
+  exerciseId: exerciseRefSchema,
+  sets: z.number().int().positive().nullable().default(null),
   load: loadSchema.nullable().default(null),
   reps: repNotationSchema.nullable().default(null),
   side: perLimbDistributionSchema.nullable().default(null),
   tempo: tempoModifierSchema.nullable().default(null),
-  position: positionSchema.nullable().default(null),
-  sequence: sequenceIndicatorSchema.nullable().default(null),
-  intensity: intensitySchema.nullable().default(null),
   media: mediaReferenceSchema.nullable().default(null),
-  notes: z.string().max(4000).nullable().default(null),
+  modifierRefs: z.array(modifierRefSchema).default([]),
+  notes: notesListSchema.nullable().default(null),
 });
 
 export type CanonicalRow = z.infer<typeof rowSchemaDef>;
@@ -196,14 +197,32 @@ export const rowSchema: z.ZodType<
   z.input<typeof rowSchemaDef>
 > = rowSchemaDef;
 
+// ──────────────────────────────────────────────────────────────────────────
+// Row group
+//
+// Mirror of `CanonicalSchemaGroup` one floor down. A schema-owned box wrapping
+// CONTIGUOUS member rows (2+) identified by their `refId`. Carries an ordered
+// notes stack (the opaque box label is the first note — D-FLOORS). The emit
+// pipeline writes a `RowGroup` row and sets `SchemaRow.rowGroupId` on the
+// member rows resolved by refId.
+// ──────────────────────────────────────────────────────────────────────────
+
+export const canonicalRowGroupSchema = z.object({
+  refId: z.string().min(1).max(48),
+  notes: notesListSchema.nullable().default(null),
+  memberRowRefIds: z.array(z.string().min(1).max(48)).min(2),
+});
+export type CanonicalRowGroup = z.infer<typeof canonicalRowGroupSchema>;
+
 const canonicalSchemaNodeSchemaDef = z.object({
   refId: z.string().min(1).max(48).optional(),
   order: z.number().int().positive(),
   composition: compositionSchema,
   header: z.string().min(1).max(200).nullable(),
   intensity: intensitySchema.nullable(),
-  notes: z.string().max(4000).nullable(),
+  notes: notesListSchema.nullable(),
   rows: z.array(rowSchema),
+  rowGroups: z.array(canonicalRowGroupSchema).default([]),
 });
 
 export type CanonicalSchemaNode = z.infer<typeof canonicalSchemaNodeSchemaDef>;
@@ -226,7 +245,7 @@ export const canonicalSchemaNodeSchema: z.ZodType<
 // ──────────────────────────────────────────────────────────────────────────
 
 export const canonicalSchemaGroupSchema = z.object({
-  label: z.string().min(1).max(200).nullable(),
+  notes: notesListSchema.nullable(),
   interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS).optional(),
   members: z.array(canonicalSchemaNodeSchema).min(1),
 });
@@ -258,9 +277,7 @@ export const blockSchema = z.object({
   blockInstanceRef: blockInstanceRefSchema,
   order: z.number().int().positive(),
   labels: z.array(labelRefSchema).default([]),
-  intensity: intensitySchema.nullable().default(null),
-  timeCap: timeCapSchema.nullable().default(null),
-  notes: z.string().max(4000).nullable().default(null),
+  notes: notesListSchema.nullable().default(null),
   schemas: z.array(canonicalBlockSchemaItemSchema).default([]),
 });
 export type CanonicalBlock = z.infer<typeof blockSchema>;
@@ -274,7 +291,7 @@ export type CanonicalBlock = z.infer<typeof blockSchema>;
 export const sessionSchema = z.object({
   order: z.number().int().positive(),
   label: labelRefSchema.nullable().default(null),
-  notes: z.string().max(4000).nullable().default(null),
+  notes: notesListSchema.nullable().default(null),
   blocks: z.array(blockSchema).default([]),
 });
 export type CanonicalSession = z.infer<typeof sessionSchema>;
@@ -282,7 +299,7 @@ export type CanonicalSession = z.infer<typeof sessionSchema>;
 export const daySchema = z.object({
   dayOfWeek: dayOfWeekSchema,
   label: labelRefSchema.nullable().default(null),
-  notes: z.string().max(4000).nullable().default(null),
+  notes: notesListSchema.nullable().default(null),
   sessions: z.array(sessionSchema).default([]),
 });
 export type CanonicalDay = z.infer<typeof daySchema>;
@@ -291,7 +308,7 @@ export const weekSchema = z.object({
   weekIndex: z.number().int().positive(),
   sheetRef: sheetRefSchema.nullable(),
   weekOffsetFromTodayWeeks: z.number().int(),
-  notes: z.string().max(4000).nullable().default(null),
+  notes: notesListSchema.nullable().default(null),
   days: z.array(daySchema).default([]),
 });
 export type CanonicalWeek = z.infer<typeof weekSchema>;
@@ -340,6 +357,7 @@ const canonicalSeedSchemaDef = z.object({
   catalog: z.object({
     exercises: z.array(exerciseCatalogEntrySchema).min(1),
     labels: z.array(labelCatalogEntrySchema).min(1),
+    modifiers: z.array(modifierCatalogEntrySchema).default([]),
   }),
   plan: planShellSchema,
   weeks: z.array(weekSchema).min(1),
@@ -358,8 +376,8 @@ export const canonicalSeedSchema: z.ZodType<
 // Cross-reference invariants (enforced after Zod parses; kept here as
 // documented expectations for the builder).
 //
-//  X1. Every `exerciseRef` referenced anywhere (rowPayload, mediaReference,
-//      etc) MUST resolve in `catalog.exercises`. Enforced by
+//  X1. Every `exerciseRef` referenced anywhere (row.exerciseId,
+//      mediaReference, etc) MUST resolve in `catalog.exercises`. Enforced by
 //      `assertExerciseRefsResolve` in `plan-emit/load-and-validate.ts`.
 //
 //  X2. Every `labelRef` referenced anywhere (day.label, session.label,

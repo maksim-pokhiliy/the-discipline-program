@@ -45,20 +45,19 @@ const atomicSchema = {
   updatedAt: new Date(),
 };
 
-const restSlotRow = {
+const exerciseRow = {
   id: "clz1234567890123456789rr1",
   schemaId: "clz1234567890123456789sa1",
   order: 1,
-  rowKind: "REST_SLOT" as const,
-  rowPayload: { rowKind: "REST_SLOT" as const },
+  exerciseId: "clz1234567890123456789ex1",
+  sets: null,
+  rowGroupId: null,
   load: null,
   reps: null,
   side: null,
   tempo: null,
-  position: null,
-  sequence: null,
-  intensity: null,
   media: null,
+  modifiers: [],
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -66,13 +65,14 @@ const restSlotRow = {
 
 const schemaWithBody = {
   schema: atomicSchema,
-  rows: [restSlotRow],
+  rows: [exerciseRow],
+  rowGroups: [],
 };
 
 const schemaGroup = {
   id: "clz1234567890123456789grp",
   blockId: "clz1234567890123456789012",
-  label: "parallel ladders",
+  notes: null,
   interleaveOrder: "round_by_round" as const,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -82,9 +82,7 @@ const baseBlock = {
   id: "clz1234567890123456789012",
   sessionId: "clz1234567890123456789ccc",
   order: 10,
-  intensity: { rpe: { value: 7 } },
-  timeCap: { min: 10, max: 15, unit: "min" as const },
-  notes: "block focus",
+  notes: ["block focus"],
   labels: [labelOne],
   schemas: [],
   groups: [],
@@ -93,7 +91,7 @@ const baseBlock = {
 };
 
 describe("blockSchema", () => {
-  it("accepts a fully-populated valid object (with intensity + timeCap + labels)", () => {
+  it("accepts a fully-populated valid object (with notes + labels)", () => {
     const result = blockSchema.safeParse(baseBlock);
 
     expect(result.success).toBe(true);
@@ -102,26 +100,33 @@ describe("blockSchema", () => {
       expect(result.data.id).toBe(baseBlock.id);
       expect(result.data.sessionId).toBe(baseBlock.sessionId);
       expect(result.data.order).toBe(10);
-      expect(result.data.intensity).toEqual({ rpe: { value: 7 } });
-      expect(result.data.timeCap).toEqual({ min: 10, max: 15, unit: "min" });
+      expect(result.data.notes).toEqual(["block focus"]);
       expect(result.data.labels).toHaveLength(1);
     }
   });
 
-  it("accepts intensity: null, timeCap: null, notes: null", () => {
+  it("accepts notes: null", () => {
+    const result = blockSchema.safeParse({ ...baseBlock, notes: null });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.notes).toBeNull();
+    }
+  });
+
+  it("strips the dropped intensity + timeCap fields (D-FLOORS — schema-only now)", () => {
     const result = blockSchema.safeParse({
       ...baseBlock,
-      intensity: null,
-      timeCap: null,
-      notes: null,
+      intensity: { rpe: { value: 7 } },
+      timeCap: { min: 10, max: 15, unit: "min" },
     });
 
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data.intensity).toBeNull();
-      expect(result.data.timeCap).toBeNull();
-      expect(result.data.notes).toBeNull();
+      expect(result.data).not.toHaveProperty("intensity");
+      expect(result.data).not.toHaveProperty("timeCap");
     }
   });
 
@@ -184,14 +189,14 @@ describe("blockSchema", () => {
       expect(result.data.schemas).toHaveLength(1);
       expect(result.data.schemas[0]?.schema.id).toBe(atomicSchema.id);
       expect(result.data.schemas[0]?.rows).toHaveLength(1);
-      expect(result.data.schemas[0]?.rows[0]?.id).toBe(restSlotRow.id);
+      expect(result.data.schemas[0]?.rows[0]?.id).toBe(exerciseRow.id);
     }
   });
 
   it("accepts a populated groups embed", () => {
     const result = blockSchema.safeParse({
       ...baseBlock,
-      schemas: [{ schema: { ...atomicSchema, groupId: schemaGroup.id }, rows: [] }],
+      schemas: [{ schema: { ...atomicSchema, groupId: schemaGroup.id }, rows: [], rowGroups: [] }],
       groups: [schemaGroup],
     });
 
@@ -224,22 +229,20 @@ describe("createBlockSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts intensity-only payload", () => {
+  it("accepts notes-only payload", () => {
+    const result = createBlockSchema.safeParse({ notes: ["focus"] });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("strips the dropped intensity field on create", () => {
     const result = createBlockSchema.safeParse({ intensity: { rpe: { value: 7 } } });
 
     expect(result.success).toBe(true);
-  });
 
-  it("accepts timeCap-only payload", () => {
-    const result = createBlockSchema.safeParse({ timeCap: { min: 5, unit: "min" } });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts notes-only payload", () => {
-    const result = createBlockSchema.safeParse({ notes: "focus" });
-
-    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("intensity");
+    }
   });
 
   it("accepts labelIds-only payload", () => {
@@ -258,17 +261,9 @@ describe("createBlockSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts notes at MAX_NOTES_LENGTH", () => {
+  it("rejects a note longer than NOTE_MAX_LENGTH", () => {
     const result = createBlockSchema.safeParse({
-      notes: "x".repeat(BLOCK_CONSTANTS.MAX_NOTES_LENGTH),
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects notes longer than MAX_NOTES_LENGTH", () => {
-    const result = createBlockSchema.safeParse({
-      notes: "x".repeat(BLOCK_CONSTANTS.MAX_NOTES_LENGTH + 1),
+      notes: ["x".repeat(BLOCK_CONSTANTS.MAX_NOTES_LENGTH + 1)],
     });
 
     expect(result.success).toBe(false);
@@ -298,10 +293,6 @@ describe("createBlockSchema", () => {
   it("rejects a non-cuid in labelIds", () => {
     expect(createBlockSchema.safeParse({ labelIds: [cuidA, "not-a-cuid"] }).success).toBe(false);
   });
-
-  it("rejects intensity: {} (refine at-least-one via _shared)", () => {
-    expect(createBlockSchema.safeParse({ intensity: {} }).success).toBe(false);
-  });
 });
 
 describe("updateBlockSchema", () => {
@@ -313,28 +304,16 @@ describe("updateBlockSchema", () => {
     expect(updateBlockSchema.safeParse({}).success).toBe(true);
   });
 
-  it("accepts intensity-only payload", () => {
-    expect(updateBlockSchema.safeParse({ intensity: { pace: "easy" } }).success).toBe(true);
-  });
-
-  it("accepts timeCap-only payload", () => {
-    expect(updateBlockSchema.safeParse({ timeCap: { min: 5, unit: "min" } }).success).toBe(true);
-  });
-
   it("accepts notes-only payload", () => {
-    expect(updateBlockSchema.safeParse({ notes: "updated" }).success).toBe(true);
+    expect(updateBlockSchema.safeParse({ notes: ["updated"] }).success).toBe(true);
   });
 
   it("accepts labelIds-only payload", () => {
     expect(updateBlockSchema.safeParse({ labelIds: [cuidA] }).success).toBe(true);
   });
 
-  it("accepts { intensity: null, timeCap: null, notes: null } (explicit clear)", () => {
-    const result = updateBlockSchema.safeParse({
-      intensity: null,
-      timeCap: null,
-      notes: null,
-    });
+  it("accepts { notes: null } (explicit clear)", () => {
+    const result = updateBlockSchema.safeParse({ notes: null });
 
     expect(result.success).toBe(true);
   });

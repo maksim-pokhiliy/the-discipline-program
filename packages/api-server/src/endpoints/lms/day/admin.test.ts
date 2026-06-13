@@ -10,7 +10,7 @@ const MONDAY_PARAM = "2026-05-18";
 const WEDNESDAY_PARAM = "2026-05-20";
 const EXPECTED_UTC_MONDAY = new Date(Date.UTC(2026, 4, 18));
 
-const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
+const ROW_EXERCISE_ID = "clz00000000000000000dayex1";
 
 describe("lmsDayMetadataApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -303,8 +303,7 @@ describe("lmsDayMetadataApi", () => {
         data: {
           schemaId: schema.id,
           order: 10,
-          rowKind: "REST_SLOT",
-          rowPayload: REST_SLOT_PAYLOAD,
+          exerciseId: ROW_EXERCISE_ID,
         },
       });
 
@@ -402,11 +401,11 @@ describe("lmsDayMetadataApi", () => {
           activePlanId,
           MONDAY_PARAM,
           "MONDAY",
-          { notes: "test notes" },
+          { notes: ["test notes"] },
         );
 
         expect(slot.dayOfWeek).toBe("MONDAY");
-        expect(slot.notes).toBe("test notes");
+        expect(slot.notes).toEqual(["test notes"]);
         expect(slot.label).toBeNull();
         expect(slot.sessions).toEqual([]);
 
@@ -422,7 +421,7 @@ describe("lmsDayMetadataApi", () => {
           where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: "MONDAY" } },
         });
 
-        expect(day?.notes).toBe("test notes");
+        expect(day?.notes).toEqual(["test notes"]);
       } finally {
         await cleanupRaw.day
           .deleteMany({ where: { week: { planId: activePlanId } } })
@@ -470,11 +469,11 @@ describe("lmsDayMetadataApi", () => {
           activePlanId,
           MONDAY_PARAM,
           "FRIDAY",
-          { notes: "friday focus" },
+          { notes: ["friday focus"] },
         );
 
         expect(afterNotes.label?.id).toBe(dayLabelId);
-        expect(afterNotes.notes).toBe("friday focus");
+        expect(afterNotes.notes).toEqual(["friday focus"]);
       } finally {
         await cleanupRaw.day
           .deleteMany({ where: { week: { planId: activePlanId } } })
@@ -486,7 +485,7 @@ describe("lmsDayMetadataApi", () => {
     it("rejects when caller does not own the plan, with no side-effect", async () => {
       await expect(
         lmsDayMetadataApi.setNotes(otherCoach.user.id, activePlanId, MONDAY_PARAM, "MONDAY", {
-          notes: "tamper",
+          notes: ["tamper"],
         }),
       ).rejects.toThrow(ForbiddenError);
 
@@ -509,7 +508,7 @@ describe("lmsDayMetadataApi", () => {
             labelId: dayLabelId,
           }),
           lmsDayMetadataApi.setNotes(coach.user.id, activePlanId, MONDAY_PARAM, "SATURDAY", {
-            notes: "saturday focus",
+            notes: ["saturday focus"],
           }),
         ]);
 
@@ -522,7 +521,7 @@ describe("lmsDayMetadataApi", () => {
         }
 
         if (notesResult.status === "fulfilled") {
-          expect(stored?.notes).toBe("saturday focus");
+          expect(stored?.notes).toEqual(["saturday focus"]);
         }
       } finally {
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});

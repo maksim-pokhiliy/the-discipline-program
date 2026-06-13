@@ -4,6 +4,6 @@ export const WEEK_TRAVEL_GAP: CanonicalWeek = {
   weekIndex: 2,
   sheetRef: null,
   weekOffsetFromTodayWeeks: 1,
-  notes: "travel gap, training paused for 1 week",
+  notes: ["travel gap, training paused for 1 week"],
   days: [],
 };

@@ -10,14 +10,12 @@ import { BadRequestError, InternalServerError } from "@repo/errors";
 export const projectSchemaRow = (row: SchemaRow): ComposeRow => ({
   nodeType: "row",
   id: row.id,
-  rowKind: row.rowKind,
-  rowPayload: row.rowPayload,
+  exerciseId: row.exerciseId,
   reps: row.reps,
   load: row.load,
   side: row.side,
   tempo: row.tempo,
-  position: row.position,
-  intensity: row.intensity,
+  media: row.media,
   notes: row.notes,
 });
 

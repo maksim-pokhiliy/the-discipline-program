@@ -3,10 +3,8 @@ import {
   bodyweightLoad,
   buildComposeNode,
   composeGroup,
-  dualWeight,
   ladderRep,
   rangeReps,
-  singleWeight,
 } from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
 
@@ -24,26 +22,15 @@ const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
   blockInstanceRef: "block-037",
   order: 1,
   labels: [LBL.gymnastics],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     composeGroup({
-      label: "parallel ladders 36-28-20 / 18-14-10",
+      notes: ["parallel ladders 36-28-20 / 18-14-10"],
       members: [
         buildComposeNode(
           {
             order: 1,
-            rows: [
-              mkRow(
-                1,
-                {
-                  rowKind: "EXERCISE",
-                  exercise: { form: "atomic", exerciseId: EX.strictPullUp },
-                },
-                { load: bodyweightLoad() },
-              ),
-            ],
+            rows: [mkRow(1, EX.strictPullUp, { load: bodyweightLoad() })],
           },
           ladderRep([36, 28, 20]),
           null,
@@ -51,13 +38,7 @@ const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
         buildComposeNode(
           {
             order: 2,
-            rows: [
-              mkRow(
-                1,
-                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pushUp } },
-                { load: bodyweightLoad() },
-              ),
-            ],
+            rows: [mkRow(1, EX.pushUp, { load: bodyweightLoad() })],
           },
           ladderRep([18, 14, 10]),
           null,
@@ -71,8 +52,6 @@ const BLOCK_LADDER_ASCENDING_WK1_SAT: CanonicalBlock = {
   blockInstanceRef: "block-032",
   order: 2,
   labels: [LBL.conditioning],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
@@ -80,11 +59,10 @@ const BLOCK_LADDER_ASCENDING_WK1_SAT: CanonicalBlock = {
         order: 1,
         header: "ascending 5-10-15",
         rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbSnatch } },
-            { load: absoluteLoad(dualWeight(22.5)), reps: rangeReps(5, 15) },
-          ),
+          mkRow(1, EX.dbSnatch, {
+            load: absoluteLoad({ count: 2, kg: 22.5 }),
+            reps: rangeReps(5, 15),
+          }),
         ],
       },
       ladderRep([5, 10, 15]),
@@ -97,21 +75,13 @@ const BLOCK_LADDER_VERTEX_PYRAMID_WK1_SAT: CanonicalBlock = {
   blockInstanceRef: "block-098",
   order: 3,
   labels: [LBL.olympic],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
       {
         order: 1,
         header: "vertex pyramid 3-6-9-6-3",
-        rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.powerClean } },
-            { load: absoluteLoad(singleWeight(60)) },
-          ),
-        ],
+        rows: [mkRow(1, EX.powerClean, { load: absoluteLoad({ count: 1, kg: 60 }) })],
       },
       ladderRep([3, 6, 9, 6, 3]),
       null,
@@ -123,21 +93,13 @@ const BLOCK_LADDER_SPIKE_WK1_SAT: CanonicalBlock = {
   blockInstanceRef: "block-106",
   order: 4,
   labels: [LBL.skill],
-  intensity: null,
-  timeCap: null,
   notes: null,
   schemas: [
     buildComposeNode(
       {
         order: 1,
         header: "ladder spike",
-        rows: [
-          mkRow(
-            1,
-            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.kbSnatch } },
-            { load: absoluteLoad(singleWeight(20)) },
-          ),
-        ],
+        rows: [mkRow(1, EX.kbSnatch, { load: absoluteLoad({ count: 1, kg: 20 }) })],
       },
       ladderRep([10, 8, 6, 12]),
       null,

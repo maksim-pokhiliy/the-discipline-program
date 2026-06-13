@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { schemaRowPayloadSchema } from "../schema-row";
-
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
 import type { ComposeRow } from "./composition.types";
 
@@ -21,38 +19,23 @@ const cuidBoxJumps = "clz00000000000000boxjumpsr";
 
 const cuidCashOut = "clz0000000000000000cashout";
 const cuidRun800 = "clz00000000000000000run800";
-const cuidRow1000 = "clz0000000000000000row1000";
 
 function exerciseRow(id: string, exerciseId: string): ComposeRow {
   return {
     nodeType: "row",
     id,
-    rowKind: "EXERCISE",
-    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId } },
+    exerciseId,
     reps: null,
     load: null,
     side: null,
     tempo: null,
-    position: null,
-    intensity: null,
+    media: null,
     notes: null,
   };
 }
 
 describe("Gauntlet B — EMOM / 4 rounds (cadence over a flat row set)", () => {
-  const restMinRow: ComposeRow = {
-    nodeType: "row",
-    id: cuidRowRest,
-    rowKind: "REST_SLOT",
-    rowPayload: { rowKind: "REST_SLOT" },
-    reps: null,
-    load: null,
-    side: null,
-    tempo: null,
-    position: null,
-    intensity: null,
-    notes: null,
-  };
+  const restMinRow = exerciseRow(cuidRowRest, cuidRowRest);
 
   const emomContainer = {
     nodeType: "container" as const,
@@ -115,29 +98,25 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
   const waveRow: ComposeRow = {
     nodeType: "row",
     id: cuidBackSquat,
-    rowKind: "EXERCISE",
-    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: cuidBackSquat } },
+    exerciseId: cuidBackSquat,
     reps: { kind: "count", value: 5 },
     load: null,
     side: null,
-    tempo: { fullTempo: { eccentric: 3, pauseBottom: 1, concentric: 0, pauseTop: 0 } },
-    position: null,
-    intensity: null,
+    tempo: { eccentric: 3, pauseBottom: 1, concentric: "X", pauseTop: 0 },
+    media: null,
     notes: null,
   };
 
   const boxJumpsRow: ComposeRow = {
     nodeType: "row",
     id: cuidBoxJumps,
-    rowKind: "EXERCISE",
-    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: cuidBoxJumps } },
+    exerciseId: cuidBoxJumps,
     reps: { kind: "count", value: 10 },
     load: null,
     side: null,
     tempo: null,
-    position: "FROM_SOFA",
-    intensity: null,
-    notes: null,
+    media: null,
+    notes: ["from sofa"],
   };
 
   const waveContainer = {
@@ -178,44 +157,25 @@ describe("Gauntlet E — cash-out OR (sequence as flat rows)", () => {
   const placeholderRow: ComposeRow = {
     nodeType: "row",
     id: "clz000000000000placeholder",
-    rowKind: "PLACEHOLDER",
-    rowPayload: {
-      rowKind: "PLACEHOLDER",
-      placeholder: { placeholderKind: "coach_choice_slot", text: "biceps/triceps" },
-    },
+    exerciseId: "clz000000000000placeholder",
     reps: { kind: "count", value: 12 },
     load: null,
     side: null,
     tempo: null,
-    position: null,
-    intensity: null,
-    notes: null,
+    media: null,
+    notes: ["biceps/triceps"],
   };
 
   const cashOutRow: ComposeRow = {
     nodeType: "row",
     id: cuidCashOut,
-    rowKind: "EXERCISE",
-    rowPayload: {
-      rowKind: "EXERCISE",
-      exercise: {
-        form: "or_alternative",
-        orAlternative: {
-          primaryExerciseId: cuidRun800,
-          primaryReps: { kind: "unit_bound", unit: "km", value: 0.8 },
-          alternativeExerciseId: cuidRow1000,
-          alternativeReps: { kind: "unit_bound", unit: "km", value: 1 },
-          purpose: "coach_choice",
-        },
-      },
-    },
-    reps: null,
+    exerciseId: cuidRun800,
+    reps: { kind: "unit_bound", unit: "km", value: 0.8 },
     load: null,
     side: null,
     tempo: null,
-    position: null,
-    intensity: null,
-    notes: null,
+    media: null,
+    notes: ["OR row 1000m"],
   };
 
   const sequenceContainer = {
@@ -230,11 +190,25 @@ describe("Gauntlet E — cash-out OR (sequence as flat rows)", () => {
     children: [placeholderRow, cashOutRow],
   };
 
-  it("expresses the cash-out as an or_alternative EXERCISE row payload", () => {
-    expect(schemaRowPayloadSchema.safeParse(cashOutRow.rowPayload).success).toBe(true);
+  it("expresses the cash-out as a plain exercise row (OR re-expressed as a row-group note)", () => {
+    expect(composeContainerSchema.safeParse(sequenceContainer).success).toBe(true);
   });
 
-  it("validates the count(3) container with placeholder + cash-out rows", () => {
-    expect(composeContainerSchema.safeParse(sequenceContainer).success).toBe(true);
+  it("rejects a compose row carrying the dropped rowPayload union", () => {
+    expect(
+      composeContainerSchema.safeParse({
+        ...sequenceContainer,
+        children: [
+          {
+            ...cashOutRow,
+            rowKind: "EXERCISE",
+            rowPayload: {
+              rowKind: "EXERCISE",
+              exercise: { form: "atomic", exerciseId: cuidRun800 },
+            },
+          },
+        ],
+      }).success,
+    ).toBe(false);
   });
 });

@@ -17,6 +17,9 @@ describe("lmsSchemaRowApi", () => {
   let exerciseAId: string;
   let exerciseBId: string;
 
+  let modifierAId: string;
+  let modifierBId: string;
+
   let weekCounter = 0;
 
   const provisionBlock = async (options: { planId?: string | undefined } = {}) => {
@@ -129,6 +132,24 @@ describe("lmsSchemaRowApi", () => {
     });
 
     exerciseBId = exerciseB.id;
+
+    const modifierA = await cleanupRaw.modifier.create({
+      data: {
+        name: `SchemaRow Modifier A ${uniqueA}`,
+        nameLower: `schemarow modifier a ${uniqueA}`,
+      },
+    });
+
+    modifierAId = modifierA.id;
+
+    const modifierB = await cleanupRaw.modifier.create({
+      data: {
+        name: `SchemaRow Modifier B ${uniqueB}`,
+        nameLower: `schemarow modifier b ${uniqueB}`,
+      },
+    });
+
+    modifierBId = modifierB.id;
   });
 
   afterAll(async () => {
@@ -188,6 +209,9 @@ describe("lmsSchemaRowApi", () => {
     await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
 
+    await cleanupRaw.modifier.delete({ where: { id: modifierAId } }).catch(() => {});
+    await cleanupRaw.modifier.delete({ where: { id: modifierBId } }).catch(() => {});
+
     await cleanupRaw.exercise.delete({ where: { id: exerciseAId } }).catch(() => {});
     await cleanupRaw.exercise.delete({ where: { id: exerciseBId } }).catch(() => {});
 
@@ -199,120 +223,43 @@ describe("lmsSchemaRowApi", () => {
   });
 
   describe("create", () => {
-    it("creates an EXERCISE row with parsed exercise payload", async () => {
+    it("creates an exercise row with the exerciseId promoted to a column", async () => {
       const ctx = await provisionSchema();
 
       try {
         const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: ctx.schema.id,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: exerciseAId },
-          },
+          exerciseId: exerciseAId,
         });
 
         expect(created.schemaId).toBe(ctx.schema.id);
         expect(created.order).toBe(10);
-        expect(created.rowKind).toBe("EXERCISE");
-        expect(created.rowPayload).toEqual({
-          rowKind: "EXERCISE",
-          exercise: { form: "atomic", exerciseId: exerciseAId },
-        });
+        expect(created.exerciseId).toBe(exerciseAId);
+        expect(created.sets).toBeNull();
+        expect(created.rowGroupId).toBeNull();
         expect(created.load).toBeNull();
-        expect(created.position).toBeNull();
+        expect(created.modifiers).toEqual([]);
         expect(created.notes).toBeNull();
       } finally {
         await ctx.cleanup();
       }
     });
 
-    it("creates a REST row with raw + parsed payload", async () => {
+    it("persists sets, notes, and an ordered modifier set", async () => {
       const ctx = await provisionSchema();
 
       try {
         const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: ctx.schema.id,
-          rowKind: "REST",
-          rowPayload: {
-            rowKind: "REST",
-            raw: "Rest 60s",
-            parsed: {
-              duration: { value: 60, unit: "sec" },
-              scope: "between_sets",
-              qualifier: "fixed",
-            },
-          },
+          exerciseId: exerciseAId,
+          sets: 3,
+          notes: ["tempo controlled"],
+          modifierIds: [modifierBId, modifierAId],
         });
 
-        expect(created.rowKind).toBe("REST");
-        expect(created.rowPayload).toMatchObject({
-          rowKind: "REST",
-          raw: "Rest 60s",
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("creates a PLACEHOLDER row with placeholder payload", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "PLACEHOLDER",
-          rowPayload: {
-            rowKind: "PLACEHOLDER",
-            placeholder: {
-              placeholderKind: "coach_choice_slot",
-              text: "Coach pick",
-            },
-          },
-        });
-
-        expect(created.rowKind).toBe("PLACEHOLDER");
-        expect(created.rowPayload).toMatchObject({
-          rowKind: "PLACEHOLDER",
-          placeholder: { placeholderKind: "coach_choice_slot", text: "Coach pick" },
-        });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("creates a REST_SLOT row with empty payload", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-          schemaId: ctx.schema.id,
-          rowKind: "REST_SLOT",
-          rowPayload: { rowKind: "REST_SLOT" },
-        });
-
-        expect(created.rowKind).toBe("REST_SLOT");
-        expect(created.rowPayload).toEqual({ rowKind: "REST_SLOT" });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("rejects when rowKind does not match rowPayload.rowKind", async () => {
-      const ctx = await provisionSchema();
-
-      try {
-        await expect(
-          lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-            schemaId: ctx.schema.id,
-            rowKind: "EXERCISE",
-            rowPayload: { rowKind: "REST_SLOT" },
-          }),
-        ).rejects.toThrow(BadRequestError);
-
-        const count = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
-
-        expect(count).toBe(0);
+        expect(created.sets).toBe(3);
+        expect(created.notes).toEqual(["tempo controlled"]);
+        expect(created.modifiers.map((m) => m.id)).toEqual([modifierBId, modifierAId]);
       } finally {
         await ctx.cleanup();
       }
@@ -325,8 +272,7 @@ describe("lmsSchemaRowApi", () => {
         await expect(
           lmsSchemaRowApi.create(otherCoach.user.id, activePlanId, {
             schemaId: ctx.schema.id,
-            rowKind: "REST_SLOT",
-            rowPayload: { rowKind: "REST_SLOT" },
+            exerciseId: exerciseAId,
           }),
         ).rejects.toThrow(ForbiddenError);
 
@@ -345,8 +291,7 @@ describe("lmsSchemaRowApi", () => {
         await expect(
           lmsSchemaRowApi.create(coach.user.id, archivedPlanId, {
             schemaId: ctx.schema.id,
-            rowKind: "REST_SLOT",
-            rowPayload: { rowKind: "REST_SLOT" },
+            exerciseId: exerciseAId,
           }),
         ).rejects.toThrow(ForbiddenError);
 
@@ -362,10 +307,29 @@ describe("lmsSchemaRowApi", () => {
       await expect(
         lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: "clz0000000000000000000000",
-          rowKind: "REST_SLOT",
-          rowPayload: { rowKind: "REST_SLOT" },
+          exerciseId: exerciseAId,
         }),
       ).rejects.toThrow(NotFoundError);
+    });
+
+    it("rejects a non-existent modifierId on create (P2003) and persists no row (atomicity, QA-#11)", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        await expect(
+          lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+            schemaId: ctx.schema.id,
+            exerciseId: exerciseAId,
+            modifierIds: ["clz0000000000000000000000"],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const rowCount = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
+
+        expect(rowCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
     });
 
     describe("flat write-guard fetch", () => {
@@ -382,11 +346,7 @@ describe("lmsSchemaRowApi", () => {
         try {
           const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
             schemaId: schema.id,
-            rowKind: "EXERCISE",
-            rowPayload: {
-              rowKind: "EXERCISE",
-              exercise: { form: "atomic", exerciseId: exerciseAId },
-            },
+            exerciseId: exerciseAId,
           });
 
           expect(created.schemaId).toBe(schema.id);
@@ -402,7 +362,7 @@ describe("lmsSchemaRowApi", () => {
       it("creates a row on a group-member schema independent of its sibling members (flat guard, no subtree)", async () => {
         const blockCtx = await provisionBlock();
         const group = await cleanupRaw.schemaGroup.create({
-          data: { blockId: blockCtx.block.id, label: null },
+          data: { blockId: blockCtx.block.id },
         });
         const memberA = await cleanupRaw.schema.create({
           data: {
@@ -425,8 +385,7 @@ describe("lmsSchemaRowApi", () => {
         try {
           const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
             schemaId: memberA.id,
-            rowKind: "REST_SLOT",
-            rowPayload: { rowKind: "REST_SLOT" },
+            exerciseId: exerciseAId,
           });
 
           expect(created.schemaId).toBe(memberA.id);
@@ -442,56 +401,113 @@ describe("lmsSchemaRowApi", () => {
   });
 
   describe("update", () => {
-    it("updates notes only, leaving rowPayload and other fields untouched", async () => {
+    it("updates notes only, leaving other fields untouched", async () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST",
-        rowPayload: {
-          rowKind: "REST",
-          raw: "Rest 60s",
-          parsed: { duration: { value: 60, unit: "sec" }, scope: "between_sets" },
-        },
+        exerciseId: exerciseAId,
       });
 
       try {
         const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
-          notes: "fresh notes",
+          notes: ["fresh notes"],
         });
 
-        expect(updated.notes).toBe("fresh notes");
-        expect(updated.rowKind).toBe("REST");
-        expect(updated.rowPayload).toEqual(created.rowPayload);
+        expect(updated.notes).toEqual(["fresh notes"]);
+        expect(updated.exerciseId).toBe(exerciseAId);
       } finally {
         await ctx.cleanup();
       }
     });
 
-    it("updates rowPayload within the same rowKind variant", async () => {
+    it("replaces the modifier set when modifierIds is provided", async () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST",
-        rowPayload: {
-          rowKind: "REST",
-          raw: "Rest 60s",
-          parsed: { duration: { value: 60, unit: "sec" }, scope: "between_sets" },
-        },
+        exerciseId: exerciseAId,
+        modifierIds: [modifierAId],
       });
 
       try {
         const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
-          rowPayload: {
-            rowKind: "REST",
-            raw: "Rest 120s",
-            parsed: { duration: { value: 120, unit: "sec" }, scope: "between_rounds" },
-          },
+          modifierIds: [modifierBId],
         });
 
-        expect(updated.rowPayload).toMatchObject({
-          rowKind: "REST",
-          raw: "Rest 120s",
+        expect(updated.modifiers.map((m) => m.id)).toEqual([modifierBId]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("clears every assignment when modifierIds is [] (set-replace semantics, QA-#11)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        modifierIds: [modifierAId, modifierBId],
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
+          modifierIds: [],
         });
+
+        expect(updated.modifiers).toEqual([]);
+
+        const assignmentCount = await cleanupRaw.rowModifierAssignment.count({
+          where: { rowId: created.id },
+        });
+
+        expect(assignmentCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("leaves the existing assignment set untouched when modifierIds is omitted (QA-#11)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        modifierIds: [modifierAId],
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, { sets: 4 });
+
+        expect(updated.modifiers.map((m) => m.id)).toEqual([modifierAId]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects a non-existent modifierId (P2003) and rolls back the assignment clear AND the column write (atomicity, QA-#11)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        sets: 3,
+        modifierIds: [modifierAId],
+      });
+
+      try {
+        await expect(
+          lmsSchemaRowApi.update(coach.user.id, created.id, {
+            sets: 9,
+            modifierIds: ["clz0000000000000000000000"],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.sets).toBe(3);
+
+        const assignments = await cleanupRaw.rowModifierAssignment.findMany({
+          where: { rowId: created.id },
+          select: { modifierId: true },
+        });
+
+        expect(assignments.map((a) => a.modifierId)).toEqual([modifierAId]);
       } finally {
         await ctx.cleanup();
       }
@@ -501,93 +517,52 @@ describe("lmsSchemaRowApi", () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "EXERCISE",
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: { form: "atomic", exerciseId: exerciseAId },
-        },
+        exerciseId: exerciseAId,
       });
 
       try {
         const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
-          load: { kind: "absolute", weight: { variant: "single", valueKg: 80 } },
+          load: { kind: "absolute", count: 1, kg: 80 },
         });
 
-        expect(updated.load).toEqual({
-          kind: "absolute",
-          weight: { variant: "single", valueKg: 80 },
-        });
+        expect(updated.load).toEqual({ kind: "absolute", count: 1, kg: 80 });
       } finally {
         await ctx.cleanup();
       }
     });
 
-    it("rejects update with rowKind set (structural)", async () => {
+    it("updates sets independently", async () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
-        await expect(
-          lmsSchemaRowApi.update(coach.user.id, created.id, { rowKind: "EXERCISE" }),
-        ).rejects.toThrow(BadRequestError);
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, { sets: 5 });
 
-        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
-
-        expect(stored?.rowKind).toBe("REST_SLOT");
+        expect(updated.sets).toBe(5);
+        expect(updated.exerciseId).toBe(exerciseAId);
       } finally {
         await ctx.cleanup();
       }
     });
 
-    it("rejects update with schemaId set (structural)", async () => {
+    it("rejects update from a non-owner", async () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
         await expect(
-          lmsSchemaRowApi.update(coach.user.id, created.id, {
-            schemaId: "clz0000000000000000000000",
-          }),
-        ).rejects.toThrow(BadRequestError);
+          lmsSchemaRowApi.update(otherCoach.user.id, created.id, { sets: 2 }),
+        ).rejects.toThrow(ForbiddenError);
 
         const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
 
-        expect(stored?.schemaId).toBe(ctx.schema.id);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("rejects rowPayload update with mismatched variant against stored rowKind", async () => {
-      const ctx = await provisionSchema();
-      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-        schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
-      });
-
-      try {
-        await expect(
-          lmsSchemaRowApi.update(coach.user.id, created.id, {
-            rowPayload: {
-              rowKind: "EXERCISE",
-              exercise: { form: "atomic", exerciseId: exerciseAId },
-            },
-          }),
-        ).rejects.toThrow(BadRequestError);
-
-        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
-
-        expect(stored?.rowKind).toBe("REST_SLOT");
-        expect(stored?.rowPayload).toEqual({ rowKind: "REST_SLOT" });
+        expect(stored?.sets).toBeNull();
       } finally {
         await ctx.cleanup();
       }
@@ -599,8 +574,7 @@ describe("lmsSchemaRowApi", () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
@@ -618,8 +592,7 @@ describe("lmsSchemaRowApi", () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
@@ -641,18 +614,15 @@ describe("lmsSchemaRowApi", () => {
       const ctx = await provisionSchema();
       const a = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
       const b = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
       const c = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
@@ -686,8 +656,7 @@ describe("lmsSchemaRowApi", () => {
       const ctx = await provisionSchema();
       const a = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
@@ -710,13 +679,11 @@ describe("lmsSchemaRowApi", () => {
       const ctxB = await provisionSchema();
       const a = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctxA.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
       const foreign = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctxB.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
@@ -741,19 +708,16 @@ describe("lmsSchemaRowApi", () => {
       const ctx = await provisionSchema();
       const a = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
       const b = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "REST_SLOT",
-        rowPayload: { rowKind: "REST_SLOT" },
+        exerciseId: exerciseAId,
       });
 
       try {
@@ -792,13 +756,11 @@ describe("lmsSchemaRowApi", () => {
         const results = await Promise.allSettled([
           lmsSchemaRowApi.create(coach.user.id, activePlanId, {
             schemaId: ctx.schema.id,
-            rowKind: "REST_SLOT",
-            rowPayload: { rowKind: "REST_SLOT" },
+            exerciseId: exerciseAId,
           }),
           lmsSchemaRowApi.create(coach.user.id, activePlanId, {
             schemaId: ctx.schema.id,
-            rowKind: "REST_SLOT",
-            rowPayload: { rowKind: "REST_SLOT" },
+            exerciseId: exerciseAId,
           }),
         ]);
 
@@ -830,8 +792,7 @@ describe("lmsSchemaRowApi", () => {
           data: {
             schemaId: ctx.schema.id,
             order: 10,
-            rowKind: "REST_SLOT",
-            rowPayload: { rowKind: "REST_SLOT" },
+            exerciseId: exerciseAId,
           },
         });
 
@@ -840,8 +801,7 @@ describe("lmsSchemaRowApi", () => {
             data: {
               schemaId: ctx.schema.id,
               order: 10,
-              rowKind: "REST_SLOT",
-              rowPayload: { rowKind: "REST_SLOT" },
+              exerciseId: exerciseAId,
             },
           }),
         ).rejects.toMatchObject({
@@ -856,39 +816,11 @@ describe("lmsSchemaRowApi", () => {
       }
     });
 
-    it("updates position enum independent of rowPayload variant", async () => {
-      const ctx = await provisionSchema();
-      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-        schemaId: ctx.schema.id,
-        rowKind: "EXERCISE",
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: { form: "atomic", exerciseId: exerciseAId },
-        },
-      });
-
-      try {
-        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
-          position: "NEUTRAL_GRIP",
-        });
-
-        expect(updated.position).toBe("NEUTRAL_GRIP");
-        expect(updated.rowKind).toBe("EXERCISE");
-        expect(updated.rowPayload).toEqual(created.rowPayload);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
     it("rejects delete when SchemaRow has PerformedExerciseInstance back-relation (P2003)", async () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
         schemaId: ctx.schema.id,
-        rowKind: "EXERCISE",
-        rowPayload: {
-          rowKind: "EXERCISE",
-          exercise: { form: "atomic", exerciseId: exerciseAId },
-        },
+        exerciseId: exerciseAId,
       });
 
       const performedSession = await cleanupRaw.performedSession.create({
@@ -903,7 +835,7 @@ describe("lmsSchemaRowApi", () => {
         data: {
           performedSessionId: performedSession.id,
           plannedSchemaRowId: created.id,
-          actualLoad: { kind: "absolute", weight: { variant: "single", valueKg: 80 } },
+          actualLoad: { kind: "absolute", count: 1, kg: 80 },
           actualReps: { kind: "count", value: 5 },
         },
       });
@@ -927,30 +859,21 @@ describe("lmsSchemaRowApi", () => {
       }
     });
 
-    it("preserves order assignment across mixed-kind row creation", async () => {
+    it("preserves order assignment across successive row creation", async () => {
       const ctx = await provisionSchema();
 
       try {
         const first = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: ctx.schema.id,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: exerciseAId },
-          },
+          exerciseId: exerciseAId,
         });
         const second = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: ctx.schema.id,
-          rowKind: "REST_SLOT",
-          rowPayload: { rowKind: "REST_SLOT" },
+          exerciseId: exerciseBId,
         });
         const third = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: ctx.schema.id,
-          rowKind: "EXERCISE",
-          rowPayload: {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: exerciseBId },
-          },
+          exerciseId: exerciseAId,
         });
 
         expect(first.order).toBe(10);

@@ -17,7 +17,7 @@ import {
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToBlock, mapToBlockWithLabels } from "../../../mappers/lms";
-import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
+import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 import { type TxClient } from "../_shared";
 
 const BLOCK_WITH_LABELS_INCLUDE = {
@@ -111,15 +111,7 @@ export const lmsBlockApi = {
               data: {
                 sessionId,
                 order: nextOrder,
-                intensity:
-                  data.intensity === undefined || data.intensity === null
-                    ? Prisma.JsonNull
-                    : toInputJson(data.intensity),
-                timeCap:
-                  data.timeCap === undefined || data.timeCap === null
-                    ? Prisma.JsonNull
-                    : toInputJson(data.timeCap),
-                notes: data.notes ?? null,
+                notes: marshalNullableJson(data.notes),
               },
             });
 
@@ -157,13 +149,7 @@ export const lmsBlockApi = {
       const updated = await prisma.block.update({
         where: { id: blockId },
         data: {
-          ...(data.intensity !== undefined && {
-            intensity: data.intensity === null ? Prisma.JsonNull : toInputJson(data.intensity),
-          }),
-          ...(data.timeCap !== undefined && {
-            timeCap: data.timeCap === null ? Prisma.JsonNull : toInputJson(data.timeCap),
-          }),
-          ...(data.notes !== undefined && { notes: data.notes }),
+          ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
         },
         include: BLOCK_WITH_LABELS_INCLUDE,
       });

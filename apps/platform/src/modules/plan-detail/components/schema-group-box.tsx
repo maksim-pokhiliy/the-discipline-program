@@ -13,7 +13,6 @@ import { ConfirmationModal } from "@repo/ui";
 import { useDeleteGroup, useUpdateGroup } from "@app/lib/hooks";
 
 import { groupSortableId } from "../lib/block-item-sortable-id";
-import { type BlockCtx } from "../lib/build-cascade-chips";
 import { useDeleteGroupWithMembers } from "../lib/use-delete-group-with-members";
 
 import { AddTrackButton } from "./add-track-button";
@@ -39,12 +38,13 @@ const UNGROUP_CONFIRM = "Ungroup";
 const DELETE_TITLE = "Delete group";
 const DELETE_MESSAGE = "Delete the group AND its member schemas?";
 
+const FIRST_NOTE_INDEX = 0;
+
 type SchemaGroupBoxProps = {
   group: SchemaGroup;
   members: SchemaWithBody[];
   planId: string;
   startDate: string;
-  blockCtx: BlockCtx;
   parentIsReorderPending?: boolean;
 };
 
@@ -53,7 +53,6 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   members,
   planId,
   startDate,
-  blockCtx,
   parentIsReorderPending = false,
 }): ReactElement => {
   const updateGroup = useUpdateGroup(planId, startDate);
@@ -74,15 +73,20 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
     opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };
 
+  const currentLabel = group.notes?.[FIRST_NOTE_INDEX] ?? null;
+
   const handleLabelCommit = (next: string) => {
     const trimmed = next.trim();
     const nextLabel = trimmed === "" ? null : trimmed;
 
-    if (nextLabel === group.label) {
+    if (nextLabel === currentLabel) {
       return;
     }
 
-    updateGroup.mutate({ groupId: group.id, data: { label: nextLabel } });
+    updateGroup.mutate({
+      groupId: group.id,
+      data: { notes: nextLabel === null ? null : [nextLabel] },
+    });
   };
 
   const handleInterleaveChange = (next: ParallelInterleaveOrder) => {
@@ -144,7 +148,6 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
             isContinuation={index > FIRST_TRACK_INDEX}
             planId={planId}
             startDate={startDate}
-            blockCtx={blockCtx}
             parentIsReorderPending={parentIsReorderPending}
           />
         ))}

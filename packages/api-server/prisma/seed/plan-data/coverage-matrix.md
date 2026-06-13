@@ -31,6 +31,36 @@
 > deferred (low-priority); the runnable gate is `seed-coverage.test.ts`, not this
 > doc.
 
+> **⚠️ FURTHER SUPERSEDED (2026-06-13, session-primitive W4-model).** The W4 leaf
+> reshape kills another swathe of these tables; the live SSOT remains the
+> `coverage-cells/*.ts` code (the seed-run gate tallies those), not this doc. NOW
+> DEAD: §4 RowKind (the row has no kind — `EXERCISE | REST | PLACEHOLDER |
+REST_SLOT` all gone; the row is always an exercise, render-kind inferred from the
+> catalog nature); §5 ExerciseForm (`compound`/`cyclical`/`sandwich`/
+> `or_alternative`/`placeholder_ref` → row-groups or catalog refs; only atomic
+> survives, promoted to a `SchemaRow.exerciseId` column); §6.1 `none`/`without_weight`/
+> `unspecified` load (→ `bodyweight`); §6.2 the WHOLE Weight VO table (`absolute`
+> is now `{count:1|2, kg}`; `split_tier`→row-group, `single_arm`→`count:1`+side,
+> `with_asymmetric_arm`/`with_depth_modifier`→`count:1`+a MODIFIER); §6.3
+> `movement_family` percentage scope (→ `self`/`other_exercise` only); §9 the four
+> verbal tempo axes (`slowEccentric`/`pauseInUp`/`holdAfterLast`/`perNthRepPause` →
+> MODIFIER refs; only the 4-digit `fullTempo` survives, positions `int|"X"`); §10
+> the WHOLE SequenceIndicator table (→ notes / structure); §16 the WHOLE Position
+> enum (→ the row MODIFIER library; ~7 catalog modifiers + ordered `RowModifierAssignment`s);
+> §20 PerSetSubstitution (→ a row-group of slot+variant rows); §21
+> Compound/Cyclical/Sandwich/OrAlternative (→ row-groups); §22 CompoundRepDefinition
+> (→ row-group + a "= 1 rep" note); §13 `timeCap.sec` + the §2 `Block.intensity`/
+> `Block.timeCap` cells (intensity/timeCap LEFT the block per D-FLOORS — intensity
+> is schema-only; block timeCap → `repetition.timeCap` or a note). NEW live cells:
+> `modifier.catalog`/`modifier.assignment`/`modifier.multiAssignment` (D-MODIFIER),
+> `rowGroup.present`/`rowGroup.member` (DR-W4-RG-CREATE), `load.absolute.count.{1,2}`
+>
+> - `load.byProfile.entries`, `entity.blockNotes`, and all rest-spec cells moved
+>   from `RowKind.REST` rows to `schema.composition.rest.*`. The remaining
+>   catalog/repNotation/perLimb/intensity-dim/composition sections stay valid. A full
+>   rewrite of the dead tables is still deferred; the runnable gate is
+>   `seed-coverage.test.ts`, not this doc.
+
 Single source of truth for **what Session B must emit** so the seeded DB
 covers 100% of the training-domain discriminator space. Session A's emit
 pipeline includes a runtime assertion that fails the seed run if any cell

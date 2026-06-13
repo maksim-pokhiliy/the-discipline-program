@@ -1,6 +1,10 @@
-import type { Load, PercentageReference, Weight } from "@repo/contracts/lms/_shared";
+import type { Load, PercentageReference } from "@repo/contracts/lms/_shared";
 
-export const absoluteLoad = (weight: Weight): Load => ({ kind: "absolute", weight });
+export const absoluteLoad = (input: { count: 1 | 2; kg: number }): Load => ({
+  kind: "absolute",
+  count: input.count,
+  kg: input.kg,
+});
 
 export const percentageLoad = (
   value: number,
@@ -20,20 +24,12 @@ export const percentageLoad = (
 
 export const bodyweightLoad = (): Load => ({ kind: "bodyweight" });
 
-export const byProfileLoad = (first: number, second: number): Load => ({
+export const byProfileLoad = (entries: { label: string; kg: number }[]): Load => ({
   kind: "byProfile",
-  first,
-  second,
+  entries,
 });
-
-export const noneLoad = (): Load => ({ kind: "none" });
 
 export const percentageRefSelf = (): PercentageReference => ({ scope: "self" });
-
-export const percentageRefMovementFamily = (movementFamily: string): PercentageReference => ({
-  scope: "movement_family",
-  movementFamily,
-});
 
 export const percentageRefOtherExercise = (targetExerciseId: string): PercentageReference => ({
   scope: "other_exercise",
