@@ -40,7 +40,7 @@ type SchemaRowListBodyProps = {
   onToggleSelect: (rowId: string) => void;
 };
 
-const itemMemberIds = (item: RowItem): string[] =>
+export const itemMemberIds = (item: RowItem): string[] =>
   item.kind === "group" ? item.members.map((member) => member.id) : [item.row.id];
 
 export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({

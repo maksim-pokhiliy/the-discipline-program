@@ -50,12 +50,20 @@ vi.mock("@app/lib/hooks", async () => {
 });
 
 vi.mock("./exercise-picker", () => {
-  const renderExercisePickerMock = (props: { disabled?: boolean }) =>
-    createElement("input", {
-      "data-testid": "exercise-picker-mock",
-      disabled: props.disabled ?? false,
-      readOnly: true,
-    });
+  const renderExercisePickerMock = (props: {
+    disabled?: boolean;
+    onChange?: (id: string | null) => void;
+  }) =>
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "exercise-picker-mock",
+        disabled: props.disabled ?? false,
+        onClick: () => props.onChange?.(EXERCISE_ID),
+      },
+      "pick exercise",
+    );
 
   return { ExercisePicker: renderExercisePickerMock };
 });
@@ -168,5 +176,33 @@ describe("RowEditorModal submit", () => {
     const call = updateRowMutate.mock.calls[0]?.[0];
 
     expect(call).toMatchObject({ schemaRowId: ROW_ID, data: { sets: 3 } });
+  });
+
+  it("enables submit and fires create once a valid exercise is picked", () => {
+    renderCreate();
+
+    fireEvent.click(screen.getByTestId("exercise-picker-mock"));
+
+    const submit = screen.getByRole("button", { name: "Add row" });
+
+    expect(submit).toBeEnabled();
+
+    fireEvent.click(submit);
+
+    expect(createRowMutate).toHaveBeenCalledTimes(1);
+    expect(createRowMutate.mock.calls[0]?.[0]).toMatchObject({
+      schemaId: SCHEMA_ID,
+      exerciseId: EXERCISE_ID,
+    });
+  });
+
+  it("keeps submit disabled while an engaged load is incomplete (QA-002/QA-003)", () => {
+    renderEdit(makeRow({ load: { kind: "absolute", count: 1, kg: Number.NaN } }));
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(updateRowMutate).not.toHaveBeenCalled();
   });
 });

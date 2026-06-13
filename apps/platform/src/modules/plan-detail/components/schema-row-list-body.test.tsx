@@ -1,9 +1,10 @@
 import { createElement } from "react";
 
+import { arrayMove } from "@dnd-kit/sortable";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildRowItems, type RowGroup } from "@repo/contracts/lms/row-group";
+import { buildRowItems, type RowGroup, type RowItem } from "@repo/contracts/lms/row-group";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { render } from "@app/test/render";
@@ -60,7 +61,7 @@ vi.mock("./row-group-box", () => ({
     ),
 }));
 
-const { SchemaRowListBody } = await import("./schema-row-list-body");
+const { SchemaRowListBody, itemMemberIds } = await import("./schema-row-list-body");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
@@ -212,5 +213,72 @@ describe("SchemaRowListBody select mode", () => {
     );
 
     expect(onToggleSelect).toHaveBeenCalledWith(R1);
+  });
+});
+
+const isGroupContiguous = (orderedIds: string[], memberIds: string[]): boolean => {
+  const positions = memberIds.map((id) => orderedIds.indexOf(id)).sort((a, b) => a - b);
+  const last = positions[positions.length - 1] ?? -1;
+  const first = positions[0] ?? -1;
+
+  return positions.every((position) => position >= 0) && last - first + 1 === positions.length;
+};
+
+describe("SchemaRowListBody reorder flatten invariant (QA-005)", () => {
+  const GROUP_MEMBERS = [R1, R2];
+  const STANDALONE = R3;
+  const buildItems = (): RowItem[] =>
+    buildRowItems(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+        makeRow({ id: STANDALONE, order: 3 }),
+      ],
+      [makeRowGroup()],
+    );
+
+  it("keeps a row-group's members contiguous for every arrayMove of the top-level items", () => {
+    const items = buildItems();
+
+    for (let from = 0; from < items.length; from += 1) {
+      for (let to = 0; to < items.length; to += 1) {
+        const orderedIds = arrayMove(items, from, to).flatMap(itemMemberIds);
+
+        expect(isGroupContiguous(orderedIds, GROUP_MEMBERS)).toBe(true);
+      }
+    }
+  });
+
+  it("emits every member id exactly once across the flatten", () => {
+    const orderedIds = arrayMove(buildItems(), 0, 1).flatMap(itemMemberIds);
+
+    expect([...orderedIds].sort()).toEqual([R1, R2, STANDALONE].sort());
+  });
+});
+
+describe("SchemaRowListBody minute labels with a grouped run (QA-012)", () => {
+  it("keeps a standalone row's minute label aligned by row id when a group precedes it", () => {
+    const group = makeRowGroup();
+
+    renderBody(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+        makeRow({ id: R3, order: 3 }),
+      ],
+      [group],
+      {
+        minuteLabelById: new Map([
+          [R1, "MIN 1"],
+          [R2, "MIN 2"],
+          [R3, "MIN 3"],
+        ]),
+      },
+    );
+
+    expect(screen.getByTestId("schema-row-card-mock")).toHaveAttribute(
+      "data-minute-label",
+      "MIN 3",
+    );
   });
 });
