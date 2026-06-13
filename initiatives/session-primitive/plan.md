@@ -32,6 +32,12 @@ The full ratified set (D-FLOORS / D-ROW-GRAMMAR / D-LOAD-FINAL / D-TEMPO / D-MOD
 
 **Roadmap sequence (owner, 2026-06-12):** W4 (model + coach-platform page) → **catalog pass** (equipment library + nature enum + snos movement types) → **e2e** (orchestrator writes maximally-evil CrossFit workouts, owner builds them by hand in the UI) → owner "ОК" → the next roadmap phase. The evil-workout fixture A–E (in the 2026-06-12 journal) is the acceptance stress test.
 
+**Build breakdown (the proven W2→W3 model-then-editor rhythm — W4 is ~2× W2, too big for one `/feature`):**
+
+- **W4-model** (`w4-model-runner-prompt.md`) — the whole data layer: TWO new entities (the row-MODIFIER library à la Label; the ROW-GROUP à la SchemaGroup) + the leaf reshape (load `{count,kg}`+exotics death, tempo slim, `RowKind` collapse via the interim placeholderFlag+seed-Rest bridge, `sets`, D-FLOORS settings moves, notes→ordered multi-list) + seed re-express + api-server mappers/guards/endpoints + the MINIMAL platform changes to compile & render (dead-but-functional UX, like W2 left for W3). Touches Prisma + api-server → the gated suite is the OWNER's manual ritual (db:reset + seed + gated suite). **Sub-seam if Gate A finds it too big:** A1 = the two new entities + their seed/api; A2 = the leaf reshape + floors.
+- **W4-editor** — the proto-faithful authoring UX (modifier picker = searchable create-on-the-fly, shared w/ LABEL-FLOW-UX; row-group box mirroring `schema-group-box`; `sets`/`count` fields; the row form rebuilt). Platform-only, like W3.
+- Then the catalog pass (CATALOG-NATURE + EQUIPMENT-LIBRARY) → e2e.
+
 ## Design follow-ups (owner-paced, between waves) — ALL CLOSED
 
 Order (complete): **D-MARKER-DEATH** ✅ (W2) → **F-PLAQUE** ✅ (D-PLAQUE) → **F-POSITION-CARRIER + F-CHIPS** ✅ (D-MODIFIER + D-CHIPS; D-POSITION superseded same day) → **F-WEIGHT-EXOTICS + F-TEMPO** ✅ (D-LOAD-FINAL + D-TEMPO) → **F-HEADER + F-BLOCK-TIMECAP + F-SLOT** ✅ (D-HEADER-KEEP + D-FLOORS + D-ROW-GRAMMAR). The leaf ledger is empty; nothing gates the W4 prompt (D-8 JIT satisfied).
