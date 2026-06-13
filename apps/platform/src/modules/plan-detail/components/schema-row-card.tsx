@@ -16,6 +16,7 @@ import { ConfirmationModal, RowKindBadge } from "@repo/ui";
 import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
 
 import { formatRow } from "../lib/format-row";
+import { rowSortableId } from "../lib/row-item-sortable-id";
 
 import { RowEditorModal } from "./row-editor-modal";
 import { SchemaRowCardBody } from "./schema-row-card-body";
@@ -50,6 +51,7 @@ type SchemaRowCardProps = {
   index: number;
   minuteLabel?: string | null;
   isReorderPending: boolean;
+  isDraggable?: boolean;
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (rowId: string) => void;
@@ -62,6 +64,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   index,
   minuteLabel = null,
   isReorderPending,
+  isDraggable = true,
   isSelectMode = false,
   isSelected = false,
   onToggleSelect,
@@ -72,8 +75,8 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const isMutationPending = deleteSchemaRow.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: row.id,
-    disabled: isMutationPending,
+    id: rowSortableId(row.id),
+    disabled: !isDraggable || isMutationPending,
   });
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
@@ -122,24 +125,28 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         />
       ) : null}
 
-      <IconButton
-        {...attributes}
-        {...listeners}
-        size="small"
-        aria-label={DRAG_ARIA}
-        disabled={isMutationPending}
-        sx={{
-          cursor: "grab",
-          touchAction: "none",
-          "&.Mui-focusVisible": {
-            outline: "2px solid",
-            outlineColor: "primary.main",
-            outlineOffset: 2,
-          },
-        }}
-      >
-        <DragIndicatorIcon fontSize="small" />
-      </IconButton>
+      {isDraggable ? (
+        <IconButton
+          {...attributes}
+          {...listeners}
+          size="small"
+          aria-label={DRAG_ARIA}
+          disabled={isMutationPending}
+          sx={{
+            cursor: "grab",
+            touchAction: "none",
+            "&.Mui-focusVisible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <DragIndicatorIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <span />
+      )}
 
       <Typography
         variant="caption"

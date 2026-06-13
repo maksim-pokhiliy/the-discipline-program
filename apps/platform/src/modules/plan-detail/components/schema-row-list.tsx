@@ -14,9 +14,8 @@ import { deriveMinuteView } from "../lib/derive-minute-view";
 import { useCreateRowGroup } from "../lib/use-create-row-group";
 
 import { RowEditorModal } from "./row-editor-modal";
-import { RowGroupBox } from "./row-group-box";
 import { RowGroupSelectBar } from "./row-group-select-bar";
-import { SchemaRowCard } from "./schema-row-card";
+import { SchemaRowListBody } from "./schema-row-list-body";
 
 const ADD_ROW_LABEL = "+ Add row";
 const GROUP_ROWS_LABEL = "Group rows…";
@@ -109,50 +108,19 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
       });
   };
 
-  let runningIndex = 0;
-
   return (
     <Stack direction="column">
-      <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
-        {items.map((item) => {
-          if (item.kind === "group") {
-            const startIndex = runningIndex;
-
-            runningIndex += item.members.length;
-
-            return (
-              <RowGroupBox
-                key={`group-${item.group.id}`}
-                group={item.group}
-                members={item.members}
-                planId={planId}
-                startDate={startDate}
-                startIndex={startIndex}
-                isReorderPending={parentIsReorderPending}
-              />
-            );
-          }
-
-          const index = runningIndex;
-
-          runningIndex += 1;
-
-          return (
-            <SchemaRowCard
-              key={item.row.id}
-              row={item.row}
-              planId={planId}
-              startDate={startDate}
-              index={index}
-              minuteLabel={minuteLabelById.get(item.row.id) ?? null}
-              isReorderPending={parentIsReorderPending}
-              isSelectMode={isSelectMode}
-              isSelected={selectedIds.has(item.row.id)}
-              onToggleSelect={toggleSelected}
-            />
-          );
-        })}
-      </Stack>
+      <SchemaRowListBody
+        schemaId={schemaId}
+        planId={planId}
+        startDate={startDate}
+        items={items}
+        minuteLabelById={minuteLabelById}
+        parentIsReorderPending={parentIsReorderPending}
+        isSelectMode={isSelectMode}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelected}
+      />
 
       {isSelectMode ? (
         <RowGroupSelectBar

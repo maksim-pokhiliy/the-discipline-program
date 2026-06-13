@@ -2,6 +2,8 @@
 
 import { type ReactElement, useState } from "react";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Box, Stack, alpha } from "@mui/material";
 
 import type { RowGroup } from "@repo/contracts/lms/row-group";
@@ -10,6 +12,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteRowGroup, useUpdateRowGroup } from "@app/lib/hooks";
 
+import { rowGroupSortableId } from "../lib/row-item-sortable-id";
 import { useDeleteRowGroupWithMembers } from "../lib/use-delete-row-group-with-members";
 
 import { RowGroupBoxHead } from "./row-group-box-head";
@@ -20,6 +23,8 @@ const FRAME_BORDER_ALPHA = 0.35;
 const FRAME_BG_ALPHA = 0.03;
 const FRAME_BORDER_RADIUS_FACTOR = 0.5;
 const FIRST_NOTE_INDEX = 0;
+const DRAG_OPACITY_DRAGGING = 0.5;
+const DRAG_OPACITY_DEFAULT = 1;
 
 const UNGROUP_TITLE = "Ungroup";
 const UNGROUP_MESSAGE = "Ungroup these rows? They stay in the schema as standalone rows.";
@@ -51,6 +56,17 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
   const [isUngroupOpen, setIsUngroupOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: rowGroupSortableId(group.id),
+    disabled: isReorderPending,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
+  };
+
   const currentLabel = group.notes?.[FIRST_NOTE_INDEX] ?? null;
 
   const handleLabelCommit = (next: string) => {
@@ -77,6 +93,8 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
 
   return (
     <Box
+      ref={setNodeRef}
+      style={style}
       data-testid={ROW_GROUP_BOX_TEST_ID}
       sx={(theme) => ({
         border: `1px solid ${alpha(theme.palette.primary.main, FRAME_BORDER_ALPHA)}`,
@@ -87,6 +105,9 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
     >
       <RowGroupBoxHead
         group={group}
+        isUpdatePending={updateRowGroup.isPending}
+        dragAttributes={attributes}
+        dragListeners={listeners}
         onLabelCommit={handleLabelCommit}
         onUngroupOpen={() => setIsUngroupOpen(true)}
         onDeleteOpen={() => setIsDeleteOpen(true)}
@@ -101,6 +122,7 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
             startDate={startDate}
             index={startIndex + offset}
             isReorderPending={isReorderPending}
+            isDraggable={false}
           />
         ))}
       </Stack>

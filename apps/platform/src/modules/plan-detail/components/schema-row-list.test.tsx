@@ -27,6 +27,10 @@ vi.mock("@app/lib/api", () => ({
   },
 }));
 
+vi.mock("@app/lib/hooks", () => ({
+  useReorderSchemaRows: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     error: (message: string) => toastErrorMock(message),
