@@ -8,7 +8,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import TuneIcon from "@mui/icons-material/Tune";
-import { Box, IconButton, Link, Tooltip, Typography } from "@mui/material";
+import { Box, Checkbox, IconButton, Link, Tooltip, Typography } from "@mui/material";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal, RowKindBadge } from "@repo/ui";
@@ -21,6 +21,7 @@ import { RowEditorModal } from "./row-editor-modal";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
+const GRID_TEMPLATE_COLUMNS_SELECT = "32px 24px 24px 32px 1fr auto auto auto";
 const GRID_GAP_FACTOR = 1.25;
 const PADDING_X_FACTOR = 1.5;
 const PADDING_Y_FACTOR = 1;
@@ -38,6 +39,7 @@ const EDIT_ARIA = "Edit row";
 const EDIT_TOOLTIP = "Edit row";
 const DELETE_ARIA = "Delete row";
 const DELETE_TOOLTIP = "Delete row";
+const SELECT_ARIA = "Select row";
 
 const tooltipChildSx = { display: "inline-flex" };
 
@@ -48,6 +50,9 @@ type SchemaRowCardProps = {
   index: number;
   minuteLabel?: string | null;
   isReorderPending: boolean;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (rowId: string) => void;
 };
 
 export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
@@ -57,6 +62,9 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   index,
   minuteLabel = null,
   isReorderPending,
+  isSelectMode = false,
+  isSelected = false,
+  onToggleSelect,
 }) => {
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
   const { exerciseById } = useCatalog();
@@ -92,7 +100,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
       style={style}
       sx={(theme) => ({
         display: "grid",
-        gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
+        gridTemplateColumns: isSelectMode ? GRID_TEMPLATE_COLUMNS_SELECT : GRID_TEMPLATE_COLUMNS,
         gap: theme.spacing(GRID_GAP_FACTOR),
         alignItems: "center",
         px: theme.spacing(PADDING_X_FACTOR),
@@ -104,6 +112,16 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         "&:last-of-type": { borderBottom: 0 },
       })}
     >
+      {isSelectMode ? (
+        <Checkbox
+          size="small"
+          checked={isSelected}
+          onChange={() => onToggleSelect?.(row.id)}
+          inputProps={{ "aria-label": SELECT_ARIA }}
+          sx={{ p: 0 }}
+        />
+      ) : null}
+
       <IconButton
         {...attributes}
         {...listeners}
