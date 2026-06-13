@@ -7,6 +7,7 @@ export * from "./use-coach-action-items";
 export * from "./use-coach-dashboard";
 export * from "./use-coach-invite";
 export * from "./use-create-modifier";
+export * from "./use-debounced-value";
 export * from "./use-day-metadata";
 export * from "./use-exercises";
 export * from "./use-groups";
