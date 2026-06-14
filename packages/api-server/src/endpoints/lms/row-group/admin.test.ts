@@ -287,6 +287,39 @@ describe("lmsRowGroupApi", () => {
       }
     });
 
+    it("rejects rowIds already in a group and applies no new membership (W4R-001-SERVER)", async () => {
+      const ctx = await provisionSchema();
+      const rowA = await addRow(ctx.schema.id, 10);
+      const rowB = await addRow(ctx.schema.id, 20);
+      const rowC = await addRow(ctx.schema.id, 30);
+
+      try {
+        const existing = await lmsRowGroupApi.create(coach.user.id, activePlanId, {
+          schemaId: ctx.schema.id,
+          rowIds: [rowA.id, rowB.id],
+        });
+
+        await expect(
+          lmsRowGroupApi.create(coach.user.id, activePlanId, {
+            schemaId: ctx.schema.id,
+            rowIds: [rowB.id, rowC.id],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const storedB = await cleanupRaw.schemaRow.findUnique({ where: { id: rowB.id } });
+        const storedC = await cleanupRaw.schemaRow.findUnique({ where: { id: rowC.id } });
+
+        expect(storedB?.rowGroupId).toBe(existing.group.id);
+        expect(storedC?.rowGroupId).toBeNull();
+
+        const groupCount = await cleanupRaw.rowGroup.count({ where: { schemaId: ctx.schema.id } });
+
+        expect(groupCount).toBe(1);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     it("rejects when caller does not own the schema's plan (QA-#14)", async () => {
       const ctx = await provisionSchema();
       const rowA = await addRow(ctx.schema.id, 10);

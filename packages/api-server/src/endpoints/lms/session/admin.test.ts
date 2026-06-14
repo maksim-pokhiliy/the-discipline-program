@@ -155,7 +155,13 @@ describe("lmsSessionApi", () => {
 
         expect(day).not.toBeNull();
         expect(day?.id).toBe(session.dayId);
+
+        const blocks = await cleanupRaw.block.findMany({ where: { sessionId: session.id } });
+
+        expect(blocks).toHaveLength(1);
+        expect(blocks[0]?.order).toBe(10);
       } finally {
+        await cleanupRaw.block.deleteMany({ where: { sessionId: session.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.deleteMany({ where: { id: session.dayId } }).catch(() => {});
         await cleanupRaw.week

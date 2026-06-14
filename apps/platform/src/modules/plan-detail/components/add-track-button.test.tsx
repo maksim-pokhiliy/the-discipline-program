@@ -25,7 +25,7 @@ const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
-const BUTTON_LABEL = "Add track";
+const BUTTON_LABEL = "Add schema to group";
 
 const renderButton = () =>
   render(

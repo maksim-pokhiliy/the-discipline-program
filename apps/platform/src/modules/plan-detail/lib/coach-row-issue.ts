@@ -23,6 +23,7 @@ const COACH_MESSAGES = {
   perLimbPositive: "Enter a per-limb count greater than 0.",
   modifiersTooMany: "Pick fewer modifiers.",
   modifiersDuplicate: "Remove the duplicate modifier.",
+  tempoTooLong: "Shorten the tempo to a 4-digit code like 3-1-X-0 or a brief note.",
 } as const;
 
 const stringAt = (path: ZodIssue["path"], index: number): string | undefined => {
@@ -104,6 +105,10 @@ const coachMessageForRoot = (root: string | undefined, issue: ZodIssue): string 
 
   if (root === "side" && stringAt(path, 1) === "countPerLimb") {
     return COACH_MESSAGES.perLimbPositive;
+  }
+
+  if (root === "tempo") {
+    return COACH_MESSAGES.tempoTooLong;
   }
 
   if (root === "modifierIds") {

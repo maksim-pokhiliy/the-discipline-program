@@ -11,22 +11,23 @@ const BAR_BORDER_ALPHA = 0.25;
 const BAR_BG_ALPHA = 0.04;
 const MIN_GROUP_SELECTION = 2;
 const CANCEL_LABEL = "Cancel";
-const GROUP_LABEL = "Group rows";
 
 const selectedLabel = (count: number): string => `${count} selected`;
 
-type RowGroupSelectBarProps = {
+type GroupSelectBarProps = {
   selectedCount: number;
   isPending: boolean;
   onCancel: () => void;
   onGroup: () => void;
+  groupLabel: string;
 };
 
-export const RowGroupSelectBar: React.FC<RowGroupSelectBarProps> = ({
+export const GroupSelectBar: React.FC<GroupSelectBarProps> = ({
   selectedCount,
   isPending,
   onCancel,
   onGroup,
+  groupLabel,
 }): ReactElement => (
   <Stack
     direction="row"
@@ -53,7 +54,7 @@ export const RowGroupSelectBar: React.FC<RowGroupSelectBarProps> = ({
       onClick={onGroup}
       disabled={selectedCount < MIN_GROUP_SELECTION || isPending}
     >
-      {GROUP_LABEL}
+      {groupLabel}
     </Button>
   </Stack>
 );

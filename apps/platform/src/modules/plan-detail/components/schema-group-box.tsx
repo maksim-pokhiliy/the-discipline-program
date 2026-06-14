@@ -1,8 +1,25 @@
 "use client";
 
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
-import { useSortable } from "@dnd-kit/sortable";
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box, Stack, alpha } from "@mui/material";
 
@@ -12,10 +29,13 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteGroup, useUpdateGroup } from "@app/lib/hooks";
 
-import { groupSortableId } from "../lib/block-item-sortable-id";
+import { groupSortableId, schemaSortableId } from "../lib/block-item-sortable-id";
+import { formatSchemaHeader } from "../lib/format-schema-header";
+import { restrictToVerticalAxis } from "../lib/restrict-to-vertical-axis";
 import { useDeleteGroupWithMembers } from "../lib/use-delete-group-with-members";
 
 import { AddTrackButton } from "./add-track-button";
+import { DragGhost } from "./drag-ghost";
 import { GroupTrackWrapper } from "./group-track-wrapper";
 import { SchemaGroupBoxHead } from "./schema-group-box-head";
 
@@ -30,7 +50,7 @@ const FOOTER_PADDING_X_FACTOR = 1.5;
 const FOOTER_PADDING_BOTTOM_FACTOR = 1.5;
 const DRAG_OPACITY_DRAGGING = 0.5;
 const DRAG_OPACITY_DEFAULT = 1;
-const FIRST_TRACK_INDEX = 0;
+const MEMBER_GHOST_FALLBACK = "Schema";
 
 const UNGROUP_TITLE = "Ungroup";
 const UNGROUP_MESSAGE = "Ungroup these tracks? Schemas stay in the block as standalone.";
@@ -46,6 +66,11 @@ type SchemaGroupBoxProps = {
   planId: string;
   startDate: string;
   parentIsReorderPending?: boolean;
+  onMemberReorder: (
+    groupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void },
+  ) => void;
 };
 
 export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
@@ -54,6 +79,7 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   planId,
   startDate,
   parentIsReorderPending = false,
+  onMemberReorder,
 }): ReactElement => {
   const updateGroup = useUpdateGroup(planId, startDate);
   const deleteGroup = useDeleteGroup(planId, startDate);
@@ -61,6 +87,17 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
 
   const [isUngroupOpen, setIsUngroupOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [sortedMembers, setSortedMembers] = useState<SchemaWithBody[]>(members);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSortedMembers(members);
+  }, [members]);
+
+  const memberSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: groupSortableId(group.id),
@@ -68,12 +105,24 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };
 
   const currentLabel = group.notes?.[FIRST_NOTE_INDEX] ?? null;
+
+  const resolveActiveLabel = (id: string): string => {
+    const member = sortedMembers.find((entry) => schemaSortableId(entry.schema.id) === id);
+
+    if (member === undefined) {
+      return MEMBER_GHOST_FALLBACK;
+    }
+
+    const header = formatSchemaHeader(member);
+
+    return header === "" ? MEMBER_GHOST_FALLBACK : header;
+  };
 
   const handleLabelCommit = (next: string) => {
     const trimmed = next.trim();
@@ -95,6 +144,37 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
     }
 
     updateGroup.mutate({ groupId: group.id, data: { interleaveOrder: next } });
+  };
+
+  const handleMemberDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = sortedMembers.findIndex(
+      (member) => schemaSortableId(member.schema.id) === active.id,
+    );
+    const newIndex = sortedMembers.findIndex(
+      (member) => schemaSortableId(member.schema.id) === over.id,
+    );
+
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+
+    const previousMembers = sortedMembers;
+    const nextMembers = arrayMove(sortedMembers, oldIndex, newIndex);
+
+    setSortedMembers(nextMembers);
+    onMemberReorder(
+      group.id,
+      nextMembers.map((member) => member.schema.id),
+      { onError: () => setSortedMembers(previousMembers) },
+    );
   };
 
   const handleUngroupConfirm = () =>
@@ -128,30 +208,46 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
         onDeleteOpen={() => setIsDeleteOpen(true)}
       />
 
-      <Stack
-        direction="column"
-        spacing={TRACK_GAP_FACTOR}
-        sx={(theme) => ({
-          p: theme.spacing(
-            TRACKS_PADDING_BLOCK_FACTOR,
-            TRACKS_PADDING_BLOCK_FACTOR,
-            TRACKS_PADDING_BLOCK_FACTOR,
-            TRACKS_PADDING_RAIL_FACTOR,
-          ),
-        })}
+      <DndContext
+        sensors={memberSensors}
+        collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
+        onDragCancel={() => setActiveId(null)}
+        onDragEnd={handleMemberDragEnd}
       >
-        {members.map((member, index) => (
-          <GroupTrackWrapper
-            key={member.schema.id}
-            member={member}
-            index={index}
-            isContinuation={index > FIRST_TRACK_INDEX}
-            planId={planId}
-            startDate={startDate}
-            parentIsReorderPending={parentIsReorderPending}
-          />
-        ))}
-      </Stack>
+        <SortableContext
+          items={sortedMembers.map((member) => schemaSortableId(member.schema.id))}
+          strategy={verticalListSortingStrategy}
+        >
+          <Stack
+            direction="column"
+            spacing={TRACK_GAP_FACTOR}
+            sx={(theme) => ({
+              p: theme.spacing(
+                TRACKS_PADDING_BLOCK_FACTOR,
+                TRACKS_PADDING_BLOCK_FACTOR,
+                TRACKS_PADDING_BLOCK_FACTOR,
+                TRACKS_PADDING_RAIL_FACTOR,
+              ),
+            })}
+          >
+            {sortedMembers.map((member) => (
+              <GroupTrackWrapper
+                key={member.schema.id}
+                member={member}
+                planId={planId}
+                startDate={startDate}
+                parentIsReorderPending={parentIsReorderPending}
+              />
+            ))}
+          </Stack>
+        </SortableContext>
+
+        <DragOverlay>
+          {activeId !== null ? <DragGhost label={resolveActiveLabel(activeId)} /> : null}
+        </DragOverlay>
+      </DndContext>
 
       <Box sx={{ px: FOOTER_PADDING_X_FACTOR, pb: FOOTER_PADDING_BOTTOM_FACTOR, pt: 0 }}>
         <AddTrackButton

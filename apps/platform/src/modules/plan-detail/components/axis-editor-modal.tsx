@@ -14,10 +14,8 @@ import { makeNodeId } from "../lib/axis-draft-id";
 import { buildComposition, previewComposition } from "../lib/build-axis-composition";
 import { formatCompositionSummary } from "../lib/format-composition-summary";
 import { schemaWithBodyToDraft } from "../lib/schema-to-draft";
-import { useCreateGroup } from "../lib/use-create-group";
-import { useCreateIndependentLadders } from "../lib/use-create-independent-ladders";
 
-import type { DraftSeed, GroupDraft, NodeId, SchemaDraft } from "./axes/axis-draft.types";
+import type { NodeId, SchemaDraft } from "./axes/axis-draft.types";
 import { ContainerInspector } from "./axes/container-inspector";
 import { CreateSchemaFlow } from "./create-schema-flow";
 import { DerivedLabelCard } from "./derived-label-card";
@@ -31,7 +29,7 @@ const BODY_SPACING = 2;
 const EMPTY_COMPOSITION: Composition = {};
 
 export type AxisEditorMode =
-  | { kind: "create"; blockId: string; groupId?: string }
+  | { kind: "create"; blockId: string }
   | { kind: "edit"; schema: SchemaWithBody };
 
 type AxisEditorModalProps = {
@@ -49,22 +47,11 @@ const defaultSchemaDraft = (): SchemaDraft => ({
   rows: [],
 });
 
-const groupToFlatSchema = (group: GroupDraft): SchemaDraft => ({
-  id: group.id,
-  header: group.header,
-  notes: null,
-  rows: [],
-});
-
-const seedDraft = (mode: AxisEditorMode): DraftSeed =>
-  mode.kind === "create"
-    ? { mode: "schema", schema: defaultSchemaDraft() }
-    : { mode: "schema", schema: schemaWithBodyToDraft(mode.schema) };
+const seedDraft = (mode: AxisEditorMode): SchemaDraft =>
+  mode.kind === "create" ? defaultSchemaDraft() : schemaWithBodyToDraft(mode.schema);
 
 const modeKey = (mode: AxisEditorMode): string =>
-  mode.kind === "create"
-    ? `create:${mode.blockId}:${mode.groupId ?? ""}`
-    : `edit:${mode.schema.schema.id}`;
+  mode.kind === "create" ? `create:${mode.blockId}` : `edit:${mode.schema.schema.id}`;
 
 export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   open,
@@ -75,12 +62,9 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 }): ReactElement => {
   const createSchema = useCreateSchema(planId, startDate);
   const updateSchema = useUpdateSchema(planId, startDate);
-  const groupCreate = useCreateGroup(planId, startDate);
-  const independentCreate = useCreateIndependentLadders(planId, startDate);
 
-  const [seed, setSeed] = useState<DraftSeed>(() => seedDraft(mode));
+  const [seed, setSeed] = useState<SchemaDraft>(() => seedDraft(mode));
   const [error, setError] = useState<string | null>(null);
-  const [linkIntoBox, setLinkIntoBox] = useState(true);
 
   const modeRef = useRef(mode);
 
@@ -93,38 +77,22 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   useEffect(() => {
     setSeed(seedDraft(modeRef.current));
     setError(null);
-    setLinkIntoBox(true);
     isSubmittingRef.current = false;
   }, [key]);
 
   const onUpdateNode = (id: NodeId, patch: (schema: SchemaDraft) => SchemaDraft): void =>
-    setSeed((prev) =>
-      prev.mode === "schema" && prev.schema.id === id
-        ? { mode: "schema", schema: patch(prev.schema) }
-        : prev,
-    );
+    setSeed((prev) => (prev.id === id ? patch(prev) : prev));
 
   const onRename = (id: NodeId, header: string): void =>
-    setSeed((prev) =>
-      prev.mode === "schema" && prev.schema.id === id
-        ? { mode: "schema", schema: { ...prev.schema, header: header === "" ? null : header } }
-        : prev,
-    );
+    setSeed((prev) => (prev.id === id ? { ...prev, header: header === "" ? null : header } : prev));
 
-  const onDraftChange = (next: DraftSeed): void => setSeed(next);
+  const onDraftChange = (next: SchemaDraft): void => setSeed(next);
 
   const isCreateMode = mode.kind === "create";
-  const isInGroupAdd = mode.kind === "create" && mode.groupId !== undefined;
-  const isPending =
-    createSchema.isPending ||
-    updateSchema.isPending ||
-    groupCreate.isPending ||
-    independentCreate.isPending;
-  const editSchema = seed.mode === "schema" ? seed.schema : undefined;
+  const isPending = createSchema.isPending || updateSchema.isPending;
   const preview = useMemo(
-    () =>
-      isCreateMode || editSchema === undefined ? EMPTY_COMPOSITION : previewComposition(editSchema),
-    [isCreateMode, editSchema],
+    () => (isCreateMode ? EMPTY_COMPOSITION : previewComposition(seed)),
+    [isCreateMode, seed],
   );
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
   const labelKind = deriveCompositionLabel(preview).kind;
@@ -150,52 +118,11 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     createSchema.mutate(
       {
         blockId: createMode.blockId,
-        ...(createMode.groupId !== undefined && { groupId: createMode.groupId }),
         composition: result.composition,
         header: schema.header,
         notes: null,
       },
       { onSuccess: onClose, onError: (cause) => setError(cause.message), onSettled: releaseGuard },
-    );
-  };
-
-  const submitGroupCreate = (
-    createMode: Extract<AxisEditorMode, { kind: "create" }>,
-    group: GroupDraft,
-  ): void => {
-    isSubmittingRef.current = true;
-    void groupCreate.run(
-      { blockId: createMode.blockId, draft: group },
-      {
-        onSuccess: () => {
-          releaseGuard();
-          onClose();
-        },
-        onError: (message) => {
-          setError(message);
-          releaseGuard();
-        },
-      },
-    );
-  };
-
-  const submitIndependentLadders = (
-    createMode: Extract<AxisEditorMode, { kind: "create" }>,
-    group: GroupDraft,
-  ): void => {
-    isSubmittingRef.current = true;
-    void independentCreate.run(
-      { blockId: createMode.blockId, draft: group },
-      {
-        onSuccess: () => {
-          releaseGuard();
-          onClose();
-        },
-        onError: (message) => {
-          setError(message);
-          releaseGuard();
-        },
-      },
     );
   };
 
@@ -229,24 +156,12 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     setError(null);
 
     if (mode.kind === "edit") {
-      if (seed.mode === "schema") {
-        submitEdit(mode, seed.schema);
-      }
+      submitEdit(mode, seed);
 
       return;
     }
 
-    if (seed.mode === "group" && !isInGroupAdd) {
-      if (linkIntoBox) {
-        submitGroupCreate(mode, seed.group);
-      } else {
-        submitIndependentLadders(mode, seed.group);
-      }
-
-      return;
-    }
-
-    submitFlatCreate(mode, seed.mode === "schema" ? seed.schema : groupToFlatSchema(seed.group));
+    submitFlatCreate(mode, seed);
   };
 
   return (
@@ -269,15 +184,13 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
           onDraftChange={onDraftChange}
           onUpdateNode={onUpdateNode}
           onRename={onRename}
-          linkIntoBox={linkIntoBox}
-          onLinkIntoBoxChange={isInGroupAdd ? undefined : setLinkIntoBox}
         />
-      ) : editSchema !== undefined ? (
+      ) : (
         <Stack direction="column" spacing={BODY_SPACING}>
           <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />
 
           <ContainerInspector
-            container={editSchema}
+            container={seed}
             isCreateMode={isCreateMode}
             headerEditable
             onUpdateNode={onUpdateNode}
@@ -285,7 +198,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
             onDemoteNode={undefined}
           />
         </Stack>
-      ) : null}
+      )}
     </FormModal>
   );
 };

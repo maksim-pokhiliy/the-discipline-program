@@ -1,7 +1,9 @@
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 
+import type * as DndKitCore from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent, Modifiers } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildRowItems, type RowGroup, type RowItem } from "@repo/contracts/lms/row-group";
@@ -9,17 +11,58 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { render } from "@app/test/render";
 
+import { restrictToVerticalAxis } from "../lib/restrict-to-vertical-axis";
+
+import { exerciseById, ID_BACK_SQUAT } from "./schema-row-card.fixtures";
+
 const reorderMutate = vi.fn();
 
 vi.mock("@app/lib/hooks", () => ({
   useReorderSchemaRows: () => ({ mutate: reorderMutate, isPending: false }),
+  useCatalog: () => ({ exerciseById }),
 }));
+
+let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
+let capturedOnDragStart: ((event: DragStartEvent) => void) | null = null;
+let capturedModifiers: Modifiers | undefined = undefined;
+
+vi.mock("@dnd-kit/core", async () => {
+  const actual = await vi.importActual<typeof DndKitCore>("@dnd-kit/core");
+
+  const renderDndContextMock = ({
+    onDragEnd,
+    onDragStart,
+    modifiers,
+    children,
+  }: {
+    onDragEnd: (event: DragEndEvent) => void;
+    onDragStart?: (event: DragStartEvent) => void;
+    modifiers?: Modifiers;
+    children: ReactNode;
+  }) => {
+    capturedOnDragEnd = onDragEnd;
+    capturedOnDragStart = onDragStart ?? null;
+    capturedModifiers = modifiers;
+
+    return createElement("div", { "data-testid": "dnd-context-mock" }, children);
+  };
+
+  const renderDragOverlayMock = ({ children }: { children: ReactNode }) =>
+    createElement("div", { "data-testid": "drag-overlay-mock" }, children);
+
+  return {
+    ...actual,
+    DndContext: renderDndContextMock,
+    DragOverlay: renderDragOverlayMock,
+  };
+});
 
 vi.mock("./schema-row-card", () => {
   const renderSchemaRowCardMock = (props: {
     row: SchemaRow;
     index: number;
     minuteLabel?: string | null;
+    isDraggable?: boolean;
     isSelectMode?: boolean;
     isSelected?: boolean;
     onToggleSelect?: (rowId: string) => void;
@@ -31,6 +74,7 @@ vi.mock("./schema-row-card", () => {
         "data-row-id": props.row.id,
         "data-index": String(props.index),
         "data-minute-label": props.minuteLabel ?? "",
+        "data-draggable": props.isDraggable === false ? "false" : "true",
         "data-select-mode": props.isSelectMode ? "true" : "false",
         "data-selected": props.isSelected ? "true" : "false",
       },
@@ -48,9 +92,19 @@ vi.mock("./schema-row-card", () => {
   return { SchemaRowCard: renderSchemaRowCardMock };
 });
 
+type MemberReorder = (
+  rowGroupId: string,
+  orderedMemberIds: string[],
+  options: { onError: () => void },
+) => void;
+
+const capturedMemberReorderByGroup = new Map<string, MemberReorder>();
+
 vi.mock("./row-group-box", () => ({
-  RowGroupBox: (props: { group: RowGroup; startIndex: number }) =>
-    createElement(
+  RowGroupBox: (props: { group: RowGroup; startIndex: number; onMemberReorder: MemberReorder }) => {
+    capturedMemberReorderByGroup.set(props.group.id, props.onMemberReorder);
+
+    return createElement(
       "div",
       {
         "data-testid": "row-group-box-mock",
@@ -58,7 +112,8 @@ vi.mock("./row-group-box", () => ({
         "data-start-index": String(props.startIndex),
       },
       "row-group-box",
-    ),
+    );
+  },
 }));
 
 const { SchemaRowListBody, itemMemberIds } = await import("./schema-row-list-body");
@@ -130,8 +185,37 @@ const rowIdsOf = (container: HTMLElement): (string | null)[] =>
     node.getAttribute("data-row-id"),
   );
 
+const triggerDragStart = (activeId: string): void => {
+  if (capturedOnDragStart === null) {
+    throw new Error("DndContext.onDragStart was not captured");
+  }
+
+  const handler = capturedOnDragStart;
+
+  act(() => handler({ active: { id: activeId } } as unknown as DragStartEvent));
+};
+
+const triggerTopDragEnd = (activeId: string, overId: string): void => {
+  if (capturedOnDragEnd === null) {
+    throw new Error("DndContext.onDragEnd was not captured");
+  }
+
+  const handler = capturedOnDragEnd;
+
+  act(() =>
+    handler({
+      active: { id: activeId },
+      over: { id: overId },
+    } as unknown as DragEndEvent),
+  );
+};
+
 beforeEach(() => {
   reorderMutate.mockReset();
+  capturedMemberReorderByGroup.clear();
+  capturedOnDragEnd = null;
+  capturedOnDragStart = null;
+  capturedModifiers = undefined;
 });
 
 afterEach(() => {
@@ -214,6 +298,22 @@ describe("SchemaRowListBody select mode", () => {
 
     expect(onToggleSelect).toHaveBeenCalledWith(R1);
   });
+
+  it("disables standalone SchemaRowCard drag while select-mode is active (QA-B-06)", () => {
+    const draggableWhenIdle = renderBody([makeRow({ id: R1, order: 1 })]);
+
+    expect(screen.getByTestId("schema-row-card-mock")).toHaveAttribute("data-draggable", "true");
+
+    draggableWhenIdle.unmount();
+
+    renderBody([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })], [], {
+      isSelectMode: true,
+    });
+
+    for (const card of screen.getAllByTestId("schema-row-card-mock")) {
+      expect(card).toHaveAttribute("data-draggable", "false");
+    }
+  });
 });
 
 const isGroupContiguous = (orderedIds: string[], memberIds: string[]): boolean => {
@@ -280,5 +380,123 @@ describe("SchemaRowListBody minute labels with a grouped run (QA-012)", () => {
       "data-minute-label",
       "MIN 3",
     );
+  });
+});
+
+describe("SchemaRowListBody DR-W4E-INGROUP-REORDER: lifted member reorder rebuilds the full schema roster", () => {
+  const invokeMemberReorder = (
+    rowGroupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void } = { onError: () => undefined },
+  ): void => {
+    const handler = capturedMemberReorderByGroup.get(rowGroupId);
+
+    if (handler === undefined) {
+      throw new Error(`onMemberReorder for row group ${rowGroupId} was not captured`);
+    }
+
+    handler(rowGroupId, orderedMemberIds, options);
+  };
+
+  it("emits every schema row with the group's members in the new order (length === full scope)", () => {
+    renderBody(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+        makeRow({ id: R3, order: 3 }),
+      ],
+      [makeRowGroup()],
+    );
+
+    invokeMemberReorder(GROUP_ID, [R2, R1]);
+
+    expect(reorderMutate).toHaveBeenCalledTimes(1);
+
+    const payload = reorderMutate.mock.calls[0]?.[0];
+
+    expect(payload).toEqual({ schemaId: SCHEMA_ID, orderedIds: [R2, R1, R3] });
+    expect(payload?.orderedIds).toHaveLength(3);
+  });
+
+  it("forwards the box revert callback as the mutation onError", () => {
+    reorderMutate.mockImplementation(
+      (_payload: unknown, options: { onError?: () => void } | undefined) => {
+        options?.onError?.();
+      },
+    );
+
+    renderBody(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+      ],
+      [makeRowGroup()],
+    );
+
+    const onError = vi.fn();
+
+    invokeMemberReorder(GROUP_ID, [R2, R1], { onError });
+
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("SchemaRowListBody W3-DND-POLISH: drag overlay ghost + vertical-axis modifier", () => {
+  it("passes the restrict-to-vertical-axis modifier to the DndContext", () => {
+    renderBody([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })]);
+
+    expect(capturedModifiers).toEqual([restrictToVerticalAxis]);
+  });
+
+  it("renders an empty DragOverlay (no ghost) before any drag starts", () => {
+    renderBody([makeRow({ id: R1, order: 1 })]);
+
+    expect(screen.getByTestId("drag-overlay-mock")).toBeEmptyDOMElement();
+  });
+
+  it("shows the row exercise name in the ghost when a row drag starts", () => {
+    renderBody([
+      makeRow({ id: R1, order: 1, exerciseId: ID_BACK_SQUAT }),
+      makeRow({ id: R2, order: 2 }),
+    ]);
+
+    triggerDragStart(`row:${R1}`);
+
+    const overlay = screen.getByTestId("drag-overlay-mock");
+
+    expect(within(overlay).getByText("Back Squat")).toBeInTheDocument();
+  });
+
+  it("shows the row-group label in the ghost when a row-group drag starts", () => {
+    renderBody(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+      ],
+      [makeRowGroup({ notes: ["AMRAP"] })],
+    );
+
+    triggerDragStart(`rowgroup:${GROUP_ID}`);
+
+    const overlay = screen.getByTestId("drag-overlay-mock");
+
+    expect(within(overlay).getByText("AMRAP")).toBeInTheDocument();
+  });
+
+  it("clears the ghost when the drag ends", () => {
+    renderBody([
+      makeRow({ id: R1, order: 1, exerciseId: ID_BACK_SQUAT }),
+      makeRow({ id: R2, order: 2 }),
+    ]);
+
+    triggerDragStart(`row:${R1}`);
+
+    expect(
+      within(screen.getByTestId("drag-overlay-mock")).getByText("Back Squat"),
+    ).toBeInTheDocument();
+
+    triggerTopDragEnd(`row:${R1}`, `row:${R2}`);
+
+    expect(screen.getByTestId("drag-overlay-mock")).toBeEmptyDOMElement();
   });
 });

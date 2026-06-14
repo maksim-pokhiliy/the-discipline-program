@@ -35,14 +35,6 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
-vi.mock("../lib/use-create-group", () => ({
-  useCreateGroup: () => ({ run: vi.fn(), isPending: false }),
-}));
-
-vi.mock("../lib/use-create-independent-ladders", () => ({
-  useCreateIndependentLadders: () => ({ run: vi.fn(), isPending: false }),
-}));
-
 vi.mock("./schema-row-list", () => {
   const renderRowListMock = (props: {
     rows: SchemaWithBody["rows"];

@@ -16,4 +16,10 @@ describe("formatTempo", () => {
 
     expect(formatTempo(t)).toBe("3-1-X-0");
   });
+
+  it("returns a free-string tempo verbatim", () => {
+    const t: TempoModifier = "slow tempo";
+
+    expect(formatTempo(t)).toBe("slow tempo");
+  });
 });

@@ -23,7 +23,7 @@ describe("buildRow", () => {
     expect(result.demoUrl).toBeNull();
   });
 
-  it("pushes sets, reps, load, side and tempo sub-parts when present", () => {
+  it("categorizes sets, reps, load, side and tempo into the summary when present", () => {
     const row = makeExerciseRow({
       sets: 4,
       reps: { kind: "count", value: 5 },
@@ -33,10 +33,50 @@ describe("buildRow", () => {
     });
     const result = buildRow(row, exerciseById, 0);
 
-    expect(result.subParts).toEqual(["4 ×", "5", "BW", "[each leg]", "[3-1-1-0]"]);
+    expect(result.summary).toEqual({
+      volume: "4 × 5",
+      load: "BW",
+      side: "each leg",
+      tempo: "3-1-1-0",
+      modifiers: [],
+      notes: [],
+    });
   });
 
-  it("renders each modifier as its own bracketed sub-part", () => {
+  it("combines sets-only into the volume with the multiplier suffix", () => {
+    const result = buildRow(makeExerciseRow({ sets: 4 }), exerciseById, 0);
+
+    expect(result.summary.volume).toBe("4 ×");
+  });
+
+  it("renders reps-only as the bare rep notation in volume", () => {
+    const result = buildRow(
+      makeExerciseRow({ reps: { kind: "count", value: 5 } }),
+      exerciseById,
+      0,
+    );
+
+    expect(result.summary.volume).toBe("5");
+  });
+
+  it("leaves volume null when both sets and reps are absent", () => {
+    const result = buildRow(makeExerciseRow(), exerciseById, 0);
+
+    expect(result.summary.volume).toBeNull();
+  });
+
+  it("strips the brackets from side and tempo", () => {
+    const row = makeExerciseRow({
+      side: { kind: "each_leg" },
+      tempo: { eccentric: 3, pauseBottom: 1, concentric: 1, pauseTop: 0 },
+    });
+    const result = buildRow(row, exerciseById, 0);
+
+    expect(result.summary.side).toBe("each leg");
+    expect(result.summary.tempo).toBe("3-1-1-0");
+  });
+
+  it("collects each modifier name into the summary modifiers list", () => {
     const row = makeExerciseRow({
       modifiers: [
         {
@@ -59,8 +99,13 @@ describe("buildRow", () => {
     });
     const result = buildRow(row, exerciseById, 0);
 
-    expect(result.subParts).toContain("[from sofa]");
-    expect(result.subParts).toContain("[neutral grip]");
+    expect(result.summary.modifiers).toEqual(["from sofa", "neutral grip"]);
+  });
+
+  it("leaves the summary notes empty (notes are appended by formatRow)", () => {
+    const result = buildRow(makeExerciseRow(), exerciseById, 0);
+
+    expect(result.summary.notes).toEqual([]);
   });
 
   it("marks a placeholderFlag exercise as dashed with no demo url", () => {

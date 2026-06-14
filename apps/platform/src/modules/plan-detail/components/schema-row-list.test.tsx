@@ -14,6 +14,8 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { render } from "@app/test/render";
 
+import { exerciseById } from "./schema-row-card.fixtures";
+
 const createRowGroupMock =
   vi.fn<(planId: string, data: CreateRowGroupRequest) => Promise<CreateRowGroupResponse>>();
 const toastErrorMock = vi.fn<(message: string) => void>();
@@ -29,6 +31,7 @@ vi.mock("@app/lib/api", () => ({
 
 vi.mock("@app/lib/hooks", () => ({
   useReorderSchemaRows: () => ({ mutate: vi.fn(), isPending: false }),
+  useCatalog: () => ({ exerciseById }),
 }));
 
 vi.mock("sonner", () => ({

@@ -101,7 +101,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
     deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: handleDeleteClose });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };
@@ -167,7 +167,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
       <SchemaRowCardBody
         mainText={fmt.mainText}
         formPillText={fmt.formPillText}
-        subParts={fmt.subParts}
+        summary={fmt.summary}
         minuteLabel={minuteLabel}
       />
 

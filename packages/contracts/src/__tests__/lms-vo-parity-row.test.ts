@@ -118,6 +118,10 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       ).toBe(true);
     });
 
+    it("accepts a bare verbal string (the free-text arm)", () => {
+      expect(tempoModifierSchema.safeParse("slow eccentric").success).toBe(true);
+    });
+
     it("rejects the dropped verbal slowEccentric form (data.js:653 — Fri snatch)", () => {
       expect(tempoModifierSchema.safeParse({ slowEccentric: { durationSec: 3 } }).success).toBe(
         false,

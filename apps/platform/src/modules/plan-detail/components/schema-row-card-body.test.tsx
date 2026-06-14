@@ -74,36 +74,41 @@ describe("SchemaRowCard per-RowKind rendering", () => {
   }
 });
 
-describe("SchemaRowCard notes append", () => {
-  it("appends notes in single quotes to subParts for a row", () => {
+describe("SchemaRowCard summary chips", () => {
+  it("renders a chip per prescription category and notes as prose", () => {
+    renderRow(
+      makeExerciseRow({
+        sets: 4,
+        reps: { kind: "count", value: 5 },
+        load: { kind: "bodyweight" },
+        side: { kind: "each_leg" },
+        tempo: { eccentric: 3, pauseBottom: 1, concentric: 1, pauseTop: 0 },
+        modifiers: [
+          {
+            id: "ckmod01234567890abcdef0123",
+            name: "from sofa",
+            nameLower: "from sofa",
+            notes: null,
+            createdAt: new Date("2025-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2025-01-01T00:00:00.000Z"),
+          },
+        ],
+        notes: ["explosive"],
+      }),
+    );
+
+    expect(screen.getByText("4 × 5")).toBeInTheDocument();
+    expect(screen.getByText("BW")).toBeInTheDocument();
+    expect(screen.getByText("each leg")).toBeInTheDocument();
+    expect(screen.getByText("3-1-1-0")).toBeInTheDocument();
+    expect(screen.getByText("from sofa")).toBeInTheDocument();
+    expect(screen.getByText("explosive")).toBeInTheDocument();
+  });
+
+  it("renders notes as plain prose without quotes", () => {
     renderRow(makeExerciseRow({ notes: ["explosive"] }));
 
-    expect(screen.getByText("'explosive'")).toBeInTheDocument();
-  });
-});
-
-describe("SchemaRowCard duplicate-string sub-parts (anti-pattern #45)", () => {
-  it("renders sub-parts without a React duplicate-key warning when same text repeats", () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    try {
-      renderRow(
-        makeExerciseRow({
-          reps: { kind: "count", value: 5 },
-          load: { kind: "bodyweight" },
-          notes: ["BW"],
-        }),
-      );
-
-      const duplicateKeyWarnings = consoleErrorSpy.mock.calls.filter((args) => {
-        const first = args[0];
-
-        return typeof first === "string" && first.includes("two children with the same key");
-      });
-
-      expect(duplicateKeyWarnings).toHaveLength(0);
-    } finally {
-      consoleErrorSpy.mockRestore();
-    }
+    expect(screen.getByText("explosive")).toBeInTheDocument();
+    expect(screen.queryByText("'explosive'")).toBeNull();
   });
 });

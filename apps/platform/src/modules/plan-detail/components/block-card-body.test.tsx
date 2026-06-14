@@ -1,8 +1,8 @@
 import { createElement, type ReactNode } from "react";
 
 import type * as DndKitCore from "@dnd-kit/core";
-import type { DragEndEvent } from "@dnd-kit/core";
-import { screen } from "@testing-library/react";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Block } from "@repo/contracts/lms/block";
@@ -12,8 +12,15 @@ import type { SchemaGroup } from "@repo/contracts/lms/schema-group";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+import { restrictToVerticalAxis } from "../lib/restrict-to-vertical-axis";
+import type { UseCreateSchemaGroupResult } from "../lib/use-create-schema-group";
+
+type SchemaGroupRun = UseCreateSchemaGroupResult["run"];
+
 const reorderSchemasMutate = vi.fn();
 const reorderSchemasState = { isPending: false };
+const createSchemaGroupRun = vi.fn<SchemaGroupRun>(() => Promise.resolve());
+const createSchemaGroupState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -27,17 +34,33 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
+vi.mock("../lib/use-create-schema-group", () => ({
+  useCreateSchemaGroup: () => ({
+    run: createSchemaGroupRun,
+    isPending: createSchemaGroupState.isPending,
+  }),
+}));
+
 vi.mock("./schema-card", () => {
   const renderSchemaCardMock = (props: {
     schema: SchemaWithBody;
     parentIsReorderPending?: boolean;
+    isDraggable?: boolean;
+    isSelectMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: (schemaId: string) => void;
   }) =>
     createElement(
-      "div",
+      "button",
       {
+        type: "button",
         "data-testid": "schema-card-mock",
         "data-schema-id": props.schema.schema.id,
         "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
+        "data-draggable": props.isDraggable === false ? "false" : "true",
+        "data-select-mode": props.isSelectMode === true ? "true" : "false",
+        "data-selected": props.isSelected === true ? "true" : "false",
+        onClick: () => props.onToggleSelect?.(props.schema.schema.id),
       },
       `schema-card:${props.schema.schema.id}`,
     );
@@ -45,13 +68,24 @@ vi.mock("./schema-card", () => {
   return { SchemaCard: renderSchemaCardMock };
 });
 
+type MemberReorder = (
+  groupId: string,
+  orderedMemberIds: string[],
+  options: { onError: () => void },
+) => void;
+
+const capturedMemberReorderByGroup = new Map<string, MemberReorder>();
+
 vi.mock("./schema-group-box", () => {
   const renderSchemaGroupBoxMock = (props: {
     group: SchemaGroup;
     members: SchemaWithBody[];
     parentIsReorderPending?: boolean;
-  }) =>
-    createElement(
+    onMemberReorder: MemberReorder;
+  }) => {
+    capturedMemberReorderByGroup.set(props.group.id, props.onMemberReorder);
+
+    return createElement(
       "div",
       {
         "data-testid": "schema-group-box-mock",
@@ -61,6 +95,7 @@ vi.mock("./schema-group-box", () => {
       },
       `group-box:${props.group.id}`,
     );
+  };
 
   return { SchemaGroupBox: renderSchemaGroupBoxMock };
 });
@@ -72,33 +107,38 @@ vi.mock("./add-schema-button", () => {
   return { AddSchemaButton: renderAddSchemaButtonMock };
 });
 
-vi.mock("./add-group-button", () => {
-  const renderAddGroupButtonMock = () =>
-    createElement("div", { "data-testid": "add-group-button-mock" });
-
-  return { AddGroupButton: renderAddGroupButtonMock };
-});
-
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
+let capturedOnDragStart: ((event: DragStartEvent) => void) | null = null;
+let capturedModifiers: DndKitCore.Modifiers | undefined = undefined;
 
 vi.mock("@dnd-kit/core", async () => {
   const actual = await vi.importActual<typeof DndKitCore>("@dnd-kit/core");
 
-  const DndContextMock = ({
+  const renderDndContextMock = ({
     onDragEnd,
+    onDragStart,
+    modifiers,
     children,
   }: {
     onDragEnd: (event: DragEndEvent) => void;
+    onDragStart?: (event: DragStartEvent) => void;
+    modifiers?: DndKitCore.Modifiers;
     children: ReactNode;
   }) => {
     capturedOnDragEnd = onDragEnd;
+    capturedOnDragStart = onDragStart ?? null;
+    capturedModifiers = modifiers;
 
     return createElement("div", { "data-testid": "dnd-context-mock" }, children);
   };
 
+  const renderDragOverlayMock = ({ children }: { children: ReactNode }) =>
+    createElement("div", { "data-testid": "drag-overlay-mock" }, children);
+
   return {
     ...actual,
-    DndContext: DndContextMock,
+    DndContext: renderDndContextMock,
+    DragOverlay: renderDragOverlayMock,
   };
 });
 
@@ -187,13 +227,31 @@ const triggerDragEnd = (event: DragEndEvent): void => {
     throw new Error("DndContext.onDragEnd was not captured");
   }
 
-  capturedOnDragEnd(event);
+  const handler = capturedOnDragEnd;
+
+  act(() => handler(event));
+};
+
+const triggerDragStart = (activeId: string): void => {
+  if (capturedOnDragStart === null) {
+    throw new Error("DndContext.onDragStart was not captured");
+  }
+
+  const handler = capturedOnDragStart;
+
+  act(() => handler({ active: { id: activeId } } as unknown as DragStartEvent));
 };
 
 afterEach(() => {
   reorderSchemasMutate.mockReset();
   reorderSchemasState.isPending = false;
+  createSchemaGroupRun.mockReset();
+  createSchemaGroupRun.mockImplementation(() => Promise.resolve());
+  createSchemaGroupState.isPending = false;
   capturedOnDragEnd = null;
+  capturedOnDragStart = null;
+  capturedModifiers = undefined;
+  capturedMemberReorderByGroup.clear();
 });
 
 describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
@@ -402,6 +460,100 @@ describe("BlockCardBody W1-RENDER-REPOINT: group clustering via buildBlockItems"
   });
 });
 
+describe("BlockCardBody DR-W4E-INGROUP-REORDER: lifted member reorder rebuilds the full block roster", () => {
+  const GROUP_ID = "clp9z8x7w0000abcd12mrg001";
+
+  const invokeMemberReorder = (
+    groupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void } = { onError: () => undefined },
+  ): void => {
+    const handler = capturedMemberReorderByGroup.get(groupId);
+
+    if (handler === undefined) {
+      throw new Error(`onMemberReorder for group ${groupId} was not captured`);
+    }
+
+    handler(groupId, orderedMemberIds, options);
+  };
+
+  it("emits every block schema with the group's members in the new order (length === full scope)", () => {
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12mrm001", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12mrm002", order: 2, groupId: GROUP_ID });
+    const flat = makeSchema({ id: "clp9z8x7w0000abcd12mrf001", order: 3 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flat], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    invokeMemberReorder(GROUP_ID, [m2.schema.id, m1.schema.id]);
+
+    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
+
+    const payload = reorderSchemasMutate.mock.calls[0]?.[0];
+
+    expect(payload).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [m2.schema.id, m1.schema.id, flat.schema.id],
+    });
+    expect(payload?.orderedIds).toHaveLength(3);
+  });
+
+  it("keeps standalone schemas around the group in their existing order", () => {
+    const flatFirst = makeSchema({ id: "clp9z8x7w0000abcd12mrf010", order: 1 });
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12mrm010", order: 2, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12mrm011", order: 3, groupId: GROUP_ID });
+    const flatLast = makeSchema({ id: "clp9z8x7w0000abcd12mrf011", order: 4 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [flatFirst, m1, m2, flatLast],
+          groups: [makeGroup({ id: GROUP_ID })],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    invokeMemberReorder(GROUP_ID, [m2.schema.id, m1.schema.id]);
+
+    expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [flatFirst.schema.id, m2.schema.id, m1.schema.id, flatLast.schema.id],
+    });
+  });
+
+  it("forwards the box revert callback as the mutation onError", () => {
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12mrm020", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12mrm021", order: 2, groupId: GROUP_ID });
+
+    reorderSchemasMutate.mockImplementation(
+      (_payload: unknown, options: { onError?: () => void } | undefined) => {
+        options?.onError?.();
+      },
+    );
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    const onError = vi.fn();
+
+    invokeMemberReorder(GROUP_ID, [m2.schema.id, m1.schema.id], { onError });
+
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
   it("propagates effective pending to every SchemaCard when parentIsReorderPending is true", () => {
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas201", order: 1 });
@@ -437,5 +589,268 @@ describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
     );
 
     expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "false");
+  });
+});
+
+describe("BlockCardBody DR-W4E-SG-WRAP: schema-group select-mode create", () => {
+  const GROUP_BUTTON = "Group schemas…";
+  const GROUP_BAR_BUTTON = "Group schemas";
+
+  it("shows the 'Group schemas…' toggle when at least two ungrouped schemas exist", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw002", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: GROUP_BUTTON })).toBeInTheDocument();
+  });
+
+  it("hides the 'Group schemas…' toggle when fewer than two ungrouped schemas exist", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw010", order: 1 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: GROUP_BUTTON })).toBeNull();
+  });
+
+  it("counts only ungrouped schemas toward the toggle threshold (grouped members excluded)", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12sgw0gr";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw020", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw021", order: 2, groupId: GROUP_ID });
+    const flat = makeSchema({ id: "clp9z8x7w0000abcd12sgw022", order: 3 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flat], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: GROUP_BUTTON })).toBeNull();
+  });
+
+  it("enters select-mode and threads select props only to standalone SchemaCards", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw030", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw031", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    const cards = screen.getAllByTestId("schema-card-mock");
+
+    for (const card of cards) {
+      expect(card).toHaveAttribute("data-select-mode", "true");
+    }
+  });
+
+  it("disables standalone SchemaCard drag while select-mode is active (QA-B-06)", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw0d0", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw0d1", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    for (const card of screen.getAllByTestId("schema-card-mock")) {
+      expect(card).toHaveAttribute("data-draggable", "true");
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    for (const card of screen.getAllByTestId("schema-card-mock")) {
+      expect(card).toHaveAttribute("data-draggable", "false");
+    }
+  });
+
+  it("runs useCreateSchemaGroup with the full block schemas and selected ids after selecting two and confirming", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw040", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw041", order: 2 });
+    const block = makeBlock({ schemas: [s1, s2] });
+
+    render(<BlockCardBody block={block} planId={PLAN_ID} startDate={START_DATE} />);
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    const cards = screen.getAllByTestId("schema-card-mock");
+
+    for (const card of cards) {
+      fireEvent.click(card);
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BAR_BUTTON }));
+
+    expect(createSchemaGroupRun).toHaveBeenCalledTimes(1);
+
+    const args = createSchemaGroupRun.mock.calls[0]?.[0];
+
+    if (args === undefined) {
+      throw new Error("useCreateSchemaGroup.run was not called");
+    }
+
+    expect(args.blockId).toBe(BLOCK_ID);
+    expect(args.schemas).toBe(block.schemas);
+    expect([...args.selectedIds]).toEqual([s1.schema.id, s2.schema.id]);
+  });
+
+  it("keeps the 'Group schemas' confirm disabled until two schemas are selected", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw050", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw051", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    expect(screen.getByRole("button", { name: GROUP_BAR_BUTTON })).toBeDisabled();
+
+    fireEvent.click(screen.getAllByTestId("schema-card-mock")[0] as HTMLElement);
+
+    expect(screen.getByRole("button", { name: GROUP_BAR_BUTTON })).toBeDisabled();
+
+    fireEvent.click(screen.getAllByTestId("schema-card-mock")[1] as HTMLElement);
+
+    expect(screen.getByRole("button", { name: GROUP_BAR_BUTTON })).toBeEnabled();
+  });
+
+  it("exits select-mode via Cancel without invoking the create hook", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw060", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw061", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByRole("button", { name: GROUP_BUTTON })).toBeInTheDocument();
+    expect(createSchemaGroupRun).not.toHaveBeenCalled();
+  });
+});
+
+describe("BlockCardBody W3-DND-POLISH: drag overlay ghost + vertical-axis modifier", () => {
+  it("passes the restrict-to-vertical-axis modifier to the DndContext", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp002", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(capturedModifiers).toEqual([restrictToVerticalAxis]);
+  });
+
+  it("renders an empty DragOverlay (no ghost) before any drag starts", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp010", order: 1 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.getByTestId("drag-overlay-mock")).toBeEmptyDOMElement();
+  });
+
+  it("shows the schema header in the ghost when a schema drag starts", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp020", order: 1, header: "WOD A" });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp021", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragStart(`schema:${s1.schema.id}`);
+
+    const overlay = screen.getByTestId("drag-overlay-mock");
+
+    expect(within(overlay).getByText("WOD A")).toBeInTheDocument();
+  });
+
+  it("shows the group label in the ghost when a group drag starts", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12dnpgr1";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp030", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp031", order: 2, groupId: GROUP_ID });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [m1, m2],
+          groups: [makeGroup({ id: GROUP_ID, notes: ["Conditioning"] })],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragStart(`group:${GROUP_ID}`);
+
+    const overlay = screen.getByTestId("drag-overlay-mock");
+
+    expect(within(overlay).getByText("Conditioning")).toBeInTheDocument();
+  });
+
+  it("clears the ghost when the drag ends", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp040", order: 1, header: "WOD A" });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp041", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragStart(`schema:${s1.schema.id}`);
+
+    expect(within(screen.getByTestId("drag-overlay-mock")).getByText("WOD A")).toBeInTheDocument();
+
+    triggerDragEnd(makeDragEndEvent(`schema:${s1.schema.id}`, `schema:${s2.schema.id}`));
+
+    expect(screen.getByTestId("drag-overlay-mock")).toBeEmptyDOMElement();
   });
 });

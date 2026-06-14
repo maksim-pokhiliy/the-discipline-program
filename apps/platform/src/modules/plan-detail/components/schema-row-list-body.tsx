@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -20,13 +22,21 @@ import { Stack } from "@mui/material";
 
 import { type RowItem } from "@repo/contracts/lms/row-group";
 
-import { useReorderSchemaRows } from "@app/lib/hooks";
+import { useCatalog, useReorderSchemaRows } from "@app/lib/hooks";
 
+import { formatRow } from "../lib/format-row";
 import { pointerFirstCollision } from "../lib/pointer-first-collision";
+import { restrictToVerticalAxis } from "../lib/restrict-to-vertical-axis";
 import { rowItemSortableId } from "../lib/row-item-sortable-id";
 
+import { DragGhost } from "./drag-ghost";
 import { RowGroupBox } from "./row-group-box";
 import { SchemaRowCard } from "./schema-row-card";
+
+const ROW_GROUP_GHOST_FALLBACK = "Group";
+const ROW_GHOST_FALLBACK = "Row";
+const FIRST_NOTE_INDEX = 0;
+const GHOST_INDEX = 0;
 
 type SchemaRowListBodyProps = {
   schemaId: string;
@@ -55,8 +65,10 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
   onToggleSelect,
 }) => {
   const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
+  const { exerciseById } = useCatalog();
 
   const [sortedItems, setSortedItems] = useState<RowItem[]>(items);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     setSortedItems(items);
@@ -69,7 +81,25 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
 
   const effectiveReorderPending = parentIsReorderPending || reorderSchemaRows.isPending;
 
+  const resolveActiveLabel = (id: string): string => {
+    const item = sortedItems.find((entry) => rowItemSortableId(entry) === id);
+
+    if (item === undefined) {
+      return ROW_GHOST_FALLBACK;
+    }
+
+    if (item.kind === "group") {
+      return item.group.notes?.[FIRST_NOTE_INDEX] ?? ROW_GROUP_GHOST_FALLBACK;
+    }
+
+    const mainText = formatRow(item.row, exerciseById, GHOST_INDEX).mainText;
+
+    return mainText === "" ? ROW_GHOST_FALLBACK : mainText;
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -94,12 +124,29 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
     );
   };
 
+  const handleMemberReorder = (
+    rowGroupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void },
+  ) => {
+    const orderedIds = sortedItems.flatMap((item) =>
+      item.kind === "group" && item.group.id === rowGroupId
+        ? orderedMemberIds
+        : itemMemberIds(item),
+    );
+
+    reorderSchemaRows.mutate({ schemaId, orderedIds }, { onError: options.onError });
+  };
+
   let runningIndex = 0;
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={pointerFirstCollision}
+      modifiers={[restrictToVerticalAxis]}
+      onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
+      onDragCancel={() => setActiveId(null)}
       onDragEnd={handleDragEnd}
     >
       <SortableContext
@@ -122,6 +169,7 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                   startDate={startDate}
                   startIndex={startIndex}
                   isReorderPending={effectiveReorderPending}
+                  onMemberReorder={handleMemberReorder}
                 />
               );
             }
@@ -139,6 +187,7 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                 index={index}
                 minuteLabel={minuteLabelById.get(item.row.id) ?? null}
                 isReorderPending={effectiveReorderPending}
+                isDraggable={!isSelectMode}
                 isSelectMode={isSelectMode}
                 isSelected={selectedIds.has(item.row.id)}
                 onToggleSelect={onToggleSelect}
@@ -147,6 +196,10 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
           })}
         </Stack>
       </SortableContext>
+
+      <DragOverlay>
+        {activeId !== null ? <DragGhost label={resolveActiveLabel(activeId)} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 };

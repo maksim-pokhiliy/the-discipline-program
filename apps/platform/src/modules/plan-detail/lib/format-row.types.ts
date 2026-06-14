@@ -1,8 +1,17 @@
 import { type RowKind as BadgeKind } from "@repo/ui";
 
+export type RowSummary = {
+  volume: string | null;
+  load: string | null;
+  side: string | null;
+  tempo: string | null;
+  modifiers: string[];
+  notes: string[];
+};
+
 export type FormatRowResult = {
   mainText: string;
-  subParts: string[];
+  summary: RowSummary;
   kindBadge: string;
   kindCls: BadgeKind;
   dashed: boolean;

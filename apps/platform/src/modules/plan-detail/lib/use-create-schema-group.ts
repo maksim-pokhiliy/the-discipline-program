@@ -5,18 +5,19 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import type { SchemaWithBody } from "@repo/contracts/lms/schema";
+
 import { api } from "@app/lib/api";
 import { platformKeys } from "@app/lib/api/keys";
 
-import type { GroupDraft } from "../components/axes/axis-draft.types";
-
-import { buildGroupCreateRequest } from "./build-group-create-request";
+import { buildSchemaGroupCreateRequest } from "./build-schema-group-create-request";
 
 const SUCCESS_MESSAGE = "Group created";
 
 type RunArgs = {
   blockId: string;
-  draft: GroupDraft;
+  schemas: SchemaWithBody[];
+  selectedIds: ReadonlySet<string>;
 };
 
 type RunOptions = {
@@ -24,7 +25,7 @@ type RunOptions = {
   onError: (message: string) => void;
 };
 
-export type UseCreateGroupResult = {
+export type UseCreateSchemaGroupResult = {
   run: (args: RunArgs, opts: RunOptions) => Promise<void>;
   isPending: boolean;
 };
@@ -32,15 +33,18 @@ export type UseCreateGroupResult = {
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-export const useCreateGroup = (planId: string, startDate: string): UseCreateGroupResult => {
+export const useCreateSchemaGroup = (
+  planId: string,
+  startDate: string,
+): UseCreateSchemaGroupResult => {
   const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
 
   const run = async (
-    { blockId, draft }: RunArgs,
+    { blockId, schemas, selectedIds }: RunArgs,
     { onSuccess, onError }: RunOptions,
   ): Promise<void> => {
-    const built = buildGroupCreateRequest(draft, blockId);
+    const built = buildSchemaGroupCreateRequest(schemas, selectedIds, blockId);
 
     if (!built.ok) {
       onError(built.error);

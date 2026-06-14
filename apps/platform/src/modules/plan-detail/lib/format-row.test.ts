@@ -57,8 +57,8 @@ describe("formatRow", () => {
     });
   });
 
-  describe("sub-parts", () => {
-    it("renders sets, reps, load, side, tempo and modifiers in order", () => {
+  describe("summary categories", () => {
+    it("categorizes sets, reps, load, side, tempo and modifiers", () => {
       const row = makeExerciseRow({
         sets: 3,
         reps: { kind: "count", value: 5 },
@@ -78,27 +78,34 @@ describe("formatRow", () => {
       });
       const result = formatRow(row, exerciseById, 0);
 
-      expect(result.subParts).toEqual(["3 ×", "5", "BW", "[each leg]", "[3-1-1-0]", "[from sofa]"]);
+      expect(result.summary).toEqual({
+        volume: "3 × 5",
+        load: "BW",
+        side: "each leg",
+        tempo: "3-1-1-0",
+        modifiers: ["from sofa"],
+        notes: [],
+      });
     });
   });
 
   describe("notes append", () => {
-    it("appends each quoted note when notes is present", () => {
+    it("puts each note (unquoted) into the summary notes when notes is present", () => {
       const result = formatRow(makeExerciseRow({ notes: ["explosive"] }), exerciseById, 0);
 
-      expect(result.subParts).toContain("'explosive'");
+      expect(result.summary.notes).toContain("explosive");
     });
 
-    it("does NOT append notes when notes is null", () => {
+    it("leaves summary notes empty when notes is null", () => {
       const result = formatRow(makeExerciseRow({ notes: null }), exerciseById, 0);
 
-      expect(result.subParts).toEqual([]);
+      expect(result.summary.notes).toEqual([]);
     });
 
-    it("does NOT append notes when notes is an empty list", () => {
+    it("leaves summary notes empty when notes is an empty list", () => {
       const result = formatRow(makeExerciseRow({ notes: [] }), exerciseById, 0);
 
-      expect(result.subParts).toEqual([]);
+      expect(result.summary.notes).toEqual([]);
     });
   });
 

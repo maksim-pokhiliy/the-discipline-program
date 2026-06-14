@@ -6,7 +6,7 @@ import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import TuneIcon from "@mui/icons-material/Tune";
-import { IconButton, Stack, Tooltip } from "@mui/material";
+import { Checkbox, IconButton, Stack, Tooltip } from "@mui/material";
 
 import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
@@ -18,6 +18,7 @@ import { SchemaCardMeta } from "./schema-card-meta";
 import { SchemaCompositionTag } from "./schema-composition-tag";
 
 const DRAG_ARIA = "Drag schema";
+const SELECT_ARIA = "Select schema";
 const DELETE_ARIA = "Delete schema";
 const DELETE_TOOLTIP = "Delete schema";
 const EDIT_ARIA = "Edit axes";
@@ -41,6 +42,9 @@ type SchemaCardHeadProps = {
   onEditOpen: () => void;
   isBoxed?: boolean;
   isDraggable?: boolean;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: ((schemaId: string) => void) | undefined;
 };
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
@@ -52,6 +56,9 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   onDeleteOpen,
   onEditOpen,
   isDraggable = true,
+  isSelectMode = false,
+  isSelected = false,
+  onToggleSelect,
 }): ReactElement => {
   return (
     <Stack
@@ -60,6 +67,15 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
       spacing={HEAD_SPACING}
       sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
     >
+      {isSelectMode ? (
+        <Checkbox
+          size="small"
+          checked={isSelected}
+          onChange={() => onToggleSelect?.(schema.schema.id)}
+          inputProps={{ "aria-label": SELECT_ARIA }}
+        />
+      ) : null}
+
       {isDraggable ? (
         <IconButton
           {...dragAttributes}

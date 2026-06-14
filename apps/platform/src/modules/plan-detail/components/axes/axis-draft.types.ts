@@ -45,19 +45,3 @@ export type SchemaDraft = {
   rest?: RestAxis;
   rows: ComposeRow[];
 };
-
-export type TrackDraft = {
-  id: NodeId;
-  header: string | null;
-  steps: number[];
-};
-
-export type GroupDraft = {
-  id: NodeId;
-  header: string | null;
-  tracks: TrackDraft[];
-};
-
-export type DraftSeed =
-  | { mode: "schema"; schema: SchemaDraft }
-  | { mode: "group"; group: GroupDraft };

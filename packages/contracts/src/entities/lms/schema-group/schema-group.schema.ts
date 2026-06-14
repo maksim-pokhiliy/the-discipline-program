@@ -14,22 +14,18 @@ export const schemaGroupSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const groupTrackSchema = z
-  .object({
-    header: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable().optional(),
-    steps: z
-      .array(z.number().int().positive().max(SCHEMA_CONSTANTS.MAX_LADDER_STEP_VALUE))
-      .min(1)
-      .max(SCHEMA_CONSTANTS.MAX_LADDER_STEPS),
-  })
-  .strict();
-
 export const createGroupRequestSchema = z
   .object({
     blockId: z.string().cuid(),
-    notes: notesListSchema.nullable().optional(),
+    schemaIds: z
+      .array(z.string().cuid())
+      .min(2)
+      .max(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS)
+      .refine((ids) => new Set(ids).size === ids.length, {
+        message: "schemaIds must be unique",
+      }),
     interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS).optional(),
-    tracks: z.array(groupTrackSchema).min(2).max(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS),
+    notes: notesListSchema.nullable().optional(),
   })
   .strict();
 

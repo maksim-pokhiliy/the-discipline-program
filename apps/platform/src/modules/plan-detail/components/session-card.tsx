@@ -65,7 +65,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   };
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };

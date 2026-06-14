@@ -1,4 +1,4 @@
-import type { TempoModifier } from "@repo/contracts/lms/_shared";
+import type { FullTempo, TempoModifier } from "@repo/contracts/lms/_shared";
 
 const TEMPO_TOKEN_COUNT = 4;
 const TEMPO_MIN = 0;
@@ -7,13 +7,7 @@ const TEMPO_HOLD = "X";
 const TEMPO_SPLIT = /[-/\s]+/;
 const DECIMAL_RADIX = 10;
 
-const TEMPO_ERROR = "Tempo must be 4 positions, each 0–60 or X, e.g. 3-1-X-0";
-
-type TempoPosition = TempoModifier["eccentric"];
-
-export type ParseTempoResult =
-  | { ok: true; value: TempoModifier | null }
-  | { ok: false; error: string };
+type TempoPosition = FullTempo["eccentric"];
 
 const parsePosition = (token: string): TempoPosition | null => {
   if (token === TEMPO_HOLD || token === "x") {
@@ -33,17 +27,17 @@ const parsePosition = (token: string): TempoPosition | null => {
   return parsed;
 };
 
-export const parseTempo = (input: string): ParseTempoResult => {
+export const parseTempo = (input: string): TempoModifier | null => {
   const trimmed = input.trim();
 
   if (trimmed === "") {
-    return { ok: true, value: null };
+    return null;
   }
 
   const tokens = trimmed.split(TEMPO_SPLIT);
 
   if (tokens.length !== TEMPO_TOKEN_COUNT) {
-    return { ok: false, error: TEMPO_ERROR };
+    return trimmed;
   }
 
   const positions = tokens.map(parsePosition);
@@ -60,8 +54,8 @@ export const parseTempo = (input: string): ParseTempoResult => {
     pauseTop === null ||
     pauseTop === undefined
   ) {
-    return { ok: false, error: TEMPO_ERROR };
+    return trimmed;
   }
 
-  return { ok: true, value: { eccentric, pauseBottom, concentric, pauseTop } };
+  return { eccentric, pauseBottom, concentric, pauseTop };
 };

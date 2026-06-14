@@ -89,6 +89,10 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
   });
 
   describe("TempoModifier", () => {
+    it("accepts a bare verbal string (the free-text arm)", () => {
+      expect(tempoModifierSchema.safeParse("slow eccentric").success).toBe(true);
+    });
+
     it("rejects the dropped verbal-form wrapper object", () => {
       expect(tempoModifierSchema.safeParse({ pauseInUp: { durationSec: 2 } }).success).toBe(false);
     });

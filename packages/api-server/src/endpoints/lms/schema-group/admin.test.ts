@@ -1,15 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
 
 import { lmsSchemaGroupApi } from "./admin";
-
-const TRACKS = [
-  { header: "Track A", steps: [21, 15, 9] },
-  { header: "Track B", steps: [15, 12, 9] },
-];
 
 describe("lmsSchemaGroupApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -48,6 +43,8 @@ describe("lmsSchemaGroupApi", () => {
       day,
       session,
       block,
+      addSchema: async (order: number) =>
+        cleanupRaw.schema.create({ data: { blockId: block.id, order } }),
       cleanup: async () => {
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
@@ -152,133 +149,37 @@ describe("lmsSchemaGroupApi", () => {
     await cleanupRaw.user.delete({ where: { id: headCoach.user.id } }).catch(() => {});
   });
 
-  describe("create", () => {
-    it("rejects when caller does not own the plan and persists nothing", async () => {
+  describe("create — wrap existing contiguous schemas", () => {
+    it("wraps a contiguous run, sets groupId on members, and returns { group, members }", async () => {
       const ctx = await provisionBlock();
-
-      try {
-        await expect(
-          lmsSchemaGroupApi.create(otherCoach.user.id, activePlanId, {
-            blockId: ctx.block.id,
-            tracks: TRACKS,
-          }),
-        ).rejects.toThrow(ForbiddenError);
-
-        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
-        const schemaCount = await cleanupRaw.schema.count({ where: { blockId: ctx.block.id } });
-
-        expect(groupCount).toBe(0);
-        expect(schemaCount).toBe(0);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("rejects on an archived plan and persists nothing", async () => {
-      const ctx = await provisionBlock({ planId: archivedPlanId });
-
-      try {
-        await expect(
-          lmsSchemaGroupApi.create(coach.user.id, archivedPlanId, {
-            blockId: ctx.block.id,
-            tracks: TRACKS,
-          }),
-        ).rejects.toThrow(ForbiddenError);
-
-        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
-        const schemaCount = await cleanupRaw.schema.count({ where: { blockId: ctx.block.id } });
-
-        expect(groupCount).toBe(0);
-        expect(schemaCount).toBe(0);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("rejects when planId does not match the block's plan", async () => {
-      const ctx = await provisionBlock();
-      const otherPlan = await createTestPlan(coach.user.id, { status: "ACTIVE" });
-
-      try {
-        await expect(
-          lmsSchemaGroupApi.create(coach.user.id, otherPlan.id, {
-            blockId: ctx.block.id,
-            tracks: TRACKS,
-          }),
-        ).rejects.toThrow(NotFoundError);
-      } finally {
-        await ctx.cleanup();
-        await cleanupRaw.trainingPlan.delete({ where: { id: otherPlan.id } }).catch(() => {});
-      }
-    });
-
-    it("creates a group row plus N contiguous flat members with NO parent schema, returning { group, members }", async () => {
-      const ctx = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
 
       try {
         const result = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
           blockId: ctx.block.id,
+          schemaIds: [schemaA.id, schemaB.id],
           notes: ["parallel ladders"],
           interleaveOrder: "track_by_track",
-          tracks: TRACKS,
         });
 
         expect(result.group.blockId).toBe(ctx.block.id);
         expect(result.group.notes).toEqual(["parallel ladders"]);
         expect(result.group.interleaveOrder).toBe("track_by_track");
 
-        expect(result.members).toHaveLength(2);
-        expect(result.members.map((m) => m.schema.header)).toEqual(["Track A", "Track B"]);
+        expect(result.members.map((m) => m.schema.id)).toEqual([schemaA.id, schemaB.id]);
         expect(result.members.map((m) => m.schema.order)).toEqual([10, 20]);
-        expect(result.members.map((m) => m.schema.groupId)).toEqual([
-          result.group.id,
-          result.group.id,
-        ]);
-        expect(result.members.map((m) => m.schema.composition)).toEqual([
-          { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-          { repetition: { kind: "ladder", steps: [15, 12, 9] } },
-        ]);
-        expect(result.members.map((m) => m.schema.label?.kind)).toEqual(["ladder", "ladder"]);
-        expect(result.members.every((m) => m.rows.length === 0)).toBe(true);
+        expect(result.members.every((m) => m.schema.groupId === result.group.id)).toBe(true);
 
-        const blockSchemas = await cleanupRaw.schema.findMany({
+        const stored = await cleanupRaw.schema.findMany({
           where: { blockId: ctx.block.id },
           orderBy: { order: "asc" },
-          select: { id: true, groupId: true, order: true },
+          select: { id: true, groupId: true },
         });
 
-        expect(blockSchemas).toHaveLength(2);
-        expect(blockSchemas.every((s) => s.groupId === result.group.id)).toBe(true);
-        expect(blockSchemas.map((s) => s.order)).toEqual([10, 20]);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("appends the members at the block tail on a populated block, keeping contiguity", async () => {
-      const ctx = await provisionBlock();
-      const leading = await cleanupRaw.schema.create({
-        data: { blockId: ctx.block.id, order: 10 },
-      });
-
-      try {
-        const result = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
-          blockId: ctx.block.id,
-          tracks: TRACKS,
-        });
-
-        expect(result.members.map((m) => m.schema.order)).toEqual([20, 30]);
-
-        const blockSchemas = await cleanupRaw.schema.findMany({
-          where: { blockId: ctx.block.id },
-          orderBy: { order: "asc" },
-          select: { id: true, groupId: true, order: true },
-        });
-
-        expect(blockSchemas).toEqual([
-          { id: leading.id, groupId: null, order: 10 },
-          { id: result.members[0]?.schema.id, groupId: result.group.id, order: 20 },
-          { id: result.members[1]?.schema.id, groupId: result.group.id, order: 30 },
+        expect(stored).toEqual([
+          { id: schemaA.id, groupId: result.group.id },
+          { id: schemaB.id, groupId: result.group.id },
         ]);
       } finally {
         await ctx.cleanup();
@@ -287,11 +188,13 @@ describe("lmsSchemaGroupApi", () => {
 
     it("defaults interleaveOrder to round_by_round and notes to null when omitted", async () => {
       const ctx = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
 
       try {
         const result = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
           blockId: ctx.block.id,
-          tracks: TRACKS,
+          schemaIds: [schemaA.id, schemaB.id],
         });
 
         expect(result.group.notes).toBeNull();
@@ -301,40 +204,242 @@ describe("lmsSchemaGroupApi", () => {
       }
     });
 
-    it("concurrent create into one block — fulfilled calls land whole groups with distinct member orders (QA-Must-5)", async () => {
+    it("rejects schemaIds already in a group and applies no new membership (W4R-001-SERVER)", async () => {
       const ctx = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
+      const schemaC = await ctx.addSchema(30);
+
+      try {
+        const existing = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+          blockId: ctx.block.id,
+          schemaIds: [schemaA.id, schemaB.id],
+        });
+
+        await expect(
+          lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaB.id, schemaC.id],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const storedB = await cleanupRaw.schema.findUnique({ where: { id: schemaB.id } });
+        const storedC = await cleanupRaw.schema.findUnique({ where: { id: schemaC.id } });
+
+        expect(storedB?.groupId).toBe(existing.group.id);
+        expect(storedC?.groupId).toBeNull();
+
+        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
+
+        expect(groupCount).toBe(1);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects schemaIds from another block and applies no membership", async () => {
+      const ctx = await provisionBlock();
+      const other = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+      const foreign = await other.addSchema(10);
+
+      try {
+        await expect(
+          lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaA.id, foreign.id],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const storedA = await cleanupRaw.schema.findUnique({ where: { id: schemaA.id } });
+        const storedForeign = await cleanupRaw.schema.findUnique({ where: { id: foreign.id } });
+
+        expect(storedA?.groupId).toBeNull();
+        expect(storedForeign?.groupId).toBeNull();
+
+        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
+
+        expect(groupCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+        await other.cleanup();
+      }
+    });
+
+    it("rejects a non-existent schemaId and applies no membership", async () => {
+      const ctx = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+
+      try {
+        await expect(
+          lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaA.id, "clz0000000000000000000000"],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const storedA = await cleanupRaw.schema.findUnique({ where: { id: schemaA.id } });
+
+        expect(storedA?.groupId).toBeNull();
+
+        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
+
+        expect(groupCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects a non-contiguous selection and the contiguity throw rolls back the updateMany", async () => {
+      const ctx = await provisionBlock();
+      const schemaFirst = await ctx.addSchema(10);
+      const schemaMiddle = await ctx.addSchema(20);
+      const schemaLast = await ctx.addSchema(30);
+
+      try {
+        await expect(
+          lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaFirst.id, schemaLast.id],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schema.findMany({
+          where: { blockId: ctx.block.id },
+          orderBy: { order: "asc" },
+          select: { id: true, groupId: true },
+        });
+
+        expect(stored).toEqual([
+          { id: schemaFirst.id, groupId: null },
+          { id: schemaMiddle.id, groupId: null },
+          { id: schemaLast.id, groupId: null },
+        ]);
+
+        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
+
+        expect(groupCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects when caller does not own the plan and persists nothing", async () => {
+      const ctx = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
+
+      try {
+        await expect(
+          lmsSchemaGroupApi.create(otherCoach.user.id, activePlanId, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaA.id, schemaB.id],
+          }),
+        ).rejects.toThrow(ForbiddenError);
+
+        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
+
+        expect(groupCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects when planId does not match the block's plan", async () => {
+      const ctx = await provisionBlock();
+      const otherPlan = await createTestPlan(coach.user.id, { status: "ACTIVE" });
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
+
+      try {
+        await expect(
+          lmsSchemaGroupApi.create(coach.user.id, otherPlan.id, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaA.id, schemaB.id],
+          }),
+        ).rejects.toThrow(NotFoundError);
+      } finally {
+        await ctx.cleanup();
+        await cleanupRaw.trainingPlan.delete({ where: { id: otherPlan.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects on an archived plan and persists nothing", async () => {
+      const ctx = await provisionBlock({ planId: archivedPlanId });
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
+
+      try {
+        await expect(
+          lmsSchemaGroupApi.create(coach.user.id, archivedPlanId, {
+            blockId: ctx.block.id,
+            schemaIds: [schemaA.id, schemaB.id],
+          }),
+        ).rejects.toThrow(ForbiddenError);
+
+        const groupCount = await cleanupRaw.schemaGroup.count({ where: { blockId: ctx.block.id } });
+
+        expect(groupCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("concurrent create wrapping OVERLAPPING schemas — exactly one survivor claims the shared schema (QA-Must-5)", async () => {
+      const ctx = await provisionBlock();
+      const schemaA = await ctx.addSchema(10);
+      const schemaShared = await ctx.addSchema(20);
+      const schemaC = await ctx.addSchema(30);
 
       try {
         const results = await Promise.allSettled([
           lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
             blockId: ctx.block.id,
-            tracks: TRACKS,
+            schemaIds: [schemaA.id, schemaShared.id],
           }),
           lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
             blockId: ctx.block.id,
-            tracks: TRACKS,
+            schemaIds: [schemaShared.id, schemaC.id],
           }),
         ]);
 
-        const fulfilledCount = results.filter((r) => r.status === "fulfilled").length;
+        const fulfilled = results.filter((r) => r.status === "fulfilled").length;
 
-        expect(fulfilledCount).toBeGreaterThanOrEqual(1);
+        expect(fulfilled).toBeGreaterThanOrEqual(1);
+
+        const sharedSchema = await cleanupRaw.schema.findUnique({
+          where: { id: schemaShared.id },
+          select: { groupId: true },
+        });
+        const claimedGroupId = sharedSchema?.groupId ?? null;
+
+        expect(claimedGroupId).not.toBeNull();
 
         const groups = await cleanupRaw.schemaGroup.findMany({
           where: { blockId: ctx.block.id },
+          select: { id: true },
         });
-        const blockCount = await cleanupRaw.schema.count({ where: { blockId: ctx.block.id } });
+        const groupIds = new Set(groups.map((g) => g.id));
 
-        expect(groups).toHaveLength(fulfilledCount);
-        expect(blockCount).toBe(fulfilledCount * 2);
+        expect(claimedGroupId !== null && groupIds.has(claimedGroupId)).toBe(true);
+
+        const allSchemas = await cleanupRaw.schema.findMany({
+          where: { blockId: ctx.block.id },
+          orderBy: { order: "asc" },
+          select: { groupId: true },
+        });
 
         for (const group of groups) {
-          const members = await cleanupRaw.schema.findMany({
-            where: { groupId: group.id },
-            orderBy: { order: "asc" },
-          });
+          const memberIndices = allSchemas
+            .map((schema, index) => ({ index, groupId: schema.groupId }))
+            .filter((schema) => schema.groupId === group.id)
+            .map((schema) => schema.index);
+          const span =
+            memberIndices.length === 0
+              ? 0
+              : (memberIndices[memberIndices.length - 1] ?? 0) - (memberIndices[0] ?? 0) + 1;
 
-          expect(members).toHaveLength(2);
+          expect(span).toBe(memberIndices.length);
         }
       } finally {
         await ctx.cleanup();
@@ -343,13 +448,20 @@ describe("lmsSchemaGroupApi", () => {
   });
 
   describe("update", () => {
+    const wrapTwo = async (ctx: Awaited<ReturnType<typeof provisionBlock>>, notes?: string[]) => {
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
+
+      return lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+        blockId: ctx.block.id,
+        schemaIds: [schemaA.id, schemaB.id],
+        ...(notes !== undefined && { notes }),
+      });
+    };
+
     it("updates the notes and interleaveOrder", async () => {
       const ctx = await provisionBlock();
-      const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
-        blockId: ctx.block.id,
-        notes: ["before"],
-        tracks: TRACKS,
-      });
+      const created = await wrapTwo(ctx, ["before"]);
 
       try {
         const updated = await lmsSchemaGroupApi.update(coach.user.id, created.group.id, {
@@ -371,11 +483,7 @@ describe("lmsSchemaGroupApi", () => {
 
     it("clears the notes by writing null", async () => {
       const ctx = await provisionBlock();
-      const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
-        blockId: ctx.block.id,
-        notes: ["before"],
-        tracks: TRACKS,
-      });
+      const created = await wrapTwo(ctx, ["before"]);
 
       try {
         const updated = await lmsSchemaGroupApi.update(coach.user.id, created.group.id, {
@@ -394,11 +502,7 @@ describe("lmsSchemaGroupApi", () => {
 
     it("rejects a non-owner update", async () => {
       const ctx = await provisionBlock();
-      const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
-        blockId: ctx.block.id,
-        notes: ["original"],
-        tracks: TRACKS,
-      });
+      const created = await wrapTwo(ctx, ["original"]);
 
       try {
         await expect(
@@ -421,12 +525,19 @@ describe("lmsSchemaGroupApi", () => {
   });
 
   describe("delete", () => {
+    const wrapTwo = async (ctx: Awaited<ReturnType<typeof provisionBlock>>) => {
+      const schemaA = await ctx.addSchema(10);
+      const schemaB = await ctx.addSchema(20);
+
+      return lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
+        blockId: ctx.block.id,
+        schemaIds: [schemaA.id, schemaB.id],
+      });
+    };
+
     it("deletes the group row and frees its members in place via SetNull (no member deletion)", async () => {
       const ctx = await provisionBlock();
-      const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
-        blockId: ctx.block.id,
-        tracks: TRACKS,
-      });
+      const created = await wrapTwo(ctx);
       const memberIds = created.members.map((m) => m.schema.id);
 
       try {
@@ -454,10 +565,7 @@ describe("lmsSchemaGroupApi", () => {
 
     it("rejects a non-owner delete and leaves the group intact", async () => {
       const ctx = await provisionBlock();
-      const created = await lmsSchemaGroupApi.create(coach.user.id, activePlanId, {
-        blockId: ctx.block.id,
-        tracks: TRACKS,
-      });
+      const created = await wrapTwo(ctx);
 
       try {
         await expect(
