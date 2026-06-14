@@ -326,6 +326,30 @@ describe("lmsSchemaRowApi", () => {
       }
     });
 
+    it("rejects a dangling exerciseId on create (P2003) with the FK message and persists no row (QA-001)", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        const error = await lmsSchemaRowApi
+          .create(coach.user.id, activePlanId, {
+            schemaId: ctx.schema.id,
+            exerciseId: "clz0000000000000000000000",
+          })
+          .catch((caught: unknown) => caught);
+
+        expect(error).toBeInstanceOf(BadRequestError);
+        expect(error).toMatchObject({
+          message: "Referenced exercise or modifier does not exist",
+        });
+
+        const rowCount = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
+
+        expect(rowCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     describe("flat write-guard fetch", () => {
       it("creates a row on a flat ladder schema — the guard validates the single flat container", async () => {
         const blockCtx = await provisionBlock();
