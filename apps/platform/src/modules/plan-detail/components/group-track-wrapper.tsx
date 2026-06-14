@@ -28,7 +28,7 @@ export const GroupTrackWrapper: React.FC<GroupTrackWrapperProps> = ({
       startDate={startDate}
       parentIsReorderPending={parentIsReorderPending}
       isBoxed
-      isDraggable={false}
+      isDraggable
     />
   </Box>
 );

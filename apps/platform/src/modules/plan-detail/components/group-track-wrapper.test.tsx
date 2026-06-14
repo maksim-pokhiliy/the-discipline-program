@@ -81,14 +81,14 @@ describe("GroupTrackWrapper flush member (DR-W4E-SG-WRAP rail + badge stripped)"
   });
 });
 
-describe("GroupTrackWrapper member card has no drag handle (proto no-member-handle law)", () => {
-  it("renders the boxed member SchemaCard without the 'Drag schema' handle", () => {
+describe("GroupTrackWrapper member card is draggable in-group (DR-W4E-INGROUP-REORDER)", () => {
+  it("renders the boxed member SchemaCard WITH the 'Drag schema' handle for in-group reorder", () => {
     renderWrapper();
 
-    expect(screen.queryByRole("button", { name: DRAG_HANDLE_ARIA })).toBeNull();
+    expect(screen.getByRole("button", { name: DRAG_HANDLE_ARIA })).toBeInTheDocument();
   });
 
-  it("keeps the 'Drag schema' handle on a standalone SchemaCard (the handle the box omits)", () => {
+  it("keeps the 'Drag schema' handle on a standalone SchemaCard", () => {
     render(
       <SchemaCard
         schema={makeMember("clp9z8x7w0000abcd1234mm09")}

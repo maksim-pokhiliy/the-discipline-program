@@ -1,8 +1,23 @@
 "use client";
 
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
-import { useSortable } from "@dnd-kit/sortable";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box, Stack, alpha } from "@mui/material";
 
@@ -12,7 +27,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteGroup, useUpdateGroup } from "@app/lib/hooks";
 
-import { groupSortableId } from "../lib/block-item-sortable-id";
+import { groupSortableId, schemaSortableId } from "../lib/block-item-sortable-id";
 import { useDeleteGroupWithMembers } from "../lib/use-delete-group-with-members";
 
 import { AddTrackButton } from "./add-track-button";
@@ -45,6 +60,11 @@ type SchemaGroupBoxProps = {
   planId: string;
   startDate: string;
   parentIsReorderPending?: boolean;
+  onMemberReorder: (
+    groupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void },
+  ) => void;
 };
 
 export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
@@ -53,6 +73,7 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   planId,
   startDate,
   parentIsReorderPending = false,
+  onMemberReorder,
 }): ReactElement => {
   const updateGroup = useUpdateGroup(planId, startDate);
   const deleteGroup = useDeleteGroup(planId, startDate);
@@ -60,6 +81,16 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
 
   const [isUngroupOpen, setIsUngroupOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [sortedMembers, setSortedMembers] = useState<SchemaWithBody[]>(members);
+
+  useEffect(() => {
+    setSortedMembers(members);
+  }, [members]);
+
+  const memberSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: groupSortableId(group.id),
@@ -96,6 +127,35 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
     updateGroup.mutate({ groupId: group.id, data: { interleaveOrder: next } });
   };
 
+  const handleMemberDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = sortedMembers.findIndex(
+      (member) => schemaSortableId(member.schema.id) === active.id,
+    );
+    const newIndex = sortedMembers.findIndex(
+      (member) => schemaSortableId(member.schema.id) === over.id,
+    );
+
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+
+    const previousMembers = sortedMembers;
+    const nextMembers = arrayMove(sortedMembers, oldIndex, newIndex);
+
+    setSortedMembers(nextMembers);
+    onMemberReorder(
+      group.id,
+      nextMembers.map((member) => member.schema.id),
+      { onError: () => setSortedMembers(previousMembers) },
+    );
+  };
+
   const handleUngroupConfirm = () =>
     deleteGroup.mutate({ groupId: group.id }, { onSuccess: () => setIsUngroupOpen(false) });
 
@@ -127,28 +187,39 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
         onDeleteOpen={() => setIsDeleteOpen(true)}
       />
 
-      <Stack
-        direction="column"
-        spacing={TRACK_GAP_FACTOR}
-        sx={(theme) => ({
-          p: theme.spacing(
-            TRACKS_PADDING_BLOCK_FACTOR,
-            TRACKS_PADDING_BLOCK_FACTOR,
-            TRACKS_PADDING_BLOCK_FACTOR,
-            TRACKS_PADDING_RAIL_FACTOR,
-          ),
-        })}
+      <DndContext
+        sensors={memberSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleMemberDragEnd}
       >
-        {members.map((member) => (
-          <GroupTrackWrapper
-            key={member.schema.id}
-            member={member}
-            planId={planId}
-            startDate={startDate}
-            parentIsReorderPending={parentIsReorderPending}
-          />
-        ))}
-      </Stack>
+        <SortableContext
+          items={sortedMembers.map((member) => schemaSortableId(member.schema.id))}
+          strategy={verticalListSortingStrategy}
+        >
+          <Stack
+            direction="column"
+            spacing={TRACK_GAP_FACTOR}
+            sx={(theme) => ({
+              p: theme.spacing(
+                TRACKS_PADDING_BLOCK_FACTOR,
+                TRACKS_PADDING_BLOCK_FACTOR,
+                TRACKS_PADDING_BLOCK_FACTOR,
+                TRACKS_PADDING_RAIL_FACTOR,
+              ),
+            })}
+          >
+            {sortedMembers.map((member) => (
+              <GroupTrackWrapper
+                key={member.schema.id}
+                member={member}
+                planId={planId}
+                startDate={startDate}
+                parentIsReorderPending={parentIsReorderPending}
+              />
+            ))}
+          </Stack>
+        </SortableContext>
+      </DndContext>
 
       <Box sx={{ px: FOOTER_PADDING_X_FACTOR, pb: FOOTER_PADDING_BOTTOM_FACTOR, pt: 0 }}>
         <AddTrackButton

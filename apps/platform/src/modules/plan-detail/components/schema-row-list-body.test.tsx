@@ -48,9 +48,19 @@ vi.mock("./schema-row-card", () => {
   return { SchemaRowCard: renderSchemaRowCardMock };
 });
 
+type MemberReorder = (
+  rowGroupId: string,
+  orderedMemberIds: string[],
+  options: { onError: () => void },
+) => void;
+
+const capturedMemberReorderByGroup = new Map<string, MemberReorder>();
+
 vi.mock("./row-group-box", () => ({
-  RowGroupBox: (props: { group: RowGroup; startIndex: number }) =>
-    createElement(
+  RowGroupBox: (props: { group: RowGroup; startIndex: number; onMemberReorder: MemberReorder }) => {
+    capturedMemberReorderByGroup.set(props.group.id, props.onMemberReorder);
+
+    return createElement(
       "div",
       {
         "data-testid": "row-group-box-mock",
@@ -58,7 +68,8 @@ vi.mock("./row-group-box", () => ({
         "data-start-index": String(props.startIndex),
       },
       "row-group-box",
-    ),
+    );
+  },
 }));
 
 const { SchemaRowListBody, itemMemberIds } = await import("./schema-row-list-body");
@@ -132,6 +143,7 @@ const rowIdsOf = (container: HTMLElement): (string | null)[] =>
 
 beforeEach(() => {
   reorderMutate.mockReset();
+  capturedMemberReorderByGroup.clear();
 });
 
 afterEach(() => {
@@ -280,5 +292,63 @@ describe("SchemaRowListBody minute labels with a grouped run (QA-012)", () => {
       "data-minute-label",
       "MIN 3",
     );
+  });
+});
+
+describe("SchemaRowListBody DR-W4E-INGROUP-REORDER: lifted member reorder rebuilds the full schema roster", () => {
+  const invokeMemberReorder = (
+    rowGroupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void } = { onError: () => undefined },
+  ): void => {
+    const handler = capturedMemberReorderByGroup.get(rowGroupId);
+
+    if (handler === undefined) {
+      throw new Error(`onMemberReorder for row group ${rowGroupId} was not captured`);
+    }
+
+    handler(rowGroupId, orderedMemberIds, options);
+  };
+
+  it("emits every schema row with the group's members in the new order (length === full scope)", () => {
+    renderBody(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+        makeRow({ id: R3, order: 3 }),
+      ],
+      [makeRowGroup()],
+    );
+
+    invokeMemberReorder(GROUP_ID, [R2, R1]);
+
+    expect(reorderMutate).toHaveBeenCalledTimes(1);
+
+    const payload = reorderMutate.mock.calls[0]?.[0];
+
+    expect(payload).toEqual({ schemaId: SCHEMA_ID, orderedIds: [R2, R1, R3] });
+    expect(payload?.orderedIds).toHaveLength(3);
+  });
+
+  it("forwards the box revert callback as the mutation onError", () => {
+    reorderMutate.mockImplementation(
+      (_payload: unknown, options: { onError?: () => void } | undefined) => {
+        options?.onError?.();
+      },
+    );
+
+    renderBody(
+      [
+        makeRow({ id: R1, order: 1, rowGroupId: GROUP_ID }),
+        makeRow({ id: R2, order: 2, rowGroupId: GROUP_ID }),
+      ],
+      [makeRowGroup()],
+    );
+
+    const onError = vi.fn();
+
+    invokeMemberReorder(GROUP_ID, [R2, R1], { onError });
+
+    expect(onError).toHaveBeenCalledTimes(1);
   });
 });

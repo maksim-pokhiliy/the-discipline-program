@@ -94,6 +94,20 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
     );
   };
 
+  const handleMemberReorder = (
+    rowGroupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void },
+  ) => {
+    const orderedIds = sortedItems.flatMap((item) =>
+      item.kind === "group" && item.group.id === rowGroupId
+        ? orderedMemberIds
+        : itemMemberIds(item),
+    );
+
+    reorderSchemaRows.mutate({ schemaId, orderedIds }, { onError: options.onError });
+  };
+
   let runningIndex = 0;
 
   return (
@@ -122,6 +136,7 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                   startDate={startDate}
                   startIndex={startIndex}
                   isReorderPending={effectiveReorderPending}
+                  onMemberReorder={handleMemberReorder}
                 />
               );
             }

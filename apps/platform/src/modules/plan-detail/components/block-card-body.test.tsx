@@ -65,13 +65,24 @@ vi.mock("./schema-card", () => {
   return { SchemaCard: renderSchemaCardMock };
 });
 
+type MemberReorder = (
+  groupId: string,
+  orderedMemberIds: string[],
+  options: { onError: () => void },
+) => void;
+
+const capturedMemberReorderByGroup = new Map<string, MemberReorder>();
+
 vi.mock("./schema-group-box", () => {
   const renderSchemaGroupBoxMock = (props: {
     group: SchemaGroup;
     members: SchemaWithBody[];
     parentIsReorderPending?: boolean;
-  }) =>
-    createElement(
+    onMemberReorder: MemberReorder;
+  }) => {
+    capturedMemberReorderByGroup.set(props.group.id, props.onMemberReorder);
+
+    return createElement(
       "div",
       {
         "data-testid": "schema-group-box-mock",
@@ -81,6 +92,7 @@ vi.mock("./schema-group-box", () => {
       },
       `group-box:${props.group.id}`,
     );
+  };
 
   return { SchemaGroupBox: renderSchemaGroupBoxMock };
 });
@@ -210,6 +222,7 @@ afterEach(() => {
   createSchemaGroupRun.mockImplementation(() => Promise.resolve());
   createSchemaGroupState.isPending = false;
   capturedOnDragEnd = null;
+  capturedMemberReorderByGroup.clear();
 });
 
 describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
@@ -415,6 +428,100 @@ describe("BlockCardBody W1-RENDER-REPOINT: group clustering via buildBlockItems"
       "data-parent-pending",
       "true",
     );
+  });
+});
+
+describe("BlockCardBody DR-W4E-INGROUP-REORDER: lifted member reorder rebuilds the full block roster", () => {
+  const GROUP_ID = "clp9z8x7w0000abcd12mrg001";
+
+  const invokeMemberReorder = (
+    groupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void } = { onError: () => undefined },
+  ): void => {
+    const handler = capturedMemberReorderByGroup.get(groupId);
+
+    if (handler === undefined) {
+      throw new Error(`onMemberReorder for group ${groupId} was not captured`);
+    }
+
+    handler(groupId, orderedMemberIds, options);
+  };
+
+  it("emits every block schema with the group's members in the new order (length === full scope)", () => {
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12mrm001", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12mrm002", order: 2, groupId: GROUP_ID });
+    const flat = makeSchema({ id: "clp9z8x7w0000abcd12mrf001", order: 3 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flat], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    invokeMemberReorder(GROUP_ID, [m2.schema.id, m1.schema.id]);
+
+    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
+
+    const payload = reorderSchemasMutate.mock.calls[0]?.[0];
+
+    expect(payload).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [m2.schema.id, m1.schema.id, flat.schema.id],
+    });
+    expect(payload?.orderedIds).toHaveLength(3);
+  });
+
+  it("keeps standalone schemas around the group in their existing order", () => {
+    const flatFirst = makeSchema({ id: "clp9z8x7w0000abcd12mrf010", order: 1 });
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12mrm010", order: 2, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12mrm011", order: 3, groupId: GROUP_ID });
+    const flatLast = makeSchema({ id: "clp9z8x7w0000abcd12mrf011", order: 4 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [flatFirst, m1, m2, flatLast],
+          groups: [makeGroup({ id: GROUP_ID })],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    invokeMemberReorder(GROUP_ID, [m2.schema.id, m1.schema.id]);
+
+    expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [flatFirst.schema.id, m2.schema.id, m1.schema.id, flatLast.schema.id],
+    });
+  });
+
+  it("forwards the box revert callback as the mutation onError", () => {
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12mrm020", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12mrm021", order: 2, groupId: GROUP_ID });
+
+    reorderSchemasMutate.mockImplementation(
+      (_payload: unknown, options: { onError?: () => void } | undefined) => {
+        options?.onError?.();
+      },
+    );
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    const onError = vi.fn();
+
+    invokeMemberReorder(GROUP_ID, [m2.schema.id, m1.schema.id], { onError });
+
+    expect(onError).toHaveBeenCalledTimes(1);
   });
 });
 

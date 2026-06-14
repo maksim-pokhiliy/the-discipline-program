@@ -22,6 +22,10 @@ import {
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
 
+import { assertRowGroupMembersContiguous } from "./assertions";
+
+const ORDER_STEP = 10;
+
 const replaceRowModifiers = async (
   tx: TxClient,
   rowId: string,
@@ -210,7 +214,7 @@ export const lmsSchemaRowApi = {
 
     const rows = await prisma.schemaRow.findMany({
       where: { id: { in: [...data.orderedIds] } },
-      select: { id: true, schemaId: true },
+      select: { id: true, schemaId: true, rowGroupId: true },
     });
 
     if (rows.length !== data.orderedIds.length) {
@@ -234,6 +238,20 @@ export const lmsSchemaRowApi = {
         provided: data.orderedIds.length,
         expected: scopeCount,
       });
+    }
+
+    const rowGroupById = new Map(rows.map((r) => [r.id, r.rowGroupId]));
+    const reorderedRows = data.orderedIds.map((id, i) => ({
+      id,
+      rowGroupId: rowGroupById.get(id) ?? null,
+      order: (i + 1) * ORDER_STEP,
+    }));
+    const rowGroupIds = new Set(
+      reorderedRows.flatMap((r) => (r.rowGroupId === null ? [] : [r.rowGroupId])),
+    );
+
+    for (const rowGroupId of rowGroupIds) {
+      assertRowGroupMembersContiguous(reorderedRows, rowGroupId);
     }
 
     try {

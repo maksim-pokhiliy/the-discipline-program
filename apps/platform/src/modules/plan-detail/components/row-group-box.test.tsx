@@ -1,5 +1,7 @@
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 
+import type * as DndKitCore from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { alpha } from "@mui/material";
 import { act, fireEvent, screen, waitForElementToBeRemoved, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -65,6 +67,54 @@ vi.mock("./schema-row-card", () => {
   return { SchemaRowCard: renderSchemaRowCardMock };
 });
 
+let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
+
+vi.mock("@dnd-kit/core", async () => {
+  const actual = await vi.importActual<typeof DndKitCore>("@dnd-kit/core");
+
+  const DndContextMock = ({
+    onDragEnd,
+    children,
+  }: {
+    onDragEnd: (event: DragEndEvent) => void;
+    children: ReactNode;
+  }) => {
+    capturedOnDragEnd = onDragEnd;
+
+    return createElement("div", { "data-testid": "member-dnd-context-mock" }, children);
+  };
+
+  return {
+    ...actual,
+    DndContext: DndContextMock,
+  };
+});
+
+const makeDragEndEvent = (activeId: string, overId: string): DragEndEvent =>
+  ({
+    active: {
+      id: activeId,
+      data: { current: undefined },
+      rect: { current: { initial: null, translated: null } },
+    },
+    over: {
+      id: overId,
+      data: { current: undefined },
+      rect: { width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 },
+    },
+    activatorEvent: new MouseEvent("mousedown"),
+    collisions: null,
+    delta: { x: 0, y: 0 },
+  }) as unknown as DragEndEvent;
+
+const triggerMemberDragEnd = (event: DragEndEvent): void => {
+  if (capturedOnDragEnd === null) {
+    throw new Error("inner DndContext.onDragEnd was not captured");
+  }
+
+  capturedOnDragEnd(event);
+};
+
 const { RowGroupBox } = await import("./row-group-box");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
@@ -107,6 +157,8 @@ const makeRow = (id: string, order: number): SchemaRow => ({
 
 const DEFAULT_MEMBERS = [makeRow("m1", 1), makeRow("m2", 2)];
 
+const onMemberReorder = vi.fn();
+
 const renderBox = (group: RowGroup = makeGroup(), members: SchemaRow[] = DEFAULT_MEMBERS) =>
   render(
     <RowGroupBox
@@ -116,6 +168,7 @@ const renderBox = (group: RowGroup = makeGroup(), members: SchemaRow[] = DEFAULT
       startDate={START_DATE}
       startIndex={0}
       isReorderPending={false}
+      onMemberReorder={onMemberReorder}
     />,
   );
 
@@ -126,6 +179,8 @@ afterEach(() => {
   updateRowGroupMutate.mockReset();
   deleteRowGroupMutate.mockReset();
   deleteRowGroupWithMembersRun.mockReset();
+  onMemberReorder.mockReset();
+  capturedOnDragEnd = null;
 });
 
 describe("RowGroupBox frame", () => {
@@ -329,5 +384,52 @@ describe("RowGroupBox delete-group gesture", () => {
     const dialog = screen.getByRole("dialog");
 
     expect(within(dialog).getByRole("button", { name: "Processing..." })).toBeDisabled();
+  });
+});
+
+describe("RowGroupBox DR-W4E-INGROUP-REORDER: in-group member drag", () => {
+  it("calls onMemberReorder with the group id and the arrayMoved member order", () => {
+    renderBox(makeGroup(), [makeRow("m1", 1), makeRow("m2", 2), makeRow("m3", 3)]);
+
+    triggerMemberDragEnd(makeDragEndEvent("row:m3", "row:m1"));
+
+    expect(onMemberReorder).toHaveBeenCalledTimes(1);
+
+    const call = onMemberReorder.mock.calls[0];
+
+    if (call === undefined) {
+      throw new Error("onMemberReorder was not called");
+    }
+
+    expect(call[0]).toBe(GROUP_ID);
+    expect(call[1]).toEqual(["m3", "m1", "m2"]);
+  });
+
+  it("does NOT call onMemberReorder when the member is dropped on itself", () => {
+    renderBox(makeGroup(), [makeRow("m1", 1), makeRow("m2", 2)]);
+
+    triggerMemberDragEnd(makeDragEndEvent("row:m1", "row:m1"));
+
+    expect(onMemberReorder).not.toHaveBeenCalled();
+  });
+
+  it("reverts the optimistic member order when the lifted mutation reports an error", () => {
+    onMemberReorder.mockImplementation(
+      (_rowGroupId: string, _orderedMemberIds: string[], options: { onError: () => void }) => {
+        options.onError();
+      },
+    );
+
+    const { container } = renderBox(makeGroup(), [makeRow("m1", 1), makeRow("m2", 2)]);
+
+    triggerMemberDragEnd(makeDragEndEvent("row:m2", "row:m1"));
+
+    expect(onMemberReorder).toHaveBeenCalledTimes(1);
+
+    const renderedIds = Array.from(
+      container.querySelectorAll('[data-testid="schema-row-card-mock"]'),
+    ).map((node) => node.getAttribute("data-row-id"));
+
+    expect(renderedIds).toEqual(["m1", "m2"]);
   });
 });

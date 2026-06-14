@@ -1,8 +1,23 @@
 "use client";
 
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
-import { useSortable } from "@dnd-kit/sortable";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box, Stack, alpha } from "@mui/material";
 
@@ -12,7 +27,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteRowGroup, useUpdateRowGroup } from "@app/lib/hooks";
 
-import { rowGroupSortableId } from "../lib/row-item-sortable-id";
+import { rowGroupSortableId, rowSortableId } from "../lib/row-item-sortable-id";
 import { useDeleteRowGroupWithMembers } from "../lib/use-delete-row-group-with-members";
 
 import { RowGroupBoxHead } from "./row-group-box-head";
@@ -38,6 +53,11 @@ type RowGroupBoxProps = {
   startDate: string;
   startIndex: number;
   isReorderPending: boolean;
+  onMemberReorder: (
+    rowGroupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void },
+  ) => void;
 };
 
 export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
@@ -47,6 +67,7 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
   startDate,
   startIndex,
   isReorderPending,
+  onMemberReorder,
 }): ReactElement => {
   const updateRowGroup = useUpdateRowGroup(planId, startDate);
   const deleteRowGroup = useDeleteRowGroup(planId, startDate);
@@ -54,6 +75,16 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
 
   const [isUngroupOpen, setIsUngroupOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [sortedMembers, setSortedMembers] = useState<SchemaRow[]>(members);
+
+  useEffect(() => {
+    setSortedMembers(members);
+  }, [members]);
+
+  const memberSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: rowGroupSortableId(group.id),
@@ -80,6 +111,31 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
       rowGroupId: group.id,
       data: { notes: nextLabel === null ? null : [nextLabel] },
     });
+  };
+
+  const handleMemberDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = sortedMembers.findIndex((member) => rowSortableId(member.id) === active.id);
+    const newIndex = sortedMembers.findIndex((member) => rowSortableId(member.id) === over.id);
+
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+
+    const previousMembers = sortedMembers;
+    const nextMembers = arrayMove(sortedMembers, oldIndex, newIndex);
+
+    setSortedMembers(nextMembers);
+    onMemberReorder(
+      group.id,
+      nextMembers.map((member) => member.id),
+      { onError: () => setSortedMembers(previousMembers) },
+    );
   };
 
   const handleUngroupConfirm = () =>
@@ -111,19 +167,30 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
         onDeleteOpen={() => setIsDeleteOpen(true)}
       />
 
-      <Stack>
-        {members.map((member, offset) => (
-          <SchemaRowCard
-            key={member.id}
-            row={member}
-            planId={planId}
-            startDate={startDate}
-            index={startIndex + offset}
-            isReorderPending={isReorderPending}
-            isDraggable={false}
-          />
-        ))}
-      </Stack>
+      <DndContext
+        sensors={memberSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleMemberDragEnd}
+      >
+        <SortableContext
+          items={sortedMembers.map((member) => rowSortableId(member.id))}
+          strategy={verticalListSortingStrategy}
+        >
+          <Stack>
+            {sortedMembers.map((member, offset) => (
+              <SchemaRowCard
+                key={member.id}
+                row={member}
+                planId={planId}
+                startDate={startDate}
+                index={startIndex + offset}
+                isReorderPending={isReorderPending}
+                isDraggable
+              />
+            ))}
+          </Stack>
+        </SortableContext>
+      </DndContext>
 
       <ConfirmationModal
         open={isUngroupOpen}

@@ -140,6 +140,18 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
     );
   };
 
+  const handleMemberReorder = (
+    groupId: string,
+    orderedMemberIds: string[],
+    options: { onError: () => void },
+  ) => {
+    const orderedIds = sortedItems.flatMap((item) =>
+      item.kind === "group" && item.group.id === groupId ? orderedMemberIds : itemMemberIds(item),
+    );
+
+    reorderSchemas.mutate({ blockId: block.id, orderedIds }, { onError: options.onError });
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -160,6 +172,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 planId={planId}
                 startDate={startDate}
                 parentIsReorderPending={effectiveReorderPending}
+                onMemberReorder={handleMemberReorder}
               />
             ) : (
               <SchemaCard

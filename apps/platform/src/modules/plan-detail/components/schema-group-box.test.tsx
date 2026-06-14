@@ -1,5 +1,7 @@
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 
+import type * as DndKitCore from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { alpha } from "@mui/material";
 import { act, fireEvent, screen, waitForElementToBeRemoved, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -75,6 +77,54 @@ vi.mock("./add-track-button", () => {
   return { AddTrackButton: renderAddTrackButtonMock };
 });
 
+let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
+
+vi.mock("@dnd-kit/core", async () => {
+  const actual = await vi.importActual<typeof DndKitCore>("@dnd-kit/core");
+
+  const DndContextMock = ({
+    onDragEnd,
+    children,
+  }: {
+    onDragEnd: (event: DragEndEvent) => void;
+    children: ReactNode;
+  }) => {
+    capturedOnDragEnd = onDragEnd;
+
+    return createElement("div", { "data-testid": "member-dnd-context-mock" }, children);
+  };
+
+  return {
+    ...actual,
+    DndContext: DndContextMock,
+  };
+});
+
+const makeDragEndEvent = (activeId: string, overId: string): DragEndEvent =>
+  ({
+    active: {
+      id: activeId,
+      data: { current: undefined },
+      rect: { current: { initial: null, translated: null } },
+    },
+    over: {
+      id: overId,
+      data: { current: undefined },
+      rect: { width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 },
+    },
+    activatorEvent: new MouseEvent("mousedown"),
+    collisions: null,
+    delta: { x: 0, y: 0 },
+  }) as unknown as DragEndEvent;
+
+const triggerMemberDragEnd = (event: DragEndEvent): void => {
+  if (capturedOnDragEnd === null) {
+    throw new Error("inner DndContext.onDragEnd was not captured");
+  }
+
+  capturedOnDragEnd(event);
+};
+
 const { SchemaGroupBox } = await import("./schema-group-box");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
@@ -115,6 +165,8 @@ const makeGroup = (overrides: Partial<SchemaGroup> = {}): SchemaGroup => ({
   ...overrides,
 });
 
+const onMemberReorder = vi.fn();
+
 type RenderOptions = {
   group?: SchemaGroup;
   members?: SchemaWithBody[];
@@ -136,6 +188,7 @@ const renderBox = ({
       planId={PLAN_ID}
       startDate={START_DATE}
       parentIsReorderPending={parentIsReorderPending}
+      onMemberReorder={onMemberReorder}
     />,
   );
 
@@ -149,6 +202,8 @@ afterEach(() => {
   updateGroupMutate.mockReset();
   deleteGroupMutate.mockReset();
   deleteGroupWithMembersRun.mockReset();
+  onMemberReorder.mockReset();
+  capturedOnDragEnd = null;
 });
 
 describe("SchemaGroupBox proto frame", () => {
@@ -406,5 +461,58 @@ describe("SchemaGroupBox delete-group gesture", () => {
     const dialog = screen.getByRole("dialog");
 
     expect(within(dialog).getByRole("button", { name: "Processing..." })).toBeDisabled();
+  });
+});
+
+describe("SchemaGroupBox DR-W4E-INGROUP-REORDER: in-group member drag", () => {
+  const M1 = "clp9z8x7w0000abcd1234ir01";
+  const M2 = "clp9z8x7w0000abcd1234ir02";
+  const M3 = "clp9z8x7w0000abcd1234ir03";
+
+  it("calls onMemberReorder with the group id and the arrayMoved member order", () => {
+    renderBox({ members: [makeSchema(M1, 1), makeSchema(M2, 2), makeSchema(M3, 3)] });
+
+    triggerMemberDragEnd(makeDragEndEvent(`schema:${M3}`, `schema:${M1}`));
+
+    expect(onMemberReorder).toHaveBeenCalledTimes(1);
+
+    const call = onMemberReorder.mock.calls[0];
+
+    if (call === undefined) {
+      throw new Error("onMemberReorder was not called");
+    }
+
+    expect(call[0]).toBe(GROUP_ID);
+    expect(call[1]).toEqual([M3, M1, M2]);
+  });
+
+  it("does NOT call onMemberReorder when the member is dropped on itself", () => {
+    renderBox({ members: [makeSchema(M1, 1), makeSchema(M2, 2)] });
+
+    triggerMemberDragEnd(makeDragEndEvent(`schema:${M1}`, `schema:${M1}`));
+
+    expect(onMemberReorder).not.toHaveBeenCalled();
+  });
+
+  it("reverts the optimistic member order when the lifted mutation reports an error", () => {
+    onMemberReorder.mockImplementation(
+      (_groupId: string, _orderedMemberIds: string[], options: { onError: () => void }) => {
+        options.onError();
+      },
+    );
+
+    const { container } = renderBox({
+      members: [makeSchema(M1, 1), makeSchema(M2, 2)],
+    });
+
+    triggerMemberDragEnd(makeDragEndEvent(`schema:${M2}`, `schema:${M1}`));
+
+    expect(onMemberReorder).toHaveBeenCalledTimes(1);
+
+    const renderedIds = Array.from(
+      container.querySelectorAll('[data-testid="group-track-wrapper-mock"]'),
+    ).map((node) => node.getAttribute("data-schema-id"));
+
+    expect(renderedIds).toEqual([M1, M2]);
   });
 });

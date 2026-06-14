@@ -746,6 +746,78 @@ describe("lmsSchemaRowApi", () => {
         }),
       ).toThrow();
     });
+
+    it("rejects a reorder that splits a row-group's contiguous run (DR-W4E-ROWREORDER-CONTIG-SERVER)", async () => {
+      const ctx = await provisionSchema();
+      const group = await cleanupRaw.rowGroup.create({ data: { schemaId: ctx.schema.id } });
+      const g1 = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 10, exerciseId: exerciseAId, rowGroupId: group.id },
+      });
+      const g2 = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 20, exerciseId: exerciseAId, rowGroupId: group.id },
+      });
+      const g3 = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 30, exerciseId: exerciseAId, rowGroupId: group.id },
+      });
+      const standalone = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 40, exerciseId: exerciseAId },
+      });
+
+      try {
+        await expect(
+          lmsSchemaRowApi.reorder(coach.user.id, activePlanId, ctx.schema.id, {
+            orderedIds: [g1.id, standalone.id, g2.id, g3.id],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schemaRow.findMany({
+          where: { schemaId: ctx.schema.id },
+          orderBy: { order: "asc" },
+          select: { id: true, order: true },
+        });
+
+        expect(stored).toEqual([
+          { id: g1.id, order: 10 },
+          { id: g2.id, order: 20 },
+          { id: g3.id, order: 30 },
+          { id: standalone.id, order: 40 },
+        ]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("allows a within-group reorder that keeps the run contiguous", async () => {
+      const ctx = await provisionSchema();
+      const group = await cleanupRaw.rowGroup.create({ data: { schemaId: ctx.schema.id } });
+      const g1 = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 10, exerciseId: exerciseAId, rowGroupId: group.id },
+      });
+      const g2 = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 20, exerciseId: exerciseAId, rowGroupId: group.id },
+      });
+      const g3 = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 30, exerciseId: exerciseAId, rowGroupId: group.id },
+      });
+      const standalone = await cleanupRaw.schemaRow.create({
+        data: { schemaId: ctx.schema.id, order: 40, exerciseId: exerciseAId },
+      });
+
+      try {
+        const returned = await lmsSchemaRowApi.reorder(coach.user.id, activePlanId, ctx.schema.id, {
+          orderedIds: [g3.id, g1.id, g2.id, standalone.id],
+        });
+
+        expect(returned.map((r) => ({ id: r.id, order: r.order }))).toEqual([
+          { id: g3.id, order: 10 },
+          { id: g1.id, order: 20 },
+          { id: g2.id, order: 30 },
+          { id: standalone.id, order: 40 },
+        ]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
   });
 
   describe("cross-cutting", () => {
