@@ -3,13 +3,8 @@ import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
-import { seedBlogPosts } from "./seed/blog-posts";
 import { clearAll } from "./seed/clear-all";
-import { seedContactSubmissions } from "./seed/contact-submissions";
-import { seedMarketingPages } from "./seed/marketing-pages";
-import { seedProducts } from "./seed/products";
 import { seedProfiles } from "./seed/profiles";
-import { seedReviews } from "./seed/reviews";
 import { seedUsers } from "./seed/users";
 
 const prisma = new PrismaClient();
@@ -28,12 +23,6 @@ const main = async (): Promise<void> => {
   const users = await seedUsers(prisma, passwordHash);
 
   await seedProfiles(prisma, users);
-
-  await seedMarketingPages(prisma);
-  await seedProducts(prisma);
-  await seedBlogPosts(prisma);
-  await seedReviews(prisma);
-  await seedContactSubmissions(prisma);
 
   console.log("\nSeed completed!");
 };

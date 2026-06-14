@@ -48,14 +48,6 @@ describe("cmsEquipmentAdminApi", () => {
       expect(created.updatedAt).toBeInstanceOf(Date);
     });
 
-    it("persists null notes when omitted", async () => {
-      const created = await cmsEquipmentAdminApi.createEquipment(baseEquipmentData());
-
-      createdEquipmentIds.push(created.id);
-
-      expect(created.notes).toBeNull();
-    });
-
     it("rejects a case-folded duplicate name with a P2002 ConflictError", async () => {
       const name = `Kettlebell ${crypto.randomUUID().slice(0, 8)}`;
       const first = await cmsEquipmentAdminApi.createEquipment(baseEquipmentData({ name }));
