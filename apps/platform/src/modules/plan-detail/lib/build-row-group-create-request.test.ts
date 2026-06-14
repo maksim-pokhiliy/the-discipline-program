@@ -32,7 +32,11 @@ const R3 = "clp9z8x7w0000abcd12rg1r003";
 
 describe("buildRowGroupCreateRequest", () => {
   it("builds a request with the rowIds sorted by order for a contiguous run", () => {
-    const result = buildRowGroupCreateRequest([makeRow(R2, 2), makeRow(R1, 1)], SCHEMA_ID);
+    const result = buildRowGroupCreateRequest(
+      [makeRow(R2, 2), makeRow(R1, 1)],
+      new Set([R1, R2]),
+      SCHEMA_ID,
+    );
 
     expect(result).toStrictEqual({
       ok: true,
@@ -41,7 +45,12 @@ describe("buildRowGroupCreateRequest", () => {
   });
 
   it("carries notes onto the request when provided", () => {
-    const result = buildRowGroupCreateRequest([makeRow(R1, 1), makeRow(R2, 2)], SCHEMA_ID, ["OR"]);
+    const result = buildRowGroupCreateRequest(
+      [makeRow(R1, 1), makeRow(R2, 2)],
+      new Set([R1, R2]),
+      SCHEMA_ID,
+      ["OR"],
+    );
 
     expect(result.ok).toBe(true);
 
@@ -50,8 +59,12 @@ describe("buildRowGroupCreateRequest", () => {
     }
   });
 
-  it("fails with the coach message for a non-contiguous selection", () => {
-    const result = buildRowGroupCreateRequest([makeRow(R1, 1), makeRow(R3, 3)], SCHEMA_ID);
+  it("fails with the coach message when an unselected row sits between the selection", () => {
+    const result = buildRowGroupCreateRequest(
+      [makeRow(R1, 1), makeRow(R2, 2), makeRow(R3, 3)],
+      new Set([R1, R3]),
+      SCHEMA_ID,
+    );
 
     expect(result.ok).toBe(false);
 
@@ -60,8 +73,21 @@ describe("buildRowGroupCreateRequest", () => {
     }
   });
 
+  it("succeeds for two adjacent rows whose order has a gap from a prior deletion", () => {
+    const result = buildRowGroupCreateRequest(
+      [makeRow(R1, 1), makeRow(R3, 3)],
+      new Set([R1, R3]),
+      SCHEMA_ID,
+    );
+
+    expect(result).toStrictEqual({
+      ok: true,
+      request: { schemaId: SCHEMA_ID, rowIds: [R1, R3], notes: null },
+    });
+  });
+
   it("fails when fewer than two rows are selected", () => {
-    const result = buildRowGroupCreateRequest([makeRow(R1, 1)], SCHEMA_ID);
+    const result = buildRowGroupCreateRequest([makeRow(R1, 1)], new Set([R1]), SCHEMA_ID);
 
     expect(result.ok).toBe(false);
   });

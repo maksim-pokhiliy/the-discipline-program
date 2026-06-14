@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import type { Composition } from "@repo/contracts/lms/composition";
 import { buildRowItems, type RowGroup } from "@repo/contracts/lms/row-group";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
-import { PlusRowButton } from "@repo/ui";
 
 import { deriveMinuteView } from "../lib/derive-minute-view";
 import { useCreateRowGroup } from "../lib/use-create-row-group";
@@ -95,12 +94,10 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
       return;
     }
 
-    const selectedRows = rows.filter((row) => selectedIds.has(row.id));
-
     isFiredRef.current = true;
     void createRowGroup
       .run(
-        { schemaId, rows: selectedRows },
+        { schemaId, rows, selectedIds },
         { onSuccess: exitSelectMode, onError: (message) => toast.error(message) },
       )
       .finally(() => {
@@ -143,7 +140,14 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
         </Button>
 
         {!isSelectMode && ungroupedCount >= MIN_GROUPABLE_ROWS ? (
-          <PlusRowButton onClick={() => setIsSelectMode(true)} label={GROUP_ROWS_LABEL} />
+          <Button
+            size="tiny"
+            variant="text"
+            onClick={() => setIsSelectMode(true)}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            {GROUP_ROWS_LABEL}
+          </Button>
         ) : null}
       </Stack>
 
