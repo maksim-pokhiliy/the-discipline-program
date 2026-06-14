@@ -28,14 +28,11 @@ export const ExercisesEditForm: React.FC<ExercisesEditFormProps> = ({ exercise }
     resolver: zodResolver(createExerciseSchema),
     defaultValues: {
       canonicalName: exercise.canonicalName,
-      primaryEquipment: exercise.primaryEquipment,
-      movementTypeTagPrimary: exercise.movementTypeTagPrimary,
-      movementTypeTagSecondary: exercise.movementTypeTagSecondary,
-      canonicalCompoundType: exercise.canonicalCompoundType,
-      placeholderFlag: exercise.placeholderFlag,
+      nature: exercise.nature,
       movementFamily: exercise.movementFamily,
       defaultDemoUrls: exercise.defaultDemoUrls,
       aliases: exercise.aliases,
+      equipmentIds: exercise.equipment.map((item) => item.id),
       notes: exercise.notes,
     },
   });

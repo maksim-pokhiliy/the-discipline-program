@@ -7,6 +7,7 @@ export const createApi = (client: ApiClient) => ({
   blog: endpoints.createBlogAPI(client),
   contacts: endpoints.createContactsAPI(client),
   dashboard: endpoints.createDashboardAPI(client),
+  equipment: endpoints.createEquipmentAPI(client),
   exercises: endpoints.createExercisesAPI(client),
   labels: endpoints.createLabelsAPI(client),
   pages: endpoints.createPagesAPI(client),

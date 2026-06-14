@@ -7,10 +7,7 @@ import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 
 import { FormCard } from "@app/lib/components/form-card";
 
-import { EQUIPMENT_LABELS, MOVEMENT_TYPE_LABELS } from "../constants";
-
-import { EnumSelectField } from "./enum-select-field";
-import { SecondaryMovementSelect } from "./secondary-movement-select";
+import { EquipmentMultiSelect } from "./equipment-multi-select";
 
 type BasicInfoCardProps = {
   isLoading: boolean;
@@ -39,23 +36,7 @@ export const BasicInfoCard = ({ isLoading }: BasicInfoCardProps) => {
           {...register("canonicalName")}
         />
 
-        <EnumSelectField
-          name="primaryEquipment"
-          label="Primary Equipment"
-          labels={EQUIPMENT_LABELS}
-          error={errors.primaryEquipment}
-          isLoading={isLoading}
-        />
-
-        <EnumSelectField
-          name="movementTypeTagPrimary"
-          label="Primary Movement Type"
-          labels={MOVEMENT_TYPE_LABELS}
-          error={errors.movementTypeTagPrimary}
-          isLoading={isLoading}
-        />
-
-        <SecondaryMovementSelect error={errors.movementTypeTagSecondary} isLoading={isLoading} />
+        <EquipmentMultiSelect isLoading={isLoading} />
       </Stack>
     </FormCard>
   );

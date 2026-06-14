@@ -4,7 +4,6 @@ import { useMemo } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
@@ -22,41 +21,34 @@ import {
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteExercise } from "@app/lib/hooks";
 
-import { COMPOUND_TYPE_LABELS, EQUIPMENT_LABELS, MOVEMENT_TYPE_LABELS } from "../../constants";
+import { NATURE_LABELS } from "../../constants";
 
-const PLACEHOLDER_TRUE = "true";
-const PLACEHOLDER_FALSE = "false";
+const buildEquipmentFilterOptions = (exercises: Exercise[]): { label: string; value: string }[] => {
+  const byId = new Map<string, string>();
 
-const buildEnumOptions = (labels: Record<string, string>): { label: string; value: string }[] =>
-  Object.entries(labels).map(([value, label]) => ({ value, label }));
+  for (const exercise of exercises) {
+    for (const item of exercise.equipment) {
+      byId.set(item.id, item.name);
+    }
+  }
 
-const filters: DataTableFilter<Exercise>[] = [
+  return [...byId.entries()]
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+};
+
+const buildFilters = (exercises: Exercise[]): DataTableFilter<Exercise>[] => [
   {
-    id: "primaryEquipment",
+    id: "equipment",
     label: "Equipment",
-    options: buildEnumOptions(EQUIPMENT_LABELS),
-    match: (exercise, value) => exercise.primaryEquipment === value,
+    options: buildEquipmentFilterOptions(exercises),
+    match: (exercise, value) => exercise.equipment.some((item) => item.id === value),
   },
   {
-    id: "movementTypeTagPrimary",
-    label: "Movement Type",
-    options: buildEnumOptions(MOVEMENT_TYPE_LABELS),
-    match: (exercise, value) => exercise.movementTypeTagPrimary === value,
-  },
-  {
-    id: "canonicalCompoundType",
-    label: "Compound Type",
-    options: buildEnumOptions(COMPOUND_TYPE_LABELS),
-    match: (exercise, value) => exercise.canonicalCompoundType === value,
-  },
-  {
-    id: "placeholderFlag",
-    label: "Placeholder",
-    options: [
-      { label: "Yes", value: PLACEHOLDER_TRUE },
-      { label: "No", value: PLACEHOLDER_FALSE },
-    ],
-    match: (exercise, value) => exercise.placeholderFlag === (value === PLACEHOLDER_TRUE),
+    id: "nature",
+    label: "Nature",
+    options: Object.entries(NATURE_LABELS).map(([value, label]) => ({ value, label })),
+    match: (exercise, value) => exercise.nature === value,
   },
 ];
 
@@ -69,6 +61,8 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
   const deleteMutation = useDeleteExercise();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
+
+  const filters = useMemo(() => buildFilters(exercises), [exercises]);
 
   const columns: Column<Exercise>[] = useMemo(
     () => [
@@ -92,36 +86,29 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
         ),
       },
       {
-        id: "primaryEquipment",
+        id: "equipment",
         label: "Equipment",
-        width: "16%",
-        render: (exercise) => (
-          <Chip
-            label={EQUIPMENT_LABELS[exercise.primaryEquipment]}
-            size="small"
-            variant="outlined"
-          />
-        ),
+        width: "24%",
+        render: (exercise) =>
+          exercise.equipment.length > 0 ? (
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {exercise.equipment.map((item) => (
+                <Chip key={item.id} label={item.name} size="small" variant="outlined" />
+              ))}
+            </Stack>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              —
+            </Typography>
+          ),
       },
       {
-        id: "movementTypeTagPrimary",
-        label: "Movement",
-        width: "16%",
+        id: "nature",
+        label: "Nature",
+        width: "12%",
         render: (exercise) => (
           <Chip
-            label={MOVEMENT_TYPE_LABELS[exercise.movementTypeTagPrimary]}
-            size="small"
-            variant="outlined"
-          />
-        ),
-      },
-      {
-        id: "canonicalCompoundType",
-        label: "Compound",
-        width: "14%",
-        render: (exercise) => (
-          <Chip
-            label={COMPOUND_TYPE_LABELS[exercise.canonicalCompoundType]}
+            label={NATURE_LABELS[exercise.nature]}
             size="small"
             variant="outlined"
             color="primary"
@@ -129,16 +116,14 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
         ),
       },
       {
-        id: "placeholderFlag",
-        label: "Placeholder",
-        width: "8%",
-        align: "center",
-        render: (exercise) =>
-          exercise.placeholderFlag ? (
-            <Tooltip title="Placeholder slot">
-              <HelpOutlineIcon color="primary" fontSize="small" />
-            </Tooltip>
-          ) : null,
+        id: "movementFamily",
+        label: "Movement Family",
+        width: "16%",
+        render: (exercise) => (
+          <Typography variant="body2" color="text.secondary">
+            {exercise.movementFamily ?? "—"}
+          </Typography>
+        ),
       },
       {
         id: "createdAt",
