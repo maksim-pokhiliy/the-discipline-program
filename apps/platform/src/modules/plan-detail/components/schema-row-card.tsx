@@ -167,7 +167,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
       <SchemaRowCardBody
         mainText={fmt.mainText}
         formPillText={fmt.formPillText}
-        subParts={fmt.subParts}
+        summary={fmt.summary}
         minuteLabel={minuteLabel}
       />
 

@@ -4,25 +4,25 @@ import { Stack, Typography } from "@mui/material";
 
 import { FormPill } from "@repo/ui";
 
-import { type FormatRowResult } from "../lib/format-row";
+import { type RowSummary } from "../lib/format-row";
 
 import { MinutePill } from "./minute-pill";
+import { RowSummaryChips } from "./row-summary-chips";
 
-const BODY_GAP_FACTOR = 0.125;
+const BODY_GAP_FACTOR = 0.5;
 const BODY_MAIN_GAP_FACTOR = 0.75;
-const SUB_PART_SEPARATOR = " ";
 
 type SchemaRowCardBodyProps = {
   mainText: string;
   formPillText: string | null;
-  subParts: FormatRowResult["subParts"];
+  summary: RowSummary;
   minuteLabel?: string | null;
 };
 
 export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
   mainText,
   formPillText,
-  subParts,
+  summary,
   minuteLabel = null,
 }) => (
   <Stack direction="column" spacing={BODY_GAP_FACTOR} sx={{ minWidth: 0 }}>
@@ -41,10 +41,6 @@ export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
       {formPillText !== null ? <FormPill text={formPillText} /> : null}
     </Stack>
 
-    {subParts.length > 0 ? (
-      <Typography variant="caption" color="text.subtle" component="span">
-        {subParts.join(SUB_PART_SEPARATOR)}
-      </Typography>
-    ) : null}
+    <RowSummaryChips summary={summary} />
   </Stack>
 );

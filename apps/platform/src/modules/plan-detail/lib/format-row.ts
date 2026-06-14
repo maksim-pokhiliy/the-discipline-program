@@ -5,11 +5,7 @@ import { buildRow } from "./format-row-builders";
 import { type FormatRowResult } from "./format-row.types";
 
 export { type ExerciseById } from "./format-percentage-reference";
-export { type FormatRowResult } from "./format-row.types";
-
-const NOTE_QUOTE = "'";
-
-const formatNote = (note: string): string => `${NOTE_QUOTE}${note}${NOTE_QUOTE}`;
+export { type FormatRowResult, type RowSummary } from "./format-row.types";
 
 export const formatRow = (
   row: SchemaRow,
@@ -18,13 +14,7 @@ export const formatRow = (
 ): FormatRowResult => {
   const built = buildRow(row, exerciseById, index);
   const base = row.media === null ? built : { ...built, demoUrl: row.media.url };
+  const notes = row.notes ?? [];
 
-  if (row.notes === null || row.notes.length === 0) {
-    return base;
-  }
-
-  return {
-    ...base,
-    subParts: [...base.subParts, ...row.notes.map(formatNote)],
-  };
+  return { ...base, summary: { ...base.summary, notes } };
 };
