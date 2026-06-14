@@ -21,8 +21,6 @@ const COACH_MESSAGES = {
   durationNeeded: "Enter a time or distance value.",
   durationNotBoth: "Choose either a single value or a range, not both.",
   perLimbPositive: "Enter a per-limb count greater than 0.",
-  mediaUrl: "Enter a valid demo URL.",
-  mediaLabel: "Add a demo label or leave it blank.",
   modifiersTooMany: "Pick fewer modifiers.",
   modifiersDuplicate: "Remove the duplicate modifier.",
 } as const;
@@ -89,16 +87,6 @@ const coachMessageForReps = (path: ZodIssue["path"], issue: ZodIssue): string | 
   return undefined;
 };
 
-const coachMessageForMedia = (path: ZodIssue["path"]): string | undefined => {
-  const field = stringAt(path, 1);
-
-  if (field === "url") {
-    return COACH_MESSAGES.mediaUrl;
-  }
-
-  return field === "label" ? COACH_MESSAGES.mediaLabel : undefined;
-};
-
 const coachMessageForRoot = (root: string | undefined, issue: ZodIssue): string | undefined => {
   const { path } = issue;
 
@@ -116,10 +104,6 @@ const coachMessageForRoot = (root: string | undefined, issue: ZodIssue): string 
 
   if (root === "side" && stringAt(path, 1) === "countPerLimb") {
     return COACH_MESSAGES.perLimbPositive;
-  }
-
-  if (root === "media") {
-    return coachMessageForMedia(path);
   }
 
   if (root === "modifierIds") {

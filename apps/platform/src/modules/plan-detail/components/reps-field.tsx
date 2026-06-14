@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import { Button, Stack, TextField, ToggleButton } from "@mui/material";
+import { Button, Stack, TextField, ToggleButton, Typography } from "@mui/material";
 
 import {
   REP_NOTATION_KINDS,
@@ -43,12 +43,14 @@ type RepsFieldProps = {
   value: RepNotation | null;
   onChange: (next: RepNotation | null) => void;
   disabled?: boolean;
+  error?: string | undefined;
 };
 
 export const RepsField = ({
   value,
   onChange,
   disabled = false,
+  error,
 }: RepsFieldProps): React.ReactElement => {
   const handleKindChange = (_: unknown, next: RepNotationKind | null): void => {
     if (next === null || next === value?.kind) {
@@ -123,6 +125,12 @@ export const RepsField = ({
       </Stack>
 
       {renderBody()}
+
+      {error !== undefined && (
+        <Typography variant="caption" color="error">
+          {error}
+        </Typography>
+      )}
     </Stack>
   );
 };

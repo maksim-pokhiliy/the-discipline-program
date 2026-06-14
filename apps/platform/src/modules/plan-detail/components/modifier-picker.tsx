@@ -109,6 +109,7 @@ export const ModifierPicker = ({
   label = DEFAULT_LABEL,
   placeholder = DEFAULT_PLACEHOLDER,
   disabled = false,
+  error,
 }: CreatableMultiPickerProps) => {
   const [inputValue, setInputValue] = useState("");
   const [mintedNames, setMintedNames] = useState<ReadonlyMap<string, string>>(() => new Map());
@@ -129,6 +130,16 @@ export const ModifierPicker = ({
     return byId;
   }, [searchResults, resolvedRefs, mintedNames]);
   const valueOptions = useMemo(() => buildValueOptions(value, nameById), [value, nameById]);
+  const options = useMemo<ModifierOption[]>(() => {
+    const searchOptions: ModifierOption[] = searchResults.map((modifier) => ({
+      kind: "existing",
+      modifier,
+    }));
+    const searchIds = new Set(searchOptions.map(getOptionId));
+    const selectedExtras = valueOptions.filter((option) => !searchIds.has(getOptionId(option)));
+
+    return [...searchOptions, ...selectedExtras];
+  }, [searchResults, valueOptions]);
 
   const handleChange = async (_event: SyntheticEvent, chosen: ChosenValue): Promise<void> => {
     const existingIds = collectExistingIds(chosen);
@@ -174,8 +185,14 @@ export const ModifierPicker = ({
       multiple
       freeSolo
       disableCloseOnSelect
+      slotProps={{
+        popper: {
+          placement: "bottom-start",
+          modifiers: [{ name: "flip", enabled: false }],
+        },
+      }}
       disabled={disabled}
-      options={valueOptions}
+      options={options}
       value={valueOptions}
       inputValue={inputValue}
       onInputChange={(_event, next) => setInputValue(next)}
@@ -210,14 +227,17 @@ export const ModifierPicker = ({
       renderInput={(params) => {
         const { InputProps, inputProps, id: paramsId, disabled: paramsDisabled } = params;
         const capHelperText = `Up to ${maxCount} modifiers`;
+        const helperText = error ?? (isAtCap ? capHelperText : undefined);
 
         return (
           <TextField
+            size="small"
             {...(paramsId !== undefined && { id: paramsId })}
             {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
             label={label}
+            error={error !== undefined}
             {...(!isAtCap && { placeholder })}
-            {...(isAtCap && { helperText: capHelperText })}
+            {...(helperText !== undefined && { helperText })}
             inputProps={isAtCap ? { ...inputProps, readOnly: true } : inputProps}
             slotProps={{ input: InputProps }}
           />

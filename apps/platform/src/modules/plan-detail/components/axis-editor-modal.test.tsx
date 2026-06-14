@@ -63,7 +63,7 @@ const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 
 const CREATE_TITLE = "Add schema";
-const EDIT_TITLE = "Container composition";
+const EDIT_TITLE = "Edit schema";
 const HEADER_ARIA = "Inspector header";
 const GROUP_CHECKBOX = /group into one box/i;
 

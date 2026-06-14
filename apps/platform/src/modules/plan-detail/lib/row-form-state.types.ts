@@ -8,8 +8,6 @@ export type RowFormState = {
   side: PerLimbDistribution | null;
   tempoInput: string;
   modifierIds: string[];
-  mediaUrl: string;
-  mediaLabel: string;
   notes: string[];
 };
 

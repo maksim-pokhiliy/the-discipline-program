@@ -3,7 +3,6 @@ import { createElement } from "react";
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -21,29 +20,11 @@ const SCHEMA_ID = "cksch1234567890abcdef01234";
 const ROW_ID = "ckrow1234567890abcdef01234";
 const EXERCISE_ID = "ckabc1234567890abcdef01234";
 
-const makeExercise = (): Exercise => ({
-  id: EXERCISE_ID,
-  canonicalName: "Back Squat",
-  canonicalNameLower: "back squat",
-  primaryEquipment: "BARBELL",
-  movementTypeTagPrimary: "SQUAT",
-  movementTypeTagSecondary: null,
-  canonicalCompoundType: "ATOMIC",
-  placeholderFlag: false,
-  movementFamily: "squat",
-  defaultDemoUrls: [],
-  aliases: [],
-  notes: null,
-  createdAt: NOW,
-  updatedAt: NOW,
-});
-
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
 
   return {
     ...actual,
-    useExercises: () => ({ data: [makeExercise()], isLoading: false }),
     useCreateSchemaRow: () => ({ mutate: createRowMutate, isPending: createRowState.isPending }),
     useUpdateSchemaRow: () => ({ mutate: updateRowMutate, isPending: updateRowState.isPending }),
   };
@@ -154,12 +135,12 @@ describe("RowEditorModal chrome", () => {
 });
 
 describe("RowEditorModal submit", () => {
-  it("disables submit and does not fire create when no exercise is picked", () => {
+  it("keeps submit enabled and does not fire create when no exercise is picked", () => {
     renderCreate();
 
     const submit = screen.getByRole("button", { name: "Add row" });
 
-    expect(submit).toBeDisabled();
+    expect(submit).toBeEnabled();
 
     fireEvent.click(submit);
 
@@ -196,13 +177,16 @@ describe("RowEditorModal submit", () => {
     });
   });
 
-  it("keeps submit disabled while an engaged load is incomplete (QA-002/QA-003)", () => {
+  it("keeps Save enabled and shows an error without firing update when an engaged load is incomplete (QA-002/QA-003)", () => {
     renderEdit(makeRow({ load: { kind: "absolute", count: 1, kg: Number.NaN } }));
 
-    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    const save = screen.getByRole("button", { name: "Save" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(save).toBeEnabled();
+
+    fireEvent.click(save);
 
     expect(updateRowMutate).not.toHaveBeenCalled();
+    expect(screen.getByText("Enter a weight greater than 0.")).toBeInTheDocument();
   });
 });

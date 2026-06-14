@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import { Button, Stack, ToggleButton } from "@mui/material";
+import { Button, Stack, ToggleButton, Typography } from "@mui/material";
 
 import { type Load, LOAD_KINDS, type LoadKind } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
@@ -39,12 +39,14 @@ type LoadEditorProps = {
   value: Load | null;
   onChange: (next: Load | null) => void;
   disabled?: boolean;
+  error?: string | undefined;
 };
 
 export const LoadEditor = ({
   value,
   onChange,
   disabled = false,
+  error,
 }: LoadEditorProps): React.ReactElement => {
   const handleKindChange = (_: unknown, next: LoadKind | null): void => {
     if (next === null || next === value?.kind) {
@@ -97,6 +99,12 @@ export const LoadEditor = ({
       </Stack>
 
       {renderBody()}
+
+      {error !== undefined && (
+        <Typography variant="caption" color="error">
+          {error}
+        </Typography>
+      )}
     </Stack>
   );
 };

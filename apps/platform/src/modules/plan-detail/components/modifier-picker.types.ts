@@ -8,6 +8,7 @@ export type CreatableMultiPickerProps = {
   label?: string | undefined;
   placeholder?: string | undefined;
   disabled?: boolean | undefined;
+  error?: string | undefined;
 };
 
 export type ModifierOption =

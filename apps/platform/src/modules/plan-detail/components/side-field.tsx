@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, ToggleButton } from "@mui/material";
+import { Stack, ToggleButton, Typography } from "@mui/material";
 
 import { type PerLimbDistribution } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
@@ -75,12 +75,14 @@ type SideFieldProps = {
   value: PerLimbDistribution | null;
   onChange: (next: PerLimbDistribution | null) => void;
   disabled?: boolean;
+  error?: string | undefined;
 };
 
 export const SideField = ({
   value,
   onChange,
   disabled = false,
+  error,
 }: SideFieldProps): React.ReactElement => {
   const handleOptionChange = (_: unknown, option: SideOption | null): void => {
     if (option === null) {
@@ -99,29 +101,37 @@ export const SideField = ({
   };
 
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-      <LabeledToggleGroup
-        label={LABEL}
-        value={toOption(value)}
-        onChange={handleOptionChange}
-        disabled={disabled}
-      >
-        {SIDE_OPTIONS.map((option) => (
-          <ToggleButton key={option} value={option}>
-            {SIDE_OPTION_LABELS[option]}
-          </ToggleButton>
-        ))}
-      </LabeledToggleGroup>
-
-      {hasPerLimbCount(value) && (
-        <NumberField
-          label="Per limb"
-          value={value.countPerLimb ?? Number.NaN}
-          onChange={handleCountChange}
-          min={COUNT_FIELD_MIN}
+    <Stack spacing={0.5}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <LabeledToggleGroup
+          label={LABEL}
+          value={toOption(value)}
+          onChange={handleOptionChange}
           disabled={disabled}
-          maxWidth={COUNT_FIELD_WIDTH}
-        />
+        >
+          {SIDE_OPTIONS.map((option) => (
+            <ToggleButton key={option} value={option}>
+              {SIDE_OPTION_LABELS[option]}
+            </ToggleButton>
+          ))}
+        </LabeledToggleGroup>
+
+        {hasPerLimbCount(value) && (
+          <NumberField
+            label="Per limb"
+            value={value.countPerLimb ?? Number.NaN}
+            onChange={handleCountChange}
+            min={COUNT_FIELD_MIN}
+            disabled={disabled}
+            maxWidth={COUNT_FIELD_WIDTH}
+          />
+        )}
+      </Stack>
+
+      {error !== undefined && (
+        <Typography variant="caption" color="error">
+          {error}
+        </Typography>
       )}
     </Stack>
   );

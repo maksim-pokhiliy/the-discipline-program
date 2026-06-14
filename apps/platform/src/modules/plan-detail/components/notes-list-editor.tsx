@@ -7,6 +7,7 @@ import { NOTE_MAX_LENGTH, NOTES_MAX_COUNT } from "@repo/contracts/lms/_shared";
 
 const DEFAULT_ADD_LABEL = "add note";
 const DEFAULT_ARIA_LABEL = "Notes";
+const NOTE_LABEL = "Note";
 const REMOVE_ARIA = "Remove note";
 const NOTE_ROWS = 2;
 const EMPTY_NOTE = "";
@@ -55,6 +56,7 @@ export const NotesListEditor = ({
             multiline
             minRows={NOTE_ROWS}
             size="small"
+            label={NOTE_LABEL}
             value={note}
             onChange={(e) => updateNote(index, e.target.value)}
             inputProps={{ maxLength, "aria-label": `${ariaLabel} ${index + 1}` }}

@@ -32,6 +32,7 @@ type ExercisePickerProps = {
   disabled?: boolean;
   placeholderOnly?: boolean;
   compact?: boolean;
+  label?: string;
 };
 
 export const ExercisePicker = ({
@@ -41,6 +42,7 @@ export const ExercisePicker = ({
   disabled = false,
   placeholderOnly = false,
   compact = false,
+  label,
 }: ExercisePickerProps) => {
   const { data: exercises = [], isLoading } = useExercises();
   const options = placeholderOnly ? exercises.filter((e) => e.placeholderFlag) : exercises;
@@ -86,6 +88,7 @@ export const ExercisePicker = ({
             {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
             {...(paramsId !== undefined && { id: paramsId })}
             inputProps={inputProps}
+            {...(label !== undefined && { label })}
             placeholder={SEARCH_PLACEHOLDER}
             variant="outlined"
             error={error}
