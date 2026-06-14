@@ -201,17 +201,19 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     });
   });
 
-  it("rejects an invalid tempo string before parsing the rest", () => {
+  it("stores a non-4-digit tempo as a free string", () => {
     const state: RowFormState = {
       ...emptyState(),
       exerciseId: EXERCISE_ID,
-      tempoInput: "3-1",
+      tempoInput: "slow tempo",
     };
 
-    expect(buildRowRequest(state, CREATE)).toStrictEqual({
-      ok: false,
-      error: "Tempo must be 4 positions, each 0–60 or X, e.g. 3-1-X-0",
-      field: "tempo",
-    });
+    const result = buildRowRequest(state, CREATE);
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.data).toMatchObject({ tempo: "slow tempo" });
+    }
   });
 });

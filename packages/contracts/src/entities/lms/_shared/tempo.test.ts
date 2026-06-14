@@ -64,7 +64,7 @@ describe("fullTempoSchema", () => {
 });
 
 describe("tempoModifierSchema", () => {
-  it("is the full-tempo quad directly", () => {
+  it("accepts the full-tempo quad", () => {
     expect(
       tempoModifierSchema.safeParse({
         eccentric: 3,
@@ -73,6 +73,18 @@ describe("tempoModifierSchema", () => {
         pauseTop: 0,
       }).success,
     ).toBe(true);
+  });
+
+  it("accepts a bare verbal free string", () => {
+    expect(tempoModifierSchema.safeParse("slow tempo").success).toBe(true);
+  });
+
+  it("accepts a single verbal word", () => {
+    expect(tempoModifierSchema.safeParse("explosive").success).toBe(true);
+  });
+
+  it("rejects an empty string", () => {
+    expect(tempoModifierSchema.safeParse("").success).toBe(false);
   });
 
   it("rejects the dropped verbal slowEccentric form", () => {

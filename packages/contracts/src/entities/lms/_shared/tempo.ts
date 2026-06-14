@@ -9,7 +9,11 @@ export const fullTempoSchema = z.object({
   pauseTop: tempoPositionSchema,
 });
 
-export const tempoModifierSchema = fullTempoSchema;
+const TEMPO_FREE_MAX_LENGTH = 80;
+
+const tempoFreeSchema = z.string().trim().min(1).max(TEMPO_FREE_MAX_LENGTH);
+
+export const tempoModifierSchema = z.union([fullTempoSchema, tempoFreeSchema]);
 
 export type FullTempo = z.infer<typeof fullTempoSchema>;
-export type TempoModifier = FullTempo;
+export type TempoModifier = z.infer<typeof tempoModifierSchema>;

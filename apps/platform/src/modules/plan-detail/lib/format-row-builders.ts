@@ -46,7 +46,7 @@ const buildSubParts = (row: SchemaRow, exerciseById: ExerciseById): string[] => 
   }
 
   if (row.tempo !== null) {
-    out.push(`[${formatTempo(row.tempo)}]`);
+    out.push(`[${typeof row.tempo === "string" ? row.tempo : formatTempo(row.tempo)}]`);
   }
 
   for (const modifier of row.modifiers) {

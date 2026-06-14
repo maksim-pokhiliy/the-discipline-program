@@ -21,22 +21,32 @@ describe("formatTempoInput", () => {
 
     expect(formatTempoInput(tempo)).toBe("3-1-X-0");
   });
+
+  it("returns a free-string tempo verbatim", () => {
+    expect(formatTempoInput("slow tempo")).toBe("slow tempo");
+  });
 });
 
 describe("formatTempoInput round-trips with parseTempo", () => {
   it("re-parses a serialized numeric tempo to the same value", () => {
     const tempo: TempoModifier = { eccentric: 4, pauseBottom: 0, concentric: 1, pauseTop: 2 };
 
-    expect(parseTempo(formatTempoInput(tempo))).toStrictEqual({ ok: true, value: tempo });
+    expect(parseTempo(formatTempoInput(tempo))).toStrictEqual(tempo);
   });
 
   it("re-parses a serialized X-hold tempo to the same value", () => {
     const tempo: TempoModifier = { eccentric: "X", pauseBottom: 2, concentric: "X", pauseTop: 0 };
 
-    expect(parseTempo(formatTempoInput(tempo))).toStrictEqual({ ok: true, value: tempo });
+    expect(parseTempo(formatTempoInput(tempo))).toStrictEqual(tempo);
+  });
+
+  it("re-parses a serialized free-string tempo to the same value", () => {
+    const tempo: TempoModifier = "explosive";
+
+    expect(parseTempo(formatTempoInput(tempo))).toBe("explosive");
   });
 
   it("re-parses a serialized cleared tempo to null", () => {
-    expect(parseTempo(formatTempoInput(null))).toStrictEqual({ ok: true, value: null });
+    expect(parseTempo(formatTempoInput(null))).toBeNull();
   });
 });

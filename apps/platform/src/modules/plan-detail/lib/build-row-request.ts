@@ -53,18 +53,12 @@ const issueToError = (issues: ZodIssue[]): { error: string; field?: string } => 
 };
 
 export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowRequestResult => {
-  const tempo = parseTempo(state.tempoInput);
-
-  if (!tempo.ok) {
-    return { ok: false, error: tempo.error, field: "tempo" };
-  }
-
   const payload: RowRequestPayload = {
     sets: state.sets,
     load: state.load,
     reps: state.reps,
     side: state.side,
-    tempo: tempo.value,
+    tempo: parseTempo(state.tempoInput),
     modifierIds: state.modifierIds,
     notes: buildNotes(state.notes),
   };
