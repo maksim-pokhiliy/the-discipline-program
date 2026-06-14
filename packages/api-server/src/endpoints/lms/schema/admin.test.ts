@@ -3,7 +3,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
+import {
+  cleanupRaw,
+  createTestCoach,
+  createTestExercise,
+  createTestPlan,
+} from "../../../test/helpers";
 
 import { lmsSchemaApi } from "./admin";
 
@@ -22,6 +27,7 @@ describe("lmsSchemaApi", () => {
 
   let activePlanId: string;
   let archivedPlanId: string;
+  let exerciseId: string;
 
   let weekCounter = 0;
 
@@ -101,6 +107,10 @@ describe("lmsSchemaApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
+
+    const exercise = await createTestExercise();
+
+    exerciseId = exercise.id;
   });
 
   afterAll(async () => {
@@ -146,6 +156,8 @@ describe("lmsSchemaApi", () => {
 
     await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
+
+    await cleanupRaw.exercise.delete({ where: { id: exerciseId } }).catch(() => {});
 
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: otherCoach.profile.id } }).catch(() => {});
@@ -700,7 +712,7 @@ describe("lmsSchemaApi", () => {
         data: {
           schemaId: target.id,
           order: 10,
-          exerciseId: "clz0000000000000schemaex1",
+          exerciseId,
         },
       });
 
