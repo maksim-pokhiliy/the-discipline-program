@@ -27,16 +27,16 @@ const EMPTY_MAP: ExerciseById = new Map();
 
 describe("formatLoad", () => {
   describe("absolute kind", () => {
-    it("renders '<kg> kg' for a single implement", () => {
+    it("renders '@<kg>kg' for a single implement", () => {
       const load: Load = { kind: "absolute", count: 1, kg: 15 };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("15 kg");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("@15kg");
     });
 
-    it("renders '2× <kg> kg' for a paired implement", () => {
+    it("renders '@2x<kg>kg' for a paired implement", () => {
       const load: Load = { kind: "absolute", count: 2, kg: 16 };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("2× 16 kg");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("@2x16kg");
     });
   });
 

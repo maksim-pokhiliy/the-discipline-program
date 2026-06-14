@@ -60,7 +60,9 @@ describe("formatCompositionSummary rest labels", () => {
       rest: { duration: { value: 3, unit: "range_min", rangeMax: 5 }, scope: "between_rounds" },
     };
 
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "rest 3–5’" }]);
+    expect(formatCompositionSummary(composition)).toEqual([
+      { text: "rest 3–5 min between rounds" },
+    ]);
   });
 
   it("emits the repetition part before the rest part", () => {
@@ -71,7 +73,7 @@ describe("formatCompositionSummary rest labels", () => {
 
     expect(formatCompositionSummary(composition)).toEqual([
       { text: "3 rounds" },
-      { text: "rest 60 sec" },
+      { text: "rest 60s between rounds" },
     ]);
   });
 
