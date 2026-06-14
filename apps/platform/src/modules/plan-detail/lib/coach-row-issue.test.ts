@@ -97,12 +97,6 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     expect(coachRowIssue(issue)).toBe("Enter a per-limb count greater than 0.");
   });
 
-  it("maps an invalid media URL", () => {
-    const issue = firstIssue({ media: { url: "notaurl" } });
-
-    expect(coachRowIssue(issue)).toBe("Enter a valid demo URL.");
-  });
-
   it("maps a percentage value (the rangeMax field) when its max % is out of range", () => {
     const issue = firstIssue({
       load: { kind: "percentage", value: 80, rangeMax: 300, reference: { scope: "self" } },

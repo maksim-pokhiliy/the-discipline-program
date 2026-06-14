@@ -22,7 +22,16 @@ import { RowEditorModal } from "./row-editor-modal";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
-const GRID_TEMPLATE_COLUMNS_SELECT = "32px 24px 24px 32px 1fr auto auto auto";
+const GRID_TEMPLATE_COLUMNS_NO_DRAG = "24px 32px 1fr auto auto auto";
+const GRID_TEMPLATE_COLUMNS_SELECT = "auto 24px 24px 32px 1fr auto auto auto";
+
+const gridTemplateFor = (isSelectMode: boolean, isDraggable: boolean): string => {
+  if (isSelectMode) {
+    return GRID_TEMPLATE_COLUMNS_SELECT;
+  }
+
+  return isDraggable ? GRID_TEMPLATE_COLUMNS : GRID_TEMPLATE_COLUMNS_NO_DRAG;
+};
 const GRID_GAP_FACTOR = 1.25;
 const PADDING_X_FACTOR = 1.5;
 const PADDING_Y_FACTOR = 1;
@@ -103,7 +112,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
       style={style}
       sx={(theme) => ({
         display: "grid",
-        gridTemplateColumns: isSelectMode ? GRID_TEMPLATE_COLUMNS_SELECT : GRID_TEMPLATE_COLUMNS,
+        gridTemplateColumns: gridTemplateFor(isSelectMode, isDraggable),
         gap: theme.spacing(GRID_GAP_FACTOR),
         alignItems: "center",
         px: theme.spacing(PADDING_X_FACTOR),
@@ -121,7 +130,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           checked={isSelected}
           onChange={() => onToggleSelect?.(row.id)}
           inputProps={{ "aria-label": SELECT_ARIA }}
-          sx={{ p: 0 }}
         />
       ) : null}
 
@@ -144,9 +152,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         >
           <DragIndicatorIcon fontSize="small" />
         </IconButton>
-      ) : (
-        <span />
-      )}
+      ) : null}
 
       <Typography
         variant="caption"

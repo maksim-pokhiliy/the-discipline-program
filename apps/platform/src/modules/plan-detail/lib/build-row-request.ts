@@ -2,7 +2,6 @@ import type { ZodIssue } from "zod";
 
 import type {
   Load,
-  MediaReference,
   PerLimbDistribution,
   RepNotation,
   TempoModifier,
@@ -23,7 +22,7 @@ const REQUEST_BUILD_FALLBACK = "could not build the row request.";
 
 export type RowRequestResult =
   | { ok: true; data: CreateSchemaRowRequest | UpdateSchemaRowRequest }
-  | { ok: false; error: string };
+  | { ok: false; error: string; field?: string };
 
 type RowRequestPayload = {
   sets: number | null;
@@ -31,21 +30,8 @@ type RowRequestPayload = {
   reps: RepNotation | null;
   side: PerLimbDistribution | null;
   tempo: TempoModifier | null;
-  media: MediaReference | null;
   modifierIds: string[];
   notes: string[] | null;
-};
-
-const buildMedia = (url: string, label: string): MediaReference | null => {
-  const trimmedUrl = url.trim();
-
-  if (trimmedUrl === "") {
-    return null;
-  }
-
-  const trimmedLabel = label.trim();
-
-  return trimmedLabel === "" ? { url: trimmedUrl } : { url: trimmedUrl, label: trimmedLabel };
 };
 
 const buildNotes = (notes: string[]): string[] | null => {
@@ -54,17 +40,23 @@ const buildNotes = (notes: string[]): string[] | null => {
   return cleaned.length === 0 ? null : cleaned;
 };
 
-const issueToError = (issues: ZodIssue[]): string => {
+const issueToError = (issues: ZodIssue[]): { error: string; field?: string } => {
   const [issue] = issues;
 
-  return issue === undefined ? REQUEST_BUILD_FALLBACK : coachRowIssue(issue);
+  if (issue === undefined) {
+    return { error: REQUEST_BUILD_FALLBACK };
+  }
+
+  const field = typeof issue.path[0] === "string" ? issue.path[0] : undefined;
+
+  return { error: coachRowIssue(issue), ...(field !== undefined && { field }) };
 };
 
 export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowRequestResult => {
   const tempo = parseTempo(state.tempoInput);
 
   if (!tempo.ok) {
-    return { ok: false, error: tempo.error };
+    return { ok: false, error: tempo.error, field: "tempo" };
   }
 
   const payload: RowRequestPayload = {
@@ -73,7 +65,6 @@ export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowR
     reps: state.reps,
     side: state.side,
     tempo: tempo.value,
-    media: buildMedia(state.mediaUrl, state.mediaLabel),
     modifierIds: state.modifierIds,
     notes: buildNotes(state.notes),
   };
@@ -83,11 +74,11 @@ export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowR
 
     return parsed.success
       ? { ok: true, data: parsed.data }
-      : { ok: false, error: issueToError(parsed.error.issues) };
+      : { ok: false, ...issueToError(parsed.error.issues) };
   }
 
   if (state.exerciseId === null) {
-    return { ok: false, error: NO_EXERCISE_ERROR };
+    return { ok: false, error: NO_EXERCISE_ERROR, field: "exerciseId" };
   }
 
   const parsed = createSchemaRowSchema.safeParse({
@@ -98,5 +89,5 @@ export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowR
 
   return parsed.success
     ? { ok: true, data: parsed.data }
-    : { ok: false, error: issueToError(parsed.error.issues) };
+    : { ok: false, ...issueToError(parsed.error.issues) };
 };

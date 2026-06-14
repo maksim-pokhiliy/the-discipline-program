@@ -6,18 +6,18 @@ import { formatRepNotation } from "./format-rep-notation";
 
 describe("formatRepNotation", () => {
   describe("count kind", () => {
-    it("renders '<value> reps'", () => {
+    it("renders the bare count", () => {
       const r: RepNotation = { kind: "count", value: 5 };
 
-      expect(formatRepNotation(r)).toBe("5 reps");
+      expect(formatRepNotation(r)).toBe("5");
     });
   });
 
   describe("range kind", () => {
-    it("renders '<min>–<max> reps' with EN DASH", () => {
+    it("renders '<min>–<max>' with EN DASH", () => {
       const r: RepNotation = { kind: "range", min: 6, max: 10 };
 
-      expect(formatRepNotation(r)).toBe("6–10 reps");
+      expect(formatRepNotation(r)).toBe("6–10");
     });
   });
 

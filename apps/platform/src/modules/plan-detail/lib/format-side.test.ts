@@ -48,19 +48,19 @@ describe("formatSide", () => {
   });
 
   describe("alternating kind", () => {
-    it("renders 'alt.' when sourceAnnotation is omitted", () => {
+    it("renders 'alternating' when sourceAnnotation is omitted", () => {
       const s: PerLimbDistribution = { kind: "alternating" };
 
-      expect(formatSide(s)).toBe("alt.");
+      expect(formatSide(s)).toBe("alternating");
     });
 
-    it("renders 'alt. (<annotation>)' when sourceAnnotation is set", () => {
+    it("renders 'alternating (<annotation>)' when sourceAnnotation is set", () => {
       const s: PerLimbDistribution = {
         kind: "alternating",
         sourceAnnotation: "alt-source",
       };
 
-      expect(formatSide(s)).toBe("alt. (alt-source)");
+      expect(formatSide(s)).toBe("alternating (alt-source)");
     });
   });
 });

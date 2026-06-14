@@ -4,8 +4,9 @@ import {
   type RestAxis,
 } from "@repo/contracts/lms/composition";
 
+import { formatRestSpec } from "./format-rest-spec";
+
 const MINUTE_MARK = "’";
-const SECOND_MARK = " sec";
 const STEP_SEPARATOR = "-";
 
 export type CompositionSummaryPart = { text: string };
@@ -31,13 +32,7 @@ const repetitionLabel = (repetition: RepetitionAxis): string => {
   }
 };
 
-const restLabel = (rest: RestAxis): string => {
-  const max = rest.duration.rangeMax;
-  const range = max === undefined ? `${rest.duration.value}` : `${rest.duration.value}–${max}`;
-  const mark = rest.duration.unit.endsWith("min") ? MINUTE_MARK : SECOND_MARK;
-
-  return `rest ${range}${mark}`;
-};
+const restLabel = (rest: RestAxis): string => formatRestSpec(rest);
 
 const buildStructuralParts = (composition: Composition): CompositionSummaryPart[] => {
   const parts: CompositionSummaryPart[] = [];

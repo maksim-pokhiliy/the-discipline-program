@@ -1,6 +1,5 @@
 import { type RepNotation } from "@repo/contracts/lms/_shared";
 
-const REPS_SUFFIX = " reps";
 const RANGE_SEPARATOR = "–";
 const SPACE = " ";
 const MAX_LABEL = "max";
@@ -8,9 +7,9 @@ const MAX_LABEL = "max";
 export const formatRepNotation = (reps: RepNotation): string => {
   switch (reps.kind) {
     case "count":
-      return `${reps.value}${REPS_SUFFIX}`;
+      return String(reps.value);
     case "range":
-      return `${reps.min}${RANGE_SEPARATOR}${reps.max}${REPS_SUFFIX}`;
+      return `${reps.min}${RANGE_SEPARATOR}${reps.max}`;
     case "unit_bound": {
       if (reps.value !== undefined) {
         return `${reps.value}${SPACE}${reps.unit}`;

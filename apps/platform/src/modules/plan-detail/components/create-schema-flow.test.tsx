@@ -56,6 +56,35 @@ const StatefulFlow: React.FC<{ seed: DraftSeed }> = ({ seed }) => {
         draftRef.current = next;
         setDraft(next);
       }}
+      onUpdateNode={(id, patch) =>
+        setDraft((prev) => {
+          if (prev.mode !== "schema" || prev.schema.id !== id) {
+            return prev;
+          }
+
+          const next: DraftSeed = { mode: "schema", schema: patch(prev.schema) };
+
+          draftRef.current = next;
+
+          return next;
+        })
+      }
+      onRename={(id, header) =>
+        setDraft((prev) => {
+          if (prev.mode !== "schema" || prev.schema.id !== id) {
+            return prev;
+          }
+
+          const next: DraftSeed = {
+            mode: "schema",
+            schema: { ...prev.schema, header: header === "" ? null : header },
+          };
+
+          draftRef.current = next;
+
+          return next;
+        })
+      }
       linkIntoBox={linkIntoBox}
       onLinkIntoBoxChange={(next) => {
         linkRef.current = next;

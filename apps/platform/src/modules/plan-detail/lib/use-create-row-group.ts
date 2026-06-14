@@ -17,6 +17,7 @@ const SUCCESS_MESSAGE = "Group created";
 type RunArgs = {
   schemaId: string;
   rows: SchemaRow[];
+  selectedIds: ReadonlySet<string>;
 };
 
 type RunOptions = {
@@ -37,10 +38,10 @@ export const useCreateRowGroup = (planId: string, startDate: string): UseCreateR
   const [isPending, setIsPending] = useState(false);
 
   const run = async (
-    { schemaId, rows }: RunArgs,
+    { schemaId, rows, selectedIds }: RunArgs,
     { onSuccess, onError }: RunOptions,
   ): Promise<void> => {
-    const built = buildRowGroupCreateRequest(rows, schemaId);
+    const built = buildRowGroupCreateRequest(rows, selectedIds, schemaId);
 
     if (!built.ok) {
       onError(built.error);

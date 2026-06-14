@@ -8,8 +8,7 @@ import { formatSide } from "./format-side";
 import { formatTempo } from "./format-tempo";
 
 const EXERCISE_FALLBACK = "exercise";
-const SETS_PREFIX = "×";
-const MODIFIER_SEPARATOR = ", ";
+const SETS_SUFFIX = " ×";
 
 const resolveExerciseName = (exerciseId: string, exerciseById: ExerciseById): string =>
   exerciseById.get(exerciseId)?.canonicalName ?? EXERCISE_FALLBACK;
@@ -31,7 +30,7 @@ const buildSubParts = (row: SchemaRow, exerciseById: ExerciseById): string[] => 
   const out: string[] = [];
 
   if (row.sets !== null) {
-    out.push(`${SETS_PREFIX}${row.sets}`);
+    out.push(`${row.sets}${SETS_SUFFIX}`);
   }
 
   if (row.reps !== null) {
@@ -43,15 +42,15 @@ const buildSubParts = (row: SchemaRow, exerciseById: ExerciseById): string[] => 
   }
 
   if (row.side !== null) {
-    out.push(formatSide(row.side));
+    out.push(`[${formatSide(row.side)}]`);
   }
 
   if (row.tempo !== null) {
-    out.push(formatTempo(row.tempo));
+    out.push(`[${formatTempo(row.tempo)}]`);
   }
 
-  if (row.modifiers.length > 0) {
-    out.push(row.modifiers.map((modifier) => modifier.name).join(MODIFIER_SEPARATOR));
+  for (const modifier of row.modifiers) {
+    out.push(`[${modifier.name}]`);
   }
 
   return out;

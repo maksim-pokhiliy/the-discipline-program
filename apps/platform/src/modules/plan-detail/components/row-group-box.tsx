@@ -21,7 +21,6 @@ import { SchemaRowCard } from "./schema-row-card";
 const ROW_GROUP_BOX_TEST_ID = "row-group-box";
 const FRAME_BORDER_ALPHA = 0.35;
 const FRAME_BG_ALPHA = 0.03;
-const FRAME_BORDER_RADIUS_FACTOR = 0.5;
 const FIRST_NOTE_INDEX = 0;
 const DRAG_OPACITY_DRAGGING = 0.5;
 const DRAG_OPACITY_DEFAULT = 1;
@@ -98,7 +97,6 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
       data-testid={ROW_GROUP_BOX_TEST_ID}
       sx={(theme) => ({
         border: `1px solid ${alpha(theme.palette.primary.main, FRAME_BORDER_ALPHA)}`,
-        borderRadius: theme.spacing(FRAME_BORDER_RADIUS_FACTOR),
         bgcolor: alpha(theme.palette.primary.main, FRAME_BG_ALPHA),
         overflow: "hidden",
       })}

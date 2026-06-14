@@ -23,7 +23,7 @@ import { CreateSchemaFlow } from "./create-schema-flow";
 import { DerivedLabelCard } from "./derived-label-card";
 
 const CREATE_TITLE = "Add schema";
-const EDIT_TITLE = "Container composition";
+const EDIT_TITLE = "Edit schema";
 const CREATE_SUBMIT = "Add schema";
 const EDIT_SUBMIT = "Save";
 const FLAT_KIND = "flat";
@@ -267,6 +267,8 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
         <CreateSchemaFlow
           draft={seed}
           onDraftChange={onDraftChange}
+          onUpdateNode={onUpdateNode}
+          onRename={onRename}
           linkIntoBox={linkIntoBox}
           onLinkIntoBoxChange={isInGroupAdd ? undefined : setLinkIntoBox}
         />

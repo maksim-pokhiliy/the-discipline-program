@@ -16,27 +16,32 @@ export type RowGroupCreateRequestResult =
   | { ok: true; request: CreateRowGroupRequest }
   | { ok: false; error: string };
 
-const isContiguousByOrder = (orders: number[]): boolean => {
-  const min = Math.min(...orders);
-  const max = Math.max(...orders);
-
-  return max - min + CONTIGUITY_SPAN_OFFSET === orders.length;
-};
-
 export const buildRowGroupCreateRequest = (
   rows: SchemaRow[],
+  selectedIds: ReadonlySet<string>,
   schemaId: string,
   notes: string[] | null = null,
 ): RowGroupCreateRequestResult => {
   const sorted = [...rows].sort((a, b) => a.order - b.order);
 
-  if (!isContiguousByOrder(sorted.map((row) => row.order))) {
+  const selectedInOrder = sorted
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => selectedIds.has(row.id));
+
+  const first = selectedInOrder[0];
+  const last = selectedInOrder[selectedInOrder.length - 1];
+  const isContiguous =
+    first !== undefined &&
+    last !== undefined &&
+    last.index - first.index + CONTIGUITY_SPAN_OFFSET === selectedInOrder.length;
+
+  if (!isContiguous) {
     return { ok: false, error: NON_CONTIGUOUS_ERROR };
   }
 
   const parsed = createRowGroupRequestSchema.safeParse({
     schemaId,
-    rowIds: sorted.map((row) => row.id),
+    rowIds: selectedInOrder.map(({ row }) => row.id),
     notes,
   });
 

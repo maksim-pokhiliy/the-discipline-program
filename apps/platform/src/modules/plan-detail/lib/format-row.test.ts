@@ -78,14 +78,7 @@ describe("formatRow", () => {
       });
       const result = formatRow(row, exerciseById, 0);
 
-      expect(result.subParts).toEqual([
-        "×3",
-        "5 reps",
-        "BW",
-        "each leg",
-        "Tempo 3-1-1-0",
-        "from sofa",
-      ]);
+      expect(result.subParts).toEqual(["3 ×", "5", "BW", "[each leg]", "[3-1-1-0]", "[from sofa]"]);
     });
   });
 

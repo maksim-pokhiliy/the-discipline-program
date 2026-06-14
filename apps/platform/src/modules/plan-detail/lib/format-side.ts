@@ -5,7 +5,7 @@ const EACH_ARM_LABEL = "each arm";
 const SPACE = " ";
 const LEFT_LABEL = "L";
 const RIGHT_LABEL = "R";
-const ALTERNATING_BASE = "alt.";
+const ALTERNATING_BASE = "alternating";
 const ANNOTATION_OPEN = " (";
 const ANNOTATION_CLOSE = ")";
 

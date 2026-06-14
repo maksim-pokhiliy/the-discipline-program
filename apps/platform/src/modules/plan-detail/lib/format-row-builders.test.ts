@@ -33,10 +33,10 @@ describe("buildRow", () => {
     });
     const result = buildRow(row, exerciseById, 0);
 
-    expect(result.subParts).toEqual(["×4", "5 reps", "BW", "each leg", "Tempo 3-1-1-0"]);
+    expect(result.subParts).toEqual(["4 ×", "5", "BW", "[each leg]", "[3-1-1-0]"]);
   });
 
-  it("joins modifier names into a single sub-part", () => {
+  it("renders each modifier as its own bracketed sub-part", () => {
     const row = makeExerciseRow({
       modifiers: [
         {
@@ -59,7 +59,8 @@ describe("buildRow", () => {
     });
     const result = buildRow(row, exerciseById, 0);
 
-    expect(result.subParts).toContain("from sofa, neutral grip");
+    expect(result.subParts).toContain("[from sofa]");
+    expect(result.subParts).toContain("[neutral grip]");
   });
 
   it("marks a placeholderFlag exercise as dashed with no demo url", () => {

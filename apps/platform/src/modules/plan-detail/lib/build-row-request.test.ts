@@ -17,8 +17,6 @@ const emptyState = (): RowFormState => ({
   side: null,
   tempoInput: "",
   modifierIds: [],
-  mediaUrl: "",
-  mediaLabel: "",
   notes: [],
 });
 
@@ -30,8 +28,6 @@ const fullState = (): RowFormState => ({
   side: { kind: "each_leg", countPerLimb: 10 },
   tempoInput: "3-1-X-0",
   modifierIds: [MODIFIER_ID],
-  mediaUrl: "https://example.com/demo",
-  mediaLabel: "demo",
   notes: ["from sofa", "  keep tight  "],
 });
 
@@ -49,7 +45,6 @@ describe("buildRowRequest create (QA-004)", () => {
         load: { kind: "absolute", count: 2, kg: 60 },
         side: { kind: "each_leg", countPerLimb: 10 },
         tempo: { eccentric: 3, pauseBottom: 1, concentric: "X", pauseTop: 0 },
-        media: { url: "https://example.com/demo", label: "demo" },
         modifierIds: [MODIFIER_ID],
         notes: ["from sofa", "keep tight"],
       },
@@ -71,34 +66,16 @@ describe("buildRowRequest create (QA-004)", () => {
         reps: null,
         side: null,
         tempo: null,
-        media: null,
         modifierIds: [],
         notes: null,
       },
     });
   });
 
-  it("drops a demo label that has no URL", () => {
-    const state: RowFormState = {
-      ...emptyState(),
-      exerciseId: EXERCISE_ID,
-      mediaUrl: "",
-      mediaLabel: "orphan label",
-    };
-
-    const result = buildRowRequest(state, CREATE);
-
-    expect(result.ok).toBe(true);
-
-    if (result.ok) {
-      expect(result.data.media).toBeNull();
-    }
-  });
-
   it("rejects a create with no exercise picked with the coach message", () => {
     const result = buildRowRequest(emptyState(), CREATE);
 
-    expect(result).toStrictEqual({ ok: false, error: "Pick an exercise" });
+    expect(result).toStrictEqual({ ok: false, error: "Pick an exercise", field: "exerciseId" });
   });
 });
 
@@ -128,7 +105,6 @@ describe("buildRowRequest edit (QA-004)", () => {
         reps: null,
         side: null,
         tempo: null,
-        media: null,
         modifierIds: [],
         notes: null,
       },
@@ -147,6 +123,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "Enter a weight greater than 0.",
+      field: "load",
     });
   });
 
@@ -160,6 +137,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "Add a label for each profile weight.",
+      field: "load",
     });
   });
 
@@ -173,6 +151,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "Max % must be higher than the %.",
+      field: "load",
     });
   });
 
@@ -190,6 +169,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "Pick the reference exercise.",
+      field: "load",
     });
   });
 
@@ -203,6 +183,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "The min reps must be lower than the max.",
+      field: "reps",
     });
   });
 
@@ -216,6 +197,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "Enter a time or distance value.",
+      field: "reps",
     });
   });
 
@@ -229,6 +211,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
       error: "Tempo must be 4 positions, each 0–60 or X, e.g. 3-1-X-0",
+      field: "tempo",
     });
   });
 });

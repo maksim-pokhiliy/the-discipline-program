@@ -102,7 +102,11 @@ describe("useCreateRowGroup", () => {
 
     await act(async () => {
       await view.result.current.run(
-        { schemaId: SCHEMA_ID, rows: [makeRow(R2, 2), makeRow(R1, 1)] },
+        {
+          schemaId: SCHEMA_ID,
+          rows: [makeRow(R2, 2), makeRow(R1, 1)],
+          selectedIds: new Set([R1, R2]),
+        },
         { onSuccess, onError },
       );
     });
@@ -130,7 +134,11 @@ describe("useCreateRowGroup", () => {
 
     await act(async () => {
       await view.result.current.run(
-        { schemaId: SCHEMA_ID, rows: [makeRow(R1, 1), makeRow(R3, 3)] },
+        {
+          schemaId: SCHEMA_ID,
+          rows: [makeRow(R1, 1), makeRow(R2, 2), makeRow(R3, 3)],
+          selectedIds: new Set([R1, R3]),
+        },
         { onSuccess, onError },
       );
     });
@@ -152,7 +160,11 @@ describe("useCreateRowGroup", () => {
 
     await act(async () => {
       await view.result.current.run(
-        { schemaId: SCHEMA_ID, rows: [makeRow(R1, 1), makeRow(R2, 2)] },
+        {
+          schemaId: SCHEMA_ID,
+          rows: [makeRow(R1, 1), makeRow(R2, 2)],
+          selectedIds: new Set([R1, R2]),
+        },
         { onSuccess, onError },
       );
     });
@@ -181,7 +193,11 @@ describe("useCreateRowGroup", () => {
 
     await act(async () => {
       runPromise = view.result.current.run(
-        { schemaId: SCHEMA_ID, rows: [makeRow(R1, 1), makeRow(R2, 2)] },
+        {
+          schemaId: SCHEMA_ID,
+          rows: [makeRow(R1, 1), makeRow(R2, 2)],
+          selectedIds: new Set([R1, R2]),
+        },
         { onSuccess: vi.fn(), onError: vi.fn() },
       );
     });

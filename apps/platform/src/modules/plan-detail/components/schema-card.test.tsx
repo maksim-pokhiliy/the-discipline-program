@@ -442,12 +442,12 @@ describe("SchemaCard edit-axes affordance", () => {
     expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
   });
 
-  it("opens the edit AxisEditorModal (title 'Container composition') when Edit axes is clicked", () => {
+  it("opens the edit AxisEditorModal (title 'Edit schema') when Edit axes is clicked", () => {
     renderSchemaCard();
 
     fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
 
-    expect(screen.getByRole("dialog", { name: "Container composition" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Edit schema" })).toBeInTheDocument();
   });
 });
 

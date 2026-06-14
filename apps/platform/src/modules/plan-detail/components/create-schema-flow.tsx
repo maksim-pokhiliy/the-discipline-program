@@ -11,12 +11,18 @@ import {
   materializeParallel,
 } from "../lib/parallel-ladder-draft";
 
-import type { DraftSeed, GroupDraft, RepetitionAxis, SchemaDraft } from "./axes/axis-draft.types";
+import type {
+  DraftSeed,
+  GroupDraft,
+  NodeId,
+  RepetitionAxis,
+  SchemaDraft,
+} from "./axes/axis-draft.types";
 import { AxisFieldSection } from "./axes/axis-field-section";
 import { AxisModeButtonGrid } from "./axes/axis-mode-button-grid";
 import { REPETITION_TILES } from "./axes/axis-modes";
+import { ContainerInspector } from "./axes/container-inspector";
 import { type LadderTrack, LadderTrackStack } from "./axes/ladder-track-stack";
-import { RepetitionAxisField } from "./axes/repetition-axis-field";
 import { REPETITION_DEFAULTS } from "./axes/repetition-defaults";
 import { GroupIntoBoxCheckbox } from "./group-into-box-checkbox";
 import { KindSwitchConfirm } from "./kind-switch-confirm";
@@ -65,6 +71,8 @@ const discardsAuthoredContent = (draft: DraftSeed): boolean => {
 type CreateSchemaFlowProps = {
   draft: DraftSeed;
   onDraftChange: (next: DraftSeed) => void;
+  onUpdateNode: (id: NodeId, patch: (schema: SchemaDraft) => SchemaDraft) => void;
+  onRename: (id: NodeId, header: string) => void;
   linkIntoBox?: boolean;
   onLinkIntoBoxChange?: ((checked: boolean) => void) | undefined;
 };
@@ -72,6 +80,8 @@ type CreateSchemaFlowProps = {
 export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
   draft,
   onDraftChange,
+  onUpdateNode,
+  onRename,
   linkIntoBox = true,
   onLinkIntoBoxChange,
 }) => {
@@ -105,12 +115,6 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
   };
 
   const handleCancelKind = (): void => setPendingKind(null);
-
-  const handleRepetitionChange = (next: RepetitionAxis): void => {
-    if (draft.mode === "schema") {
-      onDraftChange({ mode: "schema", schema: { ...draft.schema, repetition: next } });
-    }
-  };
 
   const handleChangeTrack = (index: number, steps: number[]): void => {
     if (draft.mode === "group") {
@@ -157,9 +161,13 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
 
   if (activeKind !== LADDER_KIND && draft.mode === "schema") {
     return (
-      <RepetitionAxisField
-        value={draft.schema.repetition ?? REPETITION_DEFAULTS[FALLBACK_KIND]}
-        onChange={handleRepetitionChange}
+      <ContainerInspector
+        container={draft.schema}
+        isCreateMode
+        headerEditable
+        onUpdateNode={onUpdateNode}
+        onRename={onRename}
+        onDemoteNode={undefined}
       />
     );
   }

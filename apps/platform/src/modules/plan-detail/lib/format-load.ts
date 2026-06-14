@@ -5,8 +5,8 @@ import { type ExerciseById, formatPercentageReference } from "./format-percentag
 const PERCENT_SUFFIX = "%";
 const RANGE_SEPARATOR = "–";
 const SPACE = " ";
-const KG_SUFFIX = " kg";
-const PAIR_PREFIX = "2× ";
+const KG_SUFFIX = "kg";
+const PAIR_PREFIX = "2x";
 const BW_LABEL = "BW";
 const BY_PROFILE_SEPARATOR = " / ";
 
@@ -16,9 +16,9 @@ const formatProfileEntry = (entry: { label: string; kg: number }): string =>
 export const formatLoad = (load: Load, exerciseById: ExerciseById): string => {
   switch (load.kind) {
     case "absolute": {
-      const body = `${load.kg}${KG_SUFFIX}`;
+      const prefix = load.count === 2 ? PAIR_PREFIX : "";
 
-      return load.count === 2 ? `${PAIR_PREFIX}${body}` : body;
+      return `@${prefix}${load.kg}${KG_SUFFIX}`;
     }
     case "percentage": {
       const head =
