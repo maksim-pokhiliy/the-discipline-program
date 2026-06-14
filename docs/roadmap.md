@@ -3,14 +3,14 @@
 > **Mission.** Ship the MVP: a CrossFit coach (Denys) programs training cycles in our constructor faster than his Excel, his athletes follow the plan, log results, and see their records — and he pays for it. Everything below is the path from **today** to that launch. Nothing more.
 
 **Owner:** Maksim. **Reviewed:** at the start of every working session (this file is the top of the planning stack — see `docs/process.md`).
-**Last synced:** 2026-06-13.
+**Last synced:** 2026-06-14.
 
 ---
 
 ## Where we are now (honest snapshot)
 
 - **Monorepo is mature:** 3 apps (marketing / platform / admin), contracts / api-server (Prisma) / api-client / query / auth (next-auth) / ui / mui — all real. Upstash ratelimit + redis, Sentry wired. Dev DB on Neon (`db:reset` world, no migrations yet).
-- **The session primitive is being rebuilt** (`initiatives/session-primitive`): the model the coach authors a workout in. W1–W3 merged; **W4 design is FROZEN** (the whole notation grid maps to the model, zero open questions). W4 implementation is the immediate next build.
+- **The session primitive is being rebuilt** (`initiatives/session-primitive`): the model the coach authors a workout in. **W1 → W4-editor all merged** (PRs #261–#265) — the W4 row-grammar model + the coach authoring page are built. The **W4E live-test follow-ups** (tempo smart-union, schema-group create-as-rows, in-group drag + DnD polish, session-with-block, row-summary chips) are in **PR #268** (awaiting the gated suite + browser walkthrough). `primitive-spec.md` is FROZEN (zero open grid rows). The **catalog pass** is the immediate next build.
 - **Known-wrong, deliberately deferred:** `Performed*` / `OneRMRecord` (athlete logging + records) are stubs from before the rebuild — redesigned in Phase 3 against the frozen primitive, not patched now.
 - **Not started:** payments (no provider wired), production infra (Vercel/Neon-prod not configured), lifecycle emails beyond auth basics.
 
@@ -38,14 +38,14 @@ Each phase has an **Outcome** (what is TRUE when it's done) and an **Exit** (the
 ### Phase 1 — Primitive freeze · the coach can author ANYTHING ⟵ _in flight_
 
 - **Outcome.** The coach can express any workout he writes — including a maximally-evil CrossFit session — in the constructor, and read it back unambiguously. The model has zero parsing-residue debt.
-- **Key work.** `session-primitive` W4 (the row-grammar model build + the coach-platform authoring page) → the **catalog pass** (equipment library, exercise nature `concrete|placeholder|rest`, drop dead movement-type tags) → reseed.
+- **Key work.** `session-primitive` W4 (the row-grammar model + the coach-platform authoring page — DONE, PRs #264/#265 + the W4E follow-ups in PR #268) → the **catalog pass** (equipment library, exercise nature `concrete|placeholder|rest`, drop dead movement-type tags) → reseed.
 - **Exit (self-test).** The orchestrator writes the hardest CrossFit workouts (the A–E evil fixture + more); Maksim builds each one **by hand in the UI** with no model gap. `primitive-spec.md` stays frozen; gated suites green on a reseeded DB.
-- **Status.** Design frozen (D-FLOORS … D-HEADER-KEEP). Next: author the W4 `/feature` prompt.
+- **Status.** W4-model + W4-editor MERGED (PRs #264/#265); the W4E live-test follow-ups are in PR #268 (tempo smart-union · schema-group create-as-rows · in-group drag + DnD polish · session-with-block · row-summary chips). Next: the **catalog pass** (equipment library + `concrete|placeholder|rest` nature enum + drop dead movement-type tags) → reseed → the e2e self-test (build the evil A–E fixtures by hand).
 
 ### Phase 2 — Coach station complete · programming is faster than Excel
 
 - **Outcome.** The coach's daily surface is fully usable and genuinely faster than his spreadsheet — the explicit promise of the bar.
-- **Key work.** Reuse features (clone week / day / block, saved compositions) — the persona's pain #1; coach profile UI; the authoring-flow polish surfaced during Phase 1's self-test (incl. the LABEL-FLOW-UX searchable create-on-the-fly picker, shared with the row-modifier picker).
+- **Key work.** Reuse features (clone week / day / block, saved compositions) — the persona's pain #1; coach profile UI; the authoring-flow polish surfaced during Phase 1's self-test (incl. the LABEL-FLOW-UX searchable create-on-the-fly picker, shared with the row-modifier picker). The owner-requested **DnD group-creation** (create groups by dragging schema-onto-schema / row-onto-row + drag-in / drag-out) belongs here too — it pairs naturally with the clone/duplication work (both manipulate whole subtrees); see `initiatives/session-primitive/deferred.md` → DND-GROUP-CREATE.
 - **Exit.** Maksim programs a full multi-week cycle end-to-end, timed, and it beats the Excel baseline.
 
 ### Phase 3 — Athlete core + honest coach metrics
