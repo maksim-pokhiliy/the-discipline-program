@@ -32,6 +32,7 @@ const NOW = new Date("2026-01-06T00:00:00.000Z");
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const DRAG_HANDLE_ARIA = "Drag schema";
+const SELECT_CHECKBOX_ARIA = "Select schema";
 
 const makeMember = (id: string): SchemaWithBody => ({
   schema: {
@@ -98,5 +99,38 @@ describe("GroupTrackWrapper member card is draggable in-group (DR-W4E-INGROUP-RE
     );
 
     expect(screen.getByRole("button", { name: DRAG_HANDLE_ARIA })).toBeInTheDocument();
+  });
+});
+
+describe("group member is structurally unselectable in select-mode (W4R-001-CLIENT)", () => {
+  it("renders NO select checkbox on a boxed member even though GroupTrackWrapper accepts no select props", () => {
+    renderWrapper();
+
+    expect(screen.queryByRole("checkbox", { name: SELECT_CHECKBOX_ARIA })).toBeNull();
+  });
+
+  it("renders the select checkbox on a standalone SchemaCard when select-mode is active", () => {
+    render(
+      <SchemaCard
+        schema={makeMember("clp9z8x7w0000abcd1234mm11")}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        isSelectMode
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: SELECT_CHECKBOX_ARIA })).toBeInTheDocument();
+  });
+
+  it("renders NO select checkbox on a standalone SchemaCard outside select-mode", () => {
+    render(
+      <SchemaCard
+        schema={makeMember("clp9z8x7w0000abcd1234mm12")}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.queryByRole("checkbox", { name: SELECT_CHECKBOX_ARIA })).toBeNull();
   });
 });
