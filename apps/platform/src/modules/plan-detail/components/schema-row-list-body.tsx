@@ -154,6 +154,7 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                 index={index}
                 minuteLabel={minuteLabelById.get(item.row.id) ?? null}
                 isReorderPending={effectiveReorderPending}
+                isDraggable={!isSelectMode}
                 isSelectMode={isSelectMode}
                 isSelected={selectedIds.has(item.row.id)}
                 onToggleSelect={onToggleSelect}

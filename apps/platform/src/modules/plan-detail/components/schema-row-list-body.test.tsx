@@ -20,6 +20,7 @@ vi.mock("./schema-row-card", () => {
     row: SchemaRow;
     index: number;
     minuteLabel?: string | null;
+    isDraggable?: boolean;
     isSelectMode?: boolean;
     isSelected?: boolean;
     onToggleSelect?: (rowId: string) => void;
@@ -31,6 +32,7 @@ vi.mock("./schema-row-card", () => {
         "data-row-id": props.row.id,
         "data-index": String(props.index),
         "data-minute-label": props.minuteLabel ?? "",
+        "data-draggable": props.isDraggable === false ? "false" : "true",
         "data-select-mode": props.isSelectMode ? "true" : "false",
         "data-selected": props.isSelected ? "true" : "false",
       },
@@ -225,6 +227,22 @@ describe("SchemaRowListBody select mode", () => {
     );
 
     expect(onToggleSelect).toHaveBeenCalledWith(R1);
+  });
+
+  it("disables standalone SchemaRowCard drag while select-mode is active (QA-B-06)", () => {
+    const draggableWhenIdle = renderBody([makeRow({ id: R1, order: 1 })]);
+
+    expect(screen.getByTestId("schema-row-card-mock")).toHaveAttribute("data-draggable", "true");
+
+    draggableWhenIdle.unmount();
+
+    renderBody([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })], [], {
+      isSelectMode: true,
+    });
+
+    for (const card of screen.getAllByTestId("schema-row-card-mock")) {
+      expect(card).toHaveAttribute("data-draggable", "false");
+    }
   });
 });
 

@@ -181,6 +181,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 planId={planId}
                 startDate={startDate}
                 parentIsReorderPending={effectiveReorderPending}
+                isDraggable={!isSelectMode}
                 isSelectMode={isSelectMode}
                 isSelected={selectedIds.has(item.schema.schema.id)}
                 onToggleSelect={toggleSelected}

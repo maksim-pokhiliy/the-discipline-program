@@ -121,6 +121,14 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
 
     expect(coachRowIssue(issue)).toBe("Pick fewer modifiers.");
   });
+
+  it("maps an over-long free tempo note (QA-A-01)", () => {
+    const issue = firstIssue({ tempo: "x".repeat(81) });
+
+    expect(coachRowIssue(issue)).toBe(
+      "Shorten the tempo to a 4-digit code like 3-1-X-0 or a brief note.",
+    );
+  });
 });
 
 describe("coachRowIssue fallthrough", () => {

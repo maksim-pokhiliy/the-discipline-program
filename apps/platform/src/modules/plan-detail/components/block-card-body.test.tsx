@@ -44,6 +44,7 @@ vi.mock("./schema-card", () => {
   const renderSchemaCardMock = (props: {
     schema: SchemaWithBody;
     parentIsReorderPending?: boolean;
+    isDraggable?: boolean;
     isSelectMode?: boolean;
     isSelected?: boolean;
     onToggleSelect?: (schemaId: string) => void;
@@ -55,6 +56,7 @@ vi.mock("./schema-card", () => {
         "data-testid": "schema-card-mock",
         "data-schema-id": props.schema.schema.id,
         "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
+        "data-draggable": props.isDraggable === false ? "false" : "true",
         "data-select-mode": props.isSelectMode === true ? "true" : "false",
         "data-selected": props.isSelected === true ? "true" : "false",
         onClick: () => props.onToggleSelect?.(props.schema.schema.id),
@@ -631,6 +633,29 @@ describe("BlockCardBody DR-W4E-SG-WRAP: schema-group select-mode create", () => 
 
     for (const card of cards) {
       expect(card).toHaveAttribute("data-select-mode", "true");
+    }
+  });
+
+  it("disables standalone SchemaCard drag while select-mode is active (QA-B-06)", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw0d0", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw0d1", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    for (const card of screen.getAllByTestId("schema-card-mock")) {
+      expect(card).toHaveAttribute("data-draggable", "true");
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    for (const card of screen.getAllByTestId("schema-card-mock")) {
+      expect(card).toHaveAttribute("data-draggable", "false");
     }
   });
 

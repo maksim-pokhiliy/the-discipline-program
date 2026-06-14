@@ -216,4 +216,18 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
       expect(result.data).toMatchObject({ tempo: "slow tempo" });
     }
   });
+
+  it("rejects an over-long free tempo with coach prose (QA-A-01)", () => {
+    const state: RowFormState = {
+      ...emptyState(),
+      exerciseId: EXERCISE_ID,
+      tempoInput: "x".repeat(81),
+    };
+
+    expect(buildRowRequest(state, CREATE)).toStrictEqual({
+      ok: false,
+      error: "Shorten the tempo to a 4-digit code like 3-1-X-0 or a brief note.",
+      field: "tempo",
+    });
+  });
 });
