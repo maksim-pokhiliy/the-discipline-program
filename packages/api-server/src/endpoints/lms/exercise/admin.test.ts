@@ -4,6 +4,7 @@ import { createExerciseSchema, type CreateExerciseData } from "@repo/contracts/l
 import { ConflictError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
+import { cmsEquipmentAdminApi } from "../equipment/admin";
 
 import { cmsExerciseAdminApi } from "./admin";
 
@@ -11,14 +12,11 @@ const ZERO_WIDTH_SPACE = "​";
 
 const baseExerciseData = (overrides: Partial<CreateExerciseData> = {}): CreateExerciseData => ({
   canonicalName: `Test Exercise ${crypto.randomUUID().slice(0, 8)}`,
-  primaryEquipment: "BARBELL",
-  movementTypeTagPrimary: "SQUAT",
-  movementTypeTagSecondary: null,
-  canonicalCompoundType: "ATOMIC",
-  placeholderFlag: false,
+  nature: "CONCRETE",
   movementFamily: null,
   defaultDemoUrls: [],
   aliases: [],
+  equipmentIds: [],
   notes: null,
   ...overrides,
 });
@@ -30,6 +28,7 @@ describe("cmsExerciseAdminApi", () => {
   const createdIds: string[] = [];
   const createdOneRMIds: string[] = [];
   const createdUserIds: string[] = [];
+  const createdEquipmentIds: string[] = [];
 
   afterEach(async () => {
     for (const id of createdOneRMIds.splice(0).reverse()) {
@@ -38,6 +37,10 @@ describe("cmsExerciseAdminApi", () => {
 
     for (const id of createdIds.splice(0).reverse()) {
       await cleanupRaw.exercise.delete({ where: { id } }).catch(() => {});
+    }
+
+    for (const id of createdEquipmentIds.splice(0).reverse()) {
+      await cleanupRaw.equipment.delete({ where: { id } }).catch(() => {});
     }
 
     for (const id of createdUserIds.splice(0).reverse()) {
@@ -285,17 +288,28 @@ describe("cmsExerciseAdminApi", () => {
   });
 
   describe("mapToExercise round-trip via createExercise (QA-Must-8)", () => {
-    it("returns DTO with derived canonicalNameLower and round-tripped arrays/enums", async () => {
+    it("returns DTO with derived canonicalNameLower and round-tripped arrays/nature/equipment", async () => {
+      const barbell = await cmsEquipmentAdminApi.createEquipment({
+        name: `Barbell ${crypto.randomUUID().slice(0, 8)}`,
+        notes: null,
+      });
+
+      createdEquipmentIds.push(barbell.id);
+
+      const kettlebell = await cmsEquipmentAdminApi.createEquipment({
+        name: `Kettlebell ${crypto.randomUUID().slice(0, 8)}`,
+        notes: null,
+      });
+
+      createdEquipmentIds.push(kettlebell.id);
+
       const data = baseExerciseData({
         canonicalName: "Full Payload Exercise",
-        primaryEquipment: "KETTLEBELL",
-        movementTypeTagPrimary: "HINGE",
-        movementTypeTagSecondary: "PULL",
-        canonicalCompoundType: "COMPOUND_PLUS",
-        placeholderFlag: false,
+        nature: "CONCRETE",
         movementFamily: "kettlebell-swings",
         defaultDemoUrls: ["https://example.com/swing-1", "https://example.com/swing-2"],
         aliases: ["Russian Swing", "American Swing"],
+        equipmentIds: [barbell.id, kettlebell.id],
         notes: "Hip-dominant power production.",
       });
 
@@ -305,17 +319,14 @@ describe("cmsExerciseAdminApi", () => {
 
       expect(created.canonicalName).toBe("Full Payload Exercise");
       expect(created.canonicalNameLower).toBe("full payload exercise");
-      expect(created.primaryEquipment).toBe("KETTLEBELL");
-      expect(created.movementTypeTagPrimary).toBe("HINGE");
-      expect(created.movementTypeTagSecondary).toBe("PULL");
-      expect(created.canonicalCompoundType).toBe("COMPOUND_PLUS");
-      expect(created.placeholderFlag).toBe(false);
+      expect(created.nature).toBe("CONCRETE");
       expect(created.movementFamily).toBe("kettlebell-swings");
       expect(created.defaultDemoUrls).toEqual([
         "https://example.com/swing-1",
         "https://example.com/swing-2",
       ]);
       expect(created.aliases).toEqual(["Russian Swing", "American Swing"]);
+      expect(created.equipment.map((e) => e.id)).toEqual([barbell.id, kettlebell.id]);
       expect(created.notes).toBe("Hip-dominant power production.");
       expect(created.createdAt).toBeInstanceOf(Date);
       expect(created.updatedAt).toBeInstanceOf(Date);
@@ -324,6 +335,7 @@ describe("cmsExerciseAdminApi", () => {
 
       expect(fetched.defaultDemoUrls).toEqual(created.defaultDemoUrls);
       expect(fetched.aliases).toEqual(created.aliases);
+      expect(fetched.equipment.map((e) => e.id)).toEqual([barbell.id, kettlebell.id]);
       expect(fetched.canonicalNameLower).toBe(created.canonicalNameLower);
     });
   });

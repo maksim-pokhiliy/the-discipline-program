@@ -1,6 +1,7 @@
 export * from "./_shared";
 export * from "./block";
 export * from "./day";
+export * from "./equipment";
 export * from "./exercise";
 export * from "./label";
 export * from "./modifier";

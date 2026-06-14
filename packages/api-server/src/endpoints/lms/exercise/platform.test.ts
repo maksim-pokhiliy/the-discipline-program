@@ -14,14 +14,11 @@ const EXERCISE_FIELDS = [
   "id",
   "canonicalName",
   "canonicalNameLower",
-  "primaryEquipment",
-  "movementTypeTagPrimary",
-  "movementTypeTagSecondary",
-  "canonicalCompoundType",
-  "placeholderFlag",
+  "nature",
   "movementFamily",
   "defaultDemoUrls",
   "aliases",
+  "equipment",
   "notes",
   "createdAt",
   "updatedAt",
@@ -29,14 +26,11 @@ const EXERCISE_FIELDS = [
 
 const baseExerciseData = (overrides: Partial<CreateExerciseData> = {}): CreateExerciseData => ({
   canonicalName: `Platform Test ${crypto.randomUUID().slice(0, 8)}`,
-  primaryEquipment: "BARBELL",
-  movementTypeTagPrimary: "SQUAT",
-  movementTypeTagSecondary: null,
-  canonicalCompoundType: "ATOMIC",
-  placeholderFlag: false,
+  nature: "CONCRETE",
   movementFamily: null,
   defaultDemoUrls: [],
   aliases: [],
+  equipmentIds: [],
   notes: null,
   ...overrides,
 });
@@ -141,12 +135,10 @@ describe("lmsExercisePlatformApi.list", () => {
     expect(typeof found.id).toBe("string");
     expect(typeof found.canonicalName).toBe("string");
     expect(typeof found.canonicalNameLower).toBe("string");
-    expect(typeof found.primaryEquipment).toBe("string");
-    expect(typeof found.movementTypeTagPrimary).toBe("string");
-    expect(typeof found.canonicalCompoundType).toBe("string");
-    expect(typeof found.placeholderFlag).toBe("boolean");
+    expect(typeof found.nature).toBe("string");
     expect(Array.isArray(found.defaultDemoUrls)).toBe(true);
     expect(Array.isArray(found.aliases)).toBe(true);
+    expect(Array.isArray(found.equipment)).toBe(true);
     expect(found.createdAt).toBeInstanceOf(Date);
     expect(found.updatedAt).toBeInstanceOf(Date);
   });

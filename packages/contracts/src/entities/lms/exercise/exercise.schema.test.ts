@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { EXERCISE_CONSTANTS } from "./exercise.constants";
 import { createExerciseSchema, updateExerciseSchema } from "./exercise.schema";
 
+const cuidA = "clz1234567890123456789aaa";
+const cuidB = "clz1234567890123456789bbb";
+
 const baseInput = {
   canonicalName: "Back Squat",
-  primaryEquipment: "BARBELL" as const,
-  movementTypeTagPrimary: "SQUAT" as const,
 };
 
 const ZERO_WIDTH_SPACE = "​";
@@ -18,11 +19,26 @@ describe("createExerciseSchema", () => {
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data.canonicalCompoundType).toBe("ATOMIC");
-      expect(result.data.placeholderFlag).toBe(false);
+      expect(result.data.nature).toBe("CONCRETE");
       expect(result.data.defaultDemoUrls).toEqual([]);
       expect(result.data.aliases).toEqual([]);
     }
+  });
+
+  it("accepts an explicit nature", () => {
+    const result = createExerciseSchema.safeParse({ ...baseInput, nature: "REST" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.nature).toBe("REST");
+    }
+  });
+
+  it("rejects an unknown nature", () => {
+    const result = createExerciseSchema.safeParse({ ...baseInput, nature: "ATOMIC" });
+
+    expect(result.success).toBe(false);
   });
 
   it("rejects empty canonicalName (AC-T6)", () => {
@@ -107,34 +123,36 @@ describe("createExerciseSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects PLACEHOLDER compound type with placeholderFlag=false (QA-010)", () => {
-    const result = createExerciseSchema.safeParse({
-      ...baseInput,
-      canonicalCompoundType: "PLACEHOLDER",
-      placeholderFlag: false,
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects ATOMIC compound type with placeholderFlag=true (QA-010)", () => {
-    const result = createExerciseSchema.safeParse({
-      ...baseInput,
-      canonicalCompoundType: "ATOMIC",
-      placeholderFlag: true,
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts PLACEHOLDER compound type with placeholderFlag=true (QA-010)", () => {
-    const result = createExerciseSchema.safeParse({
-      ...baseInput,
-      canonicalCompoundType: "PLACEHOLDER",
-      placeholderFlag: true,
-    });
+  it("accepts a create payload with equipmentIds", () => {
+    const result = createExerciseSchema.safeParse({ ...baseInput, equipmentIds: [cuidA, cuidB] });
 
     expect(result.success).toBe(true);
+  });
+
+  it("rejects duplicate equipmentIds", () => {
+    const result = createExerciseSchema.safeParse({
+      ...baseInput,
+      equipmentIds: [cuidA, cuidA],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects more equipmentIds than the cap", () => {
+    const tooMany = Array.from(
+      { length: EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH + 1 },
+      (_, i) => `clz123456789012345678${i.toString().padStart(4, "x")}`,
+    );
+
+    const result = createExerciseSchema.safeParse({ ...baseInput, equipmentIds: tooMany });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-cuid equipmentId", () => {
+    const result = createExerciseSchema.safeParse({ ...baseInput, equipmentIds: ["not-a-cuid"] });
+
+    expect(result.success).toBe(false);
   });
 });
 
@@ -151,11 +169,20 @@ describe("updateExerciseSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("enforces placeholder cross-field refine on partial updates (QA-010)", () => {
-    const result = updateExerciseSchema.safeParse({
-      canonicalCompoundType: "PLACEHOLDER",
-      placeholderFlag: false,
-    });
+  it("accepts a nature-only update", () => {
+    const result = updateExerciseSchema.safeParse({ nature: "PLACEHOLDER" });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an equipmentIds-only update", () => {
+    const result = updateExerciseSchema.safeParse({ equipmentIds: [cuidA] });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects duplicate equipmentIds on update", () => {
+    const result = updateExerciseSchema.safeParse({ equipmentIds: [cuidA, cuidA] });
 
     expect(result.success).toBe(false);
   });

@@ -109,10 +109,7 @@ describe("lmsSchemaRowApi", () => {
       data: {
         canonicalName: `SchemaRow Test Exercise A ${uniqueA}`,
         canonicalNameLower: `schemarow test exercise a ${uniqueA}`,
-        primaryEquipment: "BARBELL",
-        movementTypeTagPrimary: "SQUAT",
-        canonicalCompoundType: "ATOMIC",
-        placeholderFlag: false,
+        nature: "CONCRETE",
         defaultDemoUrls: [],
       },
     });
@@ -123,10 +120,7 @@ describe("lmsSchemaRowApi", () => {
       data: {
         canonicalName: `SchemaRow Test Exercise B ${uniqueB}`,
         canonicalNameLower: `schemarow test exercise b ${uniqueB}`,
-        primaryEquipment: "DUMBBELL",
-        movementTypeTagPrimary: "PRESS",
-        canonicalCompoundType: "ATOMIC",
-        placeholderFlag: false,
+        nature: "CONCRETE",
         defaultDemoUrls: [],
       },
     });

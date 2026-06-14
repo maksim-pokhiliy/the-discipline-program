@@ -484,52 +484,10 @@ enum DayOfWeek {
   SUNDAY
 }
 
-enum Equipment {
-  ASSAULT_BIKE
-  ATLAS_STONE
-  BAND
-  BARBELL
-  BODYWEIGHT
-  BOX
-  BOX_OR_SOFA
-  DUMBBELL
-  JUMP_ROPE
-  KETTLEBELL
-  MIXED
-  PARALLEL_BARS
-  RINGS
-  ROW_ERG
-  SKI_ERG
-  SLED
-  SOFA
-  UNKNOWN
-  YOKE
-}
-
-enum MovementType {
-  SQUAT
-  HINGE
-  PRESS
-  PULL
-  LUNGE
-  CARRY
-  LOCOMOTION
-  STATIC_HOLD
-  ROTATIONAL
-  CARDIO_FLOW
-  CORE
-  COMBINED_OLYMPIC
-  RAISE
-  EXTENSION
-  UNKNOWN
-}
-
-enum CanonicalCompoundType {
-  ATOMIC
-  COMPOUND_PLUS
-  COMPOSITE_NAMED
+enum ExerciseNature {
+  CONCRETE
   PLACEHOLDER
-  ALTERNATIVE_OR
+  REST
 }
 
 enum OneRMRecordSource {
@@ -685,38 +643,66 @@ model SchemaRow {
   updatedAt  DateTime @updatedAt
 
   schema                     Schema                      @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  exercise                   Exercise                    @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   rowGroup                   RowGroup?                   @relation(fields: [rowGroupId], references: [id], onDelete: SetNull)
   modifierAssignments        RowModifierAssignment[]
   performedExerciseInstances PerformedExerciseInstance[]
 
   @@unique([schemaId, order])
   @@index([schemaId, order])
+  @@index([exerciseId])
   @@index([rowGroupId])
   @@map("training_schema_rows")
 }
 
 model Exercise {
-  id                       String                @id @default(cuid())
-  canonicalName            String
-  canonicalNameLower       String                @unique
-  primaryEquipment         Equipment
-  movementTypeTagPrimary   MovementType
-  movementTypeTagSecondary MovementType?
-  defaultDemoUrls          String[]
-  canonicalCompoundType    CanonicalCompoundType
-  placeholderFlag          Boolean               @default(false)
-  movementFamily           String?
-  defaultLoad              Json?
-  aliases                  Json?
-  notes                    String?
-  createdAt                DateTime              @default(now())
-  updatedAt                DateTime              @updatedAt
+  id                 String         @id @default(cuid())
+  canonicalName      String
+  canonicalNameLower String         @unique
+  nature             ExerciseNature @default(CONCRETE)
+  defaultDemoUrls    String[]
+  movementFamily     String?
+  aliases            Json?
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  oneRMRecords OneRMRecord[]
+  oneRMRecords         OneRMRecord[]
+  equipmentAssignments ExerciseEquipmentAssignment[]
+  schemaRows           SchemaRow[]
 
   @@index([canonicalName])
   @@index([movementFamily])
   @@map("training_exercises")
+}
+
+model Equipment {
+  id        String   @id @default(cuid())
+  name      String
+  nameLower String   @unique
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments ExerciseEquipmentAssignment[]
+
+  @@index([name])
+  @@map("training_equipment")
+}
+
+model ExerciseEquipmentAssignment {
+  id          String @id @default(cuid())
+  exerciseId  String
+  equipmentId String
+  order       Int
+
+  exercise  Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+
+  @@unique([exerciseId, equipmentId])
+  @@index([exerciseId, order])
+  @@index([equipmentId])
+  @@map("training_exercise_equipment_assignments")
 }
 
 model Label {
