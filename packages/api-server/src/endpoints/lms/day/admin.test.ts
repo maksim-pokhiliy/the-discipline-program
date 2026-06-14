@@ -2,15 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach } from "../../../test/helpers";
+import { cleanupRaw, createTestCoach, createTestExercise } from "../../../test/helpers";
 
 import { lmsDayMetadataApi } from "./admin";
 
 const MONDAY_PARAM = "2026-05-18";
 const WEDNESDAY_PARAM = "2026-05-20";
 const EXPECTED_UTC_MONDAY = new Date(Date.UTC(2026, 4, 18));
-
-const ROW_EXERCISE_ID = "clz00000000000000000dayex1";
 
 describe("lmsDayMetadataApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -21,6 +19,7 @@ describe("lmsDayMetadataApi", () => {
   let dayLabelId: string;
   let sessionOnlyLabelId: string;
   let sessionLabelId: string;
+  let exerciseId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -69,6 +68,10 @@ describe("lmsDayMetadataApi", () => {
     });
 
     sessionLabelId = sessionLabel.id;
+
+    const exercise = await createTestExercise();
+
+    exerciseId = exercise.id;
   });
 
   afterAll(async () => {
@@ -84,6 +87,7 @@ describe("lmsDayMetadataApi", () => {
     await cleanupRaw.label.delete({ where: { id: dayLabelId } }).catch(() => {});
     await cleanupRaw.label.delete({ where: { id: sessionOnlyLabelId } }).catch(() => {});
     await cleanupRaw.label.delete({ where: { id: sessionLabelId } }).catch(() => {});
+    await cleanupRaw.exercise.delete({ where: { id: exerciseId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
@@ -303,7 +307,7 @@ describe("lmsDayMetadataApi", () => {
         data: {
           schemaId: schema.id,
           order: 10,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         },
       });
 

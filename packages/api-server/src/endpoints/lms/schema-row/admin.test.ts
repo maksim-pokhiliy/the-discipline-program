@@ -109,10 +109,7 @@ describe("lmsSchemaRowApi", () => {
       data: {
         canonicalName: `SchemaRow Test Exercise A ${uniqueA}`,
         canonicalNameLower: `schemarow test exercise a ${uniqueA}`,
-        primaryEquipment: "BARBELL",
-        movementTypeTagPrimary: "SQUAT",
-        canonicalCompoundType: "ATOMIC",
-        placeholderFlag: false,
+        nature: "CONCRETE",
         defaultDemoUrls: [],
       },
     });
@@ -123,10 +120,7 @@ describe("lmsSchemaRowApi", () => {
       data: {
         canonicalName: `SchemaRow Test Exercise B ${uniqueB}`,
         canonicalNameLower: `schemarow test exercise b ${uniqueB}`,
-        primaryEquipment: "DUMBBELL",
-        movementTypeTagPrimary: "PRESS",
-        canonicalCompoundType: "ATOMIC",
-        placeholderFlag: false,
+        nature: "CONCRETE",
         defaultDemoUrls: [],
       },
     });
@@ -323,6 +317,30 @@ describe("lmsSchemaRowApi", () => {
             modifierIds: ["clz0000000000000000000000"],
           }),
         ).rejects.toThrow(BadRequestError);
+
+        const rowCount = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
+
+        expect(rowCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects a dangling exerciseId on create (P2003) with the FK message and persists no row (QA-001)", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        const error = await lmsSchemaRowApi
+          .create(coach.user.id, activePlanId, {
+            schemaId: ctx.schema.id,
+            exerciseId: "clz0000000000000000000000",
+          })
+          .catch((caught: unknown) => caught);
+
+        expect(error).toBeInstanceOf(BadRequestError);
+        expect(error).toMatchObject({
+          message: "Referenced exercise or modifier does not exist",
+        });
 
         const rowCount = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
 

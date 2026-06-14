@@ -82,10 +82,7 @@ describe("lmsRowGroupApi", () => {
       data: {
         canonicalName: `RowGroup Test Exercise ${unique}`,
         canonicalNameLower: `rowgroup test exercise ${unique}`,
-        primaryEquipment: "BARBELL",
-        movementTypeTagPrimary: "SQUAT",
-        canonicalCompoundType: "ATOMIC",
-        placeholderFlag: false,
+        nature: "CONCRETE",
         defaultDemoUrls: [],
       },
     });

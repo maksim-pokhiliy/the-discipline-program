@@ -8,6 +8,7 @@ import {
   exerciseById,
   makeExerciseRow,
   makePlaceholderRow,
+  makeRestRow,
 } from "./format-row.fixtures";
 
 describe("formatRow", () => {
@@ -54,6 +55,17 @@ describe("formatRow", () => {
       expect(result.mainText).toBe("Coach choice");
       expect(result.dashed).toBe(true);
       expect(result.demoUrl).toBeNull();
+    });
+  });
+
+  describe("rest exercise row", () => {
+    it("renders the rest name distinctly with the REST badge and dashed=false", () => {
+      const result = formatRow(makeRestRow(), exerciseById, 0);
+
+      expect(result.mainText).toBe("Rest");
+      expect(result.kindBadge).toBe("REST");
+      expect(result.kindCls).toBe("rest");
+      expect(result.dashed).toBe(false);
     });
   });
 

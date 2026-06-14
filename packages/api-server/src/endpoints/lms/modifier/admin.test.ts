@@ -134,10 +134,7 @@ describe("cmsModifierAdminApi", () => {
         data: {
           canonicalName: `Modifier Delete Exercise ${unique}`,
           canonicalNameLower: `modifier delete exercise ${unique}`,
-          primaryEquipment: "BARBELL",
-          movementTypeTagPrimary: "SQUAT",
-          canonicalCompoundType: "ATOMIC",
-          placeholderFlag: false,
+          nature: "CONCRETE",
           defaultDemoUrls: [],
         },
       });

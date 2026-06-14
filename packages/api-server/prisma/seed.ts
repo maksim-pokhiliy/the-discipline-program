@@ -3,16 +3,8 @@ import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
-import { seedBlogPosts } from "./seed/blog-posts";
 import { clearAll } from "./seed/clear-all";
-import { seedCoachNotes } from "./seed/coach-notes";
-import { seedContactSubmissions } from "./seed/contact-submissions";
-import { seedMarketingPages } from "./seed/marketing-pages";
-import { seedCanonicalPlan } from "./seed/plan-emit";
-import { seedProducts } from "./seed/products";
 import { seedProfiles } from "./seed/profiles";
-import { seedReviews } from "./seed/reviews";
-import { seedTrainingPlans } from "./seed/training-plans";
 import { seedUsers } from "./seed/users";
 
 const prisma = new PrismaClient();
@@ -29,19 +21,8 @@ const main = async (): Promise<void> => {
   const passwordHash = await bcrypt.hash("password12345", AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
 
   const users = await seedUsers(prisma, passwordHash);
-  const { coachProfile } = await seedProfiles(prisma, users);
 
-  await seedCoachNotes(prisma, coachProfile.id, users);
-
-  await seedTrainingPlans(prisma, users.coach.id);
-
-  await seedCanonicalPlan(prisma, users.coach.id);
-
-  await seedMarketingPages(prisma);
-  await seedProducts(prisma);
-  await seedBlogPosts(prisma);
-  await seedReviews(prisma);
-  await seedContactSubmissions(prisma);
+  await seedProfiles(prisma, users);
 
   console.log("\nSeed completed!");
 };

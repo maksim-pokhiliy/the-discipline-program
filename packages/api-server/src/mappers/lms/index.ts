@@ -2,6 +2,7 @@ export * from "./block.mapper";
 export * from "./compose-projection.mapper";
 export * from "./day.mapper";
 export * from "./enum-maps";
+export * from "./equipment.mapper";
 export * from "./exercise.enum-maps";
 export * from "./exercise.mapper";
 export * from "./label.mapper";

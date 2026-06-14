@@ -4,7 +4,7 @@ import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { BadRequestError, ForbiddenError, InternalServerError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach } from "../../../test/helpers";
+import { cleanupRaw, createTestCoach, createTestExercise } from "../../../test/helpers";
 import { lmsSchemaApi } from "../schema/admin";
 import { lmsSchemaRowApi } from "../schema-row/admin";
 
@@ -25,14 +25,14 @@ const expectEmptySlot = (
   expect(slot.sessions).toEqual([]);
 };
 
-const ROW_EXERCISE_ID = "clz00000000000000000weekex";
-
 describe("lmsWeekApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
 
   let activePlanId: string;
   let archivedPlanId: string;
+  let exerciseId: string;
+  let exerciseAltId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -49,6 +49,14 @@ describe("lmsWeekApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
+
+    const exercise = await createTestExercise();
+
+    exerciseId = exercise.id;
+
+    const exerciseAlt = await createTestExercise();
+
+    exerciseAltId = exerciseAlt.id;
   });
 
   afterAll(async () => {
@@ -57,6 +65,8 @@ describe("lmsWeekApi", () => {
       .catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
+    await cleanupRaw.exercise.delete({ where: { id: exerciseId } }).catch(() => {});
+    await cleanupRaw.exercise.delete({ where: { id: exerciseAltId } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: otherCoach.profile.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
@@ -397,14 +407,14 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schema.id,
           order: 10,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         },
       });
       const rowSecond = await cleanupRaw.schemaRow.create({
         data: {
           schemaId: schema.id,
           order: 20,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         },
       });
 
@@ -457,7 +467,7 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schema.id,
           order: 10,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
           rowGroupId: rowGroup.id,
         },
       });
@@ -465,7 +475,7 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schema.id,
           order: 20,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
           rowGroupId: rowGroup.id,
         },
       });
@@ -603,14 +613,14 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: trackA.id,
           order: 10,
-          exerciseId: "clz00000000000000exercisea",
+          exerciseId,
         },
       });
       const rowB = await cleanupRaw.schemaRow.create({
         data: {
           schemaId: trackB.id,
           order: 10,
-          exerciseId: "clz00000000000000exerciseb",
+          exerciseId: exerciseAltId,
         },
       });
 
@@ -708,14 +718,14 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schemaEarlier.id,
           order: 20,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         },
       });
       const rowEarlier = await cleanupRaw.schemaRow.create({
         data: {
           schemaId: schemaEarlier.id,
           order: 10,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         },
       });
 
@@ -818,7 +828,7 @@ describe("lmsWeekApi", () => {
         data: {
           schemaId: schema.id,
           order: 10,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
           load: { kind: "none" },
         },
       });
@@ -907,11 +917,11 @@ describe("lmsWeekApi", () => {
 
         await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: created.id,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         });
         await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
           schemaId: created.id,
-          exerciseId: ROW_EXERCISE_ID,
+          exerciseId,
         });
 
         const result = await lmsWeekApi.getByPlanAndDate(

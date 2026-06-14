@@ -20,14 +20,11 @@ export const ExercisesCreateView = () => {
     resolver: zodResolver(createExerciseSchema),
     defaultValues: {
       canonicalName: "",
-      primaryEquipment: "BARBELL",
-      movementTypeTagPrimary: "SQUAT",
-      movementTypeTagSecondary: null,
-      canonicalCompoundType: "ATOMIC",
-      placeholderFlag: false,
+      nature: "CONCRETE",
       movementFamily: null,
       defaultDemoUrls: [],
       aliases: [],
+      equipmentIds: [],
       notes: null,
     },
   });

@@ -58,6 +58,22 @@ export const createTestAssignment = async (coachProfileId: string, athleteUserId
   });
 };
 
+export const createTestExercise = async (
+  overrides: Partial<Prisma.ExerciseUncheckedCreateInput> = {},
+) => {
+  const id = crypto.randomUUID().slice(0, 8);
+
+  return rawPrisma.exercise.create({
+    data: {
+      canonicalName: `Test Exercise ${id}`,
+      canonicalNameLower: `test exercise ${id}`,
+      nature: "CONCRETE",
+      defaultDemoUrls: [],
+      ...overrides,
+    },
+  });
+};
+
 export const createTestProduct = async (
   overrides: Partial<Prisma.ProductUncheckedCreateInput> = {},
 ) => {

@@ -9,6 +9,7 @@ import {
   cleanup,
   cleanupRaw,
   createTestCoach,
+  createTestExercise,
   createTestPlan,
   createTestUser,
 } from "../test/helpers";
@@ -337,6 +338,7 @@ describe("platform guards", () => {
     let blockId: string;
     let schemaId: string;
     let schemaRowId: string;
+    let exerciseId: string;
 
     beforeAll(async () => {
       const week = await cleanupRaw.week.create({
@@ -372,11 +374,15 @@ describe("platform guards", () => {
 
       schemaId = schema.id;
 
+      const exercise = await createTestExercise();
+
+      exerciseId = exercise.id;
+
       const schemaRow = await cleanupRaw.schemaRow.create({
         data: {
           schemaId,
           order: 10,
-          exerciseId: "clz0000000000000000guardex",
+          exerciseId,
         },
       });
 
@@ -390,6 +396,7 @@ describe("platform guards", () => {
       await cleanupRaw.session.delete({ where: { id: sessionId } }).catch(() => {});
       await cleanupRaw.day.delete({ where: { id: dayId } }).catch(() => {});
       await cleanupRaw.week.delete({ where: { id: weekId } }).catch(() => {});
+      await cleanupRaw.exercise.delete({ where: { id: exerciseId } }).catch(() => {});
     });
 
     it("returns chain ids and status for the plan creator", async () => {
