@@ -20,6 +20,8 @@ import { mapToSession } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
+const FIRST_BLOCK_ORDER = 10;
+
 export const lmsSessionApi = {
   create: async (
     userId: string,
@@ -91,7 +93,7 @@ export const lmsSessionApi = {
 
             const nextOrder = (max._max.order ?? 0) + 10;
 
-            return tx.session.create({
+            const created = await tx.session.create({
               data: {
                 dayId: day.id,
                 order: nextOrder,
@@ -99,6 +101,12 @@ export const lmsSessionApi = {
                 notes: marshalNullableJson(data.notes),
               },
             });
+
+            await tx.block.create({
+              data: { sessionId: created.id, order: FIRST_BLOCK_ORDER },
+            });
+
+            return created;
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
         ),
