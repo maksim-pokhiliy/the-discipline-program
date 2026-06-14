@@ -8,89 +8,90 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID                          | Topic                                                                                 | Status     |
-| --------------------------- | ------------------------------------------------------------------------------------- | ---------- |
-| D-1 SCOPE                   | Target = the session primitive; fixed floors Session→Block→Schema→Row                 | RATIFIED   |
-| D-2 BOX                     | Relations = explicit Group boxes; opaque coach-owned label; no derivation             | RATIFIED   |
-| D-3 NO-RECURSION            | Sub-schemas die; no "group" schema-type tile; no graph                                | RATIFIED   |
-| D-4 NO-TYPED-REL            | No typed relation kinds (no parallel\|choice\|superset enum); text label only         | RATIFIED   |
-| D-5 CHANNELS                | Notation → structure \| typed field \| human text \| dropped syntax                   | RATIFIED   |
-| D-6 GRID                    | `primitive-spec.md` grid = the per-notation disposition (statuses inside)             | RATIFIED   |
-| D-7 PROCESS                 | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review           | RATIFIED   |
-| D-8 JIT-FREEZE              | Implementation starts now; OPEN items close just-in-time before their wave            | RATIFIED   |
-| D-MARKER-DEATH              | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group        | RATIFIED   |
-| D-PLAQUE                    | Plaque = render vocabulary, no stored node; rest single-carrier; notes stack          | RATIFIED   |
-| D-POSITION                  | `Position` enum + column die into ROW NOTES; no library                               | SUPERSEDED |
-| D-CHIPS                     | "Chips as a mechanism" dissolved — notes cover it; chip = MUI render word             | RATIFIED   |
-| D-MODIFIER                  | Row modifiers = coach-owned library entity; multi-ref on rows; 3-layer boundary       | RATIFIED   |
-| D-FLOORS                    | Per-floor settings map; block intensity+timeCap→gone; intensity only on schema        | RATIFIED   |
-| D-ROW-GRAMMAR               | One row kind (exercise); REST/PLACEHOLDER/REST_SLOT die→catalog natures; sets free    | RATIFIED   |
-| D-LOAD-FINAL                | load+weight final; exotics die; single/single_arm merge; byProfile=label-map list     | RATIFIED   |
-| D-TEMPO                     | 4-digit typed (X allowed); verbal tempo forms → modifiers                             | RATIFIED   |
-| D-EXEC-DEFER                | Execution/scoring semantics (straight-into, for-time, score-on-N) = notes till P4     | RATIFIED   |
-| D-HEADER-KEEP               | Schema header stays as a field; F-HEADER = UX parity only (in-group ≡ standalone)     | RATIFIED   |
-| DR-W1-1 BOX-RENDER          | Parallel parent → `AccentGroupCard` box gated by the live one-predicate               | RATIFIED   |
-| DR-W1-2 CHECKBOX            | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates      | SUPERSEDED |
-| DR-W1-3 HEAD-DEDUP          | Boxed parent: chip+title suppressed; `header` shown once in the box label zone        | SUPERSEDED |
-| DR-W1-4 COPY                | Checkbox copy = English "Group into one box" (Gate A)                                 | RATIFIED   |
-| DR-W1-5 INDEP-VALID         | Unchecked path validates ladder steps client-side, coach-message parity (Gate B)      | SUPERSEDED |
-| DR-W2-1 GROUP-OWN           | `SchemaGroup` block-owned; SetNull dissolution; no `order` column                     | RATIFIED   |
-| DR-W2-2 ARR-DEATH           | Arrangement axis dies whole; `composition = { repetition?, rest? }`                   | RATIFIED   |
-| DR-W2-3 LEAF-KILLS          | Ratified Grid A/B leaf kills (reps/load/weight/media/schema-row/compounds)            | RATIFIED   |
-| DR-W2-4 IDEM-SCOPE          | D4 was ~90% pre-built; only client stable-key threading added; base = `draft.id`      | RATIFIED   |
-| DR-W2-5 PAIRED-KILL         | `pairedConcreteRowId` premise false (inert, 0 producers) → killed                     | RATIFIED   |
-| DR-W2-6 BLK011              | block-011 rounds-over-rounds → 1-member Group "3 rounds:"                             | RATIFIED   |
-| DR-W2-7 BLK015              | block-015 interval-then-rounds → two sibling schemas (NOT a Group)                    | RATIFIED   |
-| DR-W2-8 ORDER-UNIQ          | Premise false → full unique landed at review via the raw-SQL check layer              | SUPERSEDED |
-| DR-W2-9 CONTIGUITY          | Contiguity is a server invariant (`assertGroupMembersContiguous`)                     | RATIFIED   |
-| DR-W2-FORK-1                | `interleaveOrder` = validated `String`, not a Prisma enum (Gate A)                    | RATIFIED   |
-| DR-W2-FORK-2                | Group-create response embed = `{ group, members }` (flat `SchemaWithBody[]`)          | RATIFIED   |
-| DR-W2-FORK-3                | Load `byProfile` reuses the dual-value two-input layout (Gate A)                      | RATIFIED   |
-| DR-W2-FORK-4                | `interleaveOrder` editing moves OFF the schema ONTO the Group box meta                | RATIFIED   |
-| DR-W2-FORK-5                | Seed block-011/015 re-expression calls (the 2 extra non-parallel shapes)              | RATIFIED   |
-| DR-W2-FORK-6                | `buildBlockItems` lives in contracts (the new one-predicate)                          | RATIFIED   |
-| DR-W3-1 IDEM-DASH           | Idempotency key separator `-`; format-pin test imports the REAL regex                 | RATIFIED   |
-| DR-W3-2 PROTO-LOCAL         | Proto group card built platform-local; `AccentGroupCard` dropped, not modified        | RATIFIED   |
-| DR-W3-3 SEG-CONTROL         | Interleave editing = platform-local `.seg`; same `PUT /groups` mutation               | RATIFIED   |
-| DR-W3-4 ADD-TRACK           | "Add track" = instant `POST /schemas` + `groupId` + default ladder (FORK-1a)          | RATIFIED   |
-| DR-W3-5 DEL-CLIENT          | Delete-group-and-tracks = client-orchestrated sequential `DELETE /schemas`            | RATIFIED   |
-| DR-W3-6 ADD-GROUP           | Block-level "Add group" reuses `useCreateGroup` w/ seeded 2-track draft (FORK-4a)     | SUPERSEDED |
-| DR-W3-7 DRAFT-FLAT          | Recursive draft collapses to `SchemaDraft`/`TrackDraft`/`GroupDraft`; flat            | RATIFIED   |
-| DR-W3-8 KIND-CONF           | `ConfirmationModal` gates a DIRTY repetition-kind switch; clean switches silent       | RATIFIED   |
-| DR-W3-9 DEMOTE-KEPT         | `should-be-container` + demote hint retyped, NOT deleted (owner follow-up)            | RATIFIED   |
-| DR-W3-10 HYGIENE            | Stale fixtures + vestigial contracts exports + caption + seed const rename            | RATIFIED   |
-| DR-W3-FORK-2 EXPORT         | `IDEMPOTENCY_KEY_REGEX` barrel-exported from `@repo/api-routes` (additive 1-line)     | RATIFIED   |
-| DR-W3-FORK-3 SEED           | Seed const renamed `…FOOTNOTES…`→`…PER_ROUND_MARKERS…` (owner-delegated)              | RATIFIED   |
-| DR-W3-REENTRY               | Re-entry guard — narrowed to modal-less buttons by DR-W3-12                           | RATIFIED   |
-| DR-W3-11 PTR-COLL           | Mixed-height lists use pointer-first collision (`pointerWithin` → corners)            | RATIFIED   |
-| DR-W3-12 MODAL-PAT          | Group confirmations follow the house modal pending pattern; refs removed              | RATIFIED   |
-| DR-W4-1 NOTES-JSON          | `notes Json?` `string[]` on EVERY carrier (convert-all incl. Week); one shape         | RATIFIED   |
-| DR-W4-2 MOD-WRITE           | Modifier write = `modifierIds[]` set-replace on the row; read embed `modifiers[]`     | RATIFIED   |
-| DR-W4-3 ROW-COLLAPSE        | Drop `rowKind`/`rowPayload`; `exerciseId` loose on row (no FK); render-kind inferred  | RATIFIED   |
-| DR-W4-4 LOAD-COUNT          | `absolute {count:1\|2, kg}` — count an explicit row choice in the load VO             | RATIFIED   |
-| DR-W4-5 ONE-WAVE            | Run the WHOLE W4-model in one /feature (no A1/A2 split); batches = the commit units   | RATIFIED   |
-| DR-W4-PAIRED                | Kill `explicit_split.pairedRowId` inline (dead sibling-ref, DR-W2-5 cousin)           | RATIFIED   |
-| DR-W4-RG-CREATE             | Row-group create wraps EXISTING contiguous rows (`{schemaId, rowIds[]≥2, notes?}`)    | RATIFIED   |
-| DR-W4-MAPPER-INPUT          | `mapToSchemaRow`/`…WithBody` input types carry the modifier + rowGroup includes       | RATIFIED   |
-| DR-W4-SWB                   | `schemaWithBodySchema` extended to `{schema, rows, rowGroups}` (the `Block.groups`)   | RATIFIED   |
-| DR-W4-TEMPO-SHAPE           | `tempoModifierSchema` collapses to `fullTempoSchema` (flat; positions `int\|"X"`)     | RATIFIED   |
-| W4E-F1 COACH-MOD            | INCLUDE coach create-on-the-fly modifier (D3 endpoint mirrors admin-create)           | RATIFIED   |
-| W4E-F2 NOTES-LIST           | `NotesListEditor` edits `string[]` directly; `notes-list-text.ts` RETIRED             | RATIFIED   |
-| W4E-F3 SELECT-GROUP         | Row grouping = select-mode wrap of contiguous rows; add-to-existing OUT               | RATIFIED   |
-| DR-W4E-FORM-STATE           | Row form = controlled state object, NOT react-hook-form                               | RATIFIED   |
-| DR-W4E-PICKER-LOCAL         | Modifier picker platform-local, generic-prop'd for LABEL-FLOW-UX                      | RATIFIED   |
-| DR-W4E-NOTES-LOCAL          | `NotesListEditor` lands platform-local (promotable to `@repo/ui`)                     | RATIFIED   |
-| DR-W4E-EXERCISE-LOCK        | `exerciseId` create-only → exercise picker disabled in edit mode                      | RATIFIED   |
-| DR-W4E-RG-ORPHAN            | Delete-with-members leaves the empty RowGroup; `buildRowItems` drops it               | RATIFIED   |
-| DR-W4E-ROW-REORDER          | Row reorder WIRED (Gate A) — mirror `block-card-body`; `pointerFirstCollision`        | RATIFIED   |
-| DR-W4E-W4R-001-CLIENT       | Row-group overlap guard is client-only this wave; server reject deferred              | RATIFIED   |
-| DR-W4E-COACH-ISSUE          | Row form surfaces coach-friendly validation (`coach-row-issue`); submit-block         | RATIFIED   |
-| DR-W4E-PICKER-MINT-TOLERANT | Create-on-the-fly catches per-mint rejection; keeps selection, no unhandled           | RATIFIED   |
-| D7 supersedes DR-W1-3       | In-group schema renders its header identically to standalone (D-HEADER-KEEP)          | RATIFIED   |
-| D-TEMPO-SMART               | Tempo = smart union: 4-digit typed OR free string; `parseTempo` total, no error       | RATIFIED   |
-| DR-W4E-SG-WRAP              | Schema group created by wrapping existing schemas; W3 add-group flow deleted whole    | RATIFIED   |
-| DR-W4E-INGROUP-REORDER      | In-group member drag both floors; row-floor contiguity guard; reuse reorder endpoints | RATIFIED   |
-| DR-W4E-SESSION-BLOCK        | Session create seeds one block atomically in the existing tx (E-i)                    | RATIFIED   |
+| ID                          | Topic                                                                                    | Status     |
+| --------------------------- | ---------------------------------------------------------------------------------------- | ---------- |
+| D-1 SCOPE                   | Target = the session primitive; fixed floors Session→Block→Schema→Row                    | RATIFIED   |
+| D-2 BOX                     | Relations = explicit Group boxes; opaque coach-owned label; no derivation                | RATIFIED   |
+| D-3 NO-RECURSION            | Sub-schemas die; no "group" schema-type tile; no graph                                   | RATIFIED   |
+| D-4 NO-TYPED-REL            | No typed relation kinds (no parallel\|choice\|superset enum); text label only            | RATIFIED   |
+| D-5 CHANNELS                | Notation → structure \| typed field \| human text \| dropped syntax                      | RATIFIED   |
+| D-6 GRID                    | `primitive-spec.md` grid = the per-notation disposition (statuses inside)                | RATIFIED   |
+| D-7 PROCESS                 | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review              | RATIFIED   |
+| D-8 JIT-FREEZE              | Implementation starts now; OPEN items close just-in-time before their wave               | RATIFIED   |
+| D-MARKER-DEATH              | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group           | RATIFIED   |
+| D-PLAQUE                    | Plaque = render vocabulary, no stored node; rest single-carrier; notes stack             | RATIFIED   |
+| D-POSITION                  | `Position` enum + column die into ROW NOTES; no library                                  | SUPERSEDED |
+| D-CHIPS                     | "Chips as a mechanism" dissolved — notes cover it; chip = MUI render word                | RATIFIED   |
+| D-MODIFIER                  | Row modifiers = coach-owned library entity; multi-ref on rows; 3-layer boundary          | RATIFIED   |
+| D-FLOORS                    | Per-floor settings map; block intensity+timeCap→gone; intensity only on schema           | RATIFIED   |
+| D-ROW-GRAMMAR               | One row kind (exercise); REST/PLACEHOLDER/REST_SLOT die→catalog natures; sets free       | RATIFIED   |
+| D-LOAD-FINAL                | load+weight final; exotics die; single/single_arm merge; byProfile=label-map list        | RATIFIED   |
+| D-TEMPO                     | 4-digit typed (X allowed); verbal tempo forms → modifiers                                | RATIFIED   |
+| D-EXEC-DEFER                | Execution/scoring semantics (straight-into, for-time, score-on-N) = notes till P4        | RATIFIED   |
+| D-HEADER-KEEP               | Schema header stays as a field; F-HEADER = UX parity only (in-group ≡ standalone)        | RATIFIED   |
+| DR-W1-1 BOX-RENDER          | Parallel parent → `AccentGroupCard` box gated by the live one-predicate                  | RATIFIED   |
+| DR-W1-2 CHECKBOX            | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates         | SUPERSEDED |
+| DR-W1-3 HEAD-DEDUP          | Boxed parent: chip+title suppressed; `header` shown once in the box label zone           | SUPERSEDED |
+| DR-W1-4 COPY                | Checkbox copy = English "Group into one box" (Gate A)                                    | RATIFIED   |
+| DR-W1-5 INDEP-VALID         | Unchecked path validates ladder steps client-side, coach-message parity (Gate B)         | SUPERSEDED |
+| DR-W2-1 GROUP-OWN           | `SchemaGroup` block-owned; SetNull dissolution; no `order` column                        | RATIFIED   |
+| DR-W2-2 ARR-DEATH           | Arrangement axis dies whole; `composition = { repetition?, rest? }`                      | RATIFIED   |
+| DR-W2-3 LEAF-KILLS          | Ratified Grid A/B leaf kills (reps/load/weight/media/schema-row/compounds)               | RATIFIED   |
+| DR-W2-4 IDEM-SCOPE          | D4 was ~90% pre-built; only client stable-key threading added; base = `draft.id`         | RATIFIED   |
+| DR-W2-5 PAIRED-KILL         | `pairedConcreteRowId` premise false (inert, 0 producers) → killed                        | RATIFIED   |
+| DR-W2-6 BLK011              | block-011 rounds-over-rounds → 1-member Group "3 rounds:"                                | RATIFIED   |
+| DR-W2-7 BLK015              | block-015 interval-then-rounds → two sibling schemas (NOT a Group)                       | RATIFIED   |
+| DR-W2-8 ORDER-UNIQ          | Premise false → full unique landed at review via the raw-SQL check layer                 | SUPERSEDED |
+| DR-W2-9 CONTIGUITY          | Contiguity is a server invariant (`assertGroupMembersContiguous`)                        | RATIFIED   |
+| DR-W2-FORK-1                | `interleaveOrder` = validated `String`, not a Prisma enum (Gate A)                       | RATIFIED   |
+| DR-W2-FORK-2                | Group-create response embed = `{ group, members }` (flat `SchemaWithBody[]`)             | RATIFIED   |
+| DR-W2-FORK-3                | Load `byProfile` reuses the dual-value two-input layout (Gate A)                         | RATIFIED   |
+| DR-W2-FORK-4                | `interleaveOrder` editing moves OFF the schema ONTO the Group box meta                   | RATIFIED   |
+| DR-W2-FORK-5                | Seed block-011/015 re-expression calls (the 2 extra non-parallel shapes)                 | RATIFIED   |
+| DR-W2-FORK-6                | `buildBlockItems` lives in contracts (the new one-predicate)                             | RATIFIED   |
+| DR-W3-1 IDEM-DASH           | Idempotency key separator `-`; format-pin test imports the REAL regex                    | RATIFIED   |
+| DR-W3-2 PROTO-LOCAL         | Proto group card built platform-local; `AccentGroupCard` dropped, not modified           | RATIFIED   |
+| DR-W3-3 SEG-CONTROL         | Interleave editing = platform-local `.seg`; same `PUT /groups` mutation                  | RATIFIED   |
+| DR-W3-4 ADD-TRACK           | "Add track" = instant `POST /schemas` + `groupId` + default ladder (FORK-1a)             | RATIFIED   |
+| DR-W3-5 DEL-CLIENT          | Delete-group-and-tracks = client-orchestrated sequential `DELETE /schemas`               | RATIFIED   |
+| DR-W3-6 ADD-GROUP           | Block-level "Add group" reuses `useCreateGroup` w/ seeded 2-track draft (FORK-4a)        | SUPERSEDED |
+| DR-W3-7 DRAFT-FLAT          | Recursive draft collapses to `SchemaDraft`/`TrackDraft`/`GroupDraft`; flat               | RATIFIED   |
+| DR-W3-8 KIND-CONF           | `ConfirmationModal` gates a DIRTY repetition-kind switch; clean switches silent          | RATIFIED   |
+| DR-W3-9 DEMOTE-KEPT         | `should-be-container` + demote hint retyped, NOT deleted (owner follow-up)               | RATIFIED   |
+| DR-W3-10 HYGIENE            | Stale fixtures + vestigial contracts exports + caption + seed const rename               | RATIFIED   |
+| DR-W3-FORK-2 EXPORT         | `IDEMPOTENCY_KEY_REGEX` barrel-exported from `@repo/api-routes` (additive 1-line)        | RATIFIED   |
+| DR-W3-FORK-3 SEED           | Seed const renamed `…FOOTNOTES…`→`…PER_ROUND_MARKERS…` (owner-delegated)                 | RATIFIED   |
+| DR-W3-REENTRY               | Re-entry guard — narrowed to modal-less buttons by DR-W3-12                              | RATIFIED   |
+| DR-W3-11 PTR-COLL           | Mixed-height lists use pointer-first collision (`pointerWithin` → corners)               | RATIFIED   |
+| DR-W3-12 MODAL-PAT          | Group confirmations follow the house modal pending pattern; refs removed                 | RATIFIED   |
+| DR-W4-1 NOTES-JSON          | `notes Json?` `string[]` on EVERY carrier (convert-all incl. Week); one shape            | RATIFIED   |
+| DR-W4-2 MOD-WRITE           | Modifier write = `modifierIds[]` set-replace on the row; read embed `modifiers[]`        | RATIFIED   |
+| DR-W4-3 ROW-COLLAPSE        | Drop `rowKind`/`rowPayload`; `exerciseId` loose on row (no FK); render-kind inferred     | RATIFIED   |
+| DR-W4-4 LOAD-COUNT          | `absolute {count:1\|2, kg}` — count an explicit row choice in the load VO                | RATIFIED   |
+| DR-W4-5 ONE-WAVE            | Run the WHOLE W4-model in one /feature (no A1/A2 split); batches = the commit units      | RATIFIED   |
+| DR-W4-PAIRED                | Kill `explicit_split.pairedRowId` inline (dead sibling-ref, DR-W2-5 cousin)              | RATIFIED   |
+| DR-W4-RG-CREATE             | Row-group create wraps EXISTING contiguous rows (`{schemaId, rowIds[]≥2, notes?}`)       | RATIFIED   |
+| DR-W4-MAPPER-INPUT          | `mapToSchemaRow`/`…WithBody` input types carry the modifier + rowGroup includes          | RATIFIED   |
+| DR-W4-SWB                   | `schemaWithBodySchema` extended to `{schema, rows, rowGroups}` (the `Block.groups`)      | RATIFIED   |
+| DR-W4-TEMPO-SHAPE           | `tempoModifierSchema` collapses to `fullTempoSchema` (flat; positions `int\|"X"`)        | RATIFIED   |
+| W4E-F1 COACH-MOD            | INCLUDE coach create-on-the-fly modifier (D3 endpoint mirrors admin-create)              | RATIFIED   |
+| W4E-F2 NOTES-LIST           | `NotesListEditor` edits `string[]` directly; `notes-list-text.ts` RETIRED                | RATIFIED   |
+| W4E-F3 SELECT-GROUP         | Row grouping = select-mode wrap of contiguous rows; add-to-existing OUT                  | RATIFIED   |
+| DR-W4E-FORM-STATE           | Row form = controlled state object, NOT react-hook-form                                  | RATIFIED   |
+| DR-W4E-PICKER-LOCAL         | Modifier picker platform-local, generic-prop'd for LABEL-FLOW-UX                         | RATIFIED   |
+| DR-W4E-NOTES-LOCAL          | `NotesListEditor` lands platform-local (promotable to `@repo/ui`)                        | RATIFIED   |
+| DR-W4E-EXERCISE-LOCK        | `exerciseId` create-only → exercise picker disabled in edit mode                         | RATIFIED   |
+| DR-W4E-RG-ORPHAN            | Delete-with-members leaves the empty RowGroup; `buildRowItems` drops it                  | RATIFIED   |
+| DR-W4E-ROW-REORDER          | Row reorder WIRED (Gate A) — mirror `block-card-body`; `pointerFirstCollision`           | RATIFIED   |
+| DR-W4E-W4R-001-CLIENT       | Row-group overlap guard is client-only this wave; server reject deferred                 | RATIFIED   |
+| DR-W4E-COACH-ISSUE          | Row form surfaces coach-friendly validation (`coach-row-issue`); submit-block            | RATIFIED   |
+| DR-W4E-PICKER-MINT-TOLERANT | Create-on-the-fly catches per-mint rejection; keeps selection, no unhandled              | RATIFIED   |
+| D7 supersedes DR-W1-3       | In-group schema renders its header identically to standalone (D-HEADER-KEEP)             | RATIFIED   |
+| D-TEMPO-SMART               | Tempo = smart union: 4-digit typed OR free string; `parseTempo` total, no error          | RATIFIED   |
+| DR-W4E-SG-WRAP              | Schema group created by wrapping existing schemas; W3 add-group flow deleted whole       | RATIFIED   |
+| DR-W4E-INGROUP-REORDER      | In-group member drag both floors; row-floor contiguity guard; reuse reorder endpoints    | RATIFIED   |
+| DR-W4E-SESSION-BLOCK        | Session create seeds one block atomically in the existing tx (E-i)                       | RATIFIED   |
+| DR-W4E-ROW-CHIPS            | Row summary renders each prescription field as a distinct MUI chip (D-CHIPS render-word) | RATIFIED   |
 
 ---
 
@@ -719,3 +720,11 @@ Four sub-features (A tempo / B schema-group create / D in-group drag / E session
 - **RED LINE.** NO DB-level "session must have a block" constraint — app-layer default only (a DB invariant would break api-server test helpers that raw-create blockless sessions).
 - **Closes:** nothing in `deferred.md` (a fresh UX gap). **Supersedes:** nothing.
 - **Commit.** `8677b158`.
+
+### DR-W4E-ROW-CHIPS — the row summary renders prescription fields as per-category chips
+
+- **Status:** RATIFIED (2026-06-14, owner — same live-test batch, follow-on request).
+- **Decision.** The schema-row summary stops rendering its typed fields as one joined caption string and renders each prescription category as a distinct MUI `Chip` so the coach identifies them at a glance: **volume** (sets × reps) `filled`/`default` · **load** (count + weight) `filled`/`primary` (matches `palette.kind.load`) · **side** `filled`/`info` · **tempo** `filled`/`secondary` · **modifiers** `variant="tag"` (identical to the modifier picker — display↔edit consistency). The variants/colours are deliberately NOT uniform (owner: "не должны быть все одинаковые"). NOTES stay PROSE (a subtle caption line under the chips, NOT a chip — D-PLAQUE). Engineering: `FormatRowResult.subParts: string[]` → a categorized `RowSummary { volume, load, side, tempo, modifiers, notes }`; a new platform-local `RowSummaryChips` renders it.
+- **Rationale.** Under D-CHIPS the chip IS the MUI render-word — this is exactly that use (rendering already-typed fields as chips), NOT a free-text "attach-a-chip" mechanism and NOT a new stored field. Coach-daily-UX: a colour/shape-coded chip row scans faster than a packed `4 × 5 BW [each leg] [3-1-X-0] [from sofa]` string. All colours are theme palette slots (no hex). Render-only — zero model/contract/api-server change.
+- **Closes:** nothing. **Supersedes:** nothing (refines the render under D-CHIPS).
+- **Commit.** `ceb356ab`.

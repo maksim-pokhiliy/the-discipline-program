@@ -1,6 +1,6 @@
 # session-primitive — state (the board)
 
-**Updated:** 2026-06-14 (**W4E live-test follow-ups BUILT** on `feat/session-primitive-w4e-abde`, 5 commits — A tempo smart-union (`ce096ba4`) · E session-creates-with-one-block (`8677b158`) · B schema-group create-as-rows / W3 add-group deleted whole (`b81745e0`) · D in-group member drag both floors (`334aac02`) · fix Review/QA hardening (`f1d507e1`); Review = A / QA = A, 0 CRITICAL, 3 WARNING fixed in-PR; **W4R-001-SERVER + DR-W4E-ROWREORDER-CONTIG-SERVER CLOSED**; the gated api-server suite + the §6 browser walkthrough are the owner's acceptance gates — PENDING; then merge → catalog pass per `plan.md` roadmap)
+**Updated:** 2026-06-14 (**W4E live-test follow-ups BUILT** on `feat/session-primitive-w4e-abde`, 5 commits — A tempo smart-union (`ce096ba4`) · E session-creates-with-one-block (`8677b158`) · B schema-group create-as-rows / W3 add-group deleted whole (`b81745e0`) · D in-group member drag both floors (`334aac02`) · fix Review/QA hardening (`f1d507e1`); Review = A / QA = A, 0 CRITICAL, 3 WARNING fixed in-PR; **W4R-001-SERVER + DR-W4E-ROWREORDER-CONTIG-SERVER CLOSED**; + a follow-on row-summary per-category-chips refinement (`ceb356ab`, DR-W4E-ROW-CHIPS); the gated api-server suite + the §6 browser walkthrough are the owner's acceptance gates — PENDING; then merge → catalog pass per `plan.md` roadmap)
 
 _(Prior: 2026-06-13 (late) — W4-editor MERGED PR #265 → main; D-7 review PASS; full suite 2549/2549 incl. gated api-server; review-fix `c8579775` QA-009 CLOSED. The W4-editor history follows below.)_
 
