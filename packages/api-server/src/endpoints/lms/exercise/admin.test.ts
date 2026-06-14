@@ -160,7 +160,7 @@ describe("cmsExerciseAdminApi", () => {
       createdOneRMIds.push(record.id);
 
       await expect(cmsExerciseAdminApi.deleteExercise(created.id)).rejects.toMatchObject({
-        details: { entity: "Exercise", relation: "oneRMRecords" },
+        details: { entity: "Exercise", relation: "oneRMRecords/schemaRows" },
       });
     });
   });

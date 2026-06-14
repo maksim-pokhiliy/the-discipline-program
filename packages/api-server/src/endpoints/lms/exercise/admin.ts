@@ -169,7 +169,7 @@ export const cmsExerciseAdminApi = {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
         throw new ConflictError(
           "Cannot delete: exercise is referenced by 1RM records or schema rows",
-          { entity: "Exercise", relation: "oneRMRecords" },
+          { entity: "Exercise", relation: "oneRMRecords/schemaRows" },
         );
       }
 

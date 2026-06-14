@@ -26,6 +26,12 @@ import { assertRowGroupMembersContiguous } from "./assertions";
 
 const ORDER_STEP = 10;
 
+const getFkFieldName = (error: Prisma.PrismaClientKnownRequestError): string => {
+  const fieldName = error.meta?.field_name;
+
+  return typeof fieldName === "string" ? fieldName : "unknown";
+};
+
 const replaceRowModifiers = async (
   tx: TxClient,
   rowId: string,
@@ -138,6 +144,12 @@ export const lmsSchemaRowApi = {
 
       return created;
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+        throw new BadRequestError("Referenced exercise or modifier does not exist", {
+          field: getFkFieldName(error),
+        });
+      }
+
       return handlePrismaError(error, { entity: "SchemaRow" });
     }
   },
@@ -182,6 +194,12 @@ export const lmsSchemaRowApi = {
 
       return updated;
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+        throw new BadRequestError("Referenced modifier does not exist", {
+          field: getFkFieldName(error),
+        });
+      }
+
       return handlePrismaError(error, { entity: "SchemaRow" });
     }
   },
