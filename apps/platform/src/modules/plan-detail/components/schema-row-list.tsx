@@ -12,12 +12,13 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { deriveMinuteView } from "../lib/derive-minute-view";
 import { useCreateRowGroup } from "../lib/use-create-row-group";
 
+import { GroupSelectBar } from "./group-select-bar";
 import { RowEditorModal } from "./row-editor-modal";
-import { RowGroupSelectBar } from "./row-group-select-bar";
 import { SchemaRowListBody } from "./schema-row-list-body";
 
 const ADD_ROW_LABEL = "+ Add row";
 const GROUP_ROWS_LABEL = "Group rows…";
+const GROUP_ROWS_BAR_LABEL = "Group rows";
 const MIN_GROUPABLE_ROWS = 2;
 
 type SchemaRowListProps = {
@@ -120,11 +121,12 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
       />
 
       {isSelectMode ? (
-        <RowGroupSelectBar
+        <GroupSelectBar
           selectedCount={selectedIds.size}
           isPending={createRowGroup.isPending}
           onCancel={exitSelectMode}
           onGroup={handleGroup}
+          groupLabel={GROUP_ROWS_BAR_LABEL}
         />
       ) : null}
 

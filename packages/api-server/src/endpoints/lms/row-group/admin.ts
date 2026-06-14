@@ -32,7 +32,7 @@ const createRowGroupWrapping = async (
 
   const namedRows = await tx.schemaRow.findMany({
     where: { id: { in: [...data.rowIds] } },
-    select: { id: true, schemaId: true },
+    select: { id: true, schemaId: true, rowGroupId: true },
   });
 
   if (namedRows.length !== data.rowIds.length) {
@@ -46,6 +46,14 @@ const createRowGroupWrapping = async (
   if (foreignRows.length > 0) {
     throw new BadRequestError("Some rowIds do not belong to the target schema", {
       foreignIds: foreignRows.map((r) => r.id),
+    });
+  }
+
+  const alreadyGrouped = namedRows.filter((r) => r.rowGroupId !== null);
+
+  if (alreadyGrouped.length > 0) {
+    throw new BadRequestError("Some rowIds are already in a group", {
+      groupedIds: alreadyGrouped.map((r) => r.id),
     });
   }
 

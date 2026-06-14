@@ -31,6 +31,9 @@ type SchemaCardProps = {
   parentIsReorderPending?: boolean;
   isBoxed?: boolean;
   isDraggable?: boolean;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (schemaId: string) => void;
 };
 
 export const SchemaCard: React.FC<SchemaCardProps> = ({
@@ -40,6 +43,9 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   parentIsReorderPending = false,
   isBoxed = false,
   isDraggable = true,
+  isSelectMode = false,
+  isSelected = false,
+  onToggleSelect,
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
@@ -107,6 +113,9 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onEditOpen={handleEditOpen}
         isBoxed={isBoxed}
         isDraggable={isDraggable}
+        isSelectMode={isSelectMode}
+        isSelected={isSelected}
+        onToggleSelect={onToggleSelect}
       />
 
       <SchemaRowList

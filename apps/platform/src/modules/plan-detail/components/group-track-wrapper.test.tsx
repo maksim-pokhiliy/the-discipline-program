@@ -32,8 +32,6 @@ const NOW = new Date("2026-01-06T00:00:00.000Z");
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const DRAG_HANDLE_ARIA = "Drag schema";
-const RAIL_CONTINUATION_TOP_PX = "-8px";
-const RAIL_FIRST_TOP = "0";
 
 const makeMember = (id: string): SchemaWithBody => ({
   schema: {
@@ -53,57 +51,15 @@ const makeMember = (id: string): SchemaWithBody => ({
   rowGroups: [],
 });
 
-type RenderOptions = {
-  index?: number;
-  isContinuation?: boolean;
-  member?: SchemaWithBody;
-};
-
-const renderWrapper = ({
-  index = 0,
-  isContinuation = false,
-  member = makeMember("clp9z8x7w0000abcd1234mm01"),
-}: RenderOptions = {}): HTMLElement => {
-  const { container } = render(
+const renderWrapper = (member: SchemaWithBody = makeMember("clp9z8x7w0000abcd1234mm01")): void => {
+  render(
     <GroupTrackWrapper
       member={member}
-      index={index}
-      isContinuation={isContinuation}
       planId={PLAN_ID}
       startDate={START_DATE}
       parentIsReorderPending={false}
     />,
   );
-
-  const wrapper = container.firstElementChild;
-
-  if (!(wrapper instanceof HTMLElement)) {
-    throw new Error("GroupTrackWrapper did not render a root element");
-  }
-
-  return wrapper;
-};
-
-const railBeforeTop = (wrapper: HTMLElement): string | null => {
-  const emotionClass = Array.from(wrapper.classList).find((cls) => cls.startsWith("css-"));
-
-  if (emotionClass === undefined) {
-    throw new Error("wrapper carries no emotion class");
-  }
-
-  const cssText = Array.from(document.querySelectorAll("style"))
-    .map((style) => style.textContent ?? "")
-    .join("\n");
-
-  const beforeRule = new RegExp(`\\.${emotionClass}::before\\{([^}]*)\\}`).exec(cssText);
-
-  if (beforeRule === null) {
-    return null;
-  }
-
-  const topDeclaration = /(?:^|;)top:([^;]+)/.exec(beforeRule[1] ?? "");
-
-  return topDeclaration?.[1] ?? null;
 };
 
 afterEach(() => {
@@ -111,25 +67,21 @@ afterEach(() => {
   deleteSchemaState.isPending = false;
 });
 
-describe("GroupTrackWrapper track badge (QA-107)", () => {
-  it("renders the 1-based numbered badge with a 'Track N' tooltip for the first track", () => {
-    renderWrapper({ index: 0 });
+describe("GroupTrackWrapper flush member (DR-W4E-SG-WRAP rail + badge stripped)", () => {
+  it("renders no track-ordinal badge", () => {
+    renderWrapper();
 
-    const badge = screen.getByLabelText("Track 1");
-
-    expect(badge).toHaveTextContent("1");
+    expect(screen.queryByLabelText(/^Track \d+$/)).toBeNull();
   });
 
-  it("renders the 1-based numbered badge with a 'Track N' tooltip for a later track", () => {
-    renderWrapper({ index: 2 });
+  it("renders the member SchemaCard body", () => {
+    renderWrapper();
 
-    const badge = screen.getByLabelText("Track 3");
-
-    expect(badge).toHaveTextContent("3");
+    expect(screen.getByTestId("schema-row-list-mock")).toBeInTheDocument();
   });
 });
 
-describe("GroupTrackWrapper member card has no drag handle (QA-107, proto no-member-handle law)", () => {
+describe("GroupTrackWrapper member card has no drag handle (proto no-member-handle law)", () => {
   it("renders the boxed member SchemaCard without the 'Drag schema' handle", () => {
     renderWrapper();
 
@@ -146,19 +98,5 @@ describe("GroupTrackWrapper member card has no drag handle (QA-107, proto no-mem
     );
 
     expect(screen.getByRole("button", { name: DRAG_HANDLE_ARIA })).toBeInTheDocument();
-  });
-});
-
-describe("GroupTrackWrapper continuous accent rail (QA-107)", () => {
-  it("starts the rail at the top edge for the first track (no upward continuation offset)", () => {
-    const wrapper = renderWrapper({ index: 0, isContinuation: false });
-
-    expect(railBeforeTop(wrapper)).toBe(RAIL_FIRST_TOP);
-  });
-
-  it("extends the rail upward across the inter-track gap for a continuation track", () => {
-    const wrapper = renderWrapper({ index: 1, isContinuation: true });
-
-    expect(railBeforeTop(wrapper)).toBe(RAIL_CONTINUATION_TOP_PX);
   });
 });

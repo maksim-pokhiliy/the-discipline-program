@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Schema, SchemaWithBody } from "@repo/contracts/lms/schema";
+import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type {
   CreateGroupRequest,
   CreateGroupResponse,
@@ -12,10 +12,6 @@ import type {
 } from "@repo/contracts/lms/schema-group";
 
 import { platformKeys } from "@app/lib/api/keys";
-
-import type { GroupDraft, TrackDraft } from "../components/axes/axis-draft.types";
-
-import { asNodeId } from "./axis-draft-id";
 
 const createGroupMock =
   vi.fn<(planId: string, data: CreateGroupRequest) => Promise<CreateGroupResponse>>();
@@ -35,30 +31,32 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const { useCreateGroup } = await import("./use-create-group");
+const { useCreateSchemaGroup } = await import("./use-create-schema-group");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
-const MEMBER_ID = "clp9z8x7w0000abcd1234mem1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 const SUCCESS_MESSAGE = "Group created";
+const S1 = "clp9z8x7w0000abcd12sg2s001";
+const S2 = "clp9z8x7w0000abcd12sg2s002";
+const S3 = "clp9z8x7w0000abcd12sg2s003";
 
-const memberStub = (id: string): SchemaWithBody => ({
+const makeSchema = (id: string, order: number): SchemaWithBody => ({
   schema: {
     id,
     blockId: BLOCK_ID,
-    groupId: GROUP_ID,
-    order: 1,
+    groupId: null,
+    order,
     header: null,
     intensity: null,
-    composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+    composition: null,
     label: null,
     notes: null,
     createdAt: NOW,
     updatedAt: NOW,
-  } satisfies Schema,
+  },
   rows: [],
   rowGroups: [],
 });
@@ -72,19 +70,7 @@ const groupResponse = (): CreateGroupResponse => ({
     createdAt: NOW,
     updatedAt: NOW,
   } satisfies SchemaGroup,
-  members: [memberStub(MEMBER_ID)],
-});
-
-const ladderTrack = (id: string, steps: number[]): TrackDraft => ({
-  id: asNodeId(id),
-  header: null,
-  steps,
-});
-
-const parentDraft = (tracks: TrackDraft[], header: string | null = null): GroupDraft => ({
-  id: asNodeId("parent-draft-1"),
-  header,
-  tracks,
+  members: [makeSchema(S1, 1), makeSchema(S2, 2)],
 });
 
 const renderSubmitter = () => {
@@ -92,12 +78,12 @@ const renderSubmitter = () => {
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
-  const view = renderHook(() => useCreateGroup(PLAN_ID, START_DATE), { wrapper });
+  const view = renderHook(() => useCreateSchemaGroup(PLAN_ID, START_DATE), { wrapper });
 
   return { view, invalidateSpy };
 };
 
-describe("useCreateGroup", () => {
+describe("useCreateSchemaGroup", () => {
   beforeEach(() => {
     createGroupMock.mockReset();
     toastSuccessMock.mockReset();
@@ -107,7 +93,7 @@ describe("useCreateGroup", () => {
     vi.restoreAllMocks();
   });
 
-  it("sends exactly one group-create request carrying every track and the draft header as label", async () => {
+  it("sends one create request with the schemaIds sorted by order and invalidates the week once", async () => {
     createGroupMock.mockResolvedValueOnce(groupResponse());
 
     const { view, invalidateSpy } = renderSubmitter();
@@ -118,10 +104,8 @@ describe("useCreateGroup", () => {
       await view.result.current.run(
         {
           blockId: BLOCK_ID,
-          draft: parentDraft(
-            [ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [15, 12, 9])],
-            "WOD A",
-          ),
+          schemas: [makeSchema(S2, 2), makeSchema(S1, 1)],
+          selectedIds: new Set([S1, S2]),
         },
         { onSuccess, onError },
       );
@@ -130,11 +114,8 @@ describe("useCreateGroup", () => {
     expect(createGroupMock).toHaveBeenCalledTimes(1);
     expect(createGroupMock).toHaveBeenCalledWith(PLAN_ID, {
       blockId: BLOCK_ID,
-      notes: ["WOD A"],
-      tracks: [
-        { header: null, steps: [21, 15, 9] },
-        { header: null, steps: [15, 12, 9] },
-      ],
+      schemaIds: [S1, S2],
+      notes: null,
     });
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
     expect(invalidateSpy).toHaveBeenCalledWith({
@@ -146,7 +127,7 @@ describe("useCreateGroup", () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
-  it("never hits the network when a track has zero steps", async () => {
+  it("never hits the network when the selection is non-contiguous", async () => {
     const { view, invalidateSpy } = renderSubmitter();
     const onSuccess = vi.fn();
     const onError = vi.fn();
@@ -155,7 +136,8 @@ describe("useCreateGroup", () => {
       await view.result.current.run(
         {
           blockId: BLOCK_ID,
-          draft: parentDraft([ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [])]),
+          schemas: [makeSchema(S1, 1), makeSchema(S2, 2), makeSchema(S3, 3)],
+          selectedIds: new Set([S1, S3]),
         },
         { onSuccess, onError },
       );
@@ -163,7 +145,7 @@ describe("useCreateGroup", () => {
 
     expect(createGroupMock).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError.mock.calls[0]?.[0]).toMatch(/^ladder 2 steps: /);
+    expect(onError).toHaveBeenCalledWith("Selected schemas must be next to each other");
     expect(invalidateSpy).not.toHaveBeenCalled();
     expect(toastSuccessMock).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
@@ -180,7 +162,8 @@ describe("useCreateGroup", () => {
       await view.result.current.run(
         {
           blockId: BLOCK_ID,
-          draft: parentDraft([ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [15, 12, 9])]),
+          schemas: [makeSchema(S1, 1), makeSchema(S2, 2)],
+          selectedIds: new Set([S1, S2]),
         },
         { onSuccess, onError },
       );
@@ -212,7 +195,8 @@ describe("useCreateGroup", () => {
       runPromise = view.result.current.run(
         {
           blockId: BLOCK_ID,
-          draft: parentDraft([ladderTrack("t1", [21, 15, 9]), ladderTrack("t2", [15, 12, 9])]),
+          schemas: [makeSchema(S1, 1), makeSchema(S2, 2)],
+          selectedIds: new Set([S1, S2]),
         },
         { onSuccess: vi.fn(), onError: vi.fn() },
       );

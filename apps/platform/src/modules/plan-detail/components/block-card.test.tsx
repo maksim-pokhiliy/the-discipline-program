@@ -48,6 +48,10 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
+vi.mock("../lib/use-create-schema-group", () => ({
+  useCreateSchemaGroup: () => ({ run: () => Promise.resolve(), isPending: false }),
+}));
+
 vi.mock("./schema-card", () => ({
   SchemaCard: ({
     schema,
@@ -69,13 +73,6 @@ vi.mock("./add-schema-button", () => {
     createElement("div", { "data-testid": "add-schema-button-mock" });
 
   return { AddSchemaButton: renderAddSchemaButtonMock };
-});
-
-vi.mock("./add-group-button", () => {
-  const renderAddGroupButtonMock = () =>
-    createElement("div", { "data-testid": "add-group-button-mock" });
-
-  return { AddGroupButton: renderAddGroupButtonMock };
 });
 
 const { BlockCard } = await import("./block-card");

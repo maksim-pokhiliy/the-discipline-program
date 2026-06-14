@@ -26,8 +26,8 @@ export type LadderTrack = { id: NodeId; steps: number[] };
 type LadderTrackStackProps = {
   tracks: ReadonlyArray<LadderTrack>;
   onChangeTrack: (index: number, steps: number[]) => void;
-  onAppendTrack: () => void;
-  onRemoveTrack: (index: number) => void;
+  onAppendTrack?: () => void;
+  onRemoveTrack?: (index: number) => void;
   error?: string | undefined;
   isBoxed?: boolean;
 };
@@ -49,7 +49,7 @@ export const LadderTrackStack: React.FC<LadderTrackStackProps> = ({
           {!isBoxed && index > 0 ? <Divider sx={{ borderColor: "divider" }} /> : null}
 
           <Stack direction="column" spacing={TRACK_SPACING}>
-            {hasMultipleTracks ? (
+            {hasMultipleTracks && onRemoveTrack !== undefined ? (
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <Typography
                   variant="caption"
@@ -79,7 +79,9 @@ export const LadderTrackStack: React.FC<LadderTrackStackProps> = ({
         </Fragment>
       ))}
 
-      <PlusRowButton onClick={onAppendTrack} label={ADD_TRACK_LABEL} />
+      {onAppendTrack !== undefined ? (
+        <PlusRowButton onClick={onAppendTrack} label={ADD_TRACK_LABEL} />
+      ) : null}
 
       {error !== undefined ? <FormHelperText error>{error}</FormHelperText> : null}
     </Stack>

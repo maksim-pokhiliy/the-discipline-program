@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   DndContext,
@@ -16,7 +16,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Stack } from "@mui/material";
+import { Button, Stack } from "@mui/material";
+import { toast } from "sonner";
 
 import type { Block } from "@repo/contracts/lms/block";
 import { buildBlockItems, type BlockItem } from "@repo/contracts/lms/schema-group";
@@ -25,11 +26,16 @@ import { useReorderSchemas } from "@app/lib/hooks";
 
 import { blockItemSortableId } from "../lib/block-item-sortable-id";
 import { pointerFirstCollision } from "../lib/pointer-first-collision";
+import { useCreateSchemaGroup } from "../lib/use-create-schema-group";
 
-import { AddGroupButton } from "./add-group-button";
 import { AddSchemaButton } from "./add-schema-button";
+import { GroupSelectBar } from "./group-select-bar";
 import { SchemaCard } from "./schema-card";
 import { SchemaGroupBox } from "./schema-group-box";
+
+const GROUP_SCHEMAS_LABEL = "Group schemas…";
+const GROUP_SCHEMAS_BAR_LABEL = "Group schemas";
+const MIN_GROUPABLE_SCHEMAS = 2;
 
 type BlockCardBodyProps = {
   block: Block;
@@ -48,16 +54,25 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   parentIsReorderPending = false,
 }) => {
   const reorderSchemas = useReorderSchemas(planId, startDate);
+  const createSchemaGroup = useCreateSchemaGroup(planId, startDate);
 
   const items = useMemo(
     () => buildBlockItems(block.schemas, block.groups),
     [block.schemas, block.groups],
   );
   const [sortedItems, setSortedItems] = useState<BlockItem[]>(items);
+  const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const isFiredRef = useRef(false);
 
   useEffect(() => {
     setSortedItems(items);
   }, [items]);
+
+  const ungroupedCount = useMemo(
+    () => block.schemas.filter((entry) => entry.schema.groupId === null).length,
+    [block.schemas],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -65,6 +80,40 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   );
 
   const effectiveReorderPending = parentIsReorderPending || reorderSchemas.isPending;
+
+  const exitSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelected = (schemaId: string) =>
+    setSelectedIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(schemaId)) {
+        next.delete(schemaId);
+      } else {
+        next.add(schemaId);
+      }
+
+      return next;
+    });
+
+  const handleGroup = () => {
+    if (isFiredRef.current || createSchemaGroup.isPending) {
+      return;
+    }
+
+    isFiredRef.current = true;
+    void createSchemaGroup
+      .run(
+        { blockId: block.id, schemas: block.schemas, selectedIds },
+        { onSuccess: exitSelectMode, onError: (message) => toast.error(message) },
+      )
+      .finally(() => {
+        isFiredRef.current = false;
+      });
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -119,13 +168,36 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 planId={planId}
                 startDate={startDate}
                 parentIsReorderPending={effectiveReorderPending}
+                isSelectMode={isSelectMode}
+                isSelected={selectedIds.has(item.schema.schema.id)}
+                onToggleSelect={toggleSelected}
               />
             ),
           )}
 
+          {isSelectMode ? (
+            <GroupSelectBar
+              selectedCount={selectedIds.size}
+              isPending={createSchemaGroup.isPending}
+              onCancel={exitSelectMode}
+              onGroup={handleGroup}
+              groupLabel={GROUP_SCHEMAS_BAR_LABEL}
+            />
+          ) : null}
+
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />
-            <AddGroupButton planId={planId} startDate={startDate} blockId={block.id} />
+
+            {!isSelectMode && ungroupedCount >= MIN_GROUPABLE_SCHEMAS ? (
+              <Button
+                size="tiny"
+                variant="text"
+                onClick={() => setIsSelectMode(true)}
+                sx={{ alignSelf: "flex-start" }}
+              >
+                {GROUP_SCHEMAS_LABEL}
+              </Button>
+            ) : null}
           </Stack>
         </Stack>
       </SortableContext>

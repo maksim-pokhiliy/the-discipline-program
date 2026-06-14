@@ -4,13 +4,13 @@ import { SCHEMA_CONSTANTS } from "../schema";
 
 import {
   createGroupRequestSchema,
-  groupTrackSchema,
   schemaGroupSchema,
   updateGroupRequestSchema,
 } from "./schema-group.schema";
 
 const cuidA = "clz1234567890123456789aaa";
 const cuidB = "clz1234567890123456789bbb";
+const cuidC = "clz1234567890123456789ccc";
 
 const baseGroup = {
   id: cuidA,
@@ -73,31 +73,19 @@ describe("schemaGroupSchema", () => {
   });
 });
 
-describe("groupTrackSchema", () => {
-  it("accepts a track with steps within bounds", () => {
-    expect(groupTrackSchema.safeParse({ header: "A", steps: [21, 15, 9] }).success).toBe(true);
-  });
-
-  it("rejects a track with empty steps", () => {
-    expect(groupTrackSchema.safeParse({ steps: [] }).success).toBe(false);
-  });
-
-  it("rejects an unknown track key (strict)", () => {
-    expect(groupTrackSchema.safeParse({ steps: [21], composition: {} }).success).toBe(false);
-  });
-});
-
 describe("createGroupRequestSchema", () => {
   const baseRequest = {
     blockId: cuidB,
-    tracks: [{ steps: [21, 15, 9] }, { steps: [15, 12, 9] }],
+    schemaIds: [cuidA, cuidC],
   };
 
-  const makeTracks = (count: number) => Array.from({ length: count }, () => ({ steps: [21] }));
+  const makeSchemaIds = (count: number) =>
+    Array.from(
+      { length: count },
+      (_, index) => `clz123456789012345678${index.toString().padStart(4, "0")}`,
+    );
 
-  const makeSteps = (length: number) => Array.from({ length }, () => 1);
-
-  it("accepts a minimal two-track payload", () => {
+  it("accepts a minimal two-schema wrap payload", () => {
     expect(createGroupRequestSchema.safeParse(baseRequest).success).toBe(true);
   });
 
@@ -111,93 +99,61 @@ describe("createGroupRequestSchema", () => {
     ).toBe(true);
   });
 
-  it("rejects a single-track payload (min 2)", () => {
-    expect(
-      createGroupRequestSchema.safeParse({ ...baseRequest, tracks: [{ steps: [21, 15, 9] }] })
-        .success,
-    ).toBe(false);
+  it("accepts null notes", () => {
+    expect(createGroupRequestSchema.safeParse({ ...baseRequest, notes: null }).success).toBe(true);
   });
 
-  it("rejects an empty tracks array (min 2)", () => {
-    expect(createGroupRequestSchema.safeParse({ ...baseRequest, tracks: [] }).success).toBe(false);
-  });
-
-  it("accepts the maximum allowed tracks count", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: makeTracks(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS),
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects one track over the maximum", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: makeTracks(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS + 1),
-      }).success,
-    ).toBe(false);
-  });
-
-  it("accepts a track at the maximum allowed steps length", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: [{ steps: makeSteps(SCHEMA_CONSTANTS.MAX_LADDER_STEPS) }, { steps: [15, 12, 9] }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects a track one step over the maximum length", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: [
-          { steps: makeSteps(SCHEMA_CONSTANTS.MAX_LADDER_STEPS + 1) },
-          { steps: [15, 12, 9] },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("accepts a step at the maximum allowed value", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: [{ steps: [SCHEMA_CONSTANTS.MAX_LADDER_STEP_VALUE] }, { steps: [15, 12, 9] }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects a step over the maximum value", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: [{ steps: [SCHEMA_CONSTANTS.MAX_LADDER_STEP_VALUE + 1] }, { steps: [15, 12, 9] }],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects a non-positive step", () => {
-    expect(
-      createGroupRequestSchema.safeParse({
-        ...baseRequest,
-        tracks: [{ steps: [21, 15, 9] }, { steps: [15, 0, 9] }],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects an unknown root key (strict)", () => {
-    expect(createGroupRequestSchema.safeParse({ ...baseRequest, composition: {} }).success).toBe(
+  it("rejects a single-schema payload (min 2)", () => {
+    expect(createGroupRequestSchema.safeParse({ ...baseRequest, schemaIds: [cuidA] }).success).toBe(
       false,
     );
+  });
+
+  it("rejects an empty schemaIds array (min 2)", () => {
+    expect(createGroupRequestSchema.safeParse({ ...baseRequest, schemaIds: [] }).success).toBe(
+      false,
+    );
+  });
+
+  it("accepts the maximum allowed schemaIds count", () => {
+    expect(
+      createGroupRequestSchema.safeParse({
+        ...baseRequest,
+        schemaIds: makeSchemaIds(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS),
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects one schemaId over the maximum", () => {
+    expect(
+      createGroupRequestSchema.safeParse({
+        ...baseRequest,
+        schemaIds: makeSchemaIds(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS + 1),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects duplicate schemaIds (unique refine)", () => {
+    expect(
+      createGroupRequestSchema.safeParse({ ...baseRequest, schemaIds: [cuidA, cuidA] }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a non-cuid schemaId", () => {
+    expect(
+      createGroupRequestSchema.safeParse({ ...baseRequest, schemaIds: [cuidA, "not-a-cuid"] })
+        .success,
+    ).toBe(false);
   });
 
   it("rejects a non-cuid blockId", () => {
     expect(
       createGroupRequestSchema.safeParse({ ...baseRequest, blockId: "not-a-cuid" }).success,
     ).toBe(false);
+  });
+
+  it("rejects an unknown root key (strict)", () => {
+    expect(createGroupRequestSchema.safeParse({ ...baseRequest, tracks: [] }).success).toBe(false);
   });
 });
 

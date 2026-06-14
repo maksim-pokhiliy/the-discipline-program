@@ -1,13 +1,12 @@
 import { Prisma } from "@prisma/client";
 
-import { type Composition } from "@repo/contracts/lms/composition";
 import {
   type CreateGroupRequest,
   type CreateGroupResponse,
   type SchemaGroup,
   type UpdateGroupRequest,
 } from "@repo/contracts/lms/schema-group";
-import { NotFoundError } from "@repo/errors";
+import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import {
   verifyBlockOwnership,
@@ -16,20 +15,14 @@ import {
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToSchemaGroup, mapToSchemaWithBody } from "../../../mappers/lms";
-import { handlePrismaError, marshalNullableJson, retryOnP2034, toInputJson } from "../../../utils";
+import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
 import { assertGroupMembersContiguous } from "../schema/assertions";
-import { assertPlanWritable } from "../schema/create-steps";
 
-const ORDER_STEP = 10;
-
-const createGroupWithMembers = async (
+const createSchemaGroupWrapping = async (
   tx: TxClient,
-  planId: string,
   data: CreateGroupRequest,
 ): Promise<CreateGroupResponse> => {
-  await assertPlanWritable(tx, planId);
-
   const group = await tx.schemaGroup.create({
     data: {
       blockId: data.blockId,
@@ -38,37 +31,50 @@ const createGroupWithMembers = async (
     },
   });
 
-  const tailAggregate = await tx.schema.aggregate({
-    where: { blockId: data.blockId },
-    _max: { order: true },
+  const namedSchemas = await tx.schema.findMany({
+    where: { id: { in: [...data.schemaIds] } },
+    select: { id: true, blockId: true, groupId: true },
   });
-  const tailOrder = tailAggregate._max.order ?? 0;
 
-  const members = [];
-
-  for (const [index, track] of data.tracks.entries()) {
-    const member = await tx.schema.create({
-      data: {
-        blockId: data.blockId,
-        groupId: group.id,
-        order: tailOrder + (index + 1) * ORDER_STEP,
-        header: track.header ?? null,
-        composition: toInputJson({
-          repetition: { kind: "ladder", steps: track.steps },
-        } satisfies Composition),
-      },
-      include: SCHEMA_BODY_INCLUDE,
+  if (namedSchemas.length !== data.schemaIds.length) {
+    throw new BadRequestError("Some schemaIds reference non-existent schemas", {
+      missing: data.schemaIds.filter((id) => !namedSchemas.some((s) => s.id === id)),
     });
-
-    members.push(member);
   }
+
+  const foreignSchemas = namedSchemas.filter((s) => s.blockId !== data.blockId);
+
+  if (foreignSchemas.length > 0) {
+    throw new BadRequestError("Some schemaIds do not belong to the target block", {
+      foreignIds: foreignSchemas.map((s) => s.id),
+    });
+  }
+
+  const alreadyGrouped = namedSchemas.filter((s) => s.groupId !== null);
+
+  if (alreadyGrouped.length > 0) {
+    throw new BadRequestError("Some schemaIds are already in a group", {
+      groupedIds: alreadyGrouped.map((s) => s.id),
+    });
+  }
+
+  await tx.schema.updateMany({
+    where: { id: { in: [...data.schemaIds] } },
+    data: { groupId: group.id },
+  });
 
   const blockSchemas = await tx.schema.findMany({
     where: { blockId: data.blockId },
-    select: { id: true, order: true, groupId: true },
+    select: { id: true, groupId: true, order: true },
   });
 
   assertGroupMembersContiguous(blockSchemas, group.id);
+
+  const members = await tx.schema.findMany({
+    where: { groupId: group.id },
+    orderBy: { order: "asc" },
+    include: SCHEMA_BODY_INCLUDE,
+  });
 
   return {
     group: mapToSchemaGroup(group),
@@ -92,7 +98,7 @@ export const lmsSchemaGroupApi = {
 
     try {
       return await retryOnP2034(() =>
-        prisma.$transaction((tx) => createGroupWithMembers(tx, planId, data), {
+        prisma.$transaction((tx) => createSchemaGroupWrapping(tx, data), {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         }),
       );

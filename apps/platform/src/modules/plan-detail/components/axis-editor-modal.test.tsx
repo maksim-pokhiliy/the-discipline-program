@@ -6,24 +6,10 @@ import { SCHEMA_CONSTANTS, type SchemaWithBody } from "@repo/contracts/lms/schem
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
-import type { UseCreateGroupResult } from "../lib/use-create-group";
-import type { UseCreateIndependentLaddersResult } from "../lib/use-create-independent-ladders";
-
-type GroupRun = UseCreateGroupResult["run"];
-type GroupRunArgs = Parameters<GroupRun>[0];
-type GroupRunOptions = Parameters<GroupRun>[1];
-
-type IndependentRun = UseCreateIndependentLaddersResult["run"];
-type IndependentRunArgs = Parameters<IndependentRun>[0];
-
 const createSchemaMutate = vi.fn();
 const updateSchemaMutate = vi.fn();
-const groupRun = vi.fn<GroupRun>();
-const independentRun = vi.fn<IndependentRun>();
 const createSchemaState = { isPending: false };
 const updateSchemaState = { isPending: false };
-const groupState = { isPending: false };
-const independentState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -41,17 +27,6 @@ vi.mock("@app/lib/hooks", async () => {
     }),
   };
 });
-
-vi.mock("../lib/use-create-group", () => ({
-  useCreateGroup: () => ({ run: groupRun, isPending: groupState.isPending }),
-}));
-
-vi.mock("../lib/use-create-independent-ladders", () => ({
-  useCreateIndependentLadders: () => ({
-    run: independentRun,
-    isPending: independentState.isPending,
-  }),
-}));
 
 const { AxisEditorModal } = await import("./axis-editor-modal");
 
@@ -127,70 +102,17 @@ const submitEdit = () => fireEvent.click(screen.getByRole("button", { name: "Sav
 const selectRepetition = (label: string) =>
   fireEvent.click(screen.getByRole("button", { name: label }));
 
-const addAnotherLadder = () =>
-  fireEvent.click(screen.getByRole("button", { name: "another ladder" }));
-
-const buildParallel = () => {
-  selectRepetition("Ladder");
-  addAnotherLadder();
-};
-
-const editStepCell = (cellIndex: number, value: string) => {
-  const cell = screen.getAllByRole("spinbutton")[cellIndex];
-
-  if (cell === undefined) {
-    throw new Error(`step cell ${cellIndex} not found`);
-  }
-
-  fireEvent.change(cell, { target: { value } });
-};
-
 const groupCheckbox = (): HTMLElement | null =>
   screen.queryByRole("checkbox", { name: GROUP_CHECKBOX });
 
-const uncheckGroup = (): void => {
-  fireEvent.click(screen.getByRole("checkbox", { name: GROUP_CHECKBOX }));
-};
-
-const capturedGroupArgs = (): GroupRunArgs => {
-  const args = groupRun.mock.calls[0]?.[0];
-
-  if (args === undefined) {
-    throw new Error("groupRun was not called");
-  }
-
-  return args;
-};
-
-const capturedGroupOptions = (): GroupRunOptions => {
-  const options = groupRun.mock.calls[0]?.[1];
-
-  if (options === undefined) {
-    throw new Error("groupRun was not called");
-  }
-
-  return options;
-};
-
-const capturedIndependentArgs = (): IndependentRunArgs => {
-  const args = independentRun.mock.calls[0]?.[0];
-
-  if (args === undefined) {
-    throw new Error("independentRun was not called");
-  }
-
-  return args;
-};
+const anotherLadderButton = (): HTMLElement | null =>
+  screen.queryByRole("button", { name: "another ladder" });
 
 afterEach(() => {
   createSchemaState.isPending = false;
   updateSchemaState.isPending = false;
-  groupState.isPending = false;
-  independentState.isPending = false;
   createSchemaMutate.mockReset();
   updateSchemaMutate.mockReset();
-  groupRun.mockReset();
-  independentRun.mockReset();
 });
 
 describe("AxisEditorModal create mode", () => {
@@ -225,6 +147,30 @@ describe("AxisEditorModal create mode", () => {
     expect(createSchemaMutate).toHaveBeenCalledTimes(1);
     expect(createSchemaMutate.mock.calls[0]?.[0]).not.toHaveProperty("groupId");
   });
+
+  it("submits a single ladder schema through the flat create", () => {
+    renderCreate();
+
+    selectRepetition("Ladder");
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+      header: null,
+      notes: null,
+    });
+  });
+
+  it("never offers a group-into-box checkbox or another-ladder affordance (single-schema only)", () => {
+    renderCreate();
+
+    selectRepetition("Ladder");
+
+    expect(groupCheckbox()).toBeNull();
+    expect(anotherLadderButton()).toBeNull();
+  });
 });
 
 describe("AxisEditorModal in-group add (W1-SUBADD-BOX)", () => {
@@ -242,26 +188,6 @@ describe("AxisEditorModal in-group add (W1-SUBADD-BOX)", () => {
       header: null,
       notes: null,
     });
-  });
-
-  it("hides the Group-into-box checkbox in the in-group add context even for a parallel draft (MT-18)", () => {
-    renderCreateIntoGroup(GROUP_ID);
-
-    buildParallel();
-
-    expect(groupCheckbox()).toBeNull();
-  });
-
-  it("routes a parallel draft through the flat create (never the group/independent hook) in the in-group add context", () => {
-    renderCreateIntoGroup(GROUP_ID);
-
-    buildParallel();
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toMatchObject({ groupId: GROUP_ID });
-    expect(groupRun).not.toHaveBeenCalled();
-    expect(independentRun).not.toHaveBeenCalled();
   });
 });
 
@@ -328,11 +254,6 @@ describe("AxisEditorModal edit mode", () => {
     renderEdit(editableSchema());
 
     expect(groupCheckbox()).toBeNull();
-
-    submitEdit();
-
-    expect(groupRun).not.toHaveBeenCalled();
-    expect(independentRun).not.toHaveBeenCalled();
   });
 });
 
@@ -426,153 +347,5 @@ describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
     selectRepetition("Count");
 
     expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Count");
-  });
-
-  it("renders the another-ladder control outside the repetition tile group once Ladder is active", () => {
-    renderCreate();
-
-    selectRepetition("Ladder");
-
-    const group = screen.getByRole("group", { name: "repetition" });
-    const anotherLadder = screen.getByRole("button", { name: "another ladder" });
-
-    expect(anotherLadder).toBeInTheDocument();
-    expect(within(group).queryByRole("button", { name: "another ladder" })).toBeNull();
-  });
-});
-
-describe("AxisEditorModal group-into-box submit routing (MT-18, DR-W1-2)", () => {
-  it("fires the group create once with a two-track ladder draft and skips the flat create when Group-into-box stays checked", () => {
-    renderCreate();
-
-    buildParallel();
-
-    expect(groupCheckbox()).toBeChecked();
-
-    submit();
-
-    expect(groupRun).toHaveBeenCalledTimes(1);
-    expect(capturedGroupArgs().draft.tracks).toHaveLength(2);
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(independentRun).not.toHaveBeenCalled();
-  });
-
-  it("threads an edited second-track step into the group-create draft", () => {
-    renderCreate();
-
-    buildParallel();
-    editStepCell(3, "12");
-    submit();
-
-    const [, secondTrack] = capturedGroupArgs().draft.tracks;
-
-    expect(secondTrack?.steps).toEqual([12, 12, 9]);
-  });
-
-  it("routes a parallel draft to the independent create when Group-into-box is unchecked", () => {
-    renderCreate();
-
-    buildParallel();
-    uncheckGroup();
-
-    expect(groupCheckbox()).not.toBeChecked();
-
-    submit();
-
-    expect(independentRun).toHaveBeenCalledTimes(1);
-    expect(groupRun).not.toHaveBeenCalled();
-    expect(capturedIndependentArgs().draft.tracks).toHaveLength(2);
-  });
-
-  it("submits a single ladder through the flat create and never calls the group create", () => {
-    renderCreate();
-
-    selectRepetition("Ladder");
-
-    expect(groupCheckbox()).toBeNull();
-
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
-      blockId: BLOCK_ID,
-      composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-      header: null,
-      notes: null,
-    });
-    expect(groupRun).not.toHaveBeenCalled();
-    expect(independentRun).not.toHaveBeenCalled();
-  });
-
-  it("surfaces a per-track validation error from the group create in the modal Alert", () => {
-    groupRun.mockImplementationOnce((_args, options) => {
-      options.onError("ladder 2: step values must be positive");
-
-      return Promise.resolve();
-    });
-
-    renderCreate();
-
-    buildParallel();
-    submit();
-
-    expect(groupRun).toHaveBeenCalledTimes(1);
-    expect(alertText()).toMatch(/ladder 2/);
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
-  });
-
-  it("surfaces a request failure, keeps the modal open and re-enables submit", () => {
-    const onClose = vi.fn();
-
-    groupRun.mockImplementationOnce((_args, options) => {
-      options.onError("network exploded");
-
-      return Promise.resolve();
-    });
-
-    render(
-      <AxisEditorModal
-        open
-        onClose={onClose}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        mode={{ kind: "create", blockId: BLOCK_ID }}
-      />,
-    );
-
-    buildParallel();
-    submit();
-
-    expect(alertText()).toContain("network exploded");
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog", { name: CREATE_TITLE })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
-  });
-
-  it("calls the group create once for a synchronous double-click on a parallel draft", () => {
-    renderCreate();
-
-    buildParallel();
-    submit();
-    submit();
-
-    expect(groupRun).toHaveBeenCalledTimes(1);
-  });
-
-  it("re-enables submit after a group-create success so a follow-up create can fire", () => {
-    groupRun.mockImplementationOnce((_args, options) => {
-      options.onSuccess();
-
-      return Promise.resolve();
-    });
-
-    renderCreate();
-
-    buildParallel();
-    submit();
-
-    expect(capturedGroupOptions().onSuccess).toBeTypeOf("function");
-    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
   });
 });

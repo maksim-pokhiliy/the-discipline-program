@@ -30,7 +30,6 @@ const FOOTER_PADDING_X_FACTOR = 1.5;
 const FOOTER_PADDING_BOTTOM_FACTOR = 1.5;
 const DRAG_OPACITY_DRAGGING = 0.5;
 const DRAG_OPACITY_DEFAULT = 1;
-const FIRST_TRACK_INDEX = 0;
 
 const UNGROUP_TITLE = "Ungroup";
 const UNGROUP_MESSAGE = "Ungroup these tracks? Schemas stay in the block as standalone.";
@@ -140,12 +139,10 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
           ),
         })}
       >
-        {members.map((member, index) => (
+        {members.map((member) => (
           <GroupTrackWrapper
             key={member.schema.id}
             member={member}
-            index={index}
-            isContinuation={index > FIRST_TRACK_INDEX}
             planId={planId}
             startDate={startDate}
             parentIsReorderPending={parentIsReorderPending}

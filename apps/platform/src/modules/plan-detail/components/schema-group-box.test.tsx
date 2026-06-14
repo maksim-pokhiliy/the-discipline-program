@@ -51,18 +51,12 @@ vi.mock("../lib/use-delete-group-with-members", async () => {
 });
 
 vi.mock("./group-track-wrapper", () => {
-  const renderGroupTrackWrapperMock = (props: {
-    member: SchemaWithBody;
-    index: number;
-    isContinuation: boolean;
-  }) =>
+  const renderGroupTrackWrapperMock = (props: { member: SchemaWithBody }) =>
     createElement(
       "div",
       {
         "data-testid": "group-track-wrapper-mock",
         "data-schema-id": props.member.schema.id,
-        "data-index": String(props.index),
-        "data-continuation": props.isContinuation ? "true" : "false",
       },
       `track:${props.member.schema.id}`,
     );
@@ -185,7 +179,7 @@ describe("SchemaGroupBox proto frame", () => {
     expect(screen.getByText("GROUP").parentElement).not.toHaveAttribute("aria-roledescription");
   });
 
-  it("renders one GroupTrackWrapper per member in order with continuation flags", () => {
+  it("renders one GroupTrackWrapper per member in member order", () => {
     renderBox({
       members: [
         makeSchema("clp9z8x7w0000abcd1234aa01", 1),
@@ -200,11 +194,6 @@ describe("SchemaGroupBox proto frame", () => {
       "clp9z8x7w0000abcd1234aa01",
       "clp9z8x7w0000abcd1234aa02",
       "clp9z8x7w0000abcd1234aa03",
-    ]);
-    expect(tracks.map((track) => track.getAttribute("data-continuation"))).toEqual([
-      "false",
-      "true",
-      "true",
     ]);
   });
 

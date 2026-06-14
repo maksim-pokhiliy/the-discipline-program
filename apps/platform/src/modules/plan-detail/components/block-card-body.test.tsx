@@ -2,7 +2,7 @@ import { createElement, type ReactNode } from "react";
 
 import type * as DndKitCore from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Block } from "@repo/contracts/lms/block";
@@ -12,8 +12,14 @@ import type { SchemaGroup } from "@repo/contracts/lms/schema-group";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+import type { UseCreateSchemaGroupResult } from "../lib/use-create-schema-group";
+
+type SchemaGroupRun = UseCreateSchemaGroupResult["run"];
+
 const reorderSchemasMutate = vi.fn();
 const reorderSchemasState = { isPending: false };
+const createSchemaGroupRun = vi.fn<SchemaGroupRun>(() => Promise.resolve());
+const createSchemaGroupState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -27,17 +33,31 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
+vi.mock("../lib/use-create-schema-group", () => ({
+  useCreateSchemaGroup: () => ({
+    run: createSchemaGroupRun,
+    isPending: createSchemaGroupState.isPending,
+  }),
+}));
+
 vi.mock("./schema-card", () => {
   const renderSchemaCardMock = (props: {
     schema: SchemaWithBody;
     parentIsReorderPending?: boolean;
+    isSelectMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: (schemaId: string) => void;
   }) =>
     createElement(
-      "div",
+      "button",
       {
+        type: "button",
         "data-testid": "schema-card-mock",
         "data-schema-id": props.schema.schema.id,
         "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
+        "data-select-mode": props.isSelectMode === true ? "true" : "false",
+        "data-selected": props.isSelected === true ? "true" : "false",
+        onClick: () => props.onToggleSelect?.(props.schema.schema.id),
       },
       `schema-card:${props.schema.schema.id}`,
     );
@@ -70,13 +90,6 @@ vi.mock("./add-schema-button", () => {
     createElement("div", { "data-testid": "add-schema-button-mock" });
 
   return { AddSchemaButton: renderAddSchemaButtonMock };
-});
-
-vi.mock("./add-group-button", () => {
-  const renderAddGroupButtonMock = () =>
-    createElement("div", { "data-testid": "add-group-button-mock" });
-
-  return { AddGroupButton: renderAddGroupButtonMock };
 });
 
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
@@ -193,6 +206,9 @@ const triggerDragEnd = (event: DragEndEvent): void => {
 afterEach(() => {
   reorderSchemasMutate.mockReset();
   reorderSchemasState.isPending = false;
+  createSchemaGroupRun.mockReset();
+  createSchemaGroupRun.mockImplementation(() => Promise.resolve());
+  createSchemaGroupState.isPending = false;
   capturedOnDragEnd = null;
 });
 
@@ -437,5 +453,151 @@ describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
     );
 
     expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "false");
+  });
+});
+
+describe("BlockCardBody DR-W4E-SG-WRAP: schema-group select-mode create", () => {
+  const GROUP_BUTTON = "Group schemas…";
+  const GROUP_BAR_BUTTON = "Group schemas";
+
+  it("shows the 'Group schemas…' toggle when at least two ungrouped schemas exist", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw002", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: GROUP_BUTTON })).toBeInTheDocument();
+  });
+
+  it("hides the 'Group schemas…' toggle when fewer than two ungrouped schemas exist", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw010", order: 1 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: GROUP_BUTTON })).toBeNull();
+  });
+
+  it("counts only ungrouped schemas toward the toggle threshold (grouped members excluded)", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12sgw0gr";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw020", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw021", order: 2, groupId: GROUP_ID });
+    const flat = makeSchema({ id: "clp9z8x7w0000abcd12sgw022", order: 3 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [m1, m2, flat], groups: [makeGroup({ id: GROUP_ID })] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: GROUP_BUTTON })).toBeNull();
+  });
+
+  it("enters select-mode and threads select props only to standalone SchemaCards", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw030", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw031", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    const cards = screen.getAllByTestId("schema-card-mock");
+
+    for (const card of cards) {
+      expect(card).toHaveAttribute("data-select-mode", "true");
+    }
+  });
+
+  it("runs useCreateSchemaGroup with the full block schemas and selected ids after selecting two and confirming", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw040", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw041", order: 2 });
+    const block = makeBlock({ schemas: [s1, s2] });
+
+    render(<BlockCardBody block={block} planId={PLAN_ID} startDate={START_DATE} />);
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    const cards = screen.getAllByTestId("schema-card-mock");
+
+    for (const card of cards) {
+      fireEvent.click(card);
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BAR_BUTTON }));
+
+    expect(createSchemaGroupRun).toHaveBeenCalledTimes(1);
+
+    const args = createSchemaGroupRun.mock.calls[0]?.[0];
+
+    if (args === undefined) {
+      throw new Error("useCreateSchemaGroup.run was not called");
+    }
+
+    expect(args.blockId).toBe(BLOCK_ID);
+    expect(args.schemas).toBe(block.schemas);
+    expect([...args.selectedIds]).toEqual([s1.schema.id, s2.schema.id]);
+  });
+
+  it("keeps the 'Group schemas' confirm disabled until two schemas are selected", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw050", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw051", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+
+    expect(screen.getByRole("button", { name: GROUP_BAR_BUTTON })).toBeDisabled();
+
+    fireEvent.click(screen.getAllByTestId("schema-card-mock")[0] as HTMLElement);
+
+    expect(screen.getByRole("button", { name: GROUP_BAR_BUTTON })).toBeDisabled();
+
+    fireEvent.click(screen.getAllByTestId("schema-card-mock")[1] as HTMLElement);
+
+    expect(screen.getByRole("button", { name: GROUP_BAR_BUTTON })).toBeEnabled();
+  });
+
+  it("exits select-mode via Cancel without invoking the create hook", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw060", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw061", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: GROUP_BUTTON }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByRole("button", { name: GROUP_BUTTON })).toBeInTheDocument();
+    expect(createSchemaGroupRun).not.toHaveBeenCalled();
   });
 });
