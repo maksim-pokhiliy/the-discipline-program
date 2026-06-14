@@ -6,21 +6,20 @@ import { type Exercise } from "@repo/contracts/lms/exercise";
 
 import { useExercises } from "@app/lib/hooks";
 
-import { EQUIPMENT_LABELS, MOVEMENT_TYPE_LABELS } from "./exercise-label-maps";
-
 const SEARCH_PLACEHOLDER = "search by name, family, or modality…";
 const REQUIRED_EXERCISE_MESSAGE = "Pick an exercise";
 const OPTION_NAME_FONT_WEIGHT = 600;
-const FAMILY_PREFIX = " · family: ";
+const FAMILY_PREFIX = "family: ";
+const EQUIPMENT_SEPARATOR = ", ";
 const META_SEPARATOR = " · ";
 const LOADING_SPINNER_SIZE = 16;
 
 const buildMetaLine = (exercise: Exercise): string => {
-  const base = `${EQUIPMENT_LABELS[exercise.primaryEquipment]}${META_SEPARATOR}${MOVEMENT_TYPE_LABELS[exercise.movementTypeTagPrimary]}`;
+  const equipmentPart = exercise.equipment.map((item) => item.name).join(EQUIPMENT_SEPARATOR);
+  const familyPart =
+    exercise.movementFamily === null ? null : `${FAMILY_PREFIX}${exercise.movementFamily}`;
 
-  return exercise.movementFamily === null
-    ? base
-    : `${base}${FAMILY_PREFIX}${exercise.movementFamily}`;
+  return [equipmentPart, familyPart].filter(Boolean).join(META_SEPARATOR);
 };
 
 const getOptionLabel = (option: Exercise): string => option.canonicalName;
@@ -45,7 +44,7 @@ export const ExercisePicker = ({
   label,
 }: ExercisePickerProps) => {
   const { data: exercises = [], isLoading } = useExercises();
-  const options = placeholderOnly ? exercises.filter((e) => e.placeholderFlag) : exercises;
+  const options = placeholderOnly ? exercises.filter((e) => e.nature === "PLACEHOLDER") : exercises;
   const selected = exercises.find((e) => e.id === value) ?? null;
 
   return (

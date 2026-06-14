@@ -5,6 +5,7 @@ import {
   ID_DEADLIFT,
   ID_MISS,
   ID_PLACEHOLDER,
+  ID_REST,
   exerciseById,
   makeExerciseRow,
 } from "./format-row.fixtures";
@@ -108,11 +109,22 @@ describe("buildRow", () => {
     expect(result.summary.notes).toEqual([]);
   });
 
-  it("marks a placeholderFlag exercise as dashed with no demo url", () => {
+  it("marks a placeholder-natured exercise as dashed with no demo url", () => {
     const result = buildRow(makeExerciseRow({ exerciseId: ID_PLACEHOLDER }), exerciseById, 0);
 
     expect(result.dashed).toBe(true);
     expect(result.demoUrl).toBeNull();
+    expect(result.kindBadge).toBe("EX");
+    expect(result.kindCls).toBe("ex");
     expect(result.mainText).toBe("Coach choice");
+  });
+
+  it("renders a rest-natured exercise distinctly with the REST badge and not dashed", () => {
+    const result = buildRow(makeExerciseRow({ exerciseId: ID_REST }), exerciseById, 0);
+
+    expect(result.kindBadge).toBe("REST");
+    expect(result.kindCls).toBe("rest");
+    expect(result.dashed).toBe(false);
+    expect(result.mainText).toBe("Rest");
   });
 });

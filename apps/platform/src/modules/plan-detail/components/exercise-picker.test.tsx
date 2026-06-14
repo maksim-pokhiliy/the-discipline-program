@@ -22,18 +22,24 @@ const { ExercisePicker } = await import("./exercise-picker");
 
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 
+const makeEquipment = (name: string): Exercise["equipment"][number] => ({
+  id: "ckeq01234567890abcdef01234",
+  name,
+  nameLower: name.toLowerCase(),
+  notes: null,
+  createdAt: NOW,
+  updatedAt: NOW,
+});
+
 const makeExercise = (overrides: Partial<Exercise>): Exercise => ({
   id: "ckxw5p7gp0000q1mnzv5cuq01",
   canonicalName: "Front Squat",
   canonicalNameLower: "front squat",
-  primaryEquipment: "BARBELL",
-  movementTypeTagPrimary: "SQUAT",
-  movementTypeTagSecondary: null,
-  canonicalCompoundType: "ATOMIC",
-  placeholderFlag: false,
+  nature: "CONCRETE",
   movementFamily: "squat",
   defaultDemoUrls: [],
   aliases: [],
+  equipment: [makeEquipment("Barbell")],
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -45,7 +51,6 @@ const DEADLIFT = makeExercise({
   id: "ckxw5p7gp0000q1mnzv5cuq02",
   canonicalName: "Deadlift",
   canonicalNameLower: "deadlift",
-  movementTypeTagPrimary: "HINGE",
   movementFamily: "hinge",
 });
 
@@ -72,7 +77,7 @@ describe("ExercisePicker search box", () => {
 });
 
 describe("ExercisePicker option meta line", () => {
-  it("shows the equipment · movement · family meta line under each option name", () => {
+  it("shows the equipment names · family meta line under each option name", () => {
     exercisesState.data = [FRONT_SQUAT];
 
     render(<ExercisePicker value={null} onChange={onChange} />);
@@ -80,7 +85,22 @@ describe("ExercisePicker option meta line", () => {
     openListbox();
 
     expect(screen.getByText("Front Squat")).toBeInTheDocument();
-    expect(screen.getByText("Barbell · Squat · family: squat")).toBeInTheDocument();
+    expect(screen.getByText("Barbell · family: squat")).toBeInTheDocument();
+  });
+
+  it("joins multiple equipment names with a comma", () => {
+    exercisesState.data = [
+      makeExercise({
+        movementFamily: null,
+        equipment: [makeEquipment("Kettlebell"), makeEquipment("Dumbbell")],
+      }),
+    ];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    openListbox();
+
+    expect(screen.getByText("Kettlebell, Dumbbell")).toBeInTheDocument();
   });
 
   it("omits the family suffix when movementFamily is null", () => {
@@ -90,7 +110,7 @@ describe("ExercisePicker option meta line", () => {
 
     openListbox();
 
-    expect(screen.getByText("Barbell · Squat")).toBeInTheDocument();
+    expect(screen.getByText("Barbell")).toBeInTheDocument();
   });
 });
 
@@ -124,7 +144,7 @@ describe("ExercisePicker selection", () => {
       makeExercise({
         id: "ckxw5p7gp0000q1mnzv5cuq03",
         canonicalName: "Coach choice",
-        placeholderFlag: true,
+        nature: "PLACEHOLDER",
       }),
     ];
 
@@ -183,7 +203,7 @@ describe("ExercisePicker compact mode (D-10)", () => {
       makeExercise({
         id: "ckxw5p7gp0000q1mnzv5cuq03",
         canonicalName: "Coach choice",
-        placeholderFlag: true,
+        nature: "PLACEHOLDER",
       }),
     ];
 
