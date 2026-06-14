@@ -1,8 +1,8 @@
 import { createElement, type ReactNode } from "react";
 
 import type * as DndKitCore from "@dnd-kit/core";
-import type { DragEndEvent } from "@dnd-kit/core";
-import { fireEvent, screen } from "@testing-library/react";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Block } from "@repo/contracts/lms/block";
@@ -12,6 +12,7 @@ import type { SchemaGroup } from "@repo/contracts/lms/schema-group";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+import { restrictToVerticalAxis } from "../lib/restrict-to-vertical-axis";
 import type { UseCreateSchemaGroupResult } from "../lib/use-create-schema-group";
 
 type SchemaGroupRun = UseCreateSchemaGroupResult["run"];
@@ -107,25 +108,37 @@ vi.mock("./add-schema-button", () => {
 });
 
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
+let capturedOnDragStart: ((event: DragStartEvent) => void) | null = null;
+let capturedModifiers: DndKitCore.Modifiers | undefined = undefined;
 
 vi.mock("@dnd-kit/core", async () => {
   const actual = await vi.importActual<typeof DndKitCore>("@dnd-kit/core");
 
-  const DndContextMock = ({
+  const renderDndContextMock = ({
     onDragEnd,
+    onDragStart,
+    modifiers,
     children,
   }: {
     onDragEnd: (event: DragEndEvent) => void;
+    onDragStart?: (event: DragStartEvent) => void;
+    modifiers?: DndKitCore.Modifiers;
     children: ReactNode;
   }) => {
     capturedOnDragEnd = onDragEnd;
+    capturedOnDragStart = onDragStart ?? null;
+    capturedModifiers = modifiers;
 
     return createElement("div", { "data-testid": "dnd-context-mock" }, children);
   };
 
+  const renderDragOverlayMock = ({ children }: { children: ReactNode }) =>
+    createElement("div", { "data-testid": "drag-overlay-mock" }, children);
+
   return {
     ...actual,
-    DndContext: DndContextMock,
+    DndContext: renderDndContextMock,
+    DragOverlay: renderDragOverlayMock,
   };
 });
 
@@ -214,7 +227,19 @@ const triggerDragEnd = (event: DragEndEvent): void => {
     throw new Error("DndContext.onDragEnd was not captured");
   }
 
-  capturedOnDragEnd(event);
+  const handler = capturedOnDragEnd;
+
+  act(() => handler(event));
+};
+
+const triggerDragStart = (activeId: string): void => {
+  if (capturedOnDragStart === null) {
+    throw new Error("DndContext.onDragStart was not captured");
+  }
+
+  const handler = capturedOnDragStart;
+
+  act(() => handler({ active: { id: activeId } } as unknown as DragStartEvent));
 };
 
 afterEach(() => {
@@ -224,6 +249,8 @@ afterEach(() => {
   createSchemaGroupRun.mockImplementation(() => Promise.resolve());
   createSchemaGroupState.isPending = false;
   capturedOnDragEnd = null;
+  capturedOnDragStart = null;
+  capturedModifiers = undefined;
   capturedMemberReorderByGroup.clear();
 });
 
@@ -731,5 +758,99 @@ describe("BlockCardBody DR-W4E-SG-WRAP: schema-group select-mode create", () => 
 
     expect(screen.getByRole("button", { name: GROUP_BUTTON })).toBeInTheDocument();
     expect(createSchemaGroupRun).not.toHaveBeenCalled();
+  });
+});
+
+describe("BlockCardBody W3-DND-POLISH: drag overlay ghost + vertical-axis modifier", () => {
+  it("passes the restrict-to-vertical-axis modifier to the DndContext", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp002", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(capturedModifiers).toEqual([restrictToVerticalAxis]);
+  });
+
+  it("renders an empty DragOverlay (no ghost) before any drag starts", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp010", order: 1 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    expect(screen.getByTestId("drag-overlay-mock")).toBeEmptyDOMElement();
+  });
+
+  it("shows the schema header in the ghost when a schema drag starts", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp020", order: 1, header: "WOD A" });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp021", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragStart(`schema:${s1.schema.id}`);
+
+    const overlay = screen.getByTestId("drag-overlay-mock");
+
+    expect(within(overlay).getByText("WOD A")).toBeInTheDocument();
+  });
+
+  it("shows the group label in the ghost when a group drag starts", () => {
+    const GROUP_ID = "clp9z8x7w0000abcd12dnpgr1";
+    const m1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp030", order: 1, groupId: GROUP_ID });
+    const m2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp031", order: 2, groupId: GROUP_ID });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [m1, m2],
+          groups: [makeGroup({ id: GROUP_ID, notes: ["Conditioning"] })],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragStart(`group:${GROUP_ID}`);
+
+    const overlay = screen.getByTestId("drag-overlay-mock");
+
+    expect(within(overlay).getByText("Conditioning")).toBeInTheDocument();
+  });
+
+  it("clears the ghost when the drag ends", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12dnp040", order: 1, header: "WOD A" });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12dnp041", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+      />,
+    );
+
+    triggerDragStart(`schema:${s1.schema.id}`);
+
+    expect(within(screen.getByTestId("drag-overlay-mock")).getByText("WOD A")).toBeInTheDocument();
+
+    triggerDragEnd(makeDragEndEvent(`schema:${s1.schema.id}`, `schema:${s2.schema.id}`));
+
+    expect(screen.getByTestId("drag-overlay-mock")).toBeEmptyDOMElement();
   });
 });

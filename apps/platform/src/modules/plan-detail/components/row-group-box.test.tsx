@@ -15,6 +15,8 @@ import { render } from "@app/test/render";
 
 import type * as DeleteRowGroupWithMembers from "../lib/use-delete-row-group-with-members";
 
+import { exerciseById } from "./schema-row-card.fixtures";
+
 const updateRowGroupMutate = vi.fn();
 const updateRowGroupState = { isPending: false };
 const deleteRowGroupMutate = vi.fn();
@@ -27,6 +29,7 @@ vi.mock("@app/lib/hooks", async () => {
 
   return {
     ...actual,
+    useCatalog: () => ({ exerciseById }),
     useUpdateRowGroup: () => ({
       mutate: updateRowGroupMutate,
       isPending: updateRowGroupState.isPending,
