@@ -6,9 +6,9 @@ Live browser testing of the session-primitive constructor (2026-06-14). Small UI
 
 ---
 
-## Contract-reversals — do in one batched run
+## Batched run — one feature pass
 
-Each is cross-package (contracts → api-server → platform), reverses a ratified decision, and needs the gated api-server suite. Scope lines below come from recon done this session.
+A = tempo (contract + platform). B = schema-group creation (UI/UX + minimal contract, **domain unchanged**). D/E below. Scope lines come from recon done this session; the gated api-server suite is needed only where contracts/endpoints actually change (A, the minimal group-create in B, E).
 
 ### A. TEMPO → smart union (EXTENDS D-TEMPO, not supersede)
 
@@ -23,32 +23,22 @@ Each is cross-package (contracts → api-server → platform), reverses a ratifi
   - tests: `parse-tempo.test` (ADD free-string fallback cases, KEEP 4-digit), `format-tempo.test`, `build-row-request.test`, contracts vo-parity, api-server `admin.test`.
   - docs: add `D-TEMPO-SMART` (extends D-TEMPO) to `decisions.md`; update `primitive-spec.md` tempo row + `deferred.md` F-TEMPO.
 
-### B. EXERCISE unfreeze on edit (reverses DR-W4E-EXERCISE-LOCK)
-
-- **Decision (owner leaning yes; needs final confirm):** allow changing a row's exercise in the Edit-row modal. Currently locked — `DR-W4E-EXERCISE-LOCK` (2026-06-13): exercise is an identity invariant, change = delete+re-add.
-- **OPEN domain Q (resolve before doing):** do any athlete performance-logs reference `row.exercise`? If yes, changing it on a published plan rewrites history — only safe if this stays authoring-only.
-- **Scope:**
-  - contract: `schema-row.schema.ts` `updateSchemaRowSchema = createSchemaRowSchema.omit({schemaId, exerciseId}).partial()` → stop omitting `exerciseId`.
-  - api-server: `endpoints/lms/schema-row/admin.ts` update handler — apply `exerciseId`.
-  - platform: `row-editor-modal.tsx` remove `disabled={!isCreate}` on `ExercisePicker`; remove `EXERCISE_LOCK_HINT`; update `row-editor-modal.test` (the DR-W4E-EXERCISE-LOCK test).
-  - docs: supersede `DR-W4E-EXERCISE-LOCK` in `decisions.md`.
-
-### C. SCHEMA GROUPS created like row groups (reverses W3 D2/D3)
+### B. SCHEMA GROUPS created like row groups — UI/UX only (changes the W3 add-group FLOW, not the domain)
 
 - **Decision:** create schema groups by selecting 2+ schemas → "Group" (mirror the row-group flow), NOT the "Add group" instant parallel-ladder seed. Strip the left vertical bar + ordinal-in-circle. Rename "Add track" → "Add schema to group" (styled like the `+ Add row` text button).
-- **OPEN domain Q (resolve before doing):** does a schema group still mean PARALLEL execution (`interleaveOrder`), or just a visual box around schemas? Determines whether parallel-track semantics survive at all.
+- **Domain UNCHANGED (owner, 2026-06-14):** a schema group stays a PARALLEL group (`interleaveOrder` lives). This is purely a creation-UX + visual change — NOT a parallel-vs-box question. Do not redesign the parallel model; only the create path and visuals change.
 - **Scope:**
   - visual strip: `group-track-wrapper.tsx` (rail `::before` + `pl`), delete `group-track-badge.tsx`.
   - delete add-group flow: `add-group-button.tsx`, `group-into-box-checkbox.tsx`, and (conditionally) `use-create-group.ts` / `build-group-create-request.ts` / `parallel-ladder-draft.ts` (`materializeParallel`), the AxisEditorModal group branch (`submitGroupCreate` / `submitIndependentLadders`).
   - new (mirror rows): schema select-mode in `block-card-body.tsx` (cf. `schema-row-list.tsx` `isSelectMode`/`selectedIds`/`RowGroupSelectBar`), `schema-card` checkbox, `build-schema-group-create-request`, `use-create-schema-group`.
-  - contract: `createGroupRequest {blockId, tracks≥2}` → likely new `{blockId, schemaIds}` (mirror rowGroup `rowIds`) + api-server group-create that sets `schema.groupId` on the selected schemas.
+  - contract: minimal — a create path that groups EXISTING schemas (set `schema.groupId`, mirror rowGroup `rowIds`), keeping parallel/`interleaveOrder` semantics. Do NOT change the parallel model.
   - rename: "Add track" → "Add schema to group" (#18).
 
 ---
 
 ## UI fixes already landed in-stream (2026-06-14) — context, no action
 
-Row modal: removed equipment/movement chips; removed Demo URL + Demo label (demo lives on Exercise/admin); exercise select small; MUI floating labels everywhere (dropped manual caption labels); ModifierPicker size-aligned; Save no longer disabled — validate on submit (field-level errors pending, #25). Row summary: `5 × 20 @2x25kg [alternating] [3-1-X-0]` (sets `N ×`, reps bare, abs load `@…kg` / paired `@2x…kg`, side + tempo in `[ ]`, single-space join). Group rows: contiguity by list-position (gap-tolerant), checkbox normalized, "Group rows" as text button, row-group border-radius removed, grouped-row left indent removed. Edit-schema modal retitled. Pending UI (in-stream): #2 add-schema header+rest, #25 row-modal field-level errors.
+Row modal: removed equipment/movement chips; removed Demo URL + Demo label (demo lives on Exercise/admin); exercise select small; MUI floating labels everywhere (dropped manual caption labels); ModifierPicker size-aligned; Save no longer disabled — validate on submit with field-level errors (#25). Row summary: `5 × 20 @2x25kg [alternating] [3-1-X-0]` (sets `N ×`, reps bare, abs load `@…kg` / paired `@2x…kg`, side + tempo in `[ ]`, single-space join). Group rows: contiguity by list-position (gap-tolerant), checkbox normalized, "Group rows" as text button, row-group border-radius removed, grouped-row left indent removed. Edit-schema modal retitled. Pending UI (in-stream): #2 add-schema header+rest, #25 row-modal field-level errors.
 
 ---
 
@@ -56,12 +46,14 @@ Row modal: removed equipment/movement chips; removed Demo URL + Demo label (demo
 
 ### D. In-group drag-reorder (#29)
 
-Reorder schemas within a SchemaGroup and rows within a RowGroup (grouped items currently render `isDraggable={false}`). Needs a sortable context inside the group box + a reorder mutation/endpoint. Pairs with the schema-group rework (C).
+Reorder schemas within a SchemaGroup and rows within a RowGroup (grouped items currently render `isDraggable={false}`). Needs a sortable context inside the group box + a reorder mutation/endpoint. Pairs with the schema-group rework (B).
 
 ### E. Session creates with one block (#30)
 
 A newly created session should come with one Block inside (currently empty). Decide: default block on api-server session-create (atomic, preferred), or client-orchestrated (create session → create block).
 
-### Rest qualifier/scope no visual effect (#31/#32) — UNDER RECON
+### Rest qualifier/scope no visual effect (#31/#32) — DONE in-stream (PR #266)
 
-RestSpecFields `scope` + `qualifier` toggles appear to do nothing. Recon in flight: either a round-trip shape mismatch (`RestSpec` vs `RestSpecFormValue`, or the save path drops them) or rest is simply not rendered in the schema read-surface (so changes are invisible after close). If UI-only (binding/read-surface) → fix in-stream; if it needs contract work → it moves up here.
+Was a read-surface gap: round-trip worked, but the schema summary rendered duration only. Fixed by wiring the orphaned `formatRestSpec` into `format-composition-summary`. No contract work.
+
+### (removed) EXERCISE unfreeze — owner cancelled 2026-06-14: NOT doing it; `DR-W4E-EXERCISE-LOCK` stays in force.
