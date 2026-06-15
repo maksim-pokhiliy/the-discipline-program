@@ -3,6 +3,8 @@ import { type z } from "zod";
 import {
   type createSessionRequestSchema,
   type createSessionResponseSchema,
+  type duplicateSessionRequestSchema,
+  type duplicateSessionResponseSchema,
   type reorderSessionsRequestSchema,
   type reorderSessionsResponseSchema,
   type sessionByDayParamsSchema,
@@ -19,3 +21,5 @@ export type UpdateSessionRequest = z.infer<typeof updateSessionRequestSchema>;
 export type UpdateSessionResponse = z.infer<typeof updateSessionResponseSchema>;
 export type ReorderSessionsRequest = z.infer<typeof reorderSessionsRequestSchema>;
 export type ReorderSessionsResponse = z.infer<typeof reorderSessionsResponseSchema>;
+export type DuplicateSessionRequest = z.infer<typeof duplicateSessionRequestSchema>;
+export type DuplicateSessionResponse = z.infer<typeof duplicateSessionResponseSchema>;

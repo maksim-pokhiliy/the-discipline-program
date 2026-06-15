@@ -4,6 +4,8 @@ import {
   type createSchemaRequestSchema,
   type createSchemaResponseSchema,
   type deleteSchemaParamsSchema,
+  type duplicateSchemaRequestSchema,
+  type duplicateSchemaResponseSchema,
   type getSchemaByIdParamsSchema,
   type getSchemasResponseSchema,
   type reorderSchemasRequestSchema,
@@ -27,3 +29,5 @@ export type UpdateSchemaResponse = z.infer<typeof updateSchemaResponseSchema>;
 export type DeleteSchemaParams = z.infer<typeof deleteSchemaParamsSchema>;
 export type ReorderSchemasRequest = z.infer<typeof reorderSchemasRequestSchema>;
 export type ReorderSchemasResponse = z.infer<typeof reorderSchemasResponseSchema>;
+export type DuplicateSchemaRequest = z.infer<typeof duplicateSchemaRequestSchema>;
+export type DuplicateSchemaResponse = z.infer<typeof duplicateSchemaResponseSchema>;

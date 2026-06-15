@@ -31,3 +31,6 @@ export const reorderBlocksResponseSchema = z.object({
 
 export const assignBlockLabelsRequestSchema = assignBlockLabelsSchema;
 export const assignBlockLabelsResponseSchema = blockSchema;
+
+export const duplicateBlockRequestSchema = z.object({}).strict();
+export const duplicateBlockResponseSchema = blockSchema;

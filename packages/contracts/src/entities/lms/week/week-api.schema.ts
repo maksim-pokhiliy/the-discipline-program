@@ -17,3 +17,12 @@ export const getWeekResponseSchema = z.object({
 export const updateWeekNotesRequestSchema = updateWeekNotesSchema;
 
 export const updateWeekNotesResponseSchema = weekSchema;
+
+export const cloneWeekFromRequestSchema = z.object({
+  sourceStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export const cloneWeekResponseSchema = z.discriminatedUnion("cloned", [
+  z.object({ cloned: z.literal(true), week: weekSchema }),
+  z.object({ cloned: z.literal(false), reason: z.literal("empty-source") }),
+]);
