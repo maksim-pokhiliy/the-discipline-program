@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { type CreateCoachCredentialData } from "@repo/contracts/coaching/coach-credential";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { cleanup, cleanupRaw, createTestCoach, createTestCredential } from "../../test/helpers";
@@ -53,6 +54,23 @@ describe("coachingCoachCredentialApi", () => {
           shownToAthletes: true,
         }),
       ).rejects.toThrow(BadRequestError);
+    });
+
+    it("ignores a client-supplied coachProfileId and attaches to the caller's own profile (QA-002)", async () => {
+      const payload: CreateCoachCredentialData & { coachProfileId: string } = {
+        title: "Smuggled Cert",
+        issuer: "CrossFit",
+        year: 2018,
+        shownToAthletes: true,
+        coachProfileId: coachB.profile.id,
+      };
+
+      const credential = await coachingCoachCredentialApi.create(coachA.user.id, payload);
+
+      createdCredentialIds.push(credential.id);
+
+      expect(credential.coachProfileId).toBe(coachA.profile.id);
+      expect(credential.coachProfileId).not.toBe(coachB.profile.id);
     });
   });
 
