@@ -2,9 +2,7 @@
 
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
-import { Stack } from "@mui/material";
-
-import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
+import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import { FormModal } from "@repo/ui";
 
@@ -25,8 +23,6 @@ const EDIT_TITLE = "Edit schema";
 const CREATE_SUBMIT = "Add schema";
 const EDIT_SUBMIT = "Save";
 const FLAT_KIND = "flat";
-const BODY_SPACING = 2;
-const EMPTY_COMPOSITION: Composition = {};
 
 export type AxisEditorMode =
   | { kind: "create"; blockId: string }
@@ -86,14 +82,9 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   const onRename = (id: NodeId, header: string): void =>
     setSeed((prev) => (prev.id === id ? { ...prev, header: header === "" ? null : header } : prev));
 
-  const onDraftChange = (next: SchemaDraft): void => setSeed(next);
-
   const isCreateMode = mode.kind === "create";
   const isPending = createSchema.isPending || updateSchema.isPending;
-  const preview = useMemo(
-    () => (isCreateMode ? EMPTY_COMPOSITION : previewComposition(seed)),
-    [isCreateMode, seed],
-  );
+  const preview = useMemo(() => previewComposition(seed), [seed]);
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
   const labelKind = deriveCompositionLabel(preview).kind;
   const showsFlatHint = labelKind === FLAT_KIND && parts.length === 0;
@@ -120,6 +111,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
         blockId: createMode.blockId,
         composition: result.composition,
         header: schema.header,
+        intensity: schema.intensity ?? null,
         notes: null,
       },
       { onSuccess: onClose, onError: (cause) => setError(cause.message), onSettled: releaseGuard },
@@ -142,7 +134,11 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     updateSchema.mutate(
       {
         schemaId: editMode.schema.schema.id,
-        data: { composition: result.composition, header: schema.header },
+        data: {
+          composition: result.composition,
+          header: schema.header,
+          intensity: schema.intensity ?? null,
+        },
       },
       { onSuccess: onClose, onError: (cause) => setError(cause.message), onSettled: releaseGuard },
     );
@@ -178,26 +174,19 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       submitText={isCreateMode ? CREATE_SUBMIT : EDIT_SUBMIT}
       error={error}
     >
+      <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />
+
       {isCreateMode ? (
-        <CreateSchemaFlow
-          draft={seed}
-          onDraftChange={onDraftChange}
+        <CreateSchemaFlow draft={seed} onUpdateNode={onUpdateNode} onRename={onRename} />
+      ) : (
+        <ContainerInspector
+          container={seed}
+          isCreateMode={false}
+          headerEditable
           onUpdateNode={onUpdateNode}
           onRename={onRename}
+          onDemoteNode={undefined}
         />
-      ) : (
-        <Stack direction="column" spacing={BODY_SPACING}>
-          <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />
-
-          <ContainerInspector
-            container={seed}
-            isCreateMode={isCreateMode}
-            headerEditable
-            onUpdateNode={onUpdateNode}
-            onRename={onRename}
-            onDemoteNode={undefined}
-          />
-        </Stack>
       )}
     </FormModal>
   );

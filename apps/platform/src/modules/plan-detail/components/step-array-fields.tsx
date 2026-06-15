@@ -10,11 +10,7 @@ const FALLBACK_STEP = 0;
 const CELL_MAX_WIDTH = 72;
 const DECIMAL_RADIX = 10;
 
-export const coerceStepValue = (raw: string): number => {
-  const parsed = Number.parseInt(raw, DECIMAL_RADIX);
-
-  return Number.isNaN(parsed) || parsed < MIN_STEP_VALUE ? MIN_STEP_VALUE : parsed;
-};
+export const coerceStepValue = (raw: string): number => Number.parseInt(raw, DECIMAL_RADIX);
 
 type StepArrayFieldsError = Merge<FieldError, FieldErrorsImpl<number[]>>;
 
@@ -54,7 +50,7 @@ export const StepArrayFields = ({
               type="number"
               size="small"
               aria-label={`Step ${index + 1}`}
-              value={step}
+              value={Number.isFinite(step) ? step : ""}
               onChange={(e) => updateStep(index, e.target.value)}
               inputProps={{ min: MIN_STEP_VALUE, step: 1, "aria-label": `Step ${index + 1}` }}
               disabled={disabled}

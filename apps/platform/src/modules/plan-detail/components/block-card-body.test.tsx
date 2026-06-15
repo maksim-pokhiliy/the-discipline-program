@@ -593,10 +593,10 @@ describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
 });
 
 describe("BlockCardBody DR-W4E-SG-WRAP: schema-group select-mode create", () => {
-  const GROUP_BUTTON = "Group schemas…";
+  const GROUP_BUTTON = "Group schemas";
   const GROUP_BAR_BUTTON = "Group schemas";
 
-  it("shows the 'Group schemas…' toggle when at least two ungrouped schemas exist", () => {
+  it("shows the 'Group schemas' toggle when at least two ungrouped schemas exist", () => {
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw001", order: 1 });
     const s2 = makeSchema({ id: "clp9z8x7w0000abcd12sgw002", order: 2 });
 
@@ -611,7 +611,7 @@ describe("BlockCardBody DR-W4E-SG-WRAP: schema-group select-mode create", () => 
     expect(screen.getByRole("button", { name: GROUP_BUTTON })).toBeInTheDocument();
   });
 
-  it("hides the 'Group schemas…' toggle when fewer than two ungrouped schemas exist", () => {
+  it("hides the 'Group schemas' toggle when fewer than two ungrouped schemas exist", () => {
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd12sgw010", order: 1 });
 
     render(

@@ -6,21 +6,18 @@ import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import SplitscreenIcon from "@mui/icons-material/Splitscreen";
-import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
-import { IconButton, Stack, Tooltip, Typography, alpha } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, Typography, alpha } from "@mui/material";
 
 import { NOTE_MAX_LENGTH } from "@repo/contracts/lms/_shared";
 import type { RowGroup } from "@repo/contracts/lms/row-group";
 import { InlineEditText } from "@repo/ui";
 
-const HEAD_ICON_PX = 18;
 const HEAD_ACTION_ICON_PX = 17;
-const HEAD_SPACING = 1;
+const HEAD_SPACING = 1.25;
 const HEAD_PX = 1.5;
 const HEAD_PY = 0.75;
 const HEAD_BORDER_ALPHA = 0.25;
 const DRAG_ARIA = "Drag group";
-const OVERLINE_TEXT = "GROUP";
 const LABEL_ARIA = "Group label";
 const LABEL_PLACEHOLDER = "group label…";
 const UNGROUP_LABEL = "Ungroup";
@@ -31,6 +28,7 @@ const tooltipChildSx = { display: "inline-flex" };
 
 type RowGroupBoxHeadProps = {
   group: RowGroup;
+  ord: number;
   isUpdatePending: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -41,6 +39,7 @@ type RowGroupBoxHeadProps = {
 
 export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
   group,
+  ord,
   isUpdatePending,
   dragAttributes,
   dragListeners,
@@ -79,10 +78,8 @@ export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
       <DragIndicatorIcon fontSize="small" />
     </IconButton>
 
-    <ViewColumnOutlinedIcon sx={{ fontSize: HEAD_ICON_PX, color: "primary.main" }} />
-
-    <Typography variant="overline" color="primary.main">
-      {OVERLINE_TEXT}
+    <Typography variant="caption" sx={{ fontVariantNumeric: "tabular-nums", color: "text.subtle" }}>
+      {ord}
     </Typography>
 
     <InlineEditText
@@ -97,15 +94,15 @@ export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
     />
 
     <Tooltip title={UNGROUP_LABEL}>
-      <span style={tooltipChildSx}>
+      <Box component="span" style={tooltipChildSx}>
         <IconButton size="small" aria-label={UNGROUP_LABEL} onClick={onUngroupOpen}>
           <SplitscreenIcon sx={{ fontSize: HEAD_ACTION_ICON_PX }} />
         </IconButton>
-      </span>
+      </Box>
     </Tooltip>
 
     <Tooltip title={DELETE_LABEL}>
-      <span style={tooltipChildSx}>
+      <Box component="span" style={tooltipChildSx}>
         <IconButton
           size="small"
           aria-label={DELETE_LABEL}
@@ -114,7 +111,7 @@ export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
         >
           <DeleteIcon sx={{ fontSize: HEAD_ACTION_ICON_PX }} />
         </IconButton>
-      </span>
+      </Box>
     </Tooltip>
   </Stack>
 );

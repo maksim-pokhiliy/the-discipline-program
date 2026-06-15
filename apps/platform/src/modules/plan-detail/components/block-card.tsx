@@ -50,7 +50,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
     disabled: isMutationPending,
   });
 
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+
+  const toggleExpanded = () => setIsExpanded((previous) => !previous);
 
   const handleLabelsChange = (labelIds: string[]) =>
     assignLabels.mutate({ blockId: block.id, data: { labelIds } });
@@ -97,18 +100,25 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         labelOptions={blockLabelOptions.options}
         isLabelsLoading={blockLabelOptions.isLoading}
         isMutationPending={isMutationPending}
+        isExpanded={isExpanded}
+        onToggleExpanded={toggleExpanded}
         dragAttributes={attributes}
         dragListeners={listeners}
         onLabelsChange={handleLabelsChange}
         onDeleteOpen={handleDeleteOpen}
       />
-      <BlockCardNote notes={block.notes} onCommit={handleNotesCommit} />
-      <BlockCardBody
-        block={block}
-        planId={planId}
-        startDate={startDate}
-        parentIsReorderPending={isMutationPending}
-      />
+
+      {isExpanded ? (
+        <>
+          <BlockCardNote notes={block.notes} onCommit={handleNotesCommit} />
+          <BlockCardBody
+            block={block}
+            planId={planId}
+            startDate={startDate}
+            parentIsReorderPending={isMutationPending}
+          />
+        </>
+      ) : null}
 
       <ConfirmationModal
         open={isDeleteOpen}

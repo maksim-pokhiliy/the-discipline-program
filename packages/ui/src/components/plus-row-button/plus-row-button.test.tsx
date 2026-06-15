@@ -8,34 +8,21 @@ import { PlusRowButton } from "./plus-row-button";
 const noop = (): void => undefined;
 
 describe("PlusRowButton", () => {
-  it("renders the label text passed via the label prop", () => {
+  it("renders the label text with a leading plus glyph", () => {
     render(<PlusRowButton onClick={noop} label="Add session" />);
 
-    expect(screen.getByRole("button", { name: /Add session/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Add session" })).toBeInTheDocument();
   });
 
-  it("renders an Add icon inside the icon-circle wrapper", () => {
-    render(<PlusRowButton onClick={noop} label="Add session" />);
-
-    expect(screen.getByTestId("AddIcon")).toBeInTheDocument();
-  });
-
-  it("uses the MuiButton-outlined variant via the underlying Button", () => {
+  it("uses the MuiButton-text variant via the underlying Button", () => {
     const { container } = render(<PlusRowButton onClick={noop} label="Add block" />);
     const button = container.querySelector(".MuiButton-root");
 
     expect(button).not.toBeNull();
-    expect(button).toHaveClass("MuiButton-outlined");
+    expect(button).toHaveClass("MuiButton-text");
   });
 
-  it("applies dashed border style via the composite-internal sx", () => {
-    render(<PlusRowButton onClick={noop} label="Add session" />);
-    const button = screen.getByRole("button", { name: /Add session/i });
-
-    expect(button).toHaveStyle({ borderStyle: "dashed" });
-  });
-
-  it("applies alignSelf flex-start so the composite owns natural width inside Stack columns", () => {
+  it("applies alignSelf flex-start so the button owns natural width inside Stack columns", () => {
     render(<PlusRowButton onClick={noop} label="Add session" />);
     const button = screen.getByRole("button", { name: /Add session/i });
 
@@ -60,14 +47,6 @@ describe("PlusRowButton", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it("aria-hides the icon-circle wrapper so screen readers skip the decorative glyph", () => {
-    const { container } = render(<PlusRowButton onClick={noop} label="Add session" />);
-    const ariaHidden = container.querySelector('[aria-hidden="true"]');
-
-    expect(ariaHidden).not.toBeNull();
-    expect(ariaHidden?.querySelector('[data-testid="AddIcon"]')).not.toBeNull();
-  });
-
   it("renders without crashing when label contains emoji and combining marks (QA-Must-C7-10)", () => {
     expect(() => render(<PlusRowButton onClick={noop} label="Add 🏋️‍♂️ session" />)).not.toThrow();
 
@@ -77,6 +56,6 @@ describe("PlusRowButton", () => {
   it("renders without crashing when label contains RTL characters (QA-Must-C7-10)", () => {
     expect(() => render(<PlusRowButton onClick={noop} label="إضافة جلسة" />)).not.toThrow();
 
-    expect(screen.getByRole("button", { name: "إضافة جلسة" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /إضافة جلسة/ })).toBeInTheDocument();
   });
 });

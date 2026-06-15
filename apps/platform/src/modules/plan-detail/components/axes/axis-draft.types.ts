@@ -1,4 +1,5 @@
 import type {
+  Intensity,
   Load,
   PerLimbDistribution,
   RepNotation,
@@ -43,5 +44,6 @@ export type SchemaDraft = {
   notes: string[] | null;
   repetition?: RepetitionAxis;
   rest?: RestAxis;
+  intensity?: Intensity | null;
   rows: ComposeRow[];
 };

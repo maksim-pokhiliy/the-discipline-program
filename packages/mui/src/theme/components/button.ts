@@ -69,7 +69,7 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
 
     sizeSmall: ({ theme }) => ({
       fontSize: theme.typography.pxToRem(11),
-      padding: theme.spacing(0.5, 1.25),
+      padding: theme.spacing(1, 1.25),
       minHeight: 30,
     }),
 

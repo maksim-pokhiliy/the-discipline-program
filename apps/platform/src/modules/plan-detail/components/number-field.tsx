@@ -32,7 +32,7 @@ export const NumberField = ({
     size="small"
     label={label}
     value={Number.isFinite(value) ? value : ""}
-    onChange={(e) => onChange(Number(e.target.value))}
+    onChange={(e) => onChange(e.target.value === "" ? Number.NaN : Number(e.target.value))}
     inputProps={{ min, step }}
     error={error !== undefined}
     helperText={error}

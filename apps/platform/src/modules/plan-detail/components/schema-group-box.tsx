@@ -89,6 +89,9 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [sortedMembers, setSortedMembers] = useState<SchemaWithBody[]>(members);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpanded = () => setIsExpanded((previous) => !previous);
 
   useEffect(() => {
     setSortedMembers(members);
@@ -200,6 +203,8 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
       <SchemaGroupBoxHead
         group={group}
         isUpdatePending={updateGroup.isPending}
+        isExpanded={isExpanded}
+        onToggleExpanded={toggleExpanded}
         dragAttributes={attributes}
         dragListeners={listeners}
         onLabelCommit={handleLabelCommit}
@@ -208,55 +213,59 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
         onDeleteOpen={() => setIsDeleteOpen(true)}
       />
 
-      <DndContext
-        sensors={memberSensors}
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
-        onDragCancel={() => setActiveId(null)}
-        onDragEnd={handleMemberDragEnd}
-      >
-        <SortableContext
-          items={sortedMembers.map((member) => schemaSortableId(member.schema.id))}
-          strategy={verticalListSortingStrategy}
-        >
-          <Stack
-            direction="column"
-            spacing={TRACK_GAP_FACTOR}
-            sx={(theme) => ({
-              p: theme.spacing(
-                TRACKS_PADDING_BLOCK_FACTOR,
-                TRACKS_PADDING_BLOCK_FACTOR,
-                TRACKS_PADDING_BLOCK_FACTOR,
-                TRACKS_PADDING_RAIL_FACTOR,
-              ),
-            })}
+      {isExpanded ? (
+        <>
+          <DndContext
+            sensors={memberSensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
+            onDragCancel={() => setActiveId(null)}
+            onDragEnd={handleMemberDragEnd}
           >
-            {sortedMembers.map((member) => (
-              <GroupTrackWrapper
-                key={member.schema.id}
-                member={member}
-                planId={planId}
-                startDate={startDate}
-                parentIsReorderPending={parentIsReorderPending}
-              />
-            ))}
-          </Stack>
-        </SortableContext>
+            <SortableContext
+              items={sortedMembers.map((member) => schemaSortableId(member.schema.id))}
+              strategy={verticalListSortingStrategy}
+            >
+              <Stack
+                direction="column"
+                spacing={TRACK_GAP_FACTOR}
+                sx={(theme) => ({
+                  p: theme.spacing(
+                    TRACKS_PADDING_BLOCK_FACTOR,
+                    TRACKS_PADDING_BLOCK_FACTOR,
+                    TRACKS_PADDING_BLOCK_FACTOR,
+                    TRACKS_PADDING_RAIL_FACTOR,
+                  ),
+                })}
+              >
+                {sortedMembers.map((member) => (
+                  <GroupTrackWrapper
+                    key={member.schema.id}
+                    member={member}
+                    planId={planId}
+                    startDate={startDate}
+                    parentIsReorderPending={parentIsReorderPending}
+                  />
+                ))}
+              </Stack>
+            </SortableContext>
 
-        <DragOverlay>
-          {activeId !== null ? <DragGhost label={resolveActiveLabel(activeId)} /> : null}
-        </DragOverlay>
-      </DndContext>
+            <DragOverlay>
+              {activeId !== null ? <DragGhost label={resolveActiveLabel(activeId)} /> : null}
+            </DragOverlay>
+          </DndContext>
 
-      <Box sx={{ px: FOOTER_PADDING_X_FACTOR, pb: FOOTER_PADDING_BOTTOM_FACTOR, pt: 0 }}>
-        <AddTrackButton
-          planId={planId}
-          startDate={startDate}
-          blockId={group.blockId}
-          groupId={group.id}
-        />
-      </Box>
+          <Box sx={{ px: FOOTER_PADDING_X_FACTOR, pb: FOOTER_PADDING_BOTTOM_FACTOR, pt: 0 }}>
+            <AddTrackButton
+              planId={planId}
+              startDate={startDate}
+              blockId={group.blockId}
+              groupId={group.id}
+            />
+          </Box>
+        </>
+      ) : null}
 
       <ConfirmationModal
         open={isUngroupOpen}

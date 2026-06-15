@@ -52,21 +52,23 @@ const spinbuttonByLabel = (name: string): HTMLElement => screen.getByRole("spinb
 
 const POSITIVE_MESSAGE = "Number must be greater than 0";
 const NONNEGATIVE_MESSAGE = "Number must be greater than or equal to 0";
+const NAN_MESSAGE = "Expected number, received nan";
 const REST_RANGE_MESSAGE = "rangeMax is required and must be greater than value for range units";
 const SWITCH_CONFIRM = "Switch & discard";
 const SWITCH_CANCEL = "Keep editing";
 
 describe("cadence/interval axis fields surface contract errors while storing the typed value (T2-5)", () => {
-  it("shows the positivity error on cadence everyMin when cleared, still storing everyMin 0", () => {
+  it("clears cadence everyMin to an empty field and surfaces the number error (no auto-0)", () => {
     render(
       <InspectorHarness initial={baseContainer({ kind: "cadence", everyMin: 1, rounds: 4 })} />,
     );
 
     fireEvent.change(spinbuttonByLabel("Every (min)"), { target: { value: "" } });
 
-    expect(readRepetition()).toStrictEqual({ kind: "cadence", everyMin: 0, rounds: 4 });
+    expect(readRepetition()).toStrictEqual({ kind: "cadence", everyMin: null, rounds: 4 });
+    expect(spinbuttonByLabel("Every (min)")).toHaveValue(null);
     expect(spinbuttonByLabel("Every (min)")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByText(POSITIVE_MESSAGE)).toBeInTheDocument();
+    expect(screen.getByText(NAN_MESSAGE)).toBeInTheDocument();
   });
 
   it("shows the positivity error on a negative interval workMin, still storing -5", () => {
@@ -115,6 +117,8 @@ describe("cadence/interval axis fields surface contract errors while storing the
 describe("rest axis field surfaces the refine error while storing the typed value (T2-5)", () => {
   it("shows the rangeMax error when rangeMax ≤ value, still storing the typed rest", () => {
     render(<InspectorHarness initial={baseContainer()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add rest" }));
 
     fireEvent.click(
       within(screen.getByRole("group", { name: "duration unit" })).getByText("min range"),

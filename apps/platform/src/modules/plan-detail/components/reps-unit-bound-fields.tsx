@@ -14,7 +14,9 @@ const DEFAULT_VALUE = 1;
 const UNIT_LABELS: Record<RepUnit, string> = {
   sec: "sec",
   min: "min",
+  m: "m",
   km: "km",
+  cal: "cal",
 };
 
 const toCountOrRange = (value: UnitBoundReps): CountOrRangeValue =>

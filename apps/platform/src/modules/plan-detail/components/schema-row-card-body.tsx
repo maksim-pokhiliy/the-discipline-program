@@ -9,8 +9,9 @@ import { type RowSummary } from "../lib/format-row";
 import { MinutePill } from "./minute-pill";
 import { RowSummaryChips } from "./row-summary-chips";
 
-const BODY_GAP_FACTOR = 0.5;
+const BODY_GAP_FACTOR = 0.75;
 const BODY_MAIN_GAP_FACTOR = 0.75;
+const BODY_PADDING_Y = 1;
 
 type SchemaRowCardBodyProps = {
   mainText: string;
@@ -25,7 +26,7 @@ export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
   summary,
   minuteLabel = null,
 }) => (
-  <Stack direction="column" spacing={BODY_GAP_FACTOR} sx={{ minWidth: 0 }}>
+  <Stack direction="column" spacing={BODY_GAP_FACTOR} sx={{ minWidth: 0, py: BODY_PADDING_Y }}>
     <Stack
       direction="row"
       alignItems="center"

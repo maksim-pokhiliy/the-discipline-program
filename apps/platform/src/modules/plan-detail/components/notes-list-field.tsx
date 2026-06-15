@@ -14,6 +14,7 @@ type NotesListFieldProps = {
   placeholder?: string;
   ariaLabel?: string;
   disabled?: boolean;
+  addable?: boolean;
 };
 
 const trimToCommitted = (draft: string[]): string[] | null => {
@@ -38,6 +39,7 @@ export const NotesListField = ({
   placeholder,
   ariaLabel,
   disabled = false,
+  addable = true,
 }: NotesListFieldProps): ReactElement => {
   const [draft, setDraft] = useState<string[]>(value ?? []);
   const committedRef = useRef<string[] | null>(value);
@@ -85,6 +87,7 @@ export const NotesListField = ({
         {...(placeholder !== undefined && { placeholder })}
         {...(ariaLabel !== undefined && { ariaLabel })}
         disabled={disabled}
+        addable={addable}
       />
     </Box>
   );

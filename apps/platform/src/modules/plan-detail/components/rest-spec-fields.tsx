@@ -21,6 +21,8 @@ import {
 } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
 
+import { NumberField } from "./number-field";
+
 const restDurationFormSchema = z
   .object({
     value: z.number().positive(),
@@ -108,12 +110,12 @@ export const RestSpecFields = ({
   const durationError = error?.duration;
   const durationRootMessage = durationError?.root?.message;
 
-  const handleValueChange = (raw: string): void => {
-    onChange({ ...value, duration: { ...value.duration, value: Number(raw) } });
+  const handleValueChange = (next: number): void => {
+    onChange({ ...value, duration: { ...value.duration, value: next } });
   };
 
-  const handleRangeMaxChange = (raw: string): void => {
-    onChange({ ...value, duration: { ...value.duration, rangeMax: Number(raw) } });
+  const handleRangeMaxChange = (next: number): void => {
+    onChange({ ...value, duration: { ...value.duration, rangeMax: next } });
   };
 
   const handleUnitChange = (_: unknown, next: RestDurationUnit | null): void => {
@@ -174,17 +176,15 @@ export const RestSpecFields = ({
           duration
         </Typography>
 
-        <TextField
+        <NumberField
           label="Rest value"
-          type="number"
-          size="small"
           value={value.duration.value}
-          onChange={(e) => handleValueChange(e.target.value)}
-          inputProps={{ min: 1, step: 1 }}
-          error={durationError?.value !== undefined}
-          helperText={durationError?.value?.message}
+          onChange={handleValueChange}
+          min={1}
+          step={1}
+          error={durationError?.value?.message}
           disabled={disabled}
-          sx={{ maxWidth: DURATION_FIELD_WIDTH }}
+          maxWidth={DURATION_FIELD_WIDTH}
         />
 
         {rangeUnit && (
@@ -193,17 +193,15 @@ export const RestSpecFields = ({
               {EN_DASH}
             </Typography>
 
-            <TextField
+            <NumberField
               label="Rest max"
-              type="number"
-              size="small"
-              value={value.duration.rangeMax ?? ""}
-              onChange={(e) => handleRangeMaxChange(e.target.value)}
-              inputProps={{ min: 1, step: 1 }}
-              error={durationError?.rangeMax !== undefined || durationRootMessage !== undefined}
-              helperText={durationError?.rangeMax?.message ?? durationRootMessage}
+              value={value.duration.rangeMax ?? Number.NaN}
+              onChange={handleRangeMaxChange}
+              min={1}
+              step={1}
+              error={durationError?.rangeMax?.message ?? durationRootMessage}
               disabled={disabled}
-              sx={{ maxWidth: DURATION_FIELD_WIDTH }}
+              maxWidth={DURATION_FIELD_WIDTH}
             />
           </>
         )}

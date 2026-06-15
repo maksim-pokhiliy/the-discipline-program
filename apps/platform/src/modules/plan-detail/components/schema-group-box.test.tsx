@@ -192,6 +192,10 @@ const renderBox = ({
     />,
   );
 
+const expandBox = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: "Expand group" }));
+};
+
 const interleaveButton = (name: RegExp): HTMLElement =>
   within(screen.getByRole("group", { name: "Interleave order" })).getByRole("button", { name });
 
@@ -243,6 +247,8 @@ describe("SchemaGroupBox proto frame", () => {
       ],
     });
 
+    expandBox();
+
     const tracks = screen.getAllByTestId("group-track-wrapper-mock");
 
     expect(tracks.map((track) => track.getAttribute("data-schema-id"))).toEqual([
@@ -254,6 +260,8 @@ describe("SchemaGroupBox proto frame", () => {
 
   it("wires the Add-track affordance to the group's block and group ids", () => {
     renderBox();
+
+    expandBox();
 
     const addTrack = screen.getByTestId("add-track-button-mock");
 
@@ -472,6 +480,8 @@ describe("SchemaGroupBox DR-W4E-INGROUP-REORDER: in-group member drag", () => {
   it("calls onMemberReorder with the group id and the arrayMoved member order", () => {
     renderBox({ members: [makeSchema(M1, 1), makeSchema(M2, 2), makeSchema(M3, 3)] });
 
+    expandBox();
+
     triggerMemberDragEnd(makeDragEndEvent(`schema:${M3}`, `schema:${M1}`));
 
     expect(onMemberReorder).toHaveBeenCalledTimes(1);
@@ -489,6 +499,8 @@ describe("SchemaGroupBox DR-W4E-INGROUP-REORDER: in-group member drag", () => {
   it("does NOT call onMemberReorder when the member is dropped on itself", () => {
     renderBox({ members: [makeSchema(M1, 1), makeSchema(M2, 2)] });
 
+    expandBox();
+
     triggerMemberDragEnd(makeDragEndEvent(`schema:${M1}`, `schema:${M1}`));
 
     expect(onMemberReorder).not.toHaveBeenCalled();
@@ -504,6 +516,8 @@ describe("SchemaGroupBox DR-W4E-INGROUP-REORDER: in-group member drag", () => {
     const { container } = renderBox({
       members: [makeSchema(M1, 1), makeSchema(M2, 2)],
     });
+
+    expandBox();
 
     triggerMemberDragEnd(makeDragEndEvent(`schema:${M2}`, `schema:${M1}`));
 

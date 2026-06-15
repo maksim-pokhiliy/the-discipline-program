@@ -53,3 +53,9 @@ export const formatStructuralSummary = (composition: Composition): string[] =>
 
 export const formatCompositionSummary = (composition: Composition): CompositionSummaryPart[] =>
   buildStructuralParts(composition);
+
+export const formatRepetitionLabel = (composition: Composition): string | null =>
+  composition.repetition !== undefined ? repetitionLabel(composition.repetition) : null;
+
+export const formatRestSummary = (composition: Composition): string | null =>
+  composition.rest !== undefined ? restLabel(composition.rest) : null;

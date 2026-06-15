@@ -170,10 +170,12 @@ const getNoteInputs = (): (HTMLInputElement | HTMLTextAreaElement)[] =>
         el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement,
     );
 
-const addNoteButton = (): HTMLElement => screen.getByRole("button", { name: "add note" });
+const expandBlock = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: "Expand block" }));
+};
 
 const noteFieldRoot = (): HTMLElement => {
-  const root = addNoteButton().closest(".MuiBox-root");
+  const root = getNoteInputs()[0]?.closest(".MuiBox-root");
 
   if (!(root instanceof HTMLElement)) {
     throw new Error("expected the NotesListField root for Block notes");
@@ -207,11 +209,17 @@ describe("BlockCard chrome", () => {
   });
 
   it("renders the head, note and body sections in order", () => {
-    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
+    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()], notes: ["cue"] }) });
+
+    expandBlock();
 
     const dragBtn = screen.getByRole("button", { name: "Drag block" });
-    const noteAnchor = addNoteButton();
+    const noteAnchor = getNoteInputs()[0];
     const schemaCardMock = screen.getByTestId("schema-card-mock");
+
+    if (noteAnchor === undefined) {
+      throw new Error("note input missing");
+    }
 
     const sectionOrder = [dragBtn, noteAnchor, schemaCardMock];
 
@@ -322,30 +330,21 @@ describe("BlockCard multi-label", () => {
 });
 
 describe("BlockCard note row", () => {
-  it("renders the note row with an add-note affordance and no rows when block.notes === null", () => {
+  it("renders the note row without an add-note affordance and no rows when block.notes === null", () => {
     renderBlockCard();
 
-    expect(addNoteButton()).toBeInTheDocument();
+    expandBlock();
+
+    expect(screen.queryByRole("button", { name: "add note" })).toBeNull();
     expect(getNoteInputs()).toHaveLength(0);
   });
 
-  it("seeds the placeholder copy on a freshly added empty note", () => {
-    renderBlockCard();
+  it("fires useUpdateBlock with the edited multi-note list on focus-leave (W4R-005)", () => {
+    renderBlockCard({ block: makeBlock({ notes: ["old one", "old two"] }) });
 
-    fireEvent.click(addNoteButton());
+    expandBlock();
 
-    expect(getNoteInputs()[0]).toHaveAttribute(
-      "placeholder",
-      "block notes — coaching cues, intent…",
-    );
-  });
-
-  it("fires useUpdateBlock with the authored multi-note list on focus-leave (W4R-005)", () => {
-    renderBlockCard();
-
-    fireEvent.click(addNoteButton());
     fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "focus on bar path" } });
-    fireEvent.click(addNoteButton());
     fireEvent.change(getNoteInputs()[1] as HTMLElement, { target: { value: "brace hard" } });
     blurNoteField();
 
@@ -359,6 +358,8 @@ describe("BlockCard note row", () => {
   it("reopens a stored multi-note list as separate rows without collapsing", () => {
     renderBlockCard({ block: makeBlock({ notes: ["cue one", "cue two"] }) });
 
+    expandBlock();
+
     const inputs = getNoteInputs();
 
     expect(inputs).toHaveLength(2);
@@ -368,6 +369,8 @@ describe("BlockCard note row", () => {
 
   it("fires useUpdateBlock with { data: { notes: null } } when the only note is cleared", () => {
     renderBlockCard({ block: makeBlock({ notes: ["previous note"] }) });
+
+    expandBlock();
 
     fireEvent.change(getNoteInputs()[0] as HTMLElement, { target: { value: "" } });
     blurNoteField();
@@ -387,6 +390,8 @@ describe("BlockCard body / schema rendering", () => {
     const s3 = makeSchema({ id: "clp9z8x7w0000abcd1234sch3" });
 
     renderBlockCard({ block: makeBlock({ schemas: [s1, s2, s3] }) });
+
+    expandBlock();
 
     const schemaCards = screen.getAllByTestId("schema-card-mock");
 
@@ -486,11 +491,15 @@ describe("BlockCard isReorderPending cascade (D-10)", () => {
       isReorderPending: true,
     });
 
+    expandBlock();
+
     expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "true");
   });
 
   it("passes data-parent-pending='false' to SchemaCard when isReorderPending is false", () => {
     renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
+
+    expandBlock();
 
     expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "false");
   });

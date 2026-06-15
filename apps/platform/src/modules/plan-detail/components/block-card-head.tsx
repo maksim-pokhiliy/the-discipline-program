@@ -1,9 +1,10 @@
 "use client";
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { IconButton, Stack, Tooltip } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 
 import type { Block } from "@repo/contracts/lms/block";
 import type { Label } from "@repo/contracts/lms/label";
@@ -21,6 +22,8 @@ type BlockCardHeadProps = {
   labelOptions: Label[];
   isLabelsLoading: boolean;
   isMutationPending: boolean;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
   onLabelsChange: (labelIds: string[]) => void;
@@ -32,6 +35,8 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
   labelOptions,
   isLabelsLoading,
   isMutationPending,
+  isExpanded,
+  onToggleExpanded,
   dragAttributes,
   dragListeners,
   onLabelsChange,
@@ -45,8 +50,10 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
       px: theme.spacing(1.5),
       py: theme.spacing(1.25),
       minWidth: 0,
-      borderBottom: 1,
-      borderColor: "divider",
+      ...(isExpanded && {
+        borderBottom: 1,
+        borderColor: "divider",
+      }),
     })}
   >
     <IconButton
@@ -66,6 +73,20 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
       }}
     >
       <DragIndicatorIcon fontSize="small" />
+    </IconButton>
+
+    <IconButton
+      size="small"
+      onClick={onToggleExpanded}
+      aria-label={isExpanded ? "Collapse block" : "Expand block"}
+    >
+      <ChevronRightIcon
+        fontSize="small"
+        sx={(theme) => ({
+          transform: isExpanded ? "rotate(90deg)" : "none",
+          transition: `transform ${theme.transitions.duration.shortest}ms ${theme.transitions.easing.easeInOut}`,
+        })}
+      />
     </IconButton>
 
     <Stack
@@ -89,7 +110,7 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
     </Stack>
 
     <Tooltip title={DELETE_TOOLTIP}>
-      <span style={tooltipChildSx}>
+      <Box component="span" style={tooltipChildSx}>
         <IconButton
           size="small"
           onClick={onDeleteOpen}
@@ -99,7 +120,7 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
-      </span>
+      </Box>
     </Tooltip>
   </Stack>
 );

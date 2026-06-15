@@ -29,34 +29,6 @@ export const MuiOutlinedInput: NonNullable<Components<Theme>["MuiOutlinedInput"]
         borderWidth: 1,
       },
     }),
-
-    input: ({ theme }) => ({
-      fontSize: theme.typography.body1.fontSize,
-
-      "&:not(.MuiInputBase-inputMultiline)": {
-        paddingTop: theme.spacing(1.25),
-        paddingBottom: theme.spacing(1.25),
-      },
-
-      "&:not(.MuiInputBase-inputMultiline, .MuiInputBase-inputAdornedStart)": {
-        paddingLeft: theme.spacing(1.5),
-      },
-
-      "&:not(.MuiInputBase-inputMultiline, .MuiInputBase-inputAdornedEnd)": {
-        paddingRight: theme.spacing(1.5),
-      },
-    }),
-
-    sizeSmall: ({ theme }) => ({
-      "&:not(.MuiInputBase-multiline)": {
-        height: 30,
-      },
-
-      "& .MuiOutlinedInput-input": {
-        fontSize: theme.typography.body2.fontSize,
-        padding: theme.spacing(0.5, 1.25),
-      },
-    }),
   },
 };
 
@@ -65,12 +37,6 @@ export const MuiFilledInput: NonNullable<Components<Theme>["MuiFilledInput"]> = 
     root: {
       "&::before, &::after": { display: "none" },
     },
-
-    input: ({ theme }) => ({ fontSize: theme.typography.body1.fontSize }),
-
-    sizeSmall: ({ theme }) => ({
-      "& .MuiFilledInput-input": { fontSize: theme.typography.body2.fontSize },
-    }),
   },
 };
 
@@ -86,39 +52,14 @@ export const MuiInput: NonNullable<Components<Theme>["MuiInput"]> = {
         borderBottomColor: alpha(theme.palette.common.white, 0.2),
       },
     }),
-
-    input: ({ theme }) => ({ fontSize: theme.typography.body1.fontSize }),
-
-    sizeSmall: ({ theme }) => ({
-      "& .MuiInput-input": { fontSize: theme.typography.body2.fontSize },
-    }),
   },
 };
 
 export const MuiInputLabel: NonNullable<Components<Theme>["MuiInputLabel"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
-      fontSize: theme.typography.body1.fontSize,
       color: theme.palette.text.secondary,
     }),
-
-    sizeSmall: ({ theme }) => ({ fontSize: theme.typography.body2.fontSize }),
-
-    outlined: {
-      transform: "translate(12px, 10px) scale(1)",
-
-      "&.MuiInputLabel-shrink": {
-        transform: "translate(12px, -9px) scale(0.75)",
-      },
-
-      "&.MuiInputLabel-sizeSmall": {
-        transform: "translate(10px, 6px) scale(1)",
-
-        "&.MuiInputLabel-shrink": {
-          transform: "translate(10px, -9px) scale(0.75)",
-        },
-      },
-    },
   },
 };
 
