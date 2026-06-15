@@ -6,14 +6,15 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID                     | Topic                                                                                  | Status   |
-| ---------------------- | -------------------------------------------------------------------------------------- | -------- |
-| D-1 ONE-INITIATIVE     | Phase 2 = ONE initiative `coach-station`; the four pillars run as waves                | RATIFIED |
-| D-2 CLONE-FIRST        | Clone (R1) ships first; templates/archetypes (R2) PARKED — slot TBD, not dropped       | RATIFIED |
-| D-3 CLONE-SERVER-SIDE  | Clone = server-side deep-clone in ONE transaction (atomic, idempotent, ref-remapping)  | RATIFIED |
-| D-4 CLONE-FLOORS       | Per-floor clone semantics: week/day = replace-into-current; session↓ = duplicate-append | RATIFIED |
-| D-5 PROFILE-SCOPE      | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                  | RATIFIED |
-| D-6 R1-CLONE-UX        | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day | RATIFIED |
+| ID                      | Topic                                                                                         | Status   |
+| ----------------------- | --------------------------------------------------------------------------------------------- | -------- |
+| D-1 ONE-INITIATIVE      | Phase 2 = ONE initiative `coach-station`; the four pillars run as waves                       | RATIFIED |
+| D-2 CLONE-FIRST         | Clone (R1) ships first; templates/archetypes (R2) PARKED — slot TBD, not dropped              | RATIFIED |
+| D-3 CLONE-SERVER-SIDE   | Clone = server-side deep-clone in ONE transaction (atomic, idempotent, ref-remapping)         | RATIFIED |
+| D-4 CLONE-FLOORS        | Per-floor clone semantics: week/day = replace-into-current; session↓ = duplicate-append       | RATIFIED |
+| D-5 PROFILE-SCOPE       | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                         | RATIFIED |
+| D-6 R1-CLONE-UX         | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day      | RATIFIED |
+| D-7 CLONE-SOURCE-PICKER | Source-picker = content-anchored list backed by a new `GET …/weeks`; DR-8/DR-3/DR-4 sub-calls | RATIFIED |
 
 ---
 
@@ -43,10 +44,12 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Decision.** Two distinct semantics, per floor:
 
   **A. Replace-into-current (week, day) — source-pick + destructive warning.**
+
   - **Week.** A button "clone the previous week" somewhere on the week surface. On click → the coach picks **which** week he wants to clone INTO the current week. On pick → a **warning**: all existing sessions of the current week will be DELETED and replaced by the source week's. If the source week is EMPTY → say so **explicitly**. **Cloning an empty week must NOT clear the current week** (no-op + message).
   - **Day.** Identical flow, scoped to a day.
 
   **B. Duplicate-append (session, block, schema, row) — in-place, no pick, no delete.**
+
   - **Session.** Clone works only **within the current week**. An icon-button at the session level. Click → a plain duplicate; the clone appears **in the same day, at the end of the list**.
   - **Block.** Like session (duplicate → append to the same session's end).
   - **Schema.** Like block (duplicate → append to the same block's end).
@@ -75,3 +78,13 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
   6. **Copy = everything.** A cloned week/day reproduces the FULL source subtree — week notes, day label + notes, every session and below — re-referencing the shared catalog. The ONLY thing not copied is the slot position (the target keeps its own week `startDate` / day `dayOfWeek`). No field is exempt (owner 2026-06-15: «копирование значит копирование, мы копируем ВСЁ» — don't overthink it).
 - **Rationale.** A solo, non-prod tool: the double-confirm suffices without paying for undo's snapshot/restore infrastructure (the most expensive fork — dropping it keeps R1 lean). Disable-empty beats a post-error notice. Silent-on-a-dense-editor avoids toast spam. Any-source maximizes the coach's reuse, which is the whole point of the pillar.
 - **Links.** `r1-clone-design.md` (§9 Resolved); D-4 (the semantics these UX calls dress).
+
+### D-7 CLONE-SOURCE-PICKER — week/day source-picker = content-anchored list backed by a new read endpoint
+
+- **Status:** RATIFIED (2026-06-15, R1b research stage; owner delegated — "включай сервер в скоуп, делай то что чище... скоуп не решающий критерий. решай ты сам").
+- **Decision.** The week/day clone-from source-picker is a **content-anchored list of the plan's populated weeks**, backed by a NEW read endpoint **`GET /api/platform/training-plans/[planId]/weeks`** → `{ startDate, sessionCount, dayCount }[]`, most-recent-first, no cap, `verifyPlanOwnership`-guarded. The day picker reuses the SAME week-list (pick a source week) + the existing single-week fetch (pick a day from its 7) — no separate list-days endpoint. NOT the date-picker workaround originally floored as buildable-against-main.
+- **Why this overrode R1b's "server is OUT" red line.** Stage-1 research (orchestrator-verified) found `r1-clone-design.md` §3 + the runner-prompt acceptance ("the picker LISTS the plan's weeks") **unbuildable against main**: no list-weeks route/hook/key exists; weeks are calendar-keyed `(planId, startDate)` rows, fetched one at a time, lazily upserted; `TrainingPlan` has no span — the plan has no enumerable week-set, it is an unbounded calendar where some Mondays carry content. D-6.4 ("any week, most-recent prior at top") was ratified without knowing it needed a server capability that did not exist. The owner lifted scope-preservation as the deciding criterion.
+- **Rationale (cleaner/correct, not scope-minimal).** (1) Coach UX: content recall ("Week of Jun 9 — 5 sessions") beats date recall on a bare date-picker — `[[coach-daily-ux-priority]]`. (2) Domain fit: "weeks with content" is a finite, meaningful set (the coach's actual built work) even though the calendar is unbounded — the list self-bounds to valid sources. (3) Low risk + DRY: a standalone aggregate READ; one endpoint serves both flows; it does NOT touch the frozen deep-clone engine or any primitive mutation path.
+- **Sub-calls confirmed at Gate A.** **DR-8 (refines D-6.2):** weeks block empty sources STRUCTURALLY (only populated weeks listed) rather than D-6.2's literal "disabled rows"; days keep the disabled-row + "Empty — nothing to clone" tag (a picked week's 7 days include empties). The defensive `cloned:false / empty-source` union arm is RETAINED as a race backstop. **DR-3:** `dayCount` = days-with-≥1-session (a Day row can exist label/notes-only with zero sessions; the coach-meaningful count is "days that have work"). **DR-4:** the endpoint emits `startDate` as a UTC-safe `YYYY-MM-DD` (the `@db.Date` is UTC-midnight; the existing local-getter `formatDateParam` would off-by-one).
+- **Reversibility.** Additive endpoint — a fallback to the date-picker would drop the endpoint + the two list components but keep the modals. Two-way door.
+- **Links.** `r1-clone-design.md` §3 (superseded presentation); D-6.2/D-6.4 (the UX calls this realizes/refines).
