@@ -2,7 +2,8 @@ import { type Composition } from "@repo/contracts/lms/composition";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { assertComposeTreeValidForWrite, mapToSchemaWithBody } from "../../../mappers/lms";
-import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
+import { SCHEMA_BODY_INCLUDE } from "../_shared/schema-body-include";
+import { type TxClient } from "../_shared/tx-client";
 
 type BlockSchemaOrder = { id: string; groupId: string | null; order: number };
 

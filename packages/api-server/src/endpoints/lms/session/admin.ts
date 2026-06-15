@@ -18,7 +18,13 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToSession } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
-import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
+import {
+  DAY_OF_WEEK_TO_PRISMA,
+  deepCloneSession,
+  resolveWeekStartDate,
+  SESSION_SUBTREE_INCLUDE,
+} from "../_shared";
+import { assertPlanWritable } from "../schema/create-steps";
 
 const FIRST_BLOCK_ORDER = 10;
 
@@ -246,6 +252,47 @@ export const lmsSessionApi = {
       );
 
       return updated.map(mapToSession);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Session" });
+    }
+  },
+
+  duplicate: async (userId: string, planId: string, sessionId: string): Promise<Session> => {
+    const owner = await verifySessionOwnership(sessionId, userId);
+
+    if (owner.planId !== planId) {
+      throw new NotFoundError("Session not found", { planId, sessionId });
+    }
+
+    verifyPlanEditable(owner);
+
+    try {
+      const session = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            await assertPlanWritable(tx, planId);
+
+            const source = await tx.session.findUniqueOrThrow({
+              where: { id: sessionId },
+              include: SESSION_SUBTREE_INCLUDE,
+            });
+
+            const max = await tx.session.aggregate({
+              where: { dayId: owner.dayId },
+              _max: { order: true },
+            });
+
+            const nextOrder = (max._max.order ?? 0) + 10;
+
+            const newSessionId = await deepCloneSession(tx, source, owner.dayId, nextOrder);
+
+            return tx.session.findUniqueOrThrow({ where: { id: newSessionId } });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      );
+
+      return mapToSession(session);
     } catch (error) {
       return handlePrismaError(error, { entity: "Session" });
     }

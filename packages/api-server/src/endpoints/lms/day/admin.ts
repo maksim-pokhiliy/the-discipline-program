@@ -2,6 +2,8 @@ import { Prisma } from "@prisma/client";
 
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
 import {
+  type CloneDayFromRequest,
+  type CloneDayResponse,
   type DaySlot,
   type UpdateDayLabelData,
   type UpdateDayNotesData,
@@ -13,7 +15,14 @@ import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToDaySlot } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
-import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate, SCHEMA_BODY_INCLUDE } from "../_shared";
+import {
+  DAY_OF_WEEK_TO_PRISMA,
+  deepCloneSessionsInto,
+  resolveWeekStartDate,
+  SCHEMA_BODY_INCLUDE,
+  SESSION_SUBTREE_INCLUDE,
+} from "../_shared";
+import { assertPlanWritable } from "../schema/create-steps";
 
 const DAY_INCLUDE = {
   label: true,
@@ -189,6 +198,85 @@ export const lmsDayMetadataApi = {
       );
 
       return mapToDaySlot(dayOfWeek, day);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Day" });
+    }
+  },
+
+  cloneFrom: async (
+    userId: string,
+    planId: string,
+    startDateParam: string,
+    dayOfWeek: DayOfWeek,
+    data: CloneDayFromRequest,
+  ): Promise<CloneDayResponse> => {
+    const plan = await verifyPlanOwnership(planId, userId);
+
+    verifyPlanEditable(plan);
+
+    const targetStart = resolveWeekStartDate(startDateParam);
+    const targetDayOfWeek = DAY_OF_WEEK_TO_PRISMA[dayOfWeek];
+    const sourceStart = resolveWeekStartDate(data.sourceStartDate);
+    const sourceDayOfWeek = DAY_OF_WEEK_TO_PRISMA[data.sourceDayOfWeek];
+
+    try {
+      return await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            await assertPlanWritable(tx, planId);
+
+            const source = await tx.day.findFirst({
+              where: {
+                dayOfWeek: sourceDayOfWeek,
+                week: { planId, startDate: sourceStart },
+              },
+              include: {
+                sessions: { orderBy: { order: "asc" }, include: SESSION_SUBTREE_INCLUDE },
+              },
+            });
+
+            if (source === null) {
+              throw new BadRequestError("Source day not found in this plan", {
+                sourceStartDate: data.sourceStartDate,
+                sourceDayOfWeek: data.sourceDayOfWeek,
+              });
+            }
+
+            if (source.sessions.length === 0) {
+              return { cloned: false, reason: "empty-source" };
+            }
+
+            const week = await tx.week.upsert({
+              where: { planId_startDate: { planId, startDate: targetStart } },
+              create: { planId, startDate: targetStart },
+              update: {},
+            });
+
+            const targetDay = await tx.day.upsert({
+              where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: targetDayOfWeek } },
+              create: {
+                weekId: week.id,
+                dayOfWeek: targetDayOfWeek,
+                labelId: source.labelId,
+                notes: marshalNullableJson(source.notes),
+              },
+              update: { labelId: source.labelId, notes: marshalNullableJson(source.notes) },
+              select: { id: true },
+            });
+
+            await tx.session.deleteMany({ where: { dayId: targetDay.id } });
+            await deepCloneSessionsInto(tx, source.sessions, targetDay.id);
+
+            const day = await tx.day.findUniqueOrThrow({
+              where: { id: targetDay.id },
+              include: DAY_INCLUDE,
+            });
+
+            return { cloned: true, day: mapToDaySlot(dayOfWeek, day) };
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      );
     } catch (error) {
       return handlePrismaError(error, { entity: "Day" });
     }

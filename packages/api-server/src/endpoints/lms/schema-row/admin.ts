@@ -20,9 +20,11 @@ import {
   mapToSchemaWithBody,
 } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
-import { SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
+import { deepCloneRow, SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
+import { assertPlanWritable } from "../schema/create-steps";
 
 import { assertRowGroupMembersContiguous } from "./assertions";
+import { nextRowOrderInSchema, resolveRowGroupedOrder } from "./create-steps";
 
 const ORDER_STEP = 10;
 
@@ -143,6 +145,68 @@ export const lmsSchemaRowApi = {
       );
 
       return created;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+        throw new BadRequestError("Referenced exercise or modifier does not exist", {
+          field: getFkFieldName(error),
+        });
+      }
+
+      return handlePrismaError(error, { entity: "SchemaRow" });
+    }
+  },
+
+  duplicate: async (userId: string, planId: string, schemaRowId: string): Promise<SchemaRow> => {
+    const owner = await verifySchemaRowOwnership(schemaRowId, userId);
+
+    if (owner.planId !== planId) {
+      throw new NotFoundError("SchemaRow not found in plan", { planId, schemaRowId });
+    }
+
+    verifyPlanEditable(owner);
+
+    try {
+      const duplicated = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            await assertPlanWritable(tx, planId);
+
+            const source = await tx.schemaRow.findUniqueOrThrow({
+              where: { id: schemaRowId },
+              include: SCHEMA_BODY_INCLUDE.rows.include,
+            });
+
+            const nextOrder =
+              source.rowGroupId === null
+                ? await nextRowOrderInSchema(tx, owner.schemaId)
+                : await resolveRowGroupedOrder(tx, owner.schemaId, source.rowGroupId);
+
+            const newId = await deepCloneRow(
+              tx,
+              source,
+              owner.schemaId,
+              nextOrder,
+              source.rowGroupId,
+            );
+
+            await revalidateSchemaTree(tx, owner.schemaId);
+
+            if (source.rowGroupId !== null) {
+              const schemaRows = await tx.schemaRow.findMany({
+                where: { schemaId: owner.schemaId },
+                select: { id: true, order: true, rowGroupId: true },
+              });
+
+              assertRowGroupMembersContiguous(schemaRows, source.rowGroupId);
+            }
+
+            return loadRowWithModifiers(tx, newId);
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      );
+
+      return duplicated;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
         throw new BadRequestError("Referenced exercise or modifier does not exist", {
