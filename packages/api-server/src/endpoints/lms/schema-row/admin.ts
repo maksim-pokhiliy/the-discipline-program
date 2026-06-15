@@ -113,11 +113,7 @@ export const lmsSchemaRowApi = {
               });
             }
 
-            const max = await tx.schemaRow.aggregate({
-              where: { schemaId: data.schemaId },
-              _max: { order: true },
-            });
-            const nextOrder = (max._max.order ?? 0) + 10;
+            const nextOrder = await nextRowOrderInSchema(tx, data.schemaId);
 
             const createdRow = await tx.schemaRow.create({
               data: {
@@ -202,7 +198,7 @@ export const lmsSchemaRowApi = {
 
             return loadRowWithModifiers(tx, newId);
           },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
 

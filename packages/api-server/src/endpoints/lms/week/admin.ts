@@ -28,7 +28,7 @@ const WEEK_SUBTREE_INCLUDE = {
   days: {
     include: {
       label: true,
-      sessions: { orderBy: { order: "asc" }, include: { label: true, ...SESSION_SUBTREE_INCLUDE } },
+      sessions: { orderBy: { order: "asc" }, include: SESSION_SUBTREE_INCLUDE },
     },
   },
 } satisfies Prisma.WeekInclude;
@@ -177,7 +177,7 @@ export const lmsWeekApi = {
 
             return { cloned: true, week: mapToWeek(reloaded) };
           },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
     } catch (error) {

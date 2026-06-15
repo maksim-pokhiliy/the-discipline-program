@@ -274,7 +274,7 @@ export const lmsDayMetadataApi = {
 
             return { cloned: true, day: mapToDaySlot(dayOfWeek, day) };
           },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
     } catch (error) {

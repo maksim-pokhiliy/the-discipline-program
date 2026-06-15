@@ -99,13 +99,22 @@ const witnessRowGroups = async (
   schemaId: string,
   rowGroupIds: Iterable<string>,
 ): Promise<void> => {
+  const newIds = new Set(rowGroupIds);
   const rows = await tx.schemaRow.findMany({
     where: { schemaId },
     select: { id: true, rowGroupId: true, order: true },
   });
 
-  for (const rowGroupId of rowGroupIds) {
-    assertRowGroupMembersContiguous(rows, rowGroupId);
+  for (const newId of newIds) {
+    assertRowGroupMembersContiguous(rows, newId);
+  }
+
+  for (const row of rows) {
+    if (row.rowGroupId !== null && !newIds.has(row.rowGroupId)) {
+      throw new InternalServerError("Cloned row left on a source-side row group", {
+        rowId: row.id,
+      });
+    }
   }
 };
 
@@ -172,13 +181,22 @@ const witnessSchemaGroups = async (
   blockId: string,
   groupIds: Iterable<string>,
 ): Promise<void> => {
+  const newIds = new Set(groupIds);
   const schemas = await tx.schema.findMany({
     where: { blockId },
     select: { id: true, groupId: true, order: true },
   });
 
-  for (const groupId of groupIds) {
-    assertGroupMembersContiguous(schemas, groupId);
+  for (const newId of newIds) {
+    assertGroupMembersContiguous(schemas, newId);
+  }
+
+  for (const schema of schemas) {
+    if (schema.groupId !== null && !newIds.has(schema.groupId)) {
+      throw new InternalServerError("Cloned schema left on a source-side group", {
+        schemaId: schema.id,
+      });
+    }
   }
 };
 

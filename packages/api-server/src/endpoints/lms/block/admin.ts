@@ -175,7 +175,7 @@ export const lmsBlockApi = {
               include: BLOCK_WITH_LABELS_INCLUDE,
             });
           },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
 

@@ -184,7 +184,7 @@ export const lmsSchemaApi = {
               include: SCHEMA_BODY_INCLUDE,
             });
           },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
 

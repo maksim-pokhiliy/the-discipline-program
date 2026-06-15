@@ -7,6 +7,7 @@ import {
   ConflictError,
   InternalServerError,
   NotFoundError,
+  ServiceUnavailableError,
 } from "@repo/errors";
 
 export const handlePrismaError = (
@@ -50,6 +51,10 @@ export const handlePrismaError = (
 
     if (error.code === "P2034") {
       throw new ConflictError(`${context.entity} was modified concurrently, please retry`);
+    }
+
+    if (error.code === "P2028") {
+      throw new ServiceUnavailableError(`${context.entity} operation timed out, please retry`);
     }
   }
 

@@ -288,7 +288,7 @@ export const lmsSessionApi = {
 
             return tx.session.findUniqueOrThrow({ where: { id: newSessionId } });
           },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
 
