@@ -16,7 +16,7 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToSchema } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
-import { type TxClient } from "../_shared";
+import { deepCloneSchema, SCHEMA_BODY_INCLUDE, type TxClient } from "../_shared";
 
 import { assertCompositionUpdateValid, assertGroupMembersContiguous } from "./assertions";
 import {
@@ -132,6 +132,63 @@ export const lmsSchemaApi = {
       );
 
       return mapToSchema(created);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Schema" });
+    }
+  },
+
+  duplicate: async (userId: string, planId: string, schemaId: string): Promise<Schema> => {
+    const owner = await verifySchemaOwnership(schemaId, userId);
+
+    if (owner.planId !== planId) {
+      throw new NotFoundError("Schema not found in plan", { planId, schemaId });
+    }
+
+    verifyPlanEditable(owner);
+
+    try {
+      const reloaded = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            await assertPlanWritable(tx, planId);
+
+            const source = await tx.schema.findUniqueOrThrow({
+              where: { id: schemaId },
+              include: SCHEMA_BODY_INCLUDE,
+            });
+
+            const nextOrder =
+              source.groupId === null
+                ? await nextOrderInScope(tx, { blockId: owner.blockId })
+                : await resolveGroupedOrder(tx, owner.blockId, source.groupId);
+
+            const newId = await deepCloneSchema(
+              tx,
+              source,
+              owner.blockId,
+              nextOrder,
+              source.groupId,
+            );
+
+            if (source.groupId !== null) {
+              const blockSchemas = await tx.schema.findMany({
+                where: { blockId: owner.blockId },
+                select: { id: true, order: true, groupId: true },
+              });
+
+              assertGroupMembersContiguous(blockSchemas, source.groupId);
+            }
+
+            return tx.schema.findUniqueOrThrow({
+              where: { id: newId },
+              include: SCHEMA_BODY_INCLUDE,
+            });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
+        ),
+      );
+
+      return mapToSchema(reloaded);
     } catch (error) {
       return handlePrismaError(error, { entity: "Schema" });
     }

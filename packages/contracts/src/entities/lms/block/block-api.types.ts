@@ -7,6 +7,8 @@ import {
   type blockBySessionParamsSchema,
   type createBlockRequestSchema,
   type createBlockResponseSchema,
+  type duplicateBlockRequestSchema,
+  type duplicateBlockResponseSchema,
   type reorderBlocksRequestSchema,
   type reorderBlocksResponseSchema,
   type updateBlockRequestSchema,
@@ -23,3 +25,5 @@ export type ReorderBlocksRequest = z.infer<typeof reorderBlocksRequestSchema>;
 export type ReorderBlocksResponse = z.infer<typeof reorderBlocksResponseSchema>;
 export type AssignBlockLabelsRequest = z.infer<typeof assignBlockLabelsRequestSchema>;
 export type AssignBlockLabelsResponse = z.infer<typeof assignBlockLabelsResponseSchema>;
+export type DuplicateBlockRequest = z.infer<typeof duplicateBlockRequestSchema>;
+export type DuplicateBlockResponse = z.infer<typeof duplicateBlockResponseSchema>;

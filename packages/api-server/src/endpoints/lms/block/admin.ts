@@ -18,7 +18,8 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToBlock, mapToBlockWithLabels } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
-import { type TxClient } from "../_shared";
+import { BLOCK_SUBTREE_INCLUDE, deepCloneBlock, type TxClient } from "../_shared";
+import { assertPlanWritable } from "../schema/create-steps";
 
 const BLOCK_WITH_LABELS_INCLUDE = {
   labelAssignments: {
@@ -131,6 +132,50 @@ export const lmsBlockApi = {
             });
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      );
+
+      return mapToBlockWithLabels(block);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Block" });
+    }
+  },
+
+  duplicate: async (userId: string, planId: string, blockId: string): Promise<Block> => {
+    const owner = await verifyBlockOwnership(blockId, userId);
+
+    if (owner.planId !== planId) {
+      throw new NotFoundError("Block not found", { blockId, planId });
+    }
+
+    verifyPlanEditable(owner);
+
+    try {
+      const block = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            await assertPlanWritable(tx, planId);
+
+            const source = await tx.block.findUniqueOrThrow({
+              where: { id: blockId },
+              include: BLOCK_SUBTREE_INCLUDE,
+            });
+
+            const max = await tx.block.aggregate({
+              where: { sessionId: owner.sessionId },
+              _max: { order: true },
+            });
+
+            const nextOrder = (max._max.order ?? 0) + 10;
+
+            const createdId = await deepCloneBlock(tx, source, owner.sessionId, nextOrder);
+
+            return tx.block.findUniqueOrThrow({
+              where: { id: createdId },
+              include: BLOCK_WITH_LABELS_INCLUDE,
+            });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 },
         ),
       );
 

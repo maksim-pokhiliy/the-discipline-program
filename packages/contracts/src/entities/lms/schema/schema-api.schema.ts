@@ -37,3 +37,6 @@ export const reorderSchemasRequestSchema = reorderSchemasSchema.extend({
 export const reorderSchemasResponseSchema = z.object({
   schemas: getSchemasResponseSchema,
 });
+
+export const duplicateSchemaRequestSchema = z.object({}).strict();
+export const duplicateSchemaResponseSchema = schemaSchema;

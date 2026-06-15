@@ -16,9 +16,7 @@ type SchemaCardMetaProps = {
   schema: SchemaWithBody;
 };
 
-export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
-  schema,
-}): ReactElement | null => {
+export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({ schema }): ReactElement | null => {
   const composition = schema.schema.composition;
   const schemaIntensity = schema.schema.intensity;
 

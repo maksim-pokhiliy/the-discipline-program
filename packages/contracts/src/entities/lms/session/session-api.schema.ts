@@ -30,3 +30,6 @@ export const reorderSessionsRequestSchema = reorderSessionsSchema;
 export const reorderSessionsResponseSchema = z.object({
   sessions: z.array(sessionSchema),
 });
+
+export const duplicateSessionRequestSchema = z.object({}).strict();
+export const duplicateSessionResponseSchema = sessionSchema;
