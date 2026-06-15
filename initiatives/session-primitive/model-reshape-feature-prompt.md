@@ -30,9 +30,9 @@ This is **W4-model class, NOT platform-only**: it touches `@repo/contracts` + Pr
 - **Reshape:** add `intensity` + `rest` to `schema-row` (alongside the schema-level fields). **Promote the D-FLOORS ("intensity schema-only") + D-PLAQUE ("rest schema-only") re-open into `decisions.md` as ratified.**
 - **Surface:** `schema-row.schema.ts` contract + Prisma `SchemaRow` + api-server mappers + the row editor (reuse `IntensityFields` / `RestSpecFields`) · seed.
 
-### Sequencing
+### Sequencing — all three in ONE `/feature` run
 
-GAP-1 + GAP-2 are one contract surface (composition/repetition axis, one reseed) — land them together. Row-level intensity+rest (B) is the schema-row surface — ride the same reseed or fast-follow. If all three are too big for one pipeline, do the composition-axis pair (1 + 2) first and B second.
+Land all three in a single pipeline (owner-directed). Step order inside the run: the composition-axis pair (1 + 2) as one contract pass, then schema-row (3), then **ONE unified reseed + ONE gated api-server suite covering all three** — deliberately cheaper than splitting (one ~10-min acceptance ritual, not two; one reshape commit set, one review). The three contracts are independent enough to spec in parallel and converge on a single reseed; the gated suite is the single acceptance gate at the end.
 
 ### Out of scope (Phase-3, NOT this /feature)
 
