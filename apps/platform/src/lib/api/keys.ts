@@ -14,6 +14,9 @@ export const platformKeys = {
   coachDashboard: {
     data: () => [...ROOT, "coach-dashboard"] as const,
   },
+  coachProfile: {
+    data: () => [...ROOT, "coach-profile"] as const,
+  },
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
   },

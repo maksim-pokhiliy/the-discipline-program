@@ -10,4 +10,4 @@ export const getCoachProfilePageDataResponseSchema = coachProfilePageDataSchema;
 
 export const updateCoachProfileRequestSchema = selfUpdateCoachProfileSchema;
 
-export const updateCoachProfileResponseSchema = coachProfileSchema;
+export const updateCoachProfileResponseSchema = coachProfilePageDataSchema;

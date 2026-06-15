@@ -7,8 +7,10 @@ export const createApi = (client: ApiClient) => ({
   blocks: endpoints.createBlocksAPI(client),
   coachAthletes: endpoints.createCoachAthletesAPI(client),
   coachActionItems: endpoints.createCoachActionItemsAPI(client),
+  coachCredentials: endpoints.createCoachCredentialAPI(client),
   coachDashboard: endpoints.createCoachDashboardAPI(client),
   coachInvite: endpoints.createCoachInviteAPI(client),
+  coachProfile: endpoints.createCoachProfileAPI(client),
   dayMetadata: endpoints.createDayMetadataAPI(client),
   exercises: endpoints.createExercisesAPI(client),
   groups: endpoints.createGroupsAPI(client),
@@ -19,6 +21,7 @@ export const createApi = (client: ApiClient) => ({
   schemas: endpoints.createSchemasAPI(client),
   sessions: endpoints.createSessionsAPI(client),
   trainingPlans: endpoints.createTrainingPlansAPI(client),
+  upload: endpoints.createUploadAPI(client),
   users: endpoints.createUsersAPI(client),
   weeks: endpoints.createWeeksAPI(client),
 });

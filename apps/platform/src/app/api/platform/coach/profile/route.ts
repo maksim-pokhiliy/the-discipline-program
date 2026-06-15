@@ -6,7 +6,7 @@ import {
 } from "@repo/api-routes";
 import { coachingCoachProfileApi } from "@repo/api-server/coaching";
 import {
-  getCoachProfileResponseSchema,
+  getCoachProfilePageDataResponseSchema,
   updateCoachProfileRequestSchema,
   updateCoachProfileResponseSchema,
 } from "@repo/contracts/coaching/coach-profile";
@@ -16,8 +16,8 @@ import { withCoachAuth } from "@app/lib/server/auth";
 export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetHandler(
-      (userId) => coachingCoachProfileApi.get(userId),
-      getCoachProfileResponseSchema,
+      (userId) => coachingCoachProfileApi.getPageData(userId),
+      getCoachProfilePageDataResponseSchema,
     ),
     RATE_LIMIT_TIER.API,
   ),
@@ -26,7 +26,7 @@ export const GET = withCoachAuth(
 export const PUT = withCoachAuth(
   withAuthRateLimit(
     createAuthPutHandler(
-      (userId, data) => coachingCoachProfileApi.upsert(userId, data),
+      (userId, data) => coachingCoachProfileApi.update(userId, data),
       updateCoachProfileRequestSchema,
       updateCoachProfileResponseSchema,
     ),
