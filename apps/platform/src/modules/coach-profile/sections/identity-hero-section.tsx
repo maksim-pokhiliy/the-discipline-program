@@ -59,6 +59,7 @@ export const IdentityHeroSection: React.FC<IdentityHeroSectionProps> = ({ pageDa
               variant="h5"
               ariaLabel="Name"
               placeholder="Your name"
+              maxLength={COACH_PROFILE_CONSTANTS.MAX_NAME_LENGTH}
             />
 
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">

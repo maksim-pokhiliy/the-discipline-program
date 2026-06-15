@@ -19,7 +19,8 @@ export const coachProfileSchema = z.object({
 
 const specialtiesUpdateSchema = z
   .array(z.string().refine((value) => (SPECIALTY_PRESET as readonly string[]).includes(value)))
-  .max(COACH_PROFILE_CONSTANTS.MAX_SPECIALTIES);
+  .max(COACH_PROFILE_CONSTANTS.MAX_SPECIALTIES)
+  .refine((values) => new Set(values).size === values.length, "Specialties must be unique");
 
 export const updateCoachProfileSchema = z.object({
   bio: z.string().max(COACH_PROFILE_CONSTANTS.MAX_BIO_LENGTH).nullable().optional(),
@@ -54,7 +55,7 @@ export const coachProfilePageDataSchema = z.object({
 });
 
 export const selfUpdateCoachProfileSchema = z.object({
-  name: z.string().min(1).max(120).nullable().optional(),
+  name: z.string().min(1).max(COACH_PROFILE_CONSTANTS.MAX_NAME_LENGTH).nullable().optional(),
   image: imageUrlSchema.optional(),
   timezone: timezoneSchema.optional(),
   bio: z.string().max(COACH_PROFILE_CONSTANTS.MAX_BIO_LENGTH).nullable().optional(),

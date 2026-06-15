@@ -1,23 +1,9 @@
-import {
-  createDeleteWithBodyHandler,
-  createFormDataPostHandler,
-  RATE_LIMIT_TIER,
-  withAuthRateLimit,
-} from "@repo/api-routes";
+import { createFormDataPostHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
 import { storageUploadAdminApi } from "@repo/api-server/storage";
-import {
-  deleteImageRequestSchema,
-  uploadImageResponseSchema,
-  type UploadContext,
-  UPLOAD_CONFIG,
-} from "@repo/contracts/storage/upload";
+import { uploadImageResponseSchema } from "@repo/contracts/storage/upload";
 import { BadRequestError } from "@repo/errors";
 
 import { withCoachAuth } from "@app/lib/server/auth";
-
-const isValidUploadContext = (value: unknown): value is UploadContext => {
-  return typeof value === "string" && value in UPLOAD_CONFIG;
-};
 
 const processUpload = async (formData: FormData) => {
   const file = formData.get("file");
@@ -27,26 +13,16 @@ const processUpload = async (formData: FormData) => {
     throw new BadRequestError("No valid file provided");
   }
 
-  if (!isValidUploadContext(context)) {
-    throw new BadRequestError("Invalid or missing context");
+  if (context !== "avatar") {
+    throw new BadRequestError("Only avatar uploads are allowed");
   }
 
-  return storageUploadAdminApi.uploadImage(file, context);
+  return storageUploadAdminApi.uploadImage(file, "avatar");
 };
 
 export const POST = withCoachAuth(
   withAuthRateLimit(
     createFormDataPostHandler(processUpload, uploadImageResponseSchema),
-    RATE_LIMIT_TIER.API,
-  ),
-);
-
-export const DELETE = withCoachAuth(
-  withAuthRateLimit(
-    createDeleteWithBodyHandler(
-      ({ url }) => storageUploadAdminApi.deleteImage(url),
-      deleteImageRequestSchema,
-    ),
     RATE_LIMIT_TIER.API,
   ),
 );

@@ -30,7 +30,7 @@ export const coachingCoachCredentialApi = {
 
     try {
       const credential = await prisma.coachCredential.create({
-        data: { coachProfileId, ...data },
+        data: { ...data, coachProfileId },
       });
 
       return mapToCoachCredential(credential);
