@@ -14,6 +14,9 @@ const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const DRAG_LABEL = "Drag schema";
 const TITLE_LABEL = "Schema title";
+const EDIT_LABEL = "Edit axes";
+const DUPLICATE_LABEL = "Duplicate schema";
+const DELETE_LABEL = "Delete schema";
 
 const LADDER_COMPOSITION: SchemaWithBody["schema"]["composition"] = {
   repetition: { kind: "ladder", steps: [21, 15, 9] },
@@ -52,7 +55,9 @@ type RenderOptions = {
   isBoxed?: boolean;
   isDraggable?: boolean;
   isExpanded?: boolean;
+  isMutationPending?: boolean;
   onToggleExpanded?: () => void;
+  onDuplicate?: () => void;
 };
 
 const renderHead = ({
@@ -60,17 +65,20 @@ const renderHead = ({
   isBoxed = false,
   isDraggable = true,
   isExpanded = true,
+  isMutationPending = false,
   onToggleExpanded = vi.fn(),
+  onDuplicate = vi.fn(),
 }: RenderOptions = {}) =>
   render(
     <SchemaCardHead
       schema={schema}
-      isMutationPending={false}
+      isMutationPending={isMutationPending}
       dragAttributes={DRAG_ATTRIBUTES}
       dragListeners={undefined}
       onTitleCommit={vi.fn()}
       onDeleteOpen={vi.fn()}
       onEditOpen={vi.fn()}
+      onDuplicate={onDuplicate}
       isExpanded={isExpanded}
       onToggleExpanded={onToggleExpanded}
       isBoxed={isBoxed}
@@ -150,5 +158,50 @@ describe("SchemaCardHead collapse toggle (Session/Block parity)", () => {
 
     expect(screen.getByRole("button", { name: "Expand schema" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Collapse schema" })).toBeNull();
+  });
+});
+
+describe("SchemaCardHead duplicate affordance (T4.3 / Must-Test #8)", () => {
+  it("renders the Duplicate button after the edit control and before delete", () => {
+    renderHead();
+
+    const editBtn = screen.getByRole("button", { name: EDIT_LABEL });
+    const duplicateBtn = screen.getByRole("button", { name: DUPLICATE_LABEL });
+    const deleteBtn = screen.getByRole("button", { name: DELETE_LABEL });
+
+    expect(
+      editBtn.compareDocumentPosition(duplicateBtn) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(
+      duplicateBtn.compareDocumentPosition(deleteBtn) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  });
+
+  it("renders the Duplicate button for a standalone schema (isBoxed=false)", () => {
+    renderHead({ isBoxed: false });
+
+    expect(screen.getByRole("button", { name: DUPLICATE_LABEL })).toBeInTheDocument();
+  });
+
+  it("renders the Duplicate button for an in-group schema (isBoxed=true, boxed-member affordance)", () => {
+    renderHead({ isBoxed: true });
+
+    expect(screen.getByRole("button", { name: DUPLICATE_LABEL })).toBeInTheDocument();
+  });
+
+  it("fires the threaded onDuplicate when the Duplicate button is clicked", () => {
+    const onDuplicate = vi.fn();
+
+    renderHead({ onDuplicate });
+
+    fireEvent.click(screen.getByRole("button", { name: DUPLICATE_LABEL }));
+
+    expect(onDuplicate).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the Duplicate button when a mutation is pending", () => {
+    renderHead({ isMutationPending: true });
+
+    expect(screen.getByRole("button", { name: DUPLICATE_LABEL })).toBeDisabled();
   });
 });
