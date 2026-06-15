@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
 import type {
@@ -54,7 +53,6 @@ export const useCloneDayFrom = (
         queryClient.invalidateQueries({
           queryKey: platformKeys.weeks.byDate(planId, startDate),
         });
-        toast.success(`Day replaced — ${result.day.sessions.length} sessions cloned.`);
       }
     },
     onError: (error: Error) => {

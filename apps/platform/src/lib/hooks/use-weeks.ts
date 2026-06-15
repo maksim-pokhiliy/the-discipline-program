@@ -42,7 +42,6 @@ export const useCloneWeekFrom = (
         queryClient.invalidateQueries({
           queryKey: platformKeys.weeks.byDate(planId, startDate),
         });
-        toast.success("Week replaced.");
       }
     },
     onError: (error: Error) => {

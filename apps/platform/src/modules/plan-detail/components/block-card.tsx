@@ -12,10 +12,13 @@ import { ConfirmationModal } from "@repo/ui";
 import { useLabelOptions } from "@app/lib/hooks";
 import {
   useAssignBlockLabels,
+  useCloneHighlight,
   useDeleteBlock,
   useDuplicateBlock,
   useUpdateBlock,
 } from "@app/lib/hooks";
+
+import { cloneHighlightSx } from "../lib/clone-highlight-sx";
 
 import { BlockCardBody } from "./block-card-body";
 import { BlockCardHead } from "./block-card-head";
@@ -47,6 +50,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const duplicateBlock = useDuplicateBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
   const blockLabelOptions = useLabelOptions("BLOCK");
+  const { markCloned, isHighlighted, setNode } = useCloneHighlight(block.id);
 
   const isMutationPending =
     updateBlock.isPending ||
@@ -81,7 +85,11 @@ export const BlockCard: React.FC<BlockCardProps> = ({
     deleteBlock.mutate({ blockId: block.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
 
-  const handleDuplicate = () => duplicateBlock.mutate({ blockId: block.id });
+  const handleDuplicate = () =>
+    duplicateBlock.mutate(
+      { blockId: block.id },
+      { onSuccess: (created) => markCloned(created.id) },
+    );
 
   const style = {
     transform: isDragging ? undefined : CSS.Transform.toString(transform),
@@ -96,16 +104,22 @@ export const BlockCard: React.FC<BlockCardProps> = ({
 
   return (
     <Stack
-      ref={setNodeRef}
+      ref={(node: HTMLDivElement | null) => {
+        setNodeRef(node);
+        setNode(node);
+      }}
       style={style}
       direction="column"
-      sx={(theme) => ({
-        bgcolor: "background.default",
-        border: 1,
-        borderColor: "divider",
-        borderRadius: theme.spacing(0.5),
-        overflow: "hidden",
-      })}
+      sx={[
+        (theme) => ({
+          bgcolor: "background.default",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: theme.spacing(0.5),
+          overflow: "hidden",
+        }),
+        cloneHighlightSx(isHighlighted),
+      ]}
     >
       <BlockCardHead
         block={block}

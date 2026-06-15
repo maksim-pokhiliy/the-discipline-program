@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { Stack } from "@mui/material";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { Button, Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
@@ -10,7 +11,7 @@ import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
 import { PageHeader, QueryWrapper, StatusSelectChip, type StatusOption } from "@repo/ui";
 
 import { PLAN_STATUS_CHIPS } from "@app/lib/config";
-import { CatalogProvider, LabelOptionsProvider } from "@app/lib/contexts";
+import { CatalogProvider, CloneHighlightProvider, LabelOptionsProvider } from "@app/lib/contexts";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
@@ -20,7 +21,7 @@ import {
   useWeek,
 } from "@app/lib/hooks";
 
-import { WeekGrid, WeekNavigator, WeekNotes } from "../components";
+import { CloneWeekModal, WeekGrid, WeekNavigator, WeekNotes } from "../components";
 
 type PlanDetailViewProps = { planId: string };
 
@@ -28,6 +29,8 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [isCloneWeekOpen, setIsCloneWeekOpen] = useState(false);
 
   const weekParam = searchParams.get("week");
   const parsed = weekParam ? parseDateParam(weekParam) : null;
@@ -39,6 +42,11 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const activate = useActivateTrainingPlan();
   const archive = useArchiveTrainingPlan();
   const restore = useRestoreTrainingPlan();
+
+  const currentSessionCount = (weekData?.days ?? []).reduce(
+    (sum, day) => sum + day.sessions.length,
+    0,
+  );
 
   const statusOptions = useMemo<StatusOption[]>(() => {
     if (!plan) {
@@ -73,32 +81,56 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
       {(plan) => (
         <LabelOptionsProvider>
           <CatalogProvider>
-            <Stack spacing={3}>
-              <PageHeader
-                editable
-                title={plan.name}
-                {...(plan.description !== null && { description: plan.description })}
-                actions={
-                  <StatusSelectChip {...PLAN_STATUS_CHIPS[plan.status]} options={statusOptions} />
-                }
-                onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
-                onDescriptionCommit={(next) =>
-                  updatePlan.mutate({
-                    id: planId,
-                    data: { description: next === "" ? null : next },
-                  })
-                }
-              />
+            <CloneHighlightProvider>
+              <Stack spacing={3}>
+                <PageHeader
+                  editable
+                  title={plan.name}
+                  {...(plan.description !== null && { description: plan.description })}
+                  actions={
+                    <StatusSelectChip {...PLAN_STATUS_CHIPS[plan.status]} options={statusOptions} />
+                  }
+                  onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
+                  onDescriptionCommit={(next) =>
+                    updatePlan.mutate({
+                      id: planId,
+                      data: { description: next === "" ? null : next },
+                    })
+                  }
+                />
 
-              <WeekNavigator monday={activeMonday} onChange={pushWeekParam} />
-              <WeekNotes
-                key={formatDateParam(activeMonday)}
-                planId={planId}
-                monday={activeMonday}
-                notes={weekData?.week?.notes ?? null}
-              />
-              <WeekGrid planId={planId} monday={activeMonday} days={weekData?.days ?? []} />
-            </Stack>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack sx={{ flex: 1, minWidth: 0 }}>
+                    <WeekNavigator monday={activeMonday} onChange={pushWeekParam} />
+                  </Stack>
+
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<ContentCopyIcon fontSize="small" />}
+                    onClick={() => setIsCloneWeekOpen(true)}
+                  >
+                    Clone week…
+                  </Button>
+                </Stack>
+
+                <WeekNotes
+                  key={formatDateParam(activeMonday)}
+                  planId={planId}
+                  monday={activeMonday}
+                  notes={weekData?.week?.notes ?? null}
+                />
+                <WeekGrid planId={planId} monday={activeMonday} days={weekData?.days ?? []} />
+
+                <CloneWeekModal
+                  open={isCloneWeekOpen}
+                  onClose={() => setIsCloneWeekOpen(false)}
+                  planId={planId}
+                  targetStartDate={formatDateParam(activeMonday)}
+                  currentSessionCount={currentSessionCount}
+                />
+              </Stack>
+            </CloneHighlightProvider>
           </CatalogProvider>
         </LabelOptionsProvider>
       )}

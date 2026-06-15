@@ -2,6 +2,7 @@ export { AddBlockButton } from "./add-block-button";
 export { AddSessionButton } from "./add-session-button";
 export { BlockCard } from "./block-card";
 export { BlockList } from "./block-list";
+export { CloneWeekModal } from "./clone-week-modal";
 export { CountOrRange } from "./count-or-range-field";
 export { DayRow } from "./day-row";
 export { NumberField } from "./number-field";
