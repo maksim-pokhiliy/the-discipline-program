@@ -60,6 +60,9 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
+  const toggleExpanded = () => setIsExpanded((previous) => !previous);
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
   const handleEditOpen = () => setIsEditOpen(true);
@@ -111,6 +114,8 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onTitleCommit={handleTitleCommit}
         onDeleteOpen={handleDeleteOpen}
         onEditOpen={handleEditOpen}
+        isExpanded={isExpanded}
+        onToggleExpanded={toggleExpanded}
         isBoxed={isBoxed}
         isDraggable={isDraggable}
         isSelectMode={isSelectMode}
@@ -118,15 +123,17 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onToggleSelect={onToggleSelect}
       />
 
-      <SchemaRowList
-        rows={schema.rows}
-        rowGroups={schema.rowGroups}
-        schemaId={schema.schema.id}
-        composition={schema.schema.composition}
-        planId={planId}
-        startDate={startDate}
-        parentIsReorderPending={isMutationPending}
-      />
+      {isExpanded ? (
+        <SchemaRowList
+          rows={schema.rows}
+          rowGroups={schema.rowGroups}
+          schemaId={schema.schema.id}
+          composition={schema.schema.composition}
+          planId={planId}
+          startDate={startDate}
+          parentIsReorderPending={isMutationPending}
+        />
+      ) : null}
 
       <ConfirmationModal
         open={isDeleteOpen}

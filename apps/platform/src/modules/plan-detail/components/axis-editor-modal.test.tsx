@@ -114,7 +114,7 @@ describe("AxisEditorModal create mode", () => {
   it("submits createSchema with the count composition, a null header and null notes", () => {
     renderCreate();
 
-    selectRepetition("Count");
+    selectRepetition("Rounds");
     submit();
 
     expect(createSchemaMutate).toHaveBeenCalledTimes(1);
@@ -122,6 +122,7 @@ describe("AxisEditorModal create mode", () => {
       blockId: BLOCK_ID,
       composition: { repetition: { kind: "count", count: 3 } },
       header: null,
+      intensity: null,
       notes: null,
     });
   });
@@ -129,7 +130,7 @@ describe("AxisEditorModal create mode", () => {
   it("omits groupId from the payload for a top-level create (no groupId in mode)", () => {
     renderCreate();
 
-    selectRepetition("Count");
+    selectRepetition("Rounds");
     submit();
 
     expect(createSchemaMutate).toHaveBeenCalledTimes(1);
@@ -147,6 +148,7 @@ describe("AxisEditorModal create mode", () => {
       blockId: BLOCK_ID,
       composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
       header: null,
+      intensity: null,
       notes: null,
     });
   });
@@ -181,7 +183,11 @@ describe("AxisEditorModal edit mode", () => {
     expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
     expect(updateSchemaMutate.mock.calls[0]?.[0]).toEqual({
       schemaId: SCHEMA_ID,
-      data: { composition: { repetition: { kind: "count", count: 4 } }, header: null },
+      data: {
+        composition: { repetition: { kind: "count", count: 4 } },
+        header: null,
+        intensity: null,
+      },
     });
   });
 
@@ -216,7 +222,11 @@ describe("AxisEditorModal edit mode", () => {
     expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
     expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
       schemaId: SCHEMA_ID,
-      data: { composition: { repetition: { kind: "count", count: 4 } }, header: null },
+      data: {
+        composition: { repetition: { kind: "count", count: 4 } },
+        header: null,
+        intensity: null,
+      },
     });
   });
 
@@ -231,7 +241,7 @@ describe("AxisEditorModal double-submit guard (QA-201)", () => {
   it("fires createSchema once for a synchronous double-click", () => {
     renderCreate();
 
-    selectRepetition("Count");
+    selectRepetition("Rounds");
     submit();
     submit();
 
@@ -248,7 +258,7 @@ describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
 
     renderCreate();
 
-    selectRepetition("Count");
+    selectRepetition("Rounds");
     submit();
 
     expect(alertText()).toContain("Network boom");
@@ -262,7 +272,7 @@ describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
 
 describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
   const setRangeMinMax = (min: string, max: string): void => {
-    fireEvent.click(screen.getByRole("button", { name: "Count" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rounds" }));
 
     const [rangeButton] = screen.getAllByRole("button", { name: "range" });
 
@@ -314,8 +324,8 @@ describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
 
     expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Once");
 
-    selectRepetition("Count");
+    selectRepetition("Rounds");
 
-    expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Count");
+    expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Rounds");
   });
 });

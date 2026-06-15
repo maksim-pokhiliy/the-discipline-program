@@ -6,7 +6,7 @@ import { Box } from "@mui/material";
 
 import { AxisModeButton } from "./axis-mode-button";
 
-const GRID_COLUMNS = "repeat(4, 1fr)";
+const GRID_COLUMNS = "repeat(6, 1fr)";
 const GRID_GAP = 0.75;
 
 export type AxisModeTile<TKind extends string> = {

@@ -127,7 +127,7 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
       {!isExpanded && hasBlocks ? <SessionCardCollapsedStats blockCount={blockCount} /> : null}
 
       <Tooltip title={DELETE_TOOLTIP}>
-        <span style={tooltipChildSx}>
+        <Box component="span" style={tooltipChildSx}>
           <IconButton
             size="small"
             onClick={onDeleteOpen}
@@ -137,7 +137,7 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
-        </span>
+        </Box>
       </Tooltip>
     </Stack>
   );

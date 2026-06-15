@@ -1,7 +1,7 @@
 import { type Intensity } from "@repo/contracts/lms/_shared";
 import { type IndicatorChipTone } from "@repo/ui";
 
-const EFFORT_PREFIX = "@ ";
+const EFFORT_PREFIX = "EFFORT ";
 const EN_DASH = "–";
 const PERCENT_SUFFIX = "%";
 const RPE_PREFIX = "RPE ";
@@ -47,7 +47,7 @@ export const formatIntensityChips = (intensity: Intensity | null): IntensityChip
   }
 
   if (intensity.pace !== undefined) {
-    out.push({ tone: TONE_DEFAULT, text: `${PACE_PREFIX}${intensity.pace}` });
+    out.push({ tone: TONE_DEFAULT, text: `${PACE_PREFIX}${intensity.pace}`.toUpperCase() });
   }
 
   if (intensity.hrZone !== undefined) {

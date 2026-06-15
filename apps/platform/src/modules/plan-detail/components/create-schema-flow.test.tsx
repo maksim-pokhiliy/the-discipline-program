@@ -19,7 +19,7 @@ const STEPS_PER_DEFAULT_LADDER = 3;
 const SWITCH_CONFIRM = "Switch & discard";
 const SWITCH_CANCEL = "Keep editing";
 
-const NON_LADDER_TILE_LABELS = ["Once", "Count", "Time cap", "EMOM", "Interval"];
+const NON_LADDER_TILE_LABELS = ["Once", "Rounds", "Time cap", "EMOM", "Interval"];
 
 const draftRef: { current: SchemaDraft | undefined } = { current: undefined };
 
@@ -48,10 +48,6 @@ const StatefulFlow: React.FC<{ seed: SchemaDraft }> = ({ seed }) => {
   return (
     <CreateSchemaFlow
       draft={draft}
-      onDraftChange={(next) => {
-        draftRef.current = next;
-        setDraft(next);
-      }}
       onUpdateNode={(id, patch) =>
         setDraft((prev) => {
           if (prev.id !== id) {
@@ -120,9 +116,13 @@ const cancelSwitch = (): void => {
 const anotherLadderButton = (): HTMLElement | null =>
   screen.queryByRole("button", { name: ANOTHER_LADDER });
 
-const stepperCells = (): HTMLElement[] => screen.getAllByRole("spinbutton");
+const STEP_CELL_NAME = /^Step \d/;
 
-const stepperCount = (): number => screen.queryAllByRole("spinbutton").length;
+const stepperCells = (): HTMLElement[] =>
+  screen.getAllByRole("spinbutton", { name: STEP_CELL_NAME });
+
+const stepperCount = (): number =>
+  screen.queryAllByRole("spinbutton", { name: STEP_CELL_NAME }).length;
 
 const editStepCell = (cellIndex: number, value: string): void => {
   const cell = stepperCells()[cellIndex];
@@ -186,7 +186,7 @@ describe("CreateSchemaFlow kind-switch off a dirty single ladder (QA-004)", () =
   it("defers the switch and keeps the edited ladder until the coach confirms", () => {
     renderFlow(dirtyLadderDraft());
 
-    clickTile("Count");
+    clickTile("Rounds");
 
     expect(ladderSteps(currentSeed())).toEqual(EDITED_LADDER_STEPS);
     expect(switchConfirmButton()).toBeInTheDocument();
@@ -199,7 +199,7 @@ describe("CreateSchemaFlow kind-switch off a dirty single ladder (QA-004)", () =
   it("keeps the edited single ladder when the switch is cancelled", () => {
     renderFlow(dirtyLadderDraft());
 
-    clickTile("Count");
+    clickTile("Rounds");
     cancelSwitch();
 
     expect(currentSeed().repetition).toEqual({ kind: "ladder", steps: EDITED_LADDER_STEPS });
@@ -208,7 +208,7 @@ describe("CreateSchemaFlow kind-switch off a dirty single ladder (QA-004)", () =
   it("shows exactly one confirm for a single-schema switch (no double-prompt)", () => {
     renderFlow(dirtyLadderDraft());
 
-    clickTile("Count");
+    clickTile("Rounds");
 
     expect(screen.getAllByRole("button", { name: SWITCH_CONFIRM })).toHaveLength(1);
   });
@@ -216,7 +216,7 @@ describe("CreateSchemaFlow kind-switch off a dirty single ladder (QA-004)", () =
   it("switches without a prompt when the single ladder is still at its defaults", () => {
     renderFlow(flatLadderDraft());
 
-    clickTile("Count");
+    clickTile("Rounds");
 
     expect(switchConfirmButton()).toBeNull();
     expect(currentSeed().repetition).toEqual({ kind: "count", count: 3 });
@@ -232,7 +232,7 @@ describe("CreateSchemaFlow tile-group a11y invariant (Must-Test #12)", () => {
     clickTile("Ladder");
     expectSingleGridAndPress();
 
-    clickTile("Count");
+    clickTile("Rounds");
     expectSingleGridAndPress();
   });
 });

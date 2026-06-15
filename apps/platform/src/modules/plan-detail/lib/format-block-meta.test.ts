@@ -17,7 +17,7 @@ describe("formatIntensityChips", () => {
   it("returns a primary chip for an effortPercent.value reading", () => {
     const intensity = makeIntensity({ rpe: undefined, effortPercent: { value: 80 } });
 
-    expect(formatIntensityChips(intensity)).toEqual([{ tone: "primary", text: "@ 80%" }]);
+    expect(formatIntensityChips(intensity)).toEqual([{ tone: "primary", text: "EFFORT 80%" }]);
   });
 
   it("returns a primary chip joined with EN DASH for an effortPercent.range reading", () => {
@@ -26,7 +26,7 @@ describe("formatIntensityChips", () => {
       effortPercent: { range: { min: 70, max: 85 } },
     });
 
-    expect(formatIntensityChips(intensity)).toEqual([{ tone: "primary", text: "@ 70–85%" }]);
+    expect(formatIntensityChips(intensity)).toEqual([{ tone: "primary", text: "EFFORT 70–85%" }]);
   });
 
   it("returns an info chip for an rpe reading", () => {
@@ -38,7 +38,7 @@ describe("formatIntensityChips", () => {
   it("returns a default chip for a pace reading", () => {
     const intensity = makeIntensity({ rpe: undefined, pace: "moderate" });
 
-    expect(formatIntensityChips(intensity)).toEqual([{ tone: "default", text: "pace · moderate" }]);
+    expect(formatIntensityChips(intensity)).toEqual([{ tone: "default", text: "PACE · MODERATE" }]);
   });
 
   it("returns an info chip for an hrZone reading", () => {
@@ -66,9 +66,9 @@ describe("formatIntensityChips", () => {
     };
 
     expect(formatIntensityChips(intensity)).toEqual([
-      { tone: "primary", text: "@ 75%" },
+      { tone: "primary", text: "EFFORT 75%" },
       { tone: "info", text: "RPE 6" },
-      { tone: "default", text: "pace · hard" },
+      { tone: "default", text: "PACE · HARD" },
       { tone: "info", text: "HR Z4" },
       { tone: "default", text: "5:00 / mi" },
     ]);
@@ -81,8 +81,10 @@ describe("formatIntensityChips", () => {
       effortPercent: { range: { min: 60, max: 70 } },
     });
 
-    expect(formatIntensityChips(valueIntensity)).toEqual([{ tone: "primary", text: "@ 65%" }]);
-    expect(formatIntensityChips(rangeIntensity)).toEqual([{ tone: "primary", text: "@ 60–70%" }]);
+    expect(formatIntensityChips(valueIntensity)).toEqual([{ tone: "primary", text: "EFFORT 65%" }]);
+    expect(formatIntensityChips(rangeIntensity)).toEqual([
+      { tone: "primary", text: "EFFORT 60–70%" },
+    ]);
   });
 
   it("emits one chip per dimension when the maximum of five dimensions is populated with effortPercent.range", () => {

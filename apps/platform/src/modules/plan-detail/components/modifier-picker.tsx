@@ -4,6 +4,7 @@ import { useMemo, useState, type SyntheticEvent } from "react";
 
 import {
   Autocomplete,
+  Box,
   TextField,
   createFilterOptions,
   type AutocompleteValue,
@@ -211,9 +212,9 @@ export const ModifierPicker = ({
           : `${CREATE_OPTION_PREFIX}${option.query}${CREATE_OPTION_SUFFIX}`;
 
         return (
-          <li key={key} {...rest}>
+          <Box component="li" key={key} {...rest}>
             {optionLabel}
-          </li>
+          </Box>
         );
       }}
       renderTags={(tags, getTagProps) =>

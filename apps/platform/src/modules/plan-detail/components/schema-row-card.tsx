@@ -11,7 +11,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Checkbox, IconButton, Link, Tooltip, Typography } from "@mui/material";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
-import { ConfirmationModal, RowKindBadge } from "@repo/ui";
+import { ConfirmationModal } from "@repo/ui";
 
 import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
 
@@ -19,22 +19,20 @@ import { formatRow } from "../lib/format-row";
 import { rowSortableId } from "../lib/row-item-sortable-id";
 
 import { RowEditorModal } from "./row-editor-modal";
+import { RowTimelineMarker } from "./row-timeline-marker";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
-const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
-const GRID_TEMPLATE_COLUMNS_NO_DRAG = "24px 32px 1fr auto auto auto";
-const GRID_TEMPLATE_COLUMNS_SELECT = "auto 24px 24px 32px 1fr auto auto auto";
+const COL_ORD = "24px";
+const COL_BODY = "1fr";
+const COL_ACTIONS = "auto auto auto";
 
 const gridTemplateFor = (isSelectMode: boolean, isDraggable: boolean): string => {
-  if (isSelectMode) {
-    return GRID_TEMPLATE_COLUMNS_SELECT;
-  }
+  const lead = isSelectMode ? "auto" : isDraggable ? "24px" : null;
 
-  return isDraggable ? GRID_TEMPLATE_COLUMNS : GRID_TEMPLATE_COLUMNS_NO_DRAG;
+  return [lead, COL_ORD, COL_BODY, COL_ACTIONS].filter(Boolean).join(" ");
 };
 const GRID_GAP_FACTOR = 1.25;
 const PADDING_X_FACTOR = 1.5;
-const PADDING_Y_FACTOR = 1;
 const DEMO_GAP_FACTOR = 0.5;
 const DEMO_PX_FACTOR = 0.75;
 const DEMO_PY_FACTOR = 0.5;
@@ -61,6 +59,7 @@ type SchemaRowCardProps = {
   minuteLabel?: string | null;
   isReorderPending: boolean;
   isDraggable?: boolean;
+  timeline?: { ord: number; isFirst: boolean; isLast: boolean };
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (rowId: string) => void;
@@ -74,6 +73,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   minuteLabel = null,
   isReorderPending,
   isDraggable = true,
+  timeline,
   isSelectMode = false,
   isSelected = false,
   onToggleSelect,
@@ -116,7 +116,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         gap: theme.spacing(GRID_GAP_FACTOR),
         alignItems: "center",
         px: theme.spacing(PADDING_X_FACTOR),
-        py: theme.spacing(PADDING_Y_FACTOR),
         borderBottom: 1,
         borderColor: "divider",
         transition: TRANSITION_BG,
@@ -131,9 +130,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           onChange={() => onToggleSelect?.(row.id)}
           inputProps={{ "aria-label": SELECT_ARIA }}
         />
-      ) : null}
-
-      {isDraggable ? (
+      ) : isDraggable ? (
         <IconButton
           {...attributes}
           {...listeners}
@@ -154,15 +151,17 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         </IconButton>
       ) : null}
 
-      <Typography
-        variant="caption"
-        color="text.subtle"
-        sx={{ fontVariantNumeric: "tabular-nums", textAlign: "center" }}
-      >
-        {fmt.ord}
-      </Typography>
-
-      <RowKindBadge kind={fmt.kindCls} label={fmt.kindBadge} dashed={fmt.dashed} />
+      {timeline ? (
+        <RowTimelineMarker ord={timeline.ord} isFirst={timeline.isFirst} isLast={timeline.isLast} />
+      ) : (
+        <Typography
+          variant="caption"
+          color="text.subtle"
+          sx={{ fontVariantNumeric: "tabular-nums", textAlign: "center" }}
+        >
+          {fmt.ord}
+        </Typography>
+      )}
 
       <SchemaRowCardBody
         mainText={fmt.mainText}
@@ -197,11 +196,11 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           </Typography>
         </Link>
       ) : (
-        <span />
+        <Box component="span" />
       )}
 
       <Tooltip title={EDIT_TOOLTIP}>
-        <span style={tooltipChildSx}>
+        <Box component="span" style={tooltipChildSx}>
           <IconButton
             size="small"
             onClick={() => setIsEditOpen(true)}
@@ -210,11 +209,11 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           >
             <TuneIcon fontSize="small" />
           </IconButton>
-        </span>
+        </Box>
       </Tooltip>
 
       <Tooltip title={DELETE_TOOLTIP}>
-        <span style={tooltipChildSx}>
+        <Box component="span" style={tooltipChildSx}>
           <IconButton
             size="small"
             onClick={handleDeleteOpen}
@@ -224,7 +223,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
-        </span>
+        </Box>
       </Tooltip>
 
       <ConfirmationModal

@@ -19,11 +19,13 @@ const TRUNCATION_CASES: { name: string; raw: string; expected: number }[] = [
   { name: "trailing letters", raw: "12abc", expected: 12 },
 ];
 
-const CLAMPED_TO_ZERO_CASES: { name: string; raw: string }[] = [
+const ZERO_CASES: { name: string; raw: string }[] = [
   { name: "hexadecimal", raw: "0x10" },
   { name: "binary", raw: "0b101" },
-  { name: "negative number", raw: "-3" },
   { name: "explicit zero", raw: "0" },
+];
+
+const NAN_CASES: { name: string; raw: string }[] = [
   { name: "empty string", raw: "" },
   { name: "whitespace only", raw: "   " },
   { name: "non-numeric text", raw: "abc" },
@@ -44,9 +46,19 @@ describe("coerceStepValue", () => {
     });
   });
 
-  describe("clamps every non-positive or unparseable input to zero", () => {
-    it.each(CLAMPED_TO_ZERO_CASES)("returns 0 for $name ($raw)", ({ raw }) => {
+  describe("yields zero only for base-10 inputs that truncate to zero", () => {
+    it.each(ZERO_CASES)("returns 0 for $name ($raw)", ({ raw }) => {
       expect(coerceStepValue(raw)).toBe(0);
     });
+  });
+
+  describe("returns NaN for empty or unparseable input so the field clears (no auto-0)", () => {
+    it.each(NAN_CASES)("returns NaN for $name ($raw)", ({ raw }) => {
+      expect(coerceStepValue(raw)).toBeNaN();
+    });
+  });
+
+  it("passes a negative integer through unchanged for validation to reject", () => {
+    expect(coerceStepValue("-3")).toBe(-3);
   });
 });

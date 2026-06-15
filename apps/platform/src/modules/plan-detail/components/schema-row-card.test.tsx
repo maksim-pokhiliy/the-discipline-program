@@ -87,26 +87,25 @@ afterEach(() => {
 });
 
 describe("SchemaRowCard chrome", () => {
-  it("renders the outer 7-column grid with the documented template (D-01)", () => {
+  it("renders the outer 6-column grid with the documented template (D-01)", () => {
     const { container } = renderRowCard();
     const shell = container.firstChild;
 
     expect(shell).toHaveStyle({
       display: "grid",
-      gridTemplateColumns: "24px 24px 32px 1fr auto auto auto",
+      gridTemplateColumns: "24px 24px 1fr auto auto auto",
     });
   });
 
-  it("renders drag handle, ord cell, kind badge, edit button and delete button in column order", () => {
+  it("renders drag handle, ord cell, edit button and delete button in column order", () => {
     renderRowCard();
 
     const dragBtn = screen.getByRole("button", { name: DRAG_LABEL });
     const ordCell = screen.getByText("1");
-    const kindBadge = screen.getByText("EX");
     const editBtn = screen.getByRole("button", { name: EDIT_LABEL });
     const deleteBtn = screen.getByRole("button", { name: DELETE_LABEL });
 
-    const sectionOrder = [dragBtn, ordCell, kindBadge, editBtn, deleteBtn];
+    const sectionOrder = [dragBtn, ordCell, editBtn, deleteBtn];
 
     for (let i = 0; i < sectionOrder.length - 1; i += 1) {
       const earlier = sectionOrder[i];

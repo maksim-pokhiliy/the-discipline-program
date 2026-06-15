@@ -63,6 +63,7 @@ export const schemaWithBodyToDraft = (schema: SchemaWithBody): SchemaDraft => {
     id: asNodeId(schema.schema.id),
     header: schema.schema.header,
     notes: schema.schema.notes,
+    intensity: schema.schema.intensity,
     ...(repetition !== undefined && { repetition: repetitionFromComposition(repetition) }),
     ...(rest !== undefined && { rest: restFromComposition(rest) }),
     rows: schema.rows.map(rowFromSchemaRow),

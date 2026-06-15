@@ -17,7 +17,7 @@ import { RowEditorModal } from "./row-editor-modal";
 import { SchemaRowListBody } from "./schema-row-list-body";
 
 const ADD_ROW_LABEL = "+ Add row";
-const GROUP_ROWS_LABEL = "Group rows…";
+const GROUP_ROWS_LABEL = "Group rows";
 const GROUP_ROWS_BAR_LABEL = "Group rows";
 const MIN_GROUPABLE_ROWS = 2;
 

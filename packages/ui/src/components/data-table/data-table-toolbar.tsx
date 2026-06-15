@@ -2,8 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import SearchIcon from "@mui/icons-material/Search";
-import { Box, InputAdornment, MenuItem, Stack, TextField } from "@mui/material";
+import { Box, MenuItem, Stack, TextField } from "@mui/material";
 
 type FilterConfig = {
   id: string;
@@ -15,6 +14,7 @@ type FilterConfig = {
 
 type DataTableToolbarProps = {
   searchValue?: string | undefined;
+  searchLabel?: string | undefined;
   searchPlaceholder?: string | undefined;
   onSearchChange?: ((value: string) => void) | undefined;
   filters?: FilterConfig[] | undefined;
@@ -23,6 +23,7 @@ type DataTableToolbarProps = {
 
 export const DataTableToolbar = ({
   searchValue,
+  searchLabel = "Search",
   searchPlaceholder = "Search...",
   onSearchChange,
   filters,
@@ -36,18 +37,10 @@ export const DataTableToolbar = ({
         <TextField
           fullWidth={false}
           size="small"
+          label={searchLabel}
           placeholder={searchPlaceholder}
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
-            },
-          }}
           sx={(theme) => ({ minWidth: theme.spacing(25) })}
         />
       )}

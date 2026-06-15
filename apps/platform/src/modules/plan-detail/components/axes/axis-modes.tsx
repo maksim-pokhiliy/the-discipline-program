@@ -23,9 +23,9 @@ export const REPETITION_TILES: readonly RepetitionTile[] = [
   },
   {
     kind: "count",
-    label: "Count",
+    label: "Rounds",
     icon: <Repeat fontSize={ICON_FONT_SIZE} />,
-    hint: "Repeat N rounds.",
+    hint: "Repeat N rounds — exact or a range (3 or 3–5).",
   },
   {
     kind: "ladder",
