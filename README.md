@@ -48,9 +48,9 @@ vercel env pull packages/api-server/.env          # api-server (DATABASE_URL for
 
 Re-run `vercel env pull` whenever a secret is rotated or a new variable is added. Never commit the resulting files (already covered by `.gitignore`).
 
-#### Provisioning `BLOB_READ_WRITE_TOKEN` (admin only)
+#### Provisioning `BLOB_READ_WRITE_TOKEN` (admin + platform)
 
-The admin app needs a personal Vercel Blob store for file uploads. Provision one at `Vercel Dashboard → Storage → Create Blob Store`, then copy the read/write token into `apps/admin/.env.local` as `BLOB_READ_WRITE_TOKEN`. Each contributor should use their own store -- don't share tokens.
+The admin app (CMS/blog/exercise images) and the platform app (coach avatar upload) both need a personal Vercel Blob store for file uploads. Provision one at `Vercel Dashboard → Storage → Create Blob Store`, then copy the read/write token into `apps/admin/.env.local` **and** `apps/platform/.env.local` as `BLOB_READ_WRITE_TOKEN`. Each contributor should use their own store -- don't share tokens.
 
 ```bash
 pnpm db:generate    # generate Prisma client
@@ -144,7 +144,7 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 | `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                |
 | `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.            |
 | `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                          |
-| `BLOB_READ_WRITE_TOKEN`     | admin (file uploads)                  | Vercel Blob read/write token.                            |
+| `BLOB_READ_WRITE_TOKEN`     | admin + platform (file uploads)       | Vercel Blob read/write token.                            |
 
 ### Optional
 
