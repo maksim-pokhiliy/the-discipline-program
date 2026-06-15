@@ -158,4 +158,26 @@ describe("WeekNavigator", () => {
     expect(todayButton).toHaveClass("MuiButton-outlinedPrimary");
     expect(todayButton).not.toHaveClass("MuiButton-outlinedInherit");
   });
+
+  it("renders the clone trigger beside the arrows and fires onCloneWeek when provided", () => {
+    const onChange = vi.fn();
+    const onCloneWeek = vi.fn();
+    const monday = new Date(2026, 4, 4);
+
+    render(<WeekNavigator monday={monday} onChange={onChange} onCloneWeek={onCloneWeek} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Clone into this week" }));
+
+    expect(onCloneWeek).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("renders no clone trigger when onCloneWeek is omitted", () => {
+    const onChange = vi.fn();
+    const monday = new Date(2026, 4, 4);
+
+    render(<WeekNavigator monday={monday} onChange={onChange} />);
+
+    expect(screen.queryByRole("button", { name: "Clone into this week" })).toBeNull();
+  });
 });

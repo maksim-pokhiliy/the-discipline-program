@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
@@ -99,20 +98,11 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
                   }
                 />
 
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Stack sx={{ flex: 1, minWidth: 0 }}>
-                    <WeekNavigator monday={activeMonday} onChange={pushWeekParam} />
-                  </Stack>
-
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<ContentCopyIcon fontSize="small" />}
-                    onClick={() => setIsCloneWeekOpen(true)}
-                  >
-                    Clone week…
-                  </Button>
-                </Stack>
+                <WeekNavigator
+                  monday={activeMonday}
+                  onChange={pushWeekParam}
+                  onCloneWeek={() => setIsCloneWeekOpen(true)}
+                />
 
                 <WeekNotes
                   key={formatDateParam(activeMonday)}

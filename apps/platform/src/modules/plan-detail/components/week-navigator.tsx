@@ -2,6 +2,7 @@
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import TodayIcon from "@mui/icons-material/Today";
 import { Button, Card, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -19,9 +20,10 @@ import {
 type WeekNavigatorProps = {
   monday: Date;
   onChange: (next: Date) => void;
+  onCloneWeek?: () => void;
 };
 
-export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }) => {
+export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange, onCloneWeek }) => {
   const handleDateChange = (next: Date | null) => {
     if (next && isValid(next)) {
       onChange(getMonday(next));
@@ -50,6 +52,16 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
           >
             <ChevronRightIcon />
           </IconButton>
+          {onCloneWeek ? (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<ContentCopyIcon fontSize="small" />}
+              onClick={onCloneWeek}
+            >
+              Clone into this week
+            </Button>
+          ) : null}
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={1}>
