@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
@@ -13,7 +14,7 @@ import { Box, Checkbox, IconButton, Link, Tooltip, Typography } from "@mui/mater
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
+import { useCatalog, useDeleteSchemaRow, useDuplicateSchemaRow } from "@app/lib/hooks";
 
 import { formatRow } from "../lib/format-row";
 import { rowSortableId } from "../lib/row-item-sortable-id";
@@ -24,7 +25,7 @@ import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const COL_ORD = "24px";
 const COL_BODY = "1fr";
-const COL_ACTIONS = "auto auto auto";
+const COL_ACTIONS = "auto auto auto auto";
 
 const gridTemplateFor = (isSelectMode: boolean, isDraggable: boolean): string => {
   const lead = isSelectMode ? "auto" : isDraggable ? "24px" : null;
@@ -45,6 +46,8 @@ const DELETE_MESSAGE = "Delete this row?";
 const DRAG_ARIA = "Drag row";
 const EDIT_ARIA = "Edit row";
 const EDIT_TOOLTIP = "Edit row";
+const DUPLICATE_ARIA = "Duplicate row";
+const DUPLICATE_TOOLTIP = "Duplicate row";
 const DELETE_ARIA = "Delete row";
 const DELETE_TOOLTIP = "Delete row";
 const SELECT_ARIA = "Select row";
@@ -79,9 +82,11 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   onToggleSelect,
 }) => {
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
+  const duplicateSchemaRow = useDuplicateSchemaRow(planId, startDate);
   const { exerciseById } = useCatalog();
 
-  const isMutationPending = deleteSchemaRow.isPending || isReorderPending;
+  const isMutationPending =
+    deleteSchemaRow.isPending || duplicateSchemaRow.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: rowSortableId(row.id),
@@ -208,6 +213,20 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
             aria-label={EDIT_ARIA}
           >
             <TuneIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={() => duplicateSchemaRow.mutate({ schemaRowId: row.id })}
+            disabled={isMutationPending}
+            aria-busy={isMutationPending}
+            aria-label={DUPLICATE_ARIA}
+          >
+            <ContentCopyIcon fontSize="small" />
           </IconButton>
         </Box>
       </Tooltip>

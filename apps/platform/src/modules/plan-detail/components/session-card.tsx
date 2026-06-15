@@ -9,7 +9,7 @@ import { Stack } from "@mui/material";
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
+import { useDeleteSession, useDuplicateSession, useUpdateSession } from "@app/lib/hooks";
 
 import { BlockList } from "./block-list";
 import { SessionCardHead } from "./session-card-head";
@@ -34,8 +34,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 }) => {
   const updateSession = useUpdateSession(planId, startDate);
   const deleteSession = useDeleteSession(planId, startDate);
+  const duplicateSession = useDuplicateSession(planId, startDate);
 
-  const isMutationPending = updateSession.isPending || deleteSession.isPending || isReorderPending;
+  const isMutationPending =
+    updateSession.isPending ||
+    deleteSession.isPending ||
+    duplicateSession.isPending ||
+    isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: session.id,
@@ -63,6 +68,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   const handleDeleteConfirm = () => {
     deleteSession.mutate({ sessionId: session.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
+
+  const handleDuplicate = () => duplicateSession.mutate({ sessionId: session.id });
 
   const style = {
     transform: isDragging ? undefined : CSS.Transform.toString(transform),
@@ -92,6 +99,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         onLabelChange={handleLabelChange}
         onNotesCommit={handleNotesCommit}
         onDeleteOpen={handleDeleteOpen}
+        onDuplicate={handleDuplicate}
         dragAttributes={attributes}
         dragListeners={listeners}
         isMutationPending={isMutationPending}

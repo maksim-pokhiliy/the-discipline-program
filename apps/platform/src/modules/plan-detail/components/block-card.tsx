@@ -10,7 +10,12 @@ import type { Block } from "@repo/contracts/lms/block";
 import { ConfirmationModal } from "@repo/ui";
 
 import { useLabelOptions } from "@app/lib/hooks";
-import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
+import {
+  useAssignBlockLabels,
+  useDeleteBlock,
+  useDuplicateBlock,
+  useUpdateBlock,
+} from "@app/lib/hooks";
 
 import { BlockCardBody } from "./block-card-body";
 import { BlockCardHead } from "./block-card-head";
@@ -39,11 +44,16 @@ export const BlockCard: React.FC<BlockCardProps> = ({
 }) => {
   const updateBlock = useUpdateBlock(planId, startDate);
   const deleteBlock = useDeleteBlock(planId, startDate);
+  const duplicateBlock = useDuplicateBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
   const blockLabelOptions = useLabelOptions("BLOCK");
 
   const isMutationPending =
-    updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending || isReorderPending;
+    updateBlock.isPending ||
+    deleteBlock.isPending ||
+    duplicateBlock.isPending ||
+    assignLabels.isPending ||
+    isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
@@ -70,6 +80,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const handleDeleteConfirm = () => {
     deleteBlock.mutate({ blockId: block.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
+
+  const handleDuplicate = () => duplicateBlock.mutate({ blockId: block.id });
 
   const style = {
     transform: isDragging ? undefined : CSS.Transform.toString(transform),
@@ -106,6 +118,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         dragListeners={listeners}
         onLabelsChange={handleLabelsChange}
         onDeleteOpen={handleDeleteOpen}
+        onDuplicate={handleDuplicate}
       />
 
       {isExpanded ? (

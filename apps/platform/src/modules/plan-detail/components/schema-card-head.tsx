@@ -4,6 +4,7 @@ import { type ReactElement } from "react";
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -24,6 +25,8 @@ const EXPAND_ARIA = "Expand schema";
 const SELECT_ARIA = "Select schema";
 const DELETE_ARIA = "Delete schema";
 const DELETE_TOOLTIP = "Delete schema";
+const DUPLICATE_ARIA = "Duplicate schema";
+const DUPLICATE_TOOLTIP = "Duplicate schema";
 const EDIT_ARIA = "Edit axes";
 const EDIT_TOOLTIP = "Edit axes";
 const TITLE_ARIA = "Schema title";
@@ -44,6 +47,7 @@ type SchemaCardHeadProps = {
   onTitleCommit: (next: string) => void;
   onDeleteOpen: () => void;
   onEditOpen: () => void;
+  onDuplicate?: () => void;
   isExpanded: boolean;
   onToggleExpanded: () => void;
   isBoxed?: boolean;
@@ -61,6 +65,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   onTitleCommit,
   onDeleteOpen,
   onEditOpen,
+  onDuplicate,
   isExpanded,
   onToggleExpanded,
   isDraggable = true,
@@ -163,6 +168,20 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
             aria-label={EDIT_ARIA}
           >
             <TuneIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDuplicate}
+            disabled={isMutationPending}
+            aria-busy={isMutationPending}
+            aria-label={DUPLICATE_ARIA}
+          >
+            <ContentCopyIcon fontSize="small" />
           </IconButton>
         </Box>
       </Tooltip>
