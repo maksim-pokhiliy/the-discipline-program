@@ -17,6 +17,7 @@ export const cloneHighlightSx =
       opacity: isHighlighted ? HIGHLIGHT_OPACITY : 0,
       transition: `opacity ${FADE_DURATION_MS}ms ease`,
       "@media (prefers-reduced-motion: reduce)": {
+        opacity: 0,
         transition: "none",
       },
     },

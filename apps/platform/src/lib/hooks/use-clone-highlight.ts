@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import { CloneHighlightContext } from "@app/lib/contexts";
+
+const FLASH_MS = 1400;
 
 const prefersReducedMotion = (): boolean =>
   typeof window !== "undefined" &&
@@ -22,25 +24,33 @@ export const useCloneHighlight = (id: string): CloneHighlightValue => {
     throw new Error("useCloneHighlight must be used within CloneHighlightProvider");
   }
 
-  const { highlightedId, markCloned } = ctx;
+  const { highlightedId, markCloned, clearHighlight } = ctx;
   const isHighlighted = highlightedId === id;
 
-  const nodeRef = useRef<HTMLElement | null>(null);
+  const [node, setNode] = useState<HTMLElement | null>(null);
 
-  const setNode = useCallback((node: HTMLElement | null) => {
-    nodeRef.current = node;
+  const setNodeCallback = useCallback((next: HTMLElement | null) => {
+    setNode(next);
   }, []);
 
   useEffect(() => {
-    if (!isHighlighted || nodeRef.current === null) {
+    if (!isHighlighted || node === null) {
       return;
     }
 
-    nodeRef.current.scrollIntoView({
+    node.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
       block: "nearest",
     });
-  }, [isHighlighted]);
 
-  return { markCloned, isHighlighted, setNode };
+    const timeout = setTimeout(() => {
+      clearHighlight();
+    }, FLASH_MS);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isHighlighted, node, clearHighlight]);
+
+  return { markCloned, isHighlighted, setNode: setNodeCallback };
 };

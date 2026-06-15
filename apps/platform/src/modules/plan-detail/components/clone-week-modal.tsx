@@ -120,7 +120,9 @@ export const CloneWeekModal: React.FC<CloneWeekModalProps> = ({
         </Stack>
       ) : (
         <WeekSourceList
-          weeks={weeksQuery.data?.weeks ?? []}
+          weeks={(weeksQuery.data?.weeks ?? []).filter(
+            (week) => week.startDate !== targetStartDate,
+          )}
           isLoading={weeksQuery.isLoading}
           onPick={handlePick}
         />

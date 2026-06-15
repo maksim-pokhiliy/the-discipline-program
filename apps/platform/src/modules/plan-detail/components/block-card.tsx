@@ -9,12 +9,12 @@ import { Stack } from "@mui/material";
 import type { Block } from "@repo/contracts/lms/block";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useLabelOptions } from "@app/lib/hooks";
 import {
   useAssignBlockLabels,
   useCloneHighlight,
   useDeleteBlock,
   useDuplicateBlock,
+  useLabelOptions,
   useUpdateBlock,
 } from "@app/lib/hooks";
 

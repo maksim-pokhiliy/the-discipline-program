@@ -7,6 +7,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -19,6 +20,7 @@ import { formatDayLabel } from "../lib/format-day-label";
 const BACK_LABEL = "Back to week list";
 const EMPTY_TAG = "Empty — nothing to clone";
 const LIST_MAX_HEIGHT_PX = 360;
+const SKELETON_ROW_HEIGHT_PX = 44;
 
 const findDay = (days: DaySlot[], dayOfWeek: DayOfWeek): DaySlot | undefined =>
   days.find((day) => day.dayOfWeek === dayOfWeek);
@@ -26,6 +28,7 @@ const findDay = (days: DaySlot[], dayOfWeek: DayOfWeek): DaySlot | undefined =>
 type DaySourceListProps = {
   days: DaySlot[];
   sourceLabel: string;
+  isLoading: boolean;
   onPick: (dayOfWeek: DayOfWeek) => void;
   onBack: () => void;
 };
@@ -33,6 +36,7 @@ type DaySourceListProps = {
 export const DaySourceList: React.FC<DaySourceListProps> = ({
   days,
   sourceLabel,
+  isLoading,
   onPick,
   onBack,
 }) => (
@@ -54,27 +58,35 @@ export const DaySourceList: React.FC<DaySourceListProps> = ({
       </Typography>
     </Stack>
 
-    <List disablePadding sx={{ maxHeight: LIST_MAX_HEIGHT_PX, overflowY: "auto" }}>
-      {dayOfWeekValues.map((dayOfWeek) => {
-        const day = findDay(days, dayOfWeek);
-        const sessionCount = day?.sessions.length ?? 0;
-        const isEmpty = sessionCount === 0;
-        const primary = `${formatDayLabel(dayOfWeek)} — ${sessionCount} sessions`;
+    {isLoading ? (
+      <Stack spacing={1}>
+        {dayOfWeekValues.map((dayOfWeek) => (
+          <Skeleton key={dayOfWeek} variant="rounded" height={SKELETON_ROW_HEIGHT_PX} />
+        ))}
+      </Stack>
+    ) : (
+      <List disablePadding sx={{ maxHeight: LIST_MAX_HEIGHT_PX, overflowY: "auto" }}>
+        {dayOfWeekValues.map((dayOfWeek) => {
+          const day = findDay(days, dayOfWeek);
+          const sessionCount = day?.sessions.length ?? 0;
+          const isEmpty = sessionCount === 0;
+          const primary = `${formatDayLabel(dayOfWeek)} — ${sessionCount} sessions`;
 
-        return (
-          <ListItem key={dayOfWeek} disablePadding>
-            <ListItemButton disabled={isEmpty} onClick={() => onPick(dayOfWeek)}>
-              <ListItemText
-                primary={primary}
-                {...(isEmpty && {
-                  secondary: EMPTY_TAG,
-                  secondaryTypographyProps: { color: "text.disabled" },
-                })}
-              />
-            </ListItemButton>
-          </ListItem>
-        );
-      })}
-    </List>
+          return (
+            <ListItem key={dayOfWeek} disablePadding>
+              <ListItemButton disabled={isEmpty} onClick={() => onPick(dayOfWeek)}>
+                <ListItemText
+                  primary={primary}
+                  {...(isEmpty && {
+                    secondary: EMPTY_TAG,
+                    secondaryTypographyProps: { color: "text.disabled" },
+                  })}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+    )}
   </Stack>
 );

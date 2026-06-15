@@ -70,6 +70,10 @@ export const CloneDayModal: React.FC<CloneDayModalProps> = ({
   };
 
   const handleDayPick = (dayOfWeek: DayOfWeek) => {
+    if (sourceWeekQuery.isFetching) {
+      return;
+    }
+
     const day = sourceWeekQuery.data?.days.find((slot) => slot.dayOfWeek === dayOfWeek) ?? null;
 
     if (day) {
@@ -88,7 +92,7 @@ export const CloneDayModal: React.FC<CloneDayModalProps> = ({
       {
         onSuccess: (result) => {
           if (result.cloned) {
-            toast.success(`Day replaced — ${pickedDay.sessions.length} sessions cloned.`);
+            toast.success(`Day replaced — ${result.day.sessions.length} sessions cloned.`);
             onClose();
           } else {
             setHasEmptyNotice(true);
@@ -98,7 +102,11 @@ export const CloneDayModal: React.FC<CloneDayModalProps> = ({
     );
   };
 
-  const handleBack = () => setStep("pick-week");
+  const handleBack = () => {
+    setStep("pick-week");
+    setPickedWeek(null);
+    setPickedDay(null);
+  };
   const handleCancel = () => setStep("pick-day");
 
   if (hasEmptyNotice && pickedDay && pickedWeek) {
@@ -134,6 +142,7 @@ export const CloneDayModal: React.FC<CloneDayModalProps> = ({
         <DaySourceList
           days={sourceWeekQuery.data?.days ?? []}
           sourceLabel={formatWeekLabel(pickedWeek.startDate)}
+          isLoading={sourceWeekQuery.isFetching}
           onPick={handleDayPick}
           onBack={handleBack}
         />
