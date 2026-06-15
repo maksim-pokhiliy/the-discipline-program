@@ -20,6 +20,8 @@ export const platformKeys = {
   weeks: {
     byDate: (planId: string, startDate: string) =>
       [...ROOT, "training-plans", planId, "weeks", startDate] as const,
+    populated: (planId: string) =>
+      [...ROOT, "training-plans", planId, "weeks", "populated"] as const,
   },
   labels: {
     search: (level?: AppLevelValue, q?: string) =>

@@ -1,13 +1,17 @@
 "use client";
 
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+
 import type {
   CreateSchemaRequest,
   ReorderSchemasRequest,
   Schema,
   UpdateSchemaRequest,
 } from "@repo/contracts/lms/schema";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 import { useWeekMutation } from "./use-week-mutation";
 
@@ -46,3 +50,22 @@ export const useReorderSchemas = (planId: string, startDate: string) =>
     successMessage: "Schemas reordered",
     errorMessage: "Failed to reorder schemas",
   });
+
+export const useDuplicateSchema = (
+  planId: string,
+  startDate: string,
+): UseMutationResult<Schema, Error, { schemaId: string }> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ schemaId }) => api.schemas.duplicate(planId, schemaId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: platformKeys.weeks.byDate(planId, startDate),
+      });
+    },
+    onError: (error: Error) => {
+      notifyError(error, "Couldn't duplicate — try again.");
+    },
+  });
+};
