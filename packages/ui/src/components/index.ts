@@ -36,6 +36,7 @@ export * from "./row-kind-badge";
 export * from "./skip-to-content";
 export * from "./status-chip";
 export * from "./status-select-chip";
+export * from "./tag-chip";
 export * from "./tags-input";
 export * from "./stats-card";
 export * from "./toast";

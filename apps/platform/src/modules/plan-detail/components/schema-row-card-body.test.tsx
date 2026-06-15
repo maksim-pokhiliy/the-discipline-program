@@ -97,7 +97,7 @@ describe("SchemaRowCard summary chips", () => {
       }),
     );
 
-    expect(screen.getByText("4 × 5")).toBeInTheDocument();
+    expect(screen.getByText("4 × 5 reps")).toBeInTheDocument();
     expect(screen.getByText("BW")).toBeInTheDocument();
     expect(screen.getByText("each leg")).toBeInTheDocument();
     expect(screen.getByText("3-1-1-0")).toBeInTheDocument();

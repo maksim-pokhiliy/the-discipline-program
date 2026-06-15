@@ -2,6 +2,8 @@
 
 import { Chip, Stack, Typography } from "@mui/material";
 
+import { TagChip } from "@repo/ui";
+
 import { type RowSummary } from "../lib/format-row";
 
 const CHIP_ROW_GAP_FACTOR = 0.5;
@@ -41,7 +43,7 @@ export const RowSummaryChips: React.FC<RowSummaryChipsProps> = ({ summary }) => 
           <Chip size="small" variant="filled" color="secondary" label={summary.tempo} />
         ) : null}
         {summary.modifiers.map((name) => (
-          <Chip key={name} size="small" variant="tag" label={name} />
+          <TagChip key={name} label={name} size="small" preserveCase />
         ))}
       </Stack>
 

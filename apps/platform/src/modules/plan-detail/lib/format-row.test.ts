@@ -91,7 +91,7 @@ describe("formatRow", () => {
       const result = formatRow(row, exerciseById, 0);
 
       expect(result.summary).toEqual({
-        volume: "3 × 5",
+        volume: "3 × 5 reps",
         load: "BW",
         side: "each leg",
         tempo: "3-1-1-0",

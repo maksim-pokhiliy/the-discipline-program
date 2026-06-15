@@ -2,16 +2,7 @@
 
 import { type ReactElement } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import { Chip, type SxProps, type Theme } from "@mui/material";
-
-const outlinedSx: SxProps<Theme> = (theme) => ({
-  backgroundColor: "transparent",
-  borderColor: theme.palette.dividerStrong,
-  borderWidth: 1,
-  borderStyle: "solid",
-  color: theme.palette.text.primary,
-});
+import { TagChip } from "../tag-chip";
 
 export type BlockLabelProps = {
   text: string;
@@ -19,12 +10,6 @@ export type BlockLabelProps = {
   onDelete?: (() => void) | undefined;
 };
 
-export const BlockLabel: React.FC<BlockLabelProps> = ({ text, filled, onDelete }): ReactElement => (
-  <Chip
-    variant="tag"
-    color="default"
-    label={text}
-    {...(onDelete !== undefined && { onDelete, deleteIcon: <CloseIcon /> })}
-    {...(filled !== true && { sx: outlinedSx })}
-  />
+export const BlockLabel = ({ text, filled, onDelete }: BlockLabelProps): ReactElement => (
+  <TagChip label={text} filled={filled} {...(onDelete !== undefined && { onDelete })} />
 );

@@ -4,7 +4,6 @@ import { useMemo, useState, type SyntheticEvent } from "react";
 
 import {
   Autocomplete,
-  Chip,
   TextField,
   createFilterOptions,
   type AutocompleteValue,
@@ -13,6 +12,7 @@ import {
 
 import type { Modifier } from "@repo/contracts/lms/modifier";
 import { SCHEMA_ROW_CONSTANTS } from "@repo/contracts/lms/schema-row";
+import { TagChip } from "@repo/ui";
 
 import { useCreateModifier } from "@app/lib/hooks/use-create-modifier";
 import { useDebouncedValue } from "@app/lib/hooks/use-debounced-value";
@@ -221,7 +221,7 @@ export const ModifierPicker = ({
           const { key, ...chipProps } = getTagProps({ index });
           const chipLabel = typeof option === "string" ? option : getOptionLabel(option);
 
-          return <Chip key={key} variant="tag" size="small" label={chipLabel} {...chipProps} />;
+          return <TagChip key={key} label={chipLabel} size="small" preserveCase {...chipProps} />;
         })
       }
       renderInput={(params) => {

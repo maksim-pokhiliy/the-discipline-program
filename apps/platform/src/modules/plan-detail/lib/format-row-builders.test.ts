@@ -35,7 +35,7 @@ describe("buildRow", () => {
     const result = buildRow(row, exerciseById, 0);
 
     expect(result.summary).toEqual({
-      volume: "4 × 5",
+      volume: "4 × 5 reps",
       load: "BW",
       side: "each leg",
       tempo: "3-1-1-0",
@@ -50,14 +50,40 @@ describe("buildRow", () => {
     expect(result.summary.volume).toBe("4 ×");
   });
 
-  it("renders reps-only as the bare rep notation in volume", () => {
+  it("appends the reps label to a counted reps-only volume", () => {
     const result = buildRow(
       makeExerciseRow({ reps: { kind: "count", value: 5 } }),
       exerciseById,
       0,
     );
 
-    expect(result.summary.volume).toBe("5");
+    expect(result.summary.volume).toBe("5 reps");
+  });
+
+  it("appends the reps label to a counted rep range", () => {
+    const result = buildRow(
+      makeExerciseRow({ sets: 4, reps: { kind: "range", min: 8, max: 12 } }),
+      exerciseById,
+      0,
+    );
+
+    expect(result.summary.volume).toBe("4 × 8–12 reps");
+  });
+
+  it("omits the reps label for unit-bound reps (the unit already carries meaning)", () => {
+    const result = buildRow(
+      makeExerciseRow({ reps: { kind: "unit_bound", unit: "sec", value: 30 } }),
+      exerciseById,
+      0,
+    );
+
+    expect(result.summary.volume).toBe("30 sec");
+  });
+
+  it("omits the reps label for max reps", () => {
+    const result = buildRow(makeExerciseRow({ reps: { kind: "max" } }), exerciseById, 0);
+
+    expect(result.summary.volume).toBe("max");
   });
 
   it("leaves volume null when both sets and reps are absent", () => {
