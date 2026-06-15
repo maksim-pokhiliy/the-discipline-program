@@ -39,3 +39,11 @@ Append-only. One entry per session/step.
 - **No-DB gates GREEN:** check-types 16/16, lint 16/16, dep:check clean (incl. `no-circular` — a `_shared`↔`schema/assertions` barrel cycle was broken by leaf imports). Additive — zero `schema.prisma` change.
 - **Dispositions:** QA-001 (tx timeout + P2028 map), CLONE-001 (witness → structural remap guarantee), CLONE-005 (dedup), CLONE-006 (dead include) FIXED in `c5e537fc`. QA-005 + CLONE-002 deferred/documented (see `deferred.md`); the rest INFO-accepted.
 - **PENDING:** the gated api-server suite (`db:reset && db:seed && pnpm --filter @repo/api-server test`) is the acceptance gate — owner ritual. Then PR, then R1b editor-UX.
+
+## 2026-06-15 — R1a MERGED to main (PR #270) + R1b prep
+
+- **PR #270 merged into `main` (`30835113`).** Before merge, `feat/coach-station` was synced with the latest main (which had merged PR #271 `feat/plan-editor-e2e-polish`) via a clean merge (`f54784eb`, zero conflicts — R1a's files and PR #271's plan-detail rework are disjoint); pushed; merged. `origin/feat/coach-station` deleted on merge.
+- **R1a is now live in main:** the `_shared/deep-clone.ts` engine, the 6 `clone-from`/`duplicate` endpoints, contracts, the 6 `admin.clone.test.ts` suites + `clone-request.test.ts`, and the `initiatives/coach-station/` docs. `ACTIVE=coach-station` is in main → ACTIVE-FLIP CLOSED.
+- **Gated suite:** R1a merged on green no-DB gates + Review/QA, BEFORE the gated run — the clone suites are now in main's api-server suite; the live verify (`db:reset && pnpm --filter @repo/api-server test`) is owner-owed (R1A-GATED-ACCEPTANCE, accepted post-merge gap for a solo non-prod tool).
+- **R1b prompt written** (`r1b-editor-runner-prompt.md`) — the clone editor-UX (the visible half). Flagged: **PR #271 reworked the plan-detail components, so `r1-clone-design.md` §2's insertion-point file:line are stale → R1b research must re-verify them.**
+- **Next:** R1b (`/feature`), then P / G / A-known / R2-slot.
