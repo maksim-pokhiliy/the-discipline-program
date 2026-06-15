@@ -1,40 +1,38 @@
 # coach-station — state (the board)
 
-**Updated:** 2026-06-15 (initiative FOUNDED in an isolated worktree, parallel to the session-primitive e2e. Owner ratified D-1..D-5 + the verbatim per-floor clone logic. Next: design the R1 clone UX via `ui-ux-pro-max`, then write the R1 `/feature` prompt.)
+**Updated:** 2026-06-15 (**R1a clone server-engine BUILT** via `/feature` in this worktree — 6 commits `63c03778`..`1961abc6`; Review B / QA B, 0 CRITICAL; no-DB gates GREEN (check-types 16/16, lint 16/16, dep:check clean); additive, zero Prisma change. **PENDING: the gated api-server suite (owner ritual) is the acceptance gate.** Then R1b editor-UX.)
 
 A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`; carry-forwards → `deferred.md`.
 
 ## Board
 
-| #   | Step                                            | Status              | Pointer                          |
-| --- | ----------------------------------------------- | ------------------- | -------------------------------- |
-| 1a  | R1a — Clone server-engine (deep-clone D-3)       | 🔵 prompt READY → run `/feature` | `r1a-server-runner-prompt.md` · D-3/D-4/D-6 |
-| 1b  | R1b — Clone editor-UX (affordances + flows)      | ⬜ pending (after R1a)            | `r1-clone-design.md` |
-| 2   | P — Coach profile UI                            | ⬜ pending           | D-5                              |
-| 3   | G — DnD group-creation                          | ⬜ pending           | deferred → DND-GROUP-CREATE      |
-| 4   | A-known — Authoring polish                      | ⬜ pending           | deferred → LABEL-FLOW-UX / QA-007 |
-| —   | R2 — Templates/archetypes                       | 🅿️ parked           | D-2 · deferred → TEMPLATES        |
-| —   | A-e2e — Authoring polish (e2e-fed)              | 🟠 open              | deferred → A-E2E-POLISH / P6      |
+| #   | Step                                        | Status                                   | Pointer                                                          |
+| --- | ------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
+| 1a  | R1a — Clone server-engine (deep-clone D-3)  | 🟢 BUILT (gated suite PENDING owner-run) | 6 commits `63c03778`..`1961abc6` · `r1a-server-runner-prompt.md` |
+| 1b  | R1b — Clone editor-UX (affordances + flows) | ⬜ next                                  | `r1-clone-design.md`                                             |
+| 2   | P — Coach profile UI                        | ⬜ pending                               | D-5                                                              |
+| 3   | G — DnD group-creation                      | ⬜ pending                               | deferred → DND-GROUP-CREATE                                      |
+| 4   | A-known — Authoring polish                  | ⬜ pending                               | deferred → LABEL-FLOW-UX / QA-007                                |
+| —   | R2 — Templates/archetypes                   | 🅿️ parked                                | D-2 · deferred → TEMPLATES                                       |
+| —   | A-e2e — Authoring polish (e2e-fed)          | 🟠 open                                  | deferred → A-E2E-POLISH / P6                                     |
 
 ## Next action
 
-**▶ Run `/feature` with `r1a-server-runner-prompt.md`** (the R1a clone server-engine — deep-clone endpoint family, server + contracts + routes + gated tests; NO UI). The prompt is self-contained and specced verbatim against the live patterns (recon done): `SCHEMA_BODY_INCLUDE` deep-read · `retryOnP2034 + $transaction(Serializable)` · `(max ?? 0)+10` / `resolveGroupedOrder` · `verify*Ownership` · idempotency auto-wire · the full `onDelete: Cascade` chain for replace. **Additive only — zero Prisma/migration/reseed.** Then **R1b** (editor-UX) builds the affordances from `r1-clone-design.md` on the working engine, under a browser walkthrough. Decide at run time whether `/feature` executes in THIS worktree session or a transported one.
+**▶ Owner runs the R1a acceptance gate: the gated api-server suite** — `pnpm db:reset && pnpm db:seed && pnpm --filter @repo/api-server test` (~10 min, live Neon, serial; the 6 clone suites SELF-FIXTURE the plan→week→…→row tree + catalog since `db:seed` is users-only). No-DB gates are already green. On green → **PR** for `worktree-coach-station` (the 6 R1a commits + the founding scaffold; this close-out rides in it). Then **R1b — Clone editor-UX**: build the affordances from `r1-clone-design.md` on the working engine, under a browser walkthrough.
 
 ## Open decisions awaiting ratification
 
-**NONE** — D-1..D-5 are RATIFIED. (R2's slot is parked, not blocking; the R1-split decision is made at wave-plan time, not a ratification gate.)
+NONE — D-1..D-6 RATIFIED. (R2 slot parked, not blocking.)
 
 ## Live carry-forwards
 
-TEMPLATES (parked) · DND-GROUP-CREATE (scheduled G) · LABEL-FLOW-UX + QA-007 (scheduled A-known) · A-E2E-POLISH + P6-REPS-UNIT (open, e2e-fed) · CLONE-WEEK-DESTRUCTIVE (R1 risk) · ACTIVE-FLIP (post session-primitive close).
+R1A-GATED-ACCEPTANCE (the owner's gated-suite run — the DoD "verified for real" gate) · QA-005 (concurrent grouped-duplicate 409, deferred) · CLONE-002 (revalidate asymmetry, documented) · TEMPLATES (parked) · DND-GROUP-CREATE (wave G) · LABEL-FLOW-UX + QA-007 (wave A-known) · A-E2E-POLISH + P6 (open) · ACTIVE-FLIP (post session-primitive close). See `deferred.md`.
 
 ## Gotchas a resuming session must know
 
-- **We are in an ISOLATED worktree** (`worktree-coach-station`), running PARALLEL to the owner's session-primitive browser e2e. `initiatives/ACTIVE` in `main` stays `session-primitive` until its `/initiative-close`; this worktree sets ACTIVE locally for its own resume. **Do not touch session-primitive's durable docs.**
-- **The primitive is FROZEN and Sacred** — reuse, don't edit: `primitive-spec.md`, ADR-0041 (`SchemaGroup` membership-based; no recursion / typed-relation-kinds / child-count semantics), the W4 leaf law, and the **one-predicate rule at both floors** (`buildBlockItems` / `buildRowItems` — never hand-roll clustering).
-- **Clone is GREENFIELD** — zero clone/duplicate/template capability exists anywhere today (verified by recon).
-- **Two clone semantics (D-4):** week/day = **replace-into-current** (source-pick + destructive warning + empty-source guard); session/block/schema/row = **duplicate-append** (in-place, same parent's end); groups clone their **members only** (append to the same group, contiguity-preserving).
-- **Week/Day are calendar-keyed** (`@@unique([planId,startDate])` / `([weekId,dayOfWeek])`, no `order`, upsert-on-demand) — that's WHY week/day clone is replace-into-slot, not duplicate-beside.
-- **Clone is server-side (D-3)**, one transaction, idempotent, re-references the shared catalog (does not duplicate Exercises/Modifiers/Labels). Not client orchestration.
-- **P-6 (reps-unit metres/calories)** is a session-primitive freeze call owned by the parallel session — do NOT build polish assuming a unit shape.
-- **Coach profile backend already exists** (GET/PUT `/api/platform/coach/profile`, `coachProfile` with only `bio`); the gap is the client hook + form (D-5).
+- **Isolated worktree** `worktree-coach-station`, parallel to the owner's session-primitive e2e. `initiatives/ACTIVE` in `main` stays `session-primitive` until its close; this worktree's ACTIVE is `coach-station`. **PR merges `worktree-coach-station` → main** (founding scaffold + R1a). Don't touch session-primitive docs.
+- **R1a is the clone SERVER engine only** — `/clone-from` (week/day replace) + `/duplicate` (session/block/schema/row append) endpoints, the `_shared/deep-clone.ts` recursive copier, contracts, routes, gated tests. **NO UI** — that's R1b (the next wave; design is `r1-clone-design.md`).
+- **The gated api-server suite is UNRUN** — the no-DB gates (check-types/lint/dep:check) are green, but the live round-trip/cascade/contiguity assertions only run under `db:reset && db:seed && pnpm --filter @repo/api-server test`. That is the acceptance gate; treat R1a as "built, not yet accepted" until the owner runs it.
+- **Clone is additive** — zero Prisma change, no migration, no reseed needed for the schema (the gated `db:reset` only re-applies the existing `lms-checks.sql`). The engine reuses the frozen primitive's models verbatim.
+- **The frozen primitive is Sacred** — clone reuses `SCHEMA_BODY_INCLUDE`, the mappers, `verify*Ownership`, `resolveGroupedOrder`, the contiguity asserts; it never edits them (one `schema/assertions.ts` import-path change broke a barrel cycle — behavior-identical).
+- **P-6 (reps-unit)** stays a session-primitive freeze call — clone copies whatever leaf shape exists, so it's insulated.
