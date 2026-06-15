@@ -6,15 +6,15 @@ A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`
 
 ## Board
 
-| #   | Step                                        | Status                      | Pointer                                                |
-| --- | ------------------------------------------- | --------------------------- | ------------------------------------------------------ |
-| 1a  | R1a — Clone server-engine (deep-clone D-3)  | 🟢 MERGED to main (PR #270) | `r1a-server-runner-prompt.md` · gated suite owner-owed |
-| 1b  | R1b — Clone editor-UX (affordances + flows) | 🔵 next (prompt ready)      | `r1b-editor-runner-prompt.md` · `r1-clone-design.md`   |
-| 2   | P — Coach profile UI                        | ⬜ pending                  | D-5                                                    |
-| 3   | G — DnD group-creation                      | ⬜ pending                  | deferred → DND-GROUP-CREATE                            |
-| 4   | A-known — Authoring polish                  | ⬜ pending                  | deferred → LABEL-FLOW-UX / QA-007                      |
-| —   | R2 — Templates/archetypes                   | 🅿️ parked                   | D-2 · deferred → TEMPLATES                             |
-| —   | A-e2e — Authoring polish (e2e-fed)          | 🟠 open                     | deferred → A-E2E-POLISH / P6                           |
+| #   | Step                                        | Status                           | Pointer                                                |
+| --- | ------------------------------------------- | -------------------------------- | ------------------------------------------------------ |
+| 1a  | R1a — Clone server-engine (deep-clone D-3)  | 🟢 MERGED to main (PR #270)      | `r1a-server-runner-prompt.md` · gated suite owner-owed |
+| 1b  | R1b — Clone editor-UX (affordances + flows) | 🔵 next (prompt ready)           | `r1b-editor-runner-prompt.md` · `r1-clone-design.md`   |
+| 2   | P — Coach profile UI                        | 🟢 built · PR feat/coach-profile | D-7 · gated suite + walkthrough owner-owed             |
+| 3   | G — DnD group-creation                      | ⬜ pending                       | deferred → DND-GROUP-CREATE                            |
+| 4   | A-known — Authoring polish                  | ⬜ pending                       | deferred → LABEL-FLOW-UX / QA-007                      |
+| —   | R2 — Templates/archetypes                   | 🅿️ parked                        | D-2 · deferred → TEMPLATES                             |
+| —   | A-e2e — Authoring polish (e2e-fed)          | 🟠 open                          | deferred → A-E2E-POLISH / P6                           |
 
 ## Next action
 
