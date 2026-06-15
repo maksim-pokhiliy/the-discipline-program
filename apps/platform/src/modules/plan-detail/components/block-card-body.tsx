@@ -38,7 +38,7 @@ import { GroupSelectBar } from "./group-select-bar";
 import { SchemaCard } from "./schema-card";
 import { SchemaGroupBox } from "./schema-group-box";
 
-const GROUP_SCHEMAS_LABEL = "Group schemas…";
+const GROUP_SCHEMAS_LABEL = "Group schemas";
 const GROUP_SCHEMAS_BAR_LABEL = "Group schemas";
 const MIN_GROUPABLE_SCHEMAS = 2;
 const GROUP_GHOST_FALLBACK = "Group";
@@ -229,7 +229,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
             />
           ) : null}
 
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
             <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />
 
             {!isSelectMode && ungroupedCount >= MIN_GROUPABLE_SCHEMAS ? (

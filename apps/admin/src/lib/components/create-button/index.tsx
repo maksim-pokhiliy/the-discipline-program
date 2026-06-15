@@ -9,7 +9,7 @@ type CreateButtonProps = {
 
 export const CreateButton = ({ href, children }: CreateButtonProps) => {
   return (
-    <Button component={Link} href={href} variant="contained" startIcon={<AddIcon />} size="medium">
+    <Button component={Link} href={href} variant="contained" startIcon={<AddIcon />} size="small">
       {children}
     </Button>
   );

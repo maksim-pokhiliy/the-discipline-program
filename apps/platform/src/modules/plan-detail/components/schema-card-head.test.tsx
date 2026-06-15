@@ -1,5 +1,5 @@
 import type { DraggableAttributes } from "@dnd-kit/core";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
@@ -51,12 +51,16 @@ type RenderOptions = {
   schema?: SchemaWithBody;
   isBoxed?: boolean;
   isDraggable?: boolean;
+  isExpanded?: boolean;
+  onToggleExpanded?: () => void;
 };
 
 const renderHead = ({
   schema = makeSchema(),
   isBoxed = false,
   isDraggable = true,
+  isExpanded = true,
+  onToggleExpanded = vi.fn(),
 }: RenderOptions = {}) =>
   render(
     <SchemaCardHead
@@ -67,6 +71,8 @@ const renderHead = ({
       onTitleCommit={vi.fn()}
       onDeleteOpen={vi.fn()}
       onEditOpen={vi.fn()}
+      isExpanded={isExpanded}
+      onToggleExpanded={onToggleExpanded}
       isBoxed={isBoxed}
       isDraggable={isDraggable}
     />,
@@ -76,14 +82,14 @@ describe("SchemaCardHead title row (D-HEADER-KEEP parity)", () => {
   it("renders the composition tag and title textbox for a standalone schema (isBoxed=false)", () => {
     renderHead({ isBoxed: false });
 
-    expect(screen.getByText("ladder")).toBeInTheDocument();
+    expect(screen.getByText("ladder 21-15-9")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
   });
 
   it("renders the composition tag and title textbox identically for an in-group schema (isBoxed=true)", () => {
     renderHead({ isBoxed: true });
 
-    expect(screen.getByText("ladder")).toBeInTheDocument();
+    expect(screen.getByText("ladder 21-15-9")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
   });
 
@@ -125,5 +131,24 @@ describe("SchemaCardHead drag handle (isDraggable gate, unchanged)", () => {
 
     expect(screen.queryByRole("button", { name: DRAG_LABEL })).toBeNull();
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
+  });
+});
+
+describe("SchemaCardHead collapse toggle (Session/Block parity)", () => {
+  it("renders a Collapse affordance when expanded and fires onToggleExpanded on click", () => {
+    const onToggleExpanded = vi.fn();
+
+    renderHead({ isExpanded: true, onToggleExpanded });
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse schema" }));
+
+    expect(onToggleExpanded).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders an Expand affordance when collapsed", () => {
+    renderHead({ isExpanded: false });
+
+    expect(screen.getByRole("button", { name: "Expand schema" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse schema" })).toBeNull();
   });
 });

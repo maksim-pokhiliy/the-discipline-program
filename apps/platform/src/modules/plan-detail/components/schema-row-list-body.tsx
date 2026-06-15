@@ -156,9 +156,9 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
         <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
           {sortedItems.map((item) => {
             if (item.kind === "group") {
-              const startIndex = runningIndex;
+              const ord = runningIndex + 1;
 
-              runningIndex += item.members.length;
+              runningIndex += 1;
 
               return (
                 <RowGroupBox
@@ -167,7 +167,7 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                   members={item.members}
                   planId={planId}
                   startDate={startDate}
-                  startIndex={startIndex}
+                  ord={ord}
                   isReorderPending={effectiveReorderPending}
                   onMemberReorder={handleMemberReorder}
                 />

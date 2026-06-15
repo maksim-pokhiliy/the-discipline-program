@@ -3,21 +3,25 @@
 import { Alert, Button, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
-import type { RestSpec } from "@repo/contracts/lms/_shared";
+import type { Intensity, RestSpec } from "@repo/contracts/lms/_shared";
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
 import { shouldBeContainer } from "../../lib/should-be-container";
+import { IntensityFields } from "../intensity-fields";
 import { RestSpecFields, restSpecFormSchema, type RestSpecFormValue } from "../rest-spec-fields";
 
 import type { NodeId, RepetitionAxis, SchemaDraft } from "./axis-draft.types";
 import { AxisFieldSection } from "./axis-field-section";
 import { RepetitionAxisField } from "./repetition-axis-field";
 
-const HEADER_LABEL = "Header";
+const HEADER_LABEL = "Schema title (optional)";
 const HEADER_ARIA = "Inspector header";
-const HEADER_PLACEHOLDER = "group…";
+const HEADER_PLACEHOLDER = "name this container…";
 const REST_LABEL = "rest";
+const REST_ADD_LABEL = "Add rest";
+const REST_REMOVE_LABEL = "Remove rest";
+const INTENSITY_LABEL = "intensity";
 const PANEL_SPACING = 2;
 const REST_ISSUE_TYPE = "contract";
 const DEMOTE_HINT =
@@ -83,6 +87,18 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
   const setRest = (rest: RestSpec): void =>
     onUpdateNode(container.id, (schema) => ({ ...schema, rest }));
 
+  const clearRest = (): void =>
+    onUpdateNode(container.id, (schema) => {
+      const next = { ...schema };
+
+      delete next.rest;
+
+      return next;
+    });
+
+  const setIntensity = (intensity: Intensity | null): void =>
+    onUpdateNode(container.id, (schema) => ({ ...schema, intensity }));
+
   const hasSingleRow = container.rows.length === 1;
   const showsDemoteHint = isCreateMode && !shouldBeContainer(container) && hasSingleRow;
   const showsDemote = showsDemoteHint;
@@ -102,6 +118,35 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
           </Stack>
         </Alert>
       ) : null}
+
+      <RepetitionAxisField
+        value={container.repetition ?? DEFAULT_REPETITION}
+        onChange={setRepetition}
+      />
+
+      <AxisFieldSection label={REST_LABEL}>
+        {container.rest !== undefined ? (
+          <Stack direction="column" spacing={1} sx={{ alignItems: "flex-start" }}>
+            <RestSpecFields
+              value={container.rest}
+              onChange={setRest}
+              error={restErrorsFromParse(container.rest)}
+            />
+
+            <Button size="small" color="inherit" onClick={clearRest}>
+              {REST_REMOVE_LABEL}
+            </Button>
+          </Stack>
+        ) : (
+          <Button size="small" onClick={() => setRest(DEFAULT_REST)}>
+            {REST_ADD_LABEL}
+          </Button>
+        )}
+      </AxisFieldSection>
+
+      <AxisFieldSection label={INTENSITY_LABEL}>
+        <IntensityFields value={container.intensity ?? null} onChange={setIntensity} />
+      </AxisFieldSection>
 
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">
@@ -128,19 +173,6 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
           </Typography>
         )}
       </Stack>
-
-      <RepetitionAxisField
-        value={container.repetition ?? DEFAULT_REPETITION}
-        onChange={setRepetition}
-      />
-
-      <AxisFieldSection label={REST_LABEL}>
-        <RestSpecFields
-          value={container.rest ?? DEFAULT_REST}
-          onChange={setRest}
-          error={restErrorsFromParse(container.rest ?? DEFAULT_REST)}
-        />
-      </AxisFieldSection>
     </Stack>
   );
 };

@@ -58,7 +58,7 @@ type RowGroupBoxProps = {
   members: SchemaRow[];
   planId: string;
   startDate: string;
-  startIndex: number;
+  ord: number;
   isReorderPending: boolean;
   onMemberReorder: (
     rowGroupId: string,
@@ -72,7 +72,7 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
   members,
   planId,
   startDate,
-  startIndex,
+  ord,
   isReorderPending,
   onMemberReorder,
 }): ReactElement => {
@@ -182,6 +182,7 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
     >
       <RowGroupBoxHead
         group={group}
+        ord={ord}
         isUpdatePending={updateRowGroup.isPending}
         dragAttributes={attributes}
         dragListeners={listeners}
@@ -209,9 +210,14 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
                 row={member}
                 planId={planId}
                 startDate={startDate}
-                index={startIndex + offset}
+                index={offset}
                 isReorderPending={isReorderPending}
                 isDraggable
+                timeline={{
+                  ord: offset + 1,
+                  isFirst: offset === 0,
+                  isLast: offset === sortedMembers.length - 1,
+                }}
               />
             ))}
           </Stack>

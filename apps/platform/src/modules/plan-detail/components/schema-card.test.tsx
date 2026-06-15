@@ -144,6 +144,8 @@ describe("SchemaCard chrome", () => {
   it("renders head then body in the documented order with no nested schema list (leaf)", () => {
     renderSchemaCard();
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand schema" }));
+
     const dragBtn = screen.getByRole("button", { name: DRAG_LABEL });
     const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
     const rowListMock = screen.getByTestId("schema-row-list-mock");
@@ -197,18 +199,18 @@ describe("SchemaCard drag handle", () => {
 });
 
 describe("SchemaCard composition tag", () => {
-  it("renders the derived composition-kind tag (rounds) for a count composition", () => {
+  it("renders the full repetition label in the tag for a count composition", () => {
     renderSchemaCard();
 
-    expect(screen.getByText("rounds")).toBeInTheDocument();
+    expect(screen.getByText("5 rounds")).toBeInTheDocument();
   });
 
-  it("renders the 'ladder' tag for a ladder composition", () => {
+  it("renders the full ladder label in the tag for a ladder composition", () => {
     renderSchemaCard({
       schema: makeSchema({ composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } } }),
     });
 
-    expect(screen.getByText("ladder")).toBeInTheDocument();
+    expect(screen.getByText("ladder 21-15-9")).toBeInTheDocument();
   });
 
   it("renders no composition-kind tag when composition is null", () => {
@@ -226,12 +228,12 @@ describe("SchemaCard composition tag", () => {
     });
 
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
-    expect(screen.getByText("ladder")).toBeInTheDocument();
+    expect(screen.getByText("ladder 21-15-9")).toBeInTheDocument();
   });
 });
 
 describe("SchemaCard title", () => {
-  it("renders the InlineEditText with the derived composition header when schema.header is null", () => {
+  it("leaves the title empty (no auto-derived header) when schema.header is null", () => {
     renderSchemaCard();
 
     const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
@@ -240,7 +242,7 @@ describe("SchemaCard title", () => {
       throw new Error("title input not an HTMLInputElement");
     }
 
-    expect(titleInput.value).toBe("5 rounds");
+    expect(titleInput.value).toBe("");
   });
 
   it("renders the schema.header verbatim when set to a non-empty string", () => {
@@ -345,10 +347,26 @@ describe("SchemaCard title", () => {
 });
 
 describe("SchemaCard meta row", () => {
-  it("renders the composition summary text for a count composition", () => {
+  it("does not duplicate the composition summary below the tag (the chip carries it)", () => {
     renderSchemaCard();
 
-    expect(screen.getByText("5 rounds")).toBeInTheDocument();
+    expect(screen.getAllByText("5 rounds")).toHaveLength(1);
+  });
+
+  it("renders the rest summary in the meta row when the composition carries rest", () => {
+    renderSchemaCard({
+      schema: makeSchema({
+        composition: {
+          repetition: { kind: "count", count: 5 },
+          rest: {
+            duration: { value: 90, unit: "range_sec", rangeMax: 120 },
+            scope: "between_rounds",
+          },
+        },
+      }),
+    });
+
+    expect(screen.getByText("rest 90–120 s between rounds")).toBeInTheDocument();
   });
 
   it("renders an own IndicatorChip when schema.intensity is set (dot=false filled-pill)", () => {
@@ -358,7 +376,7 @@ describe("SchemaCard meta row", () => {
       schema: makeSchema({ intensity: schemaIntensity }),
     });
 
-    const ownChip = screen.getByText("@ 80%");
+    const ownChip = screen.getByText("EFFORT 80%");
     const ownChipRoot = ownChip.closest(".MuiChip-root");
 
     expect(ownChipRoot).not.toBeNull();
@@ -369,10 +387,10 @@ describe("SchemaCard meta row", () => {
     expect(chips.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the 'no params' italic fallback when the composition and intensity are both empty", () => {
+  it("renders no 'no params' filler when the composition and intensity are both empty", () => {
     renderSchemaCard({ schema: makeSchema({ composition: {} }) });
 
-    expect(screen.getByText("no params")).toBeInTheDocument();
+    expect(screen.queryByText("no params")).toBeNull();
   });
 });
 
@@ -465,6 +483,8 @@ describe("SchemaCard body / SchemaRowList wiring", () => {
 
     renderSchemaCard({ schema: makeSchema({ rows: [row] }) });
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand schema" }));
+
     const rowListMock = screen.getByTestId("schema-row-list-mock");
 
     expect(rowListMock).toHaveAttribute("data-rows", "1");
@@ -496,6 +516,8 @@ describe("SchemaCard parentIsReorderPending cascade (D-10)", () => {
   it("passes effective pending down to SchemaRowList when parentIsReorderPending is true", () => {
     renderSchemaCard({ parentIsReorderPending: true });
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand schema" }));
+
     expect(screen.getByTestId("schema-row-list-mock")).toHaveAttribute(
       "data-parent-pending",
       "true",
@@ -505,9 +527,34 @@ describe("SchemaCard parentIsReorderPending cascade (D-10)", () => {
   it("passes data-parent-pending='false' to SchemaRowList when parentIsReorderPending is false", () => {
     renderSchemaCard();
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand schema" }));
+
     expect(screen.getByTestId("schema-row-list-mock")).toHaveAttribute(
       "data-parent-pending",
       "false",
     );
+  });
+});
+
+describe("SchemaCard collapse (Session/Block parity)", () => {
+  it("is collapsed by default — shows the SchemaRowList only after expanding, then hides it on collapse", () => {
+    renderSchemaCard();
+
+    expect(screen.queryByTestId("schema-row-list-mock")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Expand schema" }));
+
+    expect(screen.getByTestId("schema-row-list-mock")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse schema" }));
+
+    expect(screen.queryByTestId("schema-row-list-mock")).toBeNull();
+  });
+
+  it("keeps the title and composition tag visible while collapsed (head parity)", () => {
+    renderSchemaCard();
+
+    expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
+    expect(screen.getByText("5 rounds")).toBeInTheDocument();
   });
 });

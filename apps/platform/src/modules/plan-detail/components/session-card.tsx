@@ -42,7 +42,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     disabled: isMutationPending,
   });
 
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 
   const toggleExpanded = () => setIsExpanded((previous) => !previous);

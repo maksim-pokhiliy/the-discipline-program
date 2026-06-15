@@ -169,7 +169,7 @@ const renderBox = (group: RowGroup = makeGroup(), members: SchemaRow[] = DEFAULT
       members={members}
       planId={PLAN_ID}
       startDate={START_DATE}
-      startIndex={0}
+      ord={1}
       isReorderPending={false}
       onMemberReorder={onMemberReorder}
     />,
@@ -199,10 +199,10 @@ describe("RowGroupBox frame", () => {
     expect(box).not.toHaveStyle({ borderStyle: "dashed" });
   });
 
-  it("shows the GROUP overline in the head", () => {
+  it("no longer shows the GROUP overline in the head", () => {
     renderBox();
 
-    expect(screen.getByText("GROUP")).toBeInTheDocument();
+    expect(screen.queryByText("GROUP")).not.toBeInTheDocument();
   });
 });
 

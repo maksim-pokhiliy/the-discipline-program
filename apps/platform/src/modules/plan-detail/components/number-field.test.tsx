@@ -45,12 +45,13 @@ describe("NumberField change coercion", () => {
     expect(onChange).toHaveBeenCalledWith(9);
   });
 
-  it("emits 0 when the input is cleared", () => {
+  it("emits NaN when the input is cleared", () => {
     render(<NumberField value={5} onChange={onChange} />);
 
     fireEvent.change(getInput(), { target: { value: "" } });
 
-    expect(onChange).toHaveBeenCalledWith(0);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]?.[0]).toBeNaN();
   });
 });
 

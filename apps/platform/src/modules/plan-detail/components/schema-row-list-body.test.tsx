@@ -101,7 +101,7 @@ type MemberReorder = (
 const capturedMemberReorderByGroup = new Map<string, MemberReorder>();
 
 vi.mock("./row-group-box", () => ({
-  RowGroupBox: (props: { group: RowGroup; startIndex: number; onMemberReorder: MemberReorder }) => {
+  RowGroupBox: (props: { group: RowGroup; ord: number; onMemberReorder: MemberReorder }) => {
     capturedMemberReorderByGroup.set(props.group.id, props.onMemberReorder);
 
     return createElement(
@@ -109,7 +109,7 @@ vi.mock("./row-group-box", () => ({
       {
         "data-testid": "row-group-box-mock",
         "data-group-id": props.group.id,
-        "data-start-index": String(props.startIndex),
+        "data-ord": String(props.ord),
       },
       "row-group-box",
     );
@@ -243,7 +243,7 @@ describe("SchemaRowListBody rendering", () => {
     expect(rowIdsOf(container)).toEqual([R2]);
   });
 
-  it("assigns a continuous row index across the row-group box and standalone rows", () => {
+  it("numbers a group as one atomic ordinal, then continues the standalone index", () => {
     const group = makeRowGroup();
 
     renderBody(
@@ -255,8 +255,8 @@ describe("SchemaRowListBody rendering", () => {
       [group],
     );
 
-    expect(screen.getByTestId("row-group-box-mock")).toHaveAttribute("data-start-index", "0");
-    expect(screen.getByTestId("schema-row-card-mock")).toHaveAttribute("data-index", "2");
+    expect(screen.getByTestId("row-group-box-mock")).toHaveAttribute("data-ord", "1");
+    expect(screen.getByTestId("schema-row-card-mock")).toHaveAttribute("data-index", "1");
   });
 
   it("threads the minute label for each row by id", () => {

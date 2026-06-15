@@ -3,11 +3,12 @@
 import { type ReactElement } from "react";
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import SplitscreenIcon from "@mui/icons-material/Splitscreen";
 import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
-import { IconButton, Stack, Tooltip, Typography, alpha } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, Typography, alpha } from "@mui/material";
 
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { type ParallelInterleaveOrder, type SchemaGroup } from "@repo/contracts/lms/schema-group";
@@ -22,6 +23,8 @@ const HEAD_PX = 1.5;
 const HEAD_PY = 1;
 const HEAD_BORDER_ALPHA = 0.25;
 const DRAG_ARIA = "Drag group";
+const COLLAPSE_ARIA = "Collapse group";
+const EXPAND_ARIA = "Expand group";
 const OVERLINE_TEXT = "GROUP";
 const LABEL_ARIA = "Group label";
 const LABEL_PLACEHOLDER = "group label…";
@@ -34,6 +37,8 @@ const tooltipChildSx = { display: "inline-flex" };
 type SchemaGroupBoxHeadProps = {
   group: SchemaGroup;
   isUpdatePending: boolean;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
   onLabelCommit: (next: string) => void;
@@ -45,6 +50,8 @@ type SchemaGroupBoxHeadProps = {
 export const SchemaGroupBoxHead: React.FC<SchemaGroupBoxHeadProps> = ({
   group,
   isUpdatePending,
+  isExpanded,
+  onToggleExpanded,
   dragAttributes,
   dragListeners,
   onLabelCommit,
@@ -64,6 +71,20 @@ export const SchemaGroupBoxHead: React.FC<SchemaGroupBoxHeadProps> = ({
       borderBottom: `1px solid ${alpha(theme.palette.primary.main, HEAD_BORDER_ALPHA)}`,
     })}
   >
+    <IconButton
+      size="small"
+      onClick={onToggleExpanded}
+      aria-label={isExpanded ? COLLAPSE_ARIA : EXPAND_ARIA}
+    >
+      <ChevronRightIcon
+        fontSize="small"
+        sx={(theme) => ({
+          transform: isExpanded ? "rotate(90deg)" : "none",
+          transition: `transform ${theme.transitions.duration.shortest}ms ${theme.transitions.easing.easeInOut}`,
+        })}
+      />
+    </IconButton>
+
     <IconButton
       {...dragAttributes}
       {...dragListeners}
@@ -107,15 +128,15 @@ export const SchemaGroupBoxHead: React.FC<SchemaGroupBoxHeadProps> = ({
     />
 
     <Tooltip title={UNGROUP_LABEL}>
-      <span style={tooltipChildSx}>
+      <Box component="span" style={tooltipChildSx}>
         <IconButton size="small" aria-label={UNGROUP_LABEL} onClick={onUngroupOpen}>
           <SplitscreenIcon sx={{ fontSize: HEAD_ACTION_ICON_PX }} />
         </IconButton>
-      </span>
+      </Box>
     </Tooltip>
 
     <Tooltip title={DELETE_LABEL}>
-      <span style={tooltipChildSx}>
+      <Box component="span" style={tooltipChildSx}>
         <IconButton
           size="small"
           aria-label={DELETE_LABEL}
@@ -124,7 +145,7 @@ export const SchemaGroupBoxHead: React.FC<SchemaGroupBoxHeadProps> = ({
         >
           <DeleteIcon sx={{ fontSize: HEAD_ACTION_ICON_PX }} />
         </IconButton>
-      </span>
+      </Box>
     </Tooltip>
   </Stack>
 );

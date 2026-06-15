@@ -21,6 +21,7 @@ export type NotesListEditorProps = {
   placeholder?: string;
   ariaLabel?: string;
   disabled?: boolean;
+  addable?: boolean;
 };
 
 export const NotesListEditor = ({
@@ -32,6 +33,7 @@ export const NotesListEditor = ({
   placeholder,
   ariaLabel = DEFAULT_ARIA_LABEL,
   disabled = false,
+  addable = true,
 }: NotesListEditorProps): React.ReactElement => {
   const isAtCap = value.length >= maxCount;
 
@@ -75,15 +77,17 @@ export const NotesListEditor = ({
         </Stack>
       ))}
 
-      <Button
-        size="tiny"
-        variant="text"
-        onClick={addNote}
-        disabled={disabled || isAtCap}
-        sx={{ alignSelf: "flex-start" }}
-      >
-        {addLabel}
-      </Button>
+      {addable ? (
+        <Button
+          size="tiny"
+          variant="text"
+          onClick={addNote}
+          disabled={disabled || isAtCap}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          {addLabel}
+        </Button>
+      ) : null}
     </Stack>
   );
 };

@@ -147,47 +147,43 @@ describe("SessionCard", () => {
     deleteSessionState.isPending = false;
   });
 
-  it("renders the head row with the chevron and BlockList visible by default (isExpanded=true)", () => {
+  it("renders the head row collapsed by default — Expand affordance shown, BlockList hidden", () => {
     renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
 
-    expect(screen.getByRole("button", { name: "Collapse session" })).toBeInTheDocument();
-    expect(screen.getByTestId("block-list-mock")).toHaveTextContent("BlockList: 1 blocks");
+    expect(screen.getByRole("button", { name: "Expand session" })).toBeInTheDocument();
+    expect(screen.queryByTestId("block-list-mock")).toBeNull();
   });
 
-  it("collapses on chevron click and hides the BlockList while keeping the head row", () => {
+  it("expands on chevron click and shows the BlockList while keeping the head row", () => {
     renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand session" }));
+
+    expect(screen.getByTestId("block-list-mock")).toHaveTextContent("BlockList: 1 blocks");
+    expect(screen.getByRole("button", { name: "Collapse session" })).toBeInTheDocument();
+  });
+
+  it("collapses again on a second chevron click and hides the BlockList", () => {
+    renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
+
+    fireEvent.click(screen.getByRole("button", { name: "Expand session" }));
     fireEvent.click(screen.getByRole("button", { name: "Collapse session" }));
 
     expect(screen.queryByTestId("block-list-mock")).toBeNull();
-    expect(screen.getByRole("button", { name: "Expand session" })).toBeInTheDocument();
   });
 
-  it("expands again on a second chevron click and re-renders the BlockList", () => {
-    renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
-
-    fireEvent.click(screen.getByRole("button", { name: "Collapse session" }));
-    fireEvent.click(screen.getByRole("button", { name: "Expand session" }));
-
-    expect(screen.getByTestId("block-list-mock")).toBeInTheDocument();
-  });
-
-  it('renders "N blocks" plural collapsed-stats when collapsed and blocks.length > 1', () => {
+  it('renders "N blocks" plural collapsed-stats by default when blocks.length > 1', () => {
     renderSessionCard({
       session: makeSession({
         blocks: [makeBlock({ id: "b1" }), makeBlock({ id: "b2" }), makeBlock({ id: "b3" })],
       }),
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Collapse session" }));
-
     expect(screen.getByText("3 blocks")).toBeInTheDocument();
   });
 
-  it('renders "1 block" singular collapsed-stats when collapsed and blocks.length === 1', () => {
+  it('renders "1 block" singular collapsed-stats by default when blocks.length === 1', () => {
     renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
-
-    fireEvent.click(screen.getByRole("button", { name: "Collapse session" }));
 
     expect(screen.getByText("1 block")).toBeInTheDocument();
   });
@@ -197,13 +193,13 @@ describe("SessionCard", () => {
       session: makeSession({ blocks: [makeBlock({ id: "b1" }), makeBlock({ id: "b2" })] }),
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand session" }));
+
     expect(screen.queryByText("2 blocks")).toBeNull();
   });
 
   it("hides collapsed-stats when collapsed but blocks.length === 0", () => {
     renderSessionCard({ session: makeSession({ blocks: [] }) });
-
-    fireEvent.click(screen.getByRole("button", { name: "Collapse session" }));
 
     expect(screen.queryByText(/blocks?$/)).toBeNull();
   });
@@ -396,11 +392,15 @@ describe("SessionCard isReorderPending cascade (D-10)", () => {
       isReorderPending: true,
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Expand session" }));
+
     expect(screen.getByTestId("block-list-mock")).toHaveAttribute("data-parent-pending", "true");
   });
 
   it("passes data-parent-pending='false' to BlockList when isReorderPending is false", () => {
     renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
+
+    fireEvent.click(screen.getByRole("button", { name: "Expand session" }));
 
     expect(screen.getByTestId("block-list-mock")).toHaveAttribute("data-parent-pending", "false");
   });

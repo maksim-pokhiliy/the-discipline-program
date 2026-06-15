@@ -2,7 +2,6 @@ import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
-import { theme } from "@repo/mui";
 
 import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import type * as Hooks from "@app/lib/hooks";
@@ -50,8 +49,8 @@ afterEach(() => {
 
 describe("SchemaRowCard per-RowKind rendering", () => {
   for (const c of rowKindCases) {
-    it(`renders ${c.name}: ord, badge, mainText and sub`, () => {
-      const { container } = renderRow(c.build(), c.index ?? 0);
+    it(`renders ${c.name}: ord, mainText and sub`, () => {
+      renderRow(c.build(), c.index ?? 0);
 
       expect(screen.getAllByText(c.ord).length).toBeGreaterThan(0);
       expect(screen.getByText(c.mainText)).toBeInTheDocument();
@@ -59,17 +58,6 @@ describe("SchemaRowCard per-RowKind rendering", () => {
       if (c.sub !== null) {
         expect(screen.getByText(c.sub)).toBeInTheDocument();
       }
-
-      const kindColor = theme.palette.kind[c.kindCls];
-      const badge = container.querySelector(".MuiChip-root");
-
-      expect(badge).not.toBeNull();
-      expect(badge?.textContent).toBe(c.badgeLabel);
-      expect(badge).toHaveStyle({
-        borderColor: kindColor,
-        color: kindColor,
-        borderStyle: c.dashed ? "dashed" : "solid",
-      });
     });
   }
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const REP_UNITS = ["sec", "min", "km"] as const;
+export const REP_UNITS = ["sec", "min", "m", "km", "cal"] as const;
 
 export const REP_NOTATION_KINDS = ["count", "range", "unit_bound", "max"] as const;
 

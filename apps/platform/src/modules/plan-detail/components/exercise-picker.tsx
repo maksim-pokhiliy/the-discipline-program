@@ -1,6 +1,6 @@
 "use client";
 
-import { Autocomplete, CircularProgress, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, CircularProgress, Stack, TextField, Typography } from "@mui/material";
 
 import { type Exercise } from "@repo/contracts/lms/exercise";
 
@@ -57,7 +57,7 @@ export const ExercisePicker = ({
       disabled={disabled || isLoading}
       {...(compact && { size: "small" })}
       renderOption={(props, option) => (
-        <li {...props} key={option.id}>
+        <Box component="li" {...props} key={option.id}>
           <Stack spacing={0.25} sx={{ minWidth: 0 }}>
             <Typography variant="body2" sx={{ fontWeight: OPTION_NAME_FONT_WEIGHT }}>
               {option.canonicalName}
@@ -67,7 +67,7 @@ export const ExercisePicker = ({
               {buildMetaLine(option)}
             </Typography>
           </Stack>
-        </li>
+        </Box>
       )}
       renderInput={(params) => {
         const {

@@ -66,7 +66,7 @@ describe("repNotationSchema", () => {
     expect(repNotationSchema.safeParse({ kind: "unit_bound", unit: "sec" }).success).toBe(false);
   });
 
-  it("accepts unit_bound for all 3 REP_UNITS", () => {
+  it("accepts unit_bound for all REP_UNITS", () => {
     for (const unit of REP_UNITS) {
       expect(repNotationSchema.safeParse({ kind: "unit_bound", unit, value: 5 }).success).toBe(
         true,

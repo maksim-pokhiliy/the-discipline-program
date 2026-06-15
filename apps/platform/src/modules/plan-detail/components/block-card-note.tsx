@@ -33,6 +33,7 @@ export const BlockCardNote: React.FC<BlockCardNoteProps> = ({ notes, onCommit })
       placeholder={NOTES_PLACEHOLDER}
       ariaLabel={NOTES_ARIA}
       maxLength={BLOCK_CONSTANTS.MAX_NOTES_LENGTH}
+      addable={false}
     />
   </Stack>
 );

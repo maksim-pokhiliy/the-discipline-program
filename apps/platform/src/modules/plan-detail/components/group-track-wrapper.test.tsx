@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
@@ -75,8 +75,10 @@ describe("GroupTrackWrapper flush member (DR-W4E-SG-WRAP rail + badge stripped)"
     expect(screen.queryByLabelText(/^Track \d+$/)).toBeNull();
   });
 
-  it("renders the member SchemaCard body", () => {
+  it("renders the member SchemaCard body once expanded", () => {
     renderWrapper();
+
+    fireEvent.click(screen.getByRole("button", { name: "Expand schema" }));
 
     expect(screen.getByTestId("schema-row-list-mock")).toBeInTheDocument();
   });

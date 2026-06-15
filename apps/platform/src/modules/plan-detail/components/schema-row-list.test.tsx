@@ -283,7 +283,7 @@ describe("SchemaRowList group-rows gesture", () => {
   it("enters select mode and renders the bottom bar with the Group rows confirm disabled until two are selected", () => {
     renderList([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })]);
 
-    fireEvent.click(screen.getByRole("button", { name: /group rows…/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^group rows$/i }));
 
     const cards = screen.getAllByTestId("schema-row-card-mock");
 
@@ -307,7 +307,7 @@ describe("SchemaRowList group-rows gesture", () => {
 
     renderList([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })]);
 
-    fireEvent.click(screen.getByRole("button", { name: /group rows…/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^group rows$/i }));
     fireEvent.click(toggleButtonFor(R2));
     fireEvent.click(toggleButtonFor(R1));
 
@@ -330,7 +330,7 @@ describe("SchemaRowList group-rows gesture", () => {
       makeRow({ id: R3, order: 3 }),
     ]);
 
-    fireEvent.click(screen.getByRole("button", { name: /group rows…/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^group rows$/i }));
     fireEvent.click(toggleButtonFor(R1));
     fireEvent.click(toggleButtonFor(R3));
 
@@ -352,7 +352,7 @@ describe("SchemaRowList group-rows gesture", () => {
 
     renderList([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })]);
 
-    fireEvent.click(screen.getByRole("button", { name: /group rows…/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^group rows$/i }));
     fireEvent.click(toggleButtonFor(R1));
     fireEvent.click(toggleButtonFor(R2));
 
@@ -374,10 +374,10 @@ describe("SchemaRowList group-rows gesture", () => {
   it("cancels select mode without firing a request", () => {
     renderList([makeRow({ id: R1, order: 1 }), makeRow({ id: R2, order: 2 })]);
 
-    fireEvent.click(screen.getByRole("button", { name: /group rows…/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^group rows$/i }));
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
-    expect(screen.queryByRole("button", { name: /^group rows$/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /cancel/i })).toBeNull();
     expect(createRowGroupMock).not.toHaveBeenCalled();
   });
 });
