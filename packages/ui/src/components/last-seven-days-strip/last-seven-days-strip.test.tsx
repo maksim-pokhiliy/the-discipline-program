@@ -138,4 +138,21 @@ describe("LastSevenDaysStrip", () => {
     expect(screen.getByText("Missed")).toBeInTheDocument();
     expect(screen.getByText("Rest")).toBeInTheDocument();
   });
+
+  it("renders when dates arrive as serialized strings over the wire", () => {
+    const wireDays = JSON.parse(JSON.stringify(buildDays(SEVEN_STATUSES))) as Last7Day[];
+    const { container } = render(<LastSevenDaysStrip days={wireDays} />);
+
+    const grid = container.querySelector(".MuiBox-root");
+
+    if (grid === null) {
+      throw new Error("grid node missing");
+    }
+
+    const cells = grid.querySelectorAll(":scope > .MuiStack-root");
+    const letters = container.querySelectorAll(".MuiTypography-overline");
+
+    expect(cells).toHaveLength(7);
+    expect(letters).toHaveLength(7);
+  });
 });

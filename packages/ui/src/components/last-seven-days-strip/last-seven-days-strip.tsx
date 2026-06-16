@@ -47,7 +47,9 @@ const resolveMarkStyle = (status: TodayStatus, theme: Theme): MarkStyle => {
   }
 };
 
-const getDayLetter = (date: Date): string => DAY_LETTERS[date.getDay()] ?? "";
+const toDate = (value: Date | string): Date => (value instanceof Date ? value : new Date(value));
+
+const getDayLetter = (date: Date | string): string => DAY_LETTERS[toDate(date).getDay()] ?? "";
 
 export type LastSevenDaysStripProps = {
   days: Last7Day[];
@@ -67,7 +69,7 @@ export const LastSevenDaysStrip = ({ days }: LastSevenDaysStripProps): ReactElem
 
         return (
           <Stack
-            key={day.date.toISOString()}
+            key={toDate(day.date).toISOString()}
             alignItems="center"
             spacing={0.5}
             sx={(theme) => ({
