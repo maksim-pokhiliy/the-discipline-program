@@ -24,6 +24,8 @@ export const seedProfiles = async (db: PrismaClient, users: SeededUsers) => {
         heightCm: 172,
         weightKg: 67,
         healthStatus: HealthStatus.RESTRICTED,
+        healthNote:
+          "Knee — meniscus, post-op week 6. Cleared for upper-only WODs + air bike. No squat, no jumping.",
       },
       { userId: users.tom.id, gender: Gender.MALE, heightCm: 175, weightKg: 78 },
       {
@@ -32,6 +34,8 @@ export const seedProfiles = async (db: PrismaClient, users: SeededUsers) => {
         heightCm: 190,
         weightKg: 95,
         healthStatus: HealthStatus.INJURED,
+        healthNote:
+          "Right shoulder. Avoid overhead pressing, kipping, snatch. Cleared for squats + posterior chain. Re-eval in 2 wk.",
       },
       { userId: users.nina.id, gender: Gender.FEMALE, heightCm: 165, weightKg: 58 },
       { userId: users.chris.id, gender: Gender.MALE, heightCm: 180, weightKg: 85 },

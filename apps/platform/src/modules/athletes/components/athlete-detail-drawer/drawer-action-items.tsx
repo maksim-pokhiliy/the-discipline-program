@@ -5,13 +5,10 @@ import { Box, Stack, Typography } from "@mui/material";
 
 import { ActionItemSeverity } from "@repo/contracts/coaching/coach-action-item";
 import type { AthleteActionItem } from "@repo/contracts/coaching/coach-athletes";
-import { formatDate } from "@repo/shared";
+
+import { formatRelativeTime } from "../athletes-roster-config";
 
 import { SEVERITY_COLORS } from "./config";
-
-type AttentionSectionProps = {
-  actionItems: AthleteActionItem[];
-};
 
 const SEVERITY_ICONS: Record<ActionItemSeverity, React.ReactElement> = {
   [ActionItemSeverity.CRITICAL]: <ErrorOutlineIcon fontSize="small" />,
@@ -19,14 +16,24 @@ const SEVERITY_ICONS: Record<ActionItemSeverity, React.ReactElement> = {
   [ActionItemSeverity.INFO]: <InfoOutlinedIcon fontSize="small" />,
 };
 
-export const AttentionSection: React.FC<AttentionSectionProps> = ({ actionItems }) => {
+type DrawerActionItemsProps = {
+  actionItems: AthleteActionItem[];
+};
+
+export const DrawerActionItems: React.FC<DrawerActionItemsProps> = ({ actionItems }) => {
   if (actionItems.length === 0) {
     return null;
   }
 
   return (
-    <Stack spacing={1} sx={{ p: 2.5 }}>
-      <Typography variant="subtitle2">Attention</Typography>
+    <Stack
+      spacing={1}
+      sx={(theme) => ({ p: 2, borderBottom: `1px solid ${theme.palette.divider}` })}
+    >
+      <Typography variant="overline" color="text.secondary">
+        Open action items · {actionItems.length}
+      </Typography>
+
       {actionItems.map((item) => (
         <Stack key={item.id} direction="row" spacing={1} alignItems="flex-start">
           <Box sx={{ color: SEVERITY_COLORS[item.severity], mt: 0.25 }}>
@@ -34,8 +41,8 @@ export const AttentionSection: React.FC<AttentionSectionProps> = ({ actionItems 
           </Box>
           <Stack sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2">{item.message}</Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {formatDate(item.createdAt, "day")}
+            <Typography variant="caption" color="text.secondary">
+              {formatRelativeTime(item.createdAt)}
             </Typography>
           </Stack>
         </Stack>
