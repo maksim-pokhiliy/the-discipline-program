@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type AppLevelValue } from "@repo/contracts/lms/label";
+import { type AppLevelValue, type CreateLabelData } from "@repo/contracts/lms/label";
 import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
@@ -330,5 +330,104 @@ describe("lmsLabelPlatformApi.list", () => {
     const ours = rows.filter((row) => seededIds.has(row.id));
 
     expect(ours.map((row) => row.name)).toEqual(["Push Day"]);
+  });
+});
+
+describe("lmsLabelPlatformApi.create", () => {
+  const createdLabelIds: string[] = [];
+  const createdUserIds: string[] = [];
+  const createdCoachProfileIds: string[] = [];
+
+  const baseLabelData = (overrides: Partial<CreateLabelData> = {}): CreateLabelData => ({
+    name: `Tempo ${crypto.randomUUID().slice(0, 8)}`,
+    applicableLevels: ["DAY"],
+    notes: null,
+    rest: false,
+    ...overrides,
+  });
+
+  afterEach(async () => {
+    if (createdLabelIds.length > 0) {
+      await cleanupRaw.label
+        .deleteMany({ where: { id: { in: createdLabelIds.splice(0) } } })
+        .catch(() => {});
+    }
+
+    for (const id of createdCoachProfileIds.splice(0).reverse()) {
+      await cleanupRaw.coachProfile.delete({ where: { id } }).catch(() => {});
+    }
+
+    for (const id of createdUserIds.splice(0).reverse()) {
+      await cleanupRaw.user.delete({ where: { id } }).catch(() => {});
+    }
+  });
+
+  it("lets a coach mint a label with applicableLevels and lowercases the name into nameLower", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const data = baseLabelData({
+      name: `Conditioning ${crypto.randomUUID().slice(0, 8)}`,
+      applicableLevels: ["SESSION"],
+    });
+
+    const created = await lmsLabelPlatformApi.create(coach.user.id, data);
+
+    createdLabelIds.push(created.id);
+
+    expect(created.name).toBe(data.name);
+    expect(created.nameLower).toBe(data.name.toLowerCase());
+    expect(created.applicableLevels).toEqual(["SESSION"]);
+    expect(created.rest).toBe(false);
+
+    const stored = await cleanupRaw.label.findUnique({ where: { id: created.id } });
+
+    expect(stored?.nameLower).toBe(data.name.toLowerCase());
+  });
+
+  it("attaches the existing row when the same name is created again (idempotent attach, no conflict)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Active Recovery ${crypto.randomUUID().slice(0, 8)}`;
+    const first = await lmsLabelPlatformApi.create(coach.user.id, baseLabelData({ name }));
+
+    createdLabelIds.push(first.id);
+
+    const second = await lmsLabelPlatformApi.create(
+      coach.user.id,
+      baseLabelData({ name: name.toUpperCase() }),
+    );
+
+    expect(second.id).toBe(first.id);
+
+    const count = await cleanupRaw.label.count({
+      where: { nameLower: name.toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
+  it("rejects a non-coach (athlete) caller with ForbiddenError", async () => {
+    const athlete = await createTestUser();
+
+    createdUserIds.push(athlete.id);
+
+    await expect(
+      lmsLabelPlatformApi.create(
+        athlete.id,
+        baseLabelData({ name: `Denied ${crypto.randomUUID().slice(0, 8)}` }),
+      ),
+    ).rejects.toThrow(ForbiddenError);
+    await expect(
+      lmsLabelPlatformApi.create(
+        athlete.id,
+        baseLabelData({ name: `Denied ${crypto.randomUUID().slice(0, 8)}` }),
+      ),
+    ).rejects.toMatchObject({ message: "Coach role required" });
   });
 });

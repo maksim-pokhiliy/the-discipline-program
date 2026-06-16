@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -8,6 +8,7 @@ import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 const exercisesState: { data: Exercise[]; isLoading: boolean } = { data: [], isLoading: false };
+const createExerciseMock: Mock = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -15,6 +16,7 @@ vi.mock("@app/lib/hooks", async () => {
   return {
     ...actual,
     useExercises: () => ({ data: exercisesState.data, isLoading: exercisesState.isLoading }),
+    useCreateExercise: () => ({ mutate: createExerciseMock, isPending: false }),
   };
 });
 
@@ -27,7 +29,6 @@ const makeExercise = (overrides: Partial<Exercise>): Exercise => ({
   canonicalName: "Front Squat",
   canonicalNameLower: "front squat",
   nature: "CONCRETE",
-  movementFamily: "squat",
   defaultDemoUrls: [],
   aliases: [],
   notes: null,
@@ -41,7 +42,6 @@ const DEADLIFT = makeExercise({
   id: "ckxw5p7gp0000q1mnzv5cuq02",
   canonicalName: "Deadlift",
   canonicalNameLower: "deadlift",
-  movementFamily: "hinge",
 });
 
 const onChange: Mock = vi.fn();
@@ -50,10 +50,15 @@ const openListbox = (): void => {
   fireEvent.mouseDown(screen.getByRole("combobox"));
 };
 
+const typeQuery = (text: string): void => {
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: text } });
+};
+
 afterEach(() => {
   exercisesState.data = [];
   exercisesState.isLoading = false;
   onChange.mockReset();
+  createExerciseMock.mockReset();
 });
 
 describe("ExercisePicker search box", () => {
@@ -62,31 +67,7 @@ describe("ExercisePicker search box", () => {
 
     render(<ExercisePicker value={null} onChange={onChange} />);
 
-    expect(screen.getByPlaceholderText("search by name, family, or modality…")).toBeInTheDocument();
-  });
-});
-
-describe("ExercisePicker option meta line", () => {
-  it("shows the family meta line under each option name", () => {
-    exercisesState.data = [FRONT_SQUAT];
-
-    render(<ExercisePicker value={null} onChange={onChange} />);
-
-    openListbox();
-
-    expect(screen.getByText("Front Squat")).toBeInTheDocument();
-    expect(screen.getByText("family: squat")).toBeInTheDocument();
-  });
-
-  it("omits the meta line when movementFamily is null", () => {
-    exercisesState.data = [makeExercise({ movementFamily: null })];
-
-    render(<ExercisePicker value={null} onChange={onChange} />);
-
-    openListbox();
-
-    expect(screen.getByText("Front Squat")).toBeInTheDocument();
-    expect(screen.queryByText(/family:/)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("search by name or create a movement…")).toBeInTheDocument();
   });
 });
 
@@ -130,6 +111,34 @@ describe("ExercisePicker selection", () => {
 
     expect(screen.getAllByRole("option")).toHaveLength(1);
     expect(screen.getByText("Coach choice")).toBeInTheDocument();
+  });
+});
+
+describe("ExercisePicker create affordance", () => {
+  it("surfaces a Create option for a typed name with no exact match", () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    openListbox();
+    typeQuery("Sled Push");
+
+    expect(screen.getByText('Create "Sled Push"')).toBeInTheDocument();
+  });
+
+  it("opens the create modal when the Create option is chosen", () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    openListbox();
+    typeQuery("Sled Push");
+    fireEvent.click(screen.getByText('Create "Sled Push"'));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Create exercise" })).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue("Sled Push")).toBeInTheDocument();
   });
 });
 
