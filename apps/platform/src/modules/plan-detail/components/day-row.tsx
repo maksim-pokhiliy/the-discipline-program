@@ -11,17 +11,13 @@ import type { DayOfWeek } from "@repo/contracts/lms/_shared";
 import { DAY_CONSTANTS, type SessionWithLabel } from "@repo/contracts/lms/day";
 import type { Label } from "@repo/contracts/lms/label";
 import { isSameDay } from "@repo/shared";
-import { LabelPickerChip } from "@repo/ui";
+import { type CreatableOption, LabelPickerChip, usePromiseModal } from "@repo/ui";
 
-import {
-  useCreateLabelOption,
-  useLabelOptions,
-  useUpdateDayLabel,
-  useUpdateDayNotes,
-} from "@app/lib/hooks";
+import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
 
 import { AddSessionButton } from "./add-session-button";
 import { CloneDayModal } from "./clone-day-modal";
+import { DayLabelCreateModal } from "./day-label-create-modal";
 import { DayRowEmpty } from "./day-row-empty";
 import { DayRowHead } from "./day-row-head";
 import { DayRowRest } from "./day-row-rest";
@@ -58,7 +54,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   const updateLabel = useUpdateDayLabel(planId, startDate, dayOfWeek);
   const updateNotes = useUpdateDayNotes(planId, startDate, dayOfWeek);
   const dayOptions = useLabelOptions("DAY");
-  const createDayLabel = useCreateLabelOption("DAY");
+  const labelCreateModal = usePromiseModal<{ initialName: string }, CreatableOption>();
 
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isCloneDayOpen, setIsCloneDayOpen] = useState<boolean>(false);
@@ -89,7 +85,7 @@ export const DayRow: React.FC<DayRowProps> = ({
             options={dayOptions.options}
             isLoading={dayOptions.isLoading}
             onChange={(labelId) => updateLabel.mutate({ labelId })}
-            onCreateOption={createDayLabel}
+            onCreateOption={(name) => labelCreateModal.open({ initialName: name })}
             ariaLabel="Day label"
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -157,6 +153,8 @@ export const DayRow: React.FC<DayRowProps> = ({
         targetDayOfWeek={dayOfWeek}
         currentSessionCount={sessions.length}
       />
+
+      <DayLabelCreateModal controller={labelCreateModal} />
     </Box>
   );
 };

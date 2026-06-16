@@ -188,6 +188,7 @@ export const CreatablePicker = (props: CreatablePickerProps) => {
     <Autocomplete<PickerEntry, boolean, false, true>
       multiple={isMultiple}
       freeSolo
+      openOnFocus
       disableCloseOnSelect={isMultiple}
       disabled={disabled}
       size={size}

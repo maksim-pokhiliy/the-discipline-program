@@ -1,13 +1,12 @@
 "use client";
 
-import { type ReactElement, useRef } from "react";
+import { type ReactElement, useState } from "react";
 
 import { Button } from "@mui/material";
 
-import { useCreateSchema } from "@app/lib/hooks";
+import { AxisEditorModal } from "./axis-editor-modal";
 
 const BUTTON_LABEL = "Add schema to group";
-const PROTO_FIRST_LADDER = [21, 15, 9];
 
 type AddTrackButtonProps = {
   planId: string;
@@ -22,40 +21,29 @@ export const AddTrackButton: React.FC<AddTrackButtonProps> = ({
   blockId,
   groupId,
 }): ReactElement => {
-  const createSchema = useCreateSchema(planId, startDate);
-  const isFiredRef = useRef(false);
-
-  const handleClick = () => {
-    if (isFiredRef.current || createSchema.isPending) {
-      return;
-    }
-
-    isFiredRef.current = true;
-    createSchema.mutate(
-      {
-        blockId,
-        groupId,
-        composition: { repetition: { kind: "ladder", steps: PROTO_FIRST_LADDER } },
-        header: null,
-        notes: null,
-      },
-      {
-        onSettled: () => {
-          isFiredRef.current = false;
-        },
-      },
-    );
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Button
-      size="tiny"
-      variant="text"
-      onClick={handleClick}
-      disabled={createSchema.isPending}
-      sx={{ alignSelf: "flex-start" }}
-    >
-      {BUTTON_LABEL}
-    </Button>
+    <>
+      <Button
+        size="tiny"
+        variant="text"
+        onClick={() => setIsOpen(true)}
+        disabled={isOpen}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {BUTTON_LABEL}
+      </Button>
+
+      {isOpen && (
+        <AxisEditorModal
+          open
+          onClose={() => setIsOpen(false)}
+          planId={planId}
+          startDate={startDate}
+          mode={{ kind: "create", blockId, groupId }}
+        />
+      )}
+    </>
   );
 };

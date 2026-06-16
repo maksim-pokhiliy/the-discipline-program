@@ -25,7 +25,7 @@ const EDIT_SUBMIT = "Save";
 const FLAT_KIND = "flat";
 
 export type AxisEditorMode =
-  | { kind: "create"; blockId: string }
+  | { kind: "create"; blockId: string; groupId?: string }
   | { kind: "edit"; schema: SchemaWithBody };
 
 type AxisEditorModalProps = {
@@ -47,7 +47,9 @@ const seedDraft = (mode: AxisEditorMode): SchemaDraft =>
   mode.kind === "create" ? defaultSchemaDraft() : schemaWithBodyToDraft(mode.schema);
 
 const modeKey = (mode: AxisEditorMode): string =>
-  mode.kind === "create" ? `create:${mode.blockId}` : `edit:${mode.schema.schema.id}`;
+  mode.kind === "create"
+    ? `create:${mode.blockId}:${mode.groupId ?? ""}`
+    : `edit:${mode.schema.schema.id}`;
 
 export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   open,
@@ -109,6 +111,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     createSchema.mutate(
       {
         blockId: createMode.blockId,
+        ...(createMode.groupId !== undefined && { groupId: createMode.groupId }),
         composition: result.composition,
         header: schema.header,
         intensity: schema.intensity ?? null,

@@ -1,23 +1,25 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
-const createSchemaMutate = vi.fn();
-const createSchemaState = { isPending: false };
+import type { AxisEditorMode } from "./axis-editor-modal";
 
-vi.mock("@app/lib/hooks", async () => {
-  const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
+const axisEditorProps = vi.fn<(props: { mode: AxisEditorMode }) => void>();
 
-  return {
-    ...actual,
-    useCreateSchema: () => ({
-      mutate: createSchemaMutate,
-      isPending: createSchemaState.isPending,
-    }),
-  };
-});
+vi.mock("./axis-editor-modal", () => ({
+  AxisEditorModal: (props: { mode: AxisEditorMode; onClose: () => void }) => {
+    axisEditorProps(props);
+
+    return (
+      <div role="dialog" aria-label="Add schema">
+        <button type="button" onClick={props.onClose}>
+          close
+        </button>
+      </div>
+    );
+  },
+}));
 
 const { AddTrackButton } = await import("./add-track-button");
 
@@ -38,49 +40,46 @@ const renderButton = () =>
   );
 
 afterEach(() => {
-  createSchemaMutate.mockReset();
-  createSchemaState.isPending = false;
+  axisEditorProps.mockReset();
 });
 
 describe("AddTrackButton", () => {
-  it("renders the Add track trigger and opens no modal", () => {
+  it("renders the trigger and opens no modal initially", () => {
     renderButton();
 
     expect(screen.getByRole("button", { name: BUTTON_LABEL })).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("instantly creates a default ladder schema carrying groupId and blockId on click (FORK-1a)", () => {
+  it("opens AxisEditorModal in create mode carrying blockId and groupId on click", () => {
     renderButton();
 
     fireEvent.click(screen.getByRole("button", { name: BUTTON_LABEL }));
 
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(axisEditorProps).toHaveBeenCalledTimes(1);
+    expect(axisEditorProps.mock.calls[0]?.[0]?.mode).toEqual({
+      kind: "create",
       blockId: BLOCK_ID,
       groupId: GROUP_ID,
-      composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-      header: null,
-      notes: null,
     });
   });
 
-  it("disables the trigger while a create is pending", () => {
-    createSchemaState.isPending = true;
-
+  it("disables the trigger while the modal is open", () => {
     renderButton();
+
+    fireEvent.click(screen.getByRole("button", { name: BUTTON_LABEL }));
 
     expect(screen.getByRole("button", { name: BUTTON_LABEL })).toBeDisabled();
   });
 
-  it("fires a single create on a synchronous double-click (QA-102)", () => {
+  it("closes the modal and re-enables the trigger when the modal requests close", () => {
     renderButton();
 
-    const trigger = screen.getByRole("button", { name: BUTTON_LABEL });
+    fireEvent.click(screen.getByRole("button", { name: BUTTON_LABEL }));
+    fireEvent.click(screen.getByRole("button", { name: "close" }));
 
-    fireEvent.click(trigger);
-    fireEvent.click(trigger);
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: BUTTON_LABEL })).toBeEnabled();
   });
 });
