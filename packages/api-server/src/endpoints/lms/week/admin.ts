@@ -5,6 +5,7 @@ import {
   type CloneWeekFromRequest,
   type CloneWeekResponse,
   type GetWeekResponse,
+  type PopulatedWeeksResponse,
   type UpdateWeekNotesData,
   type Week,
 } from "@repo/contracts/lms/week";
@@ -12,7 +13,7 @@ import { BadRequestError } from "@repo/errors";
 
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { mapToDaySlot, mapToWeek } from "../../../mappers/lms";
+import { mapToDaySlot, mapToPopulatedWeek, mapToWeek } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 import {
   DAY_OF_WEEK_TO_PRISMA,
@@ -102,6 +103,22 @@ export const lmsWeekApi = {
       );
 
       return { week: week ? mapToWeek(week) : null, days };
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Week" });
+    }
+  },
+
+  listPopulatedWeeks: async (userId: string, planId: string): Promise<PopulatedWeeksResponse> => {
+    await verifyPlanOwnership(planId, userId);
+
+    try {
+      const weeks = await prisma.week.findMany({
+        where: { planId, days: { some: { sessions: { some: {} } } } },
+        orderBy: { startDate: "desc" },
+        include: { days: { include: { _count: { select: { sessions: true } } } } },
+      });
+
+      return { weeks: weeks.map(mapToPopulatedWeek) };
     } catch (error) {
       return handlePrismaError(error, { entity: "Week" });
     }

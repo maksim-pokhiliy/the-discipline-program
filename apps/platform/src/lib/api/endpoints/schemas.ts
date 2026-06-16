@@ -22,6 +22,13 @@ export const createSchemasAPI = (client: ApiClient) => ({
   delete: (planId: string, schemaId: string): Promise<void> =>
     client.requestNoContent(`/api/platform/training-plans/${planId}/schemas/${schemaId}`, "DELETE"),
 
+  duplicate: (planId: string, schemaId: string): Promise<Schema> =>
+    client.request(
+      `/api/platform/training-plans/${planId}/schemas/${schemaId}/duplicate`,
+      "POST",
+      {},
+    ),
+
   reorder: (planId: string, data: ReorderSchemasRequest): Promise<{ schemas: Schema[] }> =>
     client.request(`/api/platform/training-plans/${planId}/schemas/reorder`, "PUT", data),
 });

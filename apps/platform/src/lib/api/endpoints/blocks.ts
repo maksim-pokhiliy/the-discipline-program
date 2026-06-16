@@ -21,6 +21,13 @@ export const createBlocksAPI = (client: ApiClient) => ({
   delete: (planId: string, blockId: string): Promise<void> =>
     client.requestNoContent(`/api/platform/training-plans/${planId}/blocks/${blockId}`, "DELETE"),
 
+  duplicate: (planId: string, blockId: string): Promise<Block> =>
+    client.request(
+      `/api/platform/training-plans/${planId}/blocks/${blockId}/duplicate`,
+      "POST",
+      {},
+    ),
+
   reorder: (
     planId: string,
     sessionId: string,

@@ -15,6 +15,7 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | D-5 PROFILE-SCOPE           | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                             | RATIFIED |
 | D-6 R1-CLONE-UX             | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day          | RATIFIED |
 | D-7 PROFILE-SCHEMA-EXTENDED | Coach profile schema EXPANDED — CoachCredential + location/specialties (supersedes D-5 no-expand) | RATIFIED |
+| D-8 CLONE-SOURCE-PICKER     | Source-picker = content-anchored list backed by a new `GET …/weeks`; DR-8/DR-3/DR-4 sub-calls     | RATIFIED |
 
 ---
 
@@ -91,3 +92,13 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
   - **D-7e** Profile hooks = `useQuery` page-data + `useOptimisticMutation`; credentials = hand-rolled mutations invalidating the page-data key (not `createCrudHooks`). **D-7f** Self-edit PUT = bespoke `selfUpdateCoachProfileSchema` (no `role`/`email`/`coachIds`/`tokenVersion`). **D-7g** `year` upper bound validated dynamically in the endpoint. **D-7h** Credentials hard-delete. **D-7i** Contract tests = `safeParse` accept/reject.
 - **Page-data GET** returns `{user, profile, credentials, trackRecord{monthsActive, athletesCoached, plansAuthored}}` — the 3 track-record numbers are honestly derived from live data; "Sessions delivered" / integrations / notifications explicitly OUT (façade-over-absent-infra).
 - **Links.** D-5 (superseded clause); the wave-P feature PR (`feat/coach-profile`); `.feature-dev/1781547787/{design,plan}.md`.
+
+### D-8 CLONE-SOURCE-PICKER — week/day source-picker = content-anchored list backed by a new read endpoint
+
+- **Status:** RATIFIED (2026-06-15, R1b research stage; owner delegated — "включай сервер в скоуп, делай то что чище... скоуп не решающий критерий. решай ты сам"). _(Renumbered from D-7 → D-8 at the R1b↔P merge: wave P's D-7 PROFILE-SCHEMA-EXTENDED landed in main first via PR #273.)_
+- **Decision.** The week/day clone-from source-picker is a **content-anchored list of the plan's populated weeks**, backed by a NEW read endpoint **`GET /api/platform/training-plans/[planId]/weeks`** → `{ startDate, sessionCount, dayCount }[]`, most-recent-first, no cap, `verifyPlanOwnership`-guarded. The day picker reuses the SAME week-list (pick a source week) + the existing single-week fetch (pick a day from its 7) — no separate list-days endpoint. NOT the date-picker workaround originally floored as buildable-against-main.
+- **Why this overrode R1b's "server is OUT" red line.** Stage-1 research found `r1-clone-design.md` §3 + the runner-prompt acceptance ("the picker LISTS the plan's weeks") **unbuildable against main**: no list-weeks route/hook/key exists; weeks are calendar-keyed `(planId, startDate)` rows, fetched one at a time, lazily upserted; `TrainingPlan` has no span — the plan has no enumerable week-set, it is an unbounded calendar where some Mondays carry content. D-6.4 was ratified without knowing it needed a server capability that did not exist. The owner lifted scope-preservation as the deciding criterion.
+- **Rationale (cleaner/correct, not scope-minimal).** (1) Coach UX: content recall ("Week of Jun 9 — 5 sessions") beats date recall — `[[coach-daily-ux-priority]]`. (2) Domain fit: "weeks with content" is a finite, meaningful set; the list self-bounds to valid sources. (3) Low risk + DRY: a standalone aggregate READ; one endpoint serves both flows; does NOT touch the frozen deep-clone engine or any primitive mutation path.
+- **Sub-calls confirmed at Gate A.** **DR-8 (refines D-6.2):** weeks block empty sources STRUCTURALLY (only populated weeks listed); days keep the disabled-row + "Empty — nothing to clone" tag. The defensive `cloned:false / empty-source` union arm is RETAINED as a race backstop. **DR-3:** `dayCount` = days-with-≥1-session. **DR-4:** the endpoint emits `startDate` as a UTC-safe `YYYY-MM-DD`.
+- **Reversibility.** Additive endpoint — a fallback to the date-picker drops the endpoint + the two list components but keeps the modals. Two-way door.
+- **Links.** `r1-clone-design.md` §3 (superseded presentation); D-6.2/D-6.4 (the UX calls this realizes/refines).

@@ -2,6 +2,7 @@
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { Box, IconButton, Stack, Tooltip } from "@mui/material";
@@ -13,6 +14,8 @@ import { LabelPickerChip } from "@repo/ui";
 const DRAG_ARIA = "Drag block";
 const DELETE_ARIA = "Delete block";
 const DELETE_TOOLTIP = "Delete block";
+const DUPLICATE_ARIA = "Duplicate block";
+const DUPLICATE_TOOLTIP = "Duplicate block";
 const LABELS_ARIA = "Block labels";
 
 const tooltipChildSx = { display: "inline-flex" };
@@ -28,6 +31,7 @@ type BlockCardHeadProps = {
   dragListeners: DraggableSyntheticListeners;
   onLabelsChange: (labelIds: string[]) => void;
   onDeleteOpen: () => void;
+  onDuplicate?: () => void;
 };
 
 export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
@@ -41,6 +45,7 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
   dragListeners,
   onLabelsChange,
   onDeleteOpen,
+  onDuplicate,
 }) => (
   <Stack
     direction="row"
@@ -108,6 +113,20 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
         ariaLabel={LABELS_ARIA}
       />
     </Stack>
+
+    <Tooltip title={DUPLICATE_TOOLTIP}>
+      <Box component="span" style={tooltipChildSx}>
+        <IconButton
+          size="small"
+          onClick={onDuplicate}
+          disabled={isMutationPending}
+          aria-busy={isMutationPending}
+          aria-label={DUPLICATE_ARIA}
+        >
+          <ContentCopyIcon fontSize="small" />
+        </IconButton>
+      </Box>
+    </Tooltip>
 
     <Tooltip title={DELETE_TOOLTIP}>
       <Box component="span" style={tooltipChildSx}>

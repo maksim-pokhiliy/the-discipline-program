@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
@@ -13,8 +14,14 @@ import { Box, Checkbox, IconButton, Link, Tooltip, Typography } from "@mui/mater
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useCatalog, useDeleteSchemaRow } from "@app/lib/hooks";
+import {
+  useCatalog,
+  useCloneHighlight,
+  useDeleteSchemaRow,
+  useDuplicateSchemaRow,
+} from "@app/lib/hooks";
 
+import { cloneHighlightSx } from "../lib/clone-highlight-sx";
 import { formatRow } from "../lib/format-row";
 import { rowSortableId } from "../lib/row-item-sortable-id";
 
@@ -24,7 +31,7 @@ import { SchemaRowCardBody } from "./schema-row-card-body";
 
 const COL_ORD = "24px";
 const COL_BODY = "1fr";
-const COL_ACTIONS = "auto auto auto";
+const COL_ACTIONS = "auto auto auto auto";
 
 const gridTemplateFor = (isSelectMode: boolean, isDraggable: boolean): string => {
   const lead = isSelectMode ? "auto" : isDraggable ? "24px" : null;
@@ -45,6 +52,8 @@ const DELETE_MESSAGE = "Delete this row?";
 const DRAG_ARIA = "Drag row";
 const EDIT_ARIA = "Edit row";
 const EDIT_TOOLTIP = "Edit row";
+const DUPLICATE_ARIA = "Duplicate row";
+const DUPLICATE_TOOLTIP = "Duplicate row";
 const DELETE_ARIA = "Delete row";
 const DELETE_TOOLTIP = "Delete row";
 const SELECT_ARIA = "Select row";
@@ -79,9 +88,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   onToggleSelect,
 }) => {
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
+  const duplicateSchemaRow = useDuplicateSchemaRow(planId, startDate);
   const { exerciseById } = useCatalog();
+  const { markCloned, isHighlighted, setNode } = useCloneHighlight(row.id);
 
-  const isMutationPending = deleteSchemaRow.isPending || isReorderPending;
+  const isMutationPending =
+    deleteSchemaRow.isPending || duplicateSchemaRow.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: rowSortableId(row.id),
@@ -100,6 +112,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const handleDeleteConfirm = () =>
     deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: handleDeleteClose });
 
+  const handleDuplicate = () =>
+    duplicateSchemaRow.mutate(
+      { schemaRowId: row.id },
+      { onSuccess: (created) => markCloned(created.id) },
+    );
+
   const style = {
     transform: isDragging ? undefined : CSS.Transform.toString(transform),
     transition,
@@ -108,20 +126,26 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
 
   return (
     <Box
-      ref={setNodeRef}
+      ref={(node: HTMLDivElement | null) => {
+        setNodeRef(node);
+        setNode(node);
+      }}
       style={style}
-      sx={(theme) => ({
-        display: "grid",
-        gridTemplateColumns: gridTemplateFor(isSelectMode, isDraggable),
-        gap: theme.spacing(GRID_GAP_FACTOR),
-        alignItems: "center",
-        px: theme.spacing(PADDING_X_FACTOR),
-        borderBottom: 1,
-        borderColor: "divider",
-        transition: TRANSITION_BG,
-        "&:hover": { bgcolor: "action.hover" },
-        "&:last-of-type": { borderBottom: 0 },
-      })}
+      sx={[
+        (theme) => ({
+          display: "grid",
+          gridTemplateColumns: gridTemplateFor(isSelectMode, isDraggable),
+          gap: theme.spacing(GRID_GAP_FACTOR),
+          alignItems: "center",
+          px: theme.spacing(PADDING_X_FACTOR),
+          borderBottom: 1,
+          borderColor: "divider",
+          transition: TRANSITION_BG,
+          "&:hover": { bgcolor: "action.hover" },
+          "&:last-of-type": { borderBottom: 0 },
+        }),
+        cloneHighlightSx(isHighlighted),
+      ]}
     >
       {isSelectMode ? (
         <Checkbox
@@ -208,6 +232,20 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
             aria-label={EDIT_ARIA}
           >
             <TuneIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={handleDuplicate}
+            disabled={isMutationPending}
+            aria-busy={isMutationPending}
+            aria-label={DUPLICATE_ARIA}
+          >
+            <ContentCopyIcon fontSize="small" />
           </IconButton>
         </Box>
       </Tooltip>

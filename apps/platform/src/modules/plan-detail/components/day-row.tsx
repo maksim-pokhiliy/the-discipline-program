@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
-import { alpha, Box, IconButton, Stack } from "@mui/material";
+import { alpha, Box, IconButton, Stack, Tooltip } from "@mui/material";
 
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
 import { DAY_CONSTANTS, type SessionWithLabel } from "@repo/contracts/lms/day";
@@ -15,6 +16,7 @@ import { LabelPickerChip } from "@repo/ui";
 import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
 
 import { AddSessionButton } from "./add-session-button";
+import { CloneDayModal } from "./clone-day-modal";
 import { DayRowEmpty } from "./day-row-empty";
 import { DayRowHead } from "./day-row-head";
 import { DayRowRest } from "./day-row-rest";
@@ -24,6 +26,10 @@ import { SessionList } from "./session-list";
 
 const DAY_HEAD_WIDTH_PX = 96;
 const TODAY_BG_ALPHA = 0.025;
+const CLONE_DAY_ARIA = "Clone a day into this day";
+const CLONE_DAY_TOOLTIP = "Clone a day into this day";
+
+const tooltipChildSx = { display: "inline-flex" };
 
 type DayRowProps = {
   date: Date;
@@ -49,6 +55,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   const dayOptions = useLabelOptions("DAY");
 
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isCloneDayOpen, setIsCloneDayOpen] = useState<boolean>(false);
   const toggleExpanded = () => setIsExpanded((previous) => !previous);
 
   const isToday = isSameDay(date, new Date());
@@ -88,19 +95,33 @@ export const DayRow: React.FC<DayRowProps> = ({
               maxLength={DAY_CONSTANTS.MAX_NOTES_LENGTH}
             />
           </Box>
-          {hasSessions ? (
-            <IconButton
-              size="small"
-              onClick={toggleExpanded}
-              aria-label={isExpanded ? "Collapse day" : "Expand day"}
-            >
-              {isExpanded ? (
-                <UnfoldLessIcon fontSize="small" />
-              ) : (
-                <UnfoldMoreIcon fontSize="small" />
-              )}
-            </IconButton>
-          ) : null}
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Tooltip title={CLONE_DAY_TOOLTIP}>
+              <Box component="span" style={tooltipChildSx}>
+                <IconButton
+                  size="small"
+                  onClick={() => setIsCloneDayOpen(true)}
+                  aria-label={CLONE_DAY_ARIA}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Tooltip>
+
+            {hasSessions ? (
+              <IconButton
+                size="small"
+                onClick={toggleExpanded}
+                aria-label={isExpanded ? "Collapse day" : "Expand day"}
+              >
+                {isExpanded ? (
+                  <UnfoldLessIcon fontSize="small" />
+                ) : (
+                  <UnfoldMoreIcon fontSize="small" />
+                )}
+              </IconButton>
+            ) : null}
+          </Stack>
         </Stack>
 
         {isRest ? (
@@ -121,6 +142,15 @@ export const DayRow: React.FC<DayRowProps> = ({
           />
         )}
       </Stack>
+
+      <CloneDayModal
+        open={isCloneDayOpen}
+        onClose={() => setIsCloneDayOpen(false)}
+        planId={planId}
+        targetStartDate={startDate}
+        targetDayOfWeek={dayOfWeek}
+        currentSessionCount={sessions.length}
+      />
     </Box>
   );
 };

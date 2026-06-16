@@ -9,7 +9,14 @@ import { Stack } from "@mui/material";
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
+import {
+  useCloneHighlight,
+  useDeleteSession,
+  useDuplicateSession,
+  useUpdateSession,
+} from "@app/lib/hooks";
+
+import { cloneHighlightSx } from "../lib/clone-highlight-sx";
 
 import { BlockList } from "./block-list";
 import { SessionCardHead } from "./session-card-head";
@@ -34,8 +41,14 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 }) => {
   const updateSession = useUpdateSession(planId, startDate);
   const deleteSession = useDeleteSession(planId, startDate);
+  const duplicateSession = useDuplicateSession(planId, startDate);
+  const { markCloned, isHighlighted, setNode } = useCloneHighlight(session.id);
 
-  const isMutationPending = updateSession.isPending || deleteSession.isPending || isReorderPending;
+  const isMutationPending =
+    updateSession.isPending ||
+    deleteSession.isPending ||
+    duplicateSession.isPending ||
+    isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: session.id,
@@ -64,6 +77,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     deleteSession.mutate({ sessionId: session.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
 
+  const handleDuplicate = () =>
+    duplicateSession.mutate(
+      { sessionId: session.id },
+      { onSuccess: (created) => markCloned(created.id) },
+    );
+
   const style = {
     transform: isDragging ? undefined : CSS.Transform.toString(transform),
     transition,
@@ -74,16 +93,22 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 
   return (
     <Stack
-      ref={setNodeRef}
+      ref={(node: HTMLDivElement | null) => {
+        setNodeRef(node);
+        setNode(node);
+      }}
       style={style}
       direction="column"
-      sx={(theme) => ({
-        bgcolor: "background.paper",
-        border: 1,
-        borderColor: "divider",
-        borderRadius: theme.spacing(0.5),
-        overflow: "hidden",
-      })}
+      sx={[
+        (theme) => ({
+          bgcolor: "background.paper",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: theme.spacing(0.5),
+          overflow: "hidden",
+        }),
+        cloneHighlightSx(isHighlighted),
+      ]}
     >
       <SessionCardHead
         session={session}
@@ -92,6 +117,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         onLabelChange={handleLabelChange}
         onNotesCommit={handleNotesCommit}
         onDeleteOpen={handleDeleteOpen}
+        onDuplicate={handleDuplicate}
         dragAttributes={attributes}
         dragListeners={listeners}
         isMutationPending={isMutationPending}

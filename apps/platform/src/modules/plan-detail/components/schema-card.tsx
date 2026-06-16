@@ -9,9 +9,15 @@ import { Stack } from "@mui/material";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
+import {
+  useCloneHighlight,
+  useDeleteSchema,
+  useDuplicateSchema,
+  useUpdateSchema,
+} from "@app/lib/hooks";
 
 import { schemaSortableId } from "../lib/block-item-sortable-id";
+import { cloneHighlightSx } from "../lib/clone-highlight-sx";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
 import { AxisEditorModal } from "./axis-editor-modal";
@@ -49,9 +55,14 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
+  const duplicateSchema = useDuplicateSchema(planId, startDate);
+  const { markCloned, isHighlighted, setNode } = useCloneHighlight(schema.schema.id);
 
   const isMutationPending =
-    updateSchema.isPending || deleteSchema.isPending || parentIsReorderPending;
+    updateSchema.isPending ||
+    deleteSchema.isPending ||
+    duplicateSchema.isPending ||
+    parentIsReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: schemaSortableId(schema.schema.id),
@@ -67,6 +78,12 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   const handleDeleteOpen = () => setIsDeleteOpen(true);
   const handleEditOpen = () => setIsEditOpen(true);
   const handleEditClose = () => setIsEditOpen(false);
+
+  const handleDuplicate = () =>
+    duplicateSchema.mutate(
+      { schemaId: schema.schema.id },
+      { onSuccess: (created) => markCloned(created.id) },
+    );
 
   const handleDeleteConfirm = () =>
     deleteSchema.mutate(
@@ -95,16 +112,22 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
   return (
     <Stack
-      ref={setNodeRef}
+      ref={(node: HTMLDivElement | null) => {
+        setNodeRef(node);
+        setNode(node);
+      }}
       style={style}
       direction="column"
-      sx={(theme) => ({
-        bgcolor: "background.paper",
-        border: 1,
-        borderColor: "divider",
-        borderRadius: theme.spacing(OUTER_BORDER_RADIUS_FACTOR),
-        overflow: "hidden",
-      })}
+      sx={[
+        (theme) => ({
+          bgcolor: "background.paper",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: theme.spacing(OUTER_BORDER_RADIUS_FACTOR),
+          overflow: "hidden",
+        }),
+        cloneHighlightSx(isHighlighted),
+      ]}
     >
       <SchemaCardHead
         schema={schema}
@@ -114,6 +137,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onTitleCommit={handleTitleCommit}
         onDeleteOpen={handleDeleteOpen}
         onEditOpen={handleEditOpen}
+        onDuplicate={handleDuplicate}
         isExpanded={isExpanded}
         onToggleExpanded={toggleExpanded}
         isBoxed={isBoxed}

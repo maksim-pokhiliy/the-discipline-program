@@ -1,9 +1,18 @@
 "use client";
 
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
-import type { DaySlot, UpdateDayLabelData, UpdateDayNotesData } from "@repo/contracts/lms/day";
+import type {
+  CloneDayResponse,
+  DaySlot,
+  UpdateDayLabelData,
+  UpdateDayNotesData,
+} from "@repo/contracts/lms/day";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 import { useWeekMutation } from "./use-week-mutation";
 
@@ -24,3 +33,30 @@ export const useUpdateDayNotes = (planId: string, startDate: string, dayOfWeek: 
     successMessage: "Day notes saved",
     errorMessage: "Failed to save day notes",
   });
+
+export const useCloneDayFrom = (
+  planId: string,
+  startDate: string,
+  dayOfWeek: DayOfWeek,
+): UseMutationResult<
+  CloneDayResponse,
+  Error,
+  { sourceStartDate: string; sourceDayOfWeek: DayOfWeek }
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sourceStartDate, sourceDayOfWeek }) =>
+      api.dayMetadata.cloneFrom(planId, startDate, dayOfWeek, { sourceStartDate, sourceDayOfWeek }),
+    onSuccess: (result) => {
+      if (result.cloned) {
+        queryClient.invalidateQueries({
+          queryKey: platformKeys.weeks.byDate(planId, startDate),
+        });
+      }
+    },
+    onError: (error: Error) => {
+      notifyError(error, "Couldn't clone — try again.");
+    },
+  });
+};

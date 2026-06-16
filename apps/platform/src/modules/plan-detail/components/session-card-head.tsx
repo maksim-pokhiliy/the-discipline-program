@@ -2,6 +2,7 @@
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ScheduleIcon from "@mui/icons-material/Schedule";
@@ -19,6 +20,8 @@ import { SessionCardCollapsedStats } from "./session-card-collapsed-stats";
 const DRAG_ARIA = "Drag session";
 const DELETE_ARIA = "Delete session";
 const DELETE_TOOLTIP = "Delete session";
+const DUPLICATE_ARIA = "Duplicate session";
+const DUPLICATE_TOOLTIP = "Duplicate session";
 
 const tooltipChildSx = { display: "inline-flex" };
 
@@ -29,6 +32,7 @@ type SessionCardHeadProps = {
   onLabelChange: (labelId: string | null) => void;
   onNotesCommit: (next: string[] | null) => void;
   onDeleteOpen: () => void;
+  onDuplicate?: () => void;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
   isMutationPending: boolean;
@@ -41,6 +45,7 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
   onLabelChange,
   onNotesCommit,
   onDeleteOpen,
+  onDuplicate,
   dragAttributes,
   dragListeners,
   isMutationPending,
@@ -125,6 +130,20 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
       </Box>
 
       {!isExpanded && hasBlocks ? <SessionCardCollapsedStats blockCount={blockCount} /> : null}
+
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDuplicate}
+            disabled={isMutationPending}
+            aria-busy={isMutationPending}
+            aria-label={DUPLICATE_ARIA}
+          >
+            <ContentCopyIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
 
       <Tooltip title={DELETE_TOOLTIP}>
         <Box component="span" style={tooltipChildSx}>

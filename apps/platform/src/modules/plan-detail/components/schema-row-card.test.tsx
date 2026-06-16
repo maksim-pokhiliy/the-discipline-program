@@ -22,6 +22,8 @@ import {
 
 const deleteSchemaRowMutate = vi.fn();
 const deleteSchemaRowState = { isPending: false };
+const duplicateSchemaRowMutate = vi.fn();
+const duplicateSchemaRowState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -31,6 +33,10 @@ vi.mock("@app/lib/hooks", async () => {
     useDeleteSchemaRow: () => ({
       mutate: deleteSchemaRowMutate,
       isPending: deleteSchemaRowState.isPending,
+    }),
+    useDuplicateSchemaRow: () => ({
+      mutate: duplicateSchemaRowMutate,
+      isPending: duplicateSchemaRowState.isPending,
     }),
   };
 });
@@ -52,6 +58,7 @@ const { SchemaRowCard } = await import("./schema-row-card");
 
 const DRAG_LABEL = "Drag row";
 const EDIT_LABEL = "Edit row";
+const DUPLICATE_LABEL = "Duplicate row";
 const DELETE_LABEL = "Delete row";
 
 type RenderOptions = {
@@ -84,16 +91,18 @@ const renderRowCard = ({
 afterEach(() => {
   deleteSchemaRowState.isPending = false;
   deleteSchemaRowMutate.mockReset();
+  duplicateSchemaRowState.isPending = false;
+  duplicateSchemaRowMutate.mockReset();
 });
 
 describe("SchemaRowCard chrome", () => {
-  it("renders the outer 6-column grid with the documented template (D-01)", () => {
+  it("renders the outer 7-column grid with the documented template (D-01)", () => {
     const { container } = renderRowCard();
     const shell = container.firstChild;
 
     expect(shell).toHaveStyle({
       display: "grid",
-      gridTemplateColumns: "24px 24px 1fr auto auto auto",
+      gridTemplateColumns: "24px 24px 1fr auto auto auto auto",
     });
   });
 
@@ -233,6 +242,48 @@ describe("SchemaRowCard delete action", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(deleteSchemaRowMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("SchemaRowCard duplicate action (T4.3 / Must-Test #8)", () => {
+  it("renders the Duplicate IconButton after Edit and before Delete", () => {
+    renderRowCard();
+
+    const editBtn = screen.getByRole("button", { name: EDIT_LABEL });
+    const duplicateBtn = screen.getByRole("button", { name: DUPLICATE_LABEL });
+    const deleteBtn = screen.getByRole("button", { name: DELETE_LABEL });
+
+    expect(
+      editBtn.compareDocumentPosition(duplicateBtn) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(
+      duplicateBtn.compareDocumentPosition(deleteBtn) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  });
+
+  it("fires the self-owned useDuplicateSchemaRow.mutate with the row id when clicked", () => {
+    renderRowCard();
+
+    fireEvent.click(screen.getByRole("button", { name: DUPLICATE_LABEL }));
+
+    expect(duplicateSchemaRowMutate).toHaveBeenCalledTimes(1);
+    expect(duplicateSchemaRowMutate.mock.calls[0]?.[0]).toEqual({ schemaRowId: ROW_ID });
+  });
+
+  it("disables the Duplicate IconButton when useDuplicateSchemaRow is pending", () => {
+    duplicateSchemaRowState.isPending = true;
+
+    renderRowCard();
+
+    expect(screen.getByRole("button", { name: DUPLICATE_LABEL })).toBeDisabled();
+  });
+
+  it("disables the Duplicate IconButton when a sibling delete mutation is pending (all-lock)", () => {
+    deleteSchemaRowState.isPending = true;
+
+    renderRowCard();
+
+    expect(screen.getByRole("button", { name: DUPLICATE_LABEL })).toBeDisabled();
   });
 });
 

@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { dayOfWeekValues } from "../_shared";
 
-import { getWeekResponseSchema } from "./week-api.schema";
+import {
+  getWeekResponseSchema,
+  populatedWeekSchema,
+  populatedWeeksResponseSchema,
+} from "./week-api.schema";
 import { WEEK_CONSTANTS } from "./week.constants";
 import { updateWeekNotesSchema, weekSchema } from "./week.schema";
 
@@ -116,6 +120,85 @@ describe("getWeekResponseSchema (Step 6.2 — 7-day shape)", () => {
 
   it("rejects missing days field (legacy { week } shape — breaking change is enforced)", () => {
     const result = getWeekResponseSchema.safeParse({ week: null });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("populatedWeekSchema", () => {
+  it("accepts a valid populated-week summary", () => {
+    const result = populatedWeekSchema.safeParse({
+      startDate: "2026-06-09",
+      sessionCount: 5,
+      dayCount: 4,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts zero counts (a week that just lost its content)", () => {
+    const result = populatedWeekSchema.safeParse({
+      startDate: "2026-06-09",
+      sessionCount: 0,
+      dayCount: 0,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a malformed startDate (single-digit month/day)", () => {
+    const result = populatedWeekSchema.safeParse({
+      startDate: "2026-6-9",
+      sessionCount: 5,
+      dayCount: 4,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a negative sessionCount", () => {
+    const result = populatedWeekSchema.safeParse({
+      startDate: "2026-06-09",
+      sessionCount: -1,
+      dayCount: 4,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-integer dayCount", () => {
+    const result = populatedWeekSchema.safeParse({
+      startDate: "2026-06-09",
+      sessionCount: 5,
+      dayCount: 4.5,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("populatedWeeksResponseSchema", () => {
+  it("accepts an empty weeks array", () => {
+    const result = populatedWeeksResponseSchema.safeParse({ weeks: [] });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a non-empty weeks array of valid summaries", () => {
+    const result = populatedWeeksResponseSchema.safeParse({
+      weeks: [
+        { startDate: "2026-06-09", sessionCount: 5, dayCount: 4 },
+        { startDate: "2026-06-02", sessionCount: 2, dayCount: 1 },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a weeks array containing a malformed summary", () => {
+    const result = populatedWeeksResponseSchema.safeParse({
+      weeks: [{ startDate: "2026-6-9", sessionCount: 5, dayCount: 4 }],
+    });
 
     expect(result.success).toBe(false);
   });

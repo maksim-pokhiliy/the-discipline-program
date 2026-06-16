@@ -1,5 +1,7 @@
 "use client";
 
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+
 import type {
   AssignBlockLabelsData,
   Block,
@@ -7,8 +9,10 @@ import type {
   ReorderBlocksData,
   UpdateBlockData,
 } from "@repo/contracts/lms/block";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 import { useWeekMutation } from "./use-week-mutation";
 
@@ -56,3 +60,22 @@ export const useAssignBlockLabels = (planId: string, startDate: string) =>
     successMessage: "Block labels saved",
     errorMessage: "Failed to save block labels",
   });
+
+export const useDuplicateBlock = (
+  planId: string,
+  startDate: string,
+): UseMutationResult<Block, Error, { blockId: string }> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ blockId }) => api.blocks.duplicate(planId, blockId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: platformKeys.weeks.byDate(planId, startDate),
+      });
+    },
+    onError: (error: Error) => {
+      notifyError(error, "Couldn't duplicate — try again.");
+    },
+  });
+};

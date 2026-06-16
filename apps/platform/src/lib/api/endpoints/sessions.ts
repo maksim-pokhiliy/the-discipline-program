@@ -29,6 +29,13 @@ export const createSessionsAPI = (client: ApiClient) => ({
       "DELETE",
     ),
 
+  duplicate: (planId: string, sessionId: string): Promise<Session> =>
+    client.request(
+      `/api/platform/training-plans/${planId}/sessions/${sessionId}/duplicate`,
+      "POST",
+      {},
+    ),
+
   reorder: (
     planId: string,
     startDate: string,

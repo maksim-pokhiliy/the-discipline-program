@@ -48,6 +48,15 @@ Append-only. One entry per session/step.
 - **R1b prompt written** (`r1b-editor-runner-prompt.md`) — the clone editor-UX (the visible half). Flagged: **PR #271 reworked the plan-detail components, so `r1-clone-design.md` §2's insertion-point file:line are stale → R1b research must re-verify them.**
 - **Next:** R1b (`/feature`), then P / G / A-known / R2-slot.
 
+## 2026-06-15 — R1b clone editor-UX BUILT + walkthrough PASSED (`/feature`, `feat/coach-station-r1b`)
+
+- **6 commits:** `0f1f7b45` client+server layer (the D-8 `GET …/weeks` read endpoint + contract + the 6 write client methods/hooks) · `91e883c5` duplicate affordances (session/block/schema/row + boxed members) · `192c80d6` clone-from flow (week/day source-pickers + danger confirm + scroll/highlight) · `91031f00` review/QA warning fixes · `b1116a29` jsdom suite + harness fix · `7460f907` clone-week trigger tweaks (left of the calendar + label "Clone into this week").
+- **Pipeline.** Research RE-VERIFIED the insertion points against current main (PR #271 had moved them — the week trigger lifted to `PlanDetailView`, the day trigger to `day-row.tsx`, NOT the presentational heads; `isBoxed` is a dead prop, member-clone is the same button). **D-8 surfaced + ratified at research:** the ratified list-picker (§3 / D-6.4) was unbuildable against main (no enumerable week-set) → owner lifted "server is OUT" → added the `GET …/weeks` read endpoint. Design+Plan (Gate A: 26 tasks / 4 phases; DR-8/DR-3/DR-4 confirmed) → implement (Phase 1 backend-read then client-layer; Phase 2 four floors ∥; Phase 3 flow then highlight) → Review **B+** / QA **B−**, **0 CRITICAL**.
+- **Review/QA.** Destructive core proven safe (atomic tx, source-read-before-delete, empty-source guard fires before any delete, IDOR closed via `verifyPlanOwnership`). Fixed every WARNING (`91031f00`): QA-003 (highlight clock re-anchored to node-mount), QA-005/REL-001 (provider timer leak), QA-008 (day-flow Back stale-week + loading guard), QA-001-day (server count), QA-007 (target week excluded from the week picker), QA-006 (reduced-motion no-flash), CODE-001. Accepted INFO: QA-001-week, QA-002 (toast-in-modal split), QA-009/010 (race-only). Full dispositions in `deferred.md`.
+- **Tests.** Harness fix (`render.tsx` + `QueryClientProvider retry:false` + `CloneHighlightProvider`) recovered 123 red card tests; +38 new. **Platform jsdom 790/790; contracts green.**
+- **Acceptance: owner browser walkthrough PASSED** ("потестировал в браузере, всё нравится") — the jsdom-blind pointer/modal/scroll/highlight gate. **The R1 clone pillar is DONE** (engine R1a in main + UI R1b).
+- **Next.** Open the R1b PR (this close-out rides in it) → wave P.
+
 ## 2026-06-15 — P coach-profile UI BUILT (`/feature`, isolated worktree `feat/coach-profile`)
 
 - **Context.** Wave P built in parallel with R1b (separate worktree). Full vertical slice for `/coach/profile` — the prototype's "Athlete's eye" identity surface — over the FROZEN primitive, never touching plan-detail/clone (R1b's territory).

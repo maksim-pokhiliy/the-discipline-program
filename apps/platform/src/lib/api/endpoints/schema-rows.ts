@@ -23,6 +23,13 @@ export const createSchemaRowsAPI = (client: ApiClient) => ({
       "DELETE",
     ),
 
+  duplicate: (planId: string, schemaRowId: string): Promise<SchemaRow> =>
+    client.request(
+      `/api/platform/training-plans/${planId}/schema-rows/${schemaRowId}/duplicate`,
+      "POST",
+      {},
+    ),
+
   reorder: (planId: string, data: ReorderSchemaRowsRequest): Promise<{ schemaRows: SchemaRow[] }> =>
     client.request(`/api/platform/training-plans/${planId}/schema-rows/reorder`, "PUT", data),
 });
