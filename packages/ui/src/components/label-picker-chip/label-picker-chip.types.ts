@@ -1,5 +1,7 @@
 import { type AppLevelValue, type Label } from "@repo/contracts/lms/label";
 
+import { type CreatableOption } from "../creatable-picker";
+
 type LabelPickerChipBaseProps = {
   options: Label[];
   level: AppLevelValue;
@@ -7,6 +9,7 @@ type LabelPickerChipBaseProps = {
   isLoading?: boolean;
   disabled?: boolean;
   ariaLabel?: string;
+  onCreateOption?: (typedName: string) => Promise<CreatableOption | null>;
 };
 
 type LabelPickerChipSingleProps = LabelPickerChipBaseProps & {
