@@ -50,6 +50,8 @@ export const progressAthleteSchema = z.object({
   name: z.string().nullable(),
   image: imageUrlSchema,
   processStatus: z.nativeEnum(ProcessStatus),
+  engagementPct: z.number().int().min(0).max(100).nullable().optional(),
+  weeklyDelta: z.number().int().nullable().optional(),
 });
 
 export const progressBucketsSchema = z.object({

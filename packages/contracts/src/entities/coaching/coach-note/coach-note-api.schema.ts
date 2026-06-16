@@ -4,6 +4,8 @@ import { coachNoteSchema, createCoachNoteSchema, updateCoachNoteSchema } from ".
 
 const noteIdParamSchema = z.object({ noteId: z.string().cuid() });
 
+export const getCoachNotesQuerySchema = z.object({ athleteId: z.string().cuid().optional() });
+
 export const getCoachNotesResponseSchema = z.array(coachNoteSchema);
 
 export const getCoachNoteByIdParamsSchema = noteIdParamSchema;
