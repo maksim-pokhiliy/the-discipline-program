@@ -12,6 +12,8 @@ import { NOTE_MAX_LENGTH } from "@repo/contracts/lms/_shared";
 import type { RowGroup } from "@repo/contracts/lms/row-group";
 import { InlineEditText } from "@repo/ui";
 
+import { MinutePill } from "./minute-pill";
+
 const HEAD_ACTION_ICON_PX = 17;
 const HEAD_SPACING = 1.25;
 const HEAD_PX = 1.5;
@@ -29,6 +31,7 @@ const tooltipChildSx = { display: "inline-flex" };
 type RowGroupBoxHeadProps = {
   group: RowGroup;
   ord: number;
+  minuteLabel: string | null;
   isUpdatePending: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -40,6 +43,7 @@ type RowGroupBoxHeadProps = {
 export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
   group,
   ord,
+  minuteLabel,
   isUpdatePending,
   dragAttributes,
   dragListeners,
@@ -81,6 +85,8 @@ export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
     <Typography variant="caption" sx={{ fontVariantNumeric: "tabular-nums", color: "text.subtle" }}>
       {ord}
     </Typography>
+
+    {minuteLabel !== null ? <MinutePill label={minuteLabel} /> : null}
 
     <InlineEditText
       value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}

@@ -98,6 +98,7 @@ export const CreatablePicker = (props: CreatablePickerProps) => {
     error,
     noOptionsText = DEFAULT_NO_OPTIONS_TEXT,
     size = "small",
+    open,
   } = props;
 
   const isMultiple = props.multiple === true;
@@ -189,6 +190,7 @@ export const CreatablePicker = (props: CreatablePickerProps) => {
       multiple={isMultiple}
       freeSolo
       openOnFocus
+      {...(open !== undefined && { open })}
       disableCloseOnSelect={isMultiple}
       disabled={disabled}
       size={size}

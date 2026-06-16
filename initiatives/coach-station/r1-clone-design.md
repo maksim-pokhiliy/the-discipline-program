@@ -6,30 +6,30 @@
 
 ## 1. The two clone semantics (D-4 recap)
 
-| Semantic | Floors | Gesture | Destructive? | Confirm? |
-| --- | --- | --- | --- | --- |
-| **Replace-into-current** | Week, Day | pick a SOURCE → replace the current's contents | YES (deletes current subtree) | YES (danger modal) |
-| **Duplicate-append** | Session, Block, Schema, Row | instant copy → end of the same parent | no | no |
-| **Group members** | schema-in-group, row-in-group | instant copy → end of the SAME group | no | no |
+| Semantic                 | Floors                        | Gesture                                        | Destructive?                  | Confirm?           |
+| ------------------------ | ----------------------------- | ---------------------------------------------- | ----------------------------- | ------------------ |
+| **Replace-into-current** | Week, Day                     | pick a SOURCE → replace the current's contents | YES (deletes current subtree) | YES (danger modal) |
+| **Duplicate-append**     | Session, Block, Schema, Row   | instant copy → end of the same parent          | no                            | no                 |
+| **Group members**        | schema-in-group, row-in-group | instant copy → end of the SAME group           | no                            | no                 |
 
 Whole groups are never cloned (D-4-C).
 
-**Copy = everything (D-6).** A clone reproduces the full source subtree verbatim — every field, every floor below — re-referencing the shared catalog. The ONLY thing not copied is the target's slot position (week `startDate` / day `dayOfWeek`). Nuance: a *subtree* clone (week/day/session/block) copies the `SchemaGroup` / `RowGroup` containers inside it too — "groups aren't cloned" (D-4-C) only means there is no standalone duplicate-a-whole-group affordance.
+**Copy = everything (D-6).** A clone reproduces the full source subtree verbatim — every field, every floor below — re-referencing the shared catalog. The ONLY thing not copied is the target's slot position (week `startDate` / day `dayOfWeek`). Nuance: a _subtree_ clone (week/day/session/block) copies the `SchemaGroup` / `RowGroup` containers inside it too — "groups aren't cloned" (D-4-C) only means there is no standalone duplicate-a-whole-group affordance.
 
 ## 2. Affordances per floor (where + control + icon)
 
 Recon insertion points are exact (file:line from the plan-editor recon). The per-element control is an `IconButton size="small"` + `Tooltip`, **`ContentCopyIcon`** (reads as "duplicate"; visually distinct from `TuneIcon` edit and `DeleteIcon`), placed **after edit, before delete** — delete stays last + `error.main` + spatially the terminal action (`destructive-nav-separation`).
 
-| Floor | Trigger location | Control | Behavior |
-| --- | --- | --- | --- |
-| **Week** | `week-navigator.tsx` action row (after the Today button, ~:69) | labelled button "Clone week…" (icon + text — a navigator card has room; discoverable, not icon-only) | opens the source-picker modal (week scope) |
-| **Day** | `day-row-head.tsx` head zone (~:103, near the day label/notes) | `IconButton` + `ContentCopyIcon`, tooltip "Clone a day into this one" | opens the source-picker modal (day scope) |
-| **Session** | `session-card-head.tsx` cluster, after Notes (~:125), before Delete (:129) | `IconButton` + `ContentCopyIcon`, tooltip "Duplicate session" | instant duplicate-append to the same day |
-| **Block** | `block-card-head.tsx`, between labels (:89) and Delete (:91) | same | instant duplicate-append to the same session |
-| **Schema** | `schema-card-head.tsx`, after Edit-axes `TuneIcon` (:136), before Delete (:138) | same | instant duplicate-append to the same block |
-| **Row** | `schema-row-card.tsx` grid action cols, after Edit (:214), before Delete (:216) | same (the `auto auto auto` grid already reserves action columns — add one) | instant duplicate-append to the same schema |
-| **Schema in group** | the boxed member's `schema-card-head.tsx` (when `isBoxed`) | same icon | instant duplicate-append to the **same group** |
-| **Row in group** | the member `schema-row-card.tsx` inside `RowGroupBox` | same icon | instant duplicate-append to the **same row-group** |
+| Floor               | Trigger location                                                                | Control                                                                                              | Behavior                                           |
+| ------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Week**            | `week-navigator.tsx` action row (after the Today button, ~:69)                  | labelled button "Clone week…" (icon + text — a navigator card has room; discoverable, not icon-only) | opens the source-picker modal (week scope)         |
+| **Day**             | `day-row-head.tsx` head zone (~:103, near the day label/notes)                  | `IconButton` + `ContentCopyIcon`, tooltip "Clone a day into this one"                                | opens the source-picker modal (day scope)          |
+| **Session**         | `session-card-head.tsx` cluster, after Notes (~:125), before Delete (:129)      | `IconButton` + `ContentCopyIcon`, tooltip "Duplicate session"                                        | instant duplicate-append to the same day           |
+| **Block**           | `block-card-head.tsx`, between labels (:89) and Delete (:91)                    | same                                                                                                 | instant duplicate-append to the same session       |
+| **Schema**          | `schema-card-head.tsx`, after Edit-axes `TuneIcon` (:136), before Delete (:138) | same                                                                                                 | instant duplicate-append to the same block         |
+| **Row**             | `schema-row-card.tsx` grid action cols, after Edit (:214), before Delete (:216) | same (the `auto auto auto` grid already reserves action columns — add one)                           | instant duplicate-append to the same schema        |
+| **Schema in group** | the boxed member's `schema-card-head.tsx` (when `isBoxed`)                      | same icon                                                                                            | instant duplicate-append to the **same group**     |
+| **Row in group**    | the member `schema-row-card.tsx` inside `RowGroupBox`                           | same icon                                                                                            | instant duplicate-append to the **same row-group** |
 
 The group-box HEADS (`schema-group-box-head.tsx`, `row-group-box-head.tsx`) get **no** clone control — whole groups don't clone (D-4-C).
 

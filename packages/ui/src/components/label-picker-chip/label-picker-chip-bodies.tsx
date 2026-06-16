@@ -181,6 +181,7 @@ export const renderCreatableSingle = ({
           slotProps={{ paper: { sx: popoverPaperSx } }}
         >
           <CreatablePicker
+            open
             options={options.map(toOption)}
             value={value === null ? null : toOption(value)}
             onChange={handleChange}
@@ -242,6 +243,7 @@ export const renderCreatableMulti = ({
         >
           <CreatablePicker
             multiple
+            open
             options={options.map(toOption)}
             value={value.map(toOption)}
             onChange={(next) => onChange(next.map((option) => option.id))}

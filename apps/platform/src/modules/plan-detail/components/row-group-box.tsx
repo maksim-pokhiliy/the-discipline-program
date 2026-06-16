@@ -65,7 +65,7 @@ type RowGroupBoxProps = {
     orderedMemberIds: string[],
     options: { onError: () => void },
   ) => void;
-  minuteLabelById: Map<string, string>;
+  minuteLabel: string | null;
 };
 
 export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
@@ -76,7 +76,7 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
   ord,
   isReorderPending,
   onMemberReorder,
-  minuteLabelById,
+  minuteLabel,
 }): ReactElement => {
   const updateRowGroup = useUpdateRowGroup(planId, startDate);
   const deleteRowGroup = useDeleteRowGroup(planId, startDate);
@@ -185,6 +185,7 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
       <RowGroupBoxHead
         group={group}
         ord={ord}
+        minuteLabel={minuteLabel}
         isUpdatePending={updateRowGroup.isPending}
         dragAttributes={attributes}
         dragListeners={listeners}
@@ -213,7 +214,6 @@ export const RowGroupBox: React.FC<RowGroupBoxProps> = ({
                 planId={planId}
                 startDate={startDate}
                 index={offset}
-                minuteLabel={minuteLabelById.get(member.id) ?? null}
                 isReorderPending={isReorderPending}
                 isDraggable
                 timeline={{

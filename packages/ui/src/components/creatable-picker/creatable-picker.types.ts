@@ -15,6 +15,7 @@ type CreatablePickerBaseProps = {
   error?: string | undefined;
   noOptionsText?: string | undefined;
   size?: "small" | "medium" | undefined;
+  open?: boolean | undefined;
 };
 
 type CreatablePickerSingleProps = CreatablePickerBaseProps & {
