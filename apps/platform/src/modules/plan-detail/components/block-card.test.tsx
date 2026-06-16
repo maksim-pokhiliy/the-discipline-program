@@ -263,7 +263,7 @@ describe("BlockCard multi-label", () => {
     expect(screen.getByLabelText("Add block label")).toBeInTheDocument();
   });
 
-  it("opens the picker listing the level options when the '+ label' trigger is clicked", () => {
+  it("opens the picker listing every level option including already-applied labels", () => {
     const strength = makeLabel({ id: "lab-1", name: "STRENGTH" });
     const skill = makeLabel({ id: "lab-2", name: "SKILL" });
     const accessory = makeLabel({ id: "lab-3", name: "ACCESSORY" });
@@ -280,6 +280,30 @@ describe("BlockCard multi-label", () => {
 
     expect(within(listbox).getByRole("option", { name: "SKILL" })).toBeInTheDocument();
     expect(within(listbox).getByRole("option", { name: "ACCESSORY" })).toBeInTheDocument();
+    expect(within(listbox).getByRole("option", { name: "STRENGTH" })).toBeInTheDocument();
+  });
+
+  it("toggles an already-applied block label off without duplicating it in the attach payload", () => {
+    const strength = makeLabel({ id: "lab-1", name: "STRENGTH" });
+    const skill = makeLabel({ id: "lab-2", name: "SKILL" });
+
+    renderBlockCard({
+      block: makeBlock({ labels: [strength] }),
+      blockOptions: [strength, skill],
+    });
+
+    fireEvent.click(screen.getByLabelText("Add block label"));
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+
+    const listbox = screen.getByRole("listbox");
+
+    fireEvent.click(within(listbox).getByRole("option", { name: "STRENGTH" }));
+
+    expect(assignLabelsMutate).toHaveBeenCalledTimes(1);
+    expect(assignLabelsMutate).toHaveBeenCalledWith({
+      blockId: BLOCK_ID,
+      data: { labelIds: [] },
+    });
   });
 
   it("fires useAssignBlockLabels with [...currentIds, newId] when an option is selected", () => {

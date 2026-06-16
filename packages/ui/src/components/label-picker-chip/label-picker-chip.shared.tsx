@@ -96,6 +96,7 @@ export type CreatableMultiArgs = MultiBodyArgs & {
   onCreateOption: CreateSeam;
   inputValue: string;
   onInputChange: (next: string) => void;
+  maxCount: number | undefined;
 };
 
 export const renderSingleTrigger = (

@@ -59,6 +59,30 @@ describe("usePromiseModal", () => {
     expect(result.current.arg).toBeNull();
   });
 
+  it("settles the prior promise with null when open is called while it is still pending", async () => {
+    const { result } = renderHook(() => usePromiseModal<Arg, Result>());
+    let first: Promise<Result | null> = Promise.resolve({ id: "seed" });
+    let second: Promise<Result | null> = Promise.resolve({ id: "seed" });
+
+    act(() => {
+      first = result.current.open({ initialName: "First" });
+    });
+
+    act(() => {
+      second = result.current.open({ initialName: "Second" });
+    });
+
+    await expect(first).resolves.toBeNull();
+    expect(result.current.isOpen).toBe(true);
+    expect(result.current.arg).toEqual({ initialName: "Second" });
+
+    act(() => {
+      result.current.resolve({ id: "ex-2" });
+    });
+
+    await expect(second).resolves.toEqual({ id: "ex-2" });
+  });
+
   it("resolves only the latest promise when reopened", async () => {
     const { result } = renderHook(() => usePromiseModal<Arg, Result>());
     let first: Promise<Result | null> = Promise.resolve(null);

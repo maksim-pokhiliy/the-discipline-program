@@ -208,6 +208,7 @@ export const renderCreatableMulti = ({
   onCreateOption,
   inputValue,
   onInputChange,
+  maxCount,
 }: CreatableMultiArgs): ReactNode => {
   const isOpen = anchorEl !== null;
   const isInteractive = !disabled && !isLoading;
@@ -248,6 +249,7 @@ export const renderCreatableMulti = ({
             onInputChange={onInputChange}
             onCreateOption={onCreateOption}
             noOptionsText={CREATABLE_NO_OPTIONS_TEXT}
+            {...(maxCount !== undefined && { maxCount })}
           />
         </Popover>
       )}

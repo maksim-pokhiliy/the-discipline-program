@@ -36,6 +36,8 @@ const buildDefaults = (initialName: string): ExerciseCreateInput => ({
 export const ExerciseCreateModal = ({ controller }: ExerciseCreateModalProps) => {
   const initialName = controller.arg?.initialName ?? "";
   const createExercise = useCreateExercise();
+  const isSubmitting = createExercise.isPending;
+  const { isOpen, cancel } = controller;
 
   const methods = useForm<ExerciseCreateInput, unknown, CreateExerciseData>({
     resolver: zodResolver(createExerciseSchema),
@@ -45,8 +47,10 @@ export const ExerciseCreateModal = ({ controller }: ExerciseCreateModalProps) =>
   const { reset, handleSubmit } = methods;
 
   useEffect(() => {
-    reset(buildDefaults(initialName));
-  }, [initialName, reset]);
+    if (isOpen) {
+      reset(buildDefaults(initialName));
+    }
+  }, [isOpen, initialName, reset]);
 
   const onSubmit = handleSubmit((data) => {
     createExercise.mutate(data, {
@@ -56,14 +60,22 @@ export const ExerciseCreateModal = ({ controller }: ExerciseCreateModalProps) =>
     });
   });
 
+  const handleClose = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    cancel();
+  };
+
   return (
     <FormModal
-      open={controller.isOpen}
-      onClose={controller.cancel}
+      open={isOpen}
+      onClose={handleClose}
       title={MODAL_TITLE}
       maxWidth="sm"
       onSubmit={onSubmit}
-      isSubmitting={createExercise.isPending}
+      isSubmitting={isSubmitting}
       submitText={SUBMIT_TEXT}
     >
       <FormProvider {...methods}>

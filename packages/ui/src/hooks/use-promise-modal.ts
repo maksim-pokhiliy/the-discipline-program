@@ -28,6 +28,13 @@ export const usePromiseModal = <TArg, TResult>(): PromiseModalController<TArg, T
   }, []);
 
   const open = useCallback((nextArg: TArg): Promise<TResult | null> => {
+    const pendingResolver = resolverRef.current;
+
+    if (pendingResolver !== null) {
+      resolverRef.current = null;
+      pendingResolver(null);
+    }
+
     setArg(nextArg);
     setIsOpen(true);
 

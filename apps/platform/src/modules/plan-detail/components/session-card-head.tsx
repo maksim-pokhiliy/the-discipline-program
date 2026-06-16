@@ -114,7 +114,6 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
       <LabelPickerChip
         value={session.label}
         options={sessionOptions.options}
-        level="SESSION"
         isLoading={sessionOptions.isLoading}
         onChange={onLabelChange}
         onCreateOption={createSessionLabel}

@@ -7,7 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 
-import type { Block } from "@repo/contracts/lms/block";
+import { BLOCK_CONSTANTS, type Block } from "@repo/contracts/lms/block";
 import type { Label } from "@repo/contracts/lms/label";
 import { LabelPickerChip } from "@repo/ui";
 
@@ -111,7 +111,7 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
           multiple
           value={block.labels}
           options={labelOptions}
-          level="BLOCK"
+          maxCount={BLOCK_CONSTANTS.MAX_LABELS_PER_BLOCK}
           isLoading={isLabelsLoading}
           disabled={isMutationPending}
           onChange={onLabelsChange}

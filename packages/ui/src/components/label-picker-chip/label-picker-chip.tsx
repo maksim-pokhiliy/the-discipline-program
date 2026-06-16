@@ -41,6 +41,7 @@ export const LabelPickerChip: React.FC<LabelPickerChipProps> = (props) => {
         onCreateOption,
         inputValue,
         onInputChange: setInputValue,
+        maxCount: props.maxCount,
       });
     }
 

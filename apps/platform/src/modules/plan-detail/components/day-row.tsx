@@ -87,7 +87,6 @@ export const DayRow: React.FC<DayRowProps> = ({
           <LabelPickerChip
             value={label}
             options={dayOptions.options}
-            level="DAY"
             isLoading={dayOptions.isLoading}
             onChange={(labelId) => updateLabel.mutate({ labelId })}
             onCreateOption={createDayLabel}
