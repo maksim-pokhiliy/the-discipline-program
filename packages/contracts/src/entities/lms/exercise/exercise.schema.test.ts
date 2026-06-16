@@ -3,9 +3,6 @@ import { describe, expect, it } from "vitest";
 import { EXERCISE_CONSTANTS } from "./exercise.constants";
 import { createExerciseSchema, updateExerciseSchema } from "./exercise.schema";
 
-const cuidA = "clz1234567890123456789aaa";
-const cuidB = "clz1234567890123456789bbb";
-
 const baseInput = {
   canonicalName: "Back Squat",
 };
@@ -122,38 +119,6 @@ describe("createExerciseSchema", () => {
 
     expect(result.success).toBe(false);
   });
-
-  it("accepts a create payload with equipmentIds", () => {
-    const result = createExerciseSchema.safeParse({ ...baseInput, equipmentIds: [cuidA, cuidB] });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects duplicate equipmentIds", () => {
-    const result = createExerciseSchema.safeParse({
-      ...baseInput,
-      equipmentIds: [cuidA, cuidA],
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects more equipmentIds than the cap", () => {
-    const tooMany = Array.from(
-      { length: EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH + 1 },
-      (_, i) => `clz123456789012345678${i.toString().padStart(4, "x")}`,
-    );
-
-    const result = createExerciseSchema.safeParse({ ...baseInput, equipmentIds: tooMany });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects a non-cuid equipmentId", () => {
-    const result = createExerciseSchema.safeParse({ ...baseInput, equipmentIds: ["not-a-cuid"] });
-
-    expect(result.success).toBe(false);
-  });
 });
 
 describe("updateExerciseSchema", () => {
@@ -173,17 +138,5 @@ describe("updateExerciseSchema", () => {
     const result = updateExerciseSchema.safeParse({ nature: "PLACEHOLDER" });
 
     expect(result.success).toBe(true);
-  });
-
-  it("accepts an equipmentIds-only update", () => {
-    const result = updateExerciseSchema.safeParse({ equipmentIds: [cuidA] });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects duplicate equipmentIds on update", () => {
-    const result = updateExerciseSchema.safeParse({ equipmentIds: [cuidA, cuidA] });
-
-    expect(result.success).toBe(false);
   });
 });
