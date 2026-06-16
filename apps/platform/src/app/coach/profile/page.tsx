@@ -1,13 +1,5 @@
-import { Stack } from "@mui/material";
+import { CoachProfileView } from "@app/modules/coach-profile";
 
-import { PageHeader } from "@repo/ui";
-
-const ProfilePage = () => {
-  return (
-    <Stack>
-      <PageHeader title="Profile" />
-    </Stack>
-  );
-};
+const ProfilePage = () => <CoachProfileView />;
 
 export default ProfilePage;

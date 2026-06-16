@@ -6,14 +6,15 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID                     | Topic                                                                                  | Status   |
-| ---------------------- | -------------------------------------------------------------------------------------- | -------- |
-| D-1 ONE-INITIATIVE     | Phase 2 = ONE initiative `coach-station`; the four pillars run as waves                | RATIFIED |
-| D-2 CLONE-FIRST        | Clone (R1) ships first; templates/archetypes (R2) PARKED — slot TBD, not dropped       | RATIFIED |
-| D-3 CLONE-SERVER-SIDE  | Clone = server-side deep-clone in ONE transaction (atomic, idempotent, ref-remapping)  | RATIFIED |
-| D-4 CLONE-FLOORS       | Per-floor clone semantics: week/day = replace-into-current; session↓ = duplicate-append | RATIFIED |
-| D-5 PROFILE-SCOPE      | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                  | RATIFIED |
-| D-6 R1-CLONE-UX        | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day | RATIFIED |
+| ID                          | Topic                                                                                             | Status   |
+| --------------------------- | ------------------------------------------------------------------------------------------------- | -------- |
+| D-1 ONE-INITIATIVE          | Phase 2 = ONE initiative `coach-station`; the four pillars run as waves                           | RATIFIED |
+| D-2 CLONE-FIRST             | Clone (R1) ships first; templates/archetypes (R2) PARKED — slot TBD, not dropped                  | RATIFIED |
+| D-3 CLONE-SERVER-SIDE       | Clone = server-side deep-clone in ONE transaction (atomic, idempotent, ref-remapping)             | RATIFIED |
+| D-4 CLONE-FLOORS            | Per-floor clone semantics: week/day = replace-into-current; session↓ = duplicate-append           | RATIFIED |
+| D-5 PROFILE-SCOPE           | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                             | RATIFIED |
+| D-6 R1-CLONE-UX             | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day          | RATIFIED |
+| D-7 PROFILE-SCHEMA-EXTENDED | Coach profile schema EXPANDED — CoachCredential + location/specialties (supersedes D-5 no-expand) | RATIFIED |
 
 ---
 
@@ -43,10 +44,12 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Decision.** Two distinct semantics, per floor:
 
   **A. Replace-into-current (week, day) — source-pick + destructive warning.**
+
   - **Week.** A button "clone the previous week" somewhere on the week surface. On click → the coach picks **which** week he wants to clone INTO the current week. On pick → a **warning**: all existing sessions of the current week will be DELETED and replaced by the source week's. If the source week is EMPTY → say so **explicitly**. **Cloning an empty week must NOT clear the current week** (no-op + message).
   - **Day.** Identical flow, scoped to a day.
 
   **B. Duplicate-append (session, block, schema, row) — in-place, no pick, no delete.**
+
   - **Session.** Clone works only **within the current week**. An icon-button at the session level. Click → a plain duplicate; the clone appears **in the same day, at the end of the list**.
   - **Block.** Like session (duplicate → append to the same session's end).
   - **Schema.** Like block (duplicate → append to the same block's end).
@@ -60,7 +63,7 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 ### D-5 PROFILE-SCOPE — coach profile is bio + user-meta, off the spine
 
 - **Status:** RATIFIED (2026-06-15; owner delegated — "5. делай что посчитаешь нужным" — orchestrator resolved).
-- **Decision.** The coach profile UI wires the **already-shipped** `coachProfile` GET/PUT plumbing into a form: editable **bio** (the only `CoachProfile` field today, max 2000) + display of/edit for the **User** metadata that already exists (`name`, `timezone`, `image`/avatar). The `CoachProfile` Prisma schema is **NOT expanded** (no branding/gym fields) this initiative. Sequenced **off the spine** — it is not a "faster than Excel" lever.
+- **Decision.** The coach profile UI wires the **already-shipped** `coachProfile` GET/PUT plumbing into a form: editable **bio** (the only `CoachProfile` field today, max 2000) + display of/edit for the **User** metadata that already exists (`name`, `timezone`, `image`/avatar). The `CoachProfile` Prisma schema is **NOT expanded** (no branding/gym fields) this initiative. **[SUPERSEDED by D-7 (2026-06-15): the schema IS expanded for wave P — `CoachCredential` + `location` + `specialties`; the rest of D-5 holds.]** Sequenced **off the spine** — it is not a "faster than Excel" lever.
 - **Rationale.** Backend (GET/PUT `/api/platform/coach/profile`, contracts, `withCoachAuth`), route stub, and nav are already in place — the only gap is the client hook + the form, so it is a small standalone. Expanding the schema for branding/gym would be speculative infrastructure for a hypothetical need — exactly the pattern the launch bar guards against. If Denys names a need, the schema add is cheap and additive later.
 
 ### D-6 R1-CLONE-UX — the five clone-UX forks, ratified
@@ -75,3 +78,16 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
   6. **Copy = everything.** A cloned week/day reproduces the FULL source subtree — week notes, day label + notes, every session and below — re-referencing the shared catalog. The ONLY thing not copied is the slot position (the target keeps its own week `startDate` / day `dayOfWeek`). No field is exempt (owner 2026-06-15: «копирование значит копирование, мы копируем ВСЁ» — don't overthink it).
 - **Rationale.** A solo, non-prod tool: the double-confirm suffices without paying for undo's snapshot/restore infrastructure (the most expensive fork — dropping it keeps R1 lean). Disable-empty beats a post-error notice. Silent-on-a-dense-editor avoids toast spam. Any-source maximizes the coach's reuse, which is the whole point of the pillar.
 - **Links.** `r1-clone-design.md` (§9 Resolved); D-4 (the semantics these UX calls dress).
+
+### D-7 PROFILE-SCHEMA-EXTENDED — coach profile schema expanded (supersedes D-5's no-expand clause)
+
+- **Status:** RATIFIED (2026-06-15, owner amended D-5 for wave P: "schema расширяется — CoachCredential + location/specialties"; recorded in the wave-P feature PR per `closeout-before-pr`).
+- **Decision.** D-5's "the `CoachProfile` Prisma schema is **NOT expanded**" clause is **superseded for wave P**. The schema IS expanded, additively: a first-class **`CoachCredential`** entity (`title`/`issuer`/`year`/`shownToAthletes`, `onDelete: Cascade`, `@@index([coachProfileId])`, `@@map("app_coach_credentials")`) + `CoachProfile.location String?` + `CoachProfile.specialties String[] @default([])`. Everything else in D-5 still holds (profile off-spine; user-meta editable; bio retained). Branding/gym fields beyond this remain OUT until Denys names a need.
+- **Rationale.** The hi-fi prototype ("Athlete's eye") makes credentials a first-class section, and location/specialties are core identity the coach edits. The owner ratified the expansion as real product need, not speculative infra. Additive + non-prod (applied via `db:reset`, no migration files — ADR-0019); zero risk to existing reads (nullable/defaulted columns; admin user-view rides free via the shared `mapToCoachProfile` + full `coachProfile: true` include — no admin edit).
+- **Sub-resolutions (baked into the build; design `.feature-dev/1781547787/design.md` §7):**
+  - **D-7a** Extend `coachProfileSchema` (not a page-data-only carry) — admin auto-populates via the shared mapper; no admin endpoint edit.
+  - **D-7b** Avatar upload = platform-local mirror of admin (new upload route+client+hook, `withCoachAuth`, pinned to the `avatar` context — least-privilege), reusing the shared `@repo/api-server` storage + Vercel Blob adapter (ADR-0013) + `UPLOAD_CONFIG.avatar`. Operator sets `BLOB_READ_WRITE_TOKEN` in `apps/platform/.env.local`.
+  - **D-7c** `TimezoneAutocomplete` lifted admin → `@repo/ui` (rule-of-two). **D-7d** `detectBrowserTimezone` extracted → `@repo/shared/helpers`.
+  - **D-7e** Profile hooks = `useQuery` page-data + `useOptimisticMutation`; credentials = hand-rolled mutations invalidating the page-data key (not `createCrudHooks`). **D-7f** Self-edit PUT = bespoke `selfUpdateCoachProfileSchema` (no `role`/`email`/`coachIds`/`tokenVersion`). **D-7g** `year` upper bound validated dynamically in the endpoint. **D-7h** Credentials hard-delete. **D-7i** Contract tests = `safeParse` accept/reject.
+- **Page-data GET** returns `{user, profile, credentials, trackRecord{monthsActive, athletesCoached, plansAuthored}}` — the 3 track-record numbers are honestly derived from live data; "Sessions delivered" / integrations / notifications explicitly OUT (façade-over-absent-infra).
+- **Links.** D-5 (superseded clause); the wave-P feature PR (`feat/coach-profile`); `.feature-dev/1781547787/{design,plan}.md`.

@@ -1,0 +1,1 @@
+export { CoachProfileView } from "./views";

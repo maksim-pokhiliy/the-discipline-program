@@ -5,13 +5,13 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type CreateUserData, type UpdateUserData } from "@repo/contracts/iam/user";
+import { TimezoneAutocomplete } from "@repo/ui";
 
 import { FormCard } from "@app/lib/components/form-card";
 
 import { ROLE_CONFIG } from "../constants";
 
 import { AthleteCoachPicker } from "./athlete-coach-picker";
-import { TimezoneAutocomplete } from "./timezone-autocomplete";
 
 type UserFormProps = {
   isEdit?: boolean;

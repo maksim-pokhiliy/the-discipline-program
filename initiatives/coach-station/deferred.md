@@ -35,6 +35,14 @@ From `session-primitive/deferred.md` (assessed 2026-06-14, NOT quick): drag-to-G
 
 INFO accepted (no action): QA-006 (faithful reproduction of a source-side empty group — benign), QA-007 (strict-body ZodError → 400 at the factory boundary; MT-11 asserts the schema shape), QA-008 (`resolveWeekStartDate` throws outside the try — clean AppError 400 anyway), QA-009 (subtree clone gives a less-specific FK message on a near-unreachable Restrict path), CLONE-003 (self-clone is a safe in-memory full-rebuild — churns ids, no loss), CLONE-004 (barrel-vs-leaf import asymmetry after the cycle-fix — cosmetic).
 
+## Wave P (coach-profile) carry-forwards (2026-06-15)
+
+| ID                 | One-liner                                                                              | Disposition                                                                                                                                                                                                                                                | Status |
+| ------------------ | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| P-GATED-ACCEPTANCE | Wave P gated api-server suite + owner browser walkthrough — the real acceptance        | Owner ritual: `pnpm db:reset && pnpm --filter @repo/api-server test` (incl. new coach-profile + coach-credential suites, written-not-run) + walkthrough `/coach/profile`. **Set `BLOB_READ_WRITE_TOKEN` in `apps/platform/.env.local`** for avatar upload. | OPEN   |
+| QA-006-CRED-ROW    | Credentials section shares one `isMutating` → all rows disable during any one mutation | DEFERRED (cosmetic; per-row mutation state is the fix). Polish pass / wave A-known.                                                                                                                                                                        | OPEN   |
+| QA-007-TZ-NUDGE    | Workspace tz device-nudge re-fires on mount for a coach who deliberately chose UTC     | DEFERRED — first-visit auto-detect is valuable; narrow edge (seed-vs-chosen UTC ambiguity). Fix = drop the silent mount-write / add an explicit "use device tz" affordance.                                                                                | OPEN   |
+
 ## Closed history
 
 _(none yet)_

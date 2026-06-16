@@ -17,6 +17,7 @@ import {
   type ConsumeInviteResponse,
   consumeInviteResponseSchema,
 } from "@repo/contracts/iam/invite-token";
+import { detectBrowserTimezone } from "@repo/shared";
 
 const setPasswordFormSchema = z
   .object({
@@ -39,20 +40,6 @@ type SetPasswordFormProps = {
 };
 
 const CONSUME_TIMEOUT_MS = 10_000;
-
-const detectBrowserTimezone = (): string | null => {
-  if (typeof Intl === "undefined") {
-    return null;
-  }
-
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    return typeof tz === "string" && tz.length > 0 ? tz : null;
-  } catch {
-    return null;
-  }
-};
 
 const parseConsumeResponse = async (response: Response): Promise<ConsumeInviteResponse> => {
   const payload: unknown = await response.json();

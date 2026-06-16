@@ -24,7 +24,7 @@
 - **R2 — Saved compositions / archetypes.** PARKED inside this initiative (D-2; `deferred.md` → TEMPLATES), **not dropped** — keep it on the radar; we decide where to slot the implementation later. Persona-grounded ("писать EMOM по 200 раз" → archetypes), but a new entity + its own design-cycle.
 - **A-e2e — the e2e-fed polish unknowns** (P-6 reps-unit, QA-D-03, + new findings still landing): held OPEN, fed by the in-flight session-primitive e2e. Do NOT build polish assuming a reps-unit shape — **P-6's outcome is a session-primitive FREEZE decision owned by the parallel session.**
 - **Phase 3** athlete core, `Performed*` / `OneRMRecord` / scoring redesign.
-- **Coach-profile schema expansion** (branding / gym / avatar beyond `User.image`) until Denys names a real need (anti-"one more feature").
+- **Coach-profile schema expansion** — graduated to IN-SCOPE for wave P per **D-7**: the additive `CoachCredential` entity + `CoachProfile.location` + `specialties` shipped (owner-ratified override of D-5's no-expand clause). Further branding / gym fields beyond this remain deferred until Denys names a real need (anti-"one more feature").
 
 **Sacred (do not touch / reuse, don't edit).**
 

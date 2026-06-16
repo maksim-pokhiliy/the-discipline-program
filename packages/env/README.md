@@ -21,7 +21,7 @@ Side-effect imports validate at module load. The `base` validator additionally r
 src/
   base.ts        Core URLs + DATABASE_URL — required everywhere
   auth.ts        NextAuth secrets — admin + platform
-  blob.ts        Vercel Blob token — admin
+  blob.ts        Vercel Blob token — admin + platform
   email.ts       Email provider — admin (transactional only, currently)
   rate-limit.ts  Upstash Redis — apps that gate writes
   sentry.ts      Sentry DSN + build-time tokens

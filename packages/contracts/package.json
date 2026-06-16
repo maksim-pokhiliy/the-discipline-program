@@ -35,6 +35,7 @@
     "./coaching/athlete-profile": "./src/entities/coaching/athlete-profile/index.ts",
     "./coaching/coach-action-item": "./src/entities/coaching/coach-action-item/index.ts",
     "./coaching/coach-athletes": "./src/entities/coaching/coach-athletes/index.ts",
+    "./coaching/coach-credential": "./src/entities/coaching/coach-credential/index.ts",
     "./coaching/coach-dashboard": "./src/entities/coaching/coach-dashboard/index.ts",
     "./coaching/coach-invite": "./src/entities/coaching/coach-invite/index.ts",
     "./coaching/coach-note": "./src/entities/coaching/coach-note/index.ts",

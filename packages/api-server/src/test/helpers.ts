@@ -58,6 +58,22 @@ export const createTestAssignment = async (coachProfileId: string, athleteUserId
   });
 };
 
+export const createTestCredential = async (
+  coachProfileId: string,
+  overrides: Partial<Prisma.CoachCredentialUncheckedCreateInput> = {},
+) => {
+  return rawPrisma.coachCredential.create({
+    data: {
+      coachProfileId,
+      title: "L1 Trainer",
+      issuer: "CrossFit",
+      year: 2020,
+      shownToAthletes: true,
+      ...overrides,
+    },
+  });
+};
+
 export const createTestExercise = async (
   overrides: Partial<Prisma.ExerciseUncheckedCreateInput> = {},
 ) => {

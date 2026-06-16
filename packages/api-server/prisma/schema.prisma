@@ -66,9 +66,12 @@ model CoachProfile {
   userId                  String                   @unique
   user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio                     String?
+  location                String?
+  specialties             String[]                 @default([])
   coachNotes              CoachNote[]
   actionItems             CoachActionItem[]
   coachAthleteAssignments CoachAthleteAssignment[]
+  credentials             CoachCredential[]
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   deletedAt               DateTime?
@@ -76,6 +79,21 @@ model CoachProfile {
   @@index([createdAt])
   @@index([deletedAt])
   @@map("app_coach_profiles")
+}
+
+model CoachCredential {
+  id              String       @id @default(cuid())
+  coachProfileId  String
+  coachProfile    CoachProfile @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  title           String
+  issuer          String
+  year            Int
+  shownToAthletes Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([coachProfileId])
+  @@map("app_coach_credentials")
 }
 
 model CoachAthleteAssignment {
