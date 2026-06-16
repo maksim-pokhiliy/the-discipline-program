@@ -1,7 +1,6 @@
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { ActionItemStatus } from "@repo/contracts/coaching/coach-action-item";
 import { type CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
-import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { ForbiddenError } from "@repo/errors";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../../authz/guards";
@@ -12,7 +11,9 @@ import {
   ACTION_ITEM_TYPE_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
+import { createStartOfDayCache } from "../../../utils/date-helpers";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
+import { computeAthleteMetrics, loadScheduleWindow } from "../coach-metrics";
 
 export const getAthleteDetail = async (
   coachUserId: string,
@@ -57,24 +58,49 @@ export const getAthleteDetail = async (
     createdAt: item.createdAt,
   }));
 
+  const coach = await prisma.user.findUnique({
+    where: { id: coachUserId },
+    select: { timezone: true },
+  });
+  const tz = coach?.timezone ?? "UTC";
+
+  const now = new Date();
+  const window = await loadScheduleWindow({ athleteIds: [athleteUserId], tz, now });
+
+  const metrics = computeAthleteMetrics({
+    athleteId: athleteUserId,
+    enrollments: window.enrollmentsByAthlete.get(athleteUserId) ?? [],
+    performedByKey: window.performedByKey,
+    weekCountByPlan: window.weekCountByPlan,
+    firstWeekStartByPlan: window.firstWeekStartByPlan,
+    tz,
+    now,
+    startOfDayCache: createStartOfDayCache(tz),
+  });
+
   return {
     userId: athleteUserId,
     name: athlete.name,
     email: athlete.email,
     image: athlete.image,
     healthStatus,
-    processStatus: ProcessStatus.STEADY,
-    planDiscipline: [],
-    recentWorkouts: [],
+    processStatus: metrics.processStatus,
+    planDiscipline: metrics.planDiscipline,
+    recentWorkouts: metrics.recentWorkouts,
     actionItems: mappedActionItems,
-    nextWorkout: null,
+    nextWorkout: metrics.nextWorkout,
     consistency: {
-      adherenceRate4w: 0,
-      currentStreak: 0,
-      missedThisWeek: 0,
+      adherenceRate4w: metrics.adherenceRate,
+      currentStreak: metrics.currentStreak,
+      missedThisWeek: metrics.missedThisWeek,
     },
     enrolledSince: assignment.createdAt,
-    lastActivityDate: null,
-    daysSinceLastActivity: null,
+    lastActivityDate: metrics.lastActivityDate,
+    daysSinceLastActivity: metrics.daysSinceLastActivity,
+    last7Days: metrics.last7Days,
+    currentWeek: metrics.currentWeek,
+    totalWeeks: metrics.totalWeeks,
+    todayStatus: metrics.todayStatus,
+    todayWorkoutTitle: metrics.todayWorkoutTitle,
   };
 };

@@ -11,11 +11,15 @@ import { mapToCoachNote } from "../../mappers/coaching";
 import { handlePrismaError } from "../../utils";
 
 export const coachingCoachNoteApi = {
-  getAll: async (userId: string): Promise<CoachNote[]> => {
+  getAll: async (userId: string, athleteId?: string): Promise<CoachNote[]> => {
     const coachId = await resolveCoachId(userId);
 
+    if (athleteId) {
+      await verifyAthleteBelongsToCoach(athleteId, coachId);
+    }
+
     const notes = await prisma.coachNote.findMany({
-      where: { coachId },
+      where: { coachId, ...(athleteId && { athleteId }) },
       orderBy: { createdAt: "desc" },
     });
 
