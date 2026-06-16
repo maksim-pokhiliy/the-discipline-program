@@ -3,7 +3,7 @@
 > **Mission.** Ship the MVP: a CrossFit coach (Denys) programs training cycles in our constructor faster than his Excel, his athletes follow the plan, log results, and see their records — and he pays for it. Everything below is the path from **today** to that launch. Nothing more.
 
 **Owner:** Maksim. **Reviewed:** at the start of every working session (this file is the top of the planning stack — see `docs/process.md`).
-**Last synced:** 2026-06-14.
+**Last synced:** 2026-06-16.
 
 ---
 
@@ -45,8 +45,9 @@ Each phase has an **Outcome** (what is TRUE when it's done) and an **Exit** (the
 ### Phase 2 — Coach station complete · programming is faster than Excel
 
 - **Outcome.** The coach's daily surface is fully usable and genuinely faster than his spreadsheet — the explicit promise of the bar.
-- **Key work.** Reuse features (clone week / day / block, saved compositions) — the persona's pain #1; coach profile UI; the authoring-flow polish surfaced during Phase 1's self-test (incl. the LABEL-FLOW-UX searchable create-on-the-fly picker, shared with the row-modifier picker). The owner-requested **DnD group-creation** (create groups by dragging schema-onto-schema / row-onto-row + drag-in / drag-out) belongs here too — it pairs naturally with the clone/duplication work (both manipulate whole subtrees); see `initiatives/session-primitive/deferred.md` → DND-GROUP-CREATE.
+- **Key work.** Reuse features (clone week / day / block, saved compositions) — the persona's pain #1; coach profile UI; the authoring-flow polish surfaced during Phase 1's self-test (incl. the LABEL-FLOW-UX searchable create-on-the-fly picker, shared with the row-modifier picker). (DnD group-creation was scoped here but **DROPPED** — `coach-station` D-11; see "Explicitly OUT" below. The shipped select-mode group-create already covers the capability.)
 - **Exit.** Maksim programs a full multi-week cycle end-to-end, timed, and it beats the Excel baseline.
+- **Status (2026-06-16).** Substantively COMPLETE — clone (R1, PR #270/#274) + coach profile (P, #273/#275) + authoring inline-create (A-known, #277) + the `/coach` dashboard & athletes redesigns (#279/#278) all MERGED; equipment + `movementFamily` cut; G dropped (D-11). The remaining gate is the **timed-cycle Exit itself** (owner-owed, also closes Phase 1's e2e self-test) + the gated api-server suites. Detail → `initiatives/coach-station/`.
 
 ### Phase 3 — Athlete core + honest coach metrics
 
@@ -82,7 +83,7 @@ Each phase has an **Outcome** (what is TRUE when it's done) and an **Exit** (the
 
 ## Explicitly OUT of the MVP (v1.1+)
 
-Gym-floor PWA · periodization above Week (micro/meso/macro) · weekly-summary + action queue · advanced analytics · military-rehab UI · Telegram · pause UI · Excel tooling · MFA · the `Performed*` redesign's nice-to-haves beyond logging. These are real and wanted — they are _after the bar_.
+Gym-floor PWA · periodization above Week (micro/meso/macro) · weekly-summary + action queue · advanced analytics · military-rehab UI · Telegram · pause UI · Excel tooling · MFA · **DnD group-creation** (drag-to-group + drag-in/out — dropped from Phase 2, coach-station D-11) · the `Performed*` redesign's nice-to-haves beyond logging. These are real and wanted — they are _after the bar_.
 
 ## Fixed decisions (don't re-litigate)
 
