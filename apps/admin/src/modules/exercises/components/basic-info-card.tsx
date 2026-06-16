@@ -7,8 +7,6 @@ import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 
 import { FormCard } from "@app/lib/components/form-card";
 
-import { EquipmentMultiSelect } from "./equipment-multi-select";
-
 type BasicInfoCardProps = {
   isLoading: boolean;
 };
@@ -35,8 +33,6 @@ export const BasicInfoCard = ({ isLoading }: BasicInfoCardProps) => {
           }
           {...register("canonicalName")}
         />
-
-        <EquipmentMultiSelect isLoading={isLoading} />
       </Stack>
     </FormCard>
   );

@@ -4,7 +4,6 @@ import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import EventOutlined from "@mui/icons-material/EventOutlined";
 import FitnessCenterOutlined from "@mui/icons-material/FitnessCenterOutlined";
 import FunctionsOutlined from "@mui/icons-material/FunctionsOutlined";
-import HandymanOutlined from "@mui/icons-material/HandymanOutlined";
 import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
 import LabelOutlined from "@mui/icons-material/LabelOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
@@ -20,7 +19,6 @@ const icons = {
   pages: WebOutlined,
   contacts: ContactMailOutlined,
   exercises: FitnessCenterOutlined,
-  equipment: HandymanOutlined,
   labels: LabelOutlined,
   blockTypes: ViewModuleOutlined,
   schemeTypes: FunctionsOutlined,

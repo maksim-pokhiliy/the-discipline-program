@@ -23,27 +23,7 @@ import { useDeleteExercise } from "@app/lib/hooks";
 
 import { NATURE_LABELS } from "../../constants";
 
-const buildEquipmentFilterOptions = (exercises: Exercise[]): { label: string; value: string }[] => {
-  const byId = new Map<string, string>();
-
-  for (const exercise of exercises) {
-    for (const item of exercise.equipment) {
-      byId.set(item.id, item.name);
-    }
-  }
-
-  return [...byId.entries()]
-    .map(([value, label]) => ({ value, label }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-};
-
-const buildFilters = (exercises: Exercise[]): DataTableFilter<Exercise>[] => [
-  {
-    id: "equipment",
-    label: "Equipment",
-    options: buildEquipmentFilterOptions(exercises),
-    match: (exercise, value) => exercise.equipment.some((item) => item.id === value),
-  },
+const EXERCISE_FILTERS: DataTableFilter<Exercise>[] = [
   {
     id: "nature",
     label: "Nature",
@@ -61,8 +41,6 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
   const deleteMutation = useDeleteExercise();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
-
-  const filters = useMemo(() => buildFilters(exercises), [exercises]);
 
   const columns: Column<Exercise>[] = useMemo(
     () => [
@@ -84,23 +62,6 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
             {exercise.canonicalName}
           </Typography>
         ),
-      },
-      {
-        id: "equipment",
-        label: "Equipment",
-        width: "24%",
-        render: (exercise) =>
-          exercise.equipment.length > 0 ? (
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-              {exercise.equipment.map((item) => (
-                <Chip key={item.id} label={item.name} size="small" variant="outlined" />
-              ))}
-            </Stack>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              —
-            </Typography>
-          ),
       },
       {
         id: "nature",
@@ -175,7 +136,7 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
         data={exercises}
         columns={columns}
         searchPlaceholder="Search by name or alias"
-        filters={filters}
+        filters={EXERCISE_FILTERS}
         action={<CreateButton href="/exercises/create">Create Exercise</CreateButton>}
         paginated
         emptyMessage="No exercises yet. Create the first one!"
