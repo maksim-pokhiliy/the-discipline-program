@@ -679,7 +679,6 @@ model Exercise {
   canonicalNameLower String         @unique
   nature             ExerciseNature @default(CONCRETE)
   defaultDemoUrls    String[]
-  movementFamily     String?
   aliases            Json?
   notes              String?
   createdAt          DateTime       @default(now())
@@ -689,7 +688,6 @@ model Exercise {
   schemaRows   SchemaRow[]
 
   @@index([canonicalName])
-  @@index([movementFamily])
   @@map("training_exercises")
 }
 

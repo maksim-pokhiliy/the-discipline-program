@@ -31,7 +31,6 @@ export const exerciseSchema = z.object({
   canonicalName: z.string().min(1).max(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
   canonicalNameLower: z.string(),
   nature: exerciseNatureSchema,
-  movementFamily: z.string().min(1).max(EXERCISE_CONSTANTS.MAX_MOVEMENT_FAMILY_LENGTH).nullable(),
   defaultDemoUrls: z.array(z.string().url()),
   aliases: z.array(z.string().min(1)),
   notes: z.string().nullable(),
@@ -42,9 +41,6 @@ export const exerciseSchema = z.object({
 const exerciseFormBase = z.object({
   canonicalName: normalizedString(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
   nature: exerciseNatureSchema.default("CONCRETE"),
-  movementFamily: normalizedString(EXERCISE_CONSTANTS.MAX_MOVEMENT_FAMILY_LENGTH)
-    .nullable()
-    .optional(),
   defaultDemoUrls: z.array(httpUrlSchema).max(EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH).default([]),
   aliases: z
     .array(normalizedString(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH))

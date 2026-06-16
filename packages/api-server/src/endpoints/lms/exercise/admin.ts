@@ -18,7 +18,6 @@ const buildExerciseUpdateData = (data: UpdateExerciseData): Prisma.ExerciseUpdat
     canonicalNameLower: data.canonicalName.trim().toLowerCase(),
   }),
   ...(data.nature !== undefined && { nature: natureToPrisma[data.nature] }),
-  ...(data.movementFamily !== undefined && { movementFamily: data.movementFamily }),
   ...(data.defaultDemoUrls !== undefined && { defaultDemoUrls: data.defaultDemoUrls }),
   ...(data.aliases !== undefined && { aliases: data.aliases }),
   ...(data.notes !== undefined && { notes: data.notes }),
@@ -46,7 +45,6 @@ export const cmsExerciseAdminApi = {
           canonicalName: data.canonicalName,
           canonicalNameLower,
           nature: natureToPrisma[data.nature],
-          movementFamily: data.movementFamily ?? null,
           defaultDemoUrls: data.defaultDemoUrls,
           aliases: data.aliases,
           notes: data.notes ?? null,
@@ -107,18 +105,5 @@ export const cmsExerciseAdminApi = {
     const exercises = await cmsExerciseAdminApi.getExercises();
 
     return { exercises };
-  },
-
-  getMovementFamilies: async (): Promise<string[]> => {
-    const rows = await prisma.exercise.findMany({
-      where: { movementFamily: { not: null } },
-      distinct: ["movementFamily"],
-      select: { movementFamily: true },
-      orderBy: { movementFamily: "asc" },
-    });
-
-    return rows
-      .map((row) => row.movementFamily)
-      .filter((family): family is string => family !== null);
   },
 };
