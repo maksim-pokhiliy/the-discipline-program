@@ -22,15 +22,6 @@ const { ExercisePicker } = await import("./exercise-picker");
 
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 
-const makeEquipment = (name: string): Exercise["equipment"][number] => ({
-  id: "ckeq01234567890abcdef01234",
-  name,
-  nameLower: name.toLowerCase(),
-  notes: null,
-  createdAt: NOW,
-  updatedAt: NOW,
-});
-
 const makeExercise = (overrides: Partial<Exercise>): Exercise => ({
   id: "ckxw5p7gp0000q1mnzv5cuq01",
   canonicalName: "Front Squat",
@@ -39,7 +30,6 @@ const makeExercise = (overrides: Partial<Exercise>): Exercise => ({
   movementFamily: "squat",
   defaultDemoUrls: [],
   aliases: [],
-  equipment: [makeEquipment("Barbell")],
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -77,7 +67,7 @@ describe("ExercisePicker search box", () => {
 });
 
 describe("ExercisePicker option meta line", () => {
-  it("shows the equipment names · family meta line under each option name", () => {
+  it("shows the family meta line under each option name", () => {
     exercisesState.data = [FRONT_SQUAT];
 
     render(<ExercisePicker value={null} onChange={onChange} />);
@@ -85,32 +75,18 @@ describe("ExercisePicker option meta line", () => {
     openListbox();
 
     expect(screen.getByText("Front Squat")).toBeInTheDocument();
-    expect(screen.getByText("Barbell · family: squat")).toBeInTheDocument();
+    expect(screen.getByText("family: squat")).toBeInTheDocument();
   });
 
-  it("joins multiple equipment names with a comma", () => {
-    exercisesState.data = [
-      makeExercise({
-        movementFamily: null,
-        equipment: [makeEquipment("Kettlebell"), makeEquipment("Dumbbell")],
-      }),
-    ];
-
-    render(<ExercisePicker value={null} onChange={onChange} />);
-
-    openListbox();
-
-    expect(screen.getByText("Kettlebell, Dumbbell")).toBeInTheDocument();
-  });
-
-  it("omits the family suffix when movementFamily is null", () => {
+  it("omits the meta line when movementFamily is null", () => {
     exercisesState.data = [makeExercise({ movementFamily: null })];
 
     render(<ExercisePicker value={null} onChange={onChange} />);
 
     openListbox();
 
-    expect(screen.getByText("Barbell")).toBeInTheDocument();
+    expect(screen.getByText("Front Squat")).toBeInTheDocument();
+    expect(screen.queryByText(/family:/)).not.toBeInTheDocument();
   });
 });
 

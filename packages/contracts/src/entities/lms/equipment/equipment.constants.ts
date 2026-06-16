@@ -1,4 +1,0 @@
-export const EQUIPMENT_CONSTANTS = {
-  MAX_NAME_LENGTH: 200,
-  MAX_NOTES_LENGTH: 10_000,
-} as const;

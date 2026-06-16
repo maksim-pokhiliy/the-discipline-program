@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { equipmentSchema } from "../equipment";
-
 import { EXERCISE_CONSTANTS, EXERCISE_NATURE } from "./exercise.constants";
 
 export const exerciseNatureSchema = z.enum(EXERCISE_NATURE);
@@ -36,7 +34,6 @@ export const exerciseSchema = z.object({
   movementFamily: z.string().min(1).max(EXERCISE_CONSTANTS.MAX_MOVEMENT_FAMILY_LENGTH).nullable(),
   defaultDemoUrls: z.array(z.string().url()),
   aliases: z.array(z.string().min(1)),
-  equipment: z.array(equipmentSchema),
   notes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -53,13 +50,6 @@ const exerciseFormBase = z.object({
     .array(normalizedString(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH))
     .max(EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH)
     .default([]),
-  equipmentIds: z
-    .array(z.string().cuid())
-    .max(EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH)
-    .refine((ids) => new Set(ids).size === ids.length, {
-      message: "equipment must be unique",
-    })
-    .optional(),
   notes: z.string().max(EXERCISE_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
 });
 

@@ -32,7 +32,6 @@ export const ExercisesEditForm: React.FC<ExercisesEditFormProps> = ({ exercise }
       movementFamily: exercise.movementFamily,
       defaultDemoUrls: exercise.defaultDemoUrls,
       aliases: exercise.aliases,
-      equipmentIds: exercise.equipment.map((item) => item.id),
       notes: exercise.notes,
     },
   });

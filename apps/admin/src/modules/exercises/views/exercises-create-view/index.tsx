@@ -24,7 +24,6 @@ export const ExercisesCreateView = () => {
       movementFamily: null,
       defaultDemoUrls: [],
       aliases: [],
-      equipmentIds: [],
       notes: null,
     },
   });

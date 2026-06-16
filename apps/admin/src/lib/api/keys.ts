@@ -10,7 +10,6 @@ export const adminKeys = {
   contacts: createEntityKeys(ROOT, "contacts"),
 
   blog: createEntityKeys(ROOT, "blog"),
-  equipment: createEntityKeys(ROOT, "equipment"),
   exercises: {
     ...createEntityKeys(ROOT, "exercises"),
     movementFamilies: () => [...ROOT, "exercises-movement-families"] as const,
