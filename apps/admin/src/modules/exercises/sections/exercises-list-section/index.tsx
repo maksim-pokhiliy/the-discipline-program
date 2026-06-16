@@ -77,16 +77,6 @@ export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) =
         ),
       },
       {
-        id: "movementFamily",
-        label: "Movement Family",
-        width: "16%",
-        render: (exercise) => (
-          <Typography variant="body2" color="text.secondary">
-            {exercise.movementFamily ?? "—"}
-          </Typography>
-        ),
-      },
-      {
         id: "createdAt",
         label: "Created",
         width: "10%",

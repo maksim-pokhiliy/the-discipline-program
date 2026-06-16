@@ -223,6 +223,6 @@ describe("ModifierPicker cap", () => {
     render(<ModifierPicker value={ids} onChange={vi.fn()} />);
 
     expect(screen.getByRole("combobox")).toHaveAttribute("readonly");
-    expect(screen.getByText("Up to 20 modifiers")).toBeInTheDocument();
+    expect(screen.getByText("Up to 20 items")).toBeInTheDocument();
   });
 });

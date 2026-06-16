@@ -7,9 +7,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 
-import type { Block } from "@repo/contracts/lms/block";
+import { BLOCK_CONSTANTS, type Block } from "@repo/contracts/lms/block";
 import type { Label } from "@repo/contracts/lms/label";
 import { LabelPickerChip } from "@repo/ui";
+
+import { useCreateLabelOption } from "@app/lib/hooks";
 
 const DRAG_ARIA = "Drag block";
 const DELETE_ARIA = "Delete block";
@@ -46,100 +48,105 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
   onLabelsChange,
   onDeleteOpen,
   onDuplicate,
-}) => (
-  <Stack
-    direction="row"
-    alignItems="center"
-    spacing={1}
-    sx={(theme) => ({
-      px: theme.spacing(1.5),
-      py: theme.spacing(1.25),
-      minWidth: 0,
-      ...(isExpanded && {
-        borderBottom: 1,
-        borderColor: "divider",
-      }),
-    })}
-  >
-    <IconButton
-      {...dragAttributes}
-      {...dragListeners}
-      size="small"
-      aria-label={DRAG_ARIA}
-      disabled={isMutationPending}
-      sx={{
-        cursor: "grab",
-        touchAction: "none",
-        "&.Mui-focusVisible": {
-          outline: "2px solid",
-          outlineColor: "primary.main",
-          outlineOffset: 2,
-        },
-      }}
-    >
-      <DragIndicatorIcon fontSize="small" />
-    </IconButton>
+}) => {
+  const createBlockLabel = useCreateLabelOption("BLOCK");
 
-    <IconButton
-      size="small"
-      onClick={onToggleExpanded}
-      aria-label={isExpanded ? "Collapse block" : "Expand block"}
-    >
-      <ChevronRightIcon
-        fontSize="small"
-        sx={(theme) => ({
-          transform: isExpanded ? "rotate(90deg)" : "none",
-          transition: `transform ${theme.transitions.duration.shortest}ms ${theme.transitions.easing.easeInOut}`,
-        })}
-      />
-    </IconButton>
-
+  return (
     <Stack
       direction="row"
       alignItems="center"
-      spacing={0.75}
-      useFlexGap
-      flexWrap="wrap"
-      sx={{ flex: 1, minWidth: 0 }}
+      spacing={1}
+      sx={(theme) => ({
+        px: theme.spacing(1.5),
+        py: theme.spacing(1.25),
+        minWidth: 0,
+        ...(isExpanded && {
+          borderBottom: 1,
+          borderColor: "divider",
+        }),
+      })}
     >
-      <LabelPickerChip
-        multiple
-        value={block.labels}
-        options={labelOptions}
-        level="BLOCK"
-        isLoading={isLabelsLoading}
+      <IconButton
+        {...dragAttributes}
+        {...dragListeners}
+        size="small"
+        aria-label={DRAG_ARIA}
         disabled={isMutationPending}
-        onChange={onLabelsChange}
-        ariaLabel={LABELS_ARIA}
-      />
+        sx={{
+          cursor: "grab",
+          touchAction: "none",
+          "&.Mui-focusVisible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+        }}
+      >
+        <DragIndicatorIcon fontSize="small" />
+      </IconButton>
+
+      <IconButton
+        size="small"
+        onClick={onToggleExpanded}
+        aria-label={isExpanded ? "Collapse block" : "Expand block"}
+      >
+        <ChevronRightIcon
+          fontSize="small"
+          sx={(theme) => ({
+            transform: isExpanded ? "rotate(90deg)" : "none",
+            transition: `transform ${theme.transitions.duration.shortest}ms ${theme.transitions.easing.easeInOut}`,
+          })}
+        />
+      </IconButton>
+
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={0.75}
+        useFlexGap
+        flexWrap="wrap"
+        sx={{ flex: 1, minWidth: 0 }}
+      >
+        <LabelPickerChip
+          multiple
+          value={block.labels}
+          options={labelOptions}
+          maxCount={BLOCK_CONSTANTS.MAX_LABELS_PER_BLOCK}
+          isLoading={isLabelsLoading}
+          disabled={isMutationPending}
+          onChange={onLabelsChange}
+          onCreateOption={createBlockLabel}
+          ariaLabel={LABELS_ARIA}
+        />
+      </Stack>
+
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDuplicate}
+            disabled={isMutationPending}
+            aria-busy={isMutationPending}
+            aria-label={DUPLICATE_ARIA}
+          >
+            <ContentCopyIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+
+      <Tooltip title={DELETE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDeleteOpen}
+            disabled={isMutationPending}
+            aria-label={DELETE_ARIA}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
     </Stack>
-
-    <Tooltip title={DUPLICATE_TOOLTIP}>
-      <Box component="span" style={tooltipChildSx}>
-        <IconButton
-          size="small"
-          onClick={onDuplicate}
-          disabled={isMutationPending}
-          aria-busy={isMutationPending}
-          aria-label={DUPLICATE_ARIA}
-        >
-          <ContentCopyIcon fontSize="small" />
-        </IconButton>
-      </Box>
-    </Tooltip>
-
-    <Tooltip title={DELETE_TOOLTIP}>
-      <Box component="span" style={tooltipChildSx}>
-        <IconButton
-          size="small"
-          onClick={onDeleteOpen}
-          disabled={isMutationPending}
-          aria-label={DELETE_ARIA}
-          sx={{ color: "error.main" }}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Box>
-    </Tooltip>
-  </Stack>
-);
+  );
+};

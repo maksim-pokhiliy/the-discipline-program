@@ -9,7 +9,6 @@ export const mapToExercise = (row: PrismaExercise): Exercise => ({
   canonicalName: row.canonicalName,
   canonicalNameLower: row.canonicalNameLower,
   nature: NATURE_MAP[row.nature],
-  movementFamily: row.movementFamily,
   defaultDemoUrls: row.defaultDemoUrls,
   aliases: (row.aliases as string[] | null) ?? [],
   notes: row.notes,

@@ -12,7 +12,7 @@ import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { SESSION_CONSTANTS } from "@repo/contracts/lms/session";
 import { LabelPickerChip } from "@repo/ui";
 
-import { useLabelOptions } from "@app/lib/hooks";
+import { useCreateLabelOption, useLabelOptions } from "@app/lib/hooks";
 
 import { NotesListField } from "./notes-list-field";
 import { SessionCardCollapsedStats } from "./session-card-collapsed-stats";
@@ -51,6 +51,7 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
   isMutationPending,
 }) => {
   const sessionOptions = useLabelOptions("SESSION");
+  const createSessionLabel = useCreateLabelOption("SESSION");
   const blockCount = session.blocks.length;
   const hasBlocks = blockCount > 0;
 
@@ -113,9 +114,9 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
       <LabelPickerChip
         value={session.label}
         options={sessionOptions.options}
-        level="SESSION"
         isLoading={sessionOptions.isLoading}
         onChange={onLabelChange}
+        onCreateOption={createSessionLabel}
         ariaLabel="Session label"
       />
 

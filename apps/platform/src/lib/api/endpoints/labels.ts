@@ -1,5 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
-import type { Label, LabelSearchParams } from "@repo/contracts/lms/label";
+import type { CreateLabelData, Label, LabelSearchParams } from "@repo/contracts/lms/label";
 
 export const createLabelsAPI = (client: ApiClient) => ({
   search: (query?: LabelSearchParams): Promise<Label[]> => {
@@ -15,4 +15,7 @@ export const createLabelsAPI = (client: ApiClient) => ({
       Object.keys(queryParams).length > 0 ? queryParams : undefined,
     );
   },
+
+  create: (data: CreateLabelData): Promise<Label> =>
+    client.request("/api/platform/labels", "POST", data),
 });

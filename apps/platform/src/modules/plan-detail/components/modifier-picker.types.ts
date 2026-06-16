@@ -11,20 +11,6 @@ export type CreatableMultiPickerProps = {
   error?: string | undefined;
 };
 
-export type ModifierOption =
-  | { kind: "existing"; modifier: Modifier }
-  | { kind: "create"; query: string };
-
-export const isExistingOption = (
-  option: ModifierOption,
-): option is { kind: "existing"; modifier: Modifier } => option.kind === "existing";
-
-export const getOptionId = (option: ModifierOption): string =>
-  isExistingOption(option) ? option.modifier.id : option.query;
-
-export const getOptionLabel = (option: ModifierOption): string =>
-  isExistingOption(option) ? option.modifier.name : option.query;
-
 export const buildResolvedNameMap = (
   searchResults: Modifier[],
   resolvedRefs: ModifierRef[],
@@ -40,26 +26,4 @@ export const buildResolvedNameMap = (
   }
 
   return byId;
-};
-
-export const buildValueOptions = (
-  value: string[],
-  nameById: Map<string, string>,
-): ModifierOption[] =>
-  value.map((id) => ({
-    kind: "existing",
-    modifier: {
-      id,
-      name: nameById.get(id) ?? id,
-      nameLower: (nameById.get(id) ?? id).toLowerCase(),
-      notes: null,
-      createdAt: new Date(0),
-      updatedAt: new Date(0),
-    },
-  }));
-
-export const hasExactNameMatch = (options: Modifier[], query: string): boolean => {
-  const needle = query.trim().toLowerCase();
-
-  return options.some((option) => option.nameLower === needle);
 };

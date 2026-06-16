@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -8,6 +8,8 @@ import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 const exercisesState: { data: Exercise[]; isLoading: boolean } = { data: [], isLoading: false };
+const createExerciseState = { isPending: false };
+const createExerciseMock: Mock = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -15,6 +17,10 @@ vi.mock("@app/lib/hooks", async () => {
   return {
     ...actual,
     useExercises: () => ({ data: exercisesState.data, isLoading: exercisesState.isLoading }),
+    useCreateExercise: () => ({
+      mutate: createExerciseMock,
+      isPending: createExerciseState.isPending,
+    }),
   };
 });
 
@@ -27,7 +33,6 @@ const makeExercise = (overrides: Partial<Exercise>): Exercise => ({
   canonicalName: "Front Squat",
   canonicalNameLower: "front squat",
   nature: "CONCRETE",
-  movementFamily: "squat",
   defaultDemoUrls: [],
   aliases: [],
   notes: null,
@@ -41,7 +46,6 @@ const DEADLIFT = makeExercise({
   id: "ckxw5p7gp0000q1mnzv5cuq02",
   canonicalName: "Deadlift",
   canonicalNameLower: "deadlift",
-  movementFamily: "hinge",
 });
 
 const onChange: Mock = vi.fn();
@@ -50,10 +54,16 @@ const openListbox = (): void => {
   fireEvent.mouseDown(screen.getByRole("combobox"));
 };
 
+const typeQuery = (text: string): void => {
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: text } });
+};
+
 afterEach(() => {
   exercisesState.data = [];
   exercisesState.isLoading = false;
+  createExerciseState.isPending = false;
   onChange.mockReset();
+  createExerciseMock.mockReset();
 });
 
 describe("ExercisePicker search box", () => {
@@ -62,31 +72,7 @@ describe("ExercisePicker search box", () => {
 
     render(<ExercisePicker value={null} onChange={onChange} />);
 
-    expect(screen.getByPlaceholderText("search by name, family, or modality…")).toBeInTheDocument();
-  });
-});
-
-describe("ExercisePicker option meta line", () => {
-  it("shows the family meta line under each option name", () => {
-    exercisesState.data = [FRONT_SQUAT];
-
-    render(<ExercisePicker value={null} onChange={onChange} />);
-
-    openListbox();
-
-    expect(screen.getByText("Front Squat")).toBeInTheDocument();
-    expect(screen.getByText("family: squat")).toBeInTheDocument();
-  });
-
-  it("omits the meta line when movementFamily is null", () => {
-    exercisesState.data = [makeExercise({ movementFamily: null })];
-
-    render(<ExercisePicker value={null} onChange={onChange} />);
-
-    openListbox();
-
-    expect(screen.getByText("Front Squat")).toBeInTheDocument();
-    expect(screen.queryByText(/family:/)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("search by name or create a movement…")).toBeInTheDocument();
   });
 });
 
@@ -130,6 +116,133 @@ describe("ExercisePicker selection", () => {
 
     expect(screen.getAllByRole("option")).toHaveLength(1);
     expect(screen.getByText("Coach choice")).toBeInTheDocument();
+  });
+});
+
+describe("ExercisePicker create affordance", () => {
+  it("surfaces a Create option for a typed name with no exact match", () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    openListbox();
+    typeQuery("Sled Push");
+
+    expect(screen.getByText('Create "Sled Push"')).toBeInTheDocument();
+  });
+
+  it("opens the create modal when the Create option is chosen", () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    openListbox();
+    typeQuery("Sled Push");
+    fireEvent.click(screen.getByText('Create "Sled Push"'));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Create exercise" })).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue("Sled Push")).toBeInTheDocument();
+  });
+});
+
+describe("ExercisePicker create modal lifecycle", () => {
+  const openCreateModal = (name: string): HTMLElement => {
+    openListbox();
+    typeQuery(name);
+    fireEvent.click(screen.getByText(`Create "${name}"`));
+
+    return screen.getByRole("dialog");
+  };
+
+  const submitModal = (dialog: HTMLElement): void => {
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create" }));
+  };
+
+  it("keeps the modal open and selects nothing when the create mutation fails (QA-002 error path)", async () => {
+    exercisesState.data = [FRONT_SQUAT];
+    createExerciseMock.mockImplementation(() => undefined);
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    submitModal(openCreateModal("Sled Push"));
+
+    await vi.waitFor(() => expect(createExerciseMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("selects the minted exercise and closes the modal on a successful create", async () => {
+    const minted = makeExercise({
+      id: "ckxw5p7gp0000q1mnzv5cuq07",
+      canonicalName: "Sled Push",
+      canonicalNameLower: "sled push",
+    });
+
+    exercisesState.data = [FRONT_SQUAT];
+    createExerciseMock.mockImplementation(
+      (_data, options: { onSuccess: (exercise: Exercise) => void }) => {
+        options.onSuccess(minted);
+      },
+    );
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    submitModal(openCreateModal("Sled Push"));
+
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith("ckxw5p7gp0000q1mnzv5cuq07"));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("cancels without selecting anything when the modal close button is clicked (no phantom select)", async () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    const dialog = openCreateModal("Sled Push");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onChange).not.toHaveBeenCalled();
+    expect(createExerciseMock).not.toHaveBeenCalled();
+  });
+
+  it("does not close on the X button while the create is submitting (QA-009)", () => {
+    exercisesState.data = [FRONT_SQUAT];
+    createExerciseState.isPending = true;
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    const dialog = openCreateModal("Sled Push");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("resets stale field edits when the modal is reopened for the same typed name (QA-005)", async () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    const firstOpen = openCreateModal("Sled Push");
+    const aliasInput = within(firstOpen).getByLabelText("Aliases");
+
+    fireEvent.change(aliasInput, { target: { value: "Prowler Push" } });
+    fireEvent.keyDown(aliasInput, { key: "Enter" });
+
+    expect(within(firstOpen).getByText("Prowler Push")).toBeInTheDocument();
+
+    fireEvent.click(within(firstOpen).getByRole("button", { name: "Close" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    const secondOpen = openCreateModal("Sled Push");
+
+    expect(within(secondOpen).queryByText("Prowler Push")).not.toBeInTheDocument();
+    expect(within(secondOpen).getByDisplayValue("Sled Push")).toBeInTheDocument();
   });
 });
 

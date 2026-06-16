@@ -1,106 +1,21 @@
 "use client";
 
-import { useMemo, useState, type SyntheticEvent } from "react";
-
-import {
-  Autocomplete,
-  Box,
-  TextField,
-  createFilterOptions,
-  type AutocompleteValue,
-  type FilterOptionsState,
-} from "@mui/material";
+import { useMemo, useState } from "react";
 
 import type { Modifier } from "@repo/contracts/lms/modifier";
 import { SCHEMA_ROW_CONSTANTS } from "@repo/contracts/lms/schema-row";
-import { TagChip } from "@repo/ui";
+import { CreatablePicker, type CreatableOption } from "@repo/ui";
 
 import { useCreateModifier } from "@app/lib/hooks/use-create-modifier";
 import { useDebouncedValue } from "@app/lib/hooks/use-debounced-value";
 import { useModifierSearch } from "@app/lib/hooks/use-modifier-search";
 
-import {
-  buildResolvedNameMap,
-  buildValueOptions,
-  getOptionId,
-  getOptionLabel,
-  hasExactNameMatch,
-  isExistingOption,
-  type CreatableMultiPickerProps,
-  type ModifierOption,
-} from "./modifier-picker.types";
+import { buildResolvedNameMap, type CreatableMultiPickerProps } from "./modifier-picker.types";
 
 const DEFAULT_LABEL = "Modifiers";
 const DEFAULT_PLACEHOLDER = "Search or create a modifier";
 const SEARCH_DEBOUNCE_MS = 250;
-const CREATE_OPTION_PREFIX = 'Create "';
-const CREATE_OPTION_SUFFIX = '"';
 const NO_OPTIONS_TEXT = "Type to search modifiers";
-
-const baseFilter = createFilterOptions<ModifierOption>({
-  stringify: getOptionLabel,
-});
-
-const appendCreateOption = (
-  options: ModifierOption[],
-  state: FilterOptionsState<ModifierOption>,
-  searchResults: Modifier[],
-): ModifierOption[] => {
-  const filtered = baseFilter(options, state);
-  const query = state.inputValue.trim();
-
-  if (query === "" || hasExactNameMatch(searchResults, query)) {
-    return filtered;
-  }
-
-  return [...filtered, { kind: "create", query }];
-};
-
-type ChosenValue = AutocompleteValue<ModifierOption, true, false, true>;
-
-const collectExistingIds = (chosen: ChosenValue): string[] => {
-  const ids: string[] = [];
-
-  for (const entry of chosen) {
-    if (typeof entry !== "string" && isExistingOption(entry)) {
-      ids.push(entry.modifier.id);
-    }
-  }
-
-  return ids;
-};
-
-const collectCreateQueries = (chosen: ChosenValue): string[] => {
-  const queries: string[] = [];
-
-  for (const entry of chosen) {
-    if (typeof entry === "string") {
-      const trimmed = entry.trim();
-
-      if (trimmed !== "") {
-        queries.push(trimmed);
-      }
-    } else if (!isExistingOption(entry)) {
-      queries.push(entry.query);
-    }
-  }
-
-  return queries;
-};
-
-const dedupeCapped = (ids: string[], maxCount: number): string[] => {
-  const seen = new Set<string>();
-  const result: string[] = [];
-
-  for (const id of ids) {
-    if (!seen.has(id) && result.length < maxCount) {
-      seen.add(id);
-      result.push(id);
-    }
-  }
-
-  return result;
-};
 
 export const ModifierPicker = ({
   value,
@@ -118,8 +33,7 @@ export const ModifierPicker = ({
   const searchQuery = useModifierSearch(debouncedQuery === "" ? undefined : debouncedQuery);
   const createModifier = useCreateModifier();
 
-  const searchResults = useMemo(() => searchQuery.data ?? [], [searchQuery.data]);
-  const isAtCap = value.length >= maxCount;
+  const searchResults = useMemo<Modifier[]>(() => searchQuery.data ?? [], [searchQuery.data]);
 
   const nameById = useMemo(() => {
     const byId = buildResolvedNameMap(searchResults, resolvedRefs ?? []);
@@ -130,120 +44,51 @@ export const ModifierPicker = ({
 
     return byId;
   }, [searchResults, resolvedRefs, mintedNames]);
-  const valueOptions = useMemo(() => buildValueOptions(value, nameById), [value, nameById]);
-  const options = useMemo<ModifierOption[]>(() => {
-    const searchOptions: ModifierOption[] = searchResults.map((modifier) => ({
-      kind: "existing",
-      modifier,
-    }));
-    const searchIds = new Set(searchOptions.map(getOptionId));
-    const selectedExtras = valueOptions.filter((option) => !searchIds.has(getOptionId(option)));
 
-    return [...searchOptions, ...selectedExtras];
-  }, [searchResults, valueOptions]);
+  const options = useMemo<CreatableOption[]>(
+    () => searchResults.map((modifier) => ({ id: modifier.id, label: modifier.name })),
+    [searchResults],
+  );
 
-  const handleChange = async (_event: SyntheticEvent, chosen: ChosenValue): Promise<void> => {
-    const existingIds = collectExistingIds(chosen);
-    const createQueries = collectCreateQueries(chosen);
+  const selected = useMemo<CreatableOption[]>(
+    () => value.map((id) => ({ id, label: nameById.get(id) ?? id })),
+    [value, nameById],
+  );
 
-    if (createQueries.length === 0) {
-      onChange(dedupeCapped(existingIds, maxCount));
+  const handleCreate = async (name: string): Promise<CreatableOption | null> => {
+    const minted = await createModifier.mutateAsync({ name, notes: null }).catch(() => null);
 
-      return;
+    if (minted === null) {
+      return null;
     }
 
-    const mintedIds: string[] = [];
-    const mintedEntries: Array<[string, string]> = [];
+    setMintedNames((prev) => {
+      const next = new Map(prev);
 
-    for (const query of createQueries) {
-      const minted = await createModifier
-        .mutateAsync({ name: query, notes: null })
-        .catch(() => null);
+      next.set(minted.id, minted.name);
 
-      if (minted !== null) {
-        mintedIds.push(minted.id);
-        mintedEntries.push([minted.id, minted.name]);
-      }
-    }
+      return next;
+    });
 
-    if (mintedEntries.length > 0) {
-      setMintedNames((prev) => {
-        const next = new Map(prev);
-
-        for (const [id, name] of mintedEntries) {
-          next.set(id, name);
-        }
-
-        return next;
-      });
-    }
-
-    onChange(dedupeCapped([...existingIds, ...mintedIds], maxCount));
+    return { id: minted.id, label: minted.name };
   };
 
   return (
-    <Autocomplete<ModifierOption, true, false, true>
+    <CreatablePicker
       multiple
-      freeSolo
-      disableCloseOnSelect
-      slotProps={{
-        popper: {
-          placement: "bottom-start",
-          modifiers: [{ name: "flip", enabled: false }],
-        },
-      }}
-      disabled={disabled}
+      maxCount={maxCount}
       options={options}
-      value={valueOptions}
+      value={selected}
+      onChange={(next) => onChange(next.map((option) => option.id))}
       inputValue={inputValue}
-      onInputChange={(_event, next) => setInputValue(next)}
-      onChange={(event, chosen) => {
-        void handleChange(event, chosen);
-      }}
+      onInputChange={setInputValue}
+      onCreateOption={handleCreate}
       loading={searchQuery.isFetching}
-      filterOptions={(options, state) => appendCreateOption(options, state, searchResults)}
-      isOptionEqualToValue={(a, b) => getOptionId(a) === getOptionId(b)}
-      getOptionLabel={(option) => (typeof option === "string" ? option : getOptionLabel(option))}
+      disabled={disabled}
+      label={label}
+      placeholder={placeholder}
       noOptionsText={NO_OPTIONS_TEXT}
-      renderOption={(optionProps, option) => {
-        const { key, ...rest } = optionProps;
-        const optionLabel = isExistingOption(option)
-          ? getOptionLabel(option)
-          : `${CREATE_OPTION_PREFIX}${option.query}${CREATE_OPTION_SUFFIX}`;
-
-        return (
-          <Box component="li" key={key} {...rest}>
-            {optionLabel}
-          </Box>
-        );
-      }}
-      renderTags={(tags, getTagProps) =>
-        tags.map((option, index) => {
-          const { key, ...chipProps } = getTagProps({ index });
-          const chipLabel = typeof option === "string" ? option : getOptionLabel(option);
-
-          return <TagChip key={key} label={chipLabel} size="small" preserveCase {...chipProps} />;
-        })
-      }
-      renderInput={(params) => {
-        const { InputProps, inputProps, id: paramsId, disabled: paramsDisabled } = params;
-        const capHelperText = `Up to ${maxCount} modifiers`;
-        const helperText = error ?? (isAtCap ? capHelperText : undefined);
-
-        return (
-          <TextField
-            size="small"
-            {...(paramsId !== undefined && { id: paramsId })}
-            {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
-            label={label}
-            error={error !== undefined}
-            {...(!isAtCap && { placeholder })}
-            {...(helperText !== undefined && { helperText })}
-            inputProps={isAtCap ? { ...inputProps, readOnly: true } : inputProps}
-            slotProps={{ input: InputProps }}
-          />
-        );
-      }}
+      {...(error !== undefined && { error })}
     />
   );
 };

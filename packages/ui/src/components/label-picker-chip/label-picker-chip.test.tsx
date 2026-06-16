@@ -27,19 +27,14 @@ const skillOption = buildLabel({ id: "day-3", name: "SKILL" });
 
 describe("LabelPickerChip", () => {
   it("renders placeholder when value is null", () => {
-    render(<LabelPickerChip value={null} options={[dayOption]} level="DAY" onChange={vi.fn()} />);
+    render(<LabelPickerChip value={null} options={[dayOption]} onChange={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: "—" })).toBeInTheDocument();
   });
 
   it("renders the label name when a value is present", () => {
     render(
-      <LabelPickerChip
-        value={dayOption}
-        options={[dayOption, restOption]}
-        level="DAY"
-        onChange={vi.fn()}
-      />,
+      <LabelPickerChip value={dayOption} options={[dayOption, restOption]} onChange={vi.fn()} />,
     );
 
     expect(screen.getByRole("button", { name: "MAIN" })).toBeInTheDocument();
@@ -47,12 +42,7 @@ describe("LabelPickerChip", () => {
 
   it("renders the rest tonal variant when value.rest is true", () => {
     const { container } = render(
-      <LabelPickerChip
-        value={restOption}
-        options={[dayOption, restOption]}
-        level="DAY"
-        onChange={vi.fn()}
-      />,
+      <LabelPickerChip value={restOption} options={[dayOption, restOption]} onChange={vi.fn()} />,
     );
     const chip = container.querySelector(".MuiChip-root");
 
@@ -61,14 +51,7 @@ describe("LabelPickerChip", () => {
   });
 
   it("opens the menu when the chip body is clicked", () => {
-    render(
-      <LabelPickerChip
-        value={null}
-        options={[dayOption, restOption]}
-        level="DAY"
-        onChange={vi.fn()}
-      />,
-    );
+    render(<LabelPickerChip value={null} options={[dayOption, restOption]} onChange={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "—" }));
 
@@ -77,12 +60,7 @@ describe("LabelPickerChip", () => {
 
   it("opens the menu when the trailing chevron is clicked", () => {
     const { container } = render(
-      <LabelPickerChip
-        value={null}
-        options={[dayOption, restOption]}
-        level="DAY"
-        onChange={vi.fn()}
-      />,
+      <LabelPickerChip value={null} options={[dayOption, restOption]} onChange={vi.fn()} />,
     );
     const deleteIcon = container.querySelector(".MuiChip-deleteIcon");
 
@@ -100,14 +78,7 @@ describe("LabelPickerChip", () => {
   it("fires onChange with the option id and closes the menu when an option is selected", () => {
     const onChange = vi.fn();
 
-    render(
-      <LabelPickerChip
-        value={null}
-        options={[dayOption, skillOption]}
-        level="DAY"
-        onChange={onChange}
-      />,
-    );
+    render(<LabelPickerChip value={null} options={[dayOption, skillOption]} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "—" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "SKILL" }));
@@ -121,12 +92,7 @@ describe("LabelPickerChip", () => {
     const onChange = vi.fn();
 
     render(
-      <LabelPickerChip
-        value={dayOption}
-        options={[dayOption, skillOption]}
-        level="DAY"
-        onChange={onChange}
-      />,
+      <LabelPickerChip value={dayOption} options={[dayOption, skillOption]} onChange={onChange} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "MAIN" }));
@@ -138,14 +104,7 @@ describe("LabelPickerChip", () => {
   });
 
   it("renders mini chip previews for each option inside the menu", () => {
-    render(
-      <LabelPickerChip
-        value={null}
-        options={[dayOption, skillOption]}
-        level="DAY"
-        onChange={vi.fn()}
-      />,
-    );
+    render(<LabelPickerChip value={null} options={[dayOption, skillOption]} onChange={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "—" }));
 
@@ -158,14 +117,7 @@ describe("LabelPickerChip", () => {
   });
 
   it("renders the rest preview with the primary tonal variant inside the menu", () => {
-    render(
-      <LabelPickerChip
-        value={null}
-        options={[dayOption, restOption]}
-        level="DAY"
-        onChange={vi.fn()}
-      />,
-    );
+    render(<LabelPickerChip value={null} options={[dayOption, restOption]} onChange={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "—" }));
 
@@ -181,7 +133,6 @@ describe("LabelPickerChip", () => {
       <LabelPickerChip
         value={dayOption}
         options={[dayOption, restOption]}
-        level="DAY"
         disabled
         onChange={vi.fn()}
       />,
@@ -198,7 +149,6 @@ describe("LabelPickerChip", () => {
       <LabelPickerChip
         value={null}
         options={[dayOption, restOption]}
-        level="DAY"
         isLoading
         onChange={vi.fn()}
       />,
@@ -211,9 +161,7 @@ describe("LabelPickerChip", () => {
   });
 
   it("does not open the menu when options are empty", () => {
-    const { container } = render(
-      <LabelPickerChip value={null} options={[]} level="DAY" onChange={vi.fn()} />,
-    );
+    const { container } = render(<LabelPickerChip value={null} options={[]} onChange={vi.fn()} />);
     const chip = container.querySelector(".MuiChip-root");
 
     expect(chip).not.toBeNull();
@@ -224,7 +172,7 @@ describe("LabelPickerChip", () => {
   it("applies maxWidth and ellipsis styling on the chip label for long label names (QA-005)", () => {
     const longLabel = buildLabel({ id: "long-1", name: "A".repeat(200) });
     const { container } = render(
-      <LabelPickerChip value={longLabel} options={[longLabel]} level="DAY" onChange={vi.fn()} />,
+      <LabelPickerChip value={longLabel} options={[longLabel]} onChange={vi.fn()} />,
     );
     const chipRoot = container.querySelector(".MuiChip-root");
     const chipLabel = container.querySelector(".MuiChip-label");
@@ -243,13 +191,7 @@ describe("LabelPickerChip", () => {
 describe("LabelPickerChip multi-mode", () => {
   it("renders only the +label trigger when value is empty", () => {
     render(
-      <LabelPickerChip
-        multiple
-        value={[]}
-        options={[dayOption, skillOption]}
-        level="BLOCK"
-        onChange={vi.fn()}
-      />,
+      <LabelPickerChip multiple value={[]} options={[dayOption, skillOption]} onChange={vi.fn()} />,
     );
 
     const trigger = screen.getByLabelText("Add block label");
@@ -264,7 +206,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         onChange={vi.fn()}
       />,
     );
@@ -283,7 +224,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         onChange={vi.fn()}
       />,
     );
@@ -305,7 +245,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         onChange={onChange}
       />,
     );
@@ -325,7 +264,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption, skillOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         onChange={onChange}
       />,
     );
@@ -350,7 +288,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption, skillOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         onChange={vi.fn()}
       />,
     );
@@ -369,7 +306,7 @@ describe("LabelPickerChip multi-mode", () => {
   });
 
   it("surfaces 'No labels available.' inside the menu when the option pool is empty (QA-001)", () => {
-    render(<LabelPickerChip multiple value={[]} options={[]} level="BLOCK" onChange={vi.fn()} />);
+    render(<LabelPickerChip multiple value={[]} options={[]} onChange={vi.fn()} />);
 
     const trigger = screen.getByLabelText("Add block label");
 
@@ -386,13 +323,7 @@ describe("LabelPickerChip multi-mode", () => {
   it("applies maxWidth and ellipsis styling on multi-mode chips for long label names (QA-003)", () => {
     const longLabel = buildLabel({ id: "long-1", name: "A".repeat(200) });
     const { container } = render(
-      <LabelPickerChip
-        multiple
-        value={[longLabel]}
-        options={[longLabel]}
-        level="BLOCK"
-        onChange={vi.fn()}
-      />,
+      <LabelPickerChip multiple value={[longLabel]} options={[longLabel]} onChange={vi.fn()} />,
     );
     const chipRoot = container.querySelector(".MuiChip-root");
     const chipLabel = container.querySelector(".MuiChip-label");
@@ -412,7 +343,7 @@ describe("LabelPickerChip multi-mode", () => {
       buildLabel({ id: `lab-${String(index)}`, name: `LABEL_${String(index)}` }),
     );
     const { container } = render(
-      <LabelPickerChip multiple value={labels} options={labels} level="BLOCK" onChange={vi.fn()} />,
+      <LabelPickerChip multiple value={labels} options={labels} onChange={vi.fn()} />,
     );
 
     const chips = container.querySelectorAll(".MuiChip-root");
@@ -435,7 +366,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption, dayOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         onChange={onChange}
       />,
     );
@@ -461,7 +391,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[dayOption, skillOption]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         disabled
         onChange={vi.fn()}
       />,
@@ -478,7 +407,6 @@ describe("LabelPickerChip multi-mode", () => {
         multiple
         value={[]}
         options={[dayOption, skillOption]}
-        level="BLOCK"
         isLoading
         onChange={vi.fn()}
       />,

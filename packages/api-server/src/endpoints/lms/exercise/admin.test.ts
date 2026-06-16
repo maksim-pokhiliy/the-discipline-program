@@ -11,7 +11,6 @@ const ZERO_WIDTH_SPACE = "​";
 const baseExerciseData = (overrides: Partial<CreateExerciseData> = {}): CreateExerciseData => ({
   canonicalName: `Test Exercise ${crypto.randomUUID().slice(0, 8)}`,
   nature: "CONCRETE",
-  movementFamily: null,
   defaultDemoUrls: [],
   aliases: [],
   notes: null,
@@ -157,72 +156,6 @@ describe("cmsExerciseAdminApi", () => {
     });
   });
 
-  describe("getMovementFamilies (QA-Must-6)", () => {
-    it("filters nulls, dedupes, and sorts ascending", async () => {
-      const familyA = `family-a-${crypto.randomUUID().slice(0, 6)}`;
-      const familyB = `family-b-${crypto.randomUUID().slice(0, 6)}`;
-
-      const e1 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 1 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: familyB,
-        }),
-      );
-
-      createdIds.push(e1.id);
-
-      const e2 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 2 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: null,
-        }),
-      );
-
-      createdIds.push(e2.id);
-
-      const e3 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 3 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: familyA,
-        }),
-      );
-
-      createdIds.push(e3.id);
-
-      const e4 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 4 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: familyB,
-        }),
-      );
-
-      createdIds.push(e4.id);
-
-      const e5 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 5 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: null,
-        }),
-      );
-
-      createdIds.push(e5.id);
-
-      const families = await cmsExerciseAdminApi.getMovementFamilies();
-
-      expect(families).not.toContain(null);
-
-      const aIdx = families.indexOf(familyA);
-      const bIdx = families.indexOf(familyB);
-
-      expect(aIdx).toBeGreaterThanOrEqual(0);
-      expect(bIdx).toBeGreaterThan(aIdx);
-
-      const scoped = families.filter((f) => f === familyA || f === familyB);
-
-      expect(scoped).toEqual([familyA, familyB]);
-    });
-  });
-
   describe("getExercises (QA-Must-7)", () => {
     it("returns rows ordered by createdAt desc", async () => {
       const e1 = await cmsExerciseAdminApi.createExercise(
@@ -261,7 +194,6 @@ describe("cmsExerciseAdminApi", () => {
       const data = baseExerciseData({
         canonicalName: "Full Payload Exercise",
         nature: "CONCRETE",
-        movementFamily: "kettlebell-swings",
         defaultDemoUrls: ["https://example.com/swing-1", "https://example.com/swing-2"],
         aliases: ["Russian Swing", "American Swing"],
         notes: "Hip-dominant power production.",
@@ -274,7 +206,6 @@ describe("cmsExerciseAdminApi", () => {
       expect(created.canonicalName).toBe("Full Payload Exercise");
       expect(created.canonicalNameLower).toBe("full payload exercise");
       expect(created.nature).toBe("CONCRETE");
-      expect(created.movementFamily).toBe("kettlebell-swings");
       expect(created.defaultDemoUrls).toEqual([
         "https://example.com/swing-1",
         "https://example.com/swing-2",

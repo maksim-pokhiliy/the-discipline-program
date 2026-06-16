@@ -1,21 +1,16 @@
 "use client";
 
-import { Autocomplete, Box, CircularProgress, Stack, TextField, Typography } from "@mui/material";
+import { useMemo, useState } from "react";
 
-import { type Exercise } from "@repo/contracts/lms/exercise";
+import { CreatablePicker, type CreatableOption, usePromiseModal } from "@repo/ui";
 
 import { useExercises } from "@app/lib/hooks";
 
-const SEARCH_PLACEHOLDER = "search by name, family, or modality…";
+import { ExerciseCreateModal } from "./exercise-create-modal";
+
+const SEARCH_PLACEHOLDER = "search by name or create a movement…";
 const REQUIRED_EXERCISE_MESSAGE = "Pick an exercise";
-const OPTION_NAME_FONT_WEIGHT = 600;
-const FAMILY_PREFIX = "family: ";
-const LOADING_SPINNER_SIZE = 16;
-
-const buildMetaLine = (exercise: Exercise): string =>
-  exercise.movementFamily === null ? "" : `${FAMILY_PREFIX}${exercise.movementFamily}`;
-
-const getOptionLabel = (option: Exercise): string => option.canonicalName;
+const NO_OPTIONS_TEXT = "Type to search exercises";
 
 type ExercisePickerProps = {
   value: string | null;
@@ -37,71 +32,41 @@ export const ExercisePicker = ({
   label,
 }: ExercisePickerProps) => {
   const { data: exercises = [], isLoading } = useExercises();
-  const options = placeholderOnly ? exercises.filter((e) => e.nature === "PLACEHOLDER") : exercises;
-  const selected = exercises.find((e) => e.id === value) ?? null;
+  const [inputValue, setInputValue] = useState("");
+  const createModal = usePromiseModal<{ initialName: string }, CreatableOption>();
+
+  const options = useMemo<CreatableOption[]>(() => {
+    const visible = placeholderOnly
+      ? exercises.filter((exercise) => exercise.nature === "PLACEHOLDER")
+      : exercises;
+
+    return visible.map((exercise) => ({ id: exercise.id, label: exercise.canonicalName }));
+  }, [exercises, placeholderOnly]);
+
+  const selected = useMemo<CreatableOption | null>(
+    () => options.find((option) => option.id === value) ?? null,
+    [options, value],
+  );
 
   return (
-    <Autocomplete<Exercise>
-      options={options}
-      value={selected}
-      onChange={(_, next) => onChange(next?.id ?? null)}
-      getOptionLabel={getOptionLabel}
-      isOptionEqualToValue={(option, val) => option.id === val.id}
-      disabled={disabled || isLoading}
-      {...(compact && { size: "small" })}
-      renderOption={(props, option) => (
-        <Box component="li" {...props} key={option.id}>
-          <Stack spacing={0.25} sx={{ minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: OPTION_NAME_FONT_WEIGHT }}>
-              {option.canonicalName}
-            </Typography>
+    <>
+      <CreatablePicker
+        options={options}
+        value={selected}
+        onChange={(option) => onChange(option?.id ?? null)}
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onCreateOption={(name) => createModal.open({ initialName: name })}
+        loading={isLoading}
+        disabled={disabled || isLoading}
+        size={compact ? "small" : "medium"}
+        placeholder={SEARCH_PLACEHOLDER}
+        noOptionsText={NO_OPTIONS_TEXT}
+        {...(label !== undefined && { label })}
+        {...(error && { error: REQUIRED_EXERCISE_MESSAGE })}
+      />
 
-            <Typography variant="caption" color="text.subtle">
-              {buildMetaLine(option)}
-            </Typography>
-          </Stack>
-        </Box>
-      )}
-      renderInput={(params) => {
-        const {
-          size: paramsSize,
-          disabled: paramsDisabled,
-          fullWidth: paramsFullWidth,
-          id: paramsId,
-          InputLabelProps,
-          inputProps,
-          InputProps,
-        } = params;
-
-        return (
-          <TextField
-            {...(paramsSize !== undefined && { size: paramsSize })}
-            {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
-            {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
-            {...(paramsId !== undefined && { id: paramsId })}
-            inputProps={inputProps}
-            {...(label !== undefined && { label })}
-            placeholder={SEARCH_PLACEHOLDER}
-            variant="outlined"
-            error={error}
-            {...(error && { helperText: REQUIRED_EXERCISE_MESSAGE })}
-            slotProps={{
-              inputLabel: InputLabelProps,
-              input: {
-                ...InputProps,
-                endAdornment: (
-                  <>
-                    {isLoading ? (
-                      <CircularProgress color="inherit" size={LOADING_SPINNER_SIZE} />
-                    ) : null}
-                    {InputProps.endAdornment}
-                  </>
-                ),
-              },
-            }}
-          />
-        );
-      }}
-    />
+      <ExerciseCreateModal controller={createModal} />
+    </>
   );
 };

@@ -213,10 +213,11 @@ describe("SessionCard", () => {
     renderSessionCard({ session, sessionOptions: [strength, recovery] });
 
     fireEvent.click(screen.getByRole("button", { name: "Session label" }));
+    fireEvent.mouseDown(screen.getByRole("combobox"));
 
-    const menu = screen.getByRole("menu");
+    const listbox = screen.getByRole("listbox");
 
-    fireEvent.click(within(menu).getByText("RECOVERY"));
+    fireEvent.click(within(listbox).getByText("RECOVERY"));
 
     expect(updateSessionMutate).toHaveBeenCalledTimes(1);
     expect(updateSessionMutate).toHaveBeenCalledWith({
