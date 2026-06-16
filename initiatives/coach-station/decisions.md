@@ -6,16 +6,17 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID                          | Topic                                                                                             | Status   |
-| --------------------------- | ------------------------------------------------------------------------------------------------- | -------- |
-| D-1 ONE-INITIATIVE          | Phase 2 = ONE initiative `coach-station`; the four pillars run as waves                           | RATIFIED |
-| D-2 CLONE-FIRST             | Clone (R1) ships first; templates/archetypes (R2) PARKED — slot TBD, not dropped                  | RATIFIED |
-| D-3 CLONE-SERVER-SIDE       | Clone = server-side deep-clone in ONE transaction (atomic, idempotent, ref-remapping)             | RATIFIED |
-| D-4 CLONE-FLOORS            | Per-floor clone semantics: week/day = replace-into-current; session↓ = duplicate-append           | RATIFIED |
-| D-5 PROFILE-SCOPE           | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                             | RATIFIED |
-| D-6 R1-CLONE-UX             | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day          | RATIFIED |
-| D-7 PROFILE-SCHEMA-EXTENDED | Coach profile schema EXPANDED — CoachCredential + location/specialties (supersedes D-5 no-expand) | RATIFIED |
-| D-8 CLONE-SOURCE-PICKER     | Source-picker = content-anchored list backed by a new `GET …/weeks`; DR-8/DR-3/DR-4 sub-calls     | RATIFIED |
+| ID                          | Topic                                                                                                  | Status   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ | -------- |
+| D-1 ONE-INITIATIVE          | Phase 2 = ONE initiative `coach-station`; the four pillars run as waves                                | RATIFIED |
+| D-2 CLONE-FIRST             | Clone (R1) ships first; templates/archetypes (R2) PARKED — slot TBD, not dropped                       | RATIFIED |
+| D-3 CLONE-SERVER-SIDE       | Clone = server-side deep-clone in ONE transaction (atomic, idempotent, ref-remapping)                  | RATIFIED |
+| D-4 CLONE-FLOORS            | Per-floor clone semantics: week/day = replace-into-current; session↓ = duplicate-append                | RATIFIED |
+| D-5 PROFILE-SCOPE           | Coach profile = bio + user-meta, off-spine small; schema NOT expanded                                  | RATIFIED |
+| D-6 R1-CLONE-UX             | R1 clone UX ratified: no undo · block empty sources · silent append · any week · any day               | RATIFIED |
+| D-7 PROFILE-SCHEMA-EXTENDED | Coach profile schema EXPANDED — CoachCredential + location/specialties (supersedes D-5 no-expand)      | RATIFIED |
+| D-8 CLONE-SOURCE-PICKER     | Source-picker = content-anchored list backed by a new `GET …/weeks`; DR-8/DR-3/DR-4 sub-calls          | RATIFIED |
+| D-9 DROP-EQUIPMENT-LIBRARY  | Remove `Equipment` entity + join + Exercise multi-ref + admin CRUD (supersedes sp/D-EQUIPMENT-LIBRARY) | RATIFIED |
 
 ---
 
@@ -102,3 +103,15 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Sub-calls confirmed at Gate A.** **DR-8 (refines D-6.2):** weeks block empty sources STRUCTURALLY (only populated weeks listed); days keep the disabled-row + "Empty — nothing to clone" tag. The defensive `cloned:false / empty-source` union arm is RETAINED as a race backstop. **DR-3:** `dayCount` = days-with-≥1-session. **DR-4:** the endpoint emits `startDate` as a UTC-safe `YYYY-MM-DD`.
 - **Reversibility.** Additive endpoint — a fallback to the date-picker drops the endpoint + the two list components but keeps the modals. Two-way door.
 - **Links.** `r1-clone-design.md` §3 (superseded presentation); D-6.2/D-6.4 (the UX calls this realizes/refines).
+
+### D-9 DROP-EQUIPMENT-LIBRARY — remove the Equipment entity + multi-ref + admin CRUD (supersedes session-primitive D-EQUIPMENT-LIBRARY)
+
+- **Status:** RATIFIED (2026-06-16, owner-ratified scope cut; shipped on `feat/drop-equipment-library`).
+- **Decision.** Remove the `Equipment` entity + the `ExerciseEquipmentAssignment` join + the `Exercise.equipment` multi-ref + the admin Equipment CRUD (pages / route handlers / module / api / hook / nav / icon / query-key) + the exercise-form multi-select + the exercise-picker equipment hint + the admin exercises list column/filter. Supersedes session-primitive `D-EQUIPMENT-LIBRARY` (the catalog-pass fork F-EQUIP that introduced it).
+- **Rationale.** Equipment shipped as **author-side catalog metadata** — never athlete-visible (absent from the built schema row + the workout view), surfacing only as a coach hint in the exercise-picker dropdown and an admin list column/filter. Not on the critical path to the launch bar (program faster than Excel · athlete logs). The naming-collision concern it solved is carried by exercise names (Dumbbell Snatch, KB Swing, Barbell Thruster); the implement-type-as-load intent (`D-LOAD-FINAL`) was **never wired to the row**, so no load semantics are lost. ≈1590 LOC removed (+58 / −1590 across 60 files — 29 deleted, 31 edited).
+- **Ripple handled (the exercise contract).** `exerciseSchema.equipment` + `exerciseFormBase.equipmentIds` dropped at the zod source → `Exercise` / `CreateExerciseData` / `UpdateExerciseData` follow by inference; `mapToExercise` collapses `PrismaExerciseWithEquipment` → plain `PrismaExercise`; `EXERCISE_WITH_EQUIPMENT_INCLUDE` + the exercise read includes gone; picker meta line → family-only. Four consumers the original scope map missed were caught by a whole-repo grep and handled: `exercise/platform.test.ts`, the `contracts/package.json` `exports` subpath, and the inline exercise factories in `format-load.test.ts` / `format-percentage-reference.test.ts`.
+- **Sub-call (D-9a, txn-simplify).** With equipment gone, `createExercise` / `updateExercise` lost their multi-write invariant (assert + write + replace → a single write); the `prisma.$transaction` + refetch-with-include were collapsed to a direct `prisma.exercise.create/update(...)` mapped via `mapToExercise`, dropping the now-unused `BadRequestError` / `TxClient` imports. Behavior preserved exactly (P2002 → ConflictError(field canonicalName); not-found → findOrThrow; success → mapped exercise). Manifesto-aligned (no dead ceremony around one write); flagged in the PR.
+- **Verification.** Whole-repo `check-types` + `lint` green (16/16); contracts + platform vitest green (1528); the two edited api-server exercise test files green against live Neon (15 tests). The frozen clone/session primitive is untouched — `git grep -i equipment` over `endpoints/lms/{session,schema,clone}` is empty (clone re-references the catalog, it never duplicated Equipment).
+- **Owner-owed (post-merge).** `pnpm db:reset` to drop `training_equipment` + `training_exercise_equipment_assignments` from the dev DB (ADR-0019, no migration files); the FULL gated api-server suite (only the two exercise test files were run here; the rest of the suite tests code this change does not touch).
+- **Reversibility.** Two-way — re-add the entity (git revert) if catalog filtering / equipment-based substitution becomes real post-launch.
+- **Links.** session-primitive `D-EQUIPMENT-LIBRARY` (superseded); the wave feature PR (`feat/drop-equipment-library`); `.feature-dev/1781593528/{research,design,plan}.md`.

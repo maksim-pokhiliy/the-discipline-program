@@ -93,7 +93,7 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | DR-W4E-SESSION-BLOCK        | Session create seeds one block atomically in the existing tx (E-i)                                              | RATIFIED   |
 | DR-W4E-ROW-CHIPS            | Row summary renders each prescription field as a distinct MUI chip (D-CHIPS render-word)                        | RATIFIED   |
 | D-CATALOG-NATURE            | `ExerciseNature {CONCRETE,PLACEHOLDER,REST}` replaces canonicalCompoundType + placeholderFlag; REST first-class | RATIFIED   |
-| D-EQUIPMENT-LIBRARY         | `Equipment` entity + `ExerciseEquipmentAssignment` join (à la Label); multi-ref; admin CRUD; no coach-create    | RATIFIED   |
+| D-EQUIPMENT-LIBRARY         | `Equipment` entity + `ExerciseEquipmentAssignment` join (à la Label); multi-ref; admin CRUD; no coach-create    | SUPERSEDED |
 | D-EXID-FK                   | `SchemaRow.exerciseId` → Exercise `@relation onDelete Restrict` (à la OneRMRecord); targetExerciseId stays Json | RATIFIED   |
 | D-CATALOG-KILL              | `MovementType` killed (movementFamily kept); dead RefResolver code + orphan defaultLoad dropped; name→200       | RATIFIED   |
 | D-SEED-TEARDOWN             | Synthetic training seed RETIRED; `db:seed` = users + profiles only; catalog/plans via the UI                    | RATIFIED   |
@@ -750,7 +750,7 @@ The session-primitive TAIL wave (F-INIT: run as a tail, `/initiative-close` afte
 
 ### D-EQUIPMENT-LIBRARY — coach-managed Equipment entity + multi-ref on Exercise
 
-- **Status:** RATIFIED (2026-06-14, owner — fork F-EQUIP).
+- **Status:** SUPERSEDED (2026-06-16 by coach-station **D-9 DROP-EQUIPMENT-LIBRARY** — the entity + join + multi-ref + admin CRUD were removed; equipment shipped as never-athlete-visible author metadata, off the launch-bar critical path, and the implement-type-as-load intent was never wired to the row). Originally RATIFIED 2026-06-14, owner — fork F-EQUIP.
 - **Decision.** Coach-managed `Equipment` entity + `ExerciseEquipmentAssignment` join (mirror Label); multi-ref on Exercise; admin CRUD + admin-form multi-select + platform DISPLAY; NO coach-create this wave. **Equipment-value disposition:** 14 implements → library rows (ASSAULT_BIKE, ATLAS_STONE, BAND, BARBELL, BOX, DUMBBELL, JUMP_ROPE, KETTLEBELL, PARALLEL_BARS, RINGS, ROW_ERG, SKI_ERG, SLED, YOKE); SOFA/BOX_OR_SOFA → not equipment (already modifiers per D-MODIFIER); MIXED → multi-ref; UNKNOWN/BODYWEIGHT → empty set.
 - **Rationale.** Owner direction + D-LOAD-FINAL (implement TYPE rides the exercise; count on the row; kg in load).
 - **Consequences.** The enum-dup for equipment dissolves (table, not enum); admin form changes; platform meta/chip render a list.
