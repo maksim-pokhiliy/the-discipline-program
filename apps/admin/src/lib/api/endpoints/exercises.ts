@@ -3,7 +3,6 @@ import {
   type AdminExercisesPageData,
   type CreateExerciseData,
   type Exercise,
-  type GetMovementFamiliesResponse,
   type UpdateExerciseData,
 } from "@repo/contracts/lms/exercise";
 
@@ -21,7 +20,4 @@ export const createExercisesAPI = (client: ApiClient) => ({
 
   delete: (id: string): Promise<void> =>
     client.requestNoContent(`/api/admin/exercises/${id}`, "DELETE"),
-
-  getMovementFamilies: (): Promise<GetMovementFamiliesResponse> =>
-    client.request("/api/admin/exercises/movement-families"),
 });

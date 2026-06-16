@@ -252,10 +252,11 @@ describe("DayRow", () => {
     renderDayRow({ label: main, options: [main, recovery] });
 
     fireEvent.click(screen.getByRole("button", { name: "Day label" }));
+    fireEvent.mouseDown(screen.getByRole("combobox"));
 
-    const menu = screen.getByRole("menu");
+    const listbox = screen.getByRole("listbox");
 
-    fireEvent.click(within(menu).getByText("RECOVERY"));
+    fireEvent.click(within(listbox).getByText("RECOVERY"));
 
     expect(updateLabelMutate).toHaveBeenCalledTimes(1);
     expect(updateLabelMutate).toHaveBeenCalledWith({ labelId: recovery.id });

@@ -20,12 +20,6 @@ export const platformKeys = {
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
   },
-  coachNotes: {
-    byAthlete: (athleteId: string) => [...ROOT, "coach-notes", athleteId] as const,
-  },
-  coachAthleteProfile: {
-    byId: (athleteId: string) => [...ROOT, "coach-athlete-profile", athleteId] as const,
-  },
   weeks: {
     byDate: (planId: string, startDate: string) =>
       [...ROOT, "training-plans", planId, "weeks", startDate] as const,

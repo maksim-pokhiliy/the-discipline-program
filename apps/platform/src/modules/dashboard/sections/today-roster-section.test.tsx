@@ -61,10 +61,17 @@ const originalLocation = window.location;
 
 const renderSection = (athletes: AthleteDailySummary[] = ROSTER) => {
   const onOpenAthlete = vi.fn();
+  const onVisibleIdsChange = vi.fn();
 
-  render(<TodayRosterSection athletes={athletes} onOpenAthlete={onOpenAthlete} />);
+  render(
+    <TodayRosterSection
+      athletes={athletes}
+      onOpenAthlete={onOpenAthlete}
+      onVisibleIdsChange={onVisibleIdsChange}
+    />,
+  );
 
-  return { onOpenAthlete };
+  return { onOpenAthlete, onVisibleIdsChange };
 };
 
 const switchToTab = (label: string): void => {

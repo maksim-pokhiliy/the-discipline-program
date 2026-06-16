@@ -48,7 +48,6 @@ const meta = {
   args: {
     value: null,
     options: DAY_OPTIONS,
-    level: "DAY",
     onChange: () => {},
   },
   parameters: {
@@ -67,7 +66,7 @@ export const Default: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="default — no value selected" direction="row">
-        <LabelPickerChip value={null} options={DAY_OPTIONS} level="DAY" onChange={() => {}} />
+        <LabelPickerChip value={null} options={DAY_OPTIONS} onChange={() => {}} />
       </StorySection>
     </StoryPage>
   ),
@@ -77,12 +76,7 @@ export const Selected: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="selected — non-rest label" direction="row">
-        <LabelPickerChip
-          value={MAIN_OPTION ?? null}
-          options={DAY_OPTIONS}
-          level="DAY"
-          onChange={() => {}}
-        />
+        <LabelPickerChip value={MAIN_OPTION ?? null} options={DAY_OPTIONS} onChange={() => {}} />
       </StorySection>
     </StoryPage>
   ),
@@ -92,12 +86,7 @@ export const RestSelected: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="rest selected — orange tonal variant" direction="row">
-        <LabelPickerChip
-          value={REST_OPTION ?? null}
-          options={DAY_OPTIONS}
-          level="DAY"
-          onChange={() => {}}
-        />
+        <LabelPickerChip value={REST_OPTION ?? null} options={DAY_OPTIONS} onChange={() => {}} />
       </StorySection>
     </StoryPage>
   ),
@@ -120,7 +109,7 @@ const InteractiveStory = () => {
   return (
     <StoryPage>
       <StorySection title="interactive — click to open menu" direction="row">
-        <LabelPickerChip value={value} options={DAY_OPTIONS} level="DAY" onChange={handleChange} />
+        <LabelPickerChip value={value} options={DAY_OPTIONS} onChange={handleChange} />
       </StorySection>
     </StoryPage>
   );
@@ -134,7 +123,7 @@ export const Empty: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="empty — no options available" direction="row">
-        <LabelPickerChip value={null} options={[]} level="DAY" onChange={() => {}} />
+        <LabelPickerChip value={null} options={[]} onChange={() => {}} />
       </StorySection>
     </StoryPage>
   ),
@@ -144,13 +133,7 @@ export const Loading: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="loading — menu blocked until options arrive" direction="row">
-        <LabelPickerChip
-          value={null}
-          options={DAY_OPTIONS}
-          level="DAY"
-          isLoading
-          onChange={() => {}}
-        />
+        <LabelPickerChip value={null} options={DAY_OPTIONS} isLoading onChange={() => {}} />
       </StorySection>
     </StoryPage>
   ),
@@ -163,7 +146,6 @@ export const Disabled: Story = {
         <LabelPickerChip
           value={MAIN_OPTION ?? null}
           options={DAY_OPTIONS}
-          level="DAY"
           disabled
           onChange={() => {}}
         />
@@ -176,13 +158,7 @@ export const MultiEmpty: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="multi · empty — trigger only, no chips" direction="row">
-        <LabelPickerChip
-          multiple
-          value={[]}
-          options={BLOCK_OPTIONS}
-          level="BLOCK"
-          onChange={() => {}}
-        />
+        <LabelPickerChip multiple value={[]} options={BLOCK_OPTIONS} onChange={() => {}} />
       </StorySection>
     </StoryPage>
   ),
@@ -201,13 +177,7 @@ export const MultiPartial: Story = {
       };
 
       return (
-        <LabelPickerChip
-          multiple
-          value={value}
-          options={BLOCK_OPTIONS}
-          level="BLOCK"
-          onChange={handleChange}
-        />
+        <LabelPickerChip multiple value={value} options={BLOCK_OPTIONS} onChange={handleChange} />
       );
     };
 
@@ -234,13 +204,7 @@ export const MultiAllSelected: Story = {
       };
 
       return (
-        <LabelPickerChip
-          multiple
-          value={value}
-          options={BLOCK_OPTIONS}
-          level="BLOCK"
-          onChange={handleChange}
-        />
+        <LabelPickerChip multiple value={value} options={BLOCK_OPTIONS} onChange={handleChange} />
       );
     };
 
@@ -268,7 +232,6 @@ export const MultiDisabled: Story = {
           multiple
           value={[dayOpt, restOpt]}
           options={BLOCK_OPTIONS}
-          level="BLOCK"
           disabled
           onChange={() => {}}
         />
@@ -285,7 +248,6 @@ export const MultiLoading: Story = {
           multiple
           value={[]}
           options={BLOCK_OPTIONS}
-          level="BLOCK"
           isLoading
           onChange={() => {}}
         />

@@ -1,14 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-
 import {
   type AdminExercisesPageData,
   type CreateExerciseData,
   type Exercise,
   type UpdateExerciseData,
 } from "@repo/contracts/lms/exercise";
-import { createCrudHooks, STALE_TIMES } from "@repo/query";
+import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -32,7 +30,6 @@ const exerciseHooks = createCrudHooks<
   },
   redirectTo: "/exercises",
   useNavigate,
-  additionalInvalidateKeys: [adminKeys.exercises.movementFamilies()],
 });
 
 export const useExercisesPageData = exerciseHooks.usePageData;
@@ -40,10 +37,3 @@ export const useExercise = exerciseHooks.useById;
 export const useCreateExercise = exerciseHooks.useCreate;
 export const useUpdateExercise = exerciseHooks.useUpdate;
 export const useDeleteExercise = exerciseHooks.useDelete;
-
-export const useMovementFamilies = () =>
-  useQuery({
-    queryKey: adminKeys.exercises.movementFamilies(),
-    queryFn: api.exercises.getMovementFamilies,
-    staleTime: STALE_TIMES.FIVE_MINUTES,
-  });

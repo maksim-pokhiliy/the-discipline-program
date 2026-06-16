@@ -7,7 +7,6 @@ export const createApi = (client: ApiClient) => ({
   blocks: endpoints.createBlocksAPI(client),
   coachAthletes: endpoints.createCoachAthletesAPI(client),
   coachActionItems: endpoints.createCoachActionItemsAPI(client),
-  coachAthleteProfile: endpoints.createCoachAthleteProfileAPI(client),
   coachCredentials: endpoints.createCoachCredentialAPI(client),
   coachDashboard: endpoints.createCoachDashboardAPI(client),
   coachInvite: endpoints.createCoachInviteAPI(client),

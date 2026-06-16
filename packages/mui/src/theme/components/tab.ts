@@ -17,6 +17,7 @@ export const MuiTab: NonNullable<Components<Theme>["MuiTab"]> = {
     root: ({ theme }) => ({
       padding: theme.spacing(0, 3),
       borderRadius: theme.shape.borderRadius,
+      whiteSpace: "nowrap",
 
       "&:hover": {
         backgroundColor: theme.palette.action.hover,

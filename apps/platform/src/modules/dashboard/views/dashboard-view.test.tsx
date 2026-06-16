@@ -31,9 +31,7 @@ vi.mock("@app/lib/hooks", () => ({
   }),
   useResolveActionItem: () => ({ mutate: resolveMutate, isPending: false }),
   useCoachAthleteDetail: () => ({ data: undefined, isLoading: false }),
-  useCoachNotes: () => ({ data: [], isLoading: false }),
   useCreateCoachNote: () => ({ mutate: vi.fn(), isPending: false }),
-  useCoachAthleteProfile: () => ({ data: undefined, isLoading: false }),
 }));
 
 vi.mock("@repo/auth/client", () => ({

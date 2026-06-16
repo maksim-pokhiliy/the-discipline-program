@@ -3,12 +3,13 @@
 import { useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, CircularProgress, Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack, TextField, Typography } from "@mui/material";
 
+import type { CoachAthleteNote } from "@repo/contracts/coaching/coach-athletes";
 import { COACH_NOTE_CONSTANTS } from "@repo/contracts/coaching/coach-note";
 import { formatTimeAgo } from "@repo/shared";
 
-import { useCoachNotes, useCreateCoachNote } from "@app/lib/hooks";
+import { useCreateCoachNote } from "@app/lib/hooks";
 
 const NOTE_FIELD_LABEL = "Add a private coach note";
 const NOTE_ROWS = 3;
@@ -17,11 +18,11 @@ const NO_NOTES_LABEL = "No notes yet.";
 
 type NotesPaneProps = {
   athleteId: string;
+  notes: CoachAthleteNote[];
 };
 
-export const NotesPane: React.FC<NotesPaneProps> = ({ athleteId }) => {
+export const NotesPane: React.FC<NotesPaneProps> = ({ athleteId, notes }) => {
   const [draft, setDraft] = useState(EMPTY_DRAFT);
-  const { data: notes, isLoading } = useCoachNotes(athleteId);
   const createNote = useCreateCoachNote();
 
   const trimmedDraft = draft.trim();
@@ -63,11 +64,7 @@ export const NotesPane: React.FC<NotesPaneProps> = ({ athleteId }) => {
         </Button>
       </Stack>
 
-      {isLoading ? (
-        <Stack alignItems="center" sx={{ py: 2 }}>
-          <CircularProgress size={24} />
-        </Stack>
-      ) : notes && notes.length > 0 ? (
+      {notes.length > 0 ? (
         <Stack spacing={1}>
           {notes.map((note) => (
             <Stack

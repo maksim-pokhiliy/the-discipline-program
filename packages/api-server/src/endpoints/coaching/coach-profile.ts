@@ -1,4 +1,5 @@
 import {
+  type ActiveDuration,
   type CoachProfile,
   type CoachProfilePageData,
   type SelfUpdateCoachProfileData,
@@ -10,13 +11,34 @@ import { mapToCoachCredential, mapToCoachProfile } from "../../mappers/coaching"
 import { ROLE_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-export const computeMonthsActive = (createdAt: Date, now: Date): number => {
-  const months =
-    (now.getFullYear() - createdAt.getFullYear()) * 12 +
-    (now.getMonth() - createdAt.getMonth()) -
-    (now.getDate() < createdAt.getDate() ? 1 : 0);
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-  return Math.max(months, 0);
+const startOfUtcDayMs = (date: Date): number =>
+  Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+
+export const computeActiveDuration = (createdAt: Date, now: Date): ActiveDuration => {
+  const wholeMonths = Math.max(
+    (now.getUTCFullYear() - createdAt.getUTCFullYear()) * 12 +
+      (now.getUTCMonth() - createdAt.getUTCMonth()) -
+      (now.getUTCDate() < createdAt.getUTCDate() ? 1 : 0),
+    0,
+  );
+
+  const anchorMonthIndex = createdAt.getUTCMonth() + wholeMonths;
+  const anchorYear = createdAt.getUTCFullYear() + Math.floor(anchorMonthIndex / 12);
+  const anchorMonth = ((anchorMonthIndex % 12) + 12) % 12;
+  const daysInAnchorMonth = new Date(Date.UTC(anchorYear, anchorMonth + 1, 0)).getUTCDate();
+  const anchorDay = Math.min(createdAt.getUTCDate(), daysInAnchorMonth);
+
+  const elapsedDays = Math.round(
+    (startOfUtcDayMs(now) - Date.UTC(anchorYear, anchorMonth, anchorDay)) / DAY_IN_MS,
+  );
+
+  return {
+    years: Math.floor(wholeMonths / 12),
+    months: wholeMonths % 12,
+    days: Math.max(elapsedDays, 0) + 1,
+  };
 };
 
 type UserUpdatePayload = {
@@ -111,7 +133,7 @@ const getCoachProfilePageData = async (userId: string): Promise<CoachProfilePage
     },
     credentials: profile.credentials.map(mapToCoachCredential),
     trackRecord: {
-      monthsActive: computeMonthsActive(user.createdAt, new Date()),
+      activeDuration: computeActiveDuration(user.createdAt, new Date()),
       athletesCoached,
       plansAuthored,
     },

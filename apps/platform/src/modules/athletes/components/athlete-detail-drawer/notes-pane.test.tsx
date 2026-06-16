@@ -1,39 +1,29 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CoachNote } from "@repo/contracts/coaching/coach-note";
+import type { CoachAthleteNote } from "@repo/contracts/coaching/coach-athletes";
 
 import { render } from "@app/test/render";
+
+import { NotesPane } from "./notes-pane";
 
 const ATHLETE_ID = "clz00000000000000000ath1";
 const NOW = new Date("2026-06-16T09:00:00.000Z");
 
-const notesState = {
-  data: [] as CoachNote[],
-  isLoading: false,
-};
 const createMutate = vi.fn();
 const createState = { isPending: false };
 
 vi.mock("@app/lib/hooks", () => ({
-  useCoachNotes: () => ({ data: notesState.data, isLoading: notesState.isLoading }),
   useCreateCoachNote: () => ({ mutate: createMutate, isPending: createState.isPending }),
 }));
 
-const { NotesPane } = await import("./notes-pane");
-
-const makeNote = (id: string, content: string): CoachNote => ({
+const makeNote = (id: string, content: string): CoachAthleteNote => ({
   id,
-  coachId: "clz00000000000000000coa1",
-  athleteId: ATHLETE_ID,
   content,
   createdAt: NOW,
-  updatedAt: NOW,
 });
 
 beforeEach(() => {
-  notesState.data = [];
-  notesState.isLoading = false;
   createState.isPending = false;
   createMutate.mockReset();
 });
@@ -43,20 +33,23 @@ afterEach(() => {
 });
 
 describe("NotesPane list", () => {
-  it("renders the existing notes from the hook", () => {
-    notesState.data = [
-      makeNote("clz00000000000000000not1", "Strong session, watch the left knee"),
-      makeNote("clz00000000000000000not2", "Skipped Monday, follow up"),
-    ];
-
-    render(<NotesPane athleteId={ATHLETE_ID} />);
+  it("renders the existing notes from the embedded payload", () => {
+    render(
+      <NotesPane
+        athleteId={ATHLETE_ID}
+        notes={[
+          makeNote("clz00000000000000000not1", "Strong session, watch the left knee"),
+          makeNote("clz00000000000000000not2", "Skipped Monday, follow up"),
+        ]}
+      />,
+    );
 
     expect(screen.getByText("Strong session, watch the left knee")).toBeInTheDocument();
     expect(screen.getByText("Skipped Monday, follow up")).toBeInTheDocument();
   });
 
   it("shows the empty-notes copy when there are none", () => {
-    render(<NotesPane athleteId={ATHLETE_ID} />);
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
 
     expect(screen.getByText("No notes yet.")).toBeInTheDocument();
   });
@@ -65,9 +58,12 @@ describe("NotesPane list", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(NOW.getTime() + 10 * 60_000));
 
-    notesState.data = [makeNote("clz00000000000000000not1", "Strong session")];
-
-    render(<NotesPane athleteId={ATHLETE_ID} />);
+    render(
+      <NotesPane
+        athleteId={ATHLETE_ID}
+        notes={[makeNote("clz00000000000000000not1", "Strong session")]}
+      />,
+    );
 
     expect(screen.getByText("10m ago")).toBeInTheDocument();
 
@@ -77,7 +73,7 @@ describe("NotesPane list", () => {
 
 describe("NotesPane add", () => {
   it("disables Add note until the draft has content", () => {
-    render(<NotesPane athleteId={ATHLETE_ID} />);
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
 
     expect(screen.getByRole("button", { name: /Add note/ })).toBeDisabled();
 
@@ -87,7 +83,7 @@ describe("NotesPane add", () => {
   });
 
   it("creates a trimmed note for the athlete on Add", () => {
-    render(<NotesPane athleteId={ATHLETE_ID} />);
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
 
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "  follow up call  " } });
     fireEvent.click(screen.getByRole("button", { name: /Add note/ }));
@@ -100,7 +96,7 @@ describe("NotesPane add", () => {
   });
 
   it("does not submit a whitespace-only draft", () => {
-    render(<NotesPane athleteId={ATHLETE_ID} />);
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
 
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "    " } });
     fireEvent.click(screen.getByRole("button", { name: /Add note/ }));

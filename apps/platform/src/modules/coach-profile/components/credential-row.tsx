@@ -1,19 +1,19 @@
 "use client";
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
-  FormControlLabel,
+  ButtonBase,
   IconButton,
   Stack,
-  Switch,
   Typography,
+  alpha,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 
 import type { CoachCredential } from "@repo/contracts/coaching/coach-credential";
-
-const ROW_MIN_HEIGHT_PX = 56;
 
 type CredentialRowProps = {
   credential: CoachCredential;
@@ -30,17 +30,25 @@ export const CredentialRow: React.FC<CredentialRowProps> = ({
 }) => {
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
+  const isShown = credential.shownToAthletes;
 
   return (
     <Stack
-      direction={isCompact ? "column" : "row"}
-      spacing={1.5}
-      alignItems={isCompact ? "flex-start" : "center"}
-      justifyContent="space-between"
-      sx={{ minHeight: ROW_MIN_HEIGHT_PX, py: 1 }}
+      direction="row"
+      spacing={1.75}
+      alignItems="center"
+      sx={{
+        px: 1.75,
+        py: 1.5,
+        borderTop: `1px solid ${theme.palette.divider}`,
+        transition: theme.transitions.create("background-color"),
+
+        "&:first-of-type": { borderTop: "none" },
+        "&:hover": { bgcolor: theme.palette.action.hover },
+      }}
     >
-      <Stack spacing={0.25} sx={{ minWidth: 0 }}>
-        <Typography variant="subtitle2" noWrap>
+      <Stack spacing={0.25} sx={{ flexGrow: 1, minWidth: 0 }}>
+        <Typography variant="body1" sx={{ fontWeight: 600 }} noWrap>
           {credential.title}
         </Typography>
 
@@ -49,28 +57,48 @@ export const CredentialRow: React.FC<CredentialRowProps> = ({
         </Typography>
       </Stack>
 
-      <Stack direction="row" spacing={1} alignItems="center">
-        <FormControlLabel
-          control={
-            <Switch
-              checked={credential.shownToAthletes}
-              disabled={isMutating}
-              onChange={(event) => onToggleShown(event.target.checked)}
-            />
-          }
-          label="Shown to athletes"
-          slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
-        />
+      <ButtonBase
+        onClick={() => onToggleShown(!isShown)}
+        disabled={isMutating}
+        aria-label={isShown ? "Hide from athletes" : "Show to athletes"}
+        sx={{
+          height: 24,
+          flexShrink: 0,
+          gap: 0.5,
+          justifyContent: "center",
+          ...(isCompact ? { width: 32 } : { px: 1 }),
+          borderRadius: 1,
+          border: `1px solid ${isShown ? alpha(theme.palette.primary.main, 0.4) : theme.palette.divider}`,
+          color: isShown ? "primary.main" : "text.muted",
+          bgcolor: isShown ? alpha(theme.palette.primary.main, 0.08) : "transparent",
+          typography: "overline",
+          transition: theme.transitions.create(["color", "border-color", "background-color"]),
 
-        <IconButton
-          onClick={onDelete}
-          disabled={isMutating}
-          aria-label="Delete credential"
-          color="error"
-        >
-          <DeleteOutlineIcon fontSize="small" />
-        </IconButton>
-      </Stack>
+          "&:hover": {
+            color: isShown ? "primary.main" : "text.primary",
+            borderColor: isShown ? theme.palette.primary.main : theme.palette.dividerStrong,
+          },
+        }}
+      >
+        {isShown ? (
+          <VisibilityIcon sx={{ fontSize: 14 }} />
+        ) : (
+          <VisibilityOffIcon sx={{ fontSize: 14 }} />
+        )}
+
+        {!isCompact && (isShown ? "Shown" : "Hidden")}
+      </ButtonBase>
+
+      <IconButton
+        onClick={onDelete}
+        disabled={isMutating}
+        aria-label="Delete credential"
+        color="error"
+        size="small"
+        sx={{ flexShrink: 0 }}
+      >
+        <DeleteOutlineIcon fontSize="small" />
+      </IconButton>
     </Stack>
   );
 };

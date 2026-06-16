@@ -3,15 +3,16 @@
 import { useCallback, useState } from "react";
 
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button, Stack } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { PageHeader, QueryWrapper } from "@repo/ui";
 
 import { useCoachAthletes } from "@app/lib/hooks";
 
-import { AthleteDetailDrawer, InviteAthleteDialog, extractUniquePlans } from "../components";
-import { AthletesFiltersSection, AthletesListSection, AthletesSummarySection } from "../sections";
+import { InviteAthleteDialog } from "../components";
+
+import { AthletesRoster } from "./athletes-roster";
 
 export const AthletesView = () => {
   const { data, isLoading, error } = useCoachAthletes();
@@ -42,9 +43,23 @@ export const AthletesView = () => {
   }, [searchParams, router, pathname]);
 
   return (
-    <Stack spacing={4}>
+    <Stack spacing={3}>
       <PageHeader
         title="Athletes"
+        {...(data && {
+          meta: (
+            <>
+              <Typography variant="overline" color="text.secondary">
+                {data.summary.active} active
+              </Typography>
+              {data.summary.needsAttention > 0 && (
+                <Typography variant="overline" color="warning.main">
+                  {data.summary.needsAttention} need attention
+                </Typography>
+              )}
+            </>
+          ),
+        })}
         actions={
           <Button
             variant="contained"
@@ -63,24 +78,17 @@ export const AthletesView = () => {
         data={data}
         loadingMessage="Loading athletes..."
       >
-        {(data) => {
-          const uniquePlans = extractUniquePlans(data.athletes);
-
-          return (
-            <Stack spacing={{ xs: 2, md: 3 }}>
-              <AthletesSummarySection summary={data.summary} />
-              <AthletesFiltersSection plans={uniquePlans} />
-              <AthletesListSection
-                athletes={data.athletes}
-                onSelectAthlete={handleSelectAthlete}
-                onInviteClick={() => setInviteOpen(true)}
-              />
-            </Stack>
-          );
-        }}
+        {(loaded) => (
+          <AthletesRoster
+            athletes={loaded.athletes}
+            onOpenAthlete={handleSelectAthlete}
+            onInvite={() => setInviteOpen(true)}
+            selectedAthleteId={selectedAthleteId}
+            onCloseDrawer={handleCloseDrawer}
+          />
+        )}
       </QueryWrapper>
 
-      <AthleteDetailDrawer athleteId={selectedAthleteId} onClose={handleCloseDrawer} />
       <InviteAthleteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </Stack>
   );

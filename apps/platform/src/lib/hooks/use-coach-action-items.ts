@@ -29,7 +29,7 @@ export const useResolveActionItem = () => {
 
       if (athleteId) {
         queryClient.invalidateQueries({
-          queryKey: platformKeys.coachNotes.byAthlete(athleteId),
+          queryKey: platformKeys.athletes.byId(athleteId),
         });
       }
 

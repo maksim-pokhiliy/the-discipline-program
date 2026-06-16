@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import ForumIcon from "@mui/icons-material/Forum";
 import { Stack, Tabs, Typography } from "@mui/material";
@@ -28,11 +28,13 @@ const FILTER_TABS: {
 type TodayRosterSectionProps = {
   athletes: AthleteDailySummary[];
   onOpenAthlete: (athleteId: string) => void;
+  onVisibleIdsChange: (ids: string[]) => void;
 };
 
 export const TodayRosterSection: React.FC<TodayRosterSectionProps> = ({
   athletes,
   onOpenAthlete,
+  onVisibleIdsChange,
 }) => {
   const [activeTab, setActiveTab] = useState<TodayStatus>(TodayStatus.MISSED);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -70,6 +72,12 @@ export const TodayRosterSection: React.FC<TodayRosterSectionProps> = ({
 
   const visibleIds = visible.map((a) => a.userId);
   const selectedVisibleCount = visibleIds.filter((id) => selected.has(id)).length;
+
+  const visibleIdsKey = visibleIds.join(",");
+
+  useEffect(() => {
+    onVisibleIdsChange(visibleIdsKey.length > 0 ? visibleIdsKey.split(",") : []);
+  }, [visibleIdsKey, onVisibleIdsChange]);
 
   const toggleAllVisible = (): void =>
     setSelected((prev) => {

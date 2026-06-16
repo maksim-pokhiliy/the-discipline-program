@@ -1,6 +1,9 @@
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { ActionItemStatus } from "@repo/contracts/coaching/coach-action-item";
-import { type CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
+import {
+  type CoachAthleteDetail,
+  type CoachAthleteEnrollment,
+} from "@repo/contracts/coaching/coach-athletes";
 import { ForbiddenError } from "@repo/errors";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../../authz/guards";
@@ -9,10 +12,12 @@ import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
+  GENDER_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
+import { ENROLLMENT_STATUS_MAP } from "../../../mappers/lms";
 import { createStartOfDayCache } from "../../../utils/date-helpers";
-import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
+import { buildRosterAthleteInclude } from "../assigned-athlete-query";
 import {
   computeAthleteMetrics,
   findNextWorkoutForAthlete,
@@ -27,10 +32,10 @@ export const getAthleteDetail = async (
 
   await verifyAthleteBelongsToCoach(athleteUserId, coachId);
 
-  const [assignment, actionItems] = await Promise.all([
+  const [assignment, actionItems, notes, coach] = await Promise.all([
     prisma.coachAthleteAssignment.findUnique({
       where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
-      include: buildAssignedAthleteInclude(coachUserId),
+      include: buildRosterAthleteInclude(),
     }),
 
     prisma.coachActionItem.findMany({
@@ -42,6 +47,17 @@ export const getAthleteDetail = async (
       select: { id: true, type: true, severity: true, message: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
+
+    prisma.coachNote.findMany({
+      where: { coachId, athleteId: athleteUserId },
+      select: { id: true, content: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+
+    prisma.user.findUnique({
+      where: { id: coachUserId },
+      select: { timezone: true },
+    }),
   ]);
 
   if (!assignment) {
@@ -49,10 +65,18 @@ export const getAthleteDetail = async (
   }
 
   const athlete = assignment.athlete;
+  const profile = athlete.athleteProfile;
 
-  const healthStatus = athlete.athleteProfile
-    ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
-    : HealthStatus.HEALTHY;
+  const healthStatus = profile ? HEALTH_STATUS_MAP[profile.healthStatus] : HealthStatus.HEALTHY;
+
+  const enrollments: CoachAthleteEnrollment[] = athlete.planEnrollmentsAsAthlete.map(
+    (enrollment) => ({
+      planId: enrollment.planId,
+      planName: enrollment.plan.name,
+      status: ENROLLMENT_STATUS_MAP[enrollment.status],
+      boardedAt: enrollment.boardedAt,
+    }),
+  );
 
   const mappedActionItems = actionItems.map((item) => ({
     id: item.id,
@@ -62,10 +86,6 @@ export const getAthleteDetail = async (
     createdAt: item.createdAt,
   }));
 
-  const coach = await prisma.user.findUnique({
-    where: { id: coachUserId },
-    select: { timezone: true },
-  });
   const tz = coach?.timezone ?? "UTC";
 
   const now = new Date();
@@ -91,10 +111,16 @@ export const getAthleteDetail = async (
     email: athlete.email,
     image: athlete.image,
     healthStatus,
+    healthNote: profile?.healthNote ?? null,
+    gender: profile?.gender ? GENDER_MAP[profile.gender] : null,
+    heightCm: profile?.heightCm ?? null,
+    weightKg: profile?.weightKg ? Number(profile.weightKg) : null,
     processStatus: metrics.processStatus,
+    enrollments,
     planDiscipline: metrics.planDiscipline,
     recentWorkouts: metrics.recentWorkouts,
     actionItems: mappedActionItems,
+    notes,
     nextWorkout,
     consistency: {
       adherenceRate4w: metrics.adherenceRate,

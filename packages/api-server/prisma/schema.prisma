@@ -679,48 +679,16 @@ model Exercise {
   canonicalNameLower String         @unique
   nature             ExerciseNature @default(CONCRETE)
   defaultDemoUrls    String[]
-  movementFamily     String?
   aliases            Json?
   notes              String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
-  oneRMRecords         OneRMRecord[]
-  equipmentAssignments ExerciseEquipmentAssignment[]
-  schemaRows           SchemaRow[]
+  oneRMRecords OneRMRecord[]
+  schemaRows   SchemaRow[]
 
   @@index([canonicalName])
-  @@index([movementFamily])
   @@map("training_exercises")
-}
-
-model Equipment {
-  id        String   @id @default(cuid())
-  name      String
-  nameLower String   @unique
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  assignments ExerciseEquipmentAssignment[]
-
-  @@index([name])
-  @@map("training_equipment")
-}
-
-model ExerciseEquipmentAssignment {
-  id          String @id @default(cuid())
-  exerciseId  String
-  equipmentId String
-  order       Int
-
-  exercise  Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
-
-  @@unique([exerciseId, equipmentId])
-  @@index([exerciseId, order])
-  @@index([equipmentId])
-  @@map("training_exercise_equipment_assignments")
 }
 
 model Label {

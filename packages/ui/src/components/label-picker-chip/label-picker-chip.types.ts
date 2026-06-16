@@ -1,12 +1,14 @@
-import { type AppLevelValue, type Label } from "@repo/contracts/lms/label";
+import { type Label } from "@repo/contracts/lms/label";
+
+import { type CreatableOption } from "../creatable-picker";
 
 type LabelPickerChipBaseProps = {
   options: Label[];
-  level: AppLevelValue;
   placeholder?: string;
   isLoading?: boolean;
   disabled?: boolean;
   ariaLabel?: string;
+  onCreateOption?: (typedName: string) => Promise<CreatableOption | null>;
 };
 
 type LabelPickerChipSingleProps = LabelPickerChipBaseProps & {
@@ -19,6 +21,7 @@ type LabelPickerChipMultiProps = LabelPickerChipBaseProps & {
   multiple: true;
   value: Label[];
   onChange: (labelIds: string[]) => void;
+  maxCount?: number | undefined;
 };
 
 export type LabelPickerChipProps = LabelPickerChipSingleProps | LabelPickerChipMultiProps;

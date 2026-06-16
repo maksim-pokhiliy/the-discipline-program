@@ -1,55 +1,44 @@
 import { screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type AthleteProfile,
-  Gender,
-  HealthStatus,
-} from "@repo/contracts/coaching/athlete-profile";
+import { Gender, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import type { CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
+import { ProcessStatus, TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 
 import { render } from "@app/test/render";
 
+import { HealthPane } from "./health-pane";
+
 const ATHLETE_ID = "clz00000000000000000ath1";
+const NOW = new Date("2026-06-16T09:00:00.000Z");
 
-const profileState = {
-  data: undefined as AthleteProfile | undefined,
-  isLoading: false,
-};
-
-vi.mock("@app/lib/hooks", () => ({
-  useCoachAthleteProfile: () => ({ data: profileState.data, isLoading: profileState.isLoading }),
-}));
-
-const { HealthPane } = await import("./health-pane");
-
-const makeProfile = (overrides: Partial<AthleteProfile> = {}): AthleteProfile => ({
-  id: ATHLETE_ID,
+const makeDetail = (overrides: Partial<CoachAthleteDetail> = {}): CoachAthleteDetail => ({
   userId: ATHLETE_ID,
+  name: "Aria Stone",
+  email: "aria@example.com",
+  image: null,
+  healthStatus: HealthStatus.INJURED,
+  healthNote: "Tweaked shoulder, no overhead this week",
   gender: Gender.MALE,
   heightCm: 182,
   weightKg: 84,
-  healthStatus: HealthStatus.INJURED,
-  healthNote: "Tweaked shoulder, no overhead this week",
-  createdAt: new Date("2026-01-01T00:00:00.000Z"),
-  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  processStatus: ProcessStatus.ON_TRACK,
+  enrollments: [],
+  planDiscipline: [],
+  recentWorkouts: [],
+  actionItems: [],
+  notes: [],
+  nextWorkout: null,
+  consistency: { adherenceRate4w: 0.7, currentStreak: 0, missedThisWeek: 0 },
+  enrolledSince: NOW,
+  lastActivityDate: null,
+  daysSinceLastActivity: null,
+  last7Days: [],
+  currentWeek: null,
+  totalWeeks: 0,
+  todayStatus: TodayStatus.NO_SCHEDULE,
+  todayWorkoutTitle: null,
   ...overrides,
-});
-
-const makeSynthesizedDefault = (): AthleteProfile => ({
-  id: ATHLETE_ID,
-  userId: ATHLETE_ID,
-  gender: null,
-  heightCm: null,
-  weightKg: null,
-  healthStatus: HealthStatus.HEALTHY,
-  healthNote: null,
-  createdAt: new Date(0),
-  updatedAt: new Date(0),
-});
-
-beforeEach(() => {
-  profileState.data = makeProfile();
-  profileState.isLoading = false;
 });
 
 afterEach(() => {
@@ -58,7 +47,7 @@ afterEach(() => {
 
 describe("HealthPane populated profile", () => {
   it("renders the metric values and health status", () => {
-    render(<HealthPane athleteId={ATHLETE_ID} />);
+    render(<HealthPane detail={makeDetail()} />);
 
     expect(screen.getByText("Male")).toBeInTheDocument();
     expect(screen.getByText("182")).toBeInTheDocument();
@@ -67,7 +56,7 @@ describe("HealthPane populated profile", () => {
   });
 
   it("renders the coach health note when present", () => {
-    render(<HealthPane athleteId={ATHLETE_ID} />);
+    render(<HealthPane detail={makeDetail()} />);
 
     expect(screen.getByText("Tweaked shoulder, no overhead this week")).toBeInTheDocument();
   });
@@ -75,30 +64,27 @@ describe("HealthPane populated profile", () => {
 
 describe("HealthPane synthesized default", () => {
   it("renders dashes for unknown metrics and a healthy status", () => {
-    profileState.data = makeSynthesizedDefault();
-
-    render(<HealthPane athleteId={ATHLETE_ID} />);
+    render(
+      <HealthPane
+        detail={makeDetail({
+          gender: null,
+          heightCm: null,
+          weightKg: null,
+          healthStatus: HealthStatus.HEALTHY,
+          healthNote: null,
+        })}
+      />,
+    );
 
     expect(screen.getAllByText("—")).toHaveLength(3);
     expect(screen.getByText("Healthy")).toBeInTheDocument();
   });
 
   it("omits the health-note block when there is no note", () => {
-    profileState.data = makeSynthesizedDefault();
-
-    render(<HealthPane athleteId={ATHLETE_ID} />);
+    render(
+      <HealthPane detail={makeDetail({ healthStatus: HealthStatus.HEALTHY, healthNote: null })} />,
+    );
 
     expect(screen.queryByText("Coach's note")).toBeNull();
-  });
-});
-
-describe("HealthPane loading", () => {
-  it("shows a spinner while the profile is loading", () => {
-    profileState.data = undefined;
-    profileState.isLoading = true;
-
-    const { container } = render(<HealthPane athleteId={ATHLETE_ID} />);
-
-    expect(container.querySelector(".MuiCircularProgress-root")).not.toBeNull();
   });
 });

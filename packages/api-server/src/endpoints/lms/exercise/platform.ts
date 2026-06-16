@@ -1,20 +1,51 @@
-import { type Exercise } from "@repo/contracts/lms/exercise";
+import { Prisma } from "@prisma/client";
+
+import { type CreateExerciseData, type Exercise } from "@repo/contracts/lms/exercise";
 
 import { requireCoachLikeRole } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { mapToExercise } from "../../../mappers/lms";
-
-import { EXERCISE_WITH_EQUIPMENT_INCLUDE } from "./admin";
+import { mapToExercise, natureToPrisma } from "../../../mappers/lms";
+import { handlePrismaError } from "../../../utils";
 
 export const lmsExercisePlatformApi = {
   list: async (userId: string): Promise<Exercise[]> => {
     await requireCoachLikeRole(userId);
 
     const rows = await prisma.exercise.findMany({
-      orderBy: [{ movementFamily: "asc" }, { canonicalName: "asc" }],
-      include: EXERCISE_WITH_EQUIPMENT_INCLUDE,
+      orderBy: { canonicalName: "asc" },
     });
 
     return rows.map(mapToExercise);
+  },
+
+  create: async (userId: string, data: CreateExerciseData): Promise<Exercise> => {
+    await requireCoachLikeRole(userId);
+
+    const canonicalNameLower = data.canonicalName.trim().toLowerCase();
+
+    try {
+      const created = await prisma.exercise.create({
+        data: {
+          canonicalName: data.canonicalName,
+          canonicalNameLower,
+          nature: natureToPrisma[data.nature],
+          defaultDemoUrls: data.defaultDemoUrls,
+          aliases: data.aliases,
+          notes: data.notes ?? null,
+        },
+      });
+
+      return mapToExercise(created);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        const existing = await prisma.exercise.findUnique({ where: { canonicalNameLower } });
+
+        if (existing !== null) {
+          return mapToExercise(existing);
+        }
+      }
+
+      return handlePrismaError(error, { entity: "Exercise" });
+    }
   },
 };

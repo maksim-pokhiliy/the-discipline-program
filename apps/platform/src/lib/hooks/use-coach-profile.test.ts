@@ -53,7 +53,7 @@ const buildPageData = (): CoachProfilePageData => ({
   },
   credentials: [],
   trackRecord: {
-    monthsActive: 12,
+    activeDuration: { years: 1, months: 0, days: 0 },
     athletesCoached: 4,
     plansAuthored: 7,
   },

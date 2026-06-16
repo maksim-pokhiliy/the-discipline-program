@@ -1,22 +1,21 @@
 "use client";
 
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
 import { GENDER_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
-import type { AthleteProfile } from "@repo/contracts/coaching/athlete-profile";
+import type { CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
 import type { PaletteColorKey } from "@repo/mui";
 import { StatusChip } from "@repo/ui";
 
 import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
-import { useCoachAthleteProfile } from "@app/lib/hooks";
 
 const EMPTY_VALUE = "—";
 const HEALTH_NOTE_BG_ALPHA = 0.02;
 const HEALTH_NOTE_BORDER_WIDTH_PX = 2;
 
 type HealthPaneProps = {
-  athleteId: string;
+  detail: CoachAthleteDetail;
 };
 
 const HEALTH_NOTE_BORDER_TONE: Record<HealthStatus, PaletteColorKey> = {
@@ -50,21 +49,18 @@ const renderMetricCell = (label: string, value: string, unit?: string): React.Re
   </Stack>
 );
 
-const renderProfile = (profile: AthleteProfile): React.ReactElement => (
+export const HealthPane: React.FC<HealthPaneProps> = ({ detail }) => (
   <Stack spacing={1.5}>
     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-      {renderMetricCell(
-        "Sex",
-        profile.gender !== null ? GENDER_LABELS[profile.gender] : EMPTY_VALUE,
-      )}
+      {renderMetricCell("Sex", detail.gender !== null ? GENDER_LABELS[detail.gender] : EMPTY_VALUE)}
       {renderMetricCell(
         "Height",
-        profile.heightCm !== null ? `${profile.heightCm}` : EMPTY_VALUE,
+        detail.heightCm !== null ? `${detail.heightCm}` : EMPTY_VALUE,
         "cm",
       )}
       {renderMetricCell(
         "Weight",
-        profile.weightKg !== null ? `${profile.weightKg}` : EMPTY_VALUE,
+        detail.weightKg !== null ? `${detail.weightKg}` : EMPTY_VALUE,
         "kg",
       )}
     </Box>
@@ -73,16 +69,16 @@ const renderProfile = (profile: AthleteProfile): React.ReactElement => (
       <Typography variant="overline" sx={{ color: "text.faint" }}>
         Health status
       </Typography>
-      <StatusChip {...HEALTH_STATUS_CHIPS[profile.healthStatus]} />
+      <StatusChip {...HEALTH_STATUS_CHIPS[detail.healthStatus]} />
     </Stack>
 
-    {profile.healthNote !== null && profile.healthNote.length > 0 && (
+    {detail.healthNote !== null && detail.healthNote.length > 0 && (
       <Stack
         spacing={0.5}
         sx={(theme) => ({
           p: 1.5,
           borderRadius: theme.spacing(0.5),
-          borderLeft: `${HEALTH_NOTE_BORDER_WIDTH_PX}px solid ${theme.palette[HEALTH_NOTE_BORDER_TONE[profile.healthStatus]].main}`,
+          borderLeft: `${HEALTH_NOTE_BORDER_WIDTH_PX}px solid ${theme.palette[HEALTH_NOTE_BORDER_TONE[detail.healthStatus]].main}`,
           bgcolor: alpha(theme.palette.common.white, HEALTH_NOTE_BG_ALPHA),
         })}
       >
@@ -90,29 +86,9 @@ const renderProfile = (profile: AthleteProfile): React.ReactElement => (
           Coach&apos;s note
         </Typography>
         <Typography variant="body2" sx={{ color: "text.primary", whiteSpace: "pre-wrap" }}>
-          {profile.healthNote}
+          {detail.healthNote}
         </Typography>
       </Stack>
     )}
   </Stack>
 );
-
-export const HealthPane: React.FC<HealthPaneProps> = ({ athleteId }) => {
-  const { data: profile, isLoading } = useCoachAthleteProfile(athleteId);
-
-  return (
-    <Stack spacing={1}>
-      <Typography variant="overline" sx={{ color: "text.secondary" }}>
-        Profile
-      </Typography>
-
-      {isLoading || !profile ? (
-        <Stack alignItems="center" sx={{ py: 2 }}>
-          <CircularProgress size={24} />
-        </Stack>
-      ) : (
-        renderProfile(profile)
-      )}
-    </Stack>
-  );
-};

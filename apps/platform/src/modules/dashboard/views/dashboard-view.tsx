@@ -26,6 +26,7 @@ export const DashboardView = () => {
   const resolveMutation = useResolveActionItem();
 
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const [todayVisibleIds, setTodayVisibleIds] = useState<string[]>([]);
   const [resolveItem, setResolveItem] = useState<DashboardActionItem | null>(null);
   const attentionRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +72,7 @@ export const DashboardView = () => {
               <TodayRosterSection
                 athletes={data.athletesSummary}
                 onOpenAthlete={setSelectedAthleteId}
+                onVisibleIdsChange={setTodayVisibleIds}
               />
 
               <FallingBehindSection
@@ -89,7 +91,9 @@ export const DashboardView = () => {
 
       <AthleteDetailDrawer
         athleteId={selectedAthleteId}
+        visibleIds={todayVisibleIds}
         onClose={() => setSelectedAthleteId(null)}
+        onNavigate={setSelectedAthleteId}
       />
 
       <ResolveActionItemModal

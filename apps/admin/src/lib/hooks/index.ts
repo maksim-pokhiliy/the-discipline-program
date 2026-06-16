@@ -4,7 +4,6 @@ export * from "./use-navigate";
 export * from "./use-blog";
 export * from "./use-contacts";
 export * from "./use-dashboard";
-export * from "./use-equipment";
 export * from "./use-exercises";
 export * from "./use-labels";
 export * from "./use-pages";

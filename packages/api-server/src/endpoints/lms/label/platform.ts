@@ -1,8 +1,15 @@
-import { type Label, type LabelSearchParams } from "@repo/contracts/lms/label";
+import { Prisma } from "@prisma/client";
+
+import {
+  type CreateLabelData,
+  type Label,
+  type LabelSearchParams,
+} from "@repo/contracts/lms/label";
 
 import { requireCoachLikeRole } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToLabel } from "../../../mappers/lms";
+import { handlePrismaError } from "../../../utils";
 
 export const lmsLabelPlatformApi = {
   list: async (userId: string, query?: LabelSearchParams): Promise<Label[]> => {
@@ -21,5 +28,35 @@ export const lmsLabelPlatformApi = {
     });
 
     return rows.map(mapToLabel);
+  },
+
+  create: async (userId: string, data: CreateLabelData): Promise<Label> => {
+    await requireCoachLikeRole(userId);
+
+    const nameLower = data.name.trim().toLowerCase();
+
+    try {
+      const row = await prisma.label.create({
+        data: {
+          name: data.name,
+          nameLower,
+          applicableLevels: data.applicableLevels,
+          notes: data.notes ?? null,
+          rest: data.rest ?? false,
+        },
+      });
+
+      return mapToLabel(row);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        const existing = await prisma.label.findUnique({ where: { nameLower } });
+
+        if (existing !== null) {
+          return mapToLabel(existing);
+        }
+      }
+
+      return handlePrismaError(error, { entity: "Label" });
+    }
   },
 };

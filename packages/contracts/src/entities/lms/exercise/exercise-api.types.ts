@@ -6,7 +6,6 @@ import {
   type getExerciseByIdParamsSchema,
   type getExercisesPageDataResponseSchema,
   type getExercisesResponseSchema,
-  type getMovementFamiliesResponseSchema,
   type updateExerciseParamsSchema,
   type updateExerciseRequestSchema,
 } from "./exercise-api.schema";
@@ -26,5 +25,3 @@ export type DeleteExerciseParams = z.infer<typeof deleteExerciseParamsSchema>;
 export type GetExercisesPageDataResponse = z.infer<typeof getExercisesPageDataResponseSchema>;
 
 export type AdminExercisesPageData = GetExercisesPageDataResponse;
-
-export type GetMovementFamiliesResponse = z.infer<typeof getMovementFamiliesResponseSchema>;

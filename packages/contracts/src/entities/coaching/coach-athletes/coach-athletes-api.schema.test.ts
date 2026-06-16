@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { HealthStatus } from "../athlete-profile";
+import { EnrollmentStatus } from "../../lms/plan-enrollment";
+import { Gender, HealthStatus } from "../athlete-profile";
 import { ProcessStatus, TodayStatus } from "../coach-dashboard";
 
 import { coachAthleteDetailSchema, last7DaySchema } from "./coach-athletes-api.schema";
@@ -18,7 +19,20 @@ const buildDetailBase = () => ({
   email: "jane@example.com",
   image: null,
   healthStatus: HealthStatus.HEALTHY,
+  healthNote: null,
+  gender: Gender.FEMALE,
+  heightCm: 168,
+  weightKg: 62,
   processStatus: ProcessStatus.ON_TRACK,
+  enrollments: [
+    {
+      planId: VALID_CUID_2,
+      planName: "Strength Base",
+      status: EnrollmentStatus.ACTIVE,
+      boardedAt: NOW,
+    },
+  ],
+  notes: [{ id: VALID_CUID_2, content: "Watch the left knee", createdAt: NOW }],
   planDiscipline: [
     {
       planId: VALID_CUID_2,

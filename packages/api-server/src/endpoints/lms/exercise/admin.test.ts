@@ -1,23 +1,18 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createExerciseSchema, type CreateExerciseData } from "@repo/contracts/lms/exercise";
-import { BadRequestError, ConflictError } from "@repo/errors";
+import { ConflictError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
-import { cmsEquipmentAdminApi } from "../equipment/admin";
 
 import { cmsExerciseAdminApi } from "./admin";
 
 const ZERO_WIDTH_SPACE = "​";
-const NON_EXISTENT_ID = "clz0000000000000000000000";
-
 const baseExerciseData = (overrides: Partial<CreateExerciseData> = {}): CreateExerciseData => ({
   canonicalName: `Test Exercise ${crypto.randomUUID().slice(0, 8)}`,
   nature: "CONCRETE",
-  movementFamily: null,
   defaultDemoUrls: [],
   aliases: [],
-  equipmentIds: [],
   notes: null,
   ...overrides,
 });
@@ -29,7 +24,6 @@ describe("cmsExerciseAdminApi", () => {
   const createdIds: string[] = [];
   const createdOneRMIds: string[] = [];
   const createdUserIds: string[] = [];
-  const createdEquipmentIds: string[] = [];
 
   afterEach(async () => {
     for (const id of createdOneRMIds.splice(0).reverse()) {
@@ -38,10 +32,6 @@ describe("cmsExerciseAdminApi", () => {
 
     for (const id of createdIds.splice(0).reverse()) {
       await cleanupRaw.exercise.delete({ where: { id } }).catch(() => {});
-    }
-
-    for (const id of createdEquipmentIds.splice(0).reverse()) {
-      await cleanupRaw.equipment.delete({ where: { id } }).catch(() => {});
     }
 
     for (const id of createdUserIds.splice(0).reverse()) {
@@ -166,72 +156,6 @@ describe("cmsExerciseAdminApi", () => {
     });
   });
 
-  describe("getMovementFamilies (QA-Must-6)", () => {
-    it("filters nulls, dedupes, and sorts ascending", async () => {
-      const familyA = `family-a-${crypto.randomUUID().slice(0, 6)}`;
-      const familyB = `family-b-${crypto.randomUUID().slice(0, 6)}`;
-
-      const e1 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 1 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: familyB,
-        }),
-      );
-
-      createdIds.push(e1.id);
-
-      const e2 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 2 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: null,
-        }),
-      );
-
-      createdIds.push(e2.id);
-
-      const e3 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 3 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: familyA,
-        }),
-      );
-
-      createdIds.push(e3.id);
-
-      const e4 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 4 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: familyB,
-        }),
-      );
-
-      createdIds.push(e4.id);
-
-      const e5 = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `MF Exercise 5 ${crypto.randomUUID().slice(0, 6)}`,
-          movementFamily: null,
-        }),
-      );
-
-      createdIds.push(e5.id);
-
-      const families = await cmsExerciseAdminApi.getMovementFamilies();
-
-      expect(families).not.toContain(null);
-
-      const aIdx = families.indexOf(familyA);
-      const bIdx = families.indexOf(familyB);
-
-      expect(aIdx).toBeGreaterThanOrEqual(0);
-      expect(bIdx).toBeGreaterThan(aIdx);
-
-      const scoped = families.filter((f) => f === familyA || f === familyB);
-
-      expect(scoped).toEqual([familyA, familyB]);
-    });
-  });
-
   describe("getExercises (QA-Must-7)", () => {
     it("returns rows ordered by createdAt desc", async () => {
       const e1 = await cmsExerciseAdminApi.createExercise(
@@ -266,28 +190,12 @@ describe("cmsExerciseAdminApi", () => {
   });
 
   describe("mapToExercise round-trip via createExercise (QA-Must-8)", () => {
-    it("returns DTO with derived canonicalNameLower and round-tripped arrays/nature/equipment", async () => {
-      const barbell = await cmsEquipmentAdminApi.createEquipment({
-        name: `Barbell ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(barbell.id);
-
-      const kettlebell = await cmsEquipmentAdminApi.createEquipment({
-        name: `Kettlebell ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(kettlebell.id);
-
+    it("returns DTO with derived canonicalNameLower and round-tripped arrays/nature", async () => {
       const data = baseExerciseData({
         canonicalName: "Full Payload Exercise",
         nature: "CONCRETE",
-        movementFamily: "kettlebell-swings",
         defaultDemoUrls: ["https://example.com/swing-1", "https://example.com/swing-2"],
         aliases: ["Russian Swing", "American Swing"],
-        equipmentIds: [barbell.id, kettlebell.id],
         notes: "Hip-dominant power production.",
       });
 
@@ -298,13 +206,11 @@ describe("cmsExerciseAdminApi", () => {
       expect(created.canonicalName).toBe("Full Payload Exercise");
       expect(created.canonicalNameLower).toBe("full payload exercise");
       expect(created.nature).toBe("CONCRETE");
-      expect(created.movementFamily).toBe("kettlebell-swings");
       expect(created.defaultDemoUrls).toEqual([
         "https://example.com/swing-1",
         "https://example.com/swing-2",
       ]);
       expect(created.aliases).toEqual(["Russian Swing", "American Swing"]);
-      expect(created.equipment.map((e) => e.id)).toEqual([barbell.id, kettlebell.id]);
       expect(created.notes).toBe("Hip-dominant power production.");
       expect(created.createdAt).toBeInstanceOf(Date);
       expect(created.updatedAt).toBeInstanceOf(Date);
@@ -313,7 +219,6 @@ describe("cmsExerciseAdminApi", () => {
 
       expect(fetched.defaultDemoUrls).toEqual(created.defaultDemoUrls);
       expect(fetched.aliases).toEqual(created.aliases);
-      expect(fetched.equipment.map((e) => e.id)).toEqual([barbell.id, kettlebell.id]);
       expect(fetched.canonicalNameLower).toBe(created.canonicalNameLower);
     });
   });
@@ -331,171 +236,6 @@ describe("cmsExerciseAdminApi", () => {
       const fetched = await cmsExerciseAdminApi.getExerciseById(created.id);
 
       expect(fetched.nature).toBe("CONCRETE");
-    });
-  });
-
-  describe("equipmentIds — set-replace semantics", () => {
-    it("creates the assignments in order from equipmentIds", async () => {
-      const first = await cmsEquipmentAdminApi.createEquipment({
-        name: `Set First ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(first.id);
-
-      const second = await cmsEquipmentAdminApi.createEquipment({
-        name: `Set Second ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(second.id);
-
-      const created = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `Set Create ${crypto.randomUUID().slice(0, 8)}`,
-          equipmentIds: [second.id, first.id],
-        }),
-      );
-
-      createdIds.push(created.id);
-
-      expect(created.equipment.map((e) => e.id)).toEqual([second.id, first.id]);
-
-      const assignments = await cleanupRaw.exerciseEquipmentAssignment.findMany({
-        where: { exerciseId: created.id },
-        orderBy: { order: "asc" },
-        select: { equipmentId: true, order: true },
-      });
-
-      expect(assignments).toEqual([
-        { equipmentId: second.id, order: 0 },
-        { equipmentId: first.id, order: 1 },
-      ]);
-    });
-
-    it("replaces the assignment set when equipmentIds is a different set on update", async () => {
-      const a = await cmsEquipmentAdminApi.createEquipment({
-        name: `Replace A ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(a.id);
-
-      const b = await cmsEquipmentAdminApi.createEquipment({
-        name: `Replace B ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(b.id);
-
-      const c = await cmsEquipmentAdminApi.createEquipment({
-        name: `Replace C ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(c.id);
-
-      const created = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `Set Replace ${crypto.randomUUID().slice(0, 8)}`,
-          equipmentIds: [a.id, b.id],
-        }),
-      );
-
-      createdIds.push(created.id);
-
-      const updated = await cmsExerciseAdminApi.updateExercise(created.id, {
-        equipmentIds: [c.id],
-      });
-
-      expect(updated.equipment.map((e) => e.id)).toEqual([c.id]);
-
-      const remaining = await cleanupRaw.exerciseEquipmentAssignment.findMany({
-        where: { exerciseId: created.id },
-        select: { equipmentId: true },
-      });
-
-      expect(remaining.map((row) => row.equipmentId)).toEqual([c.id]);
-    });
-
-    it("clears every assignment when equipmentIds is [] on update", async () => {
-      const a = await cmsEquipmentAdminApi.createEquipment({
-        name: `Clear A ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(a.id);
-
-      const created = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `Set Clear ${crypto.randomUUID().slice(0, 8)}`,
-          equipmentIds: [a.id],
-        }),
-      );
-
-      createdIds.push(created.id);
-
-      const updated = await cmsExerciseAdminApi.updateExercise(created.id, { equipmentIds: [] });
-
-      expect(updated.equipment).toEqual([]);
-
-      const count = await cleanupRaw.exerciseEquipmentAssignment.count({
-        where: { exerciseId: created.id },
-      });
-
-      expect(count).toBe(0);
-    });
-  });
-
-  describe("equipmentIds — existence assert", () => {
-    it("rejects a non-existent equipmentId on create with a BadRequestError carrying missing", async () => {
-      const error = await cmsExerciseAdminApi
-        .createExercise(
-          baseExerciseData({
-            canonicalName: `Bad Equip Create ${crypto.randomUUID().slice(0, 8)}`,
-            equipmentIds: [NON_EXISTENT_ID],
-          }),
-        )
-        .catch((caught: unknown) => caught);
-
-      expect(error).toBeInstanceOf(BadRequestError);
-      expect(error).toMatchObject({
-        message: "Equipment not found",
-        details: { missing: [NON_EXISTENT_ID] },
-      });
-    });
-
-    it("rejects a non-existent equipmentId on update and leaves the existing set untouched", async () => {
-      const a = await cmsEquipmentAdminApi.createEquipment({
-        name: `Keep A ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(a.id);
-
-      const b = await cmsEquipmentAdminApi.createEquipment({
-        name: `Keep B ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(b.id);
-
-      const created = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `Bad Equip Update ${crypto.randomUUID().slice(0, 8)}`,
-          equipmentIds: [a.id, b.id],
-        }),
-      );
-
-      createdIds.push(created.id);
-
-      await expect(
-        cmsExerciseAdminApi.updateExercise(created.id, { equipmentIds: [a.id, NON_EXISTENT_ID] }),
-      ).rejects.toThrow(BadRequestError);
-
-      const fetched = await cmsExerciseAdminApi.getExerciseById(created.id);
-
-      expect(fetched.equipment.map((e) => e.id)).toEqual([a.id, b.id]);
     });
   });
 
@@ -547,40 +287,6 @@ describe("cmsExerciseAdminApi", () => {
         await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
         await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
       }
-    });
-  });
-
-  describe("deleteExercise — equipment cascade", () => {
-    it("deletes an exercise with equipment but no row/1RM refs and cascade-drops its assignments", async () => {
-      const equipment = await cmsEquipmentAdminApi.createEquipment({
-        name: `Cascade Equip ${crypto.randomUUID().slice(0, 8)}`,
-        notes: null,
-      });
-
-      createdEquipmentIds.push(equipment.id);
-
-      const created = await cmsExerciseAdminApi.createExercise(
-        baseExerciseData({
-          canonicalName: `Cascade Delete ${crypto.randomUUID().slice(0, 8)}`,
-          equipmentIds: [equipment.id],
-        }),
-      );
-
-      await cmsExerciseAdminApi.deleteExercise(created.id);
-
-      const exerciseAfter = await cleanupRaw.exercise.findUnique({ where: { id: created.id } });
-
-      expect(exerciseAfter).toBeNull();
-
-      const assignmentCount = await cleanupRaw.exerciseEquipmentAssignment.count({
-        where: { exerciseId: created.id },
-      });
-
-      expect(assignmentCount).toBe(0);
-
-      const equipmentAfter = await cleanupRaw.equipment.findUnique({ where: { id: equipment.id } });
-
-      expect(equipmentAfter).not.toBeNull();
     });
   });
 });

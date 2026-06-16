@@ -1,6 +1,7 @@
 import { type z } from "zod";
 
 import {
+  type activeDurationSchema,
   type coachProfilePageDataSchema,
   type coachProfileSchema,
   type coachProfileUserSchema,
@@ -10,6 +11,7 @@ import {
 
 export type CoachProfile = z.infer<typeof coachProfileSchema>;
 export type CoachProfileUser = z.infer<typeof coachProfileUserSchema>;
+export type ActiveDuration = z.infer<typeof activeDurationSchema>;
 export type TrackRecord = z.infer<typeof trackRecordSchema>;
 export type CoachProfilePageData = z.infer<typeof coachProfilePageDataSchema>;
 export type SelfUpdateCoachProfileData = z.infer<typeof selfUpdateCoachProfileSchema>;

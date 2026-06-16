@@ -13,7 +13,12 @@ import type { Label } from "@repo/contracts/lms/label";
 import { isSameDay } from "@repo/shared";
 import { LabelPickerChip } from "@repo/ui";
 
-import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
+import {
+  useCreateLabelOption,
+  useLabelOptions,
+  useUpdateDayLabel,
+  useUpdateDayNotes,
+} from "@app/lib/hooks";
 
 import { AddSessionButton } from "./add-session-button";
 import { CloneDayModal } from "./clone-day-modal";
@@ -53,6 +58,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   const updateLabel = useUpdateDayLabel(planId, startDate, dayOfWeek);
   const updateNotes = useUpdateDayNotes(planId, startDate, dayOfWeek);
   const dayOptions = useLabelOptions("DAY");
+  const createDayLabel = useCreateLabelOption("DAY");
 
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isCloneDayOpen, setIsCloneDayOpen] = useState<boolean>(false);
@@ -81,9 +87,9 @@ export const DayRow: React.FC<DayRowProps> = ({
           <LabelPickerChip
             value={label}
             options={dayOptions.options}
-            level="DAY"
             isLoading={dayOptions.isLoading}
             onChange={(labelId) => updateLabel.mutate({ labelId })}
+            onCreateOption={createDayLabel}
             ariaLabel="Day label"
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>

@@ -19,5 +19,3 @@ export const deleteExerciseParamsSchema = idParamSchema;
 export const getExercisesPageDataResponseSchema = z.object({
   exercises: getExercisesResponseSchema,
 });
-
-export const getMovementFamiliesResponseSchema = z.array(z.string());

@@ -5,6 +5,7 @@ import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coaching/coach-action-item";
 import type { CoachAthleteDetail, Last7Day } from "@repo/contracts/coaching/coach-athletes";
 import { ProcessStatus, TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
+import { EnrollmentStatus } from "@repo/contracts/lms";
 
 import { render } from "@app/test/render";
 
@@ -20,22 +21,7 @@ const detailState = {
 
 vi.mock("@app/lib/hooks", () => ({
   useCoachAthleteDetail: () => ({ data: detailState.data, isLoading: detailState.isLoading }),
-  useCoachNotes: () => ({ data: [], isLoading: false }),
   useCreateCoachNote: () => ({ mutate: vi.fn(), isPending: false }),
-  useCoachAthleteProfile: () => ({
-    data: {
-      id: ATHLETE_ID,
-      userId: ATHLETE_ID,
-      gender: null,
-      heightCm: null,
-      weightKg: null,
-      healthStatus: HealthStatus.HEALTHY,
-      healthNote: null,
-      createdAt: new Date(0),
-      updatedAt: new Date(0),
-    },
-    isLoading: false,
-  }),
   useResolveActionItem: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
@@ -53,7 +39,19 @@ const makeDetail = (overrides: Partial<CoachAthleteDetail> = {}): CoachAthleteDe
   email: "aria@example.com",
   image: null,
   healthStatus: HealthStatus.HEALTHY,
+  healthNote: null,
+  gender: null,
+  heightCm: null,
+  weightKg: null,
   processStatus: ProcessStatus.ON_TRACK,
+  enrollments: [
+    {
+      planId: PLAN_ID,
+      planName: "Strength Block",
+      status: EnrollmentStatus.ACTIVE,
+      boardedAt: NOW,
+    },
+  ],
   planDiscipline: [
     {
       planId: PLAN_ID,
@@ -74,6 +72,7 @@ const makeDetail = (overrides: Partial<CoachAthleteDetail> = {}): CoachAthleteDe
       createdAt: NOW,
     },
   ],
+  notes: [],
   nextWorkout: null,
   consistency: { adherenceRate4w: 0.72, currentStreak: 3, missedThisWeek: 1 },
   enrolledSince: NOW,
@@ -87,6 +86,16 @@ const makeDetail = (overrides: Partial<CoachAthleteDetail> = {}): CoachAthleteDe
   ...overrides,
 });
 
+const renderDrawer = (athleteId: string | null) =>
+  render(
+    <AthleteDetailDrawer
+      athleteId={athleteId}
+      visibleIds={[ATHLETE_ID]}
+      onClose={vi.fn()}
+      onNavigate={vi.fn()}
+    />,
+  );
+
 beforeEach(() => {
   detailState.data = makeDetail();
   detailState.isLoading = false;
@@ -98,7 +107,7 @@ afterEach(() => {
 
 describe("AthleteDetailDrawer shell", () => {
   it("renders the athlete identity and the four tabs when open", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     expect(screen.getByText("aria@example.com")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Today" })).toBeInTheDocument();
@@ -108,34 +117,59 @@ describe("AthleteDetailDrawer shell", () => {
   });
 
   it("leads the head with the prominent display name and keeps the email secondary", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     const names = screen.getAllByText("Aria Stone");
     const email = screen.getByText("aria@example.com");
 
     expect(names.length).toBeGreaterThan(0);
-    expect(names.some((node) => node.tagName === "H6")).toBe(true);
+    expect(names.some((node) => node.tagName === "H5")).toBe(true);
     expect(email).toBeInTheDocument();
   });
 
   it("pins the open action items block above the tab content", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     expect(screen.getByText("Open action items")).toBeInTheDocument();
     expect(screen.getByText("3 consecutive days missed")).toBeInTheDocument();
   });
 
   it("defaults to the Today pane showing the workout and week of cycle", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     expect(screen.getByText("Back Squat 5x5")).toBeInTheDocument();
     expect(screen.getByText("Week 3 / 8")).toBeInTheDocument();
+  });
+
+  it("badges the Notes tab with the embedded note count", () => {
+    detailState.data = makeDetail({
+      notes: [{ id: "clz00000000000000000not1", content: "Watch the knee", createdAt: NOW }],
+    });
+
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByRole("tab", { name: "Notes · 1" })).toBeInTheDocument();
+  });
+});
+
+describe("AthleteDetailDrawer navigation", () => {
+  it("disables prev/next when the athlete is the only visible row", () => {
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByRole("button", { name: "Previous athlete" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next athlete" })).toBeDisabled();
+  });
+
+  it("shows the position counter", () => {
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByText(/of 1/)).toBeInTheDocument();
   });
 });
 
 describe("AthleteDetailDrawer tab switching", () => {
   it("shows the notes pane after switching to the Notes tab", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
 
@@ -143,16 +177,15 @@ describe("AthleteDetailDrawer tab switching", () => {
   });
 
   it("shows the health pane after switching to the Health tab", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     fireEvent.click(screen.getByRole("tab", { name: "Health" }));
 
-    expect(screen.getByText("Profile")).toBeInTheDocument();
     expect(screen.getByText("Health status")).toBeInTheDocument();
   });
 
   it("shows the plan pane with the deep-link affordance after switching to Plan", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     fireEvent.click(screen.getByRole("tab", { name: "Plan" }));
 
@@ -162,7 +195,7 @@ describe("AthleteDetailDrawer tab switching", () => {
 
 describe("AthleteDetailDrawer footer", () => {
   it("links Message to a mailto and Open plan to the plan editor", () => {
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     expect(screen.getByRole("link", { name: /Message/ })).toHaveAttribute(
       "href",
@@ -177,7 +210,7 @@ describe("AthleteDetailDrawer footer", () => {
   it("encodes the athlete email into the Message mailto so headers cannot be injected", () => {
     detailState.data = makeDetail({ email: "a@b.com?subject=PWNED&cc=victim@x.com" });
 
-    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+    renderDrawer(ATHLETE_ID);
 
     const href = screen.getByRole("link", { name: /Message/ }).getAttribute("href");
 
@@ -186,8 +219,8 @@ describe("AthleteDetailDrawer footer", () => {
     expect(href).not.toContain("&cc=");
   });
 
-  it("does not render when no athlete is selected", () => {
-    render(<AthleteDetailDrawer athleteId={null} onClose={vi.fn()} />);
+  it("does not render the tabs when no athlete is selected", () => {
+    renderDrawer(null);
 
     expect(screen.queryByRole("tab", { name: "Today" })).toBeNull();
   });
