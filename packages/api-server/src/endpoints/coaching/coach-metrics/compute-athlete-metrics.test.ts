@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { ProcessStatus, TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 
-import { createStartOfDayCache } from "../../../utils/date-helpers";
+import { createStartOfDayCache, startOfDayInTz } from "../../../utils/date-helpers";
 
 import { LAST_7_DAYS } from "./coach-metrics.constants";
 import { type PerformedByKey, type WindowedEnrollment } from "./coach-metrics.types";
@@ -516,5 +516,220 @@ describe("computeAthleteMetrics with multiple active plans (documents aggregatio
 
     expect(result.primaryPlanId).toBe("plan-a");
     expect(result.primaryPlanName).toBe("Strength Plan");
+  });
+});
+
+const NY_TZ = "America/New_York";
+
+const nyMidnight = (isoDate: string): Date =>
+  startOfDayInTz(new Date(`${isoDate}T12:00:00.000Z`), NY_TZ);
+
+const fullWeekSpecs = (prefix: string): DaySpec[] => [
+  { dayOfWeek: DayOfWeek.MONDAY, sessionId: `${prefix}-mon` },
+  { dayOfWeek: DayOfWeek.TUESDAY, sessionId: `${prefix}-tue` },
+  { dayOfWeek: DayOfWeek.WEDNESDAY, sessionId: `${prefix}-wed` },
+  { dayOfWeek: DayOfWeek.THURSDAY, sessionId: `${prefix}-thu` },
+  { dayOfWeek: DayOfWeek.FRIDAY, sessionId: `${prefix}-fri` },
+  { dayOfWeek: DayOfWeek.SATURDAY, sessionId: `${prefix}-sat` },
+  { dayOfWeek: DayOfWeek.SUNDAY, sessionId: `${prefix}-sun` },
+];
+
+const twoWeekTzEnrollment = (weekOneStart: Date, weekTwoStart: Date) =>
+  makeEnrollment({
+    athleteId: ATHLETE,
+    boardedAt: weekOneStart,
+    weeks: [
+      { id: "w-1", startDate: weekOneStart, days: fullWeekSpecs("w1").map(dayFromSpec) },
+      { id: "w-2", startDate: weekTwoStart, days: fullWeekSpecs("w2").map(dayFromSpec) },
+    ],
+  });
+
+const runTz = (
+  enrollment: WindowedEnrollment,
+  performedByKey: PerformedByKey,
+  now: Date,
+  firstWeekStart: Date,
+) =>
+  computeAthleteMetrics({
+    athleteId: ATHLETE,
+    enrollments: [enrollment],
+    performedByKey,
+    weekCountByPlan: new Map([["plan-1", 2]]),
+    firstWeekStartByPlan: new Map([["plan-1", firstWeekStart]]),
+    tz: NY_TZ,
+    now,
+    startOfDayCache: createStartOfDayCache(NY_TZ),
+  });
+
+describe("computeAthleteMetrics across a DST boundary", () => {
+  describe("spring-forward week (America/New_York, 2026-03-08 23h day)", () => {
+    const weekOne = nyMidnight("2026-03-02");
+    const weekTwo = nyMidnight("2026-03-09");
+    const now = new Date("2026-03-09T16:00:00.000Z");
+
+    it("anchors each week to local Monday midnight despite the offset shift", () => {
+      expect(weekOne.toISOString()).toBe("2026-03-02T05:00:00.000Z");
+      expect(weekTwo.toISOString()).toBe("2026-03-09T04:00:00.000Z");
+    });
+
+    it("matches today to the post-transition Monday session, not off-by-one", () => {
+      const completions = performed(ATHLETE, [
+        { sessionId: "w2-mon", startedAt: now, completedAt: now },
+      ]);
+
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
+
+      expect(result.todayStatus).toBe(TodayStatus.COMPLETED);
+      expect(result.todayWorkoutTitle).toBe("w2-mon");
+    });
+
+    it("reports PENDING today when the post-transition Monday session is undone", () => {
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), new Map(), now, weekOne);
+
+      expect(result.todayStatus).toBe(TodayStatus.PENDING);
+    });
+
+    it("builds last7Days with one entry per civil day across the 23h boundary", () => {
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), new Map(), now, weekOne);
+
+      expect(result.last7Days).toHaveLength(LAST_7_DAYS);
+      expect(result.last7Days.map((day) => day.date.toISOString())).toStrictEqual([
+        "2026-03-03T05:00:00.000Z",
+        "2026-03-04T05:00:00.000Z",
+        "2026-03-05T05:00:00.000Z",
+        "2026-03-06T05:00:00.000Z",
+        "2026-03-07T05:00:00.000Z",
+        "2026-03-08T05:00:00.000Z",
+        "2026-03-09T04:00:00.000Z",
+      ]);
+    });
+
+    it("derives currentWeek as 2 from the civil-day gap between week starts", () => {
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), new Map(), now, weekOne);
+
+      expect(result.currentWeek).toBe(2);
+      expect(result.totalWeeks).toBe(2);
+    });
+
+    it("keeps the prior week's missed sessions inside the adherence and missed windows", () => {
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), new Map(), now, weekOne);
+
+      expect(result.missedCount).toBe(7);
+      expect(result.missedThisWeek).toBe(0);
+    });
+
+    it("reports a non-negative days-since for a Sunday completion on the 23h day", () => {
+      const sundayDone = new Date("2026-03-08T14:00:00.000Z");
+      const completions = performed(ATHLETE, [
+        { sessionId: "w1-sun", startedAt: sundayDone, completedAt: sundayDone },
+      ]);
+
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
+
+      expect(result.lastActivityDate?.toISOString()).toBe("2026-03-08T14:00:00.000Z");
+      expect(result.daysSinceLastActivity).toBe(0);
+    });
+  });
+
+  describe("fall-back week (America/New_York, 2026-11-01 25h day)", () => {
+    const weekOne = nyMidnight("2026-10-26");
+    const weekTwo = nyMidnight("2026-11-02");
+    const now = new Date("2026-11-02T17:00:00.000Z");
+
+    it("anchors each week to local Monday midnight across the offset shift", () => {
+      expect(weekOne.toISOString()).toBe("2026-10-26T04:00:00.000Z");
+      expect(weekTwo.toISOString()).toBe("2026-11-02T05:00:00.000Z");
+    });
+
+    it("matches today to the post-transition Monday session", () => {
+      const completions = performed(ATHLETE, [
+        { sessionId: "w2-mon", startedAt: now, completedAt: now },
+      ]);
+
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
+
+      expect(result.todayStatus).toBe(TodayStatus.COMPLETED);
+      expect(result.todayWorkoutTitle).toBe("w2-mon");
+    });
+
+    it("builds last7Days with one entry per civil day across the 25h boundary", () => {
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), new Map(), now, weekOne);
+
+      expect(result.last7Days.map((day) => day.date.toISOString())).toStrictEqual([
+        "2026-10-27T04:00:00.000Z",
+        "2026-10-28T04:00:00.000Z",
+        "2026-10-29T04:00:00.000Z",
+        "2026-10-30T04:00:00.000Z",
+        "2026-10-31T04:00:00.000Z",
+        "2026-11-01T04:00:00.000Z",
+        "2026-11-02T05:00:00.000Z",
+      ]);
+    });
+
+    it("derives currentWeek as 2 from the civil-day gap across the 25h week", () => {
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), new Map(), now, weekOne);
+
+      expect(result.currentWeek).toBe(2);
+      expect(result.totalWeeks).toBe(2);
+    });
+
+    it("counts the Sunday 25h-day completion as one civil day before today", () => {
+      const sundayDone = new Date("2026-11-01T17:00:00.000Z");
+      const completions = performed(ATHLETE, [
+        { sessionId: "w1-sun", startedAt: sundayDone, completedAt: sundayDone },
+      ]);
+
+      const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
+
+      expect(result.daysSinceLastActivity).toBe(1);
+    });
+  });
+});
+
+describe("computeAthleteMetrics with non-contiguous plan weeks", () => {
+  const gapWeekEnrollment = () =>
+    makeEnrollment({
+      athleteId: ATHLETE,
+      boardedAt: mkDate("2026-06-01"),
+      weeks: [
+        {
+          id: "w-1",
+          startDate: mkDate("2026-06-01"),
+          days: [
+            {
+              dayOfWeek: DayOfWeek.MONDAY,
+              label: workoutLabel("First"),
+              sessions: [{ id: "g-1" }],
+            },
+          ],
+        },
+        {
+          id: "w-3",
+          startDate: mkDate(MONDAY),
+          days: [
+            {
+              dayOfWeek: DayOfWeek.WEDNESDAY,
+              label: workoutLabel("Third"),
+              sessions: [{ id: "g-3" }],
+            },
+          ],
+        },
+      ],
+    });
+
+  it("derives currentWeek from calendar weeks since the first start, skipping the gap week", () => {
+    const result = computeAthleteMetrics({
+      athleteId: ATHLETE,
+      enrollments: [gapWeekEnrollment()],
+      performedByKey: new Map(),
+      weekCountByPlan: new Map([["plan-1", 2]]),
+      firstWeekStartByPlan: new Map([["plan-1", mkDate("2026-06-01")]]),
+      tz: TZ,
+      now: NOW,
+      startOfDayCache: createStartOfDayCache(TZ),
+    });
+
+    expect(result.currentWeek).toBe(3);
+    expect(result.totalWeeks).toBe(2);
   });
 });
