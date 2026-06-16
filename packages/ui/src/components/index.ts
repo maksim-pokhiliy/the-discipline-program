@@ -39,6 +39,7 @@ export * from "./status-select-chip";
 export * from "./tag-chip";
 export * from "./tags-input";
 export * from "./stats-card";
+export * from "./timezone-autocomplete";
 export * from "./toast";
 export * from "./toggle-pill";
 export * from "./toggle-section";

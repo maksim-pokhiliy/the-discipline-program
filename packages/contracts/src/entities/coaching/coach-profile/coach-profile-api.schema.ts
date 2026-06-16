@@ -1,7 +1,13 @@
-import { coachProfileSchema, updateCoachProfileSchema } from "./coach-profile.schema";
+import {
+  coachProfilePageDataSchema,
+  coachProfileSchema,
+  selfUpdateCoachProfileSchema,
+} from "./coach-profile.schema";
 
 export const getCoachProfileResponseSchema = coachProfileSchema;
 
-export const updateCoachProfileRequestSchema = updateCoachProfileSchema;
+export const getCoachProfilePageDataResponseSchema = coachProfilePageDataSchema;
 
-export const updateCoachProfileResponseSchema = coachProfileSchema;
+export const updateCoachProfileRequestSchema = selfUpdateCoachProfileSchema;
+
+export const updateCoachProfileResponseSchema = coachProfilePageDataSchema;

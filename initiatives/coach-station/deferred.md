@@ -54,6 +54,14 @@ R1b Review **B+** / QA **B−**, **0 CRITICAL** (destructive core proven safe �
 | QA-009           | all-7-days-empty in a picked week (race-only) → all disabled                                      | ACCEPTED — unreachable on the happy path (populated filter); race-only; Back+Close escape exists                                                                           | OPEN (accepted) |
 | QA-010           | empty-source info-notice is a dead-end (close+reopen to retry)                                    | ACCEPTED — race-only path; close+reopen is acceptable                                                                                                                      | OPEN (accepted) |
 
+## Wave P (coach-profile) carry-forwards (2026-06-15)
+
+| ID                 | One-liner                                                                              | Disposition                                                                                                                                                                                                                                                | Status |
+| ------------------ | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| P-GATED-ACCEPTANCE | Wave P gated api-server suite + owner browser walkthrough — the real acceptance        | Owner ritual: `pnpm db:reset && pnpm --filter @repo/api-server test` (incl. new coach-profile + coach-credential suites, written-not-run) + walkthrough `/coach/profile`. **Set `BLOB_READ_WRITE_TOKEN` in `apps/platform/.env.local`** for avatar upload. | OPEN   |
+| QA-006-CRED-ROW    | Credentials section shares one `isMutating` → all rows disable during any one mutation | DEFERRED (cosmetic; per-row mutation state is the fix). Polish pass / wave A-known.                                                                                                                                                                        | OPEN   |
+| QA-007-TZ-NUDGE    | Workspace tz device-nudge re-fires on mount for a coach who deliberately chose UTC     | DEFERRED — first-visit auto-detect is valuable; narrow edge. Fix = drop the silent mount-write / explicit "use device tz" affordance.                                                                                                                      | OPEN   |
+
 ## Closed history
 
 _(none yet)_

@@ -70,5 +70,5 @@ Uploaded URLs are public (`access: "public"`) and returned to the client as plai
 - `packages/api-server/src/infrastructure/storage/` — port + vercel-blob adapter + default singleton.
 - `packages/contracts/src/entities/storage/upload/` — `UploadContext` and `UPLOAD_CONFIG`.
 - `packages/env/src/blob.ts` — the `BLOB_READ_WRITE_TOKEN` env validation.
-- `apps/admin/next.config.ts` and `apps/marketing/next.config.ts` — `remotePatterns` allowing `*.public.blob.vercel-storage.com` for `next/image`.
+- `apps/admin/next.config.ts`, `apps/marketing/next.config.ts`, and `apps/platform/next.config.ts` — `remotePatterns` allowing `*.public.blob.vercel-storage.com` for `next/image`.
 - ADR 0002 — Turbo / Vercel deployment context.

@@ -56,7 +56,7 @@ All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nex
 | `NEXTAUTH_URL`              | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`) |
 | `NEXT_PUBLIC_APP_URL`       | Client | All apps        | Admin app public URL                                         |
 | `NEXT_PUBLIC_MARKETING_URL` | Client | All apps        | Marketing app public URL                                     |
-| `BLOB_READ_WRITE_TOKEN`     | Server | Admin           | Vercel Blob read/write token for file uploads                |
+| `BLOB_READ_WRITE_TOKEN`     | Server | Admin, Platform | Vercel Blob read/write token for file uploads                |
 
 ### Build-time variables
 
@@ -69,7 +69,7 @@ All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nex
 
 - **Marketing** imports only `@repo/env/base` (no auth, no blob).
 - **Admin** imports `@repo/env/base` + `@repo/env/auth` + `@repo/env/blob` (in upload endpoint).
-- **Platform** imports `@repo/env/base` + `@repo/env/auth`.
+- **Platform** imports `@repo/env/base` + `@repo/env/auth` + `@repo/env/blob` (in the coach avatar upload endpoint).
 
 Each app has its own `.env.local` for local development. The `packages/api-server` directory has its own `.env` for Prisma CLI commands and tests.
 

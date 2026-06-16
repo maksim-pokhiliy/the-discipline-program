@@ -1,8 +1,10 @@
 export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
+export { createCoachCredentialAPI } from "./coach-credential";
 export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachInviteAPI } from "./coach-invite";
+export { createCoachProfileAPI } from "./coach-profile";
 export { createDayMetadataAPI } from "./day-metadata";
 export { createExercisesAPI } from "./exercises";
 export { createGroupsAPI } from "./groups";
@@ -13,5 +15,6 @@ export { createSchemaRowsAPI } from "./schema-rows";
 export { createSchemasAPI } from "./schemas";
 export { createSessionsAPI } from "./sessions";
 export { createTrainingPlansAPI } from "./training-plans";
+export { createUploadAPI } from "./upload";
 export { createUsersAPI } from "./users";
 export { createWeeksAPI } from "./weeks";
