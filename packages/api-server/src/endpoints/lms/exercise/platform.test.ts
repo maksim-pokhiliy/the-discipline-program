@@ -250,6 +250,89 @@ describe("lmsExercisePlatformApi.create", () => {
     expect(count).toBe(1);
   });
 
+  it("attaches the existing row when the same name is re-created with leading/trailing whitespace (idempotent attach)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Box Jump ${crypto.randomUUID().slice(0, 8)}`;
+    const first = await lmsExercisePlatformApi.create(
+      coach.user.id,
+      baseExerciseData({ canonicalName: name }),
+    );
+
+    createdExerciseIds.push(first.id);
+
+    const second = await lmsExercisePlatformApi.create(
+      coach.user.id,
+      baseExerciseData({ canonicalName: `   ${name}   ` }),
+    );
+
+    expect(second.id).toBe(first.id);
+
+    const count = await cleanupRaw.exercise.count({
+      where: { canonicalNameLower: name.trim().toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
+  it("attaches the existing row when a non-ASCII-case variant collapses to the same lowercased key (idempotent attach)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Ärm Säg ${crypto.randomUUID().slice(0, 8)}`;
+    const first = await lmsExercisePlatformApi.create(
+      coach.user.id,
+      baseExerciseData({ canonicalName: name }),
+    );
+
+    createdExerciseIds.push(first.id);
+
+    const second = await lmsExercisePlatformApi.create(
+      coach.user.id,
+      baseExerciseData({ canonicalName: name.toLowerCase() }),
+    );
+
+    expect(second.id).toBe(first.id);
+
+    const count = await cleanupRaw.exercise.count({
+      where: { canonicalNameLower: name.toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
+  it("attaches an admin-authored row when a coach creates the same name (shared canonicalNameLower key space)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Thruster ${crypto.randomUUID().slice(0, 8)}`;
+    const adminRow = await cmsExerciseAdminApi.createExercise(
+      baseExerciseData({ canonicalName: name }),
+    );
+
+    createdExerciseIds.push(adminRow.id);
+
+    const attached = await lmsExercisePlatformApi.create(
+      coach.user.id,
+      baseExerciseData({ canonicalName: name.toUpperCase() }),
+    );
+
+    expect(attached.id).toBe(adminRow.id);
+
+    const count = await cleanupRaw.exercise.count({
+      where: { canonicalNameLower: name.toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
   it("rejects a non-coach (athlete) caller with ForbiddenError", async () => {
     const athlete = await createTestUser();
 

@@ -8,6 +8,7 @@ import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 const exercisesState: { data: Exercise[]; isLoading: boolean } = { data: [], isLoading: false };
+const createExerciseState = { isPending: false };
 const createExerciseMock: Mock = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
@@ -16,7 +17,10 @@ vi.mock("@app/lib/hooks", async () => {
   return {
     ...actual,
     useExercises: () => ({ data: exercisesState.data, isLoading: exercisesState.isLoading }),
-    useCreateExercise: () => ({ mutate: createExerciseMock, isPending: false }),
+    useCreateExercise: () => ({
+      mutate: createExerciseMock,
+      isPending: createExerciseState.isPending,
+    }),
   };
 });
 
@@ -57,6 +61,7 @@ const typeQuery = (text: string): void => {
 afterEach(() => {
   exercisesState.data = [];
   exercisesState.isLoading = false;
+  createExerciseState.isPending = false;
   onChange.mockReset();
   createExerciseMock.mockReset();
 });
@@ -139,6 +144,105 @@ describe("ExercisePicker create affordance", () => {
 
     expect(within(dialog).getByRole("heading", { name: "Create exercise" })).toBeInTheDocument();
     expect(within(dialog).getByDisplayValue("Sled Push")).toBeInTheDocument();
+  });
+});
+
+describe("ExercisePicker create modal lifecycle", () => {
+  const openCreateModal = (name: string): HTMLElement => {
+    openListbox();
+    typeQuery(name);
+    fireEvent.click(screen.getByText(`Create "${name}"`));
+
+    return screen.getByRole("dialog");
+  };
+
+  const submitModal = (dialog: HTMLElement): void => {
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create" }));
+  };
+
+  it("keeps the modal open and selects nothing when the create mutation fails (QA-002 error path)", async () => {
+    exercisesState.data = [FRONT_SQUAT];
+    createExerciseMock.mockImplementation(() => undefined);
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    submitModal(openCreateModal("Sled Push"));
+
+    await vi.waitFor(() => expect(createExerciseMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("selects the minted exercise and closes the modal on a successful create", async () => {
+    const minted = makeExercise({
+      id: "ckxw5p7gp0000q1mnzv5cuq07",
+      canonicalName: "Sled Push",
+      canonicalNameLower: "sled push",
+    });
+
+    exercisesState.data = [FRONT_SQUAT];
+    createExerciseMock.mockImplementation(
+      (_data, options: { onSuccess: (exercise: Exercise) => void }) => {
+        options.onSuccess(minted);
+      },
+    );
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    submitModal(openCreateModal("Sled Push"));
+
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith("ckxw5p7gp0000q1mnzv5cuq07"));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("cancels without selecting anything when the modal close button is clicked (no phantom select)", async () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    const dialog = openCreateModal("Sled Push");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onChange).not.toHaveBeenCalled();
+    expect(createExerciseMock).not.toHaveBeenCalled();
+  });
+
+  it("does not close on the X button while the create is submitting (QA-009)", () => {
+    exercisesState.data = [FRONT_SQUAT];
+    createExerciseState.isPending = true;
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    const dialog = openCreateModal("Sled Push");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("resets stale field edits when the modal is reopened for the same typed name (QA-005)", async () => {
+    exercisesState.data = [FRONT_SQUAT];
+
+    render(<ExercisePicker value={null} onChange={onChange} />);
+
+    const firstOpen = openCreateModal("Sled Push");
+    const aliasInput = within(firstOpen).getByLabelText("Aliases");
+
+    fireEvent.change(aliasInput, { target: { value: "Prowler Push" } });
+    fireEvent.keyDown(aliasInput, { key: "Enter" });
+
+    expect(within(firstOpen).getByText("Prowler Push")).toBeInTheDocument();
+
+    fireEvent.click(within(firstOpen).getByRole("button", { name: "Close" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    const secondOpen = openCreateModal("Sled Push");
+
+    expect(within(secondOpen).queryByText("Prowler Push")).not.toBeInTheDocument();
+    expect(within(secondOpen).getByDisplayValue("Sled Push")).toBeInTheDocument();
   });
 });
 

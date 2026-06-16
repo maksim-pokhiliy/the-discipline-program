@@ -412,6 +412,82 @@ describe("lmsLabelPlatformApi.create", () => {
     expect(count).toBe(1);
   });
 
+  it("attaches the existing row when the same name is re-created with leading/trailing whitespace (idempotent attach)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Tempo Hold ${crypto.randomUUID().slice(0, 8)}`;
+    const first = await lmsLabelPlatformApi.create(coach.user.id, baseLabelData({ name }));
+
+    createdLabelIds.push(first.id);
+
+    const second = await lmsLabelPlatformApi.create(
+      coach.user.id,
+      baseLabelData({ name: `   ${name}   ` }),
+    );
+
+    expect(second.id).toBe(first.id);
+
+    const count = await cleanupRaw.label.count({
+      where: { nameLower: name.trim().toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
+  it("attaches the existing row when a non-ASCII-case variant collapses to the same lowercased key (idempotent attach)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Ärobic ${crypto.randomUUID().slice(0, 8)}`;
+    const first = await lmsLabelPlatformApi.create(coach.user.id, baseLabelData({ name }));
+
+    createdLabelIds.push(first.id);
+
+    const second = await lmsLabelPlatformApi.create(
+      coach.user.id,
+      baseLabelData({ name: name.toLowerCase() }),
+    );
+
+    expect(second.id).toBe(first.id);
+
+    const count = await cleanupRaw.label.count({
+      where: { nameLower: name.toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
+  it("returns the existing wrong-level row and discards the requested level on a cross-level name collision (deferred R-3, QA-002)", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const name = `Mobility ${crypto.randomUUID().slice(0, 8)}`;
+    const dayOnly = await seedLabel({ name, levels: ["DAY"] });
+
+    createdLabelIds.push(dayOnly.id);
+
+    const attached = await lmsLabelPlatformApi.create(
+      coach.user.id,
+      baseLabelData({ name, applicableLevels: ["SESSION"] }),
+    );
+
+    expect(attached.id).toBe(dayOnly.id);
+    expect(attached.applicableLevels).toEqual(["DAY"]);
+
+    const count = await cleanupRaw.label.count({
+      where: { nameLower: name.trim().toLowerCase() },
+    });
+
+    expect(count).toBe(1);
+  });
+
   it("rejects a non-coach (athlete) caller with ForbiddenError", async () => {
     const athlete = await createTestUser();
 
