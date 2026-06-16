@@ -21,7 +21,6 @@ export const ExercisesCreateView = () => {
     defaultValues: {
       canonicalName: "",
       nature: "CONCRETE",
-      movementFamily: null,
       defaultDemoUrls: [],
       aliases: [],
       notes: null,

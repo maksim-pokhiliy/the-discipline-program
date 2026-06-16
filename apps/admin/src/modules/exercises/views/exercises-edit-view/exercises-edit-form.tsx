@@ -29,7 +29,6 @@ export const ExercisesEditForm: React.FC<ExercisesEditFormProps> = ({ exercise }
     defaultValues: {
       canonicalName: exercise.canonicalName,
       nature: exercise.nature,
-      movementFamily: exercise.movementFamily,
       defaultDemoUrls: exercise.defaultDemoUrls,
       aliases: exercise.aliases,
       notes: exercise.notes,
