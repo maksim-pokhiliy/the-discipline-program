@@ -1,40 +1,41 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  type ChipProps,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 
 type ProfileSectionProps = {
   title: string;
-  badge?: { label: string; color: NonNullable<ChipProps["color"]> } | undefined;
-  action?: React.ReactNode;
+  count?: number | undefined;
+  meta?: string | undefined;
+  subline?: React.ReactNode | undefined;
   children: React.ReactNode;
 };
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({
   title,
-  badge,
-  action,
+  count,
+  meta,
+  subline,
   children,
 }) => (
-  <Card>
-    <CardHeader
-      title={
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h6">{title}</Typography>
+  <Stack spacing={1.25}>
+    <Stack
+      direction="row"
+      spacing={1.5}
+      alignItems="center"
+      flexWrap="wrap"
+      sx={{ rowGap: 0.5, px: 0.25 }}
+    >
+      <Typography variant="h4">{title}</Typography>
 
-          {badge && (
-            <Chip size="small" variant="outlined" label={badge.label} color={badge.color} />
-          )}
-        </Stack>
-      }
-      {...(action !== undefined && { action })}
-    />
+      {count !== undefined && <Chip label={count} size="small" />}
 
-    <CardContent>{children}</CardContent>
-  </Card>
+      {meta && (
+        <Typography variant="overline" color="text.secondary">
+          {meta}
+        </Typography>
+      )}
+    </Stack>
+
+    {subline}
+
+    {children}
+  </Stack>
 );

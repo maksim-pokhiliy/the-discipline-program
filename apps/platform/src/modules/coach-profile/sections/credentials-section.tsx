@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Divider, Stack, Typography } from "@mui/material";
+import { ButtonBase, Card, Stack, Typography, alpha } from "@mui/material";
 
 import type { CoachCredential } from "@repo/contracts/coaching/coach-credential";
 import { ConfirmationModal } from "@repo/ui";
@@ -23,6 +23,9 @@ export const CredentialsSection: React.FC<CredentialsSectionProps> = ({ credenti
   const updateCredential = useUpdateCredential();
   const deleteCredential = useDeleteCredential();
 
+  const isMutating = updateCredential.isPending || deleteCredential.isPending;
+  const shownCount = credentials.filter((credential) => credential.shownToAthletes).length;
+
   const handleConfirmDelete = () => {
     if (!pendingDelete) {
       return;
@@ -34,31 +37,53 @@ export const CredentialsSection: React.FC<CredentialsSectionProps> = ({ credenti
   return (
     <ProfileSection
       title="Credentials"
-      action={
-        <Button startIcon={<AddIcon />} size="small" onClick={() => setIsAddOpen(true)}>
-          Add credential
-        </Button>
-      }
+      count={credentials.length}
+      {...(credentials.length > 0 && { meta: `${shownCount} shown to athletes` })}
     >
-      {credentials.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          No credentials yet — add your certifications and they&apos;ll show here.
-        </Typography>
-      ) : (
-        <Stack divider={<Divider flexItem />}>
-          {credentials.map((credential) => (
+      <Card>
+        {credentials.length === 0 ? (
+          <Stack spacing={1} alignItems="center" sx={{ px: 2, py: 3.5, textAlign: "center" }}>
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+              No credentials yet.
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360 }}>
+              Add your degrees, certifications and licences. Each one shows up under your name on
+              the athlete-facing page.
+            </Typography>
+          </Stack>
+        ) : (
+          credentials.map((credential) => (
             <CredentialRow
               key={credential.id}
               credential={credential}
-              isMutating={updateCredential.isPending || deleteCredential.isPending}
+              isMutating={isMutating}
               onToggleShown={(shownToAthletes) =>
                 updateCredential.mutate({ id: credential.id, data: { shownToAthletes } })
               }
               onDelete={() => setPendingDelete(credential)}
             />
-          ))}
-        </Stack>
-      )}
+          ))
+        )}
+
+        <ButtonBase
+          onClick={() => setIsAddOpen(true)}
+          sx={(theme) => ({
+            width: "100%",
+            py: 1.5,
+            gap: 0.75,
+            color: "primary.main",
+            borderTop: `1px dashed ${theme.palette.divider}`,
+            typography: "button",
+            transition: theme.transitions.create("background-color"),
+
+            "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+          })}
+        >
+          <AddIcon sx={{ fontSize: 18 }} />
+          Add credential
+        </ButtonBase>
+      </Card>
 
       <AddCredentialModal open={isAddOpen} onClose={() => setIsAddOpen(false)} />
 

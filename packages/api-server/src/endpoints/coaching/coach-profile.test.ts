@@ -13,7 +13,7 @@ import {
   createTestUser,
 } from "../../test/helpers";
 
-import { coachingCoachProfileApi, computeMonthsActive } from "./coach-profile";
+import { coachingCoachProfileApi, computeActiveDuration } from "./coach-profile";
 
 describe("coachingCoachProfileApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -84,26 +84,42 @@ describe("coachingCoachProfileApi", () => {
     });
   });
 
-  describe("computeMonthsActive", () => {
-    it("counts whole months since createdAt", () => {
+  describe("computeActiveDuration", () => {
+    it("breaks the span into whole months plus the inclusive current day", () => {
       const createdAt = new Date("2024-01-15T00:00:00.000Z");
       const now = new Date("2024-04-15T00:00:00.000Z");
 
-      expect(computeMonthsActive(createdAt, now)).toBe(3);
+      expect(computeActiveDuration(createdAt, now)).toEqual({ years: 0, months: 3, days: 1 });
     });
 
-    it("does not count a partial final month", () => {
-      const createdAt = new Date("2024-01-15T00:00:00.000Z");
-      const now = new Date("2024-04-10T00:00:00.000Z");
+    it("counts a same-day join as a single day", () => {
+      const createdAt = new Date("2024-04-15T09:00:00.000Z");
+      const now = new Date("2024-04-15T21:00:00.000Z");
 
-      expect(computeMonthsActive(createdAt, now)).toBe(2);
+      expect(computeActiveDuration(createdAt, now)).toEqual({ years: 0, months: 0, days: 1 });
     });
 
-    it("clamps to zero for a future createdAt", () => {
+    it("counts leftover days past the last whole month", () => {
+      const createdAt = new Date("2024-01-01T00:00:00.000Z");
+      const now = new Date("2024-01-23T00:00:00.000Z");
+
+      expect(computeActiveDuration(createdAt, now)).toEqual({ years: 0, months: 0, days: 23 });
+    });
+
+    it("rolls full years out of the month count", () => {
+      const createdAt = new Date("2022-01-15T00:00:00.000Z");
+      const now = new Date("2024-03-15T00:00:00.000Z");
+
+      expect(computeActiveDuration(createdAt, now)).toEqual({ years: 2, months: 2, days: 1 });
+    });
+
+    it("clamps a future createdAt to zero years and months", () => {
       const createdAt = new Date("2024-04-15T00:00:00.000Z");
       const now = new Date("2024-01-15T00:00:00.000Z");
+      const duration = computeActiveDuration(createdAt, now);
 
-      expect(computeMonthsActive(createdAt, now)).toBe(0);
+      expect(duration.years).toBe(0);
+      expect(duration.months).toBe(0);
     });
   });
 
@@ -159,7 +175,9 @@ describe("coachingCoachProfileApi", () => {
 
       expect(pageData.trackRecord.athletesCoached).toBe(2);
       expect(pageData.trackRecord.plansAuthored).toBe(1);
-      expect(pageData.trackRecord.monthsActive).toBe(computeMonthsActive(createdAt, new Date()));
+      expect(pageData.trackRecord.activeDuration).toEqual(
+        computeActiveDuration(createdAt, new Date()),
+      );
     });
 
     it("embeds credentials ordered by createdAt ascending", async () => {
