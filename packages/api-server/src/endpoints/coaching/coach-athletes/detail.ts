@@ -4,7 +4,6 @@ import {
   type CoachAthleteDetail,
   type CoachAthleteEnrollment,
 } from "@repo/contracts/coaching/coach-athletes";
-import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { ForbiddenError } from "@repo/errors";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../../authz/guards";
@@ -16,10 +15,14 @@ import {
   GENDER_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
-import { ENROLLMENT_STATUS_MAP } from "../../../mappers/lms/enum-maps-status";
+import { ENROLLMENT_STATUS_MAP } from "../../../mappers/lms";
+import { createStartOfDayCache } from "../../../utils/date-helpers";
 import { buildRosterAthleteInclude } from "../assigned-athlete-query";
-
-const MS_PER_DAY = 86_400_000;
+import {
+  computeAthleteMetrics,
+  findNextWorkoutForAthlete,
+  loadScheduleWindow,
+} from "../coach-metrics";
 
 export const getAthleteDetail = async (
   coachUserId: string,
@@ -29,7 +32,7 @@ export const getAthleteDetail = async (
 
   await verifyAthleteBelongsToCoach(athleteUserId, coachId);
 
-  const [assignment, actionItems, lastSession, notes] = await Promise.all([
+  const [assignment, actionItems, notes, coach] = await Promise.all([
     prisma.coachAthleteAssignment.findUnique({
       where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
       include: buildRosterAthleteInclude(),
@@ -45,15 +48,15 @@ export const getAthleteDetail = async (
       orderBy: { createdAt: "desc" },
     }),
 
-    prisma.performedSession.aggregate({
-      where: { userId: athleteUserId, completedAt: { not: null } },
-      _max: { completedAt: true },
-    }),
-
     prisma.coachNote.findMany({
       where: { coachId, athleteId: athleteUserId },
       select: { id: true, content: true, createdAt: true },
       orderBy: { createdAt: "desc" },
+    }),
+
+    prisma.user.findUnique({
+      where: { id: coachUserId },
+      select: { timezone: true },
     }),
   ]);
 
@@ -75,11 +78,32 @@ export const getAthleteDetail = async (
     }),
   );
 
-  const lastActivityDate = lastSession._max.completedAt ?? null;
-  const daysSinceLastActivity =
-    lastActivityDate !== null
-      ? Math.floor((Date.now() - lastActivityDate.getTime()) / MS_PER_DAY)
-      : null;
+  const mappedActionItems = actionItems.map((item) => ({
+    id: item.id,
+    type: ACTION_ITEM_TYPE_MAP[item.type],
+    severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
+    message: item.message,
+    createdAt: item.createdAt,
+  }));
+
+  const tz = coach?.timezone ?? "UTC";
+
+  const now = new Date();
+  const [window, nextWorkout] = await Promise.all([
+    loadScheduleWindow({ athleteIds: [athleteUserId], tz, now }),
+    findNextWorkoutForAthlete({ athleteId: athleteUserId, tz, now }),
+  ]);
+
+  const metrics = computeAthleteMetrics({
+    athleteId: athleteUserId,
+    enrollments: window.enrollmentsByAthlete.get(athleteUserId) ?? [],
+    performedByKey: window.performedByKey,
+    weekCountByPlan: window.weekCountByPlan,
+    firstWeekStartByPlan: window.firstWeekStartByPlan,
+    tz,
+    now,
+    startOfDayCache: createStartOfDayCache(tz),
+  });
 
   return {
     userId: athleteUserId,
@@ -91,30 +115,25 @@ export const getAthleteDetail = async (
     gender: profile?.gender ? GENDER_MAP[profile.gender] : null,
     heightCm: profile?.heightCm ?? null,
     weightKg: profile?.weightKg ? Number(profile.weightKg) : null,
-    processStatus: ProcessStatus.STEADY,
+    processStatus: metrics.processStatus,
     enrollments,
-    planDiscipline: [],
-    recentWorkouts: [],
-    actionItems: actionItems.map((item) => ({
-      id: item.id,
-      type: ACTION_ITEM_TYPE_MAP[item.type],
-      severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
-      message: item.message,
-      createdAt: item.createdAt,
-    })),
-    notes: notes.map((note) => ({
-      id: note.id,
-      content: note.content,
-      createdAt: note.createdAt,
-    })),
-    nextWorkout: null,
+    planDiscipline: metrics.planDiscipline,
+    recentWorkouts: metrics.recentWorkouts,
+    actionItems: mappedActionItems,
+    notes,
+    nextWorkout,
     consistency: {
-      adherenceRate4w: 0,
-      currentStreak: 0,
-      missedThisWeek: 0,
+      adherenceRate4w: metrics.adherenceRate,
+      currentStreak: metrics.currentStreak,
+      missedThisWeek: metrics.missedThisWeek,
     },
     enrolledSince: assignment.createdAt,
-    lastActivityDate,
-    daysSinceLastActivity,
+    lastActivityDate: metrics.lastActivityDate,
+    daysSinceLastActivity: metrics.daysSinceLastActivity,
+    last7Days: metrics.last7Days,
+    currentWeek: metrics.currentWeek,
+    totalWeeks: metrics.totalWeeks,
+    todayStatus: metrics.todayStatus,
+    todayWorkoutTitle: metrics.todayWorkoutTitle,
   };
 };

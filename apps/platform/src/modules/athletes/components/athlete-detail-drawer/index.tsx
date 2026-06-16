@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CloseIcon from "@mui/icons-material/Close";
 import ForumIcon from "@mui/icons-material/Forum";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -18,22 +19,25 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import { toast } from "sonner";
+import Link from "next/link";
 
+import type { CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
 import { LAYOUT } from "@repo/shared";
 
 import { HealthStatusChip } from "@app/lib/components";
 import { useCoachAthleteDetail } from "@app/lib/hooks";
 
-import { DrawerActionItems } from "./drawer-action-items";
 import { HealthPane } from "./health-pane";
 import { NotesPane } from "./notes-pane";
+import { OpenActionItemsBlock } from "./open-action-items-block";
 import { PlanPane } from "./plan-pane";
 import { TodayPane } from "./today-pane";
 
 type DrawerTab = "today" | "plan" | "notes" | "health";
 
+const DEFAULT_TAB: DrawerTab = "today";
 const AVATAR_SIZE = 48;
+const SPINNER_SIZE = 30;
 
 type AthleteDetailDrawerProps = {
   athleteId: string | null;
@@ -42,6 +46,12 @@ type AthleteDetailDrawerProps = {
   onNavigate: (userId: string) => void;
 };
 
+const getPrimaryPlanName = (detail: CoachAthleteDetail): string | null =>
+  detail.planDiscipline[0]?.planName ?? null;
+
+const getPrimaryPlanId = (detail: CoachAthleteDetail): string | null =>
+  detail.planDiscipline[0]?.planId ?? null;
+
 export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
   athleteId,
   visibleIds,
@@ -49,13 +59,13 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
   onNavigate,
 }) => {
   const { data, isLoading } = useCoachAthleteDetail(athleteId);
-  const [tab, setTab] = useState<DrawerTab>("today");
+  const [tab, setTab] = useState<DrawerTab>(DEFAULT_TAB);
 
   const index = athleteId ? visibleIds.indexOf(athleteId) : -1;
   const hasPrev = index > 0;
   const hasNext = index >= 0 && index < visibleIds.length - 1;
 
-  const goPrev = () => {
+  const goPrev = (): void => {
     const id = visibleIds[index - 1];
 
     if (id) {
@@ -63,7 +73,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
     }
   };
 
-  const goNext = () => {
+  const goNext = (): void => {
     const id = visibleIds[index + 1];
 
     if (id) {
@@ -72,7 +82,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
   };
 
   useEffect(() => {
-    setTab("today");
+    setTab(DEFAULT_TAB);
   }, [athleteId]);
 
   useEffect(() => {
@@ -80,7 +90,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
       return;
     }
 
-    const onKey = (event: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent): void => {
       const target = event.target as HTMLElement | null;
 
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
@@ -112,6 +122,8 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
   }, [athleteId, index, visibleIds, onNavigate]);
 
   const displayName = data ? (data.name ?? data.email) : "";
+  const primaryPlanId = data ? getPrimaryPlanId(data) : null;
+  const mailtoHref = data ? `mailto:${encodeURIComponent(data.email)}` : "";
 
   return (
     <Drawer
@@ -155,7 +167,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
 
       {isLoading || !data ? (
         <Stack alignItems="center" justifyContent="center" sx={{ flex: 1 }}>
-          <CircularProgress size={30} />
+          <CircularProgress size={SPINNER_SIZE} />
         </Stack>
       ) : (
         <>
@@ -166,7 +178,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
             sx={(theme) => ({ p: 2, borderBottom: `1px solid ${theme.palette.divider}` })}
           >
             <Avatar
-              {...(data.image && { src: data.image })}
+              {...(data.image !== null && { src: data.image })}
               alt={displayName}
               sx={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
             >
@@ -200,27 +212,58 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
             <Tab value="health" label="Health" />
           </Tabs>
 
-          <Box sx={{ flex: 1, overflow: "auto" }}>
-            <DrawerActionItems actionItems={data.actionItems} />
-            {tab === "today" && <TodayPane detail={data} />}
-            {tab === "plan" && <PlanPane enrollments={data.enrollments} />}
-            {tab === "notes" && <NotesPane notes={data.notes} />}
+          <Stack spacing={2} sx={{ flex: 1, minHeight: 0, overflow: "auto", p: 2 }}>
+            <OpenActionItemsBlock athleteId={data.userId} actionItems={data.actionItems} />
+
+            {tab === "today" && (
+              <TodayPane
+                todayWorkoutTitle={data.todayWorkoutTitle}
+                planName={getPrimaryPlanName(data)}
+                currentWeek={data.currentWeek}
+                totalWeeks={data.totalWeeks}
+                last7Days={data.last7Days}
+                consistency={data.consistency}
+              />
+            )}
+            {tab === "plan" && (
+              <PlanPane
+                enrollments={data.enrollments}
+                planDiscipline={data.planDiscipline}
+                currentWeek={data.currentWeek}
+                totalWeeks={data.totalWeeks}
+              />
+            )}
+            {tab === "notes" && <NotesPane athleteId={data.userId} notes={data.notes} />}
             {tab === "health" && <HealthPane detail={data} />}
-          </Box>
+          </Stack>
 
           <Stack
             direction="row"
             spacing={1}
-            sx={(theme) => ({ p: 1.5, borderTop: `1px solid ${theme.palette.divider}` })}
+            sx={(theme) => ({ p: 2, borderTop: `1px solid ${theme.palette.divider}` })}
           >
             <Button
-              size="small"
+              component="a"
+              href={mailtoHref}
               variant="outlined"
+              size="small"
               startIcon={<ForumIcon />}
-              onClick={() => toast.info("Telegram messaging — coming soon")}
+              sx={{ flex: 1 }}
             >
-              Message on Telegram
+              Message
             </Button>
+            {primaryPlanId !== null && (
+              <Button
+                component={Link}
+                href={`/coach/plans/${primaryPlanId}`}
+                variant="contained"
+                size="small"
+                endIcon={<ArrowForwardIcon />}
+                sx={{ flex: 1 }}
+              >
+                Open plan
+              </Button>
+            )}
           </Stack>
         </>
       )}

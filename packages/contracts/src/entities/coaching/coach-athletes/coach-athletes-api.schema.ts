@@ -3,7 +3,7 @@ import { z } from "zod";
 import { imageUrlSchema } from "../../../common/image";
 import { Gender, HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
-import { ProcessStatus } from "../coach-dashboard";
+import { ProcessStatus, TodayStatus, todayStatusSchema } from "../coach-dashboard";
 
 import {
   coachAthleteEnrollmentSchema,
@@ -50,6 +50,11 @@ export const nextWorkoutSchema = z.object({
   planName: z.string(),
 });
 
+export const last7DaySchema = z.object({
+  date: z.date(),
+  status: z.nativeEnum(TodayStatus),
+});
+
 export const consistencySchema = z.object({
   adherenceRate4w: z.number().finite().min(0).max(1),
   currentStreak: z.number().int().nonnegative(),
@@ -83,4 +88,9 @@ export const coachAthleteDetailSchema = z.object({
   enrolledSince: z.date(),
   lastActivityDate: z.date().nullable(),
   daysSinceLastActivity: z.number().int().nonnegative().nullable(),
+  last7Days: z.array(last7DaySchema),
+  currentWeek: z.number().int().positive().nullable(),
+  totalWeeks: z.number().int().nonnegative(),
+  todayStatus: todayStatusSchema,
+  todayWorkoutTitle: z.string().nullable(),
 });

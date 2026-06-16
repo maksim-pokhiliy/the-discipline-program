@@ -1,0 +1,106 @@
+import { fireEvent, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { CoachAthleteNote } from "@repo/contracts/coaching/coach-athletes";
+
+import { render } from "@app/test/render";
+
+import { NotesPane } from "./notes-pane";
+
+const ATHLETE_ID = "clz00000000000000000ath1";
+const NOW = new Date("2026-06-16T09:00:00.000Z");
+
+const createMutate = vi.fn();
+const createState = { isPending: false };
+
+vi.mock("@app/lib/hooks", () => ({
+  useCreateCoachNote: () => ({ mutate: createMutate, isPending: createState.isPending }),
+}));
+
+const makeNote = (id: string, content: string): CoachAthleteNote => ({
+  id,
+  content,
+  createdAt: NOW,
+});
+
+beforeEach(() => {
+  createState.isPending = false;
+  createMutate.mockReset();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("NotesPane list", () => {
+  it("renders the existing notes from the embedded payload", () => {
+    render(
+      <NotesPane
+        athleteId={ATHLETE_ID}
+        notes={[
+          makeNote("clz00000000000000000not1", "Strong session, watch the left knee"),
+          makeNote("clz00000000000000000not2", "Skipped Monday, follow up"),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Strong session, watch the left knee")).toBeInTheDocument();
+    expect(screen.getByText("Skipped Monday, follow up")).toBeInTheDocument();
+  });
+
+  it("shows the empty-notes copy when there are none", () => {
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
+
+    expect(screen.getByText("No notes yet.")).toBeInTheDocument();
+  });
+
+  it("renders each note createdAt as relative time-ago", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW.getTime() + 10 * 60_000));
+
+    render(
+      <NotesPane
+        athleteId={ATHLETE_ID}
+        notes={[makeNote("clz00000000000000000not1", "Strong session")]}
+      />,
+    );
+
+    expect(screen.getByText("10m ago")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+});
+
+describe("NotesPane add", () => {
+  it("disables Add note until the draft has content", () => {
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
+
+    expect(screen.getByRole("button", { name: /Add note/ })).toBeDisabled();
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "New note" } });
+
+    expect(screen.getByRole("button", { name: /Add note/ })).not.toBeDisabled();
+  });
+
+  it("creates a trimmed note for the athlete on Add", () => {
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "  follow up call  " } });
+    fireEvent.click(screen.getByRole("button", { name: /Add note/ }));
+
+    expect(createMutate).toHaveBeenCalledTimes(1);
+    expect(createMutate.mock.calls[0]?.[0]).toEqual({
+      athleteId: ATHLETE_ID,
+      content: "follow up call",
+    });
+  });
+
+  it("does not submit a whitespace-only draft", () => {
+    render(<NotesPane athleteId={ATHLETE_ID} notes={[]} />);
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "    " } });
+    fireEvent.click(screen.getByRole("button", { name: /Add note/ }));
+
+    expect(createMutate).not.toHaveBeenCalled();
+  });
+});

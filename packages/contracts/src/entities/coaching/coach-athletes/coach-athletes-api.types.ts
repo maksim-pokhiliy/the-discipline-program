@@ -7,6 +7,7 @@ import {
   type coachAthleteNoteSchema,
   type coachAthletesDataSchema,
   type consistencySchema,
+  type last7DaySchema,
   type nextWorkoutSchema,
   type planDisciplineSchema,
   type recentWorkoutSchema,
@@ -19,5 +20,6 @@ export type RecentWorkout = z.infer<typeof recentWorkoutSchema>;
 export type AthleteActionItem = z.infer<typeof athleteActionItemSchema>;
 export type NextWorkout = z.infer<typeof nextWorkoutSchema>;
 export type AthleteConsistency = z.infer<typeof consistencySchema>;
+export type Last7Day = z.infer<typeof last7DaySchema>;
 export type CoachAthleteNote = z.infer<typeof coachAthleteNoteSchema>;
 export type CoachAthleteDetail = z.infer<typeof coachAthleteDetailSchema>;

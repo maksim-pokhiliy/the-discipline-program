@@ -8,13 +8,16 @@ import {
   type AthleteDailySummary,
   type CoachDashboardData,
   type DashboardActionItem,
+  type ProgressAthlete,
   type ProgressBuckets,
+  ProcessStatus,
   TodayStatus,
 } from "@repo/contracts/coaching/coach-dashboard";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { prisma } from "../../db/client";
+import { inMemoryCache } from "../../infrastructure/cache";
 import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
@@ -24,17 +27,193 @@ import {
 import { ROLE_MAP } from "../../mappers/iam";
 import { TRAINING_PLAN_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
-import { startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
+import { createStartOfDayCache, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
-import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
-import { coachingCoachActionItemApi } from "./coach-action-item";
+import {
+  buildAssignedAthleteInclude,
+  type AssignedAthleteWithData,
+} from "./assigned-athlete-query";
+import { buildCoachMetricsCacheKey, coachingCoachActionItemApi } from "./coach-action-item";
+import {
+  type AthleteMetricsResult,
+  computeAthleteMetrics,
+  loadScheduleWindow,
+  METRICS_CACHE_TTL_SECONDS,
+} from "./coach-metrics";
 
-const EMPTY_PROGRESS_BUCKETS: ProgressBuckets = {
-  onTrack: [],
-  steady: [],
-  fallingBehind: [],
-  avgEngagementRate: 0,
+type ScheduleSummaryFields = Omit<
+  AthleteDailySummary,
+  "userId" | "name" | "email" | "image" | "healthStatus"
+>;
+
+type WorkoutCounts = Pick<
+  CoachDashboardData["overview"],
+  | "workoutsPlannedToday"
+  | "workoutsCompletedToday"
+  | "workoutsPlannedThisWeek"
+  | "workoutsCompletedThisWeek"
+>;
+
+type MetricsSlice = {
+  summaryByAthlete: Map<string, ScheduleSummaryFields>;
+  workoutCounts: WorkoutCounts;
+  progressBuckets: ProgressBuckets;
 };
+
+const EMPTY_WORKOUT_COUNTS: WorkoutCounts = {
+  workoutsPlannedToday: 0,
+  workoutsCompletedToday: 0,
+  workoutsPlannedThisWeek: 0,
+  workoutsCompletedThisWeek: 0,
+};
+
+const EMPTY_SCHEDULE_SUMMARY: ScheduleSummaryFields = {
+  planId: null,
+  planName: null,
+  todayStatus: TodayStatus.NO_SCHEDULE,
+  missedCount: 0,
+  todayWorkoutTitle: null,
+  lastActivityDate: null,
+  daysSinceLastActivity: null,
+};
+
+const toScheduleSummary = (metrics: AthleteMetricsResult): ScheduleSummaryFields => ({
+  planId: metrics.primaryPlanId,
+  planName: metrics.primaryPlanName,
+  todayStatus: metrics.todayStatus,
+  missedCount: metrics.missedCount,
+  todayWorkoutTitle: metrics.todayWorkoutTitle,
+  lastActivityDate: metrics.lastActivityDate,
+  daysSinceLastActivity: metrics.daysSinceLastActivity,
+});
+
+const toProgressAthlete = (
+  athlete: AssignedAthleteWithData["athlete"],
+  metrics: AthleteMetricsResult,
+  isFallingBehind: boolean,
+): ProgressAthlete => ({
+  userId: athlete.id,
+  name: athlete.name,
+  image: athlete.image,
+  processStatus: metrics.processStatus,
+  engagementPct: isFallingBehind ? metrics.engagementPct : null,
+  weeklyDelta: isFallingBehind ? metrics.weeklyDelta : null,
+});
+
+const accumulateWorkoutCounts = (counts: WorkoutCounts, metrics: AthleteMetricsResult): void => {
+  for (const plan of metrics.planDiscipline) {
+    counts.workoutsPlannedThisWeek += plan.planned;
+    counts.workoutsCompletedThisWeek += plan.completed;
+  }
+
+  if (
+    metrics.todayStatus === TodayStatus.COMPLETED ||
+    metrics.todayStatus === TodayStatus.PENDING
+  ) {
+    counts.workoutsPlannedToday += 1;
+  }
+
+  if (metrics.todayStatus === TodayStatus.COMPLETED) {
+    counts.workoutsCompletedToday += 1;
+  }
+};
+
+const computeMetricsSlice = async (
+  assignments: AssignedAthleteWithData[],
+  tz: string,
+): Promise<MetricsSlice> => {
+  const summaryByAthlete = new Map<string, ScheduleSummaryFields>();
+  const buckets: Record<ProcessStatus, ProgressAthlete[]> = {
+    [ProcessStatus.ON_TRACK]: [],
+    [ProcessStatus.STEADY]: [],
+    [ProcessStatus.FALLING_BEHIND]: [],
+  };
+  const workoutCounts: WorkoutCounts = { ...EMPTY_WORKOUT_COUNTS };
+
+  const now = new Date();
+  const athleteIds = assignments.map((a) => a.athlete.id);
+  const { enrollmentsByAthlete, performedByKey, weekCountByPlan, firstWeekStartByPlan } =
+    await loadScheduleWindow({ athleteIds, tz, now });
+  const startOfDayCache = createStartOfDayCache(tz);
+
+  let adherenceSum = 0;
+
+  for (const assignment of assignments) {
+    const athlete = assignment.athlete;
+    const enrollments = enrollmentsByAthlete.get(athlete.id) ?? [];
+    const metrics = computeAthleteMetrics({
+      athleteId: athlete.id,
+      enrollments,
+      performedByKey,
+      weekCountByPlan,
+      firstWeekStartByPlan,
+      tz,
+      now,
+      startOfDayCache,
+    });
+
+    summaryByAthlete.set(athlete.id, toScheduleSummary(metrics));
+
+    const isFallingBehind = metrics.processStatus === ProcessStatus.FALLING_BEHIND;
+
+    buckets[metrics.processStatus].push(toProgressAthlete(athlete, metrics, isFallingBehind));
+    adherenceSum += metrics.adherenceRate;
+    accumulateWorkoutCounts(workoutCounts, metrics);
+  }
+
+  const avgEngagementRate = assignments.length === 0 ? 0 : adherenceSum / assignments.length;
+
+  return {
+    summaryByAthlete,
+    workoutCounts,
+    progressBuckets: {
+      onTrack: buckets[ProcessStatus.ON_TRACK],
+      steady: buckets[ProcessStatus.STEADY],
+      fallingBehind: buckets[ProcessStatus.FALLING_BEHIND],
+      avgEngagementRate,
+    },
+  };
+};
+
+const resolveMetricsSlice = async (
+  coachId: string,
+  assignments: AssignedAthleteWithData[],
+  tz: string,
+): Promise<MetricsSlice> => {
+  const cacheKey = buildCoachMetricsCacheKey(coachId);
+  const cached = await inMemoryCache.get<MetricsSlice>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const slice = await computeMetricsSlice(assignments, tz);
+
+  await inMemoryCache.set(cacheKey, slice, { ttlSeconds: METRICS_CACHE_TTL_SECONDS });
+
+  return slice;
+};
+
+const buildAthletesSummary = (
+  assignments: AssignedAthleteWithData[],
+  summaryByAthlete: Map<string, ScheduleSummaryFields>,
+): AthleteDailySummary[] =>
+  assignments.map((assignment) => {
+    const athlete = assignment.athlete;
+    const healthStatus = athlete.athleteProfile
+      ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
+      : HealthStatus.HEALTHY;
+    const schedule = summaryByAthlete.get(athlete.id) ?? EMPTY_SCHEDULE_SUMMARY;
+
+    return {
+      userId: athlete.id,
+      name: athlete.name,
+      email: athlete.email,
+      image: athlete.image,
+      healthStatus,
+      ...schedule,
+    };
+  });
 
 export const coachingCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
@@ -83,27 +262,11 @@ export const coachingCoachDashboardApi = {
       }
     }
 
-    const athletesSummary: AthleteDailySummary[] = assignments.map((a) => {
-      const athlete = a.athlete;
-      const healthStatus = athlete.athleteProfile
-        ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
-        : HealthStatus.HEALTHY;
-
-      return {
-        userId: athlete.id,
-        name: athlete.name,
-        email: athlete.email,
-        image: athlete.image,
-        planId: null,
-        planName: null,
-        todayStatus: TodayStatus.NO_SCHEDULE,
-        missedCount: 0,
-        todayWorkoutTitle: null,
-        lastActivityDate: null,
-        daysSinceLastActivity: null,
-        healthStatus,
-      };
-    });
+    const { summaryByAthlete, workoutCounts, progressBuckets } = await resolveMetricsSlice(
+      coachId,
+      assignments,
+      tz,
+    );
 
     const actionItems: DashboardActionItem[] = openActionItems
       .map((item) => ({
@@ -126,16 +289,13 @@ export const coachingCoachDashboardApi = {
       overview: {
         totalActiveAthletes: assignments.length,
         activePlansCount,
-        workoutsPlannedToday: 0,
-        workoutsCompletedToday: 0,
-        workoutsPlannedThisWeek: 0,
-        workoutsCompletedThisWeek: 0,
         openActionItemsCount: openActionItems.length,
         newAthletesCount: recentAthletes.size,
+        ...workoutCounts,
       },
       actionItems,
-      athletesSummary,
-      progressBuckets: EMPTY_PROGRESS_BUCKETS,
+      athletesSummary: buildAthletesSummary(assignments, summaryByAthlete),
+      progressBuckets,
     };
   },
 };

@@ -3,12 +3,13 @@ import {
   ActionItemStatus,
   type CoachActionItem,
   type ReconcileResponse,
+  type ResolveActionItemRequest,
 } from "@repo/contracts/coaching/coach-action-item";
 import { NotFoundError } from "@repo/errors";
 
-import { resolveCoachId } from "../../authz/guards";
+import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { TX_BUDGET_LONG } from "../../db/transaction-config";
+import { TX_BUDGET_DEFAULT, TX_BUDGET_LONG } from "../../db/transaction-config";
 import { inMemoryCache } from "../../infrastructure/cache";
 import {
   ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP,
@@ -32,6 +33,8 @@ const RECONCILE_CACHE_TTL_SECONDS = 60;
 const CACHED_RECONCILE_RESPONSE: ReconcileResponse = { created: 0, updated: 0, resolved: 0 };
 
 const buildReconcileCacheKey = (coachId: string): string => `reconcile:${coachId}`;
+
+export const buildCoachMetricsCacheKey = (coachId: string): string => `coach-metrics:${coachId}`;
 
 export const coachingCoachActionItemApi = {
   reconcile: async (userId: string): Promise<ReconcileResponse & { coachId: string }> => {
@@ -110,7 +113,11 @@ export const coachingCoachActionItemApi = {
     }
   },
 
-  resolve: async (userId: string, itemId: string): Promise<CoachActionItem> => {
+  resolve: async (
+    userId: string,
+    itemId: string,
+    body?: ResolveActionItemRequest,
+  ): Promise<CoachActionItem> => {
     const coachId = await resolveCoachId(userId);
 
     const item = await prisma.coachActionItem.findUnique({ where: { id: itemId } });
@@ -123,18 +130,34 @@ export const coachingCoachActionItemApi = {
       return mapToCoachActionItem(item);
     }
 
+    const reason = body?.reason ?? ActionItemResolveReason.MANUAL_CONTACTED;
+    const note = body?.note;
+    const updateData = {
+      status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
+      resolvedAt: new Date(),
+      resolveReason: ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[reason],
+    };
+
     try {
-      const updated = await prisma.coachActionItem.update({
-        where: { id: itemId },
-        data: {
-          status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-          resolvedAt: new Date(),
-          resolveReason:
-            ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[ActionItemResolveReason.MANUAL_CONTACTED],
-        },
-      });
+      const updated = note
+        ? await prisma.$transaction(async (tx) => {
+            await verifyAthleteBelongsToCoach(item.athleteId, coachId);
+
+            const result = await tx.coachActionItem.update({
+              where: { id: itemId },
+              data: updateData,
+            });
+
+            await tx.coachNote.create({
+              data: { coachId, athleteId: item.athleteId, content: note },
+            });
+
+            return result;
+          }, TX_BUDGET_DEFAULT)
+        : await prisma.coachActionItem.update({ where: { id: itemId }, data: updateData });
 
       await inMemoryCache.delete(buildReconcileCacheKey(coachId));
+      await inMemoryCache.delete(buildCoachMetricsCacheKey(coachId));
 
       return mapToCoachActionItem(updated);
     } catch (error) {

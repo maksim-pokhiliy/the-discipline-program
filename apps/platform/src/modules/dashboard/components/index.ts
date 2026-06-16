@@ -1,3 +1,3 @@
-export { ActionMenu } from "./action-menu";
-export { AthleteCard } from "./athlete-card";
-export { DashboardSection } from "./dashboard-section";
+export { DashboardEmptyState } from "./dashboard-empty-state";
+export { DashboardHeaderBand } from "./dashboard-header-band";
+export { ResolveActionItemModal } from "./resolve-action-item-modal";

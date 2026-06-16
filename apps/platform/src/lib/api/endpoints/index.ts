@@ -2,6 +2,7 @@ export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
 export { createCoachCredentialAPI } from "./coach-credential";
+export { createCoachNotesAPI } from "./coach-note";
 export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachInviteAPI } from "./coach-invite";
 export { createCoachProfileAPI } from "./coach-profile";

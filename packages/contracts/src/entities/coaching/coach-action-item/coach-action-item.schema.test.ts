@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { COACH_NOTE_CONSTANTS } from "../coach-note";
+
+import { resolveActionItemRequestSchema } from "./coach-action-item-api.schema";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
@@ -193,5 +196,66 @@ describe("actionItemResolveReasonSchema", () => {
 
   it("rejects invalid reason", () => {
     expect(actionItemResolveReasonSchema.safeParse("MAGIC").success).toBe(false);
+  });
+});
+
+describe("resolveActionItemRequestSchema", () => {
+  it("accepts an empty body as the back-compat default", () => {
+    expect(resolveActionItemRequestSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("accepts the manual reason with a note", () => {
+    const result = resolveActionItemRequestSchema.safeParse({
+      reason: ActionItemResolveReason.MANUAL_CONTACTED,
+      note: "Reached out via email",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts only a note without a reason", () => {
+    expect(resolveActionItemRequestSchema.safeParse({ note: "Called the athlete" }).success).toBe(
+      true,
+    );
+  });
+
+  it("accepts only the manual reason without a note", () => {
+    expect(
+      resolveActionItemRequestSchema.safeParse({
+        reason: ActionItemResolveReason.MANUAL_CONTACTED,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an auto reason", () => {
+    expect(
+      resolveActionItemRequestSchema.safeParse({
+        reason: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the other auto reason", () => {
+    expect(
+      resolveActionItemRequestSchema.safeParse({
+        reason: ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty note", () => {
+    expect(resolveActionItemRequestSchema.safeParse({ note: "" }).success).toBe(false);
+  });
+
+  it("rejects a note over the max length", () => {
+    const note = "a".repeat(COACH_NOTE_CONSTANTS.MAX_CONTENT_LENGTH + 1);
+
+    expect(resolveActionItemRequestSchema.safeParse({ note }).success).toBe(false);
+  });
+
+  it("accepts a note at the max length", () => {
+    const note = "a".repeat(COACH_NOTE_CONSTANTS.MAX_CONTENT_LENGTH);
+
+    expect(resolveActionItemRequestSchema.safeParse({ note }).success).toBe(true);
   });
 });

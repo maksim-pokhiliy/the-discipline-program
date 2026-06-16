@@ -8,6 +8,7 @@ export * from "./use-coach-action-items";
 export * from "./use-coach-credentials";
 export * from "./use-coach-dashboard";
 export * from "./use-coach-invite";
+export * from "./use-coach-notes";
 export * from "./use-coach-profile";
 export * from "./use-create-exercise";
 export * from "./use-create-label";
