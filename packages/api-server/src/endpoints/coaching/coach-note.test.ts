@@ -138,6 +138,46 @@ describe("coachingCoachNoteApi", () => {
     });
   });
 
+  describe("getAll with athlete filter", () => {
+    it("returns only the notes for the requested assigned athlete", async () => {
+      const secondAthlete = await createTestUser();
+      const assignment = await cleanupRaw.coachAthleteAssignment.create({
+        data: { coachId: coachA.profile.id, athleteId: secondAthlete.id },
+      });
+
+      try {
+        await coachingCoachNoteApi.create(coachA.user.id, {
+          athleteId: athlete.id,
+          content: "Note for first athlete",
+        });
+        await coachingCoachNoteApi.create(coachA.user.id, {
+          athleteId: secondAthlete.id,
+          content: "Note for second athlete",
+        });
+
+        const filtered = await coachingCoachNoteApi.getAll(coachA.user.id, secondAthlete.id);
+
+        expect(filtered.length).toBeGreaterThanOrEqual(1);
+        expect(filtered.every((n) => n.athleteId === secondAthlete.id)).toBe(true);
+        expect(filtered.some((n) => n.content === "Note for first athlete")).toBe(false);
+      } finally {
+        await cleanupRaw.coachNote
+          .deleteMany({ where: { coachId: coachA.profile.id, athleteId: secondAthlete.id } })
+          .catch(() => {});
+        await cleanup(
+          { table: "coachAthleteAssignment", id: assignment.id },
+          { table: "user", id: secondAthlete.id },
+        );
+      }
+    });
+
+    it("throws ForbiddenError when filtering by an athlete not assigned to the coach", async () => {
+      await expect(coachingCoachNoteApi.getAll(coachA.user.id, unrelatedUser.id)).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+  });
+
   describe("getById", () => {
     it("returns a note by id for its owner", async () => {
       const created = await coachingCoachNoteApi.create(coachA.user.id, {
