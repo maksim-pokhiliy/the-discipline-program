@@ -37,8 +37,14 @@ export const coachProfileUserSchema = z.object({
   createdAt: z.date(),
 });
 
+export const activeDurationSchema = z.object({
+  years: z.number().int().nonnegative(),
+  months: z.number().int().nonnegative(),
+  days: z.number().int().nonnegative(),
+});
+
 export const trackRecordSchema = z.object({
-  monthsActive: z.number().int().nonnegative(),
+  activeDuration: activeDurationSchema,
   athletesCoached: z.number().int().nonnegative(),
   plansAuthored: z.number().int().nonnegative(),
 });
