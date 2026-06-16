@@ -18,7 +18,6 @@ const EXERCISE_FIELDS = [
   "movementFamily",
   "defaultDemoUrls",
   "aliases",
-  "equipment",
   "notes",
   "createdAt",
   "updatedAt",
@@ -30,7 +29,6 @@ const baseExerciseData = (overrides: Partial<CreateExerciseData> = {}): CreateEx
   movementFamily: null,
   defaultDemoUrls: [],
   aliases: [],
-  equipmentIds: [],
   notes: null,
   ...overrides,
 });
@@ -138,7 +136,6 @@ describe("lmsExercisePlatformApi.list", () => {
     expect(typeof found.nature).toBe("string");
     expect(Array.isArray(found.defaultDemoUrls)).toBe(true);
     expect(Array.isArray(found.aliases)).toBe(true);
-    expect(Array.isArray(found.equipment)).toBe(true);
     expect(found.createdAt).toBeInstanceOf(Date);
     expect(found.updatedAt).toBeInstanceOf(Date);
   });
