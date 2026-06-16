@@ -100,6 +100,8 @@ export const computeAthleteMetrics = ({
   const primary = pickPrimaryPlan(enrollments, startOfToday, tz, startOfDayCache);
 
   return {
+    primaryPlanId: primary?.planId ?? null,
+    primaryPlanName: primary?.plan.name ?? null,
     todayStatus: deriveTodayStatus(todayDays, performedByKey, athleteId),
     todayWorkoutTitle: composeTodayWorkoutTitle(todayDays),
     missedCount: countMissedSessions(scheduledDays, startOfToday, null, performedByKey, athleteId),

@@ -25,14 +25,14 @@ export const buildDaysByDate = (scheduledDays: ScheduledDay[]): Map<number, DayB
   return byDate;
 };
 
-const isBucketCompleted = (
+const countCompletedSessions = (
   bucket: DayBucket,
   performedByKey: PerformedByKey,
   athleteId: string,
-): boolean =>
-  bucket.workoutSessions.every((session) =>
+): number =>
+  bucket.workoutSessions.filter((session) =>
     isSessionCompleted(performedByKey, athleteId, session.id),
-  );
+  ).length;
 
 export const classifyDate = (
   bucket: DayBucket | undefined,
@@ -48,9 +48,15 @@ export const classifyDate = (
     return TodayStatus.REST_DAY;
   }
 
-  if (isBucketCompleted(bucket, performedByKey, athleteId)) {
+  const completedCount = countCompletedSessions(bucket, performedByKey, athleteId);
+
+  if (completedCount === bucket.workoutSessions.length) {
     return TodayStatus.COMPLETED;
   }
 
-  return isToday ? TodayStatus.PENDING : TodayStatus.MISSED;
+  if (isToday) {
+    return TodayStatus.PENDING;
+  }
+
+  return completedCount > 0 ? TodayStatus.COMPLETED : TodayStatus.MISSED;
 };

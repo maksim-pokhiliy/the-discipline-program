@@ -375,3 +375,146 @@ describe("computeAthleteMetrics streak, delta and missed-day boundaries", () => 
     expect(result.weeklyDelta).toBeNull();
   });
 });
+
+describe("computeAthleteMetrics partial multi-session days", () => {
+  const partialDayEnrollment = () =>
+    makeEnrollment({
+      athleteId: ATHLETE,
+      boardedAt: mkDate(MONDAY),
+      weeks: [
+        {
+          id: "w-1",
+          startDate: mkDate(MONDAY),
+          days: [
+            {
+              dayOfWeek: DayOfWeek.MONDAY,
+              label: workoutLabel("Strength"),
+              sessions: [{ id: "mon-a" }, { id: "mon-b" }],
+            },
+          ],
+        },
+      ],
+    });
+
+  it("does not count a past day with some completed sessions as a missed day", () => {
+    const completions = performed(ATHLETE, [
+      { sessionId: "mon-a", startedAt: mkDate(MONDAY), completedAt: mkDate(MONDAY) },
+    ]);
+
+    const result = run([partialDayEnrollment()], completions);
+
+    expect(result.consecutiveMissedDays).toBe(0);
+    expect(result.currentStreak).toBe(1);
+    expect(result.missedCount).toBe(1);
+  });
+
+  it("counts a past day with no completed sessions as a missed day", () => {
+    const result = run([partialDayEnrollment()], new Map());
+
+    expect(result.consecutiveMissedDays).toBe(1);
+    expect(result.currentStreak).toBe(0);
+    expect(result.missedCount).toBe(2);
+  });
+});
+
+describe("computeAthleteMetrics last activity", () => {
+  it("ignores in-progress sessions and reports null when nothing is completed", () => {
+    const enrollment = singleWeekEnrollment(fullWeekDays());
+    const inProgress = performed(ATHLETE, [
+      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: null },
+    ]);
+
+    const result = run([enrollment], inProgress);
+
+    expect(result.lastActivityDate).toBeNull();
+    expect(result.daysSinceLastActivity).toBeNull();
+  });
+
+  it("never reports a negative days-since-last-activity", () => {
+    const enrollment = singleWeekEnrollment(fullWeekDays());
+    const completions = performed(ATHLETE, [
+      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
+    ]);
+
+    const result = run([enrollment], completions);
+
+    expect(result.daysSinceLastActivity).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("computeAthleteMetrics with multiple active plans (documents aggregation)", () => {
+  const planA = makeEnrollment({
+    id: "enrollment-a",
+    planId: "plan-a",
+    planName: "Strength Plan",
+    athleteId: ATHLETE,
+    boardedAt: mkDate(MONDAY),
+    weeks: [
+      {
+        id: "wa-1",
+        startDate: mkDate(MONDAY),
+        days: [
+          {
+            dayOfWeek: DayOfWeek.MONDAY,
+            label: workoutLabel("A-Mon"),
+            sessions: [{ id: "a-mon" }],
+          },
+        ],
+      },
+    ],
+  });
+
+  const planB = makeEnrollment({
+    id: "enrollment-b",
+    planId: "plan-b",
+    planName: "Conditioning Plan",
+    athleteId: ATHLETE,
+    boardedAt: mkDate("2026-06-16"),
+    weeks: [
+      {
+        id: "wb-1",
+        startDate: mkDate(MONDAY),
+        days: [
+          {
+            dayOfWeek: DayOfWeek.MONDAY,
+            label: workoutLabel("B-Mon"),
+            sessions: [{ id: "b-mon" }],
+          },
+        ],
+      },
+    ],
+  });
+
+  const runMultiPlan = (performedByKey: PerformedByKey) =>
+    computeAthleteMetrics({
+      athleteId: ATHLETE,
+      enrollments: [planA, planB],
+      performedByKey,
+      weekCountByPlan: new Map([
+        ["plan-a", 1],
+        ["plan-b", 1],
+      ]),
+      firstWeekStartByPlan: new Map([
+        ["plan-a", mkDate(MONDAY)],
+        ["plan-b", mkDate(MONDAY)],
+      ]),
+      tz: TZ,
+      now: NOW,
+      startOfDayCache: createStartOfDayCache(TZ),
+    });
+
+  it("aggregates planDiscipline and missed counts across the union of all active plans", () => {
+    const result = runMultiPlan(new Map());
+
+    expect(result.planDiscipline).toHaveLength(2);
+    expect(result.missedCount).toBe(2);
+    expect(result.adherenceRate).toBe(0);
+  });
+
+  it("picks the first enrollment whose week covers today as the primary plan", () => {
+    const result = runMultiPlan(new Map());
+
+    expect(result.primaryPlanId).toBe("plan-a");
+    expect(result.primaryPlanName).toBe("Strength Plan");
+  });
+});

@@ -13,7 +13,11 @@ import {
 } from "../../../mappers/coaching";
 import { createStartOfDayCache } from "../../../utils/date-helpers";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
-import { computeAthleteMetrics, loadScheduleWindow } from "../coach-metrics";
+import {
+  computeAthleteMetrics,
+  findNextWorkoutForAthlete,
+  loadScheduleWindow,
+} from "../coach-metrics";
 
 export const getAthleteDetail = async (
   coachUserId: string,
@@ -65,7 +69,10 @@ export const getAthleteDetail = async (
   const tz = coach?.timezone ?? "UTC";
 
   const now = new Date();
-  const window = await loadScheduleWindow({ athleteIds: [athleteUserId], tz, now });
+  const [window, nextWorkout] = await Promise.all([
+    loadScheduleWindow({ athleteIds: [athleteUserId], tz, now }),
+    findNextWorkoutForAthlete({ athleteId: athleteUserId, tz, now }),
+  ]);
 
   const metrics = computeAthleteMetrics({
     athleteId: athleteUserId,
@@ -88,7 +95,7 @@ export const getAthleteDetail = async (
     planDiscipline: metrics.planDiscipline,
     recentWorkouts: metrics.recentWorkouts,
     actionItems: mappedActionItems,
-    nextWorkout: metrics.nextWorkout,
+    nextWorkout,
     consistency: {
       adherenceRate4w: metrics.adherenceRate,
       currentStreak: metrics.currentStreak,

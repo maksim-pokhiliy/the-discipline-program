@@ -7,9 +7,23 @@ import {
 import { TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { ForbiddenError } from "@repo/errors";
 
-import { cleanup, cleanupRaw, createTestCoach } from "../../../test/helpers";
-import { createTestScheduleScenario } from "../../../test/schedule-helpers";
-import { addDaysInTz, startOfDayInTz } from "../../../utils/date-helpers";
+import {
+  cleanup,
+  cleanupRaw,
+  createTestCoach,
+  createTestPlan,
+  createTestUser,
+} from "../../../test/helpers";
+import {
+  type CleanupEntry,
+  createTestDay,
+  createTestEnrollment,
+  createTestLabel,
+  createTestScheduleScenario,
+  createTestSession,
+  createTestWeek,
+} from "../../../test/schedule-helpers";
+import { addDaysInTz, startOfDayInTz, startOfWeekInTz } from "../../../utils/date-helpers";
 
 import { coachingCoachAthletesApi } from "./index";
 
@@ -104,5 +118,60 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     await expect(
       coachingCoachAthletesApi.getAthleteDetail(otherCoach.user.id, scenario.athlete.id),
     ).rejects.toThrow(ForbiddenError);
+  });
+});
+
+describe("coachingCoachAthletesApi.getAthleteDetail next-workout window reachability", () => {
+  let coach: Awaited<ReturnType<typeof createTestCoach>>;
+  let athlete: Awaited<ReturnType<typeof createTestUser>>;
+  let toCleanup: CleanupEntry[] = [];
+
+  beforeAll(async () => {
+    coach = await createTestCoach();
+    athlete = await createTestUser();
+
+    await cleanupRaw.user.update({ where: { id: coach.user.id }, data: { timezone: TZ } });
+
+    const plan = await createTestPlan(coach.user.id, { status: "ACTIVE" });
+    const assignment = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coach.profile.id, athleteId: athlete.id },
+    });
+    const enrollment = await createTestEnrollment(plan.id, athlete.id, coach.user.id);
+
+    const nextWeekStart = addDaysInTz(startOfWeekInTz(new Date(), TZ), FULL_WEEK, TZ);
+    const week = await createTestWeek(plan.id, { startDate: nextWeekStart });
+    const label = await createTestLabel({ name: "Next Week Session", rest: false });
+    const day = await createTestDay(week.week.id, {
+      dayOfWeek: "MONDAY",
+      labelId: label.label.id,
+    });
+    const session = await createTestSession(day.day.id, { order: 0, labelId: label.label.id });
+
+    toCleanup = [
+      { table: "coachProfile", id: coach.profile.id },
+      { table: "user", id: coach.user.id },
+      { table: "user", id: athlete.id },
+      { table: "trainingPlan", id: plan.id },
+      { table: "coachAthleteAssignment", id: assignment.id },
+      ...enrollment.toCleanup,
+      ...week.toCleanup,
+      ...label.toCleanup,
+      ...day.toCleanup,
+      ...session.toCleanup,
+    ];
+  });
+
+  afterAll(async () => {
+    await cleanup(...toCleanup);
+  });
+
+  it("resolves a next-week session even though it lies beyond the metrics window", async () => {
+    const detail = await coachingCoachAthletesApi.getAthleteDetail(coach.user.id, athlete.id);
+
+    expect(detail.nextWorkout).not.toBeNull();
+    expect(detail.nextWorkout?.title).toBe("Next Week Session");
+    expect(detail.nextWorkout?.date.getTime()).toBeGreaterThan(
+      startOfDayInTz(new Date(), TZ).getTime(),
+    );
   });
 });

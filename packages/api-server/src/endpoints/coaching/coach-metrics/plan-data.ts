@@ -157,7 +157,7 @@ export const findNextWorkout = (
       continue;
     }
 
-    const session = scheduled.workoutSessions[0];
+    const session = [...scheduled.workoutSessions].sort((a, b) => a.order - b.order)[0];
 
     if (session) {
       return {

@@ -43,6 +43,8 @@ export const buildPerformedKey = (userId: string, sessionId: string): string =>
   `${userId}:${sessionId}`;
 
 export type AthleteMetricsResult = {
+  primaryPlanId: string | null;
+  primaryPlanName: string | null;
   todayStatus: TodayStatus;
   todayWorkoutTitle: string | null;
   missedCount: number;

@@ -1,5 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { prisma } from "../../../db/client";
 import { cleanup, createTestCoach, createTestPlan, createTestUser } from "../../../test/helpers";
 import {
   type CleanupEntry,
@@ -182,6 +183,54 @@ describe("loadScheduleWindow", () => {
       const enrollment = window.enrollmentsByAthlete.get(athleteInScope.id)?.[0];
 
       expect(enrollment?.plan.weeks).toHaveLength(0);
+    });
+  });
+
+  describe("query-count invariant (no N+1 in roster size)", () => {
+    let scenarioA: Awaited<ReturnType<typeof createTestScheduleScenario>>;
+    let scenarioB: Awaited<ReturnType<typeof createTestScheduleScenario>>;
+
+    beforeAll(async () => {
+      scenarioA = await createTestScheduleScenario({
+        tz: TZ,
+        weeksBack: WEEKS_BACK,
+        sessionsPerWeek: SESSIONS_PER_WEEK,
+      });
+      scenarioB = await createTestScheduleScenario({
+        coach: scenarioA.coach,
+        tz: TZ,
+        weeksBack: WEEKS_BACK,
+        sessionsPerWeek: SESSIONS_PER_WEEK,
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    afterAll(async () => {
+      await cleanup(...scenarioB.toCleanup);
+      await cleanup(...scenarioA.toCleanup);
+    });
+
+    const countQueries = async (athleteIds: string[]): Promise<void> => {
+      const enrollmentSpy = vi.spyOn(prisma.planEnrollment, "findMany");
+      const performedSpy = vi.spyOn(prisma.performedSession, "findMany");
+      const weekGroupBySpy = vi.spyOn(prisma.week, "groupBy");
+
+      await loadScheduleWindow({ athleteIds, tz: TZ, now: new Date() });
+
+      expect(enrollmentSpy).toHaveBeenCalledTimes(1);
+      expect(performedSpy).toHaveBeenCalledTimes(1);
+      expect(weekGroupBySpy).toHaveBeenCalledTimes(1);
+    };
+
+    it("issues exactly two findMany and one groupBy for a single-athlete roster", async () => {
+      await countQueries([scenarioA.athlete.id]);
+    });
+
+    it("issues the same query count for a multi-athlete roster", async () => {
+      await countQueries([scenarioA.athlete.id, scenarioB.athlete.id]);
     });
   });
 });

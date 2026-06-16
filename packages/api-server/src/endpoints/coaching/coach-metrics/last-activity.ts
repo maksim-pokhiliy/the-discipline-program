@@ -16,20 +16,18 @@ export const computeLastActivity = (
     for (const session of scheduled.workoutSessions) {
       const entry = performedByKey.get(buildPerformedKey(athleteId, session.id));
 
-      if (!entry) {
+      if (!entry?.completedAt) {
         continue;
       }
 
-      const activeAt = entry.completedAt ?? entry.startedAt;
-
-      if (!lastActivityDate || activeAt > lastActivityDate) {
-        lastActivityDate = activeAt;
+      if (!lastActivityDate || entry.completedAt > lastActivityDate) {
+        lastActivityDate = entry.completedAt;
       }
     }
   }
 
   const daysSinceLastActivity =
-    lastActivityDate === null ? null : daysBetweenInTz(lastActivityDate, now, tz);
+    lastActivityDate === null ? null : Math.max(0, daysBetweenInTz(lastActivityDate, now, tz));
 
   return { lastActivityDate, daysSinceLastActivity };
 };

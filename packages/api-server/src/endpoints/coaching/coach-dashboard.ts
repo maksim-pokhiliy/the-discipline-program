@@ -27,13 +27,7 @@ import {
 import { ROLE_MAP } from "../../mappers/iam";
 import { TRAINING_PLAN_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
-import {
-  createStartOfDayCache,
-  DAYS_IN_WEEK,
-  MS_PER_DAY,
-  startOfTodayInTz,
-  startOfWeekInTz,
-} from "../../utils/date-helpers";
+import { createStartOfDayCache, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import {
   buildAssignedAthleteInclude,
@@ -45,7 +39,6 @@ import {
   computeAthleteMetrics,
   loadScheduleWindow,
   METRICS_CACHE_TTL_SECONDS,
-  type WindowedEnrollment,
 } from "./coach-metrics";
 
 type ScheduleSummaryFields = Omit<
@@ -84,42 +77,9 @@ const EMPTY_SCHEDULE_SUMMARY: ScheduleSummaryFields = {
   daysSinceLastActivity: null,
 };
 
-const weekCoversToday = (weekStart: Date, startOfToday: Date): boolean => {
-  const weekEnd = weekStart.getTime() + DAYS_IN_WEEK * MS_PER_DAY;
-
-  return startOfToday.getTime() >= weekStart.getTime() && startOfToday.getTime() < weekEnd;
-};
-
-const pickPrimaryEnrollment = (
-  enrollments: WindowedEnrollment[],
-  startOfToday: Date,
-  startOfDayCache: (date: Date) => Date,
-): WindowedEnrollment | null => {
-  const covering = enrollments.find((enrollment) =>
-    enrollment.plan.weeks.some((week) =>
-      weekCoversToday(startOfDayCache(week.startDate), startOfToday),
-    ),
-  );
-
-  if (covering) {
-    return covering;
-  }
-
-  return enrollments.reduce<WindowedEnrollment | null>((latest, enrollment) => {
-    if (!latest || enrollment.boardedAt > latest.boardedAt) {
-      return enrollment;
-    }
-
-    return latest;
-  }, null);
-};
-
-const toScheduleSummary = (
-  metrics: AthleteMetricsResult,
-  primary: WindowedEnrollment | null,
-): ScheduleSummaryFields => ({
-  planId: primary?.planId ?? null,
-  planName: primary?.plan.name ?? null,
+const toScheduleSummary = (metrics: AthleteMetricsResult): ScheduleSummaryFields => ({
+  planId: metrics.primaryPlanId,
+  planName: metrics.primaryPlanName,
   todayStatus: metrics.todayStatus,
   missedCount: metrics.missedCount,
   todayWorkoutTitle: metrics.todayWorkoutTitle,
@@ -175,7 +135,6 @@ const computeMetricsSlice = async (
   const { enrollmentsByAthlete, performedByKey, weekCountByPlan, firstWeekStartByPlan } =
     await loadScheduleWindow({ athleteIds, tz, now });
   const startOfDayCache = createStartOfDayCache(tz);
-  const startOfToday = startOfDayCache(now);
 
   let adherenceSum = 0;
 
@@ -192,9 +151,8 @@ const computeMetricsSlice = async (
       now,
       startOfDayCache,
     });
-    const primary = pickPrimaryEnrollment(enrollments, startOfToday, startOfDayCache);
 
-    summaryByAthlete.set(athlete.id, toScheduleSummary(metrics, primary));
+    summaryByAthlete.set(athlete.id, toScheduleSummary(metrics));
 
     const isFallingBehind = metrics.processStatus === ProcessStatus.FALLING_BEHIND;
 
