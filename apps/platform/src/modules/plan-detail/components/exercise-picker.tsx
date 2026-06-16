@@ -10,17 +10,10 @@ const SEARCH_PLACEHOLDER = "search by name, family, or modality…";
 const REQUIRED_EXERCISE_MESSAGE = "Pick an exercise";
 const OPTION_NAME_FONT_WEIGHT = 600;
 const FAMILY_PREFIX = "family: ";
-const EQUIPMENT_SEPARATOR = ", ";
-const META_SEPARATOR = " · ";
 const LOADING_SPINNER_SIZE = 16;
 
-const buildMetaLine = (exercise: Exercise): string => {
-  const equipmentPart = exercise.equipment.map((item) => item.name).join(EQUIPMENT_SEPARATOR);
-  const familyPart =
-    exercise.movementFamily === null ? null : `${FAMILY_PREFIX}${exercise.movementFamily}`;
-
-  return [equipmentPart, familyPart].filter(Boolean).join(META_SEPARATOR);
-};
+const buildMetaLine = (exercise: Exercise): string =>
+  exercise.movementFamily === null ? "" : `${FAMILY_PREFIX}${exercise.movementFamily}`;
 
 const getOptionLabel = (option: Exercise): string => option.canonicalName;
 

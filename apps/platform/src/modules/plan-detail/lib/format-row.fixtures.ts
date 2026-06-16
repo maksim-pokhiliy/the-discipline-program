@@ -20,7 +20,6 @@ export const makeExercise = (overrides: Partial<Exercise> & Pick<Exercise, "id">
   movementFamily: overrides.movementFamily ?? "squat",
   defaultDemoUrls: overrides.defaultDemoUrls ?? [],
   aliases: overrides.aliases ?? [],
-  equipment: overrides.equipment ?? [],
   notes: overrides.notes ?? null,
   createdAt: overrides.createdAt ?? new Date("2025-01-01T00:00:00.000Z"),
   updatedAt: overrides.updatedAt ?? new Date("2025-01-01T00:00:00.000Z"),
