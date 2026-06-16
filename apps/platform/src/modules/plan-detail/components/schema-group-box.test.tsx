@@ -223,19 +223,14 @@ describe("SchemaGroupBox proto frame", () => {
     expect(box).not.toHaveStyle({ borderStyle: "dashed" });
   });
 
-  it("shows the GROUP overline and the column icon in the head", () => {
-    renderBox();
-
-    expect(screen.getByText("GROUP")).toBeInTheDocument();
-  });
-
   it("puts the drag listeners on a dedicated handle, never on the head container", () => {
     renderBox();
 
     const handle = screen.getByRole("button", { name: "Drag group" });
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL_ARIA });
 
     expect(handle).toHaveAttribute("aria-roledescription");
-    expect(screen.getByText("GROUP").parentElement).not.toHaveAttribute("aria-roledescription");
+    expect(label.parentElement).not.toHaveAttribute("aria-roledescription");
   });
 
   it("renders one GroupTrackWrapper per member in member order", () => {

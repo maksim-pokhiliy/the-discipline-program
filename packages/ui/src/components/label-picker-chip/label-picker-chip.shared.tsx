@@ -42,6 +42,7 @@ export const chipSx: SxProps<Theme> = (theme) => ({
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+    textTransform: "uppercase",
   },
   "& .MuiChip-icon": {
     fontSize: theme.typography.pxToRem(LEADING_ICON_PX),

@@ -36,13 +36,13 @@ describe("formatLoad", () => {
   });
 
   describe("percentage kind", () => {
-    it("renders '<value>% of 1RM' for self scope, no range", () => {
+    it("renders '@<value>% of 1RM' for self scope, no range", () => {
       const load: Load = { kind: "percentage", value: 75, reference: { scope: "self" } };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("75% of 1RM");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("@75% of 1RM");
     });
 
-    it("renders '<min>–<max>% of 1RM' for self scope with rangeMax", () => {
+    it("renders '@<min>–<max>% of 1RM' for self scope with rangeMax", () => {
       const load: Load = {
         kind: "percentage",
         value: 60,
@@ -50,10 +50,10 @@ describe("formatLoad", () => {
         reference: { scope: "self" },
       };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("60–70% of 1RM");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("@60–70% of 1RM");
     });
 
-    it("renders '<value>% of <canonicalName> 1RM' for resolved other_exercise scope", () => {
+    it("renders '@<value>% of <canonicalName> 1RM' for resolved other_exercise scope", () => {
       const exerciseId = "ckabc1234567890abcdef012345";
       const exerciseById: ExerciseById = new Map([
         [exerciseId, makeExercise({ id: exerciseId, canonicalName: "Front Squat" })],
@@ -64,7 +64,7 @@ describe("formatLoad", () => {
         reference: { scope: "other_exercise", targetExerciseId: exerciseId },
       };
 
-      expect(formatLoad(load, exerciseById)).toBe("65% of Front Squat 1RM");
+      expect(formatLoad(load, exerciseById)).toBe("@65% of Front Squat 1RM");
     });
 
     it("falls back to '—' for other_exercise lookup miss", () => {
@@ -74,7 +74,7 @@ describe("formatLoad", () => {
         reference: { scope: "other_exercise", targetExerciseId: "ckmissing1234567890abcdef0" },
       };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("50% of — 1RM");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("@50% of — 1RM");
     });
   });
 

@@ -7,8 +7,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import SplitscreenIcon from "@mui/icons-material/Splitscreen";
-import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
-import { Box, IconButton, Stack, Tooltip, Typography, alpha } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, alpha } from "@mui/material";
 
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { type ParallelInterleaveOrder, type SchemaGroup } from "@repo/contracts/lms/schema-group";
@@ -16,7 +15,6 @@ import { InlineEditText } from "@repo/ui";
 
 import { InterleaveSegControl } from "./interleave-seg-control";
 
-const HEAD_ICON_PX = 18;
 const HEAD_ACTION_ICON_PX = 17;
 const HEAD_SPACING = 1;
 const HEAD_PX = 1.5;
@@ -25,7 +23,6 @@ const HEAD_BORDER_ALPHA = 0.25;
 const DRAG_ARIA = "Drag group";
 const COLLAPSE_ARIA = "Collapse group";
 const EXPAND_ARIA = "Expand group";
-const OVERLINE_TEXT = "GROUP";
 const LABEL_ARIA = "Group label";
 const LABEL_PLACEHOLDER = "group label…";
 const UNGROUP_LABEL = "Ungroup";
@@ -103,12 +100,6 @@ export const SchemaGroupBoxHead: React.FC<SchemaGroupBoxHeadProps> = ({
     >
       <DragIndicatorIcon fontSize="small" />
     </IconButton>
-
-    <ViewColumnOutlinedIcon sx={{ fontSize: HEAD_ICON_PX, color: "primary.main" }} />
-
-    <Typography variant="overline" color="primary.main">
-      {OVERLINE_TEXT}
-    </Typography>
 
     <InlineEditText
       value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}

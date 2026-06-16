@@ -181,7 +181,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         <Typography
           variant="caption"
           color="text.subtle"
-          sx={{ fontVariantNumeric: "tabular-nums", textAlign: "center" }}
+          sx={{ fontVariantNumeric: "tabular-nums", textAlign: "center", width: COL_ORD }}
         >
           {fmt.ord}
         </Typography>

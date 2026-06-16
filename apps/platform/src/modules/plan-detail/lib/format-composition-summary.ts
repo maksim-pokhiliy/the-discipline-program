@@ -8,6 +8,7 @@ import { formatRestSpec } from "./format-rest-spec";
 
 const MINUTE_MARK = "’";
 const STEP_SEPARATOR = "-";
+const RANGE_SEPARATOR = "–";
 
 export type CompositionSummaryPart = { text: string };
 
@@ -22,7 +23,9 @@ const repetitionLabel = (repetition: RepetitionAxis): string => {
     case "ladder":
       return `ladder ${repetition.steps.join(STEP_SEPARATOR)}`;
     case "timeCap":
-      return `cap ${repetition.cap.min}${MINUTE_MARK}`;
+      return repetition.cap.max !== undefined
+        ? `cap ${repetition.cap.min}${RANGE_SEPARATOR}${repetition.cap.max}${MINUTE_MARK}`
+        : `cap ${repetition.cap.min}${MINUTE_MARK}`;
     case "cadence":
       return `EMOM ${repetition.everyMin}${MINUTE_MARK}×${repetition.rounds}`;
     case "interval":

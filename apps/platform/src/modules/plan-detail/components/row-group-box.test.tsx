@@ -172,6 +172,7 @@ const renderBox = (group: RowGroup = makeGroup(), members: SchemaRow[] = DEFAULT
       ord={1}
       isReorderPending={false}
       onMemberReorder={onMemberReorder}
+      minuteLabelById={new Map()}
     />,
   );
 

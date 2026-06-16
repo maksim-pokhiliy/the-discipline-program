@@ -170,6 +170,7 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                   ord={ord}
                   isReorderPending={effectiveReorderPending}
                   onMemberReorder={handleMemberReorder}
+                  minuteLabelById={minuteLabelById}
                 />
               );
             }
