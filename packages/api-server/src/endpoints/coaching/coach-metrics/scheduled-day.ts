@@ -16,13 +16,9 @@ export type ScheduledDay = {
   enrolledDate: Date;
   day: WindowedDay;
   workoutSessions: WindowedSession[];
-  isRest: boolean;
 };
 
 const isRestSession = (session: WindowedSession): boolean => session.label?.rest === true;
-
-const isRestDay = (day: WindowedDay, workoutSessions: WindowedSession[]): boolean =>
-  day.label?.rest === true || workoutSessions.length === 0;
 
 export const isSessionCompleted = (
   performedByKey: PerformedByKey,
@@ -43,7 +39,8 @@ export const buildScheduledDays = (
         const date = startOfDayCache(
           addDaysInTz(week.startDate, DAY_OF_WEEK_OFFSET[day.dayOfWeek], tz),
         );
-        const workoutSessions = day.sessions.filter((session) => !isRestSession(session));
+        const workoutSessions =
+          day.label?.rest === true ? [] : day.sessions.filter((session) => !isRestSession(session));
 
         scheduled.push({
           date,
@@ -52,7 +49,6 @@ export const buildScheduledDays = (
           enrolledDate: enrollment.boardedAt,
           day,
           workoutSessions,
-          isRest: isRestDay(day, workoutSessions),
         });
       }
     }
