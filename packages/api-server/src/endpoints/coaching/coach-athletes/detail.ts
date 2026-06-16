@@ -1,6 +1,9 @@
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { ActionItemStatus } from "@repo/contracts/coaching/coach-action-item";
-import { type CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
+import {
+  type CoachAthleteDetail,
+  type CoachAthleteEnrollment,
+} from "@repo/contracts/coaching/coach-athletes";
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { ForbiddenError } from "@repo/errors";
 
@@ -10,9 +13,13 @@ import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
+  GENDER_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
-import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
+import { ENROLLMENT_STATUS_MAP } from "../../../mappers/lms/enum-maps-status";
+import { buildRosterAthleteInclude } from "../assigned-athlete-query";
+
+const MS_PER_DAY = 86_400_000;
 
 export const getAthleteDetail = async (
   coachUserId: string,
@@ -22,10 +29,10 @@ export const getAthleteDetail = async (
 
   await verifyAthleteBelongsToCoach(athleteUserId, coachId);
 
-  const [assignment, actionItems] = await Promise.all([
+  const [assignment, actionItems, lastSession, notes] = await Promise.all([
     prisma.coachAthleteAssignment.findUnique({
       where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
-      include: buildAssignedAthleteInclude(coachUserId),
+      include: buildRosterAthleteInclude(),
     }),
 
     prisma.coachActionItem.findMany({
@@ -37,6 +44,17 @@ export const getAthleteDetail = async (
       select: { id: true, type: true, severity: true, message: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
+
+    prisma.performedSession.aggregate({
+      where: { userId: athleteUserId, completedAt: { not: null } },
+      _max: { completedAt: true },
+    }),
+
+    prisma.coachNote.findMany({
+      where: { coachId, athleteId: athleteUserId },
+      select: { id: true, content: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   if (!assignment) {
@@ -44,18 +62,24 @@ export const getAthleteDetail = async (
   }
 
   const athlete = assignment.athlete;
+  const profile = athlete.athleteProfile;
 
-  const healthStatus = athlete.athleteProfile
-    ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
-    : HealthStatus.HEALTHY;
+  const healthStatus = profile ? HEALTH_STATUS_MAP[profile.healthStatus] : HealthStatus.HEALTHY;
 
-  const mappedActionItems = actionItems.map((item) => ({
-    id: item.id,
-    type: ACTION_ITEM_TYPE_MAP[item.type],
-    severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
-    message: item.message,
-    createdAt: item.createdAt,
-  }));
+  const enrollments: CoachAthleteEnrollment[] = athlete.planEnrollmentsAsAthlete.map(
+    (enrollment) => ({
+      planId: enrollment.planId,
+      planName: enrollment.plan.name,
+      status: ENROLLMENT_STATUS_MAP[enrollment.status],
+      boardedAt: enrollment.boardedAt,
+    }),
+  );
+
+  const lastActivityDate = lastSession._max.completedAt ?? null;
+  const daysSinceLastActivity =
+    lastActivityDate !== null
+      ? Math.floor((Date.now() - lastActivityDate.getTime()) / MS_PER_DAY)
+      : null;
 
   return {
     userId: athleteUserId,
@@ -63,10 +87,26 @@ export const getAthleteDetail = async (
     email: athlete.email,
     image: athlete.image,
     healthStatus,
+    healthNote: profile?.healthNote ?? null,
+    gender: profile?.gender ? GENDER_MAP[profile.gender] : null,
+    heightCm: profile?.heightCm ?? null,
+    weightKg: profile?.weightKg ? Number(profile.weightKg) : null,
     processStatus: ProcessStatus.STEADY,
+    enrollments,
     planDiscipline: [],
     recentWorkouts: [],
-    actionItems: mappedActionItems,
+    actionItems: actionItems.map((item) => ({
+      id: item.id,
+      type: ACTION_ITEM_TYPE_MAP[item.type],
+      severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
+      message: item.message,
+      createdAt: item.createdAt,
+    })),
+    notes: notes.map((note) => ({
+      id: note.id,
+      content: note.content,
+      createdAt: note.createdAt,
+    })),
     nextWorkout: null,
     consistency: {
       adherenceRate4w: 0,
@@ -74,7 +114,7 @@ export const getAthleteDetail = async (
       missedThisWeek: 0,
     },
     enrolledSince: assignment.createdAt,
-    lastActivityDate: null,
-    daysSinceLastActivity: null,
+    lastActivityDate,
+    daysSinceLastActivity,
   };
 };

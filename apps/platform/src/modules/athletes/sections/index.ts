@@ -1,3 +1,4 @@
-export { AthletesFiltersSection } from "./athletes-filters-section";
-export { AthletesListSection } from "./athletes-list-section";
-export { AthletesSummarySection } from "./athletes-summary-section";
+export { AthletesAttentionStrip } from "./athletes-attention-strip";
+export { type AthleteBatchAction, AthletesBatchBar } from "./athletes-batch-bar";
+export { AthletesControlsSection } from "./athletes-controls-section";
+export { AthletesRosterSection } from "./athletes-roster-section";

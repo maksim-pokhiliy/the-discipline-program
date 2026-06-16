@@ -1,12 +1,15 @@
 import { z } from "zod";
 
 import { imageUrlSchema } from "../../../common/image";
-import { HealthStatus } from "../athlete-profile";
+import { EnrollmentStatus } from "../../lms/plan-enrollment";
+import { Gender, HealthStatus } from "../athlete-profile";
 import { ProcessStatus } from "../coach-dashboard";
 
-export const coachAthletePlanSchema = z.object({
-  id: z.string().cuid(),
-  name: z.string(),
+export const coachAthleteEnrollmentSchema = z.object({
+  planId: z.string().cuid(),
+  planName: z.string(),
+  status: z.nativeEnum(EnrollmentStatus),
+  boardedAt: z.date(),
 });
 
 export const coachAthleteListItemSchema = z.object({
@@ -15,7 +18,11 @@ export const coachAthleteListItemSchema = z.object({
   email: z.string(),
   image: imageUrlSchema,
   healthStatus: z.nativeEnum(HealthStatus),
-  activePlans: z.array(coachAthletePlanSchema),
+  healthNote: z.string().nullable(),
+  gender: z.nativeEnum(Gender).nullable(),
+  heightCm: z.number().int().positive().nullable(),
+  weightKg: z.number().finite().positive().nullable(),
+  enrollments: z.array(coachAthleteEnrollmentSchema),
   processStatus: z.nativeEnum(ProcessStatus),
   lastActivityDate: z.date().nullable(),
   daysSinceLastActivity: z.number().int().nonnegative().nullable(),

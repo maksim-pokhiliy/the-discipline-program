@@ -1,11 +1,15 @@
 import { z } from "zod";
 
 import { imageUrlSchema } from "../../../common/image";
-import { HealthStatus } from "../athlete-profile";
+import { Gender, HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 import { ProcessStatus } from "../coach-dashboard";
 
-import { coachAthleteListItemSchema, coachAthletesSummarySchema } from "./coach-athletes.schema";
+import {
+  coachAthleteEnrollmentSchema,
+  coachAthleteListItemSchema,
+  coachAthletesSummarySchema,
+} from "./coach-athletes.schema";
 
 export const coachAthleteDetailParamsSchema = z.object({
   userId: z.string().cuid(),
@@ -52,16 +56,28 @@ export const consistencySchema = z.object({
   missedThisWeek: z.number().int().nonnegative(),
 });
 
+export const coachAthleteNoteSchema = z.object({
+  id: z.string().cuid(),
+  content: z.string(),
+  createdAt: z.date(),
+});
+
 export const coachAthleteDetailSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
   email: z.string(),
   image: imageUrlSchema,
   healthStatus: z.nativeEnum(HealthStatus),
+  healthNote: z.string().nullable(),
+  gender: z.nativeEnum(Gender).nullable(),
+  heightCm: z.number().int().positive().nullable(),
+  weightKg: z.number().finite().positive().nullable(),
   processStatus: z.nativeEnum(ProcessStatus),
+  enrollments: z.array(coachAthleteEnrollmentSchema),
   planDiscipline: z.array(planDisciplineSchema),
   recentWorkouts: z.array(recentWorkoutSchema),
   actionItems: z.array(athleteActionItemSchema),
+  notes: z.array(coachAthleteNoteSchema),
   nextWorkout: nextWorkoutSchema.nullable(),
   consistency: consistencySchema,
   enrolledSince: z.date(),
