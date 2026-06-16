@@ -1,6 +1,7 @@
 "use client";
 
-import { Avatar, Box, Checkbox, Stack, Typography } from "@mui/material";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import { Avatar, Box, Checkbox, IconButton, Stack, Typography } from "@mui/material";
 
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
@@ -104,7 +105,28 @@ export const TodayRosterRow: React.FC<TodayRosterRowProps> = ({
         </Stack>
       }
       sub={renderSub(athlete)}
-      trailing={<TodayStatusLabel status={athlete.todayStatus} />}
+      trailing={
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <TodayStatusLabel status={athlete.todayStatus} />
+          {!isSelecting && (
+            <IconButton
+              size="small"
+              aria-label={`Select ${displayName}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggle(athlete.userId);
+              }}
+              sx={{
+                display: { xs: "none", sm: "inline-flex" },
+                color: "text.disabled",
+                "&:hover": { color: "text.primary" },
+              }}
+            >
+              <CheckBoxOutlineBlankIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Stack>
+      }
     />
   );
 };

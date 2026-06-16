@@ -60,6 +60,19 @@ describe("NotesPane list", () => {
 
     expect(screen.getByText("No notes yet.")).toBeInTheDocument();
   });
+
+  it("renders each note createdAt as relative time-ago", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW.getTime() + 10 * 60_000));
+
+    notesState.data = [makeNote("clz00000000000000000not1", "Strong session")];
+
+    render(<NotesPane athleteId={ATHLETE_ID} />);
+
+    expect(screen.getByText("10m ago")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
 });
 
 describe("NotesPane add", () => {

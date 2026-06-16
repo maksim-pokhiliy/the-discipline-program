@@ -6,7 +6,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, CircularProgress, Stack, TextField, Typography } from "@mui/material";
 
 import { COACH_NOTE_CONSTANTS } from "@repo/contracts/coaching/coach-note";
-import { formatDate } from "@repo/shared";
+import { formatTimeAgo } from "@repo/shared";
 
 import { useCoachNotes, useCreateCoachNote } from "@app/lib/hooks";
 
@@ -81,7 +81,7 @@ export const NotesPane: React.FC<NotesPaneProps> = ({ athleteId }) => {
               })}
             >
               <Typography variant="overline" sx={{ color: "text.faint" }}>
-                {formatDate(note.createdAt, "compact")}
+                {formatTimeAgo(note.createdAt)}
               </Typography>
               <Typography variant="body2" sx={{ color: "text.primary", whiteSpace: "pre-wrap" }}>
                 {note.content}

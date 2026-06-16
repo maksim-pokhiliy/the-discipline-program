@@ -6,7 +6,7 @@ import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 
 import { ActionItemSeverity } from "@repo/contracts/coaching/coach-action-item";
 import type { DashboardActionItem } from "@repo/contracts/coaching/coach-dashboard";
-import { formatDate } from "@repo/shared";
+import { formatTimeAgo } from "@repo/shared";
 import { ActionTypeChip, SeverityActionCard, StatusChip, UserChip } from "@repo/ui";
 
 import { getHealthChipFromMessage } from "@app/lib/config";
@@ -79,7 +79,7 @@ export const NeedsAttentionCard: React.FC<NeedsAttentionCardProps> = ({
         </Typography>
         <Stack direction="row" spacing={0.75} alignItems="center">
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {formatDate(item.createdAt, "compact")}
+            {formatTimeAgo(item.createdAt)}
           </Typography>
           <Box component="span" sx={{ color: "text.faint" }}>
             ·

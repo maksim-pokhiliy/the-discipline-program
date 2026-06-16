@@ -88,9 +88,12 @@ export const TodayRosterSection: React.FC<TodayRosterSectionProps> = ({
     });
 
   const messageSelected = (): void => {
-    const emails = athletes.filter((a) => selected.has(a.userId)).map((a) => a.email);
+    const recipients = athletes
+      .filter((a) => selected.has(a.userId))
+      .map((a) => encodeURIComponent(a.email))
+      .join(",");
 
-    window.location.href = `mailto:${emails.join(",")}`;
+    window.location.href = `mailto:${recipients}`;
   };
 
   return (

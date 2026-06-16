@@ -51,6 +51,25 @@ describe("ResolveActionItemModal rendering", () => {
     expect(screen.getByText("Condition cleared")).toBeInTheDocument();
     expect(screen.getByText("Assignment ended")).toBeInTheDocument();
   });
+
+  it("renders the athlete context line with name, type and time-ago", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW.getTime() + 5 * 60_000));
+
+    render(
+      <ResolveActionItemModal
+        open
+        onClose={vi.fn()}
+        item={makeItem({ athleteName: "Aria Stone" })}
+      />,
+    );
+
+    expect(screen.getByText("Aria Stone")).toBeInTheDocument();
+    expect(screen.getByText("Missed")).toBeInTheDocument();
+    expect(screen.getByText("5m ago")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
 });
 
 describe("ResolveActionItemModal reason lock", () => {

@@ -5,12 +5,13 @@ import { type FormEvent, type ReactElement, useState } from "react";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ForumIcon from "@mui/icons-material/Forum";
 import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
-import { Stack, TextField, Typography } from "@mui/material";
+import { Box, Stack, TextField, Typography } from "@mui/material";
 
 import { ActionItemResolveReason } from "@repo/contracts/coaching/coach-action-item";
 import type { DashboardActionItem } from "@repo/contracts/coaching/coach-dashboard";
 import { COACH_NOTE_CONSTANTS } from "@repo/contracts/coaching/coach-note";
-import { FormModal, ReasonOption, SeverityActionCard } from "@repo/ui";
+import { formatTimeAgo } from "@repo/shared";
+import { ActionTypeChip, FormModal, ReasonOption, SeverityActionCard } from "@repo/ui";
 
 import { useResolveActionItem } from "@app/lib/hooks";
 
@@ -99,6 +100,19 @@ export const ResolveActionItemModal = ({
       isSubmitting={resolveActionItem.isPending}
       submitText={SUBMIT_TEXT}
     >
+      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+          {item.athleteName}
+        </Typography>
+        <ActionTypeChip type={item.type} />
+        <Box component="span" sx={{ color: "text.faint" }}>
+          ·
+        </Box>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          {formatTimeAgo(item.createdAt)}
+        </Typography>
+      </Stack>
+
       <SeverityActionCard severity={item.severity}>
         <Typography
           sx={{ fontSize: (theme) => theme.typography.pxToRem(13), color: "text.primary" }}

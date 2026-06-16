@@ -4,7 +4,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import { Button, Stack, Typography } from "@mui/material";
 
 import type { AthleteActionItem } from "@repo/contracts/coaching/coach-athletes";
-import { formatDate } from "@repo/shared";
+import { formatTimeAgo } from "@repo/shared";
 import { ActionTypeChip, SectionHead, SeverityActionCard } from "@repo/ui";
 
 import { useResolveActionItem } from "@app/lib/hooks";
@@ -48,7 +48,7 @@ export const OpenActionItemsBlock: React.FC<OpenActionItemsBlockProps> = ({
             <Stack direction="row" spacing={1} alignItems="center">
               <ActionTypeChip type={item.type} />
               <Typography variant="overline" sx={{ color: "text.faint" }}>
-                {formatDate(item.createdAt, "compact")}
+                {formatTimeAgo(item.createdAt)}
               </Typography>
             </Stack>
             <Typography variant="body2">{item.message}</Typography>

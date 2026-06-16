@@ -46,6 +46,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({ athlet
 
   const displayName = data ? (data.name ?? data.email) : "";
   const primaryPlanId = data ? getPrimaryPlanId(data) : null;
+  const mailtoHref = data ? `mailto:${encodeURIComponent(data.email)}` : "";
 
   return (
     <DetailDrawer
@@ -66,8 +67,11 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({ athlet
               })}
             />
             <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="h6" noWrap sx={{ color: "text.primary" }}>
+                {displayName}
+              </Typography>
               <Typography
-                variant="body2"
+                variant="caption"
                 noWrap
                 sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}
               >
@@ -121,7 +125,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({ athlet
           <Stack direction="row" spacing={1} sx={{ p: 2 }}>
             <Button
               component="a"
-              href={`mailto:${data.email}`}
+              href={mailtoHref}
               variant="outlined"
               size="small"
               startIcon={<ForumIcon />}

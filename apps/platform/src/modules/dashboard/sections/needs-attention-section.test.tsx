@@ -117,6 +117,17 @@ describe("NeedsAttentionCard interactions", () => {
     expect(onOpenAthlete).not.toHaveBeenCalled();
   });
 
+  it("renders the createdAt as relative time-ago", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW.getTime() + 3 * 60 * 60 * 1000));
+
+    renderSection([makeItem({ id: "clz00000000000000000ai01", createdAt: NOW })]);
+
+    expect(screen.getByText("3h ago")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
   it("derives a health chip from a health-report message", () => {
     renderSection([
       makeItem({

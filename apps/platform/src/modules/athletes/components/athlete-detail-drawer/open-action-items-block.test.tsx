@@ -60,6 +60,19 @@ describe("OpenActionItemsBlock", () => {
     expect(screen.getByText("Health flag")).toBeInTheDocument();
   });
 
+  it("renders the createdAt as relative time-ago", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW.getTime() + 2 * 24 * 60 * 60 * 1000));
+
+    render(
+      <OpenActionItemsBlock athleteId={ATHLETE_ID} actionItems={[makeItem({ createdAt: NOW })]} />,
+    );
+
+    expect(screen.getByText("2d ago")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
   it("resolves the item with its id and the athlete id from the quick action", () => {
     render(<OpenActionItemsBlock athleteId={ATHLETE_ID} actionItems={[makeItem()]} />);
 

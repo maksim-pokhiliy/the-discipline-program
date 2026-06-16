@@ -107,6 +107,17 @@ describe("AthleteDetailDrawer shell", () => {
     expect(screen.getByRole("tab", { name: "Health" })).toBeInTheDocument();
   });
 
+  it("leads the head with the prominent display name and keeps the email secondary", () => {
+    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+
+    const names = screen.getAllByText("Aria Stone");
+    const email = screen.getByText("aria@example.com");
+
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.some((node) => node.tagName === "H6")).toBe(true);
+    expect(email).toBeInTheDocument();
+  });
+
   it("pins the open action items block above the tab content", () => {
     render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
 
@@ -155,12 +166,24 @@ describe("AthleteDetailDrawer footer", () => {
 
     expect(screen.getByRole("link", { name: /Message/ })).toHaveAttribute(
       "href",
-      "mailto:aria@example.com",
+      `mailto:${encodeURIComponent("aria@example.com")}`,
     );
     expect(screen.getByRole("link", { name: /Open plan/ })).toHaveAttribute(
       "href",
       `/coach/plans/${PLAN_ID}`,
     );
+  });
+
+  it("encodes the athlete email into the Message mailto so headers cannot be injected", () => {
+    detailState.data = makeDetail({ email: "a@b.com?subject=PWNED&cc=victim@x.com" });
+
+    render(<AthleteDetailDrawer athleteId={ATHLETE_ID} onClose={vi.fn()} />);
+
+    const href = screen.getByRole("link", { name: /Message/ }).getAttribute("href");
+
+    expect(href).toBe(`mailto:${encodeURIComponent("a@b.com?subject=PWNED&cc=victim@x.com")}`);
+    expect(href).not.toContain("?subject=");
+    expect(href).not.toContain("&cc=");
   });
 
   it("does not render when no athlete is selected", () => {

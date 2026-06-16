@@ -165,7 +165,9 @@ describe("TodayRosterSection multi-select", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Message 2" }));
 
-    expect(window.location.href).toBe("mailto:mary@example.com,pat@example.com");
+    expect(window.location.href).toBe(
+      `mailto:${encodeURIComponent("mary@example.com")},${encodeURIComponent("pat@example.com")}`,
+    );
   });
 
   it("clears the selection when the batch bar is cancelled", () => {
@@ -175,6 +177,42 @@ describe("TodayRosterSection multi-select", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByRole("button", { name: /Message/ })).toBeNull();
+  });
+
+  it("encodes athlete emails into the mailto so headers cannot be injected", () => {
+    const crafted = makeAthlete(
+      "clz000000000000000craft1",
+      "Crafted Carl",
+      TodayStatus.MISSED,
+      "a@b.com?subject=PWNED&cc=victim@x.com",
+    );
+
+    renderSection([crafted, MISSED_A]);
+
+    selectAll();
+    fireEvent.click(screen.getByRole("button", { name: "Message 2" }));
+
+    const { href } = window.location;
+
+    expect(href).toContain(encodeURIComponent("a@b.com?subject=PWNED&cc=victim@x.com"));
+    expect(href).not.toContain("?subject=");
+    expect(href).not.toContain("&cc=");
+    expect(href).toBe(
+      `mailto:${encodeURIComponent("a@b.com?subject=PWNED&cc=victim@x.com")},${encodeURIComponent("mary@example.com")}`,
+    );
+  });
+});
+
+describe("TodayRosterSection batch from rest", () => {
+  it("enters selection mode from a single resting row via the per-row select control", () => {
+    renderSection();
+
+    expect(screen.queryByRole("button", { name: /Message/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Select Missed Mary" }));
+
+    expect(screen.getByRole("button", { name: "Message 1" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select Missed Mary" })).toBeChecked();
   });
 });
 
