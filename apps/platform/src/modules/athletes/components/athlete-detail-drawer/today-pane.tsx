@@ -26,12 +26,7 @@ const formatWeek = (currentWeek: number | null, totalWeeks: number): string => {
   return totalWeeks > 0 ? `Week ${currentWeek} / ${totalWeeks}` : `Week ${currentWeek}`;
 };
 
-type StatCellProps = {
-  label: string;
-  value: string;
-};
-
-const StatCell: React.FC<StatCellProps> = ({ label, value }) => (
+const renderStatCell = (label: string, value: string): React.ReactNode => (
   <Stack
     spacing={0.25}
     sx={(theme) => ({
@@ -96,9 +91,9 @@ export const TodayPane: React.FC<TodayPaneProps> = ({
     </Stack>
 
     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-      <StatCell label="4-week adherence" value={`${rateToPercent(consistency.adherenceRate4w)}%`} />
-      <StatCell label="Current streak" value={`${consistency.currentStreak}`} />
-      <StatCell label="Missed this week" value={`${consistency.missedThisWeek}`} />
+      {renderStatCell("4-week adherence", `${rateToPercent(consistency.adherenceRate4w)}%`)}
+      {renderStatCell("Current streak", `${consistency.currentStreak}`)}
+      {renderStatCell("Missed this week", `${consistency.missedThisWeek}`)}
     </Box>
 
     <Stack spacing={1}>

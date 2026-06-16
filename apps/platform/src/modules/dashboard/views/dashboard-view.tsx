@@ -1,36 +1,102 @@
 "use client";
 
-import { Stack } from "@mui/material";
+import { useRef, useState } from "react";
 
+import { Box, Stack } from "@mui/material";
+
+import { useSession } from "@repo/auth/client";
+import type { DashboardActionItem } from "@repo/contracts/coaching/coach-dashboard";
 import { QueryWrapper } from "@repo/ui";
 
-import { useCoachDashboard } from "@app/lib/hooks";
+import { useCoachDashboard, useResolveActionItem } from "@app/lib/hooks";
+import { AthleteDetailDrawer } from "@app/modules/athletes";
 
+import { DashboardEmptyState, DashboardHeaderBand, ResolveActionItemModal } from "../components";
 import {
-  ActionItemsSection,
-  AthletesTodaySection,
-  ProgressBucketsSection,
-  PulseSection,
+  DashboardFooterLine,
+  FallingBehindSection,
+  NeedsAttentionSection,
+  PulseBandSection,
+  TodayRosterSection,
 } from "../sections";
 
 export const DashboardView = () => {
   const { data, isLoading, error } = useCoachDashboard();
+  const { data: session } = useSession();
+  const resolveMutation = useResolveActionItem();
+
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const [resolveItem, setResolveItem] = useState<DashboardActionItem | null>(null);
+  const attentionRef = useRef<HTMLDivElement>(null);
+
+  const coachName = session?.user?.name ?? null;
+
+  const scrollToAttention = (): void =>
+    attentionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
-    <QueryWrapper
-      isLoading={isLoading}
-      error={error}
-      data={data}
-      loadingMessage="Loading dashboard..."
-    >
-      {(data) => (
-        <Stack spacing={{ xs: 2, md: 3 }}>
-          <PulseSection overview={data.overview} />
-          <ActionItemsSection items={data.actionItems} />
-          <ProgressBucketsSection buckets={data.progressBuckets} />
-          <AthletesTodaySection athletes={data.athletesSummary} />
-        </Stack>
-      )}
-    </QueryWrapper>
+    <>
+      <QueryWrapper
+        isLoading={isLoading}
+        error={error}
+        data={data}
+        loadingMessage="Loading dashboard..."
+      >
+        {(data) =>
+          data.overview.totalActiveAthletes === 0 ? (
+            <DashboardEmptyState coachName={coachName} />
+          ) : (
+            <Stack spacing={{ xs: 2, md: 3 }}>
+              <DashboardHeaderBand
+                coachName={coachName}
+                needAttentionCount={data.actionItems.length}
+                onScrollToAttention={scrollToAttention}
+              />
+
+              <PulseBandSection
+                actionItems={data.actionItems}
+                athletes={data.athletesSummary}
+                totalActiveAthletes={data.overview.totalActiveAthletes}
+              />
+
+              <Box ref={attentionRef}>
+                <NeedsAttentionSection
+                  items={data.actionItems}
+                  onOpenAthlete={setSelectedAthleteId}
+                  onOpenResolve={setResolveItem}
+                  onQuickResolve={(itemId) => resolveMutation.mutate({ itemId })}
+                />
+              </Box>
+
+              <TodayRosterSection
+                athletes={data.athletesSummary}
+                onOpenAthlete={setSelectedAthleteId}
+              />
+
+              <FallingBehindSection
+                buckets={data.progressBuckets}
+                onOpenAthlete={setSelectedAthleteId}
+              />
+
+              <DashboardFooterLine
+                overview={data.overview}
+                avgEngagementRate={data.progressBuckets.avgEngagementRate}
+              />
+            </Stack>
+          )
+        }
+      </QueryWrapper>
+
+      <AthleteDetailDrawer
+        athleteId={selectedAthleteId}
+        onClose={() => setSelectedAthleteId(null)}
+      />
+
+      <ResolveActionItemModal
+        open={resolveItem !== null}
+        item={resolveItem}
+        onClose={() => setResolveItem(null)}
+      />
+    </>
   );
 };

@@ -25,13 +25,7 @@ const HEALTH_NOTE_BORDER_TONE: Record<HealthStatus, PaletteColorKey> = {
   [HealthStatus.RESTRICTED]: "warning",
 };
 
-type MetricCellProps = {
-  label: string;
-  value: string;
-  unit?: string;
-};
-
-const MetricCell: React.FC<MetricCellProps> = ({ label, value, unit }) => (
+const renderMetricCell = (label: string, value: string, unit?: string): React.ReactNode => (
   <Stack
     spacing={0.5}
     sx={(theme) => ({
@@ -59,20 +53,20 @@ const MetricCell: React.FC<MetricCellProps> = ({ label, value, unit }) => (
 const renderProfile = (profile: AthleteProfile): React.ReactElement => (
   <Stack spacing={1.5}>
     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-      <MetricCell
-        label="Sex"
-        value={profile.gender !== null ? GENDER_LABELS[profile.gender] : EMPTY_VALUE}
-      />
-      <MetricCell
-        label="Height"
-        value={profile.heightCm !== null ? `${profile.heightCm}` : EMPTY_VALUE}
-        unit="cm"
-      />
-      <MetricCell
-        label="Weight"
-        value={profile.weightKg !== null ? `${profile.weightKg}` : EMPTY_VALUE}
-        unit="kg"
-      />
+      {renderMetricCell(
+        "Sex",
+        profile.gender !== null ? GENDER_LABELS[profile.gender] : EMPTY_VALUE,
+      )}
+      {renderMetricCell(
+        "Height",
+        profile.heightCm !== null ? `${profile.heightCm}` : EMPTY_VALUE,
+        "cm",
+      )}
+      {renderMetricCell(
+        "Weight",
+        profile.weightKg !== null ? `${profile.weightKg}` : EMPTY_VALUE,
+        "kg",
+      )}
     </Box>
 
     <Stack direction="row" spacing={1} alignItems="center">

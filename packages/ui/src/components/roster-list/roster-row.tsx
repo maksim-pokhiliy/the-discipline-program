@@ -56,11 +56,11 @@ export const RosterRow = ({
       <Box
         sx={{ display: "flex", flexDirection: "column", gap: `${ROW_MAIN_GAP_PX}px`, minWidth: 0 }}
       >
-        <Typography variant="body1" sx={{ fontWeight: ROW_NAME_FONT_WEIGHT }}>
+        <Typography component="div" variant="body1" sx={{ fontWeight: ROW_NAME_FONT_WEIGHT }}>
           {name}
         </Typography>
         {sub !== undefined && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography component="div" variant="body2" color="text.secondary">
             {sub}
           </Typography>
         )}

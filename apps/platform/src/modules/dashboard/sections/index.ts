@@ -1,4 +1,5 @@
-export { ActionItemsSection } from "./action-items-section";
-export { AthletesTodaySection } from "./athletes-today-section";
-export { ProgressBucketsSection } from "./progress-buckets-section";
-export { PulseSection } from "./pulse-section";
+export { DashboardFooterLine } from "./dashboard-footer-line";
+export { FallingBehindSection } from "./falling-behind-section";
+export { NeedsAttentionSection } from "./needs-attention-section";
+export { PulseBandSection } from "./pulse-band-section";
+export { TodayRosterSection } from "./today-roster-section";
