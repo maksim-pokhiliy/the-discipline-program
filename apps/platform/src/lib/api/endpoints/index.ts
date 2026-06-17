@@ -14,6 +14,7 @@ export { createModifiersAPI } from "./modifiers";
 export { createOneRMRecordsAPI } from "./one-rm-records";
 export { createPerformedSchemaResultsAPI } from "./performed-schema-results";
 export { createPerformedSessionsAPI } from "./performed-sessions";
+export { createPlanTimetableAPI } from "./plan-timetable";
 export { createRowGroupsAPI } from "./row-groups";
 export { createSchemaRowsAPI } from "./schema-rows";
 export { createSchemasAPI } from "./schemas";

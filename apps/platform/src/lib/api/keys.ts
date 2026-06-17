@@ -39,6 +39,9 @@ export const platformKeys = {
   oneRMRecords: {
     list: (exerciseId?: string) => [...ROOT, "one-rm-records", exerciseId ?? null] as const,
   },
+  planTimetable: {
+    data: () => [...ROOT, "plan-timetable"] as const,
+  },
   rowGroups: {
     all: () => [...ROOT, "row-groups"] as const,
   },

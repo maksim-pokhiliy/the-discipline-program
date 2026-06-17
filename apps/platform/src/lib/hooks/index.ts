@@ -25,6 +25,7 @@ export * from "./use-modifier-search";
 export * from "./use-one-rm-records";
 export * from "./use-performed-schema-results";
 export * from "./use-performed-sessions";
+export * from "./use-plan-timetable";
 export * from "./use-schema-rows";
 export * from "./use-schemas";
 export * from "./use-sessions";
