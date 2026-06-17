@@ -115,7 +115,7 @@ describe("formatLoad", () => {
         ],
       };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("RX♂:9 RX♀:6 SC♂:6 SC♀:4");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("RX ♂:9 ♀:6 / SC ♂:6 ♀:4");
     });
   });
 });

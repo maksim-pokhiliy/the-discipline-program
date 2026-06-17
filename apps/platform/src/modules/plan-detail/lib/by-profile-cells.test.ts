@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   type ByProfileAxis,
   type ByProfileCell,
-  cellKgAt,
+  cellKgAtIndex,
   EMPTY_KG,
   regenerateCells,
   renameAxisValue,
-  setCellKg,
+  setCellKgByIndex,
 } from "./by-profile-cells";
 
 describe("regenerateCells", () => {
@@ -63,28 +63,39 @@ describe("renameAxisValue", () => {
   });
 });
 
-describe("setCellKg", () => {
-  it("updates the kg of the cell matching the coords and leaves others untouched", () => {
+describe("setCellKgByIndex", () => {
+  it("updates the kg of the cell at the index and leaves others untouched", () => {
     const cells: ByProfileCell[] = [
       { coords: ["RX"], kg: 43 },
       { coords: ["SC"], kg: 30 },
     ];
 
-    expect(setCellKg(cells, ["SC"], 32)).toEqual([
+    expect(setCellKgByIndex(cells, 1, 32)).toEqual([
       { coords: ["RX"], kg: 43 },
       { coords: ["SC"], kg: 32 },
     ]);
   });
+
+  it("targets a two-axis cell by cartesian index regardless of coord values", () => {
+    const cells: ByProfileCell[] = [
+      { coords: ["RX", "M"], kg: 43 },
+      { coords: ["RX", "F"], kg: EMPTY_KG },
+      { coords: ["SC", "M"], kg: 30 },
+      { coords: ["SC", "F"], kg: EMPTY_KG },
+    ];
+
+    expect(setCellKgByIndex(cells, 1, 30)[1]).toEqual({ coords: ["RX", "F"], kg: 30 });
+  });
 });
 
-describe("cellKgAt", () => {
-  it("returns the kg of the matching cell", () => {
+describe("cellKgAtIndex", () => {
+  it("returns the kg of the cell at the index", () => {
     const cells: ByProfileCell[] = [{ coords: ["RX"], kg: 43 }];
 
-    expect(cellKgAt(cells, ["RX"])).toBe(43);
+    expect(cellKgAtIndex(cells, 0)).toBe(43);
   });
 
-  it("falls back to the empty kg when no cell matches", () => {
-    expect(cellKgAt([], ["RX"])).toBe(EMPTY_KG);
+  it("falls back to the empty kg when the index is out of range", () => {
+    expect(cellKgAtIndex([], 0)).toBe(EMPTY_KG);
   });
 });

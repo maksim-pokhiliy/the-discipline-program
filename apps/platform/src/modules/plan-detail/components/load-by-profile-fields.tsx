@@ -10,7 +10,7 @@ import {
   type ByProfileLoad,
   regenerateCells,
   renameAxisValue,
-  setCellKg,
+  setCellKgByIndex,
 } from "../lib/by-profile-cells";
 
 import { ByProfileCellGrid } from "./by-profile-cell-grid";
@@ -109,8 +109,8 @@ export const LoadByProfileFields = ({
     commitAxes(nextAxes, regenerateCells(nextAxes, cells));
   };
 
-  const handleCellChange = (coords: readonly string[], kg: number): void => {
-    commitAxes([...axes], setCellKg(cells, coords, kg));
+  const handleCellChange = (index: number, kg: number): void => {
+    commitAxes([...axes], setCellKgByIndex(cells, index, kg));
   };
 
   return (

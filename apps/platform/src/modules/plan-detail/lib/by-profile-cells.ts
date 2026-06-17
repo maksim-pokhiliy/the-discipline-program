@@ -41,15 +41,12 @@ export const renameAxisValue = (
     ),
   }));
 
-export const setCellKg = (
+export const setCellKgByIndex = (
   cells: readonly ByProfileCell[],
-  coords: readonly string[],
+  index: number,
   kg: number,
 ): ByProfileCell[] =>
-  cells.map((cell) => (coordKey(cell.coords) === coordKey(coords) ? { ...cell, kg } : cell));
+  cells.map((cell, cellIndex) => (cellIndex === index ? { ...cell, kg } : cell));
 
-export const cellKgAt = (cells: readonly ByProfileCell[], coords: readonly string[]): number => {
-  const match = cells.find((cell) => coordKey(cell.coords) === coordKey(coords));
-
-  return match?.kg ?? EMPTY_KG;
-};
+export const cellKgAtIndex = (cells: readonly ByProfileCell[], index: number): number =>
+  cells[index]?.kg ?? EMPTY_KG;

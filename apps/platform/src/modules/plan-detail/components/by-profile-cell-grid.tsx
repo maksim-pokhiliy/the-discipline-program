@@ -13,7 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { type ByProfileAxis, type ByProfileCell, cellKgAt } from "../lib/by-profile-cells";
+import { type ByProfileAxis, type ByProfileCell, cellKgAtIndex } from "../lib/by-profile-cells";
 
 import { NumberField } from "./number-field";
 
@@ -29,7 +29,7 @@ const CORNER_SEPARATOR = " \\ ";
 type ByProfileCellGridProps = {
   axes: readonly ByProfileAxis[];
   cells: readonly ByProfileCell[];
-  onCellChange: (coords: readonly string[], kg: number) => void;
+  onCellChange: (index: number, kg: number) => void;
   disabled?: boolean;
 };
 
@@ -66,8 +66,8 @@ export const ByProfileCellGrid = ({
 
           <NumberField
             label={KG_SUFFIX}
-            value={cellKgAt(cells, [value])}
-            onChange={(kg) => onCellChange([value], kg)}
+            value={cellKgAtIndex(cells, index)}
+            onChange={(kg) => onCellChange(index, kg)}
             min={KG_FIELD_MIN}
             step={KG_FIELD_STEP}
             disabled={disabled}
@@ -103,20 +103,24 @@ export const ByProfileCellGrid = ({
                 {rowValue}
               </TableCell>
 
-              {columns.values.map((columnValue, columnIndex) => (
-                <TableCell key={columnIndex} align="center">
-                  <NumberField
-                    label={KG_SUFFIX}
-                    value={cellKgAt(cells, [rowValue, columnValue])}
-                    onChange={(kg) => onCellChange([rowValue, columnValue], kg)}
-                    min={KG_FIELD_MIN}
-                    step={KG_FIELD_STEP}
-                    disabled={disabled}
-                    maxWidth={KG_FIELD_WIDTH}
-                    ariaLabel={`${rowValue} ${columnValue} ${KG_SUFFIX}`}
-                  />
-                </TableCell>
-              ))}
+              {columns.values.map((columnValue, columnIndex) => {
+                const cellIndex = rowIndex * columns.values.length + columnIndex;
+
+                return (
+                  <TableCell key={columnIndex} align="center">
+                    <NumberField
+                      label={KG_SUFFIX}
+                      value={cellKgAtIndex(cells, cellIndex)}
+                      onChange={(kg) => onCellChange(cellIndex, kg)}
+                      min={KG_FIELD_MIN}
+                      step={KG_FIELD_STEP}
+                      disabled={disabled}
+                      maxWidth={KG_FIELD_WIDTH}
+                      ariaLabel={`${rowValue} ${columnValue} ${KG_SUFFIX}`}
+                    />
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableBody>
