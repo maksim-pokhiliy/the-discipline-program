@@ -17,6 +17,7 @@ import { lmsPlanEnrollmentApi } from "./admin";
 const baseEnrollmentData = (athleteId: string) => ({
   athleteId,
   boardedAt: new Date("2026-01-01"),
+  hidePastBeforeBoarding: false,
 });
 
 describe("lmsPlanEnrollmentApi", () => {

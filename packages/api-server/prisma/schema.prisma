@@ -46,16 +46,17 @@ model User {
 }
 
 model AthleteProfile {
-  id           String       @id @default(cuid())
-  userId       String       @unique
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gender       Gender?
-  heightCm     Int?
-  weightKg     Decimal?     @db.Decimal(5, 2)
-  healthStatus HealthStatus @default(HEALTHY)
-  healthNote   String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                String       @id @default(cuid())
+  userId            String       @unique
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender            Gender?
+  heightCm          Int?
+  weightKg          Decimal?     @db.Decimal(5, 2)
+  profileSelections Json?
+  healthStatus      HealthStatus @default(HEALTHY)
+  healthNote        String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   @@index([createdAt])
   @@map("app_athlete_profiles")
@@ -275,19 +276,20 @@ model TrainingPlan {
 }
 
 model PlanEnrollment {
-  id              String           @id @default(cuid())
-  planId          String
-  plan            TrainingPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
-  athleteId       String
-  athlete         User             @relation("EnrollmentAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
-  enrolledById    String
-  enrolledBy      User             @relation("EnrollmentEnrolledBy", fields: [enrolledById], references: [id], onDelete: Restrict)
-  boardedAt       DateTime         @db.Date
-  status          EnrollmentStatus @default(ACTIVE)
-  statusChangedAt DateTime         @default(now())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  deletedAt       DateTime?
+  id                     String           @id @default(cuid())
+  planId                 String
+  plan                   TrainingPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  athleteId              String
+  athlete                User             @relation("EnrollmentAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
+  enrolledById           String
+  enrolledBy             User             @relation("EnrollmentEnrolledBy", fields: [enrolledById], references: [id], onDelete: Restrict)
+  boardedAt              DateTime         @db.Date
+  status                 EnrollmentStatus @default(ACTIVE)
+  statusChangedAt        DateTime         @default(now())
+  hidePastBeforeBoarding Boolean          @default(false)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  deletedAt              DateTime?
 
   @@index([planId, status])
   @@index([athleteId, status])
@@ -635,10 +637,11 @@ model Schema {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  block     Block        @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  group     SchemaGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  block     Block                   @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  group     SchemaGroup?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
   rows      SchemaRow[]
   rowGroups RowGroup[]
+  results   PerformedSchemaResult[]
 
   @@index([blockId, order])
   @@index([groupId])
@@ -663,11 +666,10 @@ model SchemaRow {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  schema                     Schema                      @relation(fields: [schemaId], references: [id], onDelete: Cascade)
-  exercise                   Exercise                    @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
-  rowGroup                   RowGroup?                   @relation(fields: [rowGroupId], references: [id], onDelete: SetNull)
-  modifierAssignments        RowModifierAssignment[]
-  performedExerciseInstances PerformedExerciseInstance[]
+  schema              Schema                  @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  exercise            Exercise                @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  rowGroup            RowGroup?               @relation(fields: [rowGroupId], references: [id], onDelete: SetNull)
+  modifierAssignments RowModifierAssignment[]
 
   @@unique([schemaId, order])
   @@index([schemaId, order])
@@ -766,48 +768,41 @@ model OneRMRecord {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
 
-  @@unique([userId, exerciseId])
+  @@index([userId, exerciseId, recordedAt])
   @@index([exerciseId])
-  @@index([userId])
   @@map("training_one_rm_records")
 }
 
 model PerformedSession {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   sessionId    String
   userId       String
-  startedAt    DateTime
-  completedAt  DateTime?
+  performedAt  DateTime
   coachNotes   String?
   athleteNotes String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  session                    Session                     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user                       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  performedExerciseInstances PerformedExerciseInstance[]
+  session Session                 @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results PerformedSchemaResult[]
 
-  @@unique([sessionId, userId])
+  @@index([sessionId, userId, performedAt])
   @@index([userId])
   @@map("training_performed_sessions")
 }
 
-model PerformedExerciseInstance {
+model PerformedSchemaResult {
   id                 String   @id @default(cuid())
   performedSessionId String
-  plannedSchemaRowId String
-  actualLoad         Json
-  actualReps         Json
-  actualIntensity    Json?
-  stageActuals       Json?
-  notes              String?
+  plannedSchemaId    String
+  result             Json
   createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
 
   performedSession PerformedSession @relation(fields: [performedSessionId], references: [id], onDelete: Cascade)
-  plannedSchemaRow SchemaRow        @relation(fields: [plannedSchemaRowId], references: [id], onDelete: Restrict)
+  plannedSchema    Schema           @relation(fields: [plannedSchemaId], references: [id], onDelete: Restrict)
 
-  @@index([performedSessionId])
-  @@index([plannedSchemaRowId])
-  @@map("training_performed_exercise_instances")
+  @@unique([performedSessionId, plannedSchemaId])
+  @@index([plannedSchemaId])
+  @@map("training_performed_schema_results")
 }

@@ -7,7 +7,7 @@ import type {
   TempoModifier,
   TimeCap,
 } from "@repo/contracts/lms/_shared";
-import type { INTERVAL_DURATION_UNITS } from "@repo/contracts/lms/composition";
+import type { Benchmark, INTERVAL_DURATION_UNITS } from "@repo/contracts/lms/composition";
 import type { ModifierRef } from "@repo/contracts/lms/modifier";
 
 import type { CountOrRangeValue } from "../count-or-range-field";
@@ -51,5 +51,6 @@ export type SchemaDraft = {
   rest?: RestAxis;
   intensity?: Intensity | null;
   cap?: TimeCap | null;
+  benchmark?: Benchmark | null;
   rows: ComposeRow[];
 };

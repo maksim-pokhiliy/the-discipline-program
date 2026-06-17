@@ -8,6 +8,7 @@ import {
   perLimbDistributionSchema,
   repNotationSchema,
   restSpecSchema,
+  RESULT_TYPES,
   tempoModifierSchema,
   timeCapSchema,
 } from "../_shared";
@@ -43,11 +44,14 @@ export const repetitionAxisSchema = z.discriminatedUnion("kind", [
 
 export const restAxisSchema = restSpecSchema;
 
+export const benchmarkSchema = z.object({ resultType: z.enum(RESULT_TYPES) });
+
 export const compositionSchema = z
   .object({
     repetition: repetitionAxisSchema.optional(),
     rest: restAxisSchema.optional(),
     cap: timeCapSchema.optional(),
+    benchmark: benchmarkSchema.nullable().optional(),
   })
   .strict();
 

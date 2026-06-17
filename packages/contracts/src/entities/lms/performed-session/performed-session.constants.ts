@@ -1,0 +1,3 @@
+export const PERFORMED_SESSION_CONSTANTS = {
+  MAX_NOTE_LENGTH: 2000,
+} as const;

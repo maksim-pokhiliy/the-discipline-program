@@ -81,6 +81,22 @@ describe("composeContainerToComposition flat repetition mapping", () => {
   it("emits exactly {} for a bare container with no axes", () => {
     expect(composeContainerToComposition(container({}))).toEqual({});
   });
+
+  it("emits a set benchmark onto the composition", () => {
+    expect(composeContainerToComposition(container({ benchmark: { resultType: "time" } }))).toEqual(
+      {
+        benchmark: { resultType: "time" },
+      },
+    );
+  });
+
+  it("omits the benchmark when cleared to null", () => {
+    expect(composeContainerToComposition(container({ benchmark: null }))).toEqual({});
+  });
+
+  it("omits the benchmark when absent", () => {
+    expect(composeContainerToComposition(container({}))).not.toHaveProperty("benchmark");
+  });
 });
 
 describe("composeContainerToComposition produces contract-valid compositions", () => {

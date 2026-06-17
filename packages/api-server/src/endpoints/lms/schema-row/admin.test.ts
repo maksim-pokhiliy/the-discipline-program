@@ -50,9 +50,6 @@ describe("lmsSchemaRowApi", () => {
       session,
       block,
       cleanup: async () => {
-        await cleanupRaw.performedExerciseInstance
-          .deleteMany({ where: { plannedSchemaRow: { schema: { blockId: block.id } } } })
-          .catch(() => {});
         await cleanupRaw.performedSession
           .deleteMany({ where: { sessionId: session.id } })
           .catch(() => {});
@@ -147,19 +144,6 @@ describe("lmsSchemaRowApi", () => {
   });
 
   afterAll(async () => {
-    await cleanupRaw.performedExerciseInstance
-      .deleteMany({
-        where: {
-          plannedSchemaRow: {
-            schema: {
-              block: {
-                session: { day: { week: { planId: { in: [activePlanId, archivedPlanId] } } } },
-              },
-            },
-          },
-        },
-      })
-      .catch(() => {});
     await cleanupRaw.performedSession
       .deleteMany({
         where: {
@@ -1049,49 +1033,6 @@ describe("lmsSchemaRowApi", () => {
 
         expect(stored).toBe(1);
       } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("rejects delete when SchemaRow has PerformedExerciseInstance back-relation (P2003)", async () => {
-      const ctx = await provisionSchema();
-      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-        schemaId: ctx.schema.id,
-        exerciseId: exerciseAId,
-      });
-
-      const performedSession = await cleanupRaw.performedSession.create({
-        data: {
-          sessionId: ctx.session.id,
-          userId: coach.user.id,
-          startedAt: new Date(),
-        },
-      });
-
-      const performedInstance = await cleanupRaw.performedExerciseInstance.create({
-        data: {
-          performedSessionId: performedSession.id,
-          plannedSchemaRowId: created.id,
-          actualLoad: { kind: "absolute", count: 1, kg: 80 },
-          actualReps: { kind: "count", value: 5 },
-        },
-      });
-
-      try {
-        await expect(lmsSchemaRowApi.delete(coach.user.id, created.id)).rejects.toThrow(
-          BadRequestError,
-        );
-
-        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
-
-        expect(stored).not.toBeNull();
-      } finally {
-        await cleanupRaw.performedExerciseInstance
-          .delete({ where: { id: performedInstance.id } })
-          .catch(() => {});
-        await cleanupRaw.performedSession
-          .delete({ where: { id: performedSession.id } })
-          .catch(() => {});
         await ctx.cleanup();
       }
     });

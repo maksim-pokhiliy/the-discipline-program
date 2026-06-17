@@ -16,12 +16,12 @@ export const computeLastActivity = (
     for (const session of scheduled.workoutSessions) {
       const entry = performedByKey.get(buildPerformedKey(athleteId, session.id));
 
-      if (!entry?.completedAt) {
+      if (!entry) {
         continue;
       }
 
-      if (!lastActivityDate || entry.completedAt > lastActivityDate) {
-        lastActivityDate = entry.completedAt;
+      if (!lastActivityDate || entry.performedAt > lastActivityDate) {
+        lastActivityDate = entry.performedAt;
       }
     }
   }

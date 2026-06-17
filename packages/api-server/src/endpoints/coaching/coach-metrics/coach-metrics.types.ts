@@ -35,7 +35,7 @@ export type WindowedWeek = WindowedEnrollment["plan"]["weeks"][number];
 export type WindowedDay = WindowedWeek["days"][number];
 export type WindowedSession = WindowedDay["sessions"][number];
 
-export type PerformedEntry = { startedAt: Date; completedAt: Date | null };
+export type PerformedEntry = { performedAt: Date };
 
 export type PerformedByKey = Map<string, PerformedEntry>;
 

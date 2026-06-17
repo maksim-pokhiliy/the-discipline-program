@@ -12,6 +12,7 @@ export const planEnrollmentSchema = z.object({
   boardedAt: z.coerce.date(),
   status: enrollmentStatusSchema,
   statusChangedAt: z.date(),
+  hidePastBeforeBoarding: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -20,4 +21,5 @@ export const createPlanEnrollmentSchema = z.object({
   planId: z.string().cuid(),
   athleteId: z.string().cuid(),
   boardedAt: z.coerce.date(),
+  hidePastBeforeBoarding: z.boolean().optional().default(false),
 });

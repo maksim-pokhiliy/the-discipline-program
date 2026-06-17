@@ -12,6 +12,7 @@ export const mapToPlanEnrollment = (p: PrismaPlanEnrollment): PlanEnrollment => 
   boardedAt: p.boardedAt,
   status: ENROLLMENT_STATUS_MAP[p.status],
   statusChangedAt: p.statusChangedAt,
+  hidePastBeforeBoarding: p.hidePastBeforeBoarding,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });

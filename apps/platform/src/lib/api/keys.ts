@@ -36,6 +36,9 @@ export const platformKeys = {
   modifiers: {
     search: (q?: string) => [...ROOT, "modifiers", "search", q ?? null] as const,
   },
+  oneRMRecords: {
+    list: (exerciseId?: string) => [...ROOT, "one-rm-records", exerciseId ?? null] as const,
+  },
   rowGroups: {
     all: () => [...ROOT, "row-groups"] as const,
   },

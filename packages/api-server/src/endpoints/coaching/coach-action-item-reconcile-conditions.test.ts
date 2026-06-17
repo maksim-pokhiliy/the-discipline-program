@@ -87,8 +87,7 @@ describe("computeMissedWorkoutsConditions", () => {
         capSession.sessionId,
         scenario.athlete.id,
         {
-          startedAt: capSession.sessionDate,
-          completedAt: capSession.sessionDate,
+          performedAt: capSession.sessionDate,
         },
       );
 
@@ -123,8 +122,7 @@ describe("computeMissedWorkoutsConditions", () => {
 
     for (const session of recent) {
       const performed = await createTestPerformedSession(session.sessionId, scenario.athlete.id, {
-        startedAt: session.sessionDate,
-        completedAt: session.sessionDate,
+        performedAt: session.sessionDate,
       });
 
       activeCleanup.push(...performed.toCleanup);
