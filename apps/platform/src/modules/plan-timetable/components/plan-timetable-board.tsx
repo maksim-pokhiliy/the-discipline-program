@@ -32,27 +32,45 @@ const clampWeekIndex = (index: number, weekCount: number): number =>
   Math.min(Math.max(index, 0), Math.max(weekCount - 1, 0));
 
 export const PlanTimetableBoard = ({ plans }: PlanTimetableBoardProps): ReactElement | null => {
-  const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
-  const [viewedWeekByPlan, setViewedWeekByPlan] = useState<Record<number, number>>({});
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [viewedWeekByPlan, setViewedWeekByPlan] = useState<Record<string, number>>({});
   const todayRowRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedPlan = plans[selectedPlanIndex] ?? plans[0];
+  const defaultPlan = plans.find((plan) => plan.weeks.length > 0) ?? plans[0];
+  const selectedPlan = plans.find((plan) => plan.planId === selectedPlanId) ?? defaultPlan;
   const todayWeekIndex = selectedPlan?.todayWeekIndex ?? null;
   const weekCount = selectedPlan?.weeks.length ?? 0;
 
   const viewedIndex = clampWeekIndex(
-    viewedWeekByPlan[selectedPlanIndex] ?? selectedPlan?.landingWeekIndex ?? 0,
+    (selectedPlan ? viewedWeekByPlan[selectedPlan.planId] : undefined) ??
+      selectedPlan?.landingWeekIndex ??
+      0,
     weekCount,
   );
 
   const setWeek = useCallback(
     (next: number) => {
+      if (selectedPlan === undefined) {
+        return;
+      }
+
       setViewedWeekByPlan((prev) => ({
         ...prev,
-        [selectedPlanIndex]: clampWeekIndex(next, weekCount),
+        [selectedPlan.planId]: clampWeekIndex(next, weekCount),
       }));
     },
-    [selectedPlanIndex, weekCount],
+    [selectedPlan, weekCount],
+  );
+
+  const selectPlanByIndex = useCallback(
+    (index: number) => {
+      const plan = plans[index];
+
+      if (plan !== undefined) {
+        setSelectedPlanId(plan.planId);
+      }
+    },
+    [plans],
   );
 
   const jumpToToday = useCallback(() => {
@@ -69,7 +87,7 @@ export const PlanTimetableBoard = ({ plans }: PlanTimetableBoardProps): ReactEle
     if (isViewingTodayWeek && todayRowRef.current) {
       todayRowRef.current.scrollIntoView({ block: "start" });
     }
-  }, [selectedPlanIndex, viewedIndex, todayWeekIndex, isViewingTodayWeek]);
+  }, [selectedPlan, viewedIndex, todayWeekIndex, isViewingTodayWeek]);
 
   const planSwitcherItems = useMemo(
     () => plans.map((plan) => ({ planId: plan.planId, planTitle: plan.planTitle })),
@@ -89,8 +107,11 @@ export const PlanTimetableBoard = ({ plans }: PlanTimetableBoardProps): ReactEle
         {plans.length > 1 ? (
           <PlanSwitcher
             plans={planSwitcherItems}
-            selectedIndex={selectedPlanIndex}
-            onSelect={setSelectedPlanIndex}
+            selectedIndex={Math.max(
+              0,
+              plans.findIndex((plan) => plan.planId === selectedPlan.planId),
+            )}
+            onSelect={selectPlanByIndex}
           />
         ) : null}
 
@@ -127,7 +148,7 @@ export const PlanTimetableBoard = ({ plans }: PlanTimetableBoardProps): ReactEle
             <Stack spacing={0}>
               {viewedWeek.days.map((slot) => (
                 <DayRow
-                  key={slot.date.toISOString()}
+                  key={slot.dayOfWeek}
                   slot={slot}
                   todayRowRef={todayRowRef}
                   onOpenSession={onOpenSession}

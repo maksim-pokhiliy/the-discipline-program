@@ -36,6 +36,11 @@ type SlotStatusArgs = {
   sessions: SessionCardView[];
 };
 
+const utcCalendarDayOfMonth = (startDate: Date, offset: number): number =>
+  new Date(
+    Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate() + offset),
+  ).getUTCDate();
+
 const isRestSession = (session: TimetableSession): boolean => session.label?.rest === true;
 
 const composeSlotTitle = (session: TimetableSession, day: TimetableDay | null): string =>
@@ -100,7 +105,14 @@ const buildWeekSlots = (
     const sessions = buildSessionCards(day, performedSessionIds);
     const isToday = date.getTime() === startOfToday.getTime();
 
-    return { date, dayOfWeek, isToday, status: computeSlotStatus({ isToday, sessions }), sessions };
+    return {
+      date,
+      dayOfWeek,
+      dayOfMonth: utcCalendarDayOfMonth(week.startDate, offset),
+      isToday,
+      status: computeSlotStatus({ isToday, sessions }),
+      sessions,
+    };
   });
 };
 

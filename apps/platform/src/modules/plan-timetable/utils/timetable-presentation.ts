@@ -1,11 +1,10 @@
 import { alpha, type Theme } from "@mui/material";
 
 import { TimetableSlotStatus, type WeekTimetableView } from "@repo/contracts/lms/plan-timetable";
-import { addDays, DEFAULT_LOCALE, LAST_DAY_OFFSET_IN_WEEK } from "@repo/shared";
+import { DEFAULT_LOCALE, LAST_DAY_OFFSET_IN_WEEK } from "@repo/shared";
 
 import {
   DONE_DATE_ALPHA,
-  DONE_HOVER_BORDER_ALPHA,
   DONE_TITLE_ALPHA,
   DOT_FUTURE_ALPHA,
   DOT_PAST_ALPHA,
@@ -143,9 +142,6 @@ export const resolveCardDecoration = (
   };
 };
 
-export const resolveDoneHoverBorder = (theme: Theme): string =>
-  alpha(theme.palette.common.white, DONE_HOVER_BORDER_ALPHA);
-
 export type DotStyleArgs = {
   index: number;
   viewedIndex: number;
@@ -171,10 +167,20 @@ export const formatWeekRangeCompact = (
   startDate: Date,
   locale: string = DEFAULT_LOCALE,
 ): string => {
-  const endDate = addDays(startDate, LAST_DAY_OFFSET_IN_WEEK);
-  const monthDayFormat = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
-  const dayFormat = new Intl.DateTimeFormat(locale, { day: "numeric" });
-  const isSameMonth = startDate.getMonth() === endDate.getMonth();
+  const endDate = new Date(
+    Date.UTC(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate() + LAST_DAY_OFFSET_IN_WEEK,
+    ),
+  );
+  const monthDayFormat = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const dayFormat = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: "UTC" });
+  const isSameMonth = startDate.getUTCMonth() === endDate.getUTCMonth();
   const endLabel = isSameMonth ? dayFormat.format(endDate) : monthDayFormat.format(endDate);
 
   return `${monthDayFormat.format(startDate)} – ${endLabel}`;

@@ -1,3 +1,15 @@
+import { type DayOfWeek } from "@repo/contracts/lms/_shared";
+
+export const DAY_OF_WEEK_SHORT: Record<DayOfWeek, string> = {
+  MONDAY: "Mon",
+  TUESDAY: "Tue",
+  WEDNESDAY: "Wed",
+  THURSDAY: "Thu",
+  FRIDAY: "Fri",
+  SATURDAY: "Sat",
+  SUNDAY: "Sun",
+};
+
 export const DATE_COL_W = { xs: 46, md: 54 } as const;
 export const TIMELINE_COL_W = { xs: 28, md: 30 } as const;
 
@@ -46,7 +58,6 @@ export const CARD_ACTIVE_ALPHA = 0.05;
 export const DOT_PAST_ALPHA = 0.35;
 export const DOT_FUTURE_ALPHA = 0.14;
 export const PILL_BORDER_ALPHA = 0.18;
-export const DONE_HOVER_BORDER_ALPHA = 0.2;
 export const NAV_DISABLED_OPACITY = 0.25;
 
 export const DOT_HEIGHT_PX = 4;

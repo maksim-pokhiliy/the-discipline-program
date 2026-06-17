@@ -3,10 +3,10 @@ import { type ReactElement, type RefObject } from "react";
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 
 import { type DaySlotView } from "@repo/contracts/lms/plan-timetable";
-import { DEFAULT_LOCALE, formatDayName } from "@repo/shared";
 
 import {
   DATE_COL_W,
+  DAY_OF_WEEK_SHORT,
   DAY_NUM_PX,
   FONT_WEIGHT_DISPLAY,
   FONT_WEIGHT_SEMI_BOLD,
@@ -55,7 +55,7 @@ export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): React
             color: slotDecoration.dateColor,
           }}
         >
-          {formatDayName(slot.date, DEFAULT_LOCALE)}
+          {DAY_OF_WEEK_SHORT[slot.dayOfWeek]}
         </Typography>
         <Box
           component="span"
@@ -71,7 +71,7 @@ export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): React
             color: slotDecoration.dateColor,
           })}
         >
-          {slot.date.getDate()}
+          {slot.dayOfMonth}
         </Box>
       </Stack>
 
