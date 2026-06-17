@@ -13,7 +13,7 @@ export type CloneFixtureCatalog = {
   blockLabelId: string;
 };
 
-const newId = (): string => crypto.randomUUID();
+const newId = (): string => `c${crypto.randomUUID().replace(/-/g, "")}`;
 
 const DAYS_OF_WEEK: Prisma.DayCreateInput["dayOfWeek"][] = ["MONDAY", "WEDNESDAY"];
 
