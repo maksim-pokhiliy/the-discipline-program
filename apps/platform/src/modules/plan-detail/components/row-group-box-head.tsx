@@ -12,6 +12,8 @@ import { NOTE_MAX_LENGTH } from "@repo/contracts/lms/_shared";
 import type { RowGroup } from "@repo/contracts/lms/row-group";
 import { InlineEditText } from "@repo/ui";
 
+import { MinutePill } from "./minute-pill";
+
 const HEAD_ACTION_ICON_PX = 17;
 const HEAD_SPACING = 1.25;
 const HEAD_PX = 1.5;
@@ -23,12 +25,15 @@ const LABEL_PLACEHOLDER = "group label…";
 const UNGROUP_LABEL = "Ungroup";
 const DELETE_LABEL = "Delete group";
 const FIRST_NOTE_INDEX = 0;
+const COL_ORD = "24px";
+const BODY_GAP_FACTOR = 0.75;
 
 const tooltipChildSx = { display: "inline-flex" };
 
 type RowGroupBoxHeadProps = {
   group: RowGroup;
   ord: number;
+  minuteLabel: string | null;
   isUpdatePending: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -40,6 +45,7 @@ type RowGroupBoxHeadProps = {
 export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
   group,
   ord,
+  minuteLabel,
   isUpdatePending,
   dragAttributes,
   dragListeners,
@@ -78,20 +84,32 @@ export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
       <DragIndicatorIcon fontSize="small" />
     </IconButton>
 
-    <Typography variant="caption" sx={{ fontVariantNumeric: "tabular-nums", color: "text.subtle" }}>
+    <Typography
+      variant="caption"
+      sx={{
+        fontVariantNumeric: "tabular-nums",
+        color: "text.subtle",
+        textAlign: "center",
+        width: COL_ORD,
+      }}
+    >
       {ord}
     </Typography>
 
-    <InlineEditText
-      value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}
-      onCommit={onLabelCommit}
-      variant="subtitle1"
-      ariaLabel={LABEL_ARIA}
-      emptyIsValid
-      maxLength={NOTE_MAX_LENGTH}
-      placeholder={LABEL_PLACEHOLDER}
-      sx={{ flex: 1, minWidth: 0 }}
-    />
+    <Stack direction="row" spacing={BODY_GAP_FACTOR} useFlexGap sx={{ flex: 1 }}>
+      {minuteLabel !== null ? <MinutePill label={minuteLabel} /> : null}
+
+      <InlineEditText
+        value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}
+        onCommit={onLabelCommit}
+        variant="subtitle1"
+        ariaLabel={LABEL_ARIA}
+        emptyIsValid
+        maxLength={NOTE_MAX_LENGTH}
+        placeholder={LABEL_PLACEHOLDER}
+        sx={{ flex: 1, minWidth: 0 }}
+      />
+    </Stack>
 
     <Tooltip title={UNGROUP_LABEL}>
       <Box component="span" style={tooltipChildSx}>

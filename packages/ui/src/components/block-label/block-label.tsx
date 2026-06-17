@@ -11,5 +11,10 @@ export type BlockLabelProps = {
 };
 
 export const BlockLabel = ({ text, filled, onDelete }: BlockLabelProps): ReactElement => (
-  <TagChip label={text} filled={filled} {...(onDelete !== undefined && { onDelete })} />
+  <TagChip
+    label={text}
+    filled={filled}
+    sx={{ textTransform: "uppercase" }}
+    {...(onDelete !== undefined && { onDelete })}
+  />
 );

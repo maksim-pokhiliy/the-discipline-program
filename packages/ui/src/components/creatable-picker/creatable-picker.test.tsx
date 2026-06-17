@@ -107,6 +107,16 @@ describe("CreatablePicker single mode", () => {
     expect(screen.getByRole("combobox")).toHaveValue("Back Squat");
   });
 
+  it("opens the option listbox on input focus without a prior click", () => {
+    render(<Harness mode="single" options={[SQUAT, PRESS]} onCreateOption={vi.fn()} />);
+
+    fireEvent.focus(screen.getByRole("combobox"));
+
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByText("Back Squat")).toBeInTheDocument();
+    expect(screen.getByText("Press")).toBeInTheDocument();
+  });
+
   it("surfaces a Create option for a query with no exact match", () => {
     render(<Harness mode="single" options={[PRESS]} onCreateOption={vi.fn()} />);
 

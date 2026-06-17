@@ -20,13 +20,19 @@ Build a **server-side deep-clone endpoint family** over the training hierarchy `
 ## Frozen ground truth — reuse these patterns VERBATIM (file:line; do NOT invent)
 
 **Deep-read include (the full subtree shape):** `packages/api-server/src/endpoints/lms/_shared/schema-body-include.ts:3-14`
+
 ```ts
 export const SCHEMA_BODY_INCLUDE = {
-  rows: { orderBy: { order: "asc" }, include: {
-      modifierAssignments: { orderBy: { order: "asc" }, include: { modifier: true } } } },
+  rows: {
+    orderBy: { order: "asc" },
+    include: {
+      modifierAssignments: { orderBy: { order: "asc" }, include: { modifier: true } },
+    },
+  },
   rowGroups: true,
 } satisfies Prisma.SchemaInclude;
 ```
+
 Week GET include tree: `endpoints/lms/week/admin.ts:25-54` — `Week → days → { label, sessions(order) → { label, blocks(order) → { labelAssignments(order)→label, schemas(order)→SCHEMA_BODY_INCLUDE, groups } } }`. This IS the subtree the clone must read + reproduce. Mappers: `mapToWeek` (`mappers/lms/week.mapper.ts:6`), `mapToSession`/`mapToBlock`/`mapToSchema`/`mapToSchemaRow` (`mappers/lms/`).
 
 **Transaction template:** `endpoints/lms/schema/admin.ts:91-132` — `retryOnP2034(() => prisma.$transaction(async (tx) => { … }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))`. Use this for every clone op.
@@ -45,20 +51,21 @@ Week GET include tree: `endpoints/lms/week/admin.ts:25-54` — `Week → days �
 
 ## Endpoints to build
 
-| Op | Route (`POST`) | Body | Semantic | Response |
-| --- | --- | --- | --- | --- |
-| Week replace | `…/training-plans/[planId]/weeks/[startDate]/clone-from` | `{ sourceStartDate }` | delete target week's Days → deep-copy source week's Days (full subtree). Empty source → no-op. | the rebuilt week (`mapToWeek`) |
-| Day replace | `…/[planId]/weeks/[startDate]/days/[dayOfWeek]/clone-from` | `{ sourceStartDate, sourceDayOfWeek }` (source = any day in the plan) | delete target day's content → deep-copy source day (label + notes + sessions↓). Empty source → no-op. | the rebuilt day |
-| Session dup | `…/[planId]/sessions/[sessionId]/duplicate` | `{}` | deep-copy session → append to same day | new session (`mapToSession`) |
-| Block dup | `…/[planId]/blocks/[blockId]/duplicate` | `{}` | deep-copy block → append to same session | new block (`mapToBlock`) |
-| Schema dup | `…/[planId]/schemas/[schemaId]/duplicate` | `{}` | deep-copy schema → append to same block; if grouped → same group (`resolveGroupedOrder` + contiguity assert) | new schema (`mapToSchema`) |
-| Row dup | `…/[planId]/schema-rows/[schemaRowId]/duplicate` | `{}` | deep-copy row → append to same schema; if grouped → same rowGroup | new row (`mapToSchemaRow`) |
+| Op           | Route (`POST`)                                             | Body                                                                  | Semantic                                                                                                     | Response                       |
+| ------------ | ---------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| Week replace | `…/training-plans/[planId]/weeks/[startDate]/clone-from`   | `{ sourceStartDate }`                                                 | delete target week's Days → deep-copy source week's Days (full subtree). Empty source → no-op.               | the rebuilt week (`mapToWeek`) |
+| Day replace  | `…/[planId]/weeks/[startDate]/days/[dayOfWeek]/clone-from` | `{ sourceStartDate, sourceDayOfWeek }` (source = any day in the plan) | delete target day's content → deep-copy source day (label + notes + sessions↓). Empty source → no-op.        | the rebuilt day                |
+| Session dup  | `…/[planId]/sessions/[sessionId]/duplicate`                | `{}`                                                                  | deep-copy session → append to same day                                                                       | new session (`mapToSession`)   |
+| Block dup    | `…/[planId]/blocks/[blockId]/duplicate`                    | `{}`                                                                  | deep-copy block → append to same session                                                                     | new block (`mapToBlock`)       |
+| Schema dup   | `…/[planId]/schemas/[schemaId]/duplicate`                  | `{}`                                                                  | deep-copy schema → append to same block; if grouped → same group (`resolveGroupedOrder` + contiguity assert) | new schema (`mapToSchema`)     |
+| Row dup      | `…/[planId]/schema-rows/[schemaRowId]/duplicate`           | `{}`                                                                  | deep-copy row → append to same schema; if grouped → same rowGroup                                            | new row (`mapToSchemaRow`)     |
 
 **Empty-source contract:** the `clone-from` response is a union — `{ cloned: true, … }` on success or `{ cloned: false, reason: "empty-source" }` (HTTP 200, NO delete) when the source has no content. (The R1b UI blocks empty sources in the picker — D-6 — but the server is the source of truth; enforce the guard here too.)
 
 ## The deep-copy helper (the engine)
 
 A shared recursive deep-copy over the subtree, in the open `tx`, producing fresh `cuid`s at every node and:
+
 - **Re-references the shared catalog — NEVER duplicates it:** `SchemaRow.exerciseId` (FK), `RowModifierAssignment.modifierId`, `BlockLabelAssignment.labelId`, `media` URLs → copy the reference value as-is, pointing at the same catalog rows.
 - **Copies every leaf field + VO:** `load` / `tempo` / `side` / `intensity` / `composition` (Json VOs), `notes` (`Json?` `string[]`), `header`, `sets`, `reps`, etc. — verbatim.
 - **Copies group containers + remaps membership:** for a subtree that contains `SchemaGroup`s / `RowGroup`s, create NEW container rows and point the copied schemas/rows at the new `groupId` / `rowGroupId` (preserve `interleaveOrder` + the group's notes). This is why "groups aren't cloned" (no standalone group-clone button) does NOT exempt groups inside a subtree clone — they're part of the subtree and must be reproduced.

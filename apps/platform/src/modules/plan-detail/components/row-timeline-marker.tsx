@@ -19,6 +19,7 @@ export const RowTimelineMarker: React.FC<RowTimelineMarkerProps> = ({ ord, isFir
     sx={{
       alignSelf: "stretch",
       position: "relative",
+      width: "100%",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",

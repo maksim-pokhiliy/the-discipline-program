@@ -58,10 +58,8 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
       return new Map();
     }
 
-    const view = deriveMinuteView(
-      composition,
-      rows.map((row) => row.id),
-    );
+    const itemIds = items.map((item) => (item.kind === "group" ? item.group.id : item.row.id));
+    const view = deriveMinuteView(composition, itemIds);
 
     if (view.kind === "none") {
       return new Map();
@@ -70,7 +68,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
     return new Map(
       view.assignments.map((assignment) => [assignment.rowId, assignment.minuteLabel]),
     );
-  }, [composition, rows]);
+  }, [composition, items]);
 
   const exitSelectMode = () => {
     setIsSelectMode(false);

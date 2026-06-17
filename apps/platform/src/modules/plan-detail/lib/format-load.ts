@@ -23,8 +23,8 @@ export const formatLoad = (load: Load, exerciseById: ExerciseById): string => {
     case "percentage": {
       const head =
         load.rangeMax !== undefined
-          ? `${load.value}${RANGE_SEPARATOR}${load.rangeMax}${PERCENT_SUFFIX}`
-          : `${load.value}${PERCENT_SUFFIX}`;
+          ? `@${load.value}${RANGE_SEPARATOR}${load.rangeMax}${PERCENT_SUFFIX}`
+          : `@${load.value}${PERCENT_SUFFIX}`;
       const ref = formatPercentageReference(load.reference, exerciseById);
 
       return ref.length > 0 ? `${head}${SPACE}${ref}` : head;

@@ -15,6 +15,7 @@ import { render } from "@app/test/render";
 
 const updateLabelMutate = vi.fn();
 const updateNotesMutate = vi.fn();
+const createLabelMutate = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -23,6 +24,7 @@ vi.mock("@app/lib/hooks", async () => {
     ...actual,
     useUpdateDayLabel: () => ({ mutate: updateLabelMutate }),
     useUpdateDayNotes: () => ({ mutate: updateNotesMutate }),
+    useCreateLabel: () => ({ mutate: createLabelMutate, isPending: false }),
   };
 });
 
@@ -260,6 +262,23 @@ describe("DayRow", () => {
 
     expect(updateLabelMutate).toHaveBeenCalledTimes(1);
     expect(updateLabelMutate).toHaveBeenCalledWith({ labelId: recovery.id });
+  });
+
+  it("opens the day-label create modal seeded with the typed name when the Create option is chosen", () => {
+    createLabelMutate.mockClear();
+    const main = makeLabel({ name: "MAIN" });
+
+    renderDayRow({ label: null, options: [main] });
+
+    fireEvent.click(screen.getByRole("button", { name: "Day label" }));
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Long Run" } });
+    fireEvent.click(screen.getByText('Create "Long Run"'));
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("heading", { name: "Create day label" })).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue("Long Run")).toBeInTheDocument();
+    expect(within(dialog).getByRole("switch", { name: "Rest day" })).toBeInTheDocument();
   });
 
   it("fires useUpdateDayNotes.mutate with the authored multi-note list on focus-leave (W4R-005)", () => {

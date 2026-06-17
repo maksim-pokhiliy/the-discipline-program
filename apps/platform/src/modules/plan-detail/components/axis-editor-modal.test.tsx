@@ -34,6 +34,7 @@ const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
+const GROUP_ID = "clp9z8x7w0000abcd1234grp1";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 
 const CREATE_TITLE = "Add schema";
@@ -70,6 +71,17 @@ const renderCreate = () =>
       planId={PLAN_ID}
       startDate={START_DATE}
       mode={{ kind: "create", blockId: BLOCK_ID }}
+    />,
+  );
+
+const renderCreateInGroup = () =>
+  render(
+    <AxisEditorModal
+      open
+      onClose={vi.fn()}
+      planId={PLAN_ID}
+      startDate={START_DATE}
+      mode={{ kind: "create", blockId: BLOCK_ID, groupId: GROUP_ID }}
     />,
   );
 
@@ -135,6 +147,23 @@ describe("AxisEditorModal create mode", () => {
 
     expect(createSchemaMutate).toHaveBeenCalledTimes(1);
     expect(createSchemaMutate.mock.calls[0]?.[0]).not.toHaveProperty("groupId");
+  });
+
+  it("threads groupId into the payload for a create-into-group", () => {
+    renderCreateInGroup();
+
+    selectRepetition("Rounds");
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      groupId: GROUP_ID,
+      composition: { repetition: { kind: "count", count: 3 } },
+      header: null,
+      intensity: null,
+      notes: null,
+    });
   });
 
   it("submits a single ladder schema through the flat create", () => {

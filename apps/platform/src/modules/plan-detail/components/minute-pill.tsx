@@ -24,6 +24,7 @@ export const MinutePill: React.FC<MinutePillProps> = ({ label }) => (
       fontWeight: FONT_WEIGHT,
       letterSpacing: LETTER_SPACING,
       flexShrink: 0,
+      fontVariantNumeric: "tabular-nums",
     })}
   >
     {label}
