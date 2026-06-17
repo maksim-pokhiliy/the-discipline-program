@@ -66,7 +66,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
     const lastActivityDate = lastActivityMap.get(athlete.id) ?? null;
     const daysSinceLastActivity =
       lastActivityDate !== null
-        ? Math.floor((now - lastActivityDate.getTime()) / MS_PER_DAY)
+        ? Math.max(0, Math.floor((now - lastActivityDate.getTime()) / MS_PER_DAY))
         : null;
 
     if (needsAttention) {

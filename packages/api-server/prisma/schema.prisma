@@ -802,7 +802,7 @@ model PerformedSchemaResult {
   performedSession PerformedSession @relation(fields: [performedSessionId], references: [id], onDelete: Cascade)
   plannedSchema    Schema           @relation(fields: [plannedSchemaId], references: [id], onDelete: Restrict)
 
-  @@index([performedSessionId])
+  @@unique([performedSessionId, plannedSchemaId])
   @@index([plannedSchemaId])
   @@map("training_performed_schema_results")
 }

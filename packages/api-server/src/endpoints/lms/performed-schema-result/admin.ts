@@ -1,3 +1,4 @@
+import { type ResultType } from "@repo/contracts/lms/_shared";
 import { compositionSchema } from "@repo/contracts/lms/composition";
 import {
   type CreatePerformedSchemaResultData,
@@ -9,13 +10,13 @@ import { prisma } from "../../../db/client";
 import { mapToPerformedSchemaResult } from "../../../mappers/lms";
 import { handlePrismaError, toInputJson } from "../../../utils";
 
-const verifyPerformedSessionOwnership = async (
+const loadPerformedSessionForAthlete = async (
   performedSessionId: string,
   userId: string,
-): Promise<void> => {
+): Promise<{ sessionId: string }> => {
   const performedSession = await prisma.performedSession.findUnique({
     where: { id: performedSessionId },
-    select: { userId: true },
+    select: { userId: true, sessionId: true },
   });
 
   if (!performedSession) {
@@ -27,12 +28,16 @@ const verifyPerformedSessionOwnership = async (
       performedSessionId,
     });
   }
+
+  return { sessionId: performedSession.sessionId };
 };
 
-const assertSchemaIsBenchmark = async (plannedSchemaId: string): Promise<void> => {
+const loadBenchmarkSchema = async (
+  plannedSchemaId: string,
+): Promise<{ resultType: ResultType; sessionId: string }> => {
   const schema = await prisma.schema.findUnique({
     where: { id: plannedSchemaId },
-    select: { composition: true },
+    select: { composition: true, block: { select: { sessionId: true } } },
   });
 
   if (!schema) {
@@ -47,6 +52,8 @@ const assertSchemaIsBenchmark = async (plannedSchemaId: string): Promise<void> =
       plannedSchemaId,
     });
   }
+
+  return { resultType: composition.benchmark.resultType, sessionId: schema.block.sessionId };
 };
 
 export const lmsPerformedSchemaResultApi = {
@@ -55,8 +62,24 @@ export const lmsPerformedSchemaResultApi = {
     performedSessionId: string,
     data: CreatePerformedSchemaResultData,
   ): Promise<PerformedSchemaResult> => {
-    await verifyPerformedSessionOwnership(performedSessionId, userId);
-    await assertSchemaIsBenchmark(data.plannedSchemaId);
+    const { sessionId } = await loadPerformedSessionForAthlete(performedSessionId, userId);
+    const { resultType, sessionId: schemaSessionId } = await loadBenchmarkSchema(
+      data.plannedSchemaId,
+    );
+
+    if (schemaSessionId !== sessionId) {
+      throw new BadRequestError("Schema does not belong to the performed session", {
+        performedSessionId,
+        plannedSchemaId: data.plannedSchemaId,
+      });
+    }
+
+    if (data.result.type !== resultType) {
+      throw new BadRequestError("Result type does not match the benchmark result type", {
+        expected: resultType,
+        received: data.result.type,
+      });
+    }
 
     try {
       const result = await prisma.performedSchemaResult.create({
