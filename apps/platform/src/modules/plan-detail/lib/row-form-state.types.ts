@@ -1,4 +1,10 @@
-import type { Load, PerLimbDistribution, RepNotation } from "@repo/contracts/lms/_shared";
+import type {
+  Intensity,
+  Load,
+  PerLimbDistribution,
+  RepNotation,
+  RestSpec,
+} from "@repo/contracts/lms/_shared";
 
 export type RowFormState = {
   exerciseId: string | null;
@@ -9,6 +15,8 @@ export type RowFormState = {
   tempoInput: string;
   modifierIds: string[];
   notes: string[];
+  intensity: Intensity | null;
+  rest: RestSpec | null;
 };
 
 export type RowRequestMode = { kind: "create"; schemaId: string } | { kind: "edit" };

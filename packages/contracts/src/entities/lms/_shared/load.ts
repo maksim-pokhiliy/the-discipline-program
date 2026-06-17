@@ -25,8 +25,22 @@ export const loadSchema = z
     z.object({ kind: z.literal("bodyweight") }),
     z.object({
       kind: z.literal("byProfile"),
-      entries: z
-        .array(z.object({ label: z.string().trim().min(1), kg: z.number().positive() }))
+      axes: z
+        .array(
+          z.object({
+            name: z.string().trim().min(1),
+            values: z.array(z.string().trim().min(1)).min(1),
+          }),
+        )
+        .min(1)
+        .max(2),
+      cells: z
+        .array(
+          z.object({
+            coords: z.array(z.string().trim().min(1)).min(1).max(2),
+            kg: z.number().positive(),
+          }),
+        )
         .min(1),
     }),
   ])
@@ -35,6 +49,74 @@ export const loadSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "percentage.rangeMax must be > value when set",
+      });
+    }
+
+    if (l.kind === "byProfile") {
+      l.axes.forEach((axis, axisIndex) => {
+        const seenValues = new Set<string>();
+
+        axis.values.forEach((value) => {
+          if (seenValues.has(value)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["axes", axisIndex, "values"],
+              message: `byProfile axis "${axis.name}" has duplicate values; each value must be unique`,
+            });
+          }
+
+          seenValues.add(value);
+        });
+      });
+
+      const expectedCellCount = l.axes.reduce((product, axis) => product * axis.values.length, 1);
+
+      if (l.cells.length !== expectedCellCount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cells"],
+          message: `byProfile.cells must cover every combination of axis values (expected ${expectedCellCount}, got ${l.cells.length})`,
+        });
+      }
+
+      const seenCoordKeys = new Set<string>();
+
+      l.cells.forEach((cell, cellIndex) => {
+        if (cell.coords.length !== l.axes.length) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["cells", cellIndex, "coords"],
+            message: `byProfile cell coords must have one value per axis (expected ${l.axes.length}, got ${cell.coords.length})`,
+          });
+
+          return;
+        }
+
+        cell.coords.forEach((coord, axisIndex) => {
+          const axis = l.axes[axisIndex];
+
+          if (axis === undefined || axis.values.includes(coord)) {
+            return;
+          }
+
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["cells", cellIndex, "coords", axisIndex],
+            message: `byProfile coord "${coord}" is not a value of axis "${axis.name}"`,
+          });
+        });
+
+        const coordKey = cell.coords.join("|");
+
+        if (seenCoordKeys.has(coordKey)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["cells", cellIndex, "coords"],
+            message: "byProfile cells must have unique coords",
+          });
+        }
+
+        seenCoordKeys.add(coordKey);
       });
     }
   });

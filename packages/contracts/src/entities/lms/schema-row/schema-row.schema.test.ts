@@ -33,6 +33,8 @@ const baseRow = {
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: new Date(),
@@ -57,6 +59,40 @@ describe("schemaRowSchema", () => {
         notes: ["keep the chest up"],
       }).success,
     ).toBe(true);
+  });
+
+  it("round-trips a row carrying its own intensity and rest", () => {
+    const result = schemaRowSchema.safeParse({
+      ...baseRow,
+      intensity: { rpe: { value: 8 } },
+      rest: { duration: { value: 120, unit: "sec" }, scope: "between_sets" },
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.intensity).toEqual({ rpe: { value: 8 } });
+      expect(result.data.rest).toEqual({
+        duration: { value: 120, unit: "sec" },
+        scope: "between_sets",
+      });
+    }
+  });
+
+  it("rejects a row that omits intensity (required-present, nullable)", () => {
+    const withoutIntensity: Record<string, unknown> = { ...baseRow };
+
+    delete withoutIntensity.intensity;
+
+    expect(schemaRowSchema.safeParse(withoutIntensity).success).toBe(false);
+  });
+
+  it("rejects a row that omits rest (required-present, nullable)", () => {
+    const withoutRest: Record<string, unknown> = { ...baseRow };
+
+    delete withoutRest.rest;
+
+    expect(schemaRowSchema.safeParse(withoutRest).success).toBe(false);
   });
 
   it("rejects a non-cuid id", () => {
@@ -112,6 +148,17 @@ describe("createSchemaRowSchema", () => {
     expect(
       createSchemaRowSchema.safeParse({ schemaId: cuidA, exerciseId: cuidB, modifierIds: [cuidC] })
         .success,
+    ).toBe(true);
+  });
+
+  it("accepts a create payload with intensity and rest (both optional)", () => {
+    expect(
+      createSchemaRowSchema.safeParse({
+        schemaId: cuidA,
+        exerciseId: cuidB,
+        intensity: { effortPercent: { value: 75 } },
+        rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
+      }).success,
     ).toBe(true);
   });
 

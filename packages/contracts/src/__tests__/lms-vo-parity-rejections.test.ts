@@ -36,9 +36,13 @@ describe("LMS VO parity — rejection coverage (negative space)", () => {
       );
     });
 
-    it("rejects byProfile with a non-positive entry kg", () => {
+    it("rejects byProfile with a non-positive cell kg", () => {
       expect(
-        loadSchema.safeParse({ kind: "byProfile", entries: [{ label: "M", kg: 0 }] }).success,
+        loadSchema.safeParse({
+          kind: "byProfile",
+          axes: [{ name: "sex", values: ["M"] }],
+          cells: [{ coords: ["M"], kg: 0 }],
+        }).success,
       ).toBe(false);
     });
   });

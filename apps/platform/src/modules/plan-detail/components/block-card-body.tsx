@@ -201,6 +201,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 members={item.members}
                 planId={planId}
                 startDate={startDate}
+                blockIntensity={block.intensity}
                 parentIsReorderPending={effectiveReorderPending}
                 onMemberReorder={handleMemberReorder}
               />
@@ -210,6 +211,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 schema={item.schema}
                 planId={planId}
                 startDate={startDate}
+                blockIntensity={block.intensity}
                 parentIsReorderPending={effectiveReorderPending}
                 isDraggable={!isSelectMode}
                 isSelectMode={isSelectMode}

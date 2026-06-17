@@ -259,6 +259,73 @@ describe("lmsSchemaRowApi", () => {
       }
     });
 
+    it("persists a row intensity value object", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+          schemaId: ctx.schema.id,
+          exerciseId: exerciseAId,
+          intensity: { rpe: { value: 8 } },
+        });
+
+        expect(created.intensity).toEqual({ rpe: { value: 8 } });
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.intensity).toEqual({ rpe: { value: 8 } });
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("persists a row rest value object", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+          schemaId: ctx.schema.id,
+          exerciseId: exerciseAId,
+          rest: { duration: { value: 120, unit: "sec" }, scope: "between_sets" },
+        });
+
+        expect(created.rest).toEqual({
+          duration: { value: 120, unit: "sec" },
+          scope: "between_sets",
+        });
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.rest).toEqual({
+          duration: { value: 120, unit: "sec" },
+          scope: "between_sets",
+        });
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("leaves intensity and rest null when neither is supplied", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+          schemaId: ctx.schema.id,
+          exerciseId: exerciseAId,
+        });
+
+        expect(created.intensity).toBeNull();
+        expect(created.rest).toBeNull();
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.intensity).toBeNull();
+        expect(stored?.rest).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     it("rejects when caller does not own the parent schema's plan", async () => {
       const ctx = await provisionSchema();
 
@@ -544,6 +611,86 @@ describe("lmsSchemaRowApi", () => {
         });
 
         expect(updated.load).toEqual({ kind: "absolute", count: 1, kg: 80 });
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("updates intensity from null to populated", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
+          intensity: { effortPercent: { value: 75 } },
+        });
+
+        expect(updated.intensity).toEqual({ effortPercent: { value: 75 } });
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.intensity).toEqual({ effortPercent: { value: 75 } });
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("updates rest while leaving an existing intensity untouched (conditional spread)", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        intensity: { rpe: { value: 8 } },
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
+          rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
+        });
+
+        expect(updated.rest).toEqual({
+          duration: { value: 90, unit: "sec" },
+          scope: "between_sets",
+        });
+        expect(updated.intensity).toEqual({ rpe: { value: 8 } });
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.rest).toEqual({
+          duration: { value: 90, unit: "sec" },
+          scope: "between_sets",
+        });
+        expect(stored?.intensity).toEqual({ rpe: { value: 8 } });
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("clears intensity and rest by writing JSON null on explicit null", async () => {
+      const ctx = await provisionSchema();
+      const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: ctx.schema.id,
+        exerciseId: exerciseAId,
+        intensity: { rpe: { value: 8 } },
+        rest: { duration: { value: 120, unit: "sec" }, scope: "between_sets" },
+      });
+
+      try {
+        const updated = await lmsSchemaRowApi.update(coach.user.id, created.id, {
+          intensity: null,
+          rest: null,
+        });
+
+        expect(updated.intensity).toBeNull();
+        expect(updated.rest).toBeNull();
+
+        const stored = await cleanupRaw.schemaRow.findUnique({ where: { id: created.id } });
+
+        expect(stored?.intensity).toBeNull();
+        expect(stored?.rest).toBeNull();
       } finally {
         await ctx.cleanup();
       }

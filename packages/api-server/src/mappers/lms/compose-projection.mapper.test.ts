@@ -48,6 +48,8 @@ const makeExerciseRow = (id: string): SchemaRow => ({
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: NOW,

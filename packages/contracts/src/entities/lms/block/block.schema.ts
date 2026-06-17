@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { notesListSchema } from "../_shared";
+import { intensitySchema, notesListSchema } from "../_shared";
 import { labelSchema } from "../label";
 import { schemaWithBodySchema } from "../schema";
 import { schemaGroupSchema } from "../schema-group";
@@ -11,6 +11,7 @@ export const blockSchema = z.object({
   id: z.string().cuid(),
   sessionId: z.string().cuid(),
   order: z.number().int().positive(),
+  intensity: intensitySchema.nullable(),
   notes: notesListSchema.nullable(),
   labels: z.array(labelSchema),
   schemas: z.array(schemaWithBodySchema),
@@ -20,6 +21,7 @@ export const blockSchema = z.object({
 });
 
 export const createBlockSchema = z.object({
+  intensity: intensitySchema.nullable().optional(),
   notes: notesListSchema.nullable().optional(),
   labelIds: z
     .array(z.string().cuid())

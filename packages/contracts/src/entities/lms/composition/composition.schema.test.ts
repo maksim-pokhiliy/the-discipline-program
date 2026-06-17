@@ -75,25 +75,78 @@ describe("repetitionAxisSchema", () => {
 
   it("accepts interval with positive work/off/count", () => {
     expect(
-      repetitionAxisSchema.safeParse({ kind: "interval", workMin: 2, offMin: 1, count: 3 }).success,
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 2, unit: "min" },
+        off: { value: 1, unit: "min" },
+        count: 3,
+      }).success,
     ).toBe(true);
   });
 
-  it("accepts interval with offMin zero", () => {
+  it("accepts a sub-minute Tabata interval (work/off in seconds)", () => {
     expect(
-      repetitionAxisSchema.safeParse({ kind: "interval", workMin: 2, offMin: 0, count: 3 }).success,
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 20, unit: "sec" },
+        off: { value: 10, unit: "sec" },
+        count: 8,
+      }).success,
     ).toBe(true);
   });
 
-  it("rejects interval with workMin zero", () => {
+  it("accepts interval with off value zero", () => {
     expect(
-      repetitionAxisSchema.safeParse({ kind: "interval", workMin: 0, offMin: 1, count: 3 }).success,
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 2, unit: "min" },
+        off: { value: 0, unit: "min" },
+        count: 3,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts a fractional work value (non-integer durations allowed)", () => {
+    expect(
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 1.5, unit: "min" },
+        off: { value: 0.5, unit: "min" },
+        count: 4,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects interval with work value zero", () => {
+    expect(
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 0, unit: "sec" },
+        off: { value: 10, unit: "sec" },
+        count: 8,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects interval with an unknown duration unit", () => {
+    expect(
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 20, unit: "hours" },
+        off: { value: 10, unit: "sec" },
+        count: 8,
+      }).success,
     ).toBe(false);
   });
 
   it("rejects interval with count zero", () => {
     expect(
-      repetitionAxisSchema.safeParse({ kind: "interval", workMin: 2, offMin: 1, count: 0 }).success,
+      repetitionAxisSchema.safeParse({
+        kind: "interval",
+        work: { value: 2, unit: "min" },
+        off: { value: 1, unit: "min" },
+        count: 0,
+      }).success,
     ).toBe(false);
   });
 
@@ -154,6 +207,33 @@ describe("compositionSchema", () => {
         rest: { duration: { value: 90, unit: "sec" }, scope: "between_rounds" },
       }).success,
     ).toBe(true);
+  });
+
+  it("accepts a cross-cutting cap alongside a ladder repetition (Fran 21-15-9 capped at 12 min)", () => {
+    expect(
+      compositionSchema.safeParse({
+        repetition: { kind: "ladder", steps: [21, 15, 9] },
+        cap: { min: 12, unit: "min" },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts a redundant-but-valid cap on a timeCap repetition (cap is orthogonal, not a reject)", () => {
+    expect(
+      compositionSchema.safeParse({
+        repetition: { kind: "timeCap", cap: { min: 10, unit: "min" } },
+        cap: { min: 12, unit: "min" },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a malformed cap (max not greater than min)", () => {
+    expect(
+      compositionSchema.safeParse({
+        repetition: { kind: "ladder", steps: [21, 15, 9] },
+        cap: { min: 12, max: 10, unit: "min" },
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects the dropped arrangement axis (strict)", () => {

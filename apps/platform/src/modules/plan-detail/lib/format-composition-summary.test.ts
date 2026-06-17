@@ -39,12 +39,30 @@ describe("formatCompositionSummary repetition labels", () => {
     expect(formatCompositionSummary(composition)).toEqual([{ text: "cap 5’" }]);
   });
 
-  it("labels an interval as count by work over off minutes", () => {
+  it("labels a minute interval as count by work over off minutes", () => {
     const composition: Composition = {
-      repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+      repetition: {
+        kind: "interval",
+        work: { value: 2, unit: "min" },
+        off: { value: 1, unit: "min" },
+        count: 3,
+      },
     };
 
     expect(formatCompositionSummary(composition)).toEqual([{ text: "3×2’/1’" }]);
+  });
+
+  it("labels a sub-minute Tabata interval with seconds (colon prefix)", () => {
+    const composition: Composition = {
+      repetition: {
+        kind: "interval",
+        work: { value: 20, unit: "sec" },
+        off: { value: 10, unit: "sec" },
+        count: 8,
+      },
+    };
+
+    expect(formatCompositionSummary(composition)).toEqual([{ text: "8×:20/:10" }]);
   });
 
   it("omits a once repetition while still rendering it", () => {
@@ -79,5 +97,31 @@ describe("formatCompositionSummary rest labels", () => {
 
   it("returns an empty list for an empty composition", () => {
     expect(formatCompositionSummary({})).toEqual([]);
+  });
+});
+
+describe("formatCompositionSummary cap part", () => {
+  it("renders a cross-cutting minute cap after the repetition part", () => {
+    const composition: Composition = {
+      repetition: { kind: "ladder", steps: [21, 15, 9] },
+      cap: { min: 12, unit: "min" },
+    };
+
+    expect(formatCompositionSummary(composition)).toEqual([
+      { text: "ladder 21-15-9" },
+      { text: "cap 12’" },
+    ]);
+  });
+
+  it("renders a sub-minute cap with the seconds mark", () => {
+    const composition: Composition = {
+      repetition: { kind: "count", count: 3 },
+      cap: { min: 30, unit: "sec" },
+    };
+
+    expect(formatCompositionSummary(composition)).toEqual([
+      { text: "3 rounds" },
+      { text: "cap 30s" },
+    ]);
   });
 });

@@ -25,9 +25,10 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       expect(
         loadSchema.safeParse({
           kind: "byProfile",
-          entries: [
-            { label: "M", kg: 24 },
-            { label: "F", kg: 16 },
+          axes: [{ name: "sex", values: ["M", "F"] }],
+          cells: [
+            { coords: ["M"], kg: 24 },
+            { coords: ["F"], kg: 16 },
           ],
         }).success,
       ).toBe(true);

@@ -39,6 +39,7 @@ const baseBlock = {
   id: "clp9z8x7w0000abcd1234dddd",
   sessionId: "clp9z8x7w0000abcd1234abcd",
   order: 10,
+  intensity: null,
   notes: ["block focus"],
   labels: [baseLabel],
   schemas: [],

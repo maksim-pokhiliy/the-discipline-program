@@ -10,11 +10,12 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Checkbox, IconButton, Stack, Tooltip } from "@mui/material";
 
+import { type Intensity } from "@repo/contracts/lms/_shared";
 import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
-import { formatRepetitionLabel } from "../lib/format-composition-summary";
+import { formatCapSummary, formatRepetitionLabel } from "../lib/format-composition-summary";
 
 import { SchemaCardMeta } from "./schema-card-meta";
 import { SchemaCompositionTag } from "./schema-composition-tag";
@@ -41,6 +42,7 @@ const tooltipChildSx = { display: "inline-flex" };
 
 type SchemaCardHeadProps = {
   schema: SchemaWithBody;
+  blockIntensity?: Intensity | null;
   isMutationPending: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -59,6 +61,7 @@ type SchemaCardHeadProps = {
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   schema,
+  blockIntensity = null,
   isMutationPending,
   dragAttributes,
   dragListeners,
@@ -78,6 +81,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
     composition !== null
       ? (formatRepetitionLabel(composition) ?? deriveCompositionLabel(composition).kind)
       : null;
+  const capTag = composition !== null ? formatCapSummary(composition) : null;
 
   return (
     <Stack
@@ -145,6 +149,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
           sx={{ minWidth: 0 }}
         >
           {compositionTag !== null ? <SchemaCompositionTag label={compositionTag} /> : null}
+          {capTag !== null ? <SchemaCompositionTag label={capTag} /> : null}
           <InlineEditText
             value={schema.schema.header ?? ""}
             onCommit={onTitleCommit}
@@ -156,7 +161,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
             sx={{ flex: 1, minWidth: 0 }}
           />
         </Stack>
-        <SchemaCardMeta schema={schema} />
+        <SchemaCardMeta schema={schema} blockIntensity={blockIntensity} />
       </Stack>
 
       <Tooltip title={EDIT_TOOLTIP}>

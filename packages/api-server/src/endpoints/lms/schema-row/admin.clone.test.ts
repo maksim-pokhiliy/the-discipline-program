@@ -195,6 +195,8 @@ describe("lmsSchemaRowApi.duplicate", () => {
       expect(clone.side).toBeNull();
       expect(clone.tempo).toBeNull();
       expect(clone.media).toBeNull();
+      expect(clone.intensity).toBeNull();
+      expect(clone.rest).toBeNull();
       expect(clone.notes).toBeNull();
       expect(clone.sets).toBeNull();
       expect(clone.exerciseId).toBe(ctx.catalog.exerciseId);

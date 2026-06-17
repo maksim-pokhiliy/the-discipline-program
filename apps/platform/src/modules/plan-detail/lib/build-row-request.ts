@@ -1,9 +1,11 @@
 import type { ZodIssue } from "zod";
 
 import type {
+  Intensity,
   Load,
   PerLimbDistribution,
   RepNotation,
+  RestSpec,
   TempoModifier,
 } from "@repo/contracts/lms/_shared";
 import {
@@ -32,6 +34,8 @@ type RowRequestPayload = {
   tempo: TempoModifier | null;
   modifierIds: string[];
   notes: string[] | null;
+  intensity: Intensity | null;
+  rest: RestSpec | null;
 };
 
 const buildNotes = (notes: string[]): string[] | null => {
@@ -61,6 +65,8 @@ export const buildRowRequest = (state: RowFormState, mode: RowRequestMode): RowR
     tempo: parseTempo(state.tempoInput),
     modifierIds: state.modifierIds,
     notes: buildNotes(state.notes),
+    intensity: state.intensity,
+    rest: state.rest,
   };
 
   if (mode.kind === "edit") {

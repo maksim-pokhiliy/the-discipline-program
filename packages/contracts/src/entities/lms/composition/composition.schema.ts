@@ -12,6 +12,8 @@ import {
   timeCapSchema,
 } from "../_shared";
 
+export const INTERVAL_DURATION_UNITS = ["sec", "min"] as const;
+
 export const repetitionAxisSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("once") }).strict(),
   z.object({ kind: z.literal("count"), count: exactOrRangeSchema }).strict(),
@@ -32,8 +34,8 @@ export const repetitionAxisSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("interval"),
-      workMin: z.number().int().positive(),
-      offMin: z.number().int().nonnegative(),
+      work: z.object({ value: z.number().positive(), unit: z.enum(INTERVAL_DURATION_UNITS) }),
+      off: z.object({ value: z.number().nonnegative(), unit: z.enum(INTERVAL_DURATION_UNITS) }),
       count: z.number().int().positive(),
     })
     .strict(),
@@ -45,6 +47,7 @@ export const compositionSchema = z
   .object({
     repetition: repetitionAxisSchema.optional(),
     rest: restAxisSchema.optional(),
+    cap: timeCapSchema.optional(),
   })
   .strict();
 

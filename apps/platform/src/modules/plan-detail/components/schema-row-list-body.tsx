@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Stack } from "@mui/material";
 
+import { type Intensity } from "@repo/contracts/lms/_shared";
 import { type RowItem } from "@repo/contracts/lms/row-group";
 
 import { useCatalog, useReorderSchemaRows } from "@app/lib/hooks";
@@ -44,6 +45,8 @@ type SchemaRowListBodyProps = {
   startDate: string;
   items: RowItem[];
   minuteLabelById: Map<string, string>;
+  blockIntensity: Intensity | null;
+  schemaIntensity: Intensity | null;
   parentIsReorderPending: boolean;
   isSelectMode: boolean;
   selectedIds: ReadonlySet<string>;
@@ -59,6 +62,8 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
   startDate,
   items,
   minuteLabelById,
+  blockIntensity,
+  schemaIntensity,
   parentIsReorderPending,
   isSelectMode,
   selectedIds,
@@ -187,6 +192,8 @@ export const SchemaRowListBody: React.FC<SchemaRowListBodyProps> = ({
                 startDate={startDate}
                 index={index}
                 minuteLabel={minuteLabelById.get(item.row.id) ?? null}
+                blockIntensity={blockIntensity}
+                schemaIntensity={schemaIntensity}
                 isReorderPending={effectiveReorderPending}
                 isDraggable={!isSelectMode}
                 isSelectMode={isSelectMode}

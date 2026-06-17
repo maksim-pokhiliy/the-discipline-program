@@ -73,7 +73,14 @@ describe("Gauntlet D — 3x(2min work / 1min off) interval, flat rows", () => {
     id: cuidIntervalD,
     header: "MAX wall balls",
     notes: null,
-    composition: { repetition: { kind: "interval" as const, workMin: 2, offMin: 1, count: 3 } },
+    composition: {
+      repetition: {
+        kind: "interval" as const,
+        work: { value: 2, unit: "min" as const },
+        off: { value: 1, unit: "min" as const },
+        count: 3,
+      },
+    },
     children: [
       exerciseRow(cuidKbSwings, cuidKbSwings),
       exerciseRow(cuidPushPress, cuidPushPress),
@@ -84,7 +91,12 @@ describe("Gauntlet D — 3x(2min work / 1min off) interval, flat rows", () => {
   it("expresses interval(work:2, off:1, count:3) as a bundle", () => {
     expect(
       compositionSchema.safeParse({
-        repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+        repetition: {
+          kind: "interval",
+          work: { value: 2, unit: "min" },
+          off: { value: 1, unit: "min" },
+          count: 3,
+        },
       }).success,
     ).toBe(true);
   });

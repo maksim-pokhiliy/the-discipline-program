@@ -70,6 +70,7 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: "clp9z8x7w0000abcd1234blk1",
   sessionId: "clp9z8x7w0000abcd1234ses1",
   order: 1,
+  intensity: null,
   notes: null,
   labels: [],
   schemas: [],

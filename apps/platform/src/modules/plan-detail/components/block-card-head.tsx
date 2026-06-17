@@ -1,17 +1,23 @@
 "use client";
 
+import { useMemo } from "react";
+
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import BoltIcon from "@mui/icons-material/Bolt";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import { BLOCK_CONSTANTS, type Block } from "@repo/contracts/lms/block";
 import type { Label } from "@repo/contracts/lms/label";
-import { LabelPickerChip } from "@repo/ui";
+import { IndicatorChip, LabelPickerChip } from "@repo/ui";
 
 import { useCreateLabelOption } from "@app/lib/hooks";
+
+import { formatIntensityChips } from "../lib/format-block-meta";
 
 const DRAG_ARIA = "Drag block";
 const DELETE_ARIA = "Delete block";
@@ -19,6 +25,8 @@ const DELETE_TOOLTIP = "Delete block";
 const DUPLICATE_ARIA = "Duplicate block";
 const DUPLICATE_TOOLTIP = "Duplicate block";
 const LABELS_ARIA = "Block labels";
+const INTENSITY_ARIA = "Edit block intensity";
+const INTENSITY_TOOLTIP = "Edit block intensity";
 
 const tooltipChildSx = { display: "inline-flex" };
 
@@ -34,6 +42,8 @@ type BlockCardHeadProps = {
   onLabelsChange: (labelIds: string[]) => void;
   onDeleteOpen: () => void;
   onDuplicate?: () => void;
+  intensity: Intensity | null;
+  onIntensityOpen: () => void;
 };
 
 export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
@@ -48,8 +58,12 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
   onLabelsChange,
   onDeleteOpen,
   onDuplicate,
+  intensity,
+  onIntensityOpen,
 }) => {
   const createBlockLabel = useCreateLabelOption("BLOCK");
+
+  const intensityChips = useMemo(() => formatIntensityChips(intensity), [intensity]);
 
   return (
     <Stack
@@ -118,7 +132,29 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
           onCreateOption={createBlockLabel}
           ariaLabel={LABELS_ARIA}
         />
+
+        {intensityChips.map((chip, index) => (
+          <IndicatorChip
+            key={`${String(index)}-${chip.text}`}
+            tone={chip.tone}
+            label={chip.text}
+            dot={false}
+          />
+        ))}
       </Stack>
+
+      <Tooltip title={INTENSITY_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onIntensityOpen}
+            disabled={isMutationPending}
+            aria-label={INTENSITY_ARIA}
+          >
+            <BoltIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
 
       <Tooltip title={DUPLICATE_TOOLTIP}>
         <Box component="span" style={tooltipChildSx}>

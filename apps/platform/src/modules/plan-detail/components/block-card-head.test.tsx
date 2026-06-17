@@ -13,6 +13,7 @@ const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const SESSION_ID = "clp9z8x7w0000abcd1234ses1";
 const DUPLICATE_LABEL = "Duplicate block";
 const DELETE_LABEL = "Delete block";
+const INTENSITY_LABEL = "Edit block intensity";
 
 const DRAG_ATTRIBUTES: DraggableAttributes = {
   role: "button",
@@ -27,6 +28,7 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: BLOCK_ID,
   sessionId: SESSION_ID,
   order: 1,
+  intensity: null,
   notes: null,
   labels: [],
   schemas: [],
@@ -42,6 +44,7 @@ type RenderOptions = {
   isMutationPending?: boolean;
   onDuplicate?: () => void;
   onDeleteOpen?: () => void;
+  onIntensityOpen?: () => void;
 };
 
 const renderHead = ({
@@ -50,6 +53,7 @@ const renderHead = ({
   isMutationPending = false,
   onDuplicate = vi.fn(),
   onDeleteOpen = vi.fn(),
+  onIntensityOpen = vi.fn(),
 }: RenderOptions = {}) =>
   render(
     <BlockCardHead
@@ -64,6 +68,8 @@ const renderHead = ({
       onLabelsChange={vi.fn()}
       onDeleteOpen={onDeleteOpen}
       onDuplicate={onDuplicate}
+      intensity={block.intensity}
+      onIntensityOpen={onIntensityOpen}
     />,
   );
 
@@ -93,5 +99,23 @@ describe("BlockCardHead duplicate affordance (T4.3 / Must-Test #8)", () => {
     renderHead({ isMutationPending: true });
 
     expect(screen.getByRole("button", { name: DUPLICATE_LABEL })).toBeDisabled();
+  });
+});
+
+describe("BlockCardHead intensity affordance (D-V2-INTENSITY-TRINITY block scope)", () => {
+  it("renders the block's own intensity chip", () => {
+    renderHead({ block: makeBlock({ intensity: { effortPercent: { value: 85 } } }) });
+
+    expect(screen.getByText("EFFORT 85%")).toBeInTheDocument();
+  });
+
+  it("fires the threaded onIntensityOpen when the edit-intensity button is clicked", () => {
+    const onIntensityOpen = vi.fn();
+
+    renderHead({ onIntensityOpen });
+
+    fireEvent.click(screen.getByRole("button", { name: INTENSITY_LABEL }));
+
+    expect(onIntensityOpen).toHaveBeenCalledTimes(1);
   });
 });

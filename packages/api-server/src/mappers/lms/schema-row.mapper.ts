@@ -5,11 +5,13 @@ import {
 } from "@prisma/client";
 
 import {
+  intensitySchema,
   loadSchema,
   mediaReferenceSchema,
   notesListSchema,
   perLimbDistributionSchema,
   repNotationSchema,
+  restSpecSchema,
   tempoModifierSchema,
 } from "@repo/contracts/lms/_shared";
 import { type SchemaRow } from "@repo/contracts/lms/schema-row";
@@ -32,6 +34,8 @@ export const mapToSchemaRow = (r: PrismaSchemaRowWithModifiers): SchemaRow => ({
   side: r.side === null ? null : perLimbDistributionSchema.parse(r.side),
   tempo: r.tempo === null ? null : tempoModifierSchema.parse(r.tempo),
   media: r.media === null ? null : mediaReferenceSchema.parse(r.media),
+  intensity: r.intensity === null ? null : intensitySchema.parse(r.intensity),
+  rest: r.rest === null ? null : restSpecSchema.parse(r.rest),
   modifiers: [...r.modifierAssignments]
     .sort((a, b) => a.order - b.order)
     .map((a) => mapToModifier(a.modifier)),

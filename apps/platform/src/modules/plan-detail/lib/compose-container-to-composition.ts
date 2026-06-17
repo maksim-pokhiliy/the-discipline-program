@@ -20,8 +20,8 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
     case "interval":
       return {
         kind: "interval",
-        workMin: repetition.workMin,
-        offMin: repetition.offMin,
+        work: repetition.work,
+        off: repetition.off,
         count: repetition.count,
       };
     default:
@@ -32,4 +32,5 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
 export const composeContainerToComposition = (schema: SchemaDraft): Composition => ({
   ...(schema.repetition !== undefined && { repetition: mapRepetition(schema.repetition) }),
   ...(schema.rest !== undefined && { rest: schema.rest }),
+  ...(schema.cap != null && { cap: schema.cap }),
 });

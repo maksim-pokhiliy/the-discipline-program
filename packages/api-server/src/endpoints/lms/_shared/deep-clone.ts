@@ -59,6 +59,8 @@ export const deepCloneRow = async (
       side: marshalNullableJson(source.side),
       tempo: marshalNullableJson(source.tempo),
       media: marshalNullableJson(source.media),
+      intensity: marshalNullableJson(source.intensity),
+      rest: marshalNullableJson(source.rest),
       notes: marshalNullableJson(source.notes),
     },
   });
@@ -207,7 +209,12 @@ export const deepCloneBlock = async (
   order: number,
 ): Promise<string> => {
   const created = await tx.block.create({
-    data: { sessionId, order, notes: marshalNullableJson(source.notes) },
+    data: {
+      sessionId,
+      order,
+      intensity: marshalNullableJson(source.intensity),
+      notes: marshalNullableJson(source.notes),
+    },
   });
 
   if (source.labelAssignments.length > 0) {

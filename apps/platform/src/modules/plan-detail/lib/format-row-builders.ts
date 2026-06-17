@@ -3,12 +3,19 @@ import { type ExerciseNature } from "@repo/contracts/lms/exercise";
 import { type SchemaRow } from "@repo/contracts/lms/schema-row";
 import { type RowKind } from "@repo/ui";
 
+import { formatEffectiveIntensityChips } from "./format-block-meta";
 import { formatLoad } from "./format-load";
 import { type ExerciseById } from "./format-percentage-reference";
 import { formatRepNotation } from "./format-rep-notation";
-import { type FormatRowResult, type RowSummary } from "./format-row.types";
+import { formatRestSpec } from "./format-rest-spec";
+import {
+  type FormatRowResult,
+  type RowIntensityContext,
+  type RowSummary,
+} from "./format-row.types";
 import { formatSide } from "./format-side";
 import { formatTempo } from "./format-tempo";
+import { resolveIntensity } from "./resolve-intensity";
 
 const EXERCISE_FALLBACK = "exercise";
 const SETS_SUFFIX = "×";
@@ -58,30 +65,41 @@ const buildVolume = (row: SchemaRow): string | null => {
   return [setsPart, repsPart].filter(Boolean).join(VOLUME_SEPARATOR) || null;
 };
 
-const buildSummary = (row: SchemaRow, exerciseById: ExerciseById): RowSummary => ({
-  volume: buildVolume(row),
-  load: row.load !== null ? formatLoad(row.load, exerciseById) : null,
-  side: row.side !== null ? formatSide(row.side) : null,
-  tempo:
-    row.tempo !== null
-      ? typeof row.tempo === "string"
-        ? row.tempo
-        : formatTempo(row.tempo)
-      : null,
-  modifiers: row.modifiers.map((modifier) => modifier.name),
-  notes: [],
-});
+const buildSummary = (
+  row: SchemaRow,
+  exerciseById: ExerciseById,
+  context: RowIntensityContext,
+): RowSummary => {
+  const resolved = resolveIntensity(context.blockIntensity, context.schemaIntensity, row.intensity);
+
+  return {
+    volume: buildVolume(row),
+    load: row.load !== null ? formatLoad(row.load, exerciseById) : null,
+    side: row.side !== null ? formatSide(row.side) : null,
+    tempo:
+      row.tempo !== null
+        ? typeof row.tempo === "string"
+          ? row.tempo
+          : formatTempo(row.tempo)
+        : null,
+    intensityChips: formatEffectiveIntensityChips(resolved, "row"),
+    rest: row.rest !== null ? formatRestSpec(row.rest) : null,
+    modifiers: row.modifiers.map((modifier) => modifier.name),
+    notes: [],
+  };
+};
 
 export const buildRow = (
   row: SchemaRow,
   exerciseById: ExerciseById,
   index: number,
+  context: RowIntensityContext,
 ): FormatRowResult => {
   const renderKind = resolveRenderKind(row.exerciseId, exerciseById);
 
   return {
     mainText: resolveExerciseName(row.exerciseId, exerciseById),
-    summary: buildSummary(row, exerciseById),
+    summary: buildSummary(row, exerciseById, context),
     kindBadge: renderKind.kindBadge,
     kindCls: renderKind.kindCls,
     dashed: renderKind.dashed,

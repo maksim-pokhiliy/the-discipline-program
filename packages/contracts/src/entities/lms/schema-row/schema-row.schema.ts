@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import {
+  intensitySchema,
   loadSchema,
   mediaReferenceSchema,
   notesListSchema,
   perLimbDistributionSchema,
   repNotationSchema,
+  restSpecSchema,
   tempoModifierSchema,
 } from "../_shared";
 import { modifierRefSchema } from "../modifier";
@@ -24,6 +26,8 @@ export const schemaRowSchema = z.object({
   side: perLimbDistributionSchema.nullable(),
   tempo: tempoModifierSchema.nullable(),
   media: mediaReferenceSchema.nullable(),
+  intensity: intensitySchema.nullable(),
+  rest: restSpecSchema.nullable(),
   modifiers: z.array(modifierRefSchema),
   notes: notesListSchema.nullable(),
   createdAt: z.date(),
@@ -39,6 +43,8 @@ export const createSchemaRowSchema = z.object({
   side: perLimbDistributionSchema.nullable().optional(),
   tempo: tempoModifierSchema.nullable().optional(),
   media: mediaReferenceSchema.nullable().optional(),
+  intensity: intensitySchema.nullable().optional(),
+  rest: restSpecSchema.nullable().optional(),
   modifierIds: z
     .array(z.string().cuid())
     .max(SCHEMA_ROW_CONSTANTS.MAX_MODIFIERS_PER_ROW)

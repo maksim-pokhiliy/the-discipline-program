@@ -33,6 +33,7 @@ const makeBlock = ({ schemaCount }: MakeBlockOptions): SessionWithLabel["blocks"
   id: "clp9z8x7w0000abcd1234blk1",
   sessionId: "clp9z8x7w0000abcd1234ses1",
   order: 10,
+  intensity: null,
   notes: null,
   labels: [],
   schemas: Array.from({ length: schemaCount }, makeSchema),

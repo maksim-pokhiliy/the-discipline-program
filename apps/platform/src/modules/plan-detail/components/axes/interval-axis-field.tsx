@@ -1,19 +1,27 @@
 "use client";
 
-import { Stack } from "@mui/material";
+import { Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
+
+import { INTERVAL_DURATION_UNITS } from "@repo/contracts/lms/composition";
 
 import { fieldErrorsFor } from "../../lib/axis-field-errors";
 import { NumberField } from "../number-field";
 
-const FIELD_MIN = 1;
-const OFF_FIELD_MIN = 0;
-const FIELD_STEP = 1;
+import type { IntervalDuration } from "./axis-draft.types";
+
+const WORK_VALUE_MIN = 0;
+const OFF_VALUE_MIN = 0;
+const DURATION_STEP = "any" as const;
+const COUNT_MIN = 1;
+const COUNT_STEP = 1;
 const FIELD_WIDTH = 110;
-const WORK_LABEL = "Work (min)";
-const OFF_LABEL = "Off (min)";
+const WORK_LABEL = "Work";
+const OFF_LABEL = "Off";
 const COUNT_LABEL = "Count";
 
-type IntervalAxisValue = { workMin: number; offMin: number; count: number };
+type IntervalDurationUnit = IntervalDuration["unit"];
+
+type IntervalAxisValue = { work: IntervalDuration; off: IntervalDuration; count: number };
 
 type IntervalAxisFieldProps = {
   value: IntervalAxisValue;
@@ -28,36 +36,82 @@ export const IntervalAxisField: React.FC<IntervalAxisFieldProps> = ({
 }) => {
   const errors = fieldErrorsFor({ kind: "interval", ...value });
 
+  const handleWorkUnit = (_: unknown, unit: IntervalDurationUnit | null): void => {
+    if (unit === null) {
+      return;
+    }
+
+    onChange({ ...value, work: { ...value.work, unit } });
+  };
+
+  const handleOffUnit = (_: unknown, unit: IntervalDurationUnit | null): void => {
+    if (unit === null) {
+      return;
+    }
+
+    onChange({ ...value, off: { ...value.off, unit } });
+  };
+
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
       <NumberField
         label={WORK_LABEL}
-        value={value.workMin}
-        onChange={(workMin) => onChange({ ...value, workMin })}
-        min={FIELD_MIN}
-        step={FIELD_STEP}
-        error={errors.get("workMin")}
+        value={value.work.value}
+        onChange={(next) => onChange({ ...value, work: { ...value.work, value: next } })}
+        min={WORK_VALUE_MIN}
+        step={DURATION_STEP}
+        error={errors.get("work")}
         disabled={disabled}
         maxWidth={FIELD_WIDTH}
       />
 
+      <ToggleButtonGroup
+        aria-label="interval work unit"
+        exclusive
+        size="small"
+        value={value.work.unit}
+        onChange={handleWorkUnit}
+        disabled={disabled}
+      >
+        {INTERVAL_DURATION_UNITS.map((unit) => (
+          <ToggleButton key={unit} value={unit}>
+            {unit}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+
       <NumberField
         label={OFF_LABEL}
-        value={value.offMin}
-        onChange={(offMin) => onChange({ ...value, offMin })}
-        min={OFF_FIELD_MIN}
-        step={FIELD_STEP}
-        error={errors.get("offMin")}
+        value={value.off.value}
+        onChange={(next) => onChange({ ...value, off: { ...value.off, value: next } })}
+        min={OFF_VALUE_MIN}
+        step={DURATION_STEP}
+        error={errors.get("off")}
         disabled={disabled}
         maxWidth={FIELD_WIDTH}
       />
+
+      <ToggleButtonGroup
+        aria-label="interval off unit"
+        exclusive
+        size="small"
+        value={value.off.unit}
+        onChange={handleOffUnit}
+        disabled={disabled}
+      >
+        {INTERVAL_DURATION_UNITS.map((unit) => (
+          <ToggleButton key={unit} value={unit}>
+            {unit}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
 
       <NumberField
         label={COUNT_LABEL}
         value={value.count}
         onChange={(count) => onChange({ ...value, count })}
-        min={FIELD_MIN}
-        step={FIELD_STEP}
+        min={COUNT_MIN}
+        step={COUNT_STEP}
         error={errors.get("count")}
         disabled={disabled}
         maxWidth={FIELD_WIDTH}

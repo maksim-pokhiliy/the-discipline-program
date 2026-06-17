@@ -71,46 +71,101 @@ describe("cadence/interval axis fields surface contract errors while storing the
     expect(screen.getByText(NAN_MESSAGE)).toBeInTheDocument();
   });
 
-  it("shows the positivity error on a negative interval workMin, still storing -5", () => {
+  it("shows the positivity error on a negative interval work value, still storing -5", () => {
     render(
       <InspectorHarness
-        initial={baseContainer({ kind: "interval", workMin: 2, offMin: 1, count: 3 })}
+        initial={baseContainer({
+          kind: "interval",
+          work: { value: 2, unit: "min" },
+          off: { value: 1, unit: "min" },
+          count: 3,
+        })}
       />,
     );
 
-    fireEvent.change(spinbuttonByLabel("Work (min)"), { target: { value: "-5" } });
+    fireEvent.change(spinbuttonByLabel("Work"), { target: { value: "-5" } });
 
-    expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: -5, offMin: 1, count: 3 });
-    expect(spinbuttonByLabel("Work (min)")).toHaveAttribute("aria-invalid", "true");
+    expect(readRepetition()).toStrictEqual({
+      kind: "interval",
+      work: { value: -5, unit: "min" },
+      off: { value: 1, unit: "min" },
+      count: 3,
+    });
+    expect(spinbuttonByLabel("Work")).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText(POSITIVE_MESSAGE)).toBeInTheDocument();
   });
 
-  it("accepts interval offMin 0 with no error and a min attribute of 0", () => {
+  it("accepts interval off value 0 with no error and a min attribute of 0", () => {
     render(
       <InspectorHarness
-        initial={baseContainer({ kind: "interval", workMin: 2, offMin: 1, count: 3 })}
+        initial={baseContainer({
+          kind: "interval",
+          work: { value: 2, unit: "min" },
+          off: { value: 1, unit: "min" },
+          count: 3,
+        })}
       />,
     );
 
-    fireEvent.change(spinbuttonByLabel("Off (min)"), { target: { value: "0" } });
+    fireEvent.change(spinbuttonByLabel("Off"), { target: { value: "0" } });
 
-    expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: 2, offMin: 0, count: 3 });
-    expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("aria-invalid", "false");
-    expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("min", "0");
+    expect(readRepetition()).toStrictEqual({
+      kind: "interval",
+      work: { value: 2, unit: "min" },
+      off: { value: 0, unit: "min" },
+      count: 3,
+    });
+    expect(spinbuttonByLabel("Off")).toHaveAttribute("aria-invalid", "false");
+    expect(spinbuttonByLabel("Off")).toHaveAttribute("min", "0");
   });
 
-  it("shows the nonnegative error on a negative interval offMin, still storing -1 (QA-T25-7)", () => {
+  it("shows the nonnegative error on a negative interval off value, still storing -1 (QA-T25-7)", () => {
     render(
       <InspectorHarness
-        initial={baseContainer({ kind: "interval", workMin: 2, offMin: 1, count: 3 })}
+        initial={baseContainer({
+          kind: "interval",
+          work: { value: 2, unit: "min" },
+          off: { value: 1, unit: "min" },
+          count: 3,
+        })}
       />,
     );
 
-    fireEvent.change(spinbuttonByLabel("Off (min)"), { target: { value: "-1" } });
+    fireEvent.change(spinbuttonByLabel("Off"), { target: { value: "-1" } });
 
-    expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: 2, offMin: -1, count: 3 });
-    expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("aria-invalid", "true");
+    expect(readRepetition()).toStrictEqual({
+      kind: "interval",
+      work: { value: 2, unit: "min" },
+      off: { value: -1, unit: "min" },
+      count: 3,
+    });
+    expect(spinbuttonByLabel("Off")).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText(NONNEGATIVE_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("toggles the interval work unit from min to sec, storing the typed value (sub-minute)", () => {
+    render(
+      <InspectorHarness
+        initial={baseContainer({
+          kind: "interval",
+          work: { value: 20, unit: "min" },
+          off: { value: 10, unit: "sec" },
+          count: 8,
+        })}
+      />,
+    );
+
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "interval work unit" })).getByText("sec"),
+    );
+
+    expect(readRepetition()).toStrictEqual({
+      kind: "interval",
+      work: { value: 20, unit: "sec" },
+      off: { value: 10, unit: "sec" },
+      count: 8,
+    });
+    expect(spinbuttonByLabel("Work")).toHaveAttribute("aria-invalid", "false");
   });
 });
 

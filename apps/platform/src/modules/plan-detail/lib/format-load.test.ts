@@ -87,16 +87,35 @@ describe("formatLoad", () => {
   });
 
   describe("byProfile kind", () => {
-    it("renders 'label: kg' entries joined by ' / '", () => {
+    it("renders a single-axis profile as coord:kg cells joined by ' / '", () => {
       const load: Load = {
         kind: "byProfile",
-        entries: [
-          { label: "M", kg: 24 },
-          { label: "F", kg: 16 },
+        axes: [{ name: "sex", values: ["M", "F"] }],
+        cells: [
+          { coords: ["M"], kg: 24 },
+          { coords: ["F"], kg: 16 },
         ],
       };
 
-      expect(formatLoad(load, EMPTY_MAP)).toBe("M: 24 / F: 16");
+      expect(formatLoad(load, EMPTY_MAP)).toBe("M:24 / F:16");
+    });
+
+    it("renders a two-axis profile as a coord-joined grid (Wall Ball level×sex)", () => {
+      const load: Load = {
+        kind: "byProfile",
+        axes: [
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
+        ],
+        cells: [
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
+          { coords: ["SC", "♀"], kg: 4 },
+        ],
+      };
+
+      expect(formatLoad(load, EMPTY_MAP)).toBe("RX ♂:9 ♀:6 / SC ♂:6 ♀:4");
     });
   });
 });

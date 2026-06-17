@@ -1,3 +1,4 @@
+import { type TimeCap } from "@repo/contracts/lms/_shared";
 import {
   type Composition,
   type RepetitionAxis,
@@ -7,10 +8,30 @@ import {
 import { formatRestSpec } from "./format-rest-spec";
 
 const MINUTE_MARK = "’";
+const SECOND_MARK = "s";
+const COLON = ":";
+const CAP_PREFIX = "cap ";
 const STEP_SEPARATOR = "-";
 const RANGE_SEPARATOR = "–";
+const INTERVAL_PAIR_SEPARATOR = "/";
+const COUNT_MARK = "×";
 
 export type CompositionSummaryPart = { text: string };
+
+type IntervalDuration = Extract<RepetitionAxis, { kind: "interval" }>["work"];
+
+const intervalDurationLabel = (duration: IntervalDuration): string =>
+  duration.unit === "sec" ? `${COLON}${duration.value}` : `${duration.value}${MINUTE_MARK}`;
+
+const capMark = (cap: TimeCap): string => (cap.unit === "sec" ? SECOND_MARK : MINUTE_MARK);
+
+const capLabel = (cap: TimeCap): string => {
+  const mark = capMark(cap);
+
+  return cap.max !== undefined
+    ? `${CAP_PREFIX}${cap.min}${RANGE_SEPARATOR}${cap.max}${mark}`
+    : `${CAP_PREFIX}${cap.min}${mark}`;
+};
 
 const repetitionLabel = (repetition: RepetitionAxis): string => {
   switch (repetition.kind) {
@@ -23,13 +44,11 @@ const repetitionLabel = (repetition: RepetitionAxis): string => {
     case "ladder":
       return `ladder ${repetition.steps.join(STEP_SEPARATOR)}`;
     case "timeCap":
-      return repetition.cap.max !== undefined
-        ? `cap ${repetition.cap.min}${RANGE_SEPARATOR}${repetition.cap.max}${MINUTE_MARK}`
-        : `cap ${repetition.cap.min}${MINUTE_MARK}`;
+      return capLabel(repetition.cap);
     case "cadence":
-      return `EMOM ${repetition.everyMin}${MINUTE_MARK}×${repetition.rounds}`;
+      return `EMOM ${repetition.everyMin}${MINUTE_MARK}${COUNT_MARK}${repetition.rounds}`;
     case "interval":
-      return `${repetition.count}×${repetition.workMin}${MINUTE_MARK}/${repetition.offMin}${MINUTE_MARK}`;
+      return `${repetition.count}${COUNT_MARK}${intervalDurationLabel(repetition.work)}${INTERVAL_PAIR_SEPARATOR}${intervalDurationLabel(repetition.off)}`;
     default:
       return repetition satisfies never;
   }
@@ -42,6 +61,10 @@ const buildStructuralParts = (composition: Composition): CompositionSummaryPart[
 
   if (composition.repetition !== undefined) {
     parts.push({ text: repetitionLabel(composition.repetition) });
+  }
+
+  if (composition.cap !== undefined) {
+    parts.push({ text: capLabel(composition.cap) });
   }
 
   if (composition.rest !== undefined) {
@@ -62,3 +85,6 @@ export const formatRepetitionLabel = (composition: Composition): string | null =
 
 export const formatRestSummary = (composition: Composition): string | null =>
   composition.rest !== undefined ? restLabel(composition.rest) : null;
+
+export const formatCapSummary = (composition: Composition): string | null =>
+  composition.cap !== undefined ? capLabel(composition.cap) : null;

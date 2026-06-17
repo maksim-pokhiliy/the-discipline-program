@@ -101,6 +101,8 @@ export const assertRowDeepEqual = (source: ReadRow, clone: ReadRow): void => {
   expect(clone.side).toEqual(source.side);
   expect(clone.tempo).toEqual(source.tempo);
   expect(clone.media).toEqual(source.media);
+  expect(clone.intensity).toEqual(source.intensity);
+  expect(clone.rest).toEqual(source.rest);
   expect(clone.notes).toEqual(source.notes);
 
   expect(clone.modifierAssignments).toHaveLength(source.modifierAssignments.length);

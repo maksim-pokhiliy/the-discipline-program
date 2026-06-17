@@ -16,7 +16,8 @@ const CLEAR_LABEL = "no load";
 const EMPTY_KG = Number.NaN;
 const EMPTY_PERCENT = Number.NaN;
 const SINGLE_COUNT = 1;
-const EMPTY_PROFILE_LABEL = "";
+const EXAMPLE_AXIS_NAME = "level";
+const EXAMPLE_AXIS_VALUES = ["RX", "SC"];
 
 const KIND_LABELS: Record<LoadKind, string> = {
   absolute: "Absolute",
@@ -31,7 +32,8 @@ const KIND_DEFAULTS: Record<LoadKind, Load> = {
   bodyweight: { kind: "bodyweight" },
   byProfile: {
     kind: "byProfile",
-    entries: [{ label: EMPTY_PROFILE_LABEL, kg: EMPTY_KG }],
+    axes: [{ name: EXAMPLE_AXIS_NAME, values: [...EXAMPLE_AXIS_VALUES] }],
+    cells: EXAMPLE_AXIS_VALUES.map((value) => ({ coords: [value], kg: EMPTY_KG })),
   },
 };
 

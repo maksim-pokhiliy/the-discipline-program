@@ -26,7 +26,12 @@ describe("deriveCompositionLabel — repetition-only mapping", () => {
 
   it("maps repetition interval to interval / INTERVALIC", () => {
     const composition = parsedComposition({
-      repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+      repetition: {
+        kind: "interval",
+        work: { value: 2, unit: "min" },
+        off: { value: 1, unit: "min" },
+        count: 3,
+      },
     });
 
     expect(deriveCompositionLabel(composition)).toEqual({ kind: "interval", family: "INTERVALIC" });
@@ -88,7 +93,12 @@ function repetitionAxisOf(kind: RepetitionAxis["kind"]): RepetitionAxis {
     case "cadence":
       return { kind: "cadence", everyMin: 1, rounds: 4 };
     case "interval":
-      return { kind: "interval", workMin: 2, offMin: 1, count: 3 };
+      return {
+        kind: "interval",
+        work: { value: 2, unit: "min" },
+        off: { value: 1, unit: "min" },
+        count: 3,
+      };
   }
 }
 

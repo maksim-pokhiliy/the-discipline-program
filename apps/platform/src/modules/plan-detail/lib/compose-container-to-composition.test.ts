@@ -45,8 +45,20 @@ describe("composeContainerToComposition flat repetition mapping", () => {
         expected: { repetition: { kind: "cadence", everyMin: 1, rounds: 16 } },
       },
       {
-        repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-        expected: { repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 } },
+        repetition: {
+          kind: "interval",
+          work: { value: 2, unit: "min" },
+          off: { value: 1, unit: "min" },
+          count: 3,
+        },
+        expected: {
+          repetition: {
+            kind: "interval",
+            work: { value: 2, unit: "min" },
+            off: { value: 1, unit: "min" },
+            count: 3,
+          },
+        },
       },
       {
         repetition: { kind: "timeCap", cap: { min: 5, unit: "min" } },
@@ -78,7 +90,12 @@ describe("composeContainerToComposition produces contract-valid compositions", (
     { kind: "count", count: { min: 3, max: 5 } },
     { kind: "ladder", steps: [21, 15, 9] },
     { kind: "cadence", everyMin: 1, rounds: 16 },
-    { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+    {
+      kind: "interval",
+      work: { value: 2, unit: "min" },
+      off: { value: 1, unit: "min" },
+      count: 3,
+    },
     { kind: "timeCap", cap: { min: 5, unit: "min" } },
   ];
 

@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { Block } from "@repo/contracts/lms/block";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -23,6 +24,7 @@ import { cloneHighlightSx } from "../lib/clone-highlight-sx";
 import { BlockCardBody } from "./block-card-body";
 import { BlockCardHead } from "./block-card-head";
 import { BlockCardNote } from "./block-card-note";
+import { BlockIntensityEditor } from "./block-intensity-editor";
 
 const DELETE_TITLE = "Delete block";
 const DELETE_MESSAGE = "Delete this block?";
@@ -66,6 +68,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
 
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const [isIntensityOpen, setIsIntensityOpen] = useState<boolean>(false);
 
   const toggleExpanded = () => setIsExpanded((previous) => !previous);
 
@@ -77,6 +80,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       blockId: block.id,
       data: { notes: next },
     });
+
+  const handleIntensityCommit = (next: Intensity | null) =>
+    updateBlock.mutate(
+      { blockId: block.id, data: { intensity: next } },
+      { onSuccess: () => setIsIntensityOpen(false) },
+    );
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
   const handleDeleteClose = () => setIsDeleteOpen(false);
@@ -133,6 +142,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         onLabelsChange={handleLabelsChange}
         onDeleteOpen={handleDeleteOpen}
         onDuplicate={handleDuplicate}
+        intensity={block.intensity}
+        onIntensityOpen={() => setIsIntensityOpen(true)}
       />
 
       {isExpanded ? (
@@ -156,6 +167,14 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         details={deleteDetails}
         onConfirm={handleDeleteConfirm}
         isConfirming={deleteBlock.isPending}
+      />
+
+      <BlockIntensityEditor
+        open={isIntensityOpen}
+        onClose={() => setIsIntensityOpen(false)}
+        intensity={block.intensity}
+        onCommit={handleIntensityCommit}
+        isSubmitting={updateBlock.isPending}
       />
     </Stack>
   );

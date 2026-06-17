@@ -49,6 +49,8 @@ const baseRowFields: Omit<SchemaRow, "exerciseId"> = {
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: NOW,
