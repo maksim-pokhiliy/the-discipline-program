@@ -33,4 +33,5 @@ export const composeContainerToComposition = (schema: SchemaDraft): Composition 
   ...(schema.repetition !== undefined && { repetition: mapRepetition(schema.repetition) }),
   ...(schema.rest !== undefined && { rest: schema.rest }),
   ...(schema.cap != null && { cap: schema.cap }),
+  ...(schema.benchmark != null && { benchmark: schema.benchmark }),
 });

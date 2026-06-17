@@ -1,8 +1,15 @@
 "use client";
 
-import { Alert, Button, Stack, Typography } from "@mui/material";
+import { Alert, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 
-import type { Intensity, RestSpec, TimeCap } from "@repo/contracts/lms/_shared";
+import {
+  type Intensity,
+  type ResultType,
+  RESULT_TYPES,
+  type RestSpec,
+  type TimeCap,
+} from "@repo/contracts/lms/_shared";
+import { type Benchmark } from "@repo/contracts/lms/composition";
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
@@ -31,7 +38,23 @@ const INTENSITY_LABEL = "intensity";
 const CAP_LABEL = "cap";
 const CAP_ADD_LABEL = "Add cap";
 const CAP_REMOVE_LABEL = "Remove cap";
+const BENCHMARK_LABEL = "benchmark";
+const BENCHMARK_ADD_LABEL = "Add benchmark";
+const BENCHMARK_REMOVE_LABEL = "Remove benchmark";
+const RESULT_TYPE_FIELD_LABEL = "Result type";
+const DEFAULT_RESULT_TYPE: ResultType = "time";
+const RESULT_TYPE_LABELS: Record<ResultType, string> = {
+  time: "Time",
+  rounds_reps: "Rounds + reps",
+  load: "Load",
+  max_reps: "Max reps",
+  distance: "Distance",
+  calories: "Calories",
+};
 const PANEL_SPACING = 2;
+
+const isResultType = (value: string): value is ResultType =>
+  RESULT_TYPES.some((resultType) => resultType === value);
 const DEMOTE_HINT =
   "This group holds a single movement and no rep-scheme. A plain row may read cleaner — drop it down to a row, or give it a scheme to keep it as a group.";
 const DEMOTE_BUTTON_LABEL = "Demote to row";
@@ -81,6 +104,24 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
       const next = { ...schema };
 
       delete next.cap;
+
+      return next;
+    });
+
+  const setBenchmark = (benchmark: Benchmark | null): void =>
+    onUpdateNode(container.id, (schema) => ({ ...schema, benchmark }));
+
+  const handleResultTypeChange = (value: string): void => {
+    if (isResultType(value)) {
+      setBenchmark({ resultType: value });
+    }
+  };
+
+  const clearBenchmark = (): void =>
+    onUpdateNode(container.id, (schema) => {
+      const next = { ...schema };
+
+      delete next.benchmark;
 
       return next;
     });
@@ -156,6 +197,34 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
           )}
         </AxisFieldSection>
       ) : null}
+
+      <AxisFieldSection label={BENCHMARK_LABEL}>
+        {container.benchmark != null ? (
+          <Stack direction="column" spacing={1} sx={{ alignItems: "flex-start" }}>
+            <TextField
+              select
+              size="small"
+              label={RESULT_TYPE_FIELD_LABEL}
+              value={container.benchmark.resultType}
+              onChange={(event) => handleResultTypeChange(event.target.value)}
+            >
+              {RESULT_TYPES.map((resultType) => (
+                <MenuItem key={resultType} value={resultType}>
+                  {RESULT_TYPE_LABELS[resultType]}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Button size="small" color="inherit" onClick={clearBenchmark}>
+              {BENCHMARK_REMOVE_LABEL}
+            </Button>
+          </Stack>
+        ) : (
+          <Button size="small" onClick={() => setBenchmark({ resultType: DEFAULT_RESULT_TYPE })}>
+            {BENCHMARK_ADD_LABEL}
+          </Button>
+        )}
+      </AxisFieldSection>
 
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">

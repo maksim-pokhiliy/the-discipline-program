@@ -1,4 +1,4 @@
-import { type TimeCap } from "@repo/contracts/lms/_shared";
+import { type ResultType, type TimeCap } from "@repo/contracts/lms/_shared";
 import {
   type Composition,
   type RepetitionAxis,
@@ -11,6 +11,16 @@ const MINUTE_MARK = "’";
 const SECOND_MARK = "s";
 const COLON = ":";
 const CAP_PREFIX = "cap ";
+const BENCHMARK_PREFIX = "benchmark ";
+
+const RESULT_TYPE_SHORT: Record<ResultType, string> = {
+  time: "time",
+  rounds_reps: "rounds+reps",
+  load: "load",
+  max_reps: "max reps",
+  distance: "distance",
+  calories: "cal",
+};
 const STEP_SEPARATOR = "-";
 const RANGE_SEPARATOR = "–";
 const INTERVAL_PAIR_SEPARATOR = "/";
@@ -88,3 +98,8 @@ export const formatRestSummary = (composition: Composition): string | null =>
 
 export const formatCapSummary = (composition: Composition): string | null =>
   composition.cap !== undefined ? capLabel(composition.cap) : null;
+
+export const formatBenchmarkSummary = (composition: Composition): string | null =>
+  composition.benchmark != null
+    ? `${BENCHMARK_PREFIX}${RESULT_TYPE_SHORT[composition.benchmark.resultType]}`
+    : null;

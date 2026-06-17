@@ -57,7 +57,7 @@ const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
 
 export const schemaWithBodyToDraft = (schema: SchemaWithBody): SchemaDraft => {
   const composition = schema.schema.composition ?? {};
-  const { repetition, rest, cap } = composition;
+  const { repetition, rest, cap, benchmark } = composition;
 
   return {
     id: asNodeId(schema.schema.id),
@@ -67,6 +67,7 @@ export const schemaWithBodyToDraft = (schema: SchemaWithBody): SchemaDraft => {
     ...(repetition !== undefined && { repetition: repetitionFromComposition(repetition) }),
     ...(rest !== undefined && { rest: restFromComposition(rest) }),
     ...(cap !== undefined && { cap }),
+    ...(benchmark != null && { benchmark }),
     rows: schema.rows.map(rowFromSchemaRow),
   };
 };

@@ -135,4 +135,22 @@ describe("schemaWithBodyToDraft round-trips stored compositions through emission
     expect(draft.cap).toEqual({ min: 12, unit: "min" });
     expect(composeContainerToComposition(draft)).toEqual(stored);
   });
+
+  it("seeds and re-emits a benchmark on the composition", () => {
+    const stored: Composition = {
+      repetition: { kind: "count", count: 3 },
+      benchmark: { resultType: "rounds_reps" },
+    };
+
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, stored, []));
+
+    expect(draft.benchmark).toEqual({ resultType: "rounds_reps" });
+    expect(composeContainerToComposition(draft)).toEqual(stored);
+  });
+
+  it("leaves the draft benchmark-free when the stored composition has none", () => {
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, { repetition: { kind: "once" } }, []));
+
+    expect(draft.benchmark).toBeUndefined();
+  });
 });

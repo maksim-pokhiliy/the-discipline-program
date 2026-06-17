@@ -1,6 +1,6 @@
 import { type ReactElement } from "react";
 
-import { Chip } from "@mui/material";
+import { Chip, type ChipProps } from "@mui/material";
 
 const COMPOSITION_TAG_FONT_SIZE_PX = 9.5;
 const COMPOSITION_TAG_FONT_WEIGHT = 700;
@@ -11,20 +11,21 @@ const COMPOSITION_TAG_BORDER_RADIUS_FACTOR = 0.375;
 
 export type SchemaCompositionTagProps = {
   label: string;
+  color?: ChipProps["color"];
 };
 
 export const SchemaCompositionTag: React.FC<SchemaCompositionTagProps> = ({
   label,
+  color,
 }): ReactElement => (
   <Chip
     size="small"
     variant="filled"
-    color="default"
+    color={color ?? "default"}
     label={label}
     sx={(theme) => ({
       height: "auto",
-      bgcolor: "action.selected",
-      color: "text.subtle",
+      ...(color === undefined && { bgcolor: "action.selected", color: "text.subtle" }),
       fontFamily: theme.typography.body1.fontFamily,
       fontSize: COMPOSITION_TAG_FONT_SIZE_PX,
       fontWeight: COMPOSITION_TAG_FONT_WEIGHT,
