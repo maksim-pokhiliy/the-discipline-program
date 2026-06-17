@@ -25,6 +25,8 @@ const LABEL_PLACEHOLDER = "group label…";
 const UNGROUP_LABEL = "Ungroup";
 const DELETE_LABEL = "Delete group";
 const FIRST_NOTE_INDEX = 0;
+const COL_ORD = "24px";
+const BODY_GAP_FACTOR = 0.75;
 
 const tooltipChildSx = { display: "inline-flex" };
 
@@ -82,22 +84,32 @@ export const RowGroupBoxHead: React.FC<RowGroupBoxHeadProps> = ({
       <DragIndicatorIcon fontSize="small" />
     </IconButton>
 
-    <Typography variant="caption" sx={{ fontVariantNumeric: "tabular-nums", color: "text.subtle" }}>
+    <Typography
+      variant="caption"
+      sx={{
+        fontVariantNumeric: "tabular-nums",
+        color: "text.subtle",
+        textAlign: "center",
+        width: COL_ORD,
+      }}
+    >
       {ord}
     </Typography>
 
-    {minuteLabel !== null ? <MinutePill label={minuteLabel} /> : null}
+    <Stack direction="row" spacing={BODY_GAP_FACTOR} useFlexGap sx={{ flex: 1 }}>
+      {minuteLabel !== null ? <MinutePill label={minuteLabel} /> : null}
 
-    <InlineEditText
-      value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}
-      onCommit={onLabelCommit}
-      variant="subtitle1"
-      ariaLabel={LABEL_ARIA}
-      emptyIsValid
-      maxLength={NOTE_MAX_LENGTH}
-      placeholder={LABEL_PLACEHOLDER}
-      sx={{ flex: 1, minWidth: 0 }}
-    />
+      <InlineEditText
+        value={group.notes?.[FIRST_NOTE_INDEX] ?? ""}
+        onCommit={onLabelCommit}
+        variant="subtitle1"
+        ariaLabel={LABEL_ARIA}
+        emptyIsValid
+        maxLength={NOTE_MAX_LENGTH}
+        placeholder={LABEL_PLACEHOLDER}
+        sx={{ flex: 1, minWidth: 0 }}
+      />
+    </Stack>
 
     <Tooltip title={UNGROUP_LABEL}>
       <Box component="span" style={tooltipChildSx}>
