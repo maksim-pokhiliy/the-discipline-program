@@ -11,7 +11,8 @@ export const COACH_NAVIGATION: PlatformNavigationConfig = {
 
 export const ATHLETE_NAVIGATION: PlatformNavigationConfig = {
   items: [
-    { label: "Home", href: "/athlete", icon: "home" },
+    { label: "Plan", href: "/athlete", icon: "plans" },
+    { label: "Records", href: "/athlete/records", icon: "leaderboard" },
     { label: "Profile", href: "/athlete/profile", icon: "profile" },
   ],
 };

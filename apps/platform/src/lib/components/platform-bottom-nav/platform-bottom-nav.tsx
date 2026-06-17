@@ -5,6 +5,7 @@ import { type ReactNode } from "react";
 import EventNoteRounded from "@mui/icons-material/EventNoteRounded";
 import GroupRounded from "@mui/icons-material/GroupRounded";
 import HomeRounded from "@mui/icons-material/HomeRounded";
+import LeaderboardRounded from "@mui/icons-material/LeaderboardRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import Link from "next/link";
@@ -17,6 +18,7 @@ const ICON_MAP: Record<PlatformIconName, ReactNode> = {
   plans: <EventNoteRounded />,
   athletes: <GroupRounded />,
   profile: <PersonRounded />,
+  leaderboard: <LeaderboardRounded />,
 };
 
 type PlatformBottomNavProps = {
