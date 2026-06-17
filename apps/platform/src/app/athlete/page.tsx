@@ -1,14 +1,5 @@
-import { Stack, Typography } from "@mui/material";
+import { PlanTimetableView } from "@app/modules/plan-timetable";
 
-const AthletePage = () => {
-  return (
-    <Stack>
-      <Typography variant="h5">Athlete Dashboard</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Coming soon
-      </Typography>
-    </Stack>
-  );
-};
+const AthletePage = () => <PlanTimetableView />;
 
 export default AthletePage;
