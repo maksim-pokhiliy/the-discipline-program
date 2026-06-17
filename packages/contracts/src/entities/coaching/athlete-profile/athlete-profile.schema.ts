@@ -4,6 +4,8 @@ import { ATHLETE_PROFILE_CONSTANTS, Gender, HealthStatus } from "./athlete-profi
 
 export const healthStatusSchema = z.nativeEnum(HealthStatus);
 
+export const profileSelectionsSchema = z.record(z.string().trim().min(1), z.string().trim().min(1));
+
 export const athleteProfileSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
@@ -12,6 +14,7 @@ export const athleteProfileSchema = z.object({
   weightKg: z.number().finite().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_WEIGHT_KG).nullable(),
   healthStatus: healthStatusSchema,
   healthNote: z.string().nullable(),
+  profileSelections: profileSelectionsSchema.nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -26,4 +29,5 @@ export const updateAthleteProfileSchema = z.object({
     .max(ATHLETE_PROFILE_CONSTANTS.MAX_HEALTH_NOTE_LENGTH)
     .nullable()
     .optional(),
+  profileSelections: profileSelectionsSchema.optional(),
 });

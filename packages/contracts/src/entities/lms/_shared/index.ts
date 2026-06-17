@@ -6,6 +6,7 @@ export * from "./load";
 export * from "./media";
 export * from "./notes";
 export * from "./reps";
+export * from "./result";
 export * from "./side";
 export * from "./tempo";
 export * from "./time-cap";
