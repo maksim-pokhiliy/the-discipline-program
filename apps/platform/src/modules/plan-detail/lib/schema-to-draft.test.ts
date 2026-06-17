@@ -27,6 +27,8 @@ const exerciseRow = (id: string, schemaId: string): SchemaRow => ({
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: EPOCH,
@@ -103,6 +105,34 @@ describe("schemaWithBodyToDraft round-trips stored compositions through emission
 
     const draft = schemaWithBodyToDraft(schema(TOP_ID, stored, []));
 
+    expect(composeContainerToComposition(draft)).toEqual(stored);
+  });
+
+  it("round-trips a sub-minute interval composition through the draft", () => {
+    const stored: Composition = {
+      repetition: {
+        kind: "interval",
+        work: { value: 20, unit: "sec" },
+        off: { value: 10, unit: "sec" },
+        count: 8,
+      },
+    };
+
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, stored, []));
+
+    expect(draft.repetition).toEqual(stored.repetition);
+    expect(composeContainerToComposition(draft)).toEqual(stored);
+  });
+
+  it("seeds and re-emits a cross-cutting cap on the composition", () => {
+    const stored: Composition = {
+      repetition: { kind: "ladder", steps: [21, 15, 9] },
+      cap: { min: 12, unit: "min" },
+    };
+
+    const draft = schemaWithBodyToDraft(schema(TOP_ID, stored, []));
+
+    expect(draft.cap).toEqual({ min: 12, unit: "min" });
     expect(composeContainerToComposition(draft)).toEqual(stored);
   });
 });

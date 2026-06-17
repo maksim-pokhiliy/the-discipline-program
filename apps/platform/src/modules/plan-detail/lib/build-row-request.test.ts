@@ -18,6 +18,8 @@ const emptyState = (): RowFormState => ({
   tempoInput: "",
   modifierIds: [],
   notes: [],
+  intensity: null,
+  rest: null,
 });
 
 const fullState = (): RowFormState => ({
@@ -29,6 +31,8 @@ const fullState = (): RowFormState => ({
   tempoInput: "3-1-X-0",
   modifierIds: [MODIFIER_ID],
   notes: ["from sofa", "  keep tight  "],
+  intensity: { rpe: { value: 8 } },
+  rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
 });
 
 describe("buildRowRequest create (QA-004)", () => {
@@ -47,6 +51,8 @@ describe("buildRowRequest create (QA-004)", () => {
         tempo: { eccentric: 3, pauseBottom: 1, concentric: "X", pauseTop: 0 },
         modifierIds: [MODIFIER_ID],
         notes: ["from sofa", "keep tight"],
+        intensity: { rpe: { value: 8 } },
+        rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
       },
     });
   });
@@ -68,6 +74,8 @@ describe("buildRowRequest create (QA-004)", () => {
         tempo: null,
         modifierIds: [],
         notes: null,
+        intensity: null,
+        rest: null,
       },
     });
   });
@@ -107,6 +115,8 @@ describe("buildRowRequest edit (QA-004)", () => {
         tempo: null,
         modifierIds: [],
         notes: null,
+        intensity: null,
+        rest: null,
       },
     });
   });
@@ -127,16 +137,45 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     });
   });
 
-  it("rejects a byProfile entry with an empty label", () => {
+  it("rejects a byProfile axis with an empty name with the coach message", () => {
     const state: RowFormState = {
       ...emptyState(),
       exerciseId: EXERCISE_ID,
-      load: { kind: "byProfile", entries: [{ label: "", kg: 50 }] },
+      load: {
+        kind: "byProfile",
+        axes: [{ name: "", values: ["RX"] }],
+        cells: [{ coords: ["RX"], kg: 50 }],
+      },
     };
 
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
-      error: "Add a label for each profile weight.",
+      error: "Name each axis (for example level or sex).",
+      field: "load",
+    });
+  });
+
+  it("rejects a byProfile that misses a cartesian cell with the coach message", () => {
+    const state: RowFormState = {
+      ...emptyState(),
+      exerciseId: EXERCISE_ID,
+      load: {
+        kind: "byProfile",
+        axes: [
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
+        ],
+        cells: [
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
+        ],
+      },
+    };
+
+    expect(buildRowRequest(state, CREATE)).toStrictEqual({
+      ok: false,
+      error: "Fill in a weight for every combination of axis values.",
       field: "load",
     });
   });

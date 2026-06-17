@@ -140,6 +140,8 @@ const makeRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: NOW,
@@ -177,6 +179,8 @@ const renderBody = (
       isSelectMode: options.isSelectMode ?? false,
       selectedIds: options.selectedIds ?? new Set(),
       onToggleSelect: options.onToggleSelect ?? (() => undefined),
+      blockIntensity: null,
+      schemaIntensity: null,
     }),
   );
 

@@ -126,6 +126,8 @@ export const lmsSchemaRowApi = {
                 side: marshalNullableJson(data.side),
                 tempo: marshalNullableJson(data.tempo),
                 media: marshalNullableJson(data.media),
+                intensity: marshalNullableJson(data.intensity),
+                rest: marshalNullableJson(data.rest),
                 notes: marshalNullableJson(data.notes),
               },
             });
@@ -236,6 +238,10 @@ export const lmsSchemaRowApi = {
                 ...(data.side !== undefined && { side: marshalNullableJson(data.side) }),
                 ...(data.tempo !== undefined && { tempo: marshalNullableJson(data.tempo) }),
                 ...(data.media !== undefined && { media: marshalNullableJson(data.media) }),
+                ...(data.intensity !== undefined && {
+                  intensity: marshalNullableJson(data.intensity),
+                }),
+                ...(data.rest !== undefined && { rest: marshalNullableJson(data.rest) }),
                 ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
               },
             });

@@ -10,6 +10,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Checkbox, IconButton, Stack, Tooltip } from "@mui/material";
 
+import { type Intensity } from "@repo/contracts/lms/_shared";
 import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
@@ -41,6 +42,7 @@ const tooltipChildSx = { display: "inline-flex" };
 
 type SchemaCardHeadProps = {
   schema: SchemaWithBody;
+  blockIntensity?: Intensity | null;
   isMutationPending: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
@@ -59,6 +61,7 @@ type SchemaCardHeadProps = {
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   schema,
+  blockIntensity = null,
   isMutationPending,
   dragAttributes,
   dragListeners,
@@ -156,7 +159,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
             sx={{ flex: 1, minWidth: 0 }}
           />
         </Stack>
-        <SchemaCardMeta schema={schema} />
+        <SchemaCardMeta schema={schema} blockIntensity={blockIntensity} />
       </Stack>
 
       <Tooltip title={EDIT_TOOLTIP}>

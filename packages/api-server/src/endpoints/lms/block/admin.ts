@@ -112,6 +112,7 @@ export const lmsBlockApi = {
               data: {
                 sessionId,
                 order: nextOrder,
+                intensity: marshalNullableJson(data.intensity),
                 notes: marshalNullableJson(data.notes),
               },
             });
@@ -194,6 +195,7 @@ export const lmsBlockApi = {
       const updated = await prisma.block.update({
         where: { id: blockId },
         data: {
+          ...(data.intensity !== undefined && { intensity: marshalNullableJson(data.intensity) }),
           ...(data.notes !== undefined && { notes: marshalNullableJson(data.notes) }),
         },
         include: BLOCK_WITH_LABELS_INCLUDE,

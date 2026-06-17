@@ -20,6 +20,8 @@ const makeRow = (id: string, order: number): SchemaRow => ({
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: NOW,

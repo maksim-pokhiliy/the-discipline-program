@@ -6,12 +6,21 @@ const RANGE_MAX_OVER_VALUE = "percentage.rangeMax must be > value when set";
 const REPS_RANGE_ORDER = "range.min must be < range.max";
 const UNIT_BOUND_NEEDS_ONE = "unit_bound needs value or range";
 const UNIT_BOUND_NOT_BOTH = "unit_bound cannot have both value and range";
+const PROFILE_CARTESIAN_COVER_PREFIX = "byProfile.cells must cover every combination";
+const PROFILE_COORD_ARITY_PREFIX = "byProfile cell coords must have one value per axis";
+const PROFILE_COORD_NOT_IN_AXIS_PREFIX = "byProfile coord";
+const PROFILE_COORDS_NOT_UNIQUE = "byProfile cells must have unique coords";
+const PROFILE_AXIS_DUPLICATE_SUFFIX = "has duplicate values; each value must be unique";
 
 const COACH_MESSAGES = {
   setsPositive: "Enter a number of sets greater than 0.",
   weightPositive: "Enter a weight greater than 0.",
-  profileLabel: "Add a label for each profile weight.",
-  profileWeight: "Enter a weight greater than 0 for each profile weight.",
+  profileAxisName: "Name each axis (for example level or sex).",
+  profileAxisValue: "Fill in every axis value, or remove the empty one.",
+  profileAxisDuplicate: "Give each axis value a unique name; two are the same.",
+  profileCellWeight: "Enter a weight greater than 0 for each combination.",
+  profileCartesianCover: "Fill in a weight for every combination of axis values.",
+  profileCoords: "Pick axis values that match the axes you defined.",
   percentRange: "Enter a % between 0 and 200.",
   percentMaxRange: "Enter a max % between 0 and 200.",
   percentMaxOverValue: "Max % must be higher than the %.",
@@ -32,8 +41,46 @@ const stringAt = (path: ZodIssue["path"], index: number): string | undefined => 
   return typeof segment === "string" ? segment : undefined;
 };
 
+const coachMessageForProfileCells = (
+  path: ZodIssue["path"],
+  issue: ZodIssue,
+): string | undefined => {
+  if (issue.message.startsWith(PROFILE_CARTESIAN_COVER_PREFIX)) {
+    return COACH_MESSAGES.profileCartesianCover;
+  }
+
+  if (
+    issue.message.startsWith(PROFILE_COORD_ARITY_PREFIX) ||
+    issue.message.startsWith(PROFILE_COORD_NOT_IN_AXIS_PREFIX) ||
+    issue.message === PROFILE_COORDS_NOT_UNIQUE ||
+    stringAt(path, 3) === "coords"
+  ) {
+    return COACH_MESSAGES.profileCoords;
+  }
+
+  if (stringAt(path, 3) === "kg") {
+    return COACH_MESSAGES.profileCellWeight;
+  }
+
+  return undefined;
+};
+
 const coachMessageForLoad = (path: ZodIssue["path"], issue: ZodIssue): string | undefined => {
   const field = stringAt(path, 1);
+
+  if (field === "axes") {
+    if (issue.message.endsWith(PROFILE_AXIS_DUPLICATE_SUFFIX)) {
+      return COACH_MESSAGES.profileAxisDuplicate;
+    }
+
+    return stringAt(path, 3) === "values"
+      ? COACH_MESSAGES.profileAxisValue
+      : COACH_MESSAGES.profileAxisName;
+  }
+
+  if (field === "cells") {
+    return coachMessageForProfileCells(path, issue);
+  }
 
   if (field === "kg") {
     return COACH_MESSAGES.weightPositive;
@@ -45,18 +92,6 @@ const coachMessageForLoad = (path: ZodIssue["path"], issue: ZodIssue): string | 
 
   if (field === "rangeMax") {
     return COACH_MESSAGES.percentMaxRange;
-  }
-
-  if (field === "entries") {
-    const entryField = stringAt(path, 3);
-
-    if (entryField === "label") {
-      return COACH_MESSAGES.profileLabel;
-    }
-
-    if (entryField === "kg") {
-      return COACH_MESSAGES.profileWeight;
-    }
   }
 
   if (field === "reference" && stringAt(path, 2) === "targetExerciseId") {

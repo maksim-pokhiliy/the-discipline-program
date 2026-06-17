@@ -53,14 +53,15 @@ describe("LoadEditor kind switching", () => {
     expect(onChange).toHaveBeenCalledWith({ kind: "bodyweight" });
   });
 
-  it("emits a single-entry byProfile default when By profile is chosen", () => {
+  it("emits a single-axis single-cell byProfile default when By profile is chosen", () => {
     render(<LoadEditor value={null} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "By profile" }));
 
     expect(onChange).toHaveBeenCalledWith({
       kind: "byProfile",
-      entries: [{ label: "", kg: Number.NaN }],
+      axes: [{ name: "", values: [""] }],
+      cells: [{ coords: [""], kg: Number.NaN }],
     });
   });
 
@@ -151,55 +152,79 @@ describe("LoadEditor percentage sub-fields", () => {
   });
 });
 
-describe("LoadEditor byProfile sub-fields", () => {
-  it("appends an empty entry on add profile", () => {
-    render(
-      <LoadEditor
-        value={{ kind: "byProfile", entries: [{ label: "m", kg: 50 }] }}
-        onChange={onChange}
-      />,
-    );
+describe("LoadEditor byProfile axes/cells grid", () => {
+  const singleAxis = {
+    kind: "byProfile" as const,
+    axes: [{ name: "level", values: ["RX", "SC"] }],
+    cells: [
+      { coords: ["RX"], kg: 43 },
+      { coords: ["SC"], kg: 30 },
+    ],
+  };
 
-    fireEvent.click(screen.getByRole("button", { name: "add profile" }));
+  it("renames an axis while keeping the cells", () => {
+    render(<LoadEditor value={singleAxis} onChange={onChange} />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Axis name" }), {
+      target: { value: "tier" },
+    });
 
     expect(onChange).toHaveBeenCalledWith({
       kind: "byProfile",
-      entries: [
-        { label: "m", kg: 50 },
-        { label: "", kg: Number.NaN },
+      axes: [{ name: "tier", values: ["RX", "SC"] }],
+      cells: [
+        { coords: ["RX"], kg: 43 },
+        { coords: ["SC"], kg: 30 },
       ],
     });
   });
 
-  it("removes an entry but keeps at least one", () => {
+  it("adds a value and regenerates the cells to cover it", () => {
+    render(<LoadEditor value={singleAxis} onChange={onChange} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add value" }));
+
+    expect(onChange).toHaveBeenCalledWith({
+      kind: "byProfile",
+      axes: [{ name: "level", values: ["RX", "SC", ""] }],
+      cells: [
+        { coords: ["RX"], kg: 43 },
+        { coords: ["SC"], kg: 30 },
+        { coords: [""], kg: Number.NaN },
+      ],
+    });
+  });
+
+  it("adds a second axis and regenerates the cells into the cartesian product", () => {
+    render(<LoadEditor value={singleAxis} onChange={onChange} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add axis" }));
+
+    expect(onChange).toHaveBeenCalledWith({
+      kind: "byProfile",
+      axes: [
+        { name: "level", values: ["RX", "SC"] },
+        { name: "", values: [""] },
+      ],
+      cells: [
+        { coords: ["RX", ""], kg: Number.NaN },
+        { coords: ["SC", ""], kg: Number.NaN },
+      ],
+    });
+  });
+
+  it("disables value removal when only one value remains", () => {
     render(
       <LoadEditor
         value={{
           kind: "byProfile",
-          entries: [
-            { label: "m", kg: 50 },
-            { label: "f", kg: 35 },
-          ],
+          axes: [{ name: "level", values: ["RX"] }],
+          cells: [{ coords: ["RX"], kg: 43 }],
         }}
         onChange={onChange}
       />,
     );
 
-    const removeButtons = screen.getAllByRole("button", { name: "Remove profile" });
-
-    fireEvent.click(removeButtons[1] as HTMLElement);
-
-    expect(onChange).toHaveBeenCalledWith({ kind: "byProfile", entries: [{ label: "m", kg: 50 }] });
-  });
-
-  it("disables removal when only one entry remains", () => {
-    render(
-      <LoadEditor
-        value={{ kind: "byProfile", entries: [{ label: "m", kg: 50 }] }}
-        onChange={onChange}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Remove profile" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Remove value" })).toBeDisabled();
   });
 });

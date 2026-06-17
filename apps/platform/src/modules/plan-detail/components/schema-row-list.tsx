@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import { Button, Stack } from "@mui/material";
 import { toast } from "sonner";
 
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { Composition } from "@repo/contracts/lms/composition";
 import { buildRowItems, type RowGroup } from "@repo/contracts/lms/row-group";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
@@ -28,6 +29,8 @@ type SchemaRowListProps = {
   rows: SchemaRow[];
   rowGroups: RowGroup[];
   composition?: Composition | null;
+  blockIntensity?: Intensity | null;
+  schemaIntensity?: Intensity | null;
   parentIsReorderPending?: boolean;
 };
 
@@ -38,6 +41,8 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   rows,
   rowGroups,
   composition = null,
+  blockIntensity = null,
+  schemaIntensity = null,
   parentIsReorderPending = false,
 }) => {
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
@@ -112,6 +117,8 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
         startDate={startDate}
         items={items}
         minuteLabelById={minuteLabelById}
+        blockIntensity={blockIntensity}
+        schemaIntensity={schemaIntensity}
         parentIsReorderPending={parentIsReorderPending}
         isSelectMode={isSelectMode}
         selectedIds={selectedIds}

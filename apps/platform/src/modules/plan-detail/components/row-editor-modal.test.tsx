@@ -70,6 +70,8 @@ const makeRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: NOW,
@@ -188,5 +190,60 @@ describe("RowEditorModal submit", () => {
 
     expect(updateRowMutate).not.toHaveBeenCalled();
     expect(screen.getByText("Enter a weight greater than 0.")).toBeInTheDocument();
+  });
+});
+
+describe("RowEditorModal intensity + rest wiring (QA-004)", () => {
+  const SEEDED_INTENSITY: SchemaRow["intensity"] = { rpe: { value: 8 } };
+  const SEEDED_REST: SchemaRow["rest"] = {
+    duration: { value: 60, unit: "sec" },
+    scope: "between_sets",
+  };
+
+  it("seeds the intensity and rest sections from the row and carries them on submit", () => {
+    renderEdit(makeRow({ intensity: SEEDED_INTENSITY, rest: SEEDED_REST }));
+
+    expect(screen.getByRole("spinbutton", { name: "RPE" })).toHaveValue(8);
+    expect(screen.getByRole("button", { name: "Remove rest" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(updateRowMutate).toHaveBeenCalledTimes(1);
+    expect(updateRowMutate.mock.calls[0]?.[0]).toMatchObject({
+      schemaRowId: ROW_ID,
+      data: { intensity: SEEDED_INTENSITY, rest: SEEDED_REST },
+    });
+  });
+
+  it("carries an edited intensity value on submit", () => {
+    renderEdit(makeRow({ intensity: SEEDED_INTENSITY, rest: SEEDED_REST }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "RPE" }), {
+      target: { value: "6" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(updateRowMutate.mock.calls[0]?.[0]).toMatchObject({
+      data: { intensity: { rpe: { value: 6 } } },
+    });
+  });
+
+  it("clears intensity and rest to null on submit when both are emptied", () => {
+    renderEdit(makeRow({ intensity: SEEDED_INTENSITY, rest: SEEDED_REST }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "RPE" }), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Remove rest" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(updateRowMutate).toHaveBeenCalledTimes(1);
+
+    const { data } = updateRowMutate.mock.calls[0]?.[0] ?? {};
+
+    expect(data.intensity).toBeNull();
+    expect(data.rest).toBeNull();
   });
 });

@@ -16,6 +16,8 @@ const baseRow = {
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: new Date(),
@@ -58,13 +60,13 @@ describe("LMS row — rejection coverage (collapsed grammar)", () => {
     }
   });
 
-  it("rejects the dropped row-level intensity field shape (schema-only now)", () => {
+  it("carries a row-level intensity (D-V2-INTENSITY-TRINITY restored row scope)", () => {
     const result = schemaRowSchema.safeParse({ ...baseRow, intensity: { rpe: { value: 7 } } });
 
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data).not.toHaveProperty("intensity");
+      expect(result.data.intensity).toEqual({ rpe: { value: 7 } });
     }
   });
 });

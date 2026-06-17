@@ -123,6 +123,8 @@ const makeRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   reps: null,
   side: null,
   tempo: null,
+  intensity: null,
+  rest: null,
   media: null,
   modifiers: [],
   notes: null,

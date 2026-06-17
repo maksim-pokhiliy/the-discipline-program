@@ -57,6 +57,8 @@ const exerciseRow = {
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: new Date(),
@@ -82,6 +84,7 @@ const baseBlock = {
   id: "clz1234567890123456789012",
   sessionId: "clz1234567890123456789ccc",
   order: 10,
+  intensity: null,
   notes: ["block focus"],
   labels: [labelOne],
   schemas: [],
@@ -115,7 +118,7 @@ describe("blockSchema", () => {
     }
   });
 
-  it("strips the dropped intensity + timeCap fields (D-FLOORS — schema-only now)", () => {
+  it("carries block intensity (D-V2-INTENSITY-TRINITY restored block scope) and still strips the dropped timeCap", () => {
     const result = blockSchema.safeParse({
       ...baseBlock,
       intensity: { rpe: { value: 7 } },
@@ -125,9 +128,17 @@ describe("blockSchema", () => {
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data).not.toHaveProperty("intensity");
+      expect(result.data.intensity).toEqual({ rpe: { value: 7 } });
       expect(result.data).not.toHaveProperty("timeCap");
     }
+  });
+
+  it("rejects a block that omits intensity (required-present, nullable)", () => {
+    const withoutIntensity: Record<string, unknown> = { ...baseBlock };
+
+    delete withoutIntensity.intensity;
+
+    expect(blockSchema.safeParse(withoutIntensity).success).toBe(false);
   });
 
   it("accepts labels: [] (implicit block per domain §1.3)", () => {
@@ -235,13 +246,13 @@ describe("createBlockSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("strips the dropped intensity field on create", () => {
+  it("accepts an intensity on create (D-V2-INTENSITY-TRINITY restored block scope)", () => {
     const result = createBlockSchema.safeParse({ intensity: { rpe: { value: 7 } } });
 
     expect(result.success).toBe(true);
 
     if (result.success) {
-      expect(result.data).not.toHaveProperty("intensity");
+      expect(result.data.intensity).toEqual({ rpe: { value: 7 } });
     }
   });
 

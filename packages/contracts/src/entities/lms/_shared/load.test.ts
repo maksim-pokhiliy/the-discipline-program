@@ -142,7 +142,129 @@ describe("loadSchema", () => {
     expect(loadSchema.safeParse({ kind: "bodyweight" }).success).toBe(true);
   });
 
-  it("accepts byProfile with a labelled entries list", () => {
+  it("accepts a single-axis byProfile (level RX/SC) with a cell per value", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX", "SC"] }],
+        cells: [
+          { coords: ["RX"], kg: 43 },
+          { coords: ["SC"], kg: 30 },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts a two-axis byProfile covering the full cartesian product (Wall Ball level×sex)", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
+        ],
+        cells: [
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
+          { coords: ["SC", "♀"], kg: 4 },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a two-axis byProfile missing a cell (only 3 of 4 combinations covered)", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
+        ],
+        cells: [
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a coord that is not a value of its axis", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX", "SC"] }],
+        cells: [
+          { coords: ["RX"], kg: 43 },
+          { coords: ["MASTER"], kg: 30 },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a third axis (max two axes)", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [
+          { name: "level", values: ["RX"] },
+          { name: "sex", values: ["♂"] },
+          { name: "age", values: ["masters"] },
+        ],
+        cells: [{ coords: ["RX", "♂", "masters"], kg: 9 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a non-positive cell kg", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX"] }],
+        cells: [{ coords: ["RX"], kg: 0 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty axis name", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ name: "", values: ["RX"] }],
+        cells: [{ coords: ["RX"], kg: 9 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty axis values list", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ name: "level", values: [] }],
+        cells: [{ coords: ["RX"], kg: 9 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a byProfile axis with duplicate values (QA-001)", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX", "RX"] }],
+        cells: [
+          { coords: ["RX"], kg: 43 },
+          { coords: ["RX"], kg: 30 },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects the dropped byProfile first/second shape", () => {
+    expect(loadSchema.safeParse({ kind: "byProfile", first: 24, second: 16 }).success).toBe(false);
+  });
+
+  it("rejects the dropped flat entries shape", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
@@ -151,27 +273,7 @@ describe("loadSchema", () => {
           { label: "F", kg: 16 },
         ],
       }).success,
-    ).toBe(true);
-  });
-
-  it("rejects byProfile with an empty entries list", () => {
-    expect(loadSchema.safeParse({ kind: "byProfile", entries: [] }).success).toBe(false);
-  });
-
-  it("rejects byProfile with a non-positive entry kg", () => {
-    expect(
-      loadSchema.safeParse({ kind: "byProfile", entries: [{ label: "M", kg: 0 }] }).success,
     ).toBe(false);
-  });
-
-  it("rejects byProfile with an empty entry label", () => {
-    expect(
-      loadSchema.safeParse({ kind: "byProfile", entries: [{ label: "", kg: 24 }] }).success,
-    ).toBe(false);
-  });
-
-  it("rejects the dropped byProfile first/second shape", () => {
-    expect(loadSchema.safeParse({ kind: "byProfile", first: 24, second: 16 }).success).toBe(false);
   });
 
   it("rejects the dropped none kind", () => {

@@ -37,8 +37,10 @@ export const repetitionEquals = (a: RepetitionAxis, b: RepetitionAxis): boolean 
     case "interval":
       return (
         b.kind === "interval" &&
-        a.workMin === b.workMin &&
-        a.offMin === b.offMin &&
+        a.work.value === b.work.value &&
+        a.work.unit === b.work.unit &&
+        a.off.value === b.off.value &&
+        a.off.unit === b.off.unit &&
         a.count === b.count
       );
     default:

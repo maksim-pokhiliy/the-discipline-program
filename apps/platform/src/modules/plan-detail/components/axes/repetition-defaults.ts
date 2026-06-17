@@ -10,5 +10,10 @@ export const REPETITION_DEFAULTS: Record<RepetitionAxis["kind"], RepetitionAxis>
   ladder: { kind: "ladder", steps: [21, 15, 9] },
   timeCap: { kind: "timeCap", cap: DEFAULT_TIME_CAP },
   cadence: { kind: "cadence", everyMin: 1, rounds: 4 },
-  interval: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+  interval: {
+    kind: "interval",
+    work: { value: 2, unit: "min" },
+    off: { value: 1, unit: "min" },
+    count: 3,
+  },
 };

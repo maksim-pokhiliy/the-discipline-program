@@ -11,6 +11,7 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Checkbox, IconButton, Link, Tooltip, Typography } from "@mui/material";
 
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -66,6 +67,8 @@ type SchemaRowCardProps = {
   startDate: string;
   index: number;
   minuteLabel?: string | null;
+  blockIntensity?: Intensity | null;
+  schemaIntensity?: Intensity | null;
   isReorderPending: boolean;
   isDraggable?: boolean;
   timeline?: { ord: number; isFirst: boolean; isLast: boolean };
@@ -80,6 +83,8 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   startDate,
   index,
   minuteLabel = null,
+  blockIntensity = null,
+  schemaIntensity = null,
   isReorderPending,
   isDraggable = true,
   timeline,
@@ -103,7 +108,10 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
 
-  const fmt = useMemo(() => formatRow(row, exerciseById, index), [row, exerciseById, index]);
+  const fmt = useMemo(
+    () => formatRow(row, exerciseById, index, { blockIntensity, schemaIntensity }),
+    [row, exerciseById, index, blockIntensity, schemaIntensity],
+  );
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
 

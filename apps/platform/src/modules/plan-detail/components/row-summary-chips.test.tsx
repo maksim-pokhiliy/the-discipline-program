@@ -12,6 +12,8 @@ const makeSummary = (overrides: Partial<RowSummary> = {}): RowSummary => ({
   load: null,
   side: null,
   tempo: null,
+  intensityChips: [],
+  rest: null,
   modifiers: [],
   notes: [],
   ...overrides,

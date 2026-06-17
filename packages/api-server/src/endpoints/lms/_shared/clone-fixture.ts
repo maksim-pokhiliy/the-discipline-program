@@ -52,6 +52,8 @@ const buildSchemaRows = (
       side: { kind: "each_leg", countPerLimb: 6 },
       tempo: { eccentric: 3, pauseBottom: 1, concentric: "X", pauseTop: 0 },
       media: { url: "https://example.com/demo.mp4", label: "demo" },
+      intensity: { rpe: { value: 8 } },
+      rest: { duration: { value: 120, unit: "sec" }, scope: "between_sets" },
       notes: ["grouped row A note"],
     },
     {

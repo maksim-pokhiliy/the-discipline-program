@@ -39,16 +39,89 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     expect(coachRowIssue(issue)).toBe("Enter a weight greater than 0.");
   });
 
-  it("maps an empty byProfile label", () => {
-    const issue = firstIssue({ load: { kind: "byProfile", entries: [{ label: "", kg: 5 }] } });
+  it("maps an empty byProfile axis name", () => {
+    const issue = firstIssue({
+      load: {
+        kind: "byProfile",
+        axes: [{ name: "", values: ["RX"] }],
+        cells: [{ coords: ["RX"], kg: 5 }],
+      },
+    });
 
-    expect(coachRowIssue(issue)).toBe("Add a label for each profile weight.");
+    expect(coachRowIssue(issue)).toBe("Name each axis (for example level or sex).");
   });
 
-  it("maps a non-positive byProfile weight", () => {
-    const issue = firstIssue({ load: { kind: "byProfile", entries: [{ label: "m", kg: 0 }] } });
+  it("maps an empty byProfile axis value", () => {
+    const issue = firstIssue({
+      load: {
+        kind: "byProfile",
+        axes: [{ name: "level", values: [""] }],
+        cells: [{ coords: [""], kg: 5 }],
+      },
+    });
 
-    expect(coachRowIssue(issue)).toBe("Enter a weight greater than 0 for each profile weight.");
+    expect(coachRowIssue(issue)).toBe("Fill in every axis value, or remove the empty one.");
+  });
+
+  it("maps a byProfile axis with duplicate values (QA-001)", () => {
+    const issue = firstIssue({
+      load: {
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX", "RX"] }],
+        cells: [
+          { coords: ["RX"], kg: 43 },
+          { coords: ["RX"], kg: 30 },
+        ],
+      },
+    });
+
+    expect(coachRowIssue(issue)).toBe("Give each axis value a unique name; two are the same.");
+  });
+
+  it("maps a non-positive byProfile cell weight", () => {
+    const issue = firstIssue({
+      load: {
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX"] }],
+        cells: [{ coords: ["RX"], kg: 0 }],
+      },
+    });
+
+    expect(coachRowIssue(issue)).toBe("Enter a weight greater than 0 for each combination.");
+  });
+
+  it("maps a byProfile cartesian-cover gap", () => {
+    const issue = firstIssue({
+      load: {
+        kind: "byProfile",
+        axes: [
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
+        ],
+        cells: [
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
+        ],
+      },
+    });
+
+    expect(coachRowIssue(issue)).toBe("Fill in a weight for every combination of axis values.");
+  });
+
+  it("maps a byProfile coord that is not in its axis", () => {
+    const issue = firstIssue({
+      load: {
+        kind: "byProfile",
+        axes: [{ name: "level", values: ["RX", "SC"] }],
+        cells: [
+          { coords: ["RX"], kg: 9 },
+          { coords: ["MASTER"], kg: 6 },
+        ],
+      },
+    });
+
+    expect(coachRowIssue(issue)).toBe("Pick axis values that match the axes you defined.");
   });
 
   it("maps an out-of-range percentage value", () => {

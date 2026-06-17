@@ -1,19 +1,25 @@
 "use client";
 
 import { Alert, Button, Stack, Typography } from "@mui/material";
-import type { FieldErrors } from "react-hook-form";
 
-import type { Intensity, RestSpec } from "@repo/contracts/lms/_shared";
+import type { Intensity, RestSpec, TimeCap } from "@repo/contracts/lms/_shared";
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
+import {
+  capErrorsFromParse,
+  DEFAULT_REST,
+  restErrorsFromParse,
+} from "../../lib/field-error-bridge";
 import { shouldBeContainer } from "../../lib/should-be-container";
 import { IntensityFields } from "../intensity-fields";
-import { RestSpecFields, restSpecFormSchema, type RestSpecFormValue } from "../rest-spec-fields";
+import { RestSpecFields } from "../rest-spec-fields";
+import { TimeCapFields } from "../time-cap-fields";
 
 import type { NodeId, RepetitionAxis, SchemaDraft } from "./axis-draft.types";
 import { AxisFieldSection } from "./axis-field-section";
 import { RepetitionAxisField } from "./repetition-axis-field";
+import { DEFAULT_TIME_CAP } from "./repetition-defaults";
 
 const HEADER_LABEL = "Schema title (optional)";
 const HEADER_ARIA = "Inspector header";
@@ -22,47 +28,15 @@ const REST_LABEL = "rest";
 const REST_ADD_LABEL = "Add rest";
 const REST_REMOVE_LABEL = "Remove rest";
 const INTENSITY_LABEL = "intensity";
+const CAP_LABEL = "cap";
+const CAP_ADD_LABEL = "Add cap";
+const CAP_REMOVE_LABEL = "Remove cap";
 const PANEL_SPACING = 2;
-const REST_ISSUE_TYPE = "contract";
 const DEMOTE_HINT =
   "This group holds a single movement and no rep-scheme. A plain row may read cleaner — drop it down to a row, or give it a scheme to keep it as a group.";
 const DEMOTE_BUTTON_LABEL = "Demote to row";
 
 const DEFAULT_REPETITION: RepetitionAxis = { kind: "once" };
-const DEFAULT_REST: RestSpec = {
-  duration: { value: 90, unit: "sec" },
-  scope: "between_sets",
-};
-
-type RestDurationErrors = NonNullable<FieldErrors<RestSpecFormValue>["duration"]>;
-
-const restErrorsFromParse = (rest: RestSpec): FieldErrors<RestSpecFormValue> | undefined => {
-  const result = restSpecFormSchema.safeParse(rest);
-
-  if (result.success) {
-    return undefined;
-  }
-
-  const duration: RestDurationErrors = {};
-
-  for (const issue of result.error.issues) {
-    const [head, field] = issue.path;
-
-    if (head !== "duration") {
-      continue;
-    }
-
-    if (field === "value" && duration.value === undefined) {
-      duration.value = { type: REST_ISSUE_TYPE, message: issue.message };
-    } else if (field === "rangeMax" && duration.rangeMax === undefined) {
-      duration.rangeMax = { type: REST_ISSUE_TYPE, message: issue.message };
-    } else if (field === undefined && duration.root === undefined) {
-      duration.root = { type: REST_ISSUE_TYPE, message: issue.message };
-    }
-  }
-
-  return { duration };
-};
 
 type ContainerInspectorProps = {
   container: SchemaDraft;
@@ -99,9 +73,22 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
   const setIntensity = (intensity: Intensity | null): void =>
     onUpdateNode(container.id, (schema) => ({ ...schema, intensity }));
 
+  const setCap = (cap: TimeCap | null): void =>
+    onUpdateNode(container.id, (schema) => ({ ...schema, cap }));
+
+  const clearCap = (): void =>
+    onUpdateNode(container.id, (schema) => {
+      const next = { ...schema };
+
+      delete next.cap;
+
+      return next;
+    });
+
   const hasSingleRow = container.rows.length === 1;
   const showsDemoteHint = isCreateMode && !shouldBeContainer(container) && hasSingleRow;
   const showsDemote = showsDemoteHint;
+  const showsCapSection = container.repetition?.kind !== "timeCap";
 
   return (
     <Stack direction="column" spacing={PANEL_SPACING}>
@@ -147,6 +134,28 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
       <AxisFieldSection label={INTENSITY_LABEL}>
         <IntensityFields value={container.intensity ?? null} onChange={setIntensity} />
       </AxisFieldSection>
+
+      {showsCapSection ? (
+        <AxisFieldSection label={CAP_LABEL}>
+          {container.cap != null ? (
+            <Stack direction="column" spacing={1} sx={{ alignItems: "flex-start" }}>
+              <TimeCapFields
+                value={container.cap}
+                onChange={setCap}
+                error={capErrorsFromParse(container.cap)}
+              />
+
+              <Button size="small" color="inherit" onClick={clearCap}>
+                {CAP_REMOVE_LABEL}
+              </Button>
+            </Stack>
+          ) : (
+            <Button size="small" onClick={() => setCap(DEFAULT_TIME_CAP)}>
+              {CAP_ADD_LABEL}
+            </Button>
+          )}
+        </AxisFieldSection>
+      ) : null}
 
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">

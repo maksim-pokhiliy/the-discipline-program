@@ -23,6 +23,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Box, Stack, alpha } from "@mui/material";
 
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import { type ParallelInterleaveOrder, type SchemaGroup } from "@repo/contracts/lms/schema-group";
 import { ConfirmationModal } from "@repo/ui";
@@ -65,6 +66,7 @@ type SchemaGroupBoxProps = {
   members: SchemaWithBody[];
   planId: string;
   startDate: string;
+  blockIntensity?: Intensity | null;
   parentIsReorderPending?: boolean;
   onMemberReorder: (
     groupId: string,
@@ -78,6 +80,7 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
   members,
   planId,
   startDate,
+  blockIntensity = null,
   parentIsReorderPending = false,
   onMemberReorder,
 }): ReactElement => {
@@ -245,6 +248,7 @@ export const SchemaGroupBox: React.FC<SchemaGroupBoxProps> = ({
                     member={member}
                     planId={planId}
                     startDate={startDate}
+                    blockIntensity={blockIntensity}
                     parentIsReorderPending={parentIsReorderPending}
                   />
                 ))}

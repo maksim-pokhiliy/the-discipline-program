@@ -73,7 +73,12 @@ describe("isRepetitionDirty", () => {
   });
 
   it("returns true for an edited interval", () => {
-    const edited: RepetitionAxis = { kind: "interval", workMin: 3, offMin: 1, count: 3 };
+    const edited: RepetitionAxis = {
+      kind: "interval",
+      work: { value: 3, unit: "min" },
+      off: { value: 1, unit: "min" },
+      count: 3,
+    };
 
     expect(isRepetitionDirty(edited)).toBe(true);
   });
@@ -109,6 +114,63 @@ describe("repetitionEquals", () => {
   it("returns false when one count is exact and the other is a range", () => {
     expect(
       repetitionEquals({ kind: "count", count: 4 }, { kind: "count", count: { min: 4, max: 4 } }),
+    ).toBe(false);
+  });
+
+  it("returns true for two identical intervals (deep value/unit compare)", () => {
+    expect(
+      repetitionEquals(
+        {
+          kind: "interval",
+          work: { value: 20, unit: "sec" },
+          off: { value: 10, unit: "sec" },
+          count: 8,
+        },
+        {
+          kind: "interval",
+          work: { value: 20, unit: "sec" },
+          off: { value: 10, unit: "sec" },
+          count: 8,
+        },
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false when an interval work value differs", () => {
+    expect(
+      repetitionEquals(
+        {
+          kind: "interval",
+          work: { value: 20, unit: "sec" },
+          off: { value: 10, unit: "sec" },
+          count: 8,
+        },
+        {
+          kind: "interval",
+          work: { value: 30, unit: "sec" },
+          off: { value: 10, unit: "sec" },
+          count: 8,
+        },
+      ),
+    ).toBe(false);
+  });
+
+  it("returns false when an interval work unit differs (sec vs min)", () => {
+    expect(
+      repetitionEquals(
+        {
+          kind: "interval",
+          work: { value: 1, unit: "min" },
+          off: { value: 1, unit: "min" },
+          count: 8,
+        },
+        {
+          kind: "interval",
+          work: { value: 1, unit: "sec" },
+          off: { value: 1, unit: "min" },
+          count: 8,
+        },
+      ),
     ).toBe(false);
   });
 });

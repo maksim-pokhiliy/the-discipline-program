@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
+import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { Block } from "@repo/contracts/lms/block";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -78,6 +79,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       data: { notes: next },
     });
 
+  const handleIntensityCommit = (next: Intensity | null) =>
+    updateBlock.mutate({
+      blockId: block.id,
+      data: { intensity: next },
+    });
+
   const handleDeleteOpen = () => setIsDeleteOpen(true);
   const handleDeleteClose = () => setIsDeleteOpen(false);
 
@@ -133,6 +140,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         onLabelsChange={handleLabelsChange}
         onDeleteOpen={handleDeleteOpen}
         onDuplicate={handleDuplicate}
+        intensity={block.intensity}
+        onIntensityCommit={handleIntensityCommit}
       />
 
       {isExpanded ? (

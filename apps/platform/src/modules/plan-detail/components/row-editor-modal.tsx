@@ -2,7 +2,7 @@
 
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
-import { Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack, TextField, Typography } from "@mui/material";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { FormModal } from "@repo/ui";
@@ -10,15 +10,19 @@ import { FormModal } from "@repo/ui";
 import { useCreateSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
 import { buildRowRequest } from "../lib/build-row-request";
+import { DEFAULT_REST, restErrorsFromParse } from "../lib/field-error-bridge";
 import { formatTempoInput } from "../lib/format-tempo-input";
 import type { RowFormState, RowRequestMode } from "../lib/row-form-state.types";
 
+import { AxisFieldSection } from "./axes/axis-field-section";
 import { ExercisePicker } from "./exercise-picker";
+import { IntensityFields } from "./intensity-fields";
 import { LoadEditor } from "./load-editor";
 import { ModifierPicker } from "./modifier-picker";
 import { NotesListEditor } from "./notes-list-editor";
 import { NumberField } from "./number-field";
 import { RepsField } from "./reps-field";
+import { RestSpecFields } from "./rest-spec-fields";
 import { SideField } from "./side-field";
 
 const CREATE_TITLE = "Add row";
@@ -33,6 +37,10 @@ const SETS_FIELD_MIN = 1;
 const TEMPO_LABEL = "Tempo";
 const TEMPO_PLACEHOLDER = "e.g. 3-1-X-0";
 const CAPTION_VARIANT = "caption";
+const INTENSITY_LABEL = "intensity";
+const REST_LABEL = "rest";
+const REST_ADD_LABEL = "Add rest";
+const REST_REMOVE_LABEL = "Remove rest";
 
 export type RowEditorMode = { kind: "create"; schemaId: string } | { kind: "edit"; row: SchemaRow };
 
@@ -53,6 +61,8 @@ const emptyState = (): RowFormState => ({
   tempoInput: "",
   modifierIds: [],
   notes: [],
+  intensity: null,
+  rest: null,
 });
 
 const seedFromRow = (row: SchemaRow): RowFormState => ({
@@ -64,6 +74,8 @@ const seedFromRow = (row: SchemaRow): RowFormState => ({
   tempoInput: formatTempoInput(row.tempo),
   modifierIds: row.modifiers.map((modifier) => modifier.id),
   notes: row.notes ?? [],
+  intensity: row.intensity,
+  rest: row.rest,
 });
 
 const seedState = (mode: RowEditorMode): RowFormState =>
@@ -218,6 +230,30 @@ export const RowEditorModal = ({
         error={errorFor("tempo") !== undefined}
         helperText={errorFor("tempo")}
       />
+
+      <AxisFieldSection label={INTENSITY_LABEL}>
+        <IntensityFields value={state.intensity} onChange={(intensity) => patch({ intensity })} />
+      </AxisFieldSection>
+
+      <AxisFieldSection label={REST_LABEL}>
+        {state.rest !== null ? (
+          <Stack direction="column" spacing={1} sx={{ alignItems: "flex-start" }}>
+            <RestSpecFields
+              value={state.rest}
+              onChange={(rest) => patch({ rest })}
+              error={restErrorsFromParse(state.rest)}
+            />
+
+            <Button size="small" color="inherit" onClick={() => patch({ rest: null })}>
+              {REST_REMOVE_LABEL}
+            </Button>
+          </Stack>
+        ) : (
+          <Button size="small" onClick={() => patch({ rest: DEFAULT_REST })}>
+            {REST_ADD_LABEL}
+          </Button>
+        )}
+      </AxisFieldSection>
 
       <ModifierPicker
         value={state.modifierIds}

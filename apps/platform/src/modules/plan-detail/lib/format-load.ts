@@ -8,10 +8,23 @@ const SPACE = " ";
 const KG_SUFFIX = "kg";
 const PAIR_PREFIX = "2x";
 const BW_LABEL = "BW";
-const BY_PROFILE_SEPARATOR = " / ";
+const PROFILE_COORD_SEPARATOR = "";
+const PROFILE_KG_SEPARATOR = ":";
+const PROFILE_LIST_SEPARATOR = " / ";
+const PROFILE_GRID_SEPARATOR = " ";
+const SINGLE_AXIS_COUNT = 1;
 
-const formatProfileEntry = (entry: { label: string; kg: number }): string =>
-  `${entry.label}: ${entry.kg}`;
+type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
+
+const formatProfileCell = (cell: ByProfileLoad["cells"][number]): string =>
+  `${cell.coords.join(PROFILE_COORD_SEPARATOR)}${PROFILE_KG_SEPARATOR}${cell.kg}`;
+
+const formatByProfile = (load: ByProfileLoad): string => {
+  const separator =
+    load.axes.length === SINGLE_AXIS_COUNT ? PROFILE_LIST_SEPARATOR : PROFILE_GRID_SEPARATOR;
+
+  return load.cells.map(formatProfileCell).join(separator);
+};
 
 export const formatLoad = (load: Load, exerciseById: ExerciseById): string => {
   switch (load.kind) {
@@ -32,7 +45,7 @@ export const formatLoad = (load: Load, exerciseById: ExerciseById): string => {
     case "bodyweight":
       return BW_LABEL;
     case "byProfile":
-      return load.entries.map(formatProfileEntry).join(BY_PROFILE_SEPARATOR);
+      return formatByProfile(load);
     default:
       load satisfies never;
 

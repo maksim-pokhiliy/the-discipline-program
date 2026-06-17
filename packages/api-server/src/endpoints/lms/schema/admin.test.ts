@@ -17,7 +17,22 @@ const LADDER_COMPOSITION: Composition = {
 };
 
 const INTERVAL_COMPOSITION: Composition = {
-  repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
+  repetition: {
+    kind: "interval",
+    work: { value: 2, unit: "min" },
+    off: { value: 1, unit: "min" },
+    count: 6,
+  },
+};
+
+const CAPPED_COMPOSITION: Composition = {
+  repetition: { kind: "ladder", steps: [21, 15, 9] },
+  cap: { min: 12, unit: "min" },
+};
+
+const RECAPPED_COMPOSITION: Composition = {
+  repetition: { kind: "ladder", steps: [21, 15, 9] },
+  cap: { min: 8, max: 12, unit: "min" },
 };
 
 describe("lmsSchemaApi", () => {
@@ -410,6 +425,28 @@ describe("lmsSchemaApi", () => {
       }
     });
 
+    it("persists a composition cap riding inside the composition bundle", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        const created = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { composition: CAPPED_COMPOSITION },
+        );
+
+        expect(created.composition).toEqual(CAPPED_COMPOSITION);
+        expect(created.composition?.cap).toEqual({ min: 12, unit: "min" });
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
+
+        expect(stored?.composition).toEqual(CAPPED_COMPOSITION);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     describe("create into a group", () => {
       const provisionGroup = async (blockId: string) => {
         const group = await cleanupRaw.schemaGroup.create({
@@ -610,6 +647,33 @@ describe("lmsSchemaApi", () => {
         const storedCleared = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
 
         expect(storedCleared?.composition).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("mutates a composition cap to a range cap through the conditional spread", async () => {
+      const ctx = await provisionBlock();
+      const schema = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        {
+          composition: CAPPED_COMPOSITION,
+        },
+      );
+
+      try {
+        const mutated = await lmsSchemaApi.update(coach.user.id, schema.id, {
+          composition: RECAPPED_COMPOSITION,
+        });
+
+        expect(mutated.composition).toEqual(RECAPPED_COMPOSITION);
+        expect(mutated.composition?.cap).toEqual({ min: 8, max: 12, unit: "min" });
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
+
+        expect(stored?.composition).toEqual(RECAPPED_COMPOSITION);
       } finally {
         await ctx.cleanup();
       }

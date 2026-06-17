@@ -29,8 +29,8 @@ const repetitionFromComposition = (repetition: ContractRepetitionAxis): Repetiti
     case "interval":
       return {
         kind: "interval",
-        workMin: repetition.workMin,
-        offMin: repetition.offMin,
+        work: repetition.work,
+        off: repetition.off,
         count: repetition.count,
       };
     default:
@@ -57,7 +57,7 @@ const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
 
 export const schemaWithBodyToDraft = (schema: SchemaWithBody): SchemaDraft => {
   const composition = schema.schema.composition ?? {};
-  const { repetition, rest } = composition;
+  const { repetition, rest, cap } = composition;
 
   return {
     id: asNodeId(schema.schema.id),
@@ -66,6 +66,7 @@ export const schemaWithBodyToDraft = (schema: SchemaWithBody): SchemaDraft => {
     intensity: schema.schema.intensity,
     ...(repetition !== undefined && { repetition: repetitionFromComposition(repetition) }),
     ...(rest !== undefined && { rest: restFromComposition(rest) }),
+    ...(cap !== undefined && { cap }),
     rows: schema.rows.map(rowFromSchemaRow),
   };
 };

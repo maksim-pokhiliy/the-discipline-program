@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
+import { type Intensity } from "@repo/contracts/lms/_shared";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -34,6 +35,7 @@ type SchemaCardProps = {
   schema: SchemaWithBody;
   planId: string;
   startDate: string;
+  blockIntensity?: Intensity | null;
   parentIsReorderPending?: boolean;
   isBoxed?: boolean;
   isDraggable?: boolean;
@@ -46,6 +48,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   schema,
   planId,
   startDate,
+  blockIntensity = null,
   parentIsReorderPending = false,
   isBoxed = false,
   isDraggable = true,
@@ -131,6 +134,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     >
       <SchemaCardHead
         schema={schema}
+        blockIntensity={blockIntensity}
         isMutationPending={isMutationPending}
         dragAttributes={attributes}
         dragListeners={listeners}
@@ -153,6 +157,8 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
           rowGroups={schema.rowGroups}
           schemaId={schema.schema.id}
           composition={schema.schema.composition}
+          blockIntensity={blockIntensity}
+          schemaIntensity={schema.schema.intensity}
           planId={planId}
           startDate={startDate}
           parentIsReorderPending={isMutationPending}

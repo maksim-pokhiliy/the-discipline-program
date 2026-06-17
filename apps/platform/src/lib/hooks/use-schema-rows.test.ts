@@ -53,6 +53,8 @@ const makeSchemaRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   modifiers: [],
   notes: null,
   createdAt: new Date("2026-01-06T00:00:00.000Z"),

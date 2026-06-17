@@ -14,6 +14,7 @@ type NumberFieldProps = {
   disabled?: boolean | undefined;
   maxWidth?: number | undefined;
   placeholder?: string | undefined;
+  ariaLabel?: string | undefined;
 };
 
 export const NumberField = ({
@@ -26,6 +27,7 @@ export const NumberField = ({
   disabled = false,
   maxWidth,
   placeholder,
+  ariaLabel,
 }: NumberFieldProps): React.ReactElement => (
   <TextField
     type="number"
@@ -33,7 +35,7 @@ export const NumberField = ({
     label={label}
     value={Number.isFinite(value) ? value : ""}
     onChange={(e) => onChange(e.target.value === "" ? Number.NaN : Number(e.target.value))}
-    inputProps={{ min, step }}
+    inputProps={{ min, step, ...(ariaLabel !== undefined && { "aria-label": ariaLabel }) }}
     error={error !== undefined}
     helperText={error}
     disabled={disabled}

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 
 import { mapToSchemaGroup } from "./schema-group.mapper";
-import { type PrismaSchemaRowWithModifiers } from "./schema-row.mapper";
+import { mapToSchemaRow, type PrismaSchemaRowWithModifiers } from "./schema-row.mapper";
 import {
   mapSchemas,
   mapToSchema,
@@ -56,6 +56,8 @@ const makeExerciseRow = (
   side: null,
   tempo: null,
   media: null,
+  intensity: null,
+  rest: null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -99,6 +101,10 @@ const makeRowWithModifiers = (
 
 const LADDER_COMPOSITION: Composition = { repetition: { kind: "ladder", steps: [21, 15, 9] } };
 const ROUNDS_COMPOSITION: Composition = { repetition: { kind: "count", count: 3 } };
+const CAPPED_COMPOSITION: Composition = {
+  repetition: { kind: "ladder", steps: [21, 15, 9] },
+  cap: { min: 12, unit: "min" },
+};
 
 describe("mapToSchema", () => {
   it("maps groupId straight through and never references a parent schema", () => {
@@ -134,6 +140,38 @@ describe("mapToSchema", () => {
 
     expect(mapped.composition).toBeNull();
     expect(mapped.label).toBeNull();
+  });
+
+  it("round-trips a composition cap through the composition parse", () => {
+    const mapped = mapToSchema(
+      makeFlatSchema({ id: cuid("capped"), order: 10, composition: CAPPED_COMPOSITION }),
+    );
+
+    expect(mapped.composition).toEqual(CAPPED_COMPOSITION);
+    expect(mapped.composition?.cap).toEqual({ min: 12, unit: "min" });
+  });
+});
+
+describe("mapToSchemaRow", () => {
+  it("parses intensity and rest value objects from the stored JSON", () => {
+    const mapped = mapToSchemaRow({
+      ...makeExerciseRow(cuid("vorow"), cuid("voschema"), 10),
+      intensity: { rpe: { value: 8 } },
+      rest: { duration: { value: 120, unit: "sec" }, scope: "between_sets" },
+    });
+
+    expect(mapped.intensity).toEqual({ rpe: { value: 8 } });
+    expect(mapped.rest).toEqual({
+      duration: { value: 120, unit: "sec" },
+      scope: "between_sets",
+    });
+  });
+
+  it("maps a null intensity and a null rest straight through", () => {
+    const mapped = mapToSchemaRow(makeExerciseRow(cuid("nullvo"), cuid("voschema"), 10));
+
+    expect(mapped.intensity).toBeNull();
+    expect(mapped.rest).toBeNull();
   });
 });
 

@@ -204,8 +204,27 @@ describe("lmsBlockApi", () => {
 
         expect(block.sessionId).toBe(ctx.session.id);
         expect(block.order).toBe(10);
+        expect(block.intensity).toBeNull();
         expect(block.notes).toBeNull();
         expect(block.labels).toEqual([]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("persists a block intensity value object", async () => {
+      const ctx = await provisionSession();
+
+      try {
+        const block = await lmsBlockApi.create(coach.user.id, activePlanId, ctx.session.id, {
+          intensity: { effortPercent: { value: 85 } },
+        });
+
+        expect(block.intensity).toEqual({ effortPercent: { value: 85 } });
+
+        const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
+
+        expect(stored?.intensity).toEqual({ effortPercent: { value: 85 } });
       } finally {
         await ctx.cleanup();
       }
@@ -425,6 +444,51 @@ describe("lmsBlockApi", () => {
         const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
 
         expect(stored?.notes).toEqual(["hard set"]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("updates intensity while leaving existing notes untouched (conditional spread)", async () => {
+      const ctx = await provisionSession();
+      const block = await lmsBlockApi.create(coach.user.id, activePlanId, ctx.session.id, {
+        intensity: { rpe: { value: 7 } },
+        notes: ["block note"],
+      });
+
+      try {
+        const updated = await lmsBlockApi.update(coach.user.id, block.id, {
+          intensity: { effortPercent: { value: 85 } },
+        });
+
+        expect(updated.intensity).toEqual({ effortPercent: { value: 85 } });
+        expect(updated.notes).toEqual(["block note"]);
+
+        const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
+
+        expect(stored?.intensity).toEqual({ effortPercent: { value: 85 } });
+        expect(stored?.notes).toEqual(["block note"]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("clears intensity by writing JSON null on explicit null", async () => {
+      const ctx = await provisionSession();
+      const block = await lmsBlockApi.create(coach.user.id, activePlanId, ctx.session.id, {
+        intensity: { rpe: { value: 7 } },
+      });
+
+      try {
+        const updated = await lmsBlockApi.update(coach.user.id, block.id, {
+          intensity: null,
+        });
+
+        expect(updated.intensity).toBeNull();
+
+        const stored = await cleanupRaw.block.findUnique({ where: { id: block.id } });
+
+        expect(stored?.intensity).toBeNull();
       } finally {
         await ctx.cleanup();
       }

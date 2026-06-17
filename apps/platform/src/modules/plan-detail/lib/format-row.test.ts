@@ -95,6 +95,8 @@ describe("formatRow", () => {
         load: "BW",
         side: "each leg",
         tempo: "3-1-1-0",
+        intensityChips: [],
+        rest: null,
         modifiers: ["from sofa"],
         notes: [],
       });
