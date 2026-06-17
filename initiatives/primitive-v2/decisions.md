@@ -8,15 +8,16 @@ Each re-open here SUPERSEDES a session-primitive original WITH the timed-test ra
 
 ## Index
 
-| ID                     | Topic                                                                | Status   | Supersedes (session-primitive)         |
-| ---------------------- | -------------------------------------------------------------------- | -------- | -------------------------------------- |
-| D-V2-INTENSITY-TRINITY | intensity scoped block/schema/row, render-time overlay               | RATIFIED | D-FLOORS (intensity part)              |
-| D-V2-ROW-REST          | rest also a per-row carrier (by scope), alongside the schema rest    | RATIFIED | D-PLAQUE (ONE-rest, scoped re-open)    |
-| D-V2-CAP-AXIS          | time cap = optional cross-cutting axis on composition; 6 kinds stay  | RATIFIED | — (sacred-adjacent; algebra preserved) |
-| D-V2-INTERVAL-UNIT     | interval work/off carry a unit (sec/min)                             | RATIFIED | — (extends the interval kind)          |
-| D-V2-PROFILE-NESTING   | byProfile flat → 1–2 axes + cells; render/author-serving (no reader) | RATIFIED | — (extends D-LOAD-FINAL byProfile)     |
-| D-V2-EXEC-DEFER-HOLD   | #11 score + #20 inter-schema rest stay deferred; no inert field      | RATIFIED | upholds D-EXEC-DEFER                   |
-| D-V2-ONE-WAVE          | the whole reshape ships in ONE /feature; no floor-split              | RATIFIED | mirrors DR-W4-5 ONE-WAVE               |
+| ID                         | Topic                                                                | Status   | Supersedes (session-primitive)           |
+| -------------------------- | -------------------------------------------------------------------- | -------- | ---------------------------------------- |
+| D-V2-INTENSITY-TRINITY     | intensity scoped block/schema/row, render-time overlay               | RATIFIED | D-FLOORS (intensity part)                |
+| D-V2-ROW-REST              | rest also a per-row carrier (by scope), alongside the schema rest    | RATIFIED | D-PLAQUE (ONE-rest, scoped re-open)      |
+| D-V2-CAP-AXIS              | time cap = optional cross-cutting axis on composition; 6 kinds stay  | RATIFIED | — (sacred-adjacent; algebra preserved)   |
+| D-V2-INTERVAL-UNIT         | interval work/off carry a unit (sec/min)                             | RATIFIED | — (extends the interval kind)            |
+| D-V2-PROFILE-NESTING       | byProfile flat → 1–2 axes + cells; render/author-serving (no reader) | RATIFIED | — (extends D-LOAD-FINAL byProfile)       |
+| D-V2-EXEC-DEFER-HOLD       | #11 score + #20 inter-schema rest stay deferred; no inert field      | RATIFIED | upholds D-EXEC-DEFER                     |
+| D-V2-ONE-WAVE              | the whole reshape ships in ONE /feature; no floor-split              | RATIFIED | mirrors DR-W4-5 ONE-WAVE                 |
+| D-V2-COMPOSE-ROW-UNCHANGED | composeRowSchema/projectSchemaRow carry NEITHER intensity nor rest   | RATIFIED | — (Gate-A; resolves a design open-check) |
 
 ---
 
@@ -68,3 +69,18 @@ Each re-open here SUPERSEDES a session-primitive original WITH the timed-test ra
 - **Decision.** Contracts + Prisma (3 new columns: `SchemaRow.intensity`, `SchemaRow.rest`, `Block.intensity`) + mappers + api-server guards + platform editor remap + spec re-freeze ship in ONE `/feature` (full). No row→block→schema→cross floor-split. `db:reset` world, no migration files, aggressive bridge-free — only the final pushed tree green (intermediate RED fine).
 - **Rationale.** The plan's floor-split was a sequencing default, not a constraint. Three of five changes ride inside existing Json (cap/interval in `composition`, byProfile in `load`) and the three editors already exist (`IntensityFields`/`RestSpecFields`/`TimeCapFields`) — the wave is a coherent leaf reshape on ONE migration, exactly the `DR-W4-5 ONE-WAVE` precedent. Splitting buys no safety (house aggressive-migration tolerates staged-green) and burns ≥1 `/feature` budget per session needlessly.
 - **Links.** `reshape-design.md` §1; `plan.md`; `DR-W4-5`.
+
+### D-V2-COMPOSE-ROW-UNCHANGED — composeRowSchema + projectSchemaRow carry NEITHER intensity nor rest
+
+- **Status:** RATIFIED (2026-06-17, owner at Gate A). Resolves the design's open "check `composeRowSchema`" note (`reshape-design.md` §2.1/§2.2).
+- **Decision.** The compose-tree VALIDATION projection — `composeRowSchema` (`composition.schema.ts`) + `projectSchemaRow` (`compose-projection.mapper.ts`) — is LEFT UNCHANGED; it does NOT gain `intensity`/`rest`.
+- **Rationale.** `composeRowSchema` feeds only the compose-tree validation projection (`assertComposeTreeValid`/`ForWrite`), NOT a write path — rows are written via `createSchemaRowSchema`/`updateSchemaRowSchema`. `intensity`/`rest` are leaf-PRESCRIPTION (sibling Json columns on `SchemaRow`), not composition-STRUCTURE. Adding them would force a parallel `projectSchemaRow` change (the `.strict()` projection would otherwise be missing required keys) for zero functional benefit. Contrast cap/interval, which ARE composition-structure and DO thread through the compose/draft path.
+- **Links.** `reshape-design.md` §2.1; Gate-A; `plan.md` Risks #1.
+
+## Implementation notes (2026-06-17 reshape wave)
+
+- **byProfile axis values are unique within an axis** (extends D-V2-PROFILE-NESTING). A QA pass (QA-001) found a value rename could create two identical values in one axis → duplicate coords surfaced only by the cell-uniqueness check, with a misleading message. The byProfile `superRefine` now rejects duplicate axis values with a coach-grade message. Semantically obvious (no two "RX" levels); the contract is the backstop, not editor-side prevention.
+- **Doc-fidelity correction:** `reshape-design.md` §2.1 + the founding research cited `isStructurallyParallel` as the "thread-once" precedent for the intensity overlay. That symbol does NOT exist in the repo (grep-confirmed at implement time). The one-merge-helper rule was honored regardless — `resolveIntensity` (`apps/platform/.../lib/resolve-intensity.ts`) is the single render-time merge. Don't chase the phantom in future work.
+- **Latent fix:** the `timeCap` repetition KIND now renders a `sec`-unit cap as `Ns` (was always `N’`, wrong for seconds) — folded through the same `capLabel` as the new `composition.cap`.
+- The 8 research drift items the design's §2 touch-lists undercounted (interval ~16 files, `deep-clone`, `coach-row-issue`, overlay prop-drilling, fixture sweep) are detailed in `journal.md` (2026-06-17 reshape entry).
+- **QA-002/003 follow-ups** (`IntensityFields` can't author `effortPercent` range / `numericPace`) → `deferred.md` (pre-existing, out of this wave's ratified scope).
