@@ -5,6 +5,7 @@ import { cleanup, createTestCoach, createTestPlan, createTestUser } from "../../
 import {
   type CleanupEntry,
   createTestEnrollment,
+  createTestPerformedSession,
   createTestScheduleScenario,
   createTestWeek,
 } from "../../../test/schedule-helpers";
@@ -231,6 +232,59 @@ describe("loadScheduleWindow", () => {
 
     it("issues the same query count for a multi-athlete roster", async () => {
       await countQueries([scenarioA.athlete.id, scenarioB.athlete.id]);
+    });
+  });
+
+  describe("repeated performances for the same (session, athlete) (QA-012)", () => {
+    let scenario: Awaited<ReturnType<typeof createTestScheduleScenario>>;
+    let sessionId: string;
+    let sessionDate: Date;
+
+    const extraCleanup: CleanupEntry[] = [];
+
+    beforeAll(async () => {
+      scenario = await createTestScheduleScenario({
+        tz: TZ,
+        weeksBack: 0,
+        sessionsPerWeek: 1,
+      });
+
+      const firstSession = scenario.sessions[0];
+
+      if (!firstSession) {
+        throw new Error("schedule scenario produced no session");
+      }
+
+      sessionId = firstSession.sessionId;
+      sessionDate = firstSession.sessionDate;
+
+      const earlier = await createTestPerformedSession(sessionId, scenario.athlete.id, {
+        performedAt: sessionDate,
+      });
+      const later = await createTestPerformedSession(sessionId, scenario.athlete.id, {
+        performedAt: new Date(sessionDate.getTime() + 60 * 60 * 1000),
+      });
+
+      extraCleanup.push(...earlier.toCleanup, ...later.toCleanup);
+    });
+
+    afterAll(async () => {
+      await cleanup(...extraCleanup);
+      await cleanup(...scenario.toCleanup);
+    });
+
+    it("keeps the most-recent performedAt per key, not the earliest", async () => {
+      const window = await loadScheduleWindow({
+        athleteIds: [scenario.athlete.id],
+        tz: TZ,
+        now: new Date(),
+      });
+
+      const entry = window.performedByKey.get(buildPerformedKey(scenario.athlete.id, sessionId));
+
+      expect(entry).toBeDefined();
+      expect(entry?.performedAt.getTime()).toBe(sessionDate.getTime() + 60 * 60 * 1000);
+      expect(entry?.performedAt.getTime()).not.toBe(sessionDate.getTime());
     });
   });
 });

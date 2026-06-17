@@ -1,15 +1,23 @@
 import {
   DayOfWeek,
   EnrollmentStatus,
+  OneRMRecordSource,
+  type Block,
   type Day,
   type Label,
+  type OneRMRecord,
+  type PerformedSchemaResult,
   type PerformedSession,
   type PlanEnrollment,
+  type Schema,
   type Session,
   type Week,
 } from "@prisma/client";
 
+import { type Result, type ResultType } from "@repo/contracts/lms/_shared";
+
 import { addDaysInTz, startOfWeekInTz } from "../utils/date-helpers";
+import { toInputJson } from "../utils/to-input-json";
 
 import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "./helpers";
 
@@ -261,4 +269,86 @@ export const createTestScheduleScenario = async (
     performed,
     toCleanup,
   };
+};
+
+export const createTestOneRMRecord = async (
+  userId: string,
+  exerciseId: string,
+  overrides: { valueKg?: number; recordedAt?: Date; source?: OneRMRecordSource } = {},
+): Promise<{ record: OneRMRecord; toCleanup: CleanupEntry[] }> => {
+  const record = await cleanupRaw.oneRMRecord.create({
+    data: {
+      userId,
+      exerciseId,
+      valueKg: overrides.valueKg ?? 100,
+      recordedAt: overrides.recordedAt ?? new Date(),
+      source: overrides.source ?? OneRMRecordSource.MANUAL,
+    },
+  });
+
+  return { record, toCleanup: [{ table: "oneRMRecord", id: record.id }] };
+};
+
+export type BenchmarkSchemaRef = {
+  week: Week;
+  day: Day;
+  session: Session;
+  block: Block;
+  schema: Schema;
+};
+
+export const createTestBenchmarkSchema = async (
+  planId: string,
+  overrides: { resultType: ResultType; startDate?: Date },
+): Promise<BenchmarkSchemaRef & { toCleanup: CleanupEntry[] }> => {
+  const week = await cleanupRaw.week.create({
+    data: { planId, startDate: overrides.startDate ?? new Date("2026-01-05T00:00:00.000Z") },
+  });
+  const day = await cleanupRaw.day.create({
+    data: { weekId: week.id, dayOfWeek: DayOfWeek.MONDAY },
+  });
+  const session = await cleanupRaw.session.create({
+    data: { dayId: day.id, order: 0 },
+  });
+  const block = await cleanupRaw.block.create({
+    data: { sessionId: session.id, order: 0 },
+  });
+  const schema = await cleanupRaw.schema.create({
+    data: {
+      blockId: block.id,
+      order: 0,
+      composition: toInputJson({ benchmark: { resultType: overrides.resultType } }),
+    },
+  });
+
+  return {
+    week,
+    day,
+    session,
+    block,
+    schema,
+    toCleanup: [
+      { table: "week", id: week.id },
+      { table: "day", id: day.id },
+      { table: "session", id: session.id },
+      { table: "block", id: block.id },
+      { table: "schema", id: schema.id },
+    ],
+  };
+};
+
+export const createTestPerformedSchemaResult = async (
+  performedSessionId: string,
+  plannedSchemaId: string,
+  result: Result,
+): Promise<{ result: PerformedSchemaResult; toCleanup: CleanupEntry[] }> => {
+  const created = await cleanupRaw.performedSchemaResult.create({
+    data: {
+      performedSessionId,
+      plannedSchemaId,
+      result: toInputJson(result),
+    },
+  });
+
+  return { result: created, toCleanup: [{ table: "performedSchemaResult", id: created.id }] };
 };
