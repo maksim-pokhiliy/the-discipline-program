@@ -85,3 +85,6 @@ export const formatRepetitionLabel = (composition: Composition): string | null =
 
 export const formatRestSummary = (composition: Composition): string | null =>
   composition.rest !== undefined ? restLabel(composition.rest) : null;
+
+export const formatCapSummary = (composition: Composition): string | null =>
+  composition.cap !== undefined ? capLabel(composition.cap) : null;

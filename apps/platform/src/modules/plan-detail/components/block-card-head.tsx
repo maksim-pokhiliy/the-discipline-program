@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -18,8 +18,6 @@ import { IndicatorChip, LabelPickerChip } from "@repo/ui";
 import { useCreateLabelOption } from "@app/lib/hooks";
 
 import { formatIntensityChips } from "../lib/format-block-meta";
-
-import { BlockIntensityEditor } from "./block-intensity-editor";
 
 const DRAG_ARIA = "Drag block";
 const DELETE_ARIA = "Delete block";
@@ -45,7 +43,7 @@ type BlockCardHeadProps = {
   onDeleteOpen: () => void;
   onDuplicate?: () => void;
   intensity: Intensity | null;
-  onIntensityCommit: (next: Intensity | null) => void;
+  onIntensityOpen: () => void;
 };
 
 export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
@@ -61,140 +59,130 @@ export const BlockCardHead: React.FC<BlockCardHeadProps> = ({
   onDeleteOpen,
   onDuplicate,
   intensity,
-  onIntensityCommit,
+  onIntensityOpen,
 }) => {
   const createBlockLabel = useCreateLabelOption("BLOCK");
-  const [isIntensityOpen, setIsIntensityOpen] = useState<boolean>(false);
 
   const intensityChips = useMemo(() => formatIntensityChips(intensity), [intensity]);
 
   return (
-    <>
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={1}
+      sx={(theme) => ({
+        px: theme.spacing(1.5),
+        py: theme.spacing(1.25),
+        minWidth: 0,
+        ...(isExpanded && {
+          borderBottom: 1,
+          borderColor: "divider",
+        }),
+      })}
+    >
+      <IconButton
+        {...dragAttributes}
+        {...dragListeners}
+        size="small"
+        aria-label={DRAG_ARIA}
+        disabled={isMutationPending}
+        sx={{
+          cursor: "grab",
+          touchAction: "none",
+          "&.Mui-focusVisible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+        }}
+      >
+        <DragIndicatorIcon fontSize="small" />
+      </IconButton>
+
+      <IconButton
+        size="small"
+        onClick={onToggleExpanded}
+        aria-label={isExpanded ? "Collapse block" : "Expand block"}
+      >
+        <ChevronRightIcon
+          fontSize="small"
+          sx={(theme) => ({
+            transform: isExpanded ? "rotate(90deg)" : "none",
+            transition: `transform ${theme.transitions.duration.shortest}ms ${theme.transitions.easing.easeInOut}`,
+          })}
+        />
+      </IconButton>
+
       <Stack
         direction="row"
         alignItems="center"
-        spacing={1}
-        sx={(theme) => ({
-          px: theme.spacing(1.5),
-          py: theme.spacing(1.25),
-          minWidth: 0,
-          ...(isExpanded && {
-            borderBottom: 1,
-            borderColor: "divider",
-          }),
-        })}
+        spacing={0.75}
+        useFlexGap
+        flexWrap="wrap"
+        sx={{ flex: 1, minWidth: 0 }}
       >
-        <IconButton
-          {...dragAttributes}
-          {...dragListeners}
-          size="small"
-          aria-label={DRAG_ARIA}
+        <LabelPickerChip
+          multiple
+          value={block.labels}
+          options={labelOptions}
+          maxCount={BLOCK_CONSTANTS.MAX_LABELS_PER_BLOCK}
+          isLoading={isLabelsLoading}
           disabled={isMutationPending}
-          sx={{
-            cursor: "grab",
-            touchAction: "none",
-            "&.Mui-focusVisible": {
-              outline: "2px solid",
-              outlineColor: "primary.main",
-              outlineOffset: 2,
-            },
-          }}
-        >
-          <DragIndicatorIcon fontSize="small" />
-        </IconButton>
+          onChange={onLabelsChange}
+          onCreateOption={createBlockLabel}
+          ariaLabel={LABELS_ARIA}
+        />
 
-        <IconButton
-          size="small"
-          onClick={onToggleExpanded}
-          aria-label={isExpanded ? "Collapse block" : "Expand block"}
-        >
-          <ChevronRightIcon
-            fontSize="small"
-            sx={(theme) => ({
-              transform: isExpanded ? "rotate(90deg)" : "none",
-              transition: `transform ${theme.transitions.duration.shortest}ms ${theme.transitions.easing.easeInOut}`,
-            })}
+        {intensityChips.map((chip, index) => (
+          <IndicatorChip
+            key={`${String(index)}-${chip.text}`}
+            tone={chip.tone}
+            label={chip.text}
+            dot={false}
           />
-        </IconButton>
-
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={0.75}
-          useFlexGap
-          flexWrap="wrap"
-          sx={{ flex: 1, minWidth: 0 }}
-        >
-          <LabelPickerChip
-            multiple
-            value={block.labels}
-            options={labelOptions}
-            maxCount={BLOCK_CONSTANTS.MAX_LABELS_PER_BLOCK}
-            isLoading={isLabelsLoading}
-            disabled={isMutationPending}
-            onChange={onLabelsChange}
-            onCreateOption={createBlockLabel}
-            ariaLabel={LABELS_ARIA}
-          />
-
-          {intensityChips.map((chip, index) => (
-            <IndicatorChip
-              key={`${String(index)}-${chip.text}`}
-              tone={chip.tone}
-              label={chip.text}
-              dot={false}
-            />
-          ))}
-        </Stack>
-
-        <Tooltip title={INTENSITY_TOOLTIP}>
-          <Box component="span" style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={() => setIsIntensityOpen(true)}
-              disabled={isMutationPending}
-              aria-label={INTENSITY_ARIA}
-            >
-              <BoltIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Tooltip>
-
-        <Tooltip title={DUPLICATE_TOOLTIP}>
-          <Box component="span" style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={onDuplicate}
-              disabled={isMutationPending}
-              aria-busy={isMutationPending}
-              aria-label={DUPLICATE_ARIA}
-            >
-              <ContentCopyIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Tooltip>
-
-        <Tooltip title={DELETE_TOOLTIP}>
-          <Box component="span" style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={onDeleteOpen}
-              disabled={isMutationPending}
-              aria-label={DELETE_ARIA}
-              sx={{ color: "error.main" }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Tooltip>
+        ))}
       </Stack>
 
-      <BlockIntensityEditor
-        open={isIntensityOpen}
-        onClose={() => setIsIntensityOpen(false)}
-        intensity={intensity}
-        onCommit={onIntensityCommit}
-      />
-    </>
+      <Tooltip title={INTENSITY_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onIntensityOpen}
+            disabled={isMutationPending}
+            aria-label={INTENSITY_ARIA}
+          >
+            <BoltIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDuplicate}
+            disabled={isMutationPending}
+            aria-busy={isMutationPending}
+            aria-label={DUPLICATE_ARIA}
+          >
+            <ContentCopyIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+
+      <Tooltip title={DELETE_TOOLTIP}>
+        <Box component="span" style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDeleteOpen}
+            disabled={isMutationPending}
+            aria-label={DELETE_ARIA}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Tooltip>
+    </Stack>
   );
 };

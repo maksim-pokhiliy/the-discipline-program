@@ -27,7 +27,9 @@ const ADD_VALUE_LABEL = "Add value";
 const REMOVE_AXIS_ARIA = "Remove axis";
 const REMOVE_VALUE_ARIA = "Remove value";
 const AXIS_NAME_LABEL = "Axis name";
+const AXIS_NAME_PLACEHOLDER = "e.g. level, sex";
 const VALUE_LABEL = "Value";
+const VALUE_PLACEHOLDER = "e.g. RX, SC";
 const GRID_LABEL = "Weights";
 const GRID_LABEL_FONT_SIZE_PX = 11;
 const GRID_LABEL_FONT_WEIGHT = 600;
@@ -119,6 +121,7 @@ export const LoadByProfileFields = ({
             <TextField
               label={AXIS_NAME_LABEL}
               size="small"
+              placeholder={AXIS_NAME_PLACEHOLDER}
               value={axis.name}
               onChange={(e) => renameAxis(axisIndex, e.target.value)}
               disabled={disabled}
@@ -146,6 +149,7 @@ export const LoadByProfileFields = ({
                 <TextField
                   label={VALUE_LABEL}
                   size="small"
+                  placeholder={VALUE_PLACEHOLDER}
                   value={axisValue}
                   onChange={(e) => editValue(axisIndex, valueIndex, e.target.value)}
                   disabled={disabled}

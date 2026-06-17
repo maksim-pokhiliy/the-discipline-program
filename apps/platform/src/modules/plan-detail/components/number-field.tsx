@@ -9,7 +9,7 @@ type NumberFieldProps = {
   onChange: (next: number) => void;
   label?: string | undefined;
   min?: number | undefined;
-  step?: number | undefined;
+  step?: number | "any" | undefined;
   error?: string | undefined;
   disabled?: boolean | undefined;
   maxWidth?: number | undefined;

@@ -11,6 +11,7 @@ import type { IntervalDuration } from "./axis-draft.types";
 
 const WORK_VALUE_MIN = 0;
 const OFF_VALUE_MIN = 0;
+const DURATION_STEP = "any" as const;
 const COUNT_MIN = 1;
 const COUNT_STEP = 1;
 const FIELD_WIDTH = 110;
@@ -58,6 +59,7 @@ export const IntervalAxisField: React.FC<IntervalAxisFieldProps> = ({
         value={value.work.value}
         onChange={(next) => onChange({ ...value, work: { ...value.work, value: next } })}
         min={WORK_VALUE_MIN}
+        step={DURATION_STEP}
         error={errors.get("work")}
         disabled={disabled}
         maxWidth={FIELD_WIDTH}
@@ -83,6 +85,7 @@ export const IntervalAxisField: React.FC<IntervalAxisFieldProps> = ({
         value={value.off.value}
         onChange={(next) => onChange({ ...value, off: { ...value.off, value: next } })}
         min={OFF_VALUE_MIN}
+        step={DURATION_STEP}
         error={errors.get("off")}
         disabled={disabled}
         maxWidth={FIELD_WIDTH}

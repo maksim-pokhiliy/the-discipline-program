@@ -15,6 +15,7 @@ type BlockIntensityEditorProps = {
   onClose: () => void;
   intensity: Intensity | null;
   onCommit: (next: Intensity | null) => void;
+  isSubmitting?: boolean;
 };
 
 export const BlockIntensityEditor = ({
@@ -22,6 +23,7 @@ export const BlockIntensityEditor = ({
   onClose,
   intensity,
   onCommit,
+  isSubmitting = false,
 }: BlockIntensityEditorProps): ReactElement => {
   const [value, setValue] = useState<Intensity | null>(intensity);
 
@@ -33,7 +35,6 @@ export const BlockIntensityEditor = ({
 
   const handleSubmit = (): void => {
     onCommit(value);
-    onClose();
   };
 
   return (
@@ -46,6 +47,7 @@ export const BlockIntensityEditor = ({
         event.preventDefault();
         handleSubmit();
       }}
+      isSubmitting={isSubmitting}
       submitText={SUBMIT}
     >
       <IntensityFields value={value} onChange={setValue} />

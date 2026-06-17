@@ -15,7 +15,7 @@ import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
-import { formatRepetitionLabel } from "../lib/format-composition-summary";
+import { formatCapSummary, formatRepetitionLabel } from "../lib/format-composition-summary";
 
 import { SchemaCardMeta } from "./schema-card-meta";
 import { SchemaCompositionTag } from "./schema-composition-tag";
@@ -81,6 +81,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
     composition !== null
       ? (formatRepetitionLabel(composition) ?? deriveCompositionLabel(composition).kind)
       : null;
+  const capTag = composition !== null ? formatCapSummary(composition) : null;
 
   return (
     <Stack
@@ -148,6 +149,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
           sx={{ minWidth: 0 }}
         >
           {compositionTag !== null ? <SchemaCompositionTag label={compositionTag} /> : null}
+          {capTag !== null ? <SchemaCompositionTag label={capTag} /> : null}
           <InlineEditText
             value={schema.schema.header ?? ""}
             onCommit={onTitleCommit}

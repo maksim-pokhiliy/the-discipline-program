@@ -28,7 +28,7 @@ const VALUE_FIELD_WIDTH = 90;
 const KIND_LABELS: Record<RepNotationKind, string> = {
   count: "Count",
   range: "Range",
-  unit_bound: "Time·dist",
+  unit_bound: "Duration/dist",
   max: "Max",
 };
 

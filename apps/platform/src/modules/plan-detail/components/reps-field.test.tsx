@@ -30,10 +30,10 @@ describe("RepsField kind switching", () => {
     expect(onChange).toHaveBeenCalledWith({ kind: "range", min: 1, max: 2 });
   });
 
-  it("emits a unit_bound default when switching to Time·dist", () => {
+  it("emits a unit_bound default when switching to Duration/dist", () => {
     render(<RepsField value={{ kind: "count", value: 5 }} onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Time·dist" }));
+    fireEvent.click(screen.getByRole("button", { name: "Duration/dist" }));
 
     expect(onChange).toHaveBeenCalledWith({ kind: "unit_bound", unit: "sec", value: 1 });
   });

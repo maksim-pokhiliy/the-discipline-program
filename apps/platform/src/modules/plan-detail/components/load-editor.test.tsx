@@ -53,15 +53,18 @@ describe("LoadEditor kind switching", () => {
     expect(onChange).toHaveBeenCalledWith({ kind: "bodyweight" });
   });
 
-  it("emits a single-axis single-cell byProfile default when By profile is chosen", () => {
+  it("emits a worked-example byProfile default (level RX/SC) when By profile is chosen", () => {
     render(<LoadEditor value={null} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "By profile" }));
 
     expect(onChange).toHaveBeenCalledWith({
       kind: "byProfile",
-      axes: [{ name: "", values: [""] }],
-      cells: [{ coords: [""], kg: Number.NaN }],
+      axes: [{ name: "level", values: ["RX", "SC"] }],
+      cells: [
+        { coords: ["RX"], kg: Number.NaN },
+        { coords: ["SC"], kg: Number.NaN },
+      ],
     });
   });
 

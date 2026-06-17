@@ -2,7 +2,6 @@ import type { DraggableAttributes } from "@dnd-kit/core";
 import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { Intensity } from "@repo/contracts/lms/_shared";
 import type { Block } from "@repo/contracts/lms/block";
 
 import { render } from "@app/test/render";
@@ -45,7 +44,7 @@ type RenderOptions = {
   isMutationPending?: boolean;
   onDuplicate?: () => void;
   onDeleteOpen?: () => void;
-  onIntensityCommit?: (next: Intensity | null) => void;
+  onIntensityOpen?: () => void;
 };
 
 const renderHead = ({
@@ -54,7 +53,7 @@ const renderHead = ({
   isMutationPending = false,
   onDuplicate = vi.fn(),
   onDeleteOpen = vi.fn(),
-  onIntensityCommit = vi.fn(),
+  onIntensityOpen = vi.fn(),
 }: RenderOptions = {}) =>
   render(
     <BlockCardHead
@@ -70,7 +69,7 @@ const renderHead = ({
       onDeleteOpen={onDeleteOpen}
       onDuplicate={onDuplicate}
       intensity={block.intensity}
-      onIntensityCommit={onIntensityCommit}
+      onIntensityOpen={onIntensityOpen}
     />,
   );
 
@@ -110,11 +109,13 @@ describe("BlockCardHead intensity affordance (D-V2-INTENSITY-TRINITY block scope
     expect(screen.getByText("EFFORT 85%")).toBeInTheDocument();
   });
 
-  it("exposes an edit-intensity affordance that opens the editor", () => {
-    renderHead();
+  it("fires the threaded onIntensityOpen when the edit-intensity button is clicked", () => {
+    const onIntensityOpen = vi.fn();
+
+    renderHead({ onIntensityOpen });
 
     fireEvent.click(screen.getByRole("button", { name: INTENSITY_LABEL }));
 
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onIntensityOpen).toHaveBeenCalledTimes(1);
   });
 });
