@@ -13,32 +13,37 @@ export type CloneFixtureCatalog = {
   blockLabelId: string;
 };
 
-const buildSchema = async (
-  blockId: string,
-  order: number,
+const newId = (): string => crypto.randomUUID();
+
+const DAYS_OF_WEEK: Prisma.DayCreateInput["dayOfWeek"][] = ["MONDAY", "WEDNESDAY"];
+
+type BuiltLevels = {
+  weekId: string;
+  dayIds: string[];
+  days: Prisma.DayCreateManyInput[];
+  sessions: Prisma.SessionCreateManyInput[];
+  blocks: Prisma.BlockCreateManyInput[];
+  schemaGroups: Prisma.SchemaGroupCreateManyInput[];
+  blockLabelAssignments: Prisma.BlockLabelAssignmentCreateManyInput[];
+  schemas: Prisma.SchemaCreateManyInput[];
+  rowGroups: Prisma.RowGroupCreateManyInput[];
+  rows: Prisma.SchemaRowCreateManyInput[];
+  modifierAssignments: Prisma.RowModifierAssignmentCreateManyInput[];
+};
+
+const buildSchemaRows = (
+  schemaId: string,
+  rowGroupId: string,
   catalog: CloneFixtureCatalog,
-  groupId: string | null,
-): Promise<string> => {
-  const schema = await cleanupRaw.schema.create({
-    data: {
-      blockId,
-      groupId,
-      order,
-      header: `Schema header ${order}`,
-      composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
-      intensity: { rpe: { value: 7 } },
-      notes: [`schema note ${order}`],
-    },
-  });
+  levels: BuiltLevels,
+): void => {
+  const rowAId = newId();
 
-  const rowGroup = await cleanupRaw.rowGroup.create({
-    data: { schemaId: schema.id, notes: ["row group note"] },
-  });
-
-  const groupedRowA = await cleanupRaw.schemaRow.create({
-    data: {
-      schemaId: schema.id,
-      rowGroupId: rowGroup.id,
+  levels.rows.push(
+    {
+      id: rowAId,
+      schemaId,
+      rowGroupId,
       order: ORDER_STEP,
       exerciseId: catalog.exerciseId,
       sets: 3,
@@ -49,19 +54,10 @@ const buildSchema = async (
       media: { url: "https://example.com/demo.mp4", label: "demo" },
       notes: ["grouped row A note"],
     },
-  });
-
-  await cleanupRaw.rowModifierAssignment.createMany({
-    data: [
-      { rowId: groupedRowA.id, modifierId: catalog.modifierAId, order: 0 },
-      { rowId: groupedRowA.id, modifierId: catalog.modifierBId, order: 1 },
-    ],
-  });
-
-  await cleanupRaw.schemaRow.create({
-    data: {
-      schemaId: schema.id,
-      rowGroupId: rowGroup.id,
+    {
+      id: newId(),
+      schemaId,
+      rowGroupId,
       order: ORDER_STEP * 2,
       exerciseId: catalog.exerciseId,
       sets: 4,
@@ -70,79 +66,128 @@ const buildSchema = async (
       tempo: "explosive",
       notes: ["grouped row B note"],
     },
-  });
-
-  await cleanupRaw.schemaRow.create({
-    data: {
-      schemaId: schema.id,
+    {
+      id: newId(),
+      schemaId,
       order: ORDER_STEP * 3,
       exerciseId: catalog.exerciseId,
     },
-  });
+  );
 
-  return schema.id;
+  levels.modifierAssignments.push(
+    { id: newId(), rowId: rowAId, modifierId: catalog.modifierAId, order: 0 },
+    { id: newId(), rowId: rowAId, modifierId: catalog.modifierBId, order: 1 },
+  );
 };
 
-const buildBlock = async (
-  sessionId: string,
-  order: number,
-  catalog: CloneFixtureCatalog,
-  withLabel: boolean,
-): Promise<string> => {
-  const block = await cleanupRaw.block.create({
-    data: { sessionId, order, notes: [`block note ${order}`] },
+const buildSchemas = (blockId: string, catalog: CloneFixtureCatalog, levels: BuiltLevels): void => {
+  const groupId = newId();
+
+  levels.schemaGroups.push({
+    id: groupId,
+    blockId,
+    notes: ["two-track group"],
+    interleaveOrder: "round_by_round",
   });
 
-  if (withLabel) {
-    await cleanupRaw.blockLabelAssignment.create({
-      data: { blockId: block.id, labelId: catalog.blockLabelId, order: ORDER_STEP },
+  [
+    { order: ORDER_STEP, groupId },
+    { order: ORDER_STEP * 2, groupId },
+    { order: ORDER_STEP * 3, groupId: null },
+  ].forEach(({ order, groupId: schemaGroupId }) => {
+    const schemaId = newId();
+    const rowGroupId = newId();
+
+    levels.schemas.push({
+      id: schemaId,
+      blockId,
+      groupId: schemaGroupId,
+      order,
+      header: `Schema header ${order}`,
+      composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+      intensity: { rpe: { value: 7 } },
+      notes: [`schema note ${order}`],
     });
-  }
 
-  const group = await cleanupRaw.schemaGroup.create({
-    data: { blockId: block.id, notes: ["two-track group"], interleaveOrder: "round_by_round" },
+    levels.rowGroups.push({ id: rowGroupId, schemaId, notes: ["row group note"] });
+
+    buildSchemaRows(schemaId, rowGroupId, catalog, levels);
   });
-
-  await buildSchema(block.id, ORDER_STEP, catalog, group.id);
-  await buildSchema(block.id, ORDER_STEP * 2, catalog, group.id);
-  await buildSchema(block.id, ORDER_STEP * 3, catalog, null);
-
-  return block.id;
 };
 
-const buildSession = async (
-  dayId: string,
-  order: number,
+const buildBlocks = (
+  sessionId: string,
   catalog: CloneFixtureCatalog,
-): Promise<string> => {
-  const session = await cleanupRaw.session.create({
-    data: {
+  levels: BuiltLevels,
+): void => {
+  [
+    { order: ORDER_STEP, withLabel: true },
+    { order: ORDER_STEP * 2, withLabel: false },
+  ].forEach(({ order, withLabel }) => {
+    const blockId = newId();
+
+    levels.blocks.push({ id: blockId, sessionId, order, notes: [`block note ${order}`] });
+
+    if (withLabel) {
+      levels.blockLabelAssignments.push({
+        id: newId(),
+        blockId,
+        labelId: catalog.blockLabelId,
+        order: ORDER_STEP,
+      });
+    }
+
+    buildSchemas(blockId, catalog, levels);
+  });
+};
+
+const buildSessions = (dayId: string, catalog: CloneFixtureCatalog, levels: BuiltLevels): void => {
+  [ORDER_STEP, ORDER_STEP * 2].forEach((order) => {
+    const sessionId = newId();
+
+    levels.sessions.push({
+      id: sessionId,
       dayId,
       order,
       labelId: catalog.sessionLabelId,
       notes: [`session note ${order}`],
-    },
+    });
+
+    buildBlocks(sessionId, catalog, levels);
   });
-
-  await buildBlock(session.id, ORDER_STEP, catalog, true);
-  await buildBlock(session.id, ORDER_STEP * 2, catalog, false);
-
-  return session.id;
 };
 
-const buildDay = async (
-  weekId: string,
-  dayOfWeek: Prisma.DayCreateInput["dayOfWeek"],
-  catalog: CloneFixtureCatalog,
-): Promise<string> => {
-  const day = await cleanupRaw.day.create({
-    data: { weekId, dayOfWeek, labelId: catalog.dayLabelId, notes: [`day note ${dayOfWeek}`] },
+const buildLevels = (weekId: string, catalog: CloneFixtureCatalog): BuiltLevels => {
+  const levels: BuiltLevels = {
+    weekId,
+    dayIds: [],
+    days: [],
+    sessions: [],
+    blocks: [],
+    schemaGroups: [],
+    blockLabelAssignments: [],
+    schemas: [],
+    rowGroups: [],
+    rows: [],
+    modifierAssignments: [],
+  };
+
+  DAYS_OF_WEEK.forEach((dayOfWeek) => {
+    const dayId = newId();
+
+    levels.dayIds.push(dayId);
+    levels.days.push({
+      id: dayId,
+      weekId,
+      dayOfWeek,
+      labelId: catalog.dayLabelId,
+      notes: [`day note ${dayOfWeek}`],
+    });
+
+    buildSessions(dayId, catalog, levels);
   });
 
-  await buildSession(day.id, ORDER_STEP, catalog);
-  await buildSession(day.id, ORDER_STEP * 2, catalog);
-
-  return day.id;
+  return levels;
 };
 
 export type RichSubtree = {
@@ -156,19 +201,24 @@ export const buildRichSubtree = async (
   startDate: Date,
   catalog: CloneFixtureCatalog,
 ): Promise<RichSubtree> => {
-  const week = await cleanupRaw.week.create({
-    data: { planId, startDate, notes: ["week note"] },
-  });
+  const weekId = newId();
+  const levels = buildLevels(weekId, catalog);
 
-  const dayIds = [
-    await buildDay(week.id, "MONDAY", catalog),
-    await buildDay(week.id, "WEDNESDAY", catalog),
-  ];
+  await cleanupRaw.week.create({ data: { id: weekId, planId, startDate, notes: ["week note"] } });
+  await cleanupRaw.day.createMany({ data: levels.days });
+  await cleanupRaw.session.createMany({ data: levels.sessions });
+  await cleanupRaw.block.createMany({ data: levels.blocks });
+  await cleanupRaw.schemaGroup.createMany({ data: levels.schemaGroups });
+  await cleanupRaw.blockLabelAssignment.createMany({ data: levels.blockLabelAssignments });
+  await cleanupRaw.schema.createMany({ data: levels.schemas });
+  await cleanupRaw.rowGroup.createMany({ data: levels.rowGroups });
+  await cleanupRaw.schemaRow.createMany({ data: levels.rows });
+  await cleanupRaw.rowModifierAssignment.createMany({ data: levels.modifierAssignments });
 
   return {
-    weekId: week.id,
-    dayIds,
-    cleanup: () => cleanupRichSubtree(week.id),
+    weekId,
+    dayIds: levels.dayIds,
+    cleanup: () => cleanupRichSubtree(weekId),
   };
 };
 
