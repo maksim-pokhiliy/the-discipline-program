@@ -99,8 +99,6 @@ export const seedTrainingData = async (
     ].map((enrollment) => ({ ...enrollment, enrolledById: coachUserId })),
   });
 
-  // Minimal plan → week → day → session chain so performed sessions have a
-  // session to reference (last-activity is max(completedAt) per athlete).
   const week = await db.week.create({
     data: { planId: performanceRx.id, startDate: daysAgo(14) },
   });
@@ -128,8 +126,7 @@ export const seedTrainingData = async (
     data: lastActivity.map(({ userId, days }) => ({
       sessionId: session.id,
       userId,
-      startedAt: daysAgo(days),
-      completedAt: daysAgo(days),
+      performedAt: daysAgo(days),
     })),
   });
 

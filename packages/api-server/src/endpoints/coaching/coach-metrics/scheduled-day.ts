@@ -24,7 +24,7 @@ export const isSessionCompleted = (
   performedByKey: PerformedByKey,
   athleteId: string,
   sessionId: string,
-): boolean => performedByKey.get(buildPerformedKey(athleteId, sessionId))?.completedAt != null;
+): boolean => performedByKey.get(buildPerformedKey(athleteId, sessionId)) !== undefined;
 
 export const buildScheduledDays = (
   enrollments: WindowedEnrollment[],

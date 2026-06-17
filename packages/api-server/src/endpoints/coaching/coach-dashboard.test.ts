@@ -50,8 +50,7 @@ describe("coachingCoachDashboardApi.getDashboard", () => {
             data: {
               sessionId: target.sessionId,
               userId: scenario.athlete.id,
-              startedAt: target.sessionDate,
-              completedAt: target.sessionDate,
+              performedAt: target.sessionDate,
             },
           });
 

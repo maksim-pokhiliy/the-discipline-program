@@ -90,7 +90,7 @@ export const loadScheduleWindow = async ({
         userId: { in: athleteIds },
         session: { day: { week: { startDate: { gte: windowStart, lte: windowEnd } } } },
       },
-      select: { userId: true, sessionId: true, startedAt: true, completedAt: true },
+      select: { userId: true, sessionId: true, performedAt: true },
     }),
     prisma.week.groupBy({
       by: ["planId"],
@@ -103,10 +103,12 @@ export const loadScheduleWindow = async ({
   const performedByKey: PerformedByKey = new Map();
 
   for (const entry of performed) {
-    performedByKey.set(buildPerformedKey(entry.userId, entry.sessionId), {
-      startedAt: entry.startedAt,
-      completedAt: entry.completedAt,
-    });
+    const key = buildPerformedKey(entry.userId, entry.sessionId);
+    const existing = performedByKey.get(key);
+
+    if (existing === undefined || entry.performedAt > existing.performedAt) {
+      performedByKey.set(key, { performedAt: entry.performedAt });
+    }
   }
 
   const weekCountByPlan = new Map<string, number>();

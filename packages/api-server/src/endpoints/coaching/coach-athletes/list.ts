@@ -38,14 +38,14 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
     }),
     prisma.performedSession.groupBy({
       by: ["userId"],
-      where: { userId: { in: athleteIds }, completedAt: { not: null } },
-      _max: { completedAt: true },
+      where: { userId: { in: athleteIds } },
+      _max: { performedAt: true },
     }),
   ]);
 
   const actionItemsMap = new Map(actionItemCounts.map((item) => [item.athleteId, item._count.id]));
   const lastActivityMap = new Map(
-    lastSessions.map((session) => [session.userId, session._max.completedAt]),
+    lastSessions.map((session) => [session.userId, session._max.performedAt]),
   );
 
   const now = Date.now();

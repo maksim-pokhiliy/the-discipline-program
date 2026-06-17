@@ -9,7 +9,7 @@ import {
   HEALTH_STATUS_TO_PRISMA_MAP,
   mapToAthleteProfile,
 } from "../../mappers/coaching";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
 export const coachingAthleteProfileApi = {
   get: async (userId: string): Promise<AthleteProfile> => {
@@ -28,6 +28,9 @@ export const coachingAthleteProfileApi = {
       ...(data.heightCm !== undefined && { heightCm: data.heightCm }),
       ...(data.weightKg !== undefined && { weightKg: data.weightKg }),
       ...(data.healthNote !== undefined && { healthNote: data.healthNote }),
+      ...(data.profileSelections !== undefined && {
+        profileSelections: toInputJson(data.profileSelections),
+      }),
     };
 
     try {

@@ -66,6 +66,7 @@ export const makeEnrollment = (input: EnrollmentInput): WindowedEnrollment => {
     boardedAt: input.boardedAt,
     status: input.status ?? EnrollmentStatus.ACTIVE,
     statusChangedAt: EPOCH,
+    hidePastBeforeBoarding: false,
     createdAt: EPOCH,
     updatedAt: EPOCH,
     deletedAt: null,
@@ -97,14 +98,13 @@ export const restLabel: LabelInput = { name: "Rest", rest: true };
 
 export const performed = (
   athleteId: string,
-  entries: { sessionId: string; startedAt: Date; completedAt: Date | null }[],
+  entries: { sessionId: string; performedAt: Date }[],
 ): PerformedByKey => {
   const map: PerformedByKey = new Map();
 
   for (const entry of entries) {
     map.set(buildPerformedKey(athleteId, entry.sessionId), {
-      startedAt: entry.startedAt,
-      completedAt: entry.completedAt,
+      performedAt: entry.performedAt,
     });
   }
 

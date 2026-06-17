@@ -212,6 +212,7 @@ export const lmsPlanEnrollmentApi = {
           athleteId: data.athleteId,
           enrolledById: userId,
           boardedAt: data.boardedAt,
+          hidePastBeforeBoarding: data.hidePastBeforeBoarding,
           status: ENROLLMENT_STATUS_TO_PRISMA_MAP[EnrollmentStatus.ACTIVE],
           statusChangedAt: new Date(),
         },

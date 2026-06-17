@@ -73,7 +73,7 @@ describe("loadScheduleWindow", () => {
         const entry = window.performedByKey.get(key);
 
         expect(entry).toBeDefined();
-        expect(entry?.completedAt).toBeInstanceOf(Date);
+        expect(entry?.performedAt).toBeInstanceOf(Date);
       }
     });
 

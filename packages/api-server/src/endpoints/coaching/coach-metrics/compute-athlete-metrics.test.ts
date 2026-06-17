@@ -73,9 +73,9 @@ describe("computeAthleteMetrics", () => {
   it("reports COMPLETED today when every non-rest session today is completed", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
-      { sessionId: "s-tue", startedAt: mkDate("2026-06-16"), completedAt: mkDate("2026-06-16") },
-      { sessionId: "s-wed", startedAt: NOW, completedAt: NOW },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
+      { sessionId: "s-tue", performedAt: mkDate("2026-06-16") },
+      { sessionId: "s-wed", performedAt: NOW },
     ]);
 
     const result = run([enrollment], completions);
@@ -89,7 +89,7 @@ describe("computeAthleteMetrics", () => {
   it("reports PENDING today when a non-rest session today is not completed", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
     ]);
 
     const result = run([enrollment], completions);
@@ -197,7 +197,7 @@ describe("computeAthleteMetrics", () => {
   it("builds a length-7 last7Days oldest→newest with per-day status", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
     ]);
 
     const result = run([enrollment], completions);
@@ -218,7 +218,7 @@ describe("computeAthleteMetrics", () => {
   it("exposes planDiscipline with enrolledDate, planned/available/completed for this week", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
     ]);
 
     const result = run([enrollment], completions);
@@ -235,8 +235,8 @@ describe("computeAthleteMetrics", () => {
   it("builds recentWorkouts keyed by sessionId, newest first, and a next workout with no id", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
-      { sessionId: "s-tue", startedAt: mkDate("2026-06-16"), completedAt: mkDate("2026-06-16") },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
+      { sessionId: "s-tue", performedAt: mkDate("2026-06-16") },
     ]);
 
     const result = run([enrollment], completions);
@@ -250,8 +250,8 @@ describe("computeAthleteMetrics", () => {
   it("tracks last activity date and days since last activity", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
-      { sessionId: "s-tue", startedAt: mkDate("2026-06-16"), completedAt: mkDate("2026-06-16") },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
+      { sessionId: "s-tue", performedAt: mkDate("2026-06-16") },
     ]);
 
     const result = run([enrollment], completions);
@@ -304,8 +304,8 @@ describe("computeAthleteMetrics streak, delta and missed-day boundaries", () => 
       ],
     );
     const completions = performed(ATHLETE, [
-      { sessionId: "w2-tue", startedAt: mkDate("2026-06-16"), completedAt: mkDate("2026-06-16") },
-      { sessionId: "w1-sun", startedAt: mkDate("2026-06-14"), completedAt: mkDate("2026-06-14") },
+      { sessionId: "w2-tue", performedAt: mkDate("2026-06-16") },
+      { sessionId: "w1-sun", performedAt: mkDate("2026-06-14") },
     ]);
 
     const result = runTwoWeeks(enrollment, completions);
@@ -359,9 +359,9 @@ describe("computeAthleteMetrics streak, delta and missed-day boundaries", () => 
       ],
     );
     const completions = performed(ATHLETE, [
-      { sessionId: "w1-mon", startedAt: mkDate("2026-06-08"), completedAt: mkDate("2026-06-08") },
-      { sessionId: "w2-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
-      { sessionId: "w2-tue", startedAt: mkDate("2026-06-16"), completedAt: mkDate("2026-06-16") },
+      { sessionId: "w1-mon", performedAt: mkDate("2026-06-08") },
+      { sessionId: "w2-mon", performedAt: mkDate("2026-06-15") },
+      { sessionId: "w2-tue", performedAt: mkDate("2026-06-16") },
     ]);
 
     const result = runTwoWeeks(enrollment, completions);
@@ -397,9 +397,7 @@ describe("computeAthleteMetrics partial multi-session days", () => {
     });
 
   it("does not count a past day with some completed sessions as a missed day", () => {
-    const completions = performed(ATHLETE, [
-      { sessionId: "mon-a", startedAt: mkDate(MONDAY), completedAt: mkDate(MONDAY) },
-    ]);
+    const completions = performed(ATHLETE, [{ sessionId: "mon-a", performedAt: mkDate(MONDAY) }]);
 
     const result = run([partialDayEnrollment()], completions);
 
@@ -418,13 +416,11 @@ describe("computeAthleteMetrics partial multi-session days", () => {
 });
 
 describe("computeAthleteMetrics last activity", () => {
-  it("ignores in-progress sessions and reports null when nothing is completed", () => {
+  it("reports null when no session has been performed", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
-    const inProgress = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: null },
-    ]);
+    const none = performed(ATHLETE, []);
 
-    const result = run([enrollment], inProgress);
+    const result = run([enrollment], none);
 
     expect(result.lastActivityDate).toBeNull();
     expect(result.daysSinceLastActivity).toBeNull();
@@ -433,7 +429,7 @@ describe("computeAthleteMetrics last activity", () => {
   it("never reports a negative days-since-last-activity", () => {
     const enrollment = singleWeekEnrollment(fullWeekDays());
     const completions = performed(ATHLETE, [
-      { sessionId: "s-mon", startedAt: mkDate("2026-06-15"), completedAt: mkDate("2026-06-15") },
+      { sessionId: "s-mon", performedAt: mkDate("2026-06-15") },
     ]);
 
     const result = run([enrollment], completions);
@@ -573,9 +569,7 @@ describe("computeAthleteMetrics across a DST boundary", () => {
     });
 
     it("matches today to the post-transition Monday session, not off-by-one", () => {
-      const completions = performed(ATHLETE, [
-        { sessionId: "w2-mon", startedAt: now, completedAt: now },
-      ]);
+      const completions = performed(ATHLETE, [{ sessionId: "w2-mon", performedAt: now }]);
 
       const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
 
@@ -620,9 +614,7 @@ describe("computeAthleteMetrics across a DST boundary", () => {
 
     it("reports a non-negative days-since for a Sunday completion on the 23h day", () => {
       const sundayDone = new Date("2026-03-08T14:00:00.000Z");
-      const completions = performed(ATHLETE, [
-        { sessionId: "w1-sun", startedAt: sundayDone, completedAt: sundayDone },
-      ]);
+      const completions = performed(ATHLETE, [{ sessionId: "w1-sun", performedAt: sundayDone }]);
 
       const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
 
@@ -642,9 +634,7 @@ describe("computeAthleteMetrics across a DST boundary", () => {
     });
 
     it("matches today to the post-transition Monday session", () => {
-      const completions = performed(ATHLETE, [
-        { sessionId: "w2-mon", startedAt: now, completedAt: now },
-      ]);
+      const completions = performed(ATHLETE, [{ sessionId: "w2-mon", performedAt: now }]);
 
       const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
 
@@ -675,9 +665,7 @@ describe("computeAthleteMetrics across a DST boundary", () => {
 
     it("counts the Sunday 25h-day completion as one civil day before today", () => {
       const sundayDone = new Date("2026-11-01T17:00:00.000Z");
-      const completions = performed(ATHLETE, [
-        { sessionId: "w1-sun", startedAt: sundayDone, completedAt: sundayDone },
-      ]);
+      const completions = performed(ATHLETE, [{ sessionId: "w1-sun", performedAt: sundayDone }]);
 
       const result = runTz(twoWeekTzEnrollment(weekOne, weekTwo), completions, now, weekOne);
 

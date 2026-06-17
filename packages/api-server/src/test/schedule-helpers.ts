@@ -106,14 +106,13 @@ export const createTestLabel = async (
 export const createTestPerformedSession = async (
   sessionId: string,
   userId: string,
-  overrides: { startedAt?: Date; completedAt?: Date | null } = {},
+  overrides: { performedAt?: Date } = {},
 ): Promise<{ performed: PerformedSession; toCleanup: CleanupEntry[] }> => {
   const performed = await cleanupRaw.performedSession.create({
     data: {
       sessionId,
       userId,
-      startedAt: overrides.startedAt ?? new Date(),
-      completedAt: overrides.completedAt ?? null,
+      performedAt: overrides.performedAt ?? new Date(),
     },
   });
 
@@ -245,8 +244,7 @@ export const createTestScheduleScenario = async (
     }
 
     const performedResult = await createTestPerformedSession(target.sessionId, athlete.id, {
-      startedAt: target.sessionDate,
-      completedAt: target.sessionDate,
+      performedAt: target.sessionDate,
     });
 
     toCleanup.push(...performedResult.toCleanup);

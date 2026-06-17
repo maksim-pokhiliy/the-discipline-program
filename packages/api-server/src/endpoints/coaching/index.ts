@@ -1,5 +1,6 @@
 export * from "./admin-user-view";
 export * from "./athlete-profile";
+export * from "./athlete-records";
 export * from "./coach-action-item";
 export * from "./coach-athletes";
 export * from "./coach-credential";
