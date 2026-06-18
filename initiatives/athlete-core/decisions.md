@@ -142,3 +142,85 @@ Promoted from the block-1 design (`.feature-dev/` design.md §7) + Gate-A/Gate-B
 **Ratified 2026-06-17 (orchestrator; owner-approved Gate A).** The plan-level publish gate (D-PUBLISH / D-PUBLISH-MODEL) is NOT built in block 1: the block-1 prompt scope didn't list it, `TrainingPlan` has no publish field, and it's a from-scratch read-gate orthogonal to the data core. The date-thread (visibility gate #1) ships (`hidePastBeforeBoarding`); publish (gate #2) is its own wave. The performed-vs-published SEAM is resolved here via D-RESULT-RELATION (the result pins its schema).
 
 **Why.** Keeps block 1 the data floor; publish is a separable visibility feature with its own schema + read-filter, owner-confirmed out at Gate A.
+
+---
+
+# Block-2 screen-1 (Plan Timetable) build decisions (ratified 2026-06-18, `/feature` execution)
+
+Promoted from `.feature-dev/1781732896/` (design.md §7 + `orchestrator-gate-decisions.md`). Autonomous run — owner delegated ALL gate calls ("run fully without me"); load-bearing "why" for the remaining block-2 screens.
+
+## D-TT-MULTIPLAN — the timetable endpoint returns a LIST of active plans
+
+`GET /api/platform/athlete/plan-timetable` returns `{ plans: PlanTimetableView[] }`. The athlete can hold N≥1 ACTIVE enrollments (the partial unique is `(planId, athleteId)`, not per athlete). The UI shows a horizontal plan-switcher (pills) when `plans.length > 1`; plans ordered `boardedAt` desc, the board defaults to the first plan with visible weeks.
+
+**Why.** The owner-approved design has a switcher; the data model + the coach path already treat enrollments as a list. Screens 2-4 inherit "the athlete may have several plans".
+
+## D-TT-SLOT-MODEL — one row per (week×weekday) slot; status aggregates, cards are per-session
+
+Each visible week materializes all 7 Mon–SUN slots (rest where no non-rest session). A slot carries 0..N session cards. The slot STATUS (date-column color + timeline node) = `today` > `done` (≥1 non-rest session AND every non-rest session done) > `todo` > `rest`. Each session CARD's decoration is per-session (slot.isToday + that session's `done`). Two resolvers ship: `resolveSlotDecoration(status)` + `resolveCardDecoration({isToday,done})`.
+
+**Why.** The prototype is 1 session/day; reality is `Day → Session[]`. The slot/card split is the honest extension (a day with two workouts shows two cars; the node reflects the day's aggregate).
+
+## D-TT-SERVER-COMPUTES — the builder computes the whole view shape; the client is presentation-only
+
+A pure `buildPlanTimetable({enrollments, performedSessionIds, tz, now})` computes per-slot `status`+`isToday`+`dayOfMonth`, per-session `done`, per-plan `todayWeekIndex`+`landingWeekIndex` (athlete tz). The client does ZERO date math beyond locale formatting. Done = ONE batched `performedSession.findMany` → `Set<sessionId>` (no N+1; 1 enrollment + 1 performed + 1 user query total).
+
+**Why.** tz/status logic stays in the tested server helper; the view stays dumb + faithful. The same builder pattern carries to screens 2-4.
+
+## D-TT-DATES-ABSOLUTE — displayed calendar dates are tz-stable (server `dayOfMonth`; weekday from `dayOfWeek`; week-range in UTC)
+
+A plan day's calendar date is ABSOLUTE (the coach scheduled "June 15"), not tz-relative. The server emits `dayOfMonth` (UTC calendar day of `week.startDate + dayOfWeek offset`); the client renders the weekday from the `dayOfWeek` enum + the week-range via `Intl { timeZone:"UTC" }`. ONLY "today"/status detection uses the athlete tz (server-side).
+
+**Why.** The first build derived the displayed day-number/weekday/week-range from a tz-baked instant formatted in the DEVICE tz → off-by-one in sub-UTC timezones (reproduced: "Jun 14–20" vs "Jun 15–21" under LA). Calendar dates must not be tz-baked for display. (Review/QA fix, commit `6c97dcdc`.) **Screens 2-4 that show plan dates must follow this.** **Extended 2026-06-18 (D-TT-NAV-MODEL):** + Monday-snap of non-Monday week starts + a content-bounded contiguous week span.
+
+## D-TT-NO-COACHING-EDGE — the lms builder takes NO dependency on `coaching/`
+
+The builder inlines its own `composeSlotTitle` + `weekCoversToday` and derives the weekday offset from the `dayOfWeekValues` index — it does NOT import `coaching/coach-metrics` helpers (overrode the design's default-import).
+
+**Why.** `lms` is the lower domain; importing up into `coaching` is a backward edge the `api-server-lms-no-coaching` dep-cruiser rule FORBIDS (would fail pre-push `dep:check`). A trivial local copy beats a forbidden edge (rule-of-two: first reuse → copy; consolidate to `lms/_shared` on a 3rd consumer — see `deferred.md`).
+
+## D-TT-SHELL — athlete nav extended to 3 items (Plan / Records / Profile)
+
+`ATHLETE_NAVIGATION` = Plan (`/athlete`, `plans` icon) · Records (`/athlete/records`, NEW `leaderboard` icon) · Profile (`/athlete/profile`). The timetable renders from `athlete/page.tsx` via the existing `PlatformLayout` (header + bottom nav inherited). Records is a "Coming soon" placeholder (screen 3, not built).
+
+**Why.** Matches the prototype's 3-item nav; the shell already exists (same `PlatformLayout` as coach) — only the nav config + one `PlatformIconName` member + the placeholder route were added.
+
+## D-TT-DESKTOP — responsive centered column within PlatformLayout, NOT the prototype's 320px aside rail
+
+**SUPERSEDED 2026-06-18 → D-TT-DESKTOP-3PANE** (owner reversed this on the live walkthrough — the desktop rails ARE built, via a dedicated flush layout). Original call retained for the "why" trail:
+
+Mobile is 100% faithful. On md+ the timetable is a centered ~600px column inside the existing `PlatformLayout` Container; the plan-switcher is the pill row on all breakpoints. The prototype's desktop left plan-rail `aside` was NOT built.
+
+**Why.** `PlatformLayout` is the sacred uniform app chrome (`redesign-is-foundation`); an athlete-only sidebar would be an architecture island. **Owner walkthrough call** — he can request the literal desktop rail as a later wave (see `deferred.md`). Mobile-first is the mandate; mobile is the acceptance gate.
+
+---
+
+# Block-2 screen-1 (Plan Timetable) live-walkthrough revisions (2026-06-18)
+
+Owner side-by-side vs the (updated) prototype on a running dev server. These SUPERSEDE the autonomous-run calls they name; load-bearing for screens 2-4 (same shell + timeline + date model).
+
+## D-TT-DESKTOP-3PANE — desktop is a full-bleed 3-pane app-shell (supersedes D-TT-DESKTOP)
+
+On md+ the timetable is a three-column app-shell: left **Your Plans** rail (plan cards — title · "Week N of M" · "x/y done" · progress bar, selectable) | center timetable | right **Plan Weeks** rail (every week — today-dot · "Week N" · `check_circle` if a fully-done past week else `done/total` · date range, selectable). Both rails are ALWAYS shown on desktop (even at 1 plan → "1 active"); the mobile pill switcher stays gated on `>1` plan and sits BELOW the week-nav (owner deviation from the prototype's above). The updated prototype added the right Plan Weeks column; owner ratified building both. Both rails share one width (`PLAN_RAIL_WIDTH_PX`=320); internal padding is uniform across all three columns with the left rail as the reference (20px horizontal / 24px vertical); outer gutters are the panes' own padding only (no double gutter).
+
+Built via a **dedicated flush layout** (owner: "без костылей, на уровне layouts"): `PlatformLayout` gained `mainVariant: "padded" | "flush"` (default padded — coach + athlete-secondary pages unchanged); the athlete routes split into `(home)` (flush, the timetable) and `(secondary)` (padded, profile/records) groups sharing an `AthleteShell`. Flush = `maxWidth=false`, no gutters, **flexbox full-height** (`Stack height:100dvh` → the `position:sticky` AppBar takes its natural height → main `flex:1`) — NO dependency on the stale `platformHeaderHeight`=56 const (real AppBar ≈84px). Each pane scrolls INTERNALLY (`overflowY:auto`); rail eyebrows are `position:sticky;top:0` WITHIN their pane (a real scroll container now); NO viewport-sticky / absolute positioning. Dividers (rail borders) run flush header→viewport-bottom.
+
+**Why.** Reverses the "sacred-chrome → skip the rail" call: an athlete can hold >1 plan (D-TT-MULTIPLAN) and the rail is the only way to reach them; the prototype is the fidelity gate. A separate flush layout is the no-hack way to give one route full-bleed full-height without negative-margin костыли against the padded Container.
+
+## D-TT-MUILAB-TIMELINE — the day timeline is `@mui/lab` Timeline, continuous by layout
+
+The custom absolute-positioned rail/node was replaced by `@mui/lab@7.0.1-beta.20` (catalog; peer `@mui/material ^7.3.6` ↔ pinned 7.3.6) Timeline primitives (owner: "не изобретаем велосипедов"). Each `DayRow` = `TimelineItem` [date `TimelineOppositeContent` | `TimelineSeparator` | `TimelineContent`]. The line is CONTINUOUS purely by flexbox: separator = `[TimelineConnector fixed-height = dot top-offset][TimelineDot m:0][TimelineConnector grows]`, so it fills above AND below each node and adjacent rows butt seamlessly (NO `margin-top` gap, NO absolute positioning). The separator has a FIXED width (`TIMELINE_COL_W`=18) so different node sizes (today 16 / done·todo 14 / rest 7) centre on one X and the line stays straight; the date column is held off the line by a right margin (`DATE_LINE_GAP`).
+
+**Why.** A custom absolute rail is a reinvented wheel; a margin-offset node breaks the line; a size-driven separator width zig-zags it. MUI Timeline + connector-above-dot + fixed separator width solve all three with pure layout.
+
+## D-TT-NAV-MODEL — content-bounded week span; isRestDay from the coach Day.rest flag
+
+The timetable is TIME, not DB rows: `buildPlanTimetable`'s `computeWeekRange` synthesises a contiguous calendar-week span (empty plans → the current-week scaffold). Bounds: forward = last content week (no buffer); back = `hidePastBeforeBoarding ? mondayOf(boardedAt) : earliest-content-monday`; today always included; landing = today's week; Today button when viewed≠today. Non-Monday week `startDate`s are Monday-snapped (`weekMondayOf`). All calendar math is UTC (tz only picks "today"); span is content+boarding bounded (O(n), `MAX_TIMETABLE_WEEKS`=520). REST is the slot's `isRestDay` = `day.label.rest === true` (coach-declared), NOT "no sessions"; content = sessions ? cards : (isRestDay ? "Rest day" : "No sessions yet").
+
+**Why.** The first build keyed weeks to authored DB rows → gaps and a node glued to whatever row existed. Time-first + Monday-snap + UTC gives a gap-free, tz-stable axis; isRestDay distinguishes a coach rest from an unfilled day. (fix commits `d168755d`, `2603faee`.)
+
+## D-TT-DOTS-SCALE — week-dots threshold + the desktop weeks-nav (resolves the dots-scale carry-forward)
+
+Content-bounded spans can be year-long. The center week-dots render one-per-week only while `weekCount <= DOTS_MAX_COUNT` (16); beyond that they collapse to a "Week N of M" caption. The desktop right Plan Weeks rail is the scalable, scrollable full week list at any length.
+
+**Why.** 52 dots is noise; the caption stays honest about scale, the rail carries the full list.

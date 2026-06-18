@@ -129,7 +129,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ## 3. LMS — Training Plans and Enrollments
 
-**Responsibility:** Training plan metadata, athlete enrollments onto plans, and the per-plan calendar of weeks. The richer authoring tree, library catalog, and athlete-log surfaces are not part of the live system; the plan list, the enrollment lifecycle, and the plan-detail calendar viewport ship.
+**Responsibility:** Training plan metadata, athlete enrollments onto plans, the per-plan calendar of weeks, and the athlete-facing read projections over that tree (the plan timetable). The plan list, the enrollment lifecycle, the plan-detail calendar viewport, the athlete-log write surface, and the athlete plan-timetable read ship; the richer library catalog is not yet part of the live system.
 
 ### Aggregates and entities
 
@@ -154,8 +154,8 @@ The rest of this document describes each context in detail: what it owns, which 
 
 - **DB:** `TrainingPlan`, `PlanEnrollment`, `Week`.
 - **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/plan-enrollment/`, `lms/week/`.
-- **API — `api-server`:** `packages/api-server/src/endpoints/lms/training-plan/`, `endpoints/lms/plan-enrollment/`, `endpoints/lms/week/`. Ownership guards live in `packages/api-server/src/authz/guards.ts`.
-- **Consumer apps:** `apps/platform` exclusively. `apps/admin` does not currently read LMS state.
+- **API — `api-server`:** `packages/api-server/src/endpoints/lms/training-plan/`, `endpoints/lms/plan-enrollment/`, `endpoints/lms/week/`, and `endpoints/lms/plan-timetable/` (the athlete-facing read projection — a derived view model, not a Prisma aggregate, scoped to the calling athlete's own enrollments). Ownership guards live in `packages/api-server/src/authz/guards.ts`.
+- **Consumer apps:** `apps/platform` exclusively — the coach plan surfaces and the athlete plan timetable (`/athlete`). `apps/admin` does not currently read LMS state.
 
 ### Dependencies
 

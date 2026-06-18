@@ -1,9 +1,9 @@
 import { Stack, Typography } from "@mui/material";
 
-const AthletePage = () => {
+const AthleteRecordsPage = () => {
   return (
     <Stack>
-      <Typography variant="h5">Athlete Dashboard</Typography>
+      <Typography variant="h5">Records</Typography>
       <Typography variant="body2" color="text.secondary">
         Coming soon
       </Typography>
@@ -11,4 +11,4 @@ const AthletePage = () => {
   );
 };
 
-export default AthletePage;
+export default AthleteRecordsPage;

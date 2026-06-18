@@ -1,20 +1,22 @@
 # athlete-core — state (the board)
 
-**Updated:** 2026-06-17. **Block 1 (data core) SHIPPED** via `/feature` (full) on `feat/athlete-core-data-core` — 6 commits, gated api-server suite GREEN on a reseeded DB, close-out docs in the PR. **NEXT: block 2 — Athlete UX (owner-run UI on the data floor).**
+**Updated:** 2026-06-18. **Block 2 screen 1 (Plan Timetable) SHIPPED** via `/feature` (full, autonomous) on `feat/athlete-plan-timetable` — 13 commits, 70/70 tests green (incl. the gated endpoint integration on the live dev DB), close-out docs in the PR. Block 1 (data core) shipped 2026-06-17 (#283). **NEXT: block 2 screen 2 — the session / workout view.**
 
 ## Board
 
-| #   | Step                                             | Status                     | Pointer                                                                                            |
-| --- | ------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------- |
-| 0   | Design lock + contract-shape spec                | ✅ done                    | `decisions.md` + `contract-shapes.md` + `block-1-feature-prompt.md`                                |
-| 1   | Data core (coarse wave)                          | ✅ **DONE** (feature PR)   | `decisions.md` D-DIST-UNITS…D-SCOPE-PUBLISH · `.feature-dev/1781712323/` (research/design/plan)    |
-| 2   | Athlete UX (coarse wave)                         | ⬜ **NEXT** · owner-run UI | plan-view + logging-30s + records/PR + profile; consumes the resolver `unresolved` shapes          |
-| 3   | Coach honest-metrics                             | ⬜ pending                 | derived fields + reconcile cron; on the migrated `performedAt` coach-metrics                       |
-| —   | Library wave (profiles + benchmarks + templates) | 🅿️ deferred                | one catalog pass; profile-catalog re-homes `profileSelections` free-string keys; fusion-form gated |
+| #   | Step                                             | Status                           | Pointer                                                                                                                                                                                       |
+| --- | ------------------------------------------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Design lock + contract-shape spec                | ✅ done                          | `decisions.md` + `contract-shapes.md` + `block-1-feature-prompt.md`                                                                                                                           |
+| 1   | Data core (coarse wave)                          | ✅ **DONE** (feature PR)         | `decisions.md` D-DIST-UNITS…D-SCOPE-PUBLISH · `.feature-dev/1781712323/` (research/design/plan)                                                                                               |
+| 2   | Athlete UX (coarse wave)                         | 🔄 **IN PROGRESS** · screen 1 ✅ | **Plan Timetable SHIPPED** (`feat/athlete-plan-timetable`, decisions D-TT-\*); screens 2-4 next: session view · logging-30s · records/PR · profile (consume the resolver `unresolved` shapes) |
+| 3   | Coach honest-metrics                             | ⬜ pending                       | derived fields + reconcile cron; on the migrated `performedAt` coach-metrics                                                                                                                  |
+| —   | Library wave (profiles + benchmarks + templates) | 🅿️ deferred                      | one catalog pass; profile-catalog re-homes `profileSelections` free-string keys; fusion-form gated                                                                                            |
 
 ## Next action
 
-**▶ Block 2 — Athlete UX (owner-run, ui-first on mocks).** The data floor exists: athlete write routes (`api/platform/athlete/{performed-sessions,one-rm-records,.../result}`), the pure `resolveLoad` + records/PR derivation libs, the `ResolvedLoad` 4-variant shape (resolved / missing_one_rm / missing_profile_pick / not_applicable) the UI renders into (kg / set-1RM affordance / pick-profile affordance / BW). Planner scope = UX requirements + mock-data contracts; the designer is owner-run. The app-side TanStack hooks (`use-performed-sessions`/`use-one-rm-records`/`use-performed-schema-results`) are wired and waiting for screens.
+**▶ Block 2 screen 2 — the session / workout view** (tap a timetable card → here). Read-only plan content: blocks → schemas (workouts) → rows (exercises), each row showing movement/reps/prescribed-load/intensity/tempo/notes. Render the load resolver's `ResolvedLoad` 4-variant shape (resolved kg / missing_one_rm → inline "set your 1RM" / missing_profile_pick → "pick your profile" / not_applicable → BW). A benchmark schema wears the green chip + result-type → primary action "Log result"; an ordinary session → "Mark completed". Build on screen 1's patterns: server-computes / view presentation-only (D-TT-SERVER-COMPUTES), tz-stable dates (D-TT-DATES-ABSOLUTE), no lms→coaching edge (D-TT-NO-COACHING-EDGE), faithful-to-prototype via theme tokens. The card-tap navigation target stub already exists in the timetable (`onOpenSession`).
+
+Screen 1 (Plan Timetable) is DONE: the read endpoint + builder + hook + UI module + nav extension shipped on `feat/athlete-plan-timetable`. The app-side TanStack hooks (`use-performed-sessions`/`use-one-rm-records`/`use-performed-schema-results`) remain wired and waiting for the logging screens (3).
 
 ## Resolved this wave (no longer open)
 

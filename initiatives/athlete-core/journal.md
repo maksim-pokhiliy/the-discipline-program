@@ -32,3 +32,16 @@ Executor `/feature` run on `block-1-feature-prompt.md` — the athlete-core data
 - **Close-out** (`closeout-before-pr`): decisions/deferred/contract-shapes/plan/state/journal advanced; landed IN the feature PR.
 
 **NEXT:** block 2 — Athlete UX (owner-run UI): plan-as-train view, logging-30s, records/PR, profile + the set-1RM / pick-profile affordances the resolver's `unresolved` shapes feed.
+
+## 2026-06-18 — block 2 screen 1 (Plan Timetable) SHIPPED via `/feature` (full, autonomous)
+
+Executor `/feature` run on `block-2-screen-1-feature-prompt.md` — the athlete plan-timetable on REAL data (the first of block 2's 4 athlete screens). Owner delegated ALL gate decisions ("принимай решения сам, run fully without me"); no blocking gates — every gate self-resolved with logged rationale. 13 commits on `feat/athlete-plan-timetable`.
+
+- **Built (cross-layer slice):** a new `plan-timetable` derived-view contract + read endpoint (`GET /api/platform/athlete/plan-timetable`, `withAthleteAuth`) over a PURE `buildPlanTimetable` (no N+1: 1 enrollment + 1 performed + 1 user query) + a TanStack hook + a mobile-first MUI timetable module (16 files, zero-hex, one-component-per-file) + the athlete nav extension (Records item + `leaderboard` icon + placeholder route) + the page wire. Faithful to the owner-approved Claude Design prototype, built native via theme tokens (no transplanted HTML).
+- **8 decisions ratified → `decisions.md` (D-TT-\*):** MULTIPLAN (list endpoint + switcher), SLOT-MODEL (slot/card decoration split for N-session days), SERVER-COMPUTES (view presentation-only), DATES-ABSOLUTE (the tz fix), NO-COACHING-EDGE (overrode the design's backward-import — the `api-server-lms-no-coaching` dep-cruiser rule would have failed pre-push `dep:check`), SHELL, DESKTOP (responsive column, not the prototype's aside rail).
+- **Review + QA = 0 CRITICAL.** Both independently flagged a device-tz off-by-one in the date display (reproduced "Jun 14–20" vs "Jun 15–21" under LA) — fixed at the source: the server emits an absolute `dayOfMonth`, the client formats the week-range in UTC + reads the weekday from the `dayOfWeek` enum. Also fixed QA-004 (planId-keyed switcher state vs array-index), QA-005 (default to the first NON-empty plan), and removed dead code. Commit `6c97dcdc`.
+- **Tests 70/70 green:** contract 16 + builder 24 (pure, tz-stable across UTC±) + presentation 13 + component 8 + integration 9 (live dev DB, self-fixturing, no-N+1 verified by `vi.spyOn`). No destructive `db:reset` needed — the slice is additive (no schema change) and the integration test creates + cleans its own data.
+- **Process:** 8 task-commits in dependency waves (contract → builder/nav → endpoint/hook → ui → route/page), each orchestrator-verified via `git diff` + check-types/lint (never agent self-report). The D-A12 backward-import override proved load-bearing — it aligns with an existing dep-cruiser rule that pre-push enforces.
+- **Close-out** (`closeout-before-pr`): decisions/deferred/state/journal/plan advanced; landing IN the feature PR.
+
+**NEXT:** block 2 screen 2 — the session / workout view (read-only blocks→schemas→rows, the `ResolvedLoad` 4-variant render, the benchmark green chip + "Log result" / "Mark completed"). The timetable card-tap stub (`onOpenSession`) is the entry point.
