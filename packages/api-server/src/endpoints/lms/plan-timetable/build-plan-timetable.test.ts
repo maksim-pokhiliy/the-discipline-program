@@ -2,17 +2,9 @@ import { DayOfWeek, EnrollmentStatus, TrainingPlanStatus } from "@prisma/client"
 import { describe, expect, it } from "vitest";
 
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
-import { TimetableSlotStatus, type WeekTimetableView } from "@repo/contracts/lms/plan-timetable";
+import { TimetableSlotStatus } from "@repo/contracts/lms/plan-timetable";
 
-import { addDaysInTz, startOfDayInTz } from "../../../utils/date-helpers";
-
-import {
-  buildPlanTimetable,
-  computeLandingWeekIndex,
-  computeSlotStatus,
-  computeTodayWeekIndex,
-  deriveSubtitle,
-} from "./build-plan-timetable";
+import { buildPlanTimetable, computeSlotStatus, deriveSubtitle } from "./build-plan-timetable";
 import {
   type TimetableDay,
   type TimetableEnrollment,
@@ -113,6 +105,11 @@ const workoutLabel = (name: string): LabelStub => ({ name, rest: false });
 const restLabel = (name: string): LabelStub => ({ name, rest: true });
 
 const mondayUtc = new Date("2026-06-15T00:00:00.000Z");
+const wednesday = new Date("2026-06-17T00:00:00.000Z");
+
+// A `now` a few weeks after the authored week, so weeks[0] is the authored week
+// with no "today" slot — keeps the static status assertions clean.
+const FUTURE_NOW = new Date("2026-07-13T00:00:00.000Z");
 
 const buildSingleWeekResult = (
   week: TimetableWeek,
@@ -121,16 +118,13 @@ const buildSingleWeekResult = (
     now?: Date;
     performedSessionIds?: Set<string>;
   } = {},
-) => {
-  const tz = options.tz ?? UTC;
-
-  return buildPlanTimetable({
+) =>
+  buildPlanTimetable({
     enrollments: [makeEnrollment({ weeks: [week] })],
     performedSessionIds: options.performedSessionIds ?? new Set<string>(),
-    tz,
-    now: options.now ?? new Date("2030-01-01T00:00:00.000Z"),
+    tz: options.tz ?? UTC,
+    now: options.now ?? FUTURE_NOW,
   });
-};
 
 describe("computeSlotStatus", () => {
   it("returns TODAY even when every session is done", () => {
@@ -169,8 +163,7 @@ describe("buildPlanTimetable slot materialization", () => {
       makeDay(DayOfWeek.FRIDAY, [makeSession()], workoutLabel("Friday")),
     ]);
 
-    const result = buildSingleWeekResult(week);
-    const days = result.plans[0]?.weeks[0]?.days ?? [];
+    const days = buildSingleWeekResult(week).plans[0]?.weeks[0]?.days ?? [];
 
     expect(days).toHaveLength(7);
     expect(days.map((slot) => slot.dayOfWeek)).toEqual([...dayOfWeekValues]);
@@ -194,15 +187,12 @@ describe("buildPlanTimetable slot materialization", () => {
 });
 
 describe("buildPlanTimetable per-day date derivation", () => {
-  it("derives MONDAY at startDate and SUNDAY at startDate plus six in a non-UTC tz", () => {
+  it("emits each slot date as the absolute UTC-midnight calendar date", () => {
     const week = makeWeek(mondayUtc, [makeDay(DayOfWeek.MONDAY, [makeSession()])]);
     const days = buildSingleWeekResult(week, { tz: NY }).plans[0]?.weeks[0]?.days ?? [];
 
-    const expectedMonday = startOfDayInTz(addDaysInTz(mondayUtc, 0, NY), NY);
-    const expectedSunday = startOfDayInTz(addDaysInTz(mondayUtc, 6, NY), NY);
-
-    expect(days[0]?.date.getTime()).toBe(expectedMonday.getTime());
-    expect(days[6]?.date.getTime()).toBe(expectedSunday.getTime());
+    expect(days[0]?.date.getTime()).toBe(Date.UTC(2026, 5, 15));
+    expect(days[6]?.date.getTime()).toBe(Date.UTC(2026, 5, 21));
     expect(days[0]?.dayOfWeek).toBe("MONDAY");
   });
 
@@ -286,74 +276,61 @@ describe("deriveSubtitle", () => {
   });
 });
 
-describe("today and landing index", () => {
-  const tz = UTC;
-  const startOfDayCache = (date: Date): Date => startOfDayInTz(date, tz);
+describe("buildPlanTimetable time-anchored week axis", () => {
+  it("renders the current calendar week scaffold for a plan with no authored weeks", () => {
+    const result = buildPlanTimetable({
+      enrollments: [makeEnrollment({ weeks: [] })],
+      performedSessionIds: new Set<string>(),
+      tz: UTC,
+      now: wednesday,
+    });
+    const plan = result.plans[0];
+    const week = plan?.weeks[0];
 
-  const week = (startDate: Date): WeekTimetableView => ({
-    index: 0,
-    startDate,
-    days: [],
-  });
-
-  const weeks: WeekTimetableView[] = [
-    { ...week(new Date("2026-06-08T00:00:00.000Z")), index: 0 },
-    { ...week(new Date("2026-06-15T00:00:00.000Z")), index: 1 },
-    { ...week(new Date("2026-06-22T00:00:00.000Z")), index: 2 },
-  ];
-
-  it("returns the covering week index and matching landing index when today is inside", () => {
-    const now = startOfDayInTz(new Date("2026-06-17T12:00:00.000Z"), tz);
-    const todayIndex = computeTodayWeekIndex(weeks, now, tz, startOfDayCache);
-
-    expect(todayIndex).toBe(1);
-    expect(computeLandingWeekIndex(weeks, todayIndex, now, startOfDayCache)).toBe(1);
-  });
-
-  it("returns null today and landing index 0 when today is before the first week", () => {
-    const now = startOfDayInTz(new Date("2026-06-01T00:00:00.000Z"), tz);
-    const todayIndex = computeTodayWeekIndex(weeks, now, tz, startOfDayCache);
-
-    expect(todayIndex).toBeNull();
-    expect(computeLandingWeekIndex(weeks, todayIndex, now, startOfDayCache)).toBe(0);
-  });
-
-  it("returns null today and the last index when today is after the last week", () => {
-    const now = startOfDayInTz(new Date("2026-07-15T00:00:00.000Z"), tz);
-    const todayIndex = computeTodayWeekIndex(weeks, now, tz, startOfDayCache);
-
-    expect(todayIndex).toBeNull();
-    expect(computeLandingWeekIndex(weeks, todayIndex, now, startOfDayCache)).toBe(weeks.length - 1);
-  });
-
-  it("returns null today and landing index 0 for an empty week list", () => {
-    const now = startOfDayInTz(new Date("2026-06-17T00:00:00.000Z"), tz);
-
-    expect(computeTodayWeekIndex([], now, tz, startOfDayCache)).toBeNull();
-    expect(computeLandingWeekIndex([], null, now, startOfDayCache)).toBe(0);
-  });
-});
-
-describe("buildPlanTimetable today anchoring end-to-end", () => {
-  it("flags the today slot and exposes the covering week as todayWeekIndex", () => {
-    const week = makeWeek(mondayUtc, [makeDay(DayOfWeek.WEDNESDAY, [makeSession()])]);
-    const now = new Date("2026-06-17T09:00:00.000Z");
-
-    const plan = buildSingleWeekResult(week, { tz: UTC, now }).plans[0];
-    const days = plan?.weeks[0]?.days ?? [];
-
+    expect(plan?.weeks.length).toBeGreaterThan(1);
+    expect(week?.startDate.getTime()).toBe(mondayUtc.getTime());
+    expect(week?.days).toHaveLength(7);
+    expect(week?.days.every((slot) => slot.sessions.length === 0)).toBe(true);
     expect(plan?.todayWeekIndex).toBe(0);
     expect(plan?.landingWeekIndex).toBe(0);
+    expect(week?.days.filter((slot) => slot.isToday)).toHaveLength(1);
+    expect(week?.days[2]?.isToday).toBe(true);
+  });
+
+  it("fills a contiguous span from a past authored week through the current week", () => {
+    const week = makeWeek(mondayUtc, [makeDay(DayOfWeek.MONDAY, [makeSession()])]);
+
+    const plan = buildPlanTimetable({
+      enrollments: [makeEnrollment({ weeks: [week] })],
+      performedSessionIds: new Set<string>(),
+      tz: UTC,
+      now: new Date("2026-06-29T00:00:00.000Z"),
+    }).plans[0];
+
+    expect(plan?.weeks.length).toBeGreaterThanOrEqual(3);
+    expect(plan?.weeks[0]?.startDate.getTime()).toBe(mondayUtc.getTime());
+    expect(plan?.weeks[0]?.days[0]?.status).toBe(TimetableSlotStatus.TODO);
+    expect(plan?.weeks[1]?.days.every((slot) => slot.sessions.length === 0)).toBe(true);
+    expect(plan?.todayWeekIndex).toBe(2);
+    expect(plan?.landingWeekIndex).toBe(2);
+  });
+
+  it("anchors today inside an authored current week", () => {
+    const week = makeWeek(mondayUtc, [makeDay(DayOfWeek.WEDNESDAY, [makeSession()])]);
+
+    const plan = buildSingleWeekResult(week, { tz: UTC, now: wednesday }).plans[0];
+    const days = plan?.weeks[0]?.days ?? [];
+
+    expect(plan?.weeks.length).toBeGreaterThanOrEqual(1);
+    expect(plan?.todayWeekIndex).toBe(0);
     expect(days[2]?.isToday).toBe(true);
     expect(days[2]?.status).toBe(TimetableSlotStatus.TODAY);
     expect(days.filter((slot) => slot.isToday)).toHaveLength(1);
   });
 });
 
-describe("buildPlanTimetable date-thread", () => {
-  const farFuture = new Date("2030-01-01T00:00:00.000Z");
-
-  const twoWeekEnrollment = (
+describe("buildPlanTimetable date-thread (week-granular)", () => {
+  const twoAuthoredWeeks = (
     hidePastBeforeBoarding: boolean,
     boardedAt: Date,
   ): TimetableEnrollment =>
@@ -363,78 +340,58 @@ describe("buildPlanTimetable date-thread", () => {
       weeks: [
         makeWeek(new Date("2026-06-08T00:00:00.000Z"), [
           makeDay(DayOfWeek.MONDAY, [makeSession()]),
-          makeDay(DayOfWeek.THURSDAY, [makeSession()]),
         ]),
-        makeWeek(new Date("2026-06-15T00:00:00.000Z"), [
-          makeDay(DayOfWeek.MONDAY, [makeSession()]),
-        ]),
+        makeWeek(mondayUtc, [makeDay(DayOfWeek.MONDAY, [makeSession()])]),
       ],
     });
 
-  it("returns the full tree when hidePastBeforeBoarding is false", () => {
+  it("shows authored weeks plus the current week when hidePastBeforeBoarding is false", () => {
     const result = buildPlanTimetable({
-      enrollments: [twoWeekEnrollment(false, new Date("2026-06-11T00:00:00.000Z"))],
+      enrollments: [twoAuthoredWeeks(false, new Date("2026-06-11T00:00:00.000Z"))],
       performedSessionIds: new Set<string>(),
       tz: UTC,
-      now: farFuture,
+      now: wednesday,
     });
 
-    expect(result.plans[0]?.weeks).toHaveLength(2);
-    expect(result.plans[0]?.weeks[0]?.days).toHaveLength(7);
+    expect(result.plans[0]?.weeks.length).toBeGreaterThanOrEqual(2);
+    expect(result.plans[0]?.weeks[0]?.startDate.getTime()).toBe(Date.UTC(2026, 5, 8));
+    expect(result.plans[0]?.todayWeekIndex).toBe(1);
   });
 
-  it("drops slots before boardedAt, keeps later slots, and never drops the future", () => {
+  it("clamps the span to the boarding week, hiding the earlier archive week", () => {
     const result = buildPlanTimetable({
-      enrollments: [twoWeekEnrollment(true, new Date("2026-06-11T00:00:00.000Z"))],
+      enrollments: [twoAuthoredWeeks(true, mondayUtc)],
       performedSessionIds: new Set<string>(),
       tz: UTC,
-      now: farFuture,
+      now: wednesday,
     });
 
-    const firstWeek = result.plans[0]?.weeks[0];
-
-    expect(firstWeek?.days.every((slot) => slot.date.getTime() >= Date.UTC(2026, 5, 11))).toBe(
-      true,
-    );
-    expect(firstWeek?.days.some((slot) => slot.dayOfWeek === "THURSDAY")).toBe(true);
-    expect(firstWeek?.days.some((slot) => slot.dayOfWeek === "MONDAY")).toBe(false);
-    expect(result.plans[0]?.weeks[1]?.days).toHaveLength(7);
-  });
-
-  it("drops a fully-emptied week and re-indexes survivors from zero", () => {
-    const result = buildPlanTimetable({
-      enrollments: [twoWeekEnrollment(true, new Date("2026-06-15T00:00:00.000Z"))],
-      performedSessionIds: new Set<string>(),
-      tz: UTC,
-      now: farFuture,
-    });
-
-    expect(result.plans[0]?.weeks).toHaveLength(1);
+    expect(result.plans[0]?.weeks.length).toBeGreaterThanOrEqual(1);
     expect(result.plans[0]?.weeks[0]?.index).toBe(0);
-    expect(result.plans[0]?.weeks[0]?.startDate.toISOString()).toBe("2026-06-15T00:00:00.000Z");
+    expect(result.plans[0]?.weeks[0]?.startDate.getTime()).toBe(mondayUtc.getTime());
   });
 });
 
 describe("buildPlanTimetable multi-plan order", () => {
   it("preserves the input enrollment order without re-sorting", () => {
+    const week = (): TimetableWeek =>
+      makeWeek(mondayUtc, [makeDay(DayOfWeek.MONDAY, [makeSession()])]);
     const newer = makeEnrollment({
       planId: "clz0000000000000000planAA",
       planName: "Newer Plan",
-      boardedAt: new Date("2026-06-15T00:00:00.000Z"),
-      weeks: [makeWeek(mondayUtc, [makeDay(DayOfWeek.MONDAY, [makeSession()])])],
+      weeks: [week()],
     });
     const older = makeEnrollment({
       planId: "clz0000000000000000planBB",
       planName: "Older Plan",
-      boardedAt: new Date("2026-05-01T00:00:00.000Z"),
-      weeks: [makeWeek(mondayUtc, [makeDay(DayOfWeek.MONDAY, [makeSession()])])],
+      weeks: [week()],
     });
 
     const result = buildPlanTimetable({
       enrollments: [newer, older],
       performedSessionIds: new Set<string>(),
       tz: UTC,
-      now: new Date("2030-01-01T00:00:00.000Z"),
+      now: wednesday,
     });
 
     expect(result.plans.map((plan) => plan.planTitle)).toEqual(["Newer Plan", "Older Plan"]);

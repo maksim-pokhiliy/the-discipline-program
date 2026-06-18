@@ -8,21 +8,28 @@ import {
   type WeekTimetableView,
 } from "@repo/contracts/lms/plan-timetable";
 
-import { addDaysInTz, createStartOfDayCache, DAYS_IN_WEEK } from "../../../utils/date-helpers";
 import { DAY_OF_WEEK_TO_PRISMA } from "../_shared";
 
 import {
   type TimetableDay,
   type TimetableEnrollment,
   type TimetableSession,
-  type TimetableWeek,
 } from "./plan-timetable.types";
 
 const DEFAULT_WORKOUT_TITLE = "Workout";
 
 const DEFAULT_LANDING_WEEK_INDEX = 0;
 
-type StartOfDayCache = (date: Date) => Date;
+const DAYS_PER_WEEK = dayOfWeekValues.length;
+
+const SUNDAY_DAYS_FROM_MONDAY = 6;
+
+const FORWARD_HORIZON_WEEKS = 6;
+
+type WeekSource = {
+  startDate: Date;
+  days: TimetableDay[];
+};
 
 type BuildPlanTimetableArgs = {
   enrollments: TimetableEnrollment[];
@@ -36,10 +43,32 @@ type SlotStatusArgs = {
   sessions: SessionCardView[];
 };
 
-const utcCalendarDayOfMonth = (startDate: Date, offset: number): number =>
-  new Date(
-    Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate() + offset),
-  ).getUTCDate();
+const toUtcMidnight = (date: Date): Date =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+const addUtcDays = (date: Date, days: number): Date =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
+
+const mondayOfUtc = (date: Date): Date => {
+  const weekday = date.getUTCDay();
+  const offsetToMonday = weekday === 0 ? SUNDAY_DAYS_FROM_MONDAY : weekday - 1;
+
+  return addUtcDays(date, -offsetToMonday);
+};
+
+const weekMondayOf = (date: Date): Date => mondayOfUtc(toUtcMidnight(date));
+
+const athleteTodayUtc = (now: Date, tz: string): Date => {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const [year = "0", month = "0", day = "0"] = formatter.format(now).split("-");
+
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+};
 
 const isRestSession = (session: TimetableSession): boolean => session.label?.rest === true;
 
@@ -90,25 +119,24 @@ const buildSessionCards = (
     }));
 };
 
-const buildWeekSlots = (
-  week: TimetableWeek,
+const buildDaySlots = (
+  week: WeekSource,
   performedSessionIds: Set<string>,
-  tz: string,
-  startOfToday: Date,
-  startOfDayCache: StartOfDayCache,
+  todayUtc: Date,
 ): DaySlotView[] => {
+  const monday = toUtcMidnight(week.startDate);
   const dayMap = new Map(week.days.map((day) => [day.dayOfWeek, day]));
 
   return dayOfWeekValues.map((dayOfWeek, offset) => {
-    const date = startOfDayCache(addDaysInTz(week.startDate, offset, tz));
+    const date = addUtcDays(monday, offset);
     const day = dayMap.get(DAY_OF_WEEK_TO_PRISMA[dayOfWeek]) ?? null;
     const sessions = buildSessionCards(day, performedSessionIds);
-    const isToday = date.getTime() === startOfToday.getTime();
+    const isToday = date.getTime() === todayUtc.getTime();
 
     return {
       date,
       dayOfWeek,
-      dayOfMonth: utcCalendarDayOfMonth(week.startDate, offset),
+      dayOfMonth: date.getUTCDate(),
       isToday,
       status: computeSlotStatus({ isToday, sessions }),
       sessions,
@@ -116,100 +144,79 @@ const buildWeekSlots = (
   });
 };
 
+const computeWeekSpan = (
+  enrollment: TimetableEnrollment,
+  todayMonday: Date,
+): { low: number; high: number } => {
+  const todayTime = todayMonday.getTime();
+  const authoredMondays = enrollment.plan.weeks.map((week) =>
+    weekMondayOf(week.startDate).getTime(),
+  );
+  const forwardHorizon = addUtcDays(todayMonday, FORWARD_HORIZON_WEEKS * DAYS_PER_WEEK).getTime();
+  const low = Math.min(todayTime, ...authoredMondays);
+  const high = Math.max(forwardHorizon, ...authoredMondays);
+
+  if (!enrollment.hidePastBeforeBoarding) {
+    return { low, high };
+  }
+
+  const boardedMonday = weekMondayOf(enrollment.boardedAt).getTime();
+
+  return { low: Math.max(low, boardedMonday), high };
+};
+
 const buildWeeks = (
   enrollment: TimetableEnrollment,
   performedSessionIds: Set<string>,
-  tz: string,
-  startOfToday: Date,
-  startOfDayCache: StartOfDayCache,
-): WeekTimetableView[] =>
-  enrollment.plan.weeks.map((week, index) => ({
-    index,
-    startDate: week.startDate,
-    days: buildWeekSlots(week, performedSessionIds, tz, startOfToday, startOfDayCache),
-  }));
-
-const applyDateThread = (
-  weeks: WeekTimetableView[],
-  hidePastBeforeBoarding: boolean,
-  boardedAtDay: Date,
-): WeekTimetableView[] => {
-  if (!hidePastBeforeBoarding) {
-    return weeks;
-  }
-
-  return weeks
-    .map((week) => ({
-      ...week,
-      days: week.days.filter((slot) => slot.date.getTime() >= boardedAtDay.getTime()),
-    }))
-    .filter((week) => week.days.length > 0)
-    .map((week, index) => ({ ...week, index }));
-};
-
-const weekCoversToday = (
-  weekStart: Date,
-  startOfToday: Date,
-  tz: string,
-  startOfDayCache: StartOfDayCache,
-): boolean => {
-  const normalizedStart = startOfDayCache(weekStart);
-  const weekEnd = startOfDayCache(addDaysInTz(normalizedStart, DAYS_IN_WEEK, tz));
-
-  return startOfToday >= normalizedStart && startOfToday < weekEnd;
-};
-
-export const computeTodayWeekIndex = (
-  weeks: WeekTimetableView[],
-  startOfToday: Date,
-  tz: string,
-  startOfDayCache: StartOfDayCache,
-): number | null => {
-  const index = weeks.findIndex((week) =>
-    weekCoversToday(week.startDate, startOfToday, tz, startOfDayCache),
+  todayMonday: Date,
+  todayUtc: Date,
+): { weeks: WeekTimetableView[]; todayWeekIndex: number | null } => {
+  const { low, high } = computeWeekSpan(enrollment, todayMonday);
+  const daysByMonday = new Map(
+    enrollment.plan.weeks.map((week) => [weekMondayOf(week.startDate).getTime(), week.days]),
   );
+  const weeks: WeekTimetableView[] = [];
+  let todayWeekIndex: number | null = null;
+  let cursor = low;
 
-  return index === -1 ? null : index;
-};
+  while (cursor <= high) {
+    const monday = new Date(cursor);
+    const source: WeekSource = { startDate: monday, days: daysByMonday.get(cursor) ?? [] };
+    const index = weeks.length;
 
-export const computeLandingWeekIndex = (
-  weeks: WeekTimetableView[],
-  todayWeekIndex: number | null,
-  startOfToday: Date,
-  startOfDayCache: StartOfDayCache,
-): number => {
-  if (todayWeekIndex !== null) {
-    return todayWeekIndex;
+    if (cursor === todayMonday.getTime()) {
+      todayWeekIndex = index;
+    }
+
+    weeks.push({
+      index,
+      startDate: monday,
+      days: buildDaySlots(source, performedSessionIds, todayUtc),
+    });
+    cursor = addUtcDays(monday, DAYS_PER_WEEK).getTime();
   }
 
-  const firstWeek = weeks[0];
-
-  if (firstWeek === undefined) {
-    return DEFAULT_LANDING_WEEK_INDEX;
-  }
-
-  const isBeforePlan = startOfToday.getTime() < startOfDayCache(firstWeek.startDate).getTime();
-
-  return isBeforePlan ? DEFAULT_LANDING_WEEK_INDEX : weeks.length - 1;
+  return { weeks, todayWeekIndex };
 };
 
 const buildPlanForEnrollment = (
   enrollment: TimetableEnrollment,
   performedSessionIds: Set<string>,
-  tz: string,
-  startOfToday: Date,
-  startOfDayCache: StartOfDayCache,
+  todayMonday: Date,
+  todayUtc: Date,
 ): PlanTimetableView => {
-  const boardedAtDay = startOfDayCache(enrollment.boardedAt);
-  const allWeeks = buildWeeks(enrollment, performedSessionIds, tz, startOfToday, startOfDayCache);
-  const weeks = applyDateThread(allWeeks, enrollment.hidePastBeforeBoarding, boardedAtDay);
-  const todayWeekIndex = computeTodayWeekIndex(weeks, startOfToday, tz, startOfDayCache);
+  const { weeks, todayWeekIndex } = buildWeeks(
+    enrollment,
+    performedSessionIds,
+    todayMonday,
+    todayUtc,
+  );
 
   return {
     planId: enrollment.planId,
     planTitle: enrollment.plan.name,
     todayWeekIndex,
-    landingWeekIndex: computeLandingWeekIndex(weeks, todayWeekIndex, startOfToday, startOfDayCache),
+    landingWeekIndex: todayWeekIndex ?? DEFAULT_LANDING_WEEK_INDEX,
     weeks,
   };
 };
@@ -220,10 +227,10 @@ export const buildPlanTimetable = ({
   tz,
   now,
 }: BuildPlanTimetableArgs): PlanTimetableResponse => {
-  const startOfDayCache = createStartOfDayCache(tz);
-  const startOfToday = startOfDayCache(now);
+  const todayUtc = athleteTodayUtc(now, tz);
+  const todayMonday = mondayOfUtc(todayUtc);
   const plans = enrollments.map((enrollment) =>
-    buildPlanForEnrollment(enrollment, performedSessionIds, tz, startOfToday, startOfDayCache),
+    buildPlanForEnrollment(enrollment, performedSessionIds, todayMonday, todayUtc),
   );
 
   return { plans };

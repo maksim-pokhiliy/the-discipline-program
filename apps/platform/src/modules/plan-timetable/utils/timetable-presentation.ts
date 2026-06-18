@@ -164,14 +164,15 @@ export const resolveDotStyle = (
 };
 
 export const formatWeekRangeCompact = (
-  startDate: Date,
+  startDate: Date | string,
   locale: string = DEFAULT_LOCALE,
 ): string => {
+  const start = new Date(startDate);
   const endDate = new Date(
     Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate() + LAST_DAY_OFFSET_IN_WEEK,
+      start.getUTCFullYear(),
+      start.getUTCMonth(),
+      start.getUTCDate() + LAST_DAY_OFFSET_IN_WEEK,
     ),
   );
   const monthDayFormat = new Intl.DateTimeFormat(locale, {
@@ -180,10 +181,10 @@ export const formatWeekRangeCompact = (
     timeZone: "UTC",
   });
   const dayFormat = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: "UTC" });
-  const isSameMonth = startDate.getUTCMonth() === endDate.getUTCMonth();
+  const isSameMonth = start.getUTCMonth() === endDate.getUTCMonth();
   const endLabel = isSameMonth ? dayFormat.format(endDate) : monthDayFormat.format(endDate);
 
-  return `${monthDayFormat.format(startDate)} – ${endLabel}`;
+  return `${monthDayFormat.format(start)} – ${endLabel}`;
 };
 
 const NEXT_WEEK_OFFSET = 2;
