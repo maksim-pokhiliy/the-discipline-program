@@ -1,4 +1,4 @@
-import { type ResultType } from "@repo/contracts/lms/_shared";
+import { type Result, type ResultType } from "@repo/contracts/lms/_shared";
 import { compositionSchema } from "@repo/contracts/lms/composition";
 import {
   type CreatePerformedSchemaResultData,
@@ -56,6 +56,28 @@ const loadBenchmarkSchema = async (
   return { resultType: composition.benchmark.resultType, sessionId: schema.block.sessionId };
 };
 
+export const validateBenchmarkResultForSession = async (
+  sessionId: string,
+  plannedSchemaId: string,
+  result: Result,
+): Promise<void> => {
+  const { resultType, sessionId: schemaSessionId } = await loadBenchmarkSchema(plannedSchemaId);
+
+  if (schemaSessionId !== sessionId) {
+    throw new BadRequestError("Schema does not belong to the performed session", {
+      sessionId,
+      plannedSchemaId,
+    });
+  }
+
+  if (result.type !== resultType) {
+    throw new BadRequestError("Result type does not match the benchmark result type", {
+      expected: resultType,
+      received: result.type,
+    });
+  }
+};
+
 export const lmsPerformedSchemaResultApi = {
   create: async (
     userId: string,
@@ -63,23 +85,8 @@ export const lmsPerformedSchemaResultApi = {
     data: CreatePerformedSchemaResultData,
   ): Promise<PerformedSchemaResult> => {
     const { sessionId } = await loadPerformedSessionForAthlete(performedSessionId, userId);
-    const { resultType, sessionId: schemaSessionId } = await loadBenchmarkSchema(
-      data.plannedSchemaId,
-    );
 
-    if (schemaSessionId !== sessionId) {
-      throw new BadRequestError("Schema does not belong to the performed session", {
-        performedSessionId,
-        plannedSchemaId: data.plannedSchemaId,
-      });
-    }
-
-    if (data.result.type !== resultType) {
-      throw new BadRequestError("Result type does not match the benchmark result type", {
-        expected: resultType,
-        received: data.result.type,
-      });
-    }
+    await validateBenchmarkResultForSession(sessionId, data.plannedSchemaId, data.result);
 
     try {
       const result = await prisma.performedSchemaResult.create({

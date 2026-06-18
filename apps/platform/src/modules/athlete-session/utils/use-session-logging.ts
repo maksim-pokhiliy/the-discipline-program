@@ -5,13 +5,13 @@ import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
+import { type CreatePerformedSchemaResultData } from "@repo/contracts/lms/performed-schema-result";
 import { type SessionDetailResponse } from "@repo/contracts/lms/session-detail";
 
 import { platformKeys } from "@app/lib/api/keys";
 import {
   useAthleteProfile,
   useCreateOneRMRecord,
-  useCreatePerformedSchemaResult,
   useCreatePerformedSession,
   useUpdateAthleteProfile,
 } from "@app/lib/hooks";
@@ -94,9 +94,20 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   const updateProfile = useUpdateAthleteProfile();
   const createOneRm = useCreateOneRMRecord();
   const createPerformedSession = useCreatePerformedSession();
-  const createSchemaResult = useCreatePerformedSchemaResult();
 
   const benchmarks = useMemo(() => collectBenchmarkSchemas(data.blocks), [data.blocks]);
+  const buildBenchmarkResults = useCallback(
+    (currentDrafts: Record<string, ResultDraft>): CreatePerformedSchemaResultData[] =>
+      benchmarks.flatMap((benchmark) => {
+        const result = buildResult(
+          benchmark.resultType,
+          currentDrafts[benchmark.schemaId] ?? EMPTY_DRAFT,
+        );
+
+        return result === null ? [] : [{ plannedSchemaId: benchmark.schemaId, result }];
+      }),
+    [benchmarks],
+  );
   const savedSelections = athleteProfile.data?.profileSelections ?? EMPTY_SELECTIONS;
   const profileSelections = useMemo(
     () => ({ ...savedSelections, ...stagedProfile }),
@@ -196,7 +207,7 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
 
   const isLoggingState = !done || isReopened;
   const canConfirm = areBenchmarksReady(benchmarks, drafts);
-  const isSubmitting = createPerformedSession.isPending || createSchemaResult.isPending;
+  const isSubmitting = createPerformedSession.isPending;
 
   const confirm = useCallback((): void => {
     if (!canConfirm || isSubmitting) {
@@ -205,46 +216,28 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
 
     const trimmedNote = note.trim();
 
-    void (async () => {
-      try {
-        const performed = await createPerformedSession.mutateAsync({
-          sessionId,
-          performedAt: new Date(),
-          athleteNotes: trimmedNote.length > 0 ? trimmedNote : null,
-        });
-
-        for (const benchmark of benchmarks) {
-          const result = buildResult(
-            benchmark.resultType,
-            drafts[benchmark.schemaId] ?? EMPTY_DRAFT,
-          );
-
-          if (result === null) {
-            continue;
-          }
-
-          await createSchemaResult.mutateAsync({
-            performedSessionId: performed.id,
-            sessionId,
-            data: { plannedSchemaId: benchmark.schemaId, result },
-          });
-        }
-
-        setIsSheetOpen(false);
-        setIsReopened(false);
-      } catch (error) {
-        void error;
-      }
-    })();
+    void createPerformedSession
+      .mutateAsync({
+        sessionId,
+        performedAt: new Date(),
+        athleteNotes: trimmedNote.length > 0 ? trimmedNote : null,
+        results: buildBenchmarkResults(drafts),
+      })
+      .then(
+        () => {
+          setIsSheetOpen(false);
+          setIsReopened(false);
+        },
+        () => {},
+      );
   }, [
     canConfirm,
     isSubmitting,
     note,
     sessionId,
-    benchmarks,
     drafts,
+    buildBenchmarkResults,
     createPerformedSession,
-    createSchemaResult,
   ]);
 
   return {

@@ -16,7 +16,6 @@ const useAthleteProfileMock = vi.fn();
 const createOneRmMutate = vi.fn();
 const updateProfileMutate = vi.fn();
 const createPerformedSessionAsync = vi.fn();
-const createSchemaResultAsync = vi.fn();
 
 let createOneRmPending = false;
 let updateProfilePending = false;
@@ -35,10 +34,6 @@ vi.mock("@app/lib/hooks", async () => {
     }),
     useCreatePerformedSession: () => ({
       mutateAsync: createPerformedSessionAsync,
-      isPending: false,
-    }),
-    useCreatePerformedSchemaResult: () => ({
-      mutateAsync: createSchemaResultAsync,
       isPending: false,
     }),
   };
@@ -242,7 +237,6 @@ beforeEach(() => {
   updateProfilePending = false;
   setProfile(null);
   createPerformedSessionAsync.mockResolvedValue({ id: PERFORMED_ID });
-  createSchemaResultAsync.mockResolvedValue({ id: "clz000000000000000res01" });
 });
 
 describe("AthleteSessionView — inline Set 1RM", () => {
@@ -362,7 +356,7 @@ describe("AthleteSessionView — inline Pick profile", () => {
 });
 
 describe("AthleteSessionView — Mark Completed", () => {
-  it("creates one performed-session and no result for an ordinary session", async () => {
+  it("creates one performed-session with an empty results array for an ordinary session", async () => {
     setView(buildResponse([block(oneRmRow, "clz0000000000000000000blk1", "Strength")]));
 
     const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
@@ -375,11 +369,11 @@ describe("AthleteSessionView — Mark Completed", () => {
       sessionId: SESSION_ID,
       athleteNotes: null,
       performedAt: expect.any(Date),
+      results: [],
     });
-    expect(createSchemaResultAsync).not.toHaveBeenCalled();
   });
 
-  it("logs one performed-session then one result per benchmark schema (two-step)", async () => {
+  it("logs one performed-session carrying the benchmark results in a single request (QA-001)", async () => {
     setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
 
     const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
@@ -393,16 +387,36 @@ describe("AthleteSessionView — Mark Completed", () => {
     fireEvent.click(within(rail).getByRole("button", { name: /mark completed/i }));
 
     await waitFor(() => expect(createPerformedSessionAsync).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(createSchemaResultAsync).toHaveBeenCalledTimes(1));
 
-    expect(firstCallArg(createSchemaResultAsync)).toEqual({
-      performedSessionId: PERFORMED_ID,
+    expect(firstCallArg(createPerformedSessionAsync)).toMatchObject({
       sessionId: SESSION_ID,
-      data: {
-        plannedSchemaId: BENCHMARK_SCHEMA_ID,
-        result: { type: "rounds_reps", rounds: 18, reps: 7 },
-      },
+      performedAt: expect.any(Date),
+      results: [
+        {
+          plannedSchemaId: BENCHMARK_SCHEMA_ID,
+          result: { type: "rounds_reps", rounds: 18, reps: 7 },
+        },
+      ],
     });
+  });
+
+  it("keeps the logging form open and does not flip done when the single request rejects (QA-001)", async () => {
+    createPerformedSessionAsync.mockRejectedValueOnce(new Error("network"));
+    setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
+
+    const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
+    const rail = getRail(container);
+
+    fireEvent.change(within(rail).getByLabelText(/rounds/i), { target: { value: "18" } });
+    fireEvent.change(within(rail).getByLabelText(/^reps$/i), { target: { value: "7" } });
+
+    fireEvent.click(within(rail).getByRole("button", { name: /mark completed/i }));
+
+    await waitFor(() => expect(createPerformedSessionAsync).toHaveBeenCalledTimes(1));
+
+    expect(
+      within(getRail(container)).getByRole("button", { name: /mark completed/i }),
+    ).toBeInTheDocument();
   });
 
   it("keeps confirm disabled until the benchmark result is filled", () => {
