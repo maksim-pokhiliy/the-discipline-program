@@ -8,6 +8,7 @@ import {
   DATE_COL_W,
   DAY_OF_WEEK_SHORT,
   DAY_NUM_PX,
+  EMPTY_DAY_LABEL,
   FONT_WEIGHT_DISPLAY,
   FONT_WEIGHT_SEMI_BOLD,
   REST_DAY_LABEL,
@@ -31,7 +32,8 @@ export type DayRowProps = {
 export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): ReactElement => {
   const theme = useTheme();
   const slotDecoration = resolveSlotDecoration(slot.status, theme);
-  const isRest = slot.sessions.length === 0;
+  const hasSessions = slot.sessions.length > 0;
+  const emptyLabel = slot.isRestDay ? REST_DAY_LABEL : EMPTY_DAY_LABEL;
 
   return (
     <Stack
@@ -78,17 +80,7 @@ export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): React
       <TimelineNode decoration={slotDecoration} />
 
       <Stack spacing={1} sx={{ flex: 1, minWidth: 0, pb: 1 }}>
-        {isRest ? (
-          <Typography
-            sx={{
-              pt: 1,
-              fontSize: (t) => t.typography.pxToRem(REST_DAY_PX),
-              color: "text.disabled",
-            }}
-          >
-            {REST_DAY_LABEL}
-          </Typography>
-        ) : (
+        {hasSessions ? (
           slot.sessions.map((card) => (
             <SessionCard
               key={card.sessionId}
@@ -98,6 +90,16 @@ export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): React
               onOpenSession={onOpenSession}
             />
           ))
+        ) : (
+          <Typography
+            sx={{
+              pt: 1,
+              fontSize: (t) => t.typography.pxToRem(REST_DAY_PX),
+              color: "text.disabled",
+            }}
+          >
+            {emptyLabel}
+          </Typography>
         )}
       </Stack>
     </Stack>

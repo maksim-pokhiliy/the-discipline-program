@@ -182,7 +182,10 @@ describe("buildPlanTimetable slot materialization", () => {
 
     expect(days[0]?.status).toBe(TimetableSlotStatus.REST);
     expect(days[0]?.sessions).toHaveLength(0);
+    expect(days[0]?.isRestDay).toBe(true);
     expect(days[1]?.status).toBe(TimetableSlotStatus.REST);
+    expect(days[1]?.isRestDay).toBe(false);
+    expect(days[2]?.isRestDay).toBe(false);
   });
 });
 
@@ -287,7 +290,7 @@ describe("buildPlanTimetable time-anchored week axis", () => {
     const plan = result.plans[0];
     const week = plan?.weeks[0];
 
-    expect(plan?.weeks.length).toBeGreaterThan(1);
+    expect(plan?.weeks).toHaveLength(1);
     expect(week?.startDate.getTime()).toBe(mondayUtc.getTime());
     expect(week?.days).toHaveLength(7);
     expect(week?.days.every((slot) => slot.sessions.length === 0)).toBe(true);

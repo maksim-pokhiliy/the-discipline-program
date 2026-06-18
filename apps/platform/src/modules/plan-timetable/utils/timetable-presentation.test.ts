@@ -27,6 +27,7 @@ const buildSlot = (overrides: Partial<DaySlotView> = {}): DaySlotView => ({
   dayOfWeek: "MONDAY",
   dayOfMonth: 15,
   isToday: false,
+  isRestDay: false,
   status: TimetableSlotStatus.TODO,
   sessions: [],
   ...overrides,

@@ -93,6 +93,7 @@ export const EMPTY_BODY_LABEL =
   "When your coach enrolls you in a plan, your training timetable shows up here.";
 export const EMPTY_PLAN_WEEKS_LABEL = "No sessions in this plan yet.";
 export const REST_DAY_LABEL = "Rest day";
+export const EMPTY_DAY_LABEL = "No sessions yet";
 export const TODAY_CHIP_LABEL = "Today";
 export const TODAY_JUMP_LABEL_SHORT = "Today";
 export const TODAY_JUMP_LABEL_LONG = "Jump to today";

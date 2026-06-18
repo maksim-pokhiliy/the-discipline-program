@@ -24,7 +24,7 @@ const DAYS_PER_WEEK = dayOfWeekValues.length;
 
 const SUNDAY_DAYS_FROM_MONDAY = 6;
 
-const FORWARD_HORIZON_WEEKS = 6;
+const MAX_TIMETABLE_WEEKS = 520;
 
 type WeekSource = {
   startDate: Date;
@@ -138,31 +138,27 @@ const buildDaySlots = (
       dayOfWeek,
       dayOfMonth: date.getUTCDate(),
       isToday,
+      isRestDay: day?.label?.rest === true,
       status: computeSlotStatus({ isToday, sessions }),
       sessions,
     };
   });
 };
 
-const computeWeekSpan = (
+const computeWeekRange = (
   enrollment: TimetableEnrollment,
   todayMonday: Date,
 ): { low: number; high: number } => {
   const todayTime = todayMonday.getTime();
-  const authoredMondays = enrollment.plan.weeks.map((week) =>
+  const contentMondays = enrollment.plan.weeks.map((week) =>
     weekMondayOf(week.startDate).getTime(),
   );
-  const forwardHorizon = addUtcDays(todayMonday, FORWARD_HORIZON_WEEKS * DAYS_PER_WEEK).getTime();
-  const low = Math.min(todayTime, ...authoredMondays);
-  const high = Math.max(forwardHorizon, ...authoredMondays);
+  const forward = Math.max(todayTime, ...contentMondays);
+  const back = enrollment.hidePastBeforeBoarding
+    ? weekMondayOf(enrollment.boardedAt).getTime()
+    : Math.min(todayTime, ...contentMondays);
 
-  if (!enrollment.hidePastBeforeBoarding) {
-    return { low, high };
-  }
-
-  const boardedMonday = weekMondayOf(enrollment.boardedAt).getTime();
-
-  return { low: Math.max(low, boardedMonday), high };
+  return { low: Math.min(back, forward), high: forward };
 };
 
 const buildWeeks = (
@@ -171,7 +167,7 @@ const buildWeeks = (
   todayMonday: Date,
   todayUtc: Date,
 ): { weeks: WeekTimetableView[]; todayWeekIndex: number | null } => {
-  const { low, high } = computeWeekSpan(enrollment, todayMonday);
+  const { low, high } = computeWeekRange(enrollment, todayMonday);
   const daysByMonday = new Map(
     enrollment.plan.weeks.map((week) => [weekMondayOf(week.startDate).getTime(), week.days]),
   );
@@ -179,7 +175,7 @@ const buildWeeks = (
   let todayWeekIndex: number | null = null;
   let cursor = low;
 
-  while (cursor <= high) {
+  while (cursor <= high && weeks.length < MAX_TIMETABLE_WEEKS) {
     const monday = new Date(cursor);
     const source: WeekSource = { startDate: monday, days: daysByMonday.get(cursor) ?? [] };
     const index = weeks.length;
