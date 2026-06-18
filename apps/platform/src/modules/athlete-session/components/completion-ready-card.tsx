@@ -1,56 +1,72 @@
 import { type ReactElement } from "react";
 
 import CheckRounded from "@mui/icons-material/CheckRounded";
-import { Button, Card, Typography } from "@mui/material";
+import { Button, Stack, TextField } from "@mui/material";
 
+import { type BenchmarkSchema } from "../utils/athlete-session-presentation";
 import {
   COMPLETION_BUTTON_HEIGHT_PX,
-  COMPLETION_READY_BODY_LABEL,
-  COMPLETION_READY_TITLE_LABEL,
-  FONT_WEIGHT_SEMI_BOLD,
-  MARK_COMPLETED_LABEL,
-  RAIL_CARD_BODY_LINE_HEIGHT,
-  RAIL_CARD_BODY_PX,
-  RAIL_CARD_PADDING_PX,
-  RAIL_CARD_TITLE_PX,
+  CONFIRM_LABEL,
+  NOTE_FIELD_LABEL,
+  NOTE_FIELD_MAX_LENGTH,
+  NOTE_FIELD_ROWS,
 } from "../utils/athlete-session.constants";
+import { type ResultDraft } from "../utils/result-form-config";
+
+import { ResultForm } from "./result-form";
 
 export type CompletionReadyCardProps = {
-  onComplete: () => void;
+  benchmarks: BenchmarkSchema[];
+  drafts: Record<string, ResultDraft>;
+  note: string;
+  canConfirm: boolean;
+  isSubmitting: boolean;
+  onDraftField: (schemaId: string, key: string, value: string) => void;
+  onNote: (value: string) => void;
+  onConfirm: () => void;
 };
 
-export const CompletionReadyCard = ({ onComplete }: CompletionReadyCardProps): ReactElement => (
-  <Card variant="outlined" sx={{ p: `${RAIL_CARD_PADDING_PX}px` }}>
-    <Typography
-      component="div"
-      sx={(theme) => ({
-        fontSize: theme.typography.pxToRem(RAIL_CARD_TITLE_PX),
-        fontWeight: FONT_WEIGHT_SEMI_BOLD,
-        color: theme.palette.text.primary,
-      })}
-    >
-      {COMPLETION_READY_TITLE_LABEL}
-    </Typography>
-    <Typography
-      component="div"
-      sx={(theme) => ({
-        mt: 0.75,
-        fontSize: theme.typography.pxToRem(RAIL_CARD_BODY_PX),
-        lineHeight: RAIL_CARD_BODY_LINE_HEIGHT,
-        color: theme.palette.text.secondary,
-      })}
-    >
-      {COMPLETION_READY_BODY_LABEL}
-    </Typography>
+export const CompletionReadyCard = ({
+  benchmarks,
+  drafts,
+  note,
+  canConfirm,
+  isSubmitting,
+  onDraftField,
+  onNote,
+  onConfirm,
+}: CompletionReadyCardProps): ReactElement => (
+  <Stack spacing={2}>
+    {benchmarks.map((benchmark) => (
+      <ResultForm
+        key={benchmark.schemaId}
+        title={benchmark.title}
+        resultType={benchmark.resultType}
+        draft={drafts[benchmark.schemaId] ?? {}}
+        onChange={(key, value) => onDraftField(benchmark.schemaId, key, value)}
+      />
+    ))}
+
+    <TextField
+      label={NOTE_FIELD_LABEL}
+      value={note}
+      onChange={(event) => onNote(event.target.value)}
+      fullWidth
+      multiline
+      rows={NOTE_FIELD_ROWS}
+      slotProps={{ htmlInput: { maxLength: NOTE_FIELD_MAX_LENGTH } }}
+    />
+
     <Button
       fullWidth
       variant="contained"
       color="primary"
       startIcon={<CheckRounded />}
-      onClick={onComplete}
-      sx={{ mt: 2, height: COMPLETION_BUTTON_HEIGHT_PX }}
+      onClick={onConfirm}
+      disabled={!canConfirm || isSubmitting}
+      sx={{ height: COMPLETION_BUTTON_HEIGHT_PX }}
     >
-      {MARK_COMPLETED_LABEL}
+      {CONFIRM_LABEL}
     </Button>
-  </Card>
+  </Stack>
 );

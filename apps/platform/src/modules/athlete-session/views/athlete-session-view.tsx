@@ -13,23 +13,12 @@ export type AthleteSessionViewProps = {
   sessionId: string;
 };
 
-const noopWithId = (_id: string): void => {};
-const noop = (): void => {};
-
 export const AthleteSessionView = ({ sessionId }: AthleteSessionViewProps): ReactElement => {
   const { data, isLoading, error } = useAthleteSessionView(sessionId);
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage={LOADING_LABEL}>
-      {(loaded) => (
-        <SessionContent
-          data={loaded}
-          onSetOneRm={noopWithId}
-          onPickProfile={noopWithId}
-          onComplete={noop}
-          onReopen={noop}
-        />
-      )}
+      {(loaded) => <SessionContent data={loaded} />}
     </QueryWrapper>
   );
 };

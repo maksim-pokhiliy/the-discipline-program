@@ -22,6 +22,7 @@ import {
   TRACK_PREFIX_LABEL,
   TRACKS_SUFFIX_LABEL,
 } from "../utils/athlete-session.constants";
+import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { SchemaCard } from "./schema-card";
 
@@ -35,16 +36,10 @@ export type ParallelGroupTrack = {
 export type ParallelGroupProps = {
   trackCount: number;
   tracks: ParallelGroupTrack[];
-  onSetOneRm: (exerciseId: string) => void;
-  onPickProfile: (rowId: string) => void;
+  editor: SessionEditorControls;
 };
 
-export const ParallelGroup = ({
-  trackCount,
-  tracks,
-  onSetOneRm,
-  onPickProfile,
-}: ParallelGroupProps): ReactElement => (
+export const ParallelGroup = ({ trackCount, tracks, editor }: ParallelGroupProps): ReactElement => (
   <Box
     sx={(theme) => ({
       borderLeft: `${GROUP_BORDER_WIDTH_PX}px solid ${alpha(theme.palette.primary.main, GROUP_BORDER_ALPHA)}`,
@@ -87,7 +82,7 @@ export const ParallelGroup = ({
           >
             {track.header ?? `${TRACK_PREFIX_LABEL} ${index + FIRST_TRACK_OFFSET}`}
           </Typography>
-          <SchemaCard schema={track.schema} onSetOneRm={onSetOneRm} onPickProfile={onPickProfile} />
+          <SchemaCard schema={track.schema} editor={editor} />
         </Box>
       ))}
     </Stack>

@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { Fragment, type ReactElement } from "react";
 
 import StickyNote2Rounded from "@mui/icons-material/StickyNote2Rounded";
 import { alpha, Box, Stack, Typography } from "@mui/material";
@@ -20,85 +20,111 @@ import {
   ROW_SUB_PX,
 } from "../utils/athlete-session.constants";
 import { formatRepNotation } from "../utils/format-rep-notation";
+import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { DisplayNumber } from "./display-number";
+import { InlineOneRmEditor } from "./inline-one-rm-editor";
+import { InlineProfilePicker } from "./inline-profile-picker";
 import { LoadCell } from "./load-cell";
 
 const NOTE_SEPARATOR = " ";
 
 export type SchemaRowProps = {
   row: RowView;
-  onSetOneRm: (exerciseId: string) => void;
-  onPickProfile: (rowId: string) => void;
+  editor: SessionEditorControls;
 };
 
-export const SchemaRow = ({ row, onSetOneRm, onPickProfile }: SchemaRowProps): ReactElement => {
+export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
   const repsText = row.reps !== null ? formatRepNotation(row.reps) : "";
   const subLine = buildRowSubLine(row);
   const noteText = row.notes !== null ? row.notes.join(NOTE_SEPARATOR) : "";
+  const isEditing = editor.activeEditor?.rowId === row.rowId;
+  const editorKind = isEditing ? editor.activeEditor?.kind : null;
 
   return (
-    <Stack
-      direction="row"
-      alignItems="flex-start"
-      sx={{ gap: `${ROW_GAP_PX}px`, px: `${ROW_PADDING_X_PX}px`, py: `${ROW_PADDING_Y_PX}px` }}
-    >
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Stack direction="row" alignItems="baseline" spacing={1}>
-          {repsText.length > 0 ? <DisplayNumber value={repsText} px={ROW_REPS_PX} /> : null}
-          <Typography
-            component="span"
-            sx={(theme) => ({
-              fontSize: theme.typography.pxToRem(ROW_MOVEMENT_PX),
-              fontWeight: FONT_WEIGHT_MEDIUM,
-              color: alpha(theme.palette.common.white, ROW_MOVEMENT_ALPHA),
-            })}
-          >
-            {row.movement}
-          </Typography>
-        </Stack>
-
-        {subLine.length > 0 ? (
-          <Typography
-            component="div"
-            sx={(theme) => ({
-              mt: 0.5,
-              fontSize: theme.typography.pxToRem(ROW_SUB_PX),
-              color: theme.palette.text.muted,
-            })}
-          >
-            {subLine}
-          </Typography>
-        ) : null}
-
-        {noteText.length > 0 ? (
-          <Stack
-            direction="row"
-            alignItems="flex-start"
-            spacing={0.625}
-            sx={(theme) => ({
-              mt: 0.5,
-              color: alpha(theme.palette.common.white, ROW_NOTE_ALPHA),
-            })}
-          >
-            <StickyNote2Rounded sx={{ mt: "1px", fontSize: ROW_NOTE_ICON_PX }} />
+    <Fragment>
+      <Stack
+        direction="row"
+        alignItems="flex-start"
+        sx={{ gap: `${ROW_GAP_PX}px`, px: `${ROW_PADDING_X_PX}px`, py: `${ROW_PADDING_Y_PX}px` }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Stack direction="row" alignItems="baseline" spacing={1}>
+            {repsText.length > 0 ? <DisplayNumber value={repsText} px={ROW_REPS_PX} /> : null}
             <Typography
               component="span"
-              sx={(theme) => ({ fontSize: theme.typography.pxToRem(ROW_NOTE_PX) })}
+              sx={(theme) => ({
+                fontSize: theme.typography.pxToRem(ROW_MOVEMENT_PX),
+                fontWeight: FONT_WEIGHT_MEDIUM,
+                color: alpha(theme.palette.common.white, ROW_MOVEMENT_ALPHA),
+              })}
             >
-              {noteText}
+              {row.movement}
             </Typography>
           </Stack>
-        ) : null}
-      </Box>
 
-      <LoadCell
-        rowId={row.rowId}
-        resolvedLoad={row.resolvedLoad}
-        load={row.load}
-        onSetOneRm={onSetOneRm}
-        onPickProfile={onPickProfile}
-      />
-    </Stack>
+          {subLine.length > 0 ? (
+            <Typography
+              component="div"
+              sx={(theme) => ({
+                mt: 0.5,
+                fontSize: theme.typography.pxToRem(ROW_SUB_PX),
+                color: theme.palette.text.muted,
+              })}
+            >
+              {subLine}
+            </Typography>
+          ) : null}
+
+          {noteText.length > 0 ? (
+            <Stack
+              direction="row"
+              alignItems="flex-start"
+              spacing={0.625}
+              sx={(theme) => ({
+                mt: 0.5,
+                color: alpha(theme.palette.common.white, ROW_NOTE_ALPHA),
+              })}
+            >
+              <StickyNote2Rounded sx={{ mt: "1px", fontSize: ROW_NOTE_ICON_PX }} />
+              <Typography
+                component="span"
+                sx={(theme) => ({ fontSize: theme.typography.pxToRem(ROW_NOTE_PX) })}
+              >
+                {noteText}
+              </Typography>
+            </Stack>
+          ) : null}
+        </Box>
+
+        <LoadCell
+          rowId={row.rowId}
+          resolvedLoad={row.resolvedLoad}
+          load={row.load}
+          onSetOneRm={editor.openOneRmEditor}
+          onPickProfile={editor.openProfileEditor}
+        />
+      </Stack>
+
+      {editorKind === "one_rm" ? (
+        <InlineOneRmEditor
+          movement={row.movement}
+          value={editor.oneRmValue}
+          isSubmitting={editor.isSubmitting}
+          canSubmit={editor.oneRmCanSubmit}
+          onChange={editor.setOneRmValue}
+          onCommit={editor.commitOneRm}
+        />
+      ) : null}
+
+      {editorKind === "profile" && row.load !== null ? (
+        <InlineProfilePicker
+          load={row.load}
+          selections={editor.profileSelections}
+          isSubmitting={editor.isSubmitting}
+          onPick={editor.pickProfile}
+        />
+      ) : null}
+    </Fragment>
   );
 };

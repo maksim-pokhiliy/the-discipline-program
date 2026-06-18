@@ -1,9 +1,11 @@
 import { alpha, type Theme } from "@mui/material";
 
-import { type Load } from "@repo/contracts/lms/_shared";
+import { type Load, type ResultType } from "@repo/contracts/lms/_shared";
 import {
+  type BlockView,
   type ResolvedLoad,
   type RowView,
+  type SchemaCardView,
   type SessionHeaderView,
 } from "@repo/contracts/lms/session-detail";
 
@@ -21,6 +23,7 @@ import {
 import { formatIntensity } from "./format-intensity";
 import { formatSide } from "./format-side";
 import { formatTempoInput } from "./format-tempo-input";
+import { isResultDraftValid, type ResultDraft } from "./result-form-config";
 
 const PERCENT = "%";
 const RANGE_SEPARATOR = "–";
@@ -115,3 +118,54 @@ export const formatSessionDate = ({ dayOfWeek, dayOfMonth }: SessionHeaderView):
 
 export const formatCompletedDate = (completedAt: Date): string =>
   `${LOGGED_PREFIX} ${MONTH_LONG[completedAt.getUTCMonth()]} ${completedAt.getUTCDate()}`;
+
+export type BenchmarkSchema = {
+  schemaId: string;
+  title: string;
+  resultType: ResultType;
+};
+
+const firstMovement = (schema: SchemaCardView): string | null => {
+  const firstItem = schema.items[0];
+
+  if (firstItem === undefined) {
+    return null;
+  }
+
+  if (firstItem.kind === "row") {
+    return firstItem.row.movement;
+  }
+
+  return firstItem.members[0]?.movement ?? null;
+};
+
+const toBenchmark = (schema: SchemaCardView): BenchmarkSchema | null => {
+  if (!schema.isBenchmark || schema.resultType === null) {
+    return null;
+  }
+
+  return {
+    schemaId: schema.schemaId,
+    title: schema.header ?? firstMovement(schema) ?? schema.schemaId,
+    resultType: schema.resultType,
+  };
+};
+
+const collectSchemaCards = (block: BlockView): SchemaCardView[] =>
+  block.items.flatMap((item) =>
+    item.kind === "schema" ? [item.schema] : item.tracks.map((track) => track.schema),
+  );
+
+export const collectBenchmarkSchemas = (blocks: BlockView[]): BenchmarkSchema[] =>
+  blocks
+    .flatMap(collectSchemaCards)
+    .map(toBenchmark)
+    .filter((entry): entry is BenchmarkSchema => entry !== null);
+
+export const areBenchmarksReady = (
+  benchmarks: BenchmarkSchema[],
+  drafts: Record<string, ResultDraft>,
+): boolean =>
+  benchmarks.every((benchmark) =>
+    isResultDraftValid(benchmark.resultType, drafts[benchmark.schemaId] ?? {}),
+  );

@@ -23,16 +23,16 @@ import {
 } from "../utils/athlete-session.constants";
 
 export type CompletionBarProps = {
-  done: boolean;
+  isLoggingState: boolean;
   completedLabel: string | null;
-  onComplete: () => void;
+  onOpenSheet: () => void;
   onReopen: () => void;
 };
 
 export const CompletionBar = ({
-  done,
+  isLoggingState,
   completedLabel,
-  onComplete,
+  onOpenSheet,
   onReopen,
 }: CompletionBarProps): ReactElement => (
   <Box
@@ -45,7 +45,18 @@ export const CompletionBar = ({
       borderTop: `1px solid ${theme.palette.divider}`,
     })}
   >
-    {done ? (
+    {isLoggingState ? (
+      <Button
+        fullWidth
+        variant="contained"
+        color="primary"
+        startIcon={<CheckRounded />}
+        onClick={onOpenSheet}
+        sx={{ height: COMPLETION_BUTTON_HEIGHT_PX }}
+      >
+        {MARK_COMPLETED_LABEL}
+      </Button>
+    ) : (
       <Stack direction="row" alignItems="center" spacing={1.5}>
         <CheckCircleRounded
           sx={(theme) => ({ fontSize: COMPLETION_DONE_ICON_PX, color: theme.palette.success.main })}
@@ -82,17 +93,6 @@ export const CompletionBar = ({
           {REOPEN_LABEL}
         </Button>
       </Stack>
-    ) : (
-      <Button
-        fullWidth
-        variant="contained"
-        color="primary"
-        startIcon={<CheckRounded />}
-        onClick={onComplete}
-        sx={{ height: COMPLETION_BUTTON_HEIGHT_PX }}
-      >
-        {MARK_COMPLETED_LABEL}
-      </Button>
     )}
   </Box>
 );

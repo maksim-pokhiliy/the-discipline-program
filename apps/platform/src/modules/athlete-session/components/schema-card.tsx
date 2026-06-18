@@ -19,6 +19,7 @@ import {
   SUMMARY_SEPARATOR,
 } from "../utils/athlete-session.constants";
 import { formatCapSummary, formatRestSummary } from "../utils/format-composition-summary";
+import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { BenchmarkChip } from "./benchmark-chip";
 import { LoggedResultStrip } from "./logged-result-strip";
@@ -28,8 +29,7 @@ import { SchemaShapeBadge } from "./schema-shape-badge";
 
 export type SchemaCardProps = {
   schema: SchemaCardView;
-  onSetOneRm: (exerciseId: string) => void;
-  onPickProfile: (rowId: string) => void;
+  editor: SessionEditorControls;
 };
 
 const buildMetaText = (schema: SchemaCardView): string => {
@@ -42,11 +42,7 @@ const buildMetaText = (schema: SchemaCardView): string => {
     .join(SUMMARY_SEPARATOR);
 };
 
-export const SchemaCard = ({
-  schema,
-  onSetOneRm,
-  onPickProfile,
-}: SchemaCardProps): ReactElement => {
+export const SchemaCard = ({ schema, editor }: SchemaCardProps): ReactElement => {
   const metaText = buildMetaText(schema);
   const hasResult = schema.isBenchmark && schema.existingResult !== null;
 
@@ -126,7 +122,7 @@ export const SchemaCard = ({
             })}
           >
             {item.kind === "row" ? (
-              <SchemaRow row={item.row} onSetOneRm={onSetOneRm} onPickProfile={onPickProfile} />
+              <SchemaRow row={item.row} editor={editor} />
             ) : (
               <RowGroup members={item.members} />
             )}

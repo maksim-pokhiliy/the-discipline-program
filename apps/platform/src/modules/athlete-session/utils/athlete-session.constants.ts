@@ -189,3 +189,74 @@ export const LOADING_LABEL = "Loading your workout...";
 export const SUMMARY_SEPARATOR = " · ";
 export const SUB_LINE_SEPARATOR = "  ·  ";
 export const PROFILE_AXIS_SEPARATOR = " · ";
+
+export const INLINE_EDITOR_MARGIN_X_PX = 14;
+export const INLINE_EDITOR_MARGIN_BOTTOM_PX = 12;
+export const INLINE_EDITOR_PADDING_PX = 12;
+export const INLINE_EDITOR_BG_ALPHA = 0.06;
+export const INLINE_EDITOR_BORDER_ALPHA = 0.3;
+export const INLINE_EDITOR_TITLE_PX = 11;
+export const INLINE_EDITOR_TITLE_LETTER_SPACING = "0.06em";
+export const INLINE_EDITOR_INPUT_HEIGHT_PX = 40;
+export const INLINE_EDITOR_GAP_PX = 8;
+export const INLINE_AXIS_GAP_PX = 6;
+export const INLINE_AXIS_OPTION_HEIGHT_PX = 36;
+export const INLINE_AXIS_LABEL_PX = 11;
+export const INLINE_AXIS_LABEL_ALPHA = 0.5;
+export const INLINE_OPTION_INACTIVE_BG_ALPHA = 0.04;
+export const INLINE_OPTION_INACTIVE_BORDER_ALPHA = 0.18;
+
+export const ONE_RM_EDITOR_TITLE_PREFIX = "Your";
+export const ONE_RM_EDITOR_TITLE_SUFFIX = "1RM";
+export const ONE_RM_INPUT_LABEL = "Estimated 1RM";
+export const ONE_RM_SET_LABEL = "Set";
+export const PROFILE_EDITOR_TITLE = "Pick your profile";
+
+export const SHEET_RADIUS_PX = 14;
+export const SHEET_HANDLE_WIDTH_PX = 36;
+export const SHEET_HANDLE_HEIGHT_PX = 4;
+export const SHEET_HANDLE_ALPHA = 0.2;
+export const SHEET_MAX_HEIGHT = "88%";
+export const SHEET_PADDING_TOP_PX = 10;
+export const SHEET_PADDING_X_PX = 18;
+export const SHEET_PADDING_BOTTOM_PX = 18;
+
+export const SHEET_TITLE_PX = 20;
+export const SHEET_TITLE_ALPHA = 0.92;
+export const SHEET_SUBTITLE_PX = 13;
+export const SHEET_SUBTITLE_LINE_HEIGHT = 1.5;
+
+export const RESULT_CARD_PADDING_PX = 14;
+export const RESULT_CARD_BORDER_ALPHA = 0.35;
+export const RESULT_CARD_TITLE_PX = 14;
+export const RESULT_CARD_TITLE_ALPHA = 0.92;
+export const RESULT_CARD_TYPE_PX = 11;
+export const RESULT_CARD_TYPE_ALPHA = 0.45;
+export const RESULT_CARD_TYPE_LETTER_SPACING = "0.06em";
+export const RESULT_CARD_ICON_PX = 16;
+export const RESULT_FIELD_GAP_PX = 12;
+export const RESULT_UNIT_GROUP_GAP_PX = 12;
+export const CANCEL_BUTTON_HEIGHT_PX = 42;
+
+export const LOG_SESSION_TITLE = "Log this session";
+export const LOG_SESSION_SUBTITLE_BENCHMARK =
+  "One tap marks it done. This session has a benchmark — record your score.";
+export const LOG_SESSION_SUBTITLE_PLAIN = "One tap marks this session done. It stays done.";
+export const NOTE_FIELD_LABEL = "Note (optional)";
+export const NOTE_FIELD_ROWS = 3;
+export const NOTE_FIELD_MAX_LENGTH = 2000;
+export const CONFIRM_LABEL = "Mark Completed";
+export const CANCEL_LABEL = "Cancel";
+export const RESULT_SECTION_PREFIX = "Result";
+
+export const TIME_MINUTES_LABEL = "Minutes";
+export const TIME_SECONDS_LABEL = "Seconds";
+export const ROUNDS_FIELD_LABEL = "Rounds";
+export const REPS_FIELD_LABEL = "Reps";
+export const LOAD_FIELD_LABEL = "Load (kg)";
+export const MAX_REPS_FIELD_LABEL = "Reps";
+export const DISTANCE_FIELD_LABEL = "Distance";
+export const CALORIES_FIELD_LABEL = "Calories";
+export const DISTANCE_UNIT_LABELS = { m: "m", km: "km" } as const;
+
+export const SECONDS_PER_MINUTE = 60;

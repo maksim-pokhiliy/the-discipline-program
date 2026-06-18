@@ -22,21 +22,17 @@ import {
   SCHEMA_GAP_PX,
 } from "../utils/athlete-session.constants";
 import { formatBlockIntensity } from "../utils/format-intensity";
+import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { ParallelGroup } from "./parallel-group";
 import { SchemaCard } from "./schema-card";
 
 export type SessionBlockProps = {
   block: BlockView;
-  onSetOneRm: (exerciseId: string) => void;
-  onPickProfile: (rowId: string) => void;
+  editor: SessionEditorControls;
 };
 
-export const SessionBlock = ({
-  block,
-  onSetOneRm,
-  onPickProfile,
-}: SessionBlockProps): ReactElement => {
+export const SessionBlock = ({ block, editor }: SessionBlockProps): ReactElement => {
   const intensityText = formatBlockIntensity(block.intensity);
 
   return (
@@ -104,19 +100,13 @@ export const SessionBlock = ({
       <Stack spacing={`${SCHEMA_GAP_PX}px`}>
         {block.items.map((item, index) =>
           item.kind === "schema" ? (
-            <SchemaCard
-              key={item.schema.schemaId}
-              schema={item.schema}
-              onSetOneRm={onSetOneRm}
-              onPickProfile={onPickProfile}
-            />
+            <SchemaCard key={item.schema.schemaId} schema={item.schema} editor={editor} />
           ) : (
             <ParallelGroup
               key={`parallel-${index}`}
               trackCount={item.trackCount}
               tracks={item.tracks}
-              onSetOneRm={onSetOneRm}
-              onPickProfile={onPickProfile}
+              editor={editor}
             />
           ),
         )}

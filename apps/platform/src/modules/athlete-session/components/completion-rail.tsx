@@ -2,27 +2,43 @@ import { type ReactElement } from "react";
 
 import { Box, Typography } from "@mui/material";
 
+import { type BenchmarkSchema } from "../utils/athlete-session-presentation";
 import {
   COMPLETION_EYEBROW_LABEL,
   FONT_WEIGHT_DISPLAY,
   RAIL_EYEBROW_LETTER_SPACING,
   RAIL_EYEBROW_PX,
 } from "../utils/athlete-session.constants";
+import { type ResultDraft } from "../utils/result-form-config";
 
 import { CompletionDoneCard } from "./completion-done-card";
 import { CompletionReadyCard } from "./completion-ready-card";
 
 export type CompletionRailProps = {
-  done: boolean;
+  isLoggingState: boolean;
   completedLabel: string | null;
-  onComplete: () => void;
+  benchmarks: BenchmarkSchema[];
+  drafts: Record<string, ResultDraft>;
+  note: string;
+  canConfirm: boolean;
+  isSubmitting: boolean;
+  onDraftField: (schemaId: string, key: string, value: string) => void;
+  onNote: (value: string) => void;
+  onConfirm: () => void;
   onReopen: () => void;
 };
 
 export const CompletionRail = ({
-  done,
+  isLoggingState,
   completedLabel,
-  onComplete,
+  benchmarks,
+  drafts,
+  note,
+  canConfirm,
+  isSubmitting,
+  onDraftField,
+  onNote,
+  onConfirm,
   onReopen,
 }: CompletionRailProps): ReactElement => (
   <Box>
@@ -39,10 +55,19 @@ export const CompletionRail = ({
     >
       {COMPLETION_EYEBROW_LABEL}
     </Typography>
-    {done ? (
-      <CompletionDoneCard completedLabel={completedLabel} onReopen={onReopen} />
+    {isLoggingState ? (
+      <CompletionReadyCard
+        benchmarks={benchmarks}
+        drafts={drafts}
+        note={note}
+        canConfirm={canConfirm}
+        isSubmitting={isSubmitting}
+        onDraftField={onDraftField}
+        onNote={onNote}
+        onConfirm={onConfirm}
+      />
     ) : (
-      <CompletionReadyCard onComplete={onComplete} />
+      <CompletionDoneCard completedLabel={completedLabel} onReopen={onReopen} />
     )}
   </Box>
 );

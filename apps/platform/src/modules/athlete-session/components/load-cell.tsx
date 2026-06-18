@@ -30,7 +30,7 @@ export type LoadCellProps = {
   rowId: string;
   resolvedLoad: ResolvedLoad | null;
   load: Load | null;
-  onSetOneRm: (exerciseId: string) => void;
+  onSetOneRm: (rowId: string, exerciseId: string) => void;
   onPickProfile: (rowId: string) => void;
 };
 
@@ -66,7 +66,7 @@ const renderCell = (model: LoadCellModel, props: LoadCellProps): ReactElement | 
           <LoadPromptButton
             label={SET_ONE_RM_LABEL}
             icon={<AddRounded />}
-            onClick={() => props.onSetOneRm(model.exerciseId)}
+            onClick={() => props.onSetOneRm(props.rowId, model.exerciseId)}
           />
           <LoadSubLine text={model.hint} px={LOAD_HINT_PX} alphaValue={LOAD_HINT_ALPHA} />
         </Stack>

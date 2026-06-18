@@ -14,32 +14,39 @@ import {
   RAIL_PADDING_Y_PX,
   RAIL_WIDTH_PX,
 } from "../utils/athlete-session.constants";
+import { type SessionEditorControls, useSessionLogging } from "../utils/use-session-logging";
 
 import { CompletionBar } from "./completion-bar";
 import { CompletionRail } from "./completion-rail";
+import { CompletionSheet } from "./completion-sheet";
 import { SessionBlock } from "./session-block";
 import { SessionMetaHeader } from "./session-meta-header";
 
 export type SessionContentProps = {
   data: SessionDetailResponse;
-  onSetOneRm: (exerciseId: string) => void;
-  onPickProfile: (rowId: string) => void;
-  onComplete: () => void;
-  onReopen: () => void;
 };
 
 const BACK_HREF = "/athlete";
 
-export const SessionContent = ({
-  data,
-  onSetOneRm,
-  onPickProfile,
-  onComplete,
-  onReopen,
-}: SessionContentProps): ReactElement => {
+export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
   const { session, blocks } = data;
+  const logging = useSessionLogging(data);
+
   const completedLabel =
     session.completedAt !== null ? formatCompletedDate(session.completedAt) : null;
+
+  const editor: SessionEditorControls = {
+    activeEditor: logging.activeEditor,
+    oneRmValue: logging.oneRmValue,
+    oneRmCanSubmit: logging.oneRmCanSubmit,
+    profileSelections: logging.profileSelections,
+    isSubmitting: logging.isSubmitting,
+    openOneRmEditor: logging.openOneRmEditor,
+    openProfileEditor: logging.openProfileEditor,
+    setOneRmValue: logging.setOneRmValue,
+    commitOneRm: logging.commitOneRm,
+    pickProfile: logging.pickProfile,
+  };
 
   const workout = (
     <Stack spacing={2.5}>
@@ -47,12 +54,7 @@ export const SessionContent = ({
       <SessionMetaHeader session={session} />
       <Stack spacing={`${BLOCK_GAP_PX}px`}>
         {blocks.map((block) => (
-          <SessionBlock
-            key={block.blockId}
-            block={block}
-            onSetOneRm={onSetOneRm}
-            onPickProfile={onPickProfile}
-          />
+          <SessionBlock key={block.blockId} block={block} editor={editor} />
         ))}
       </Stack>
     </Stack>
@@ -75,10 +77,17 @@ export const SessionContent = ({
           })}
         >
           <CompletionRail
-            done={session.done}
+            isLoggingState={logging.isLoggingState}
             completedLabel={completedLabel}
-            onComplete={onComplete}
-            onReopen={onReopen}
+            benchmarks={logging.benchmarks}
+            drafts={logging.drafts}
+            note={logging.note}
+            canConfirm={logging.canConfirm}
+            isSubmitting={logging.isSubmitting}
+            onDraftField={logging.setDraftField}
+            onNote={logging.setNote}
+            onConfirm={logging.confirm}
+            onReopen={logging.reopen}
           />
         </Box>
       </Box>
@@ -95,12 +104,24 @@ export const SessionContent = ({
           })}
         >
           <CompletionBar
-            done={session.done}
+            isLoggingState={logging.isLoggingState}
             completedLabel={completedLabel}
-            onComplete={onComplete}
-            onReopen={onReopen}
+            onOpenSheet={logging.openSheet}
+            onReopen={logging.reopen}
           />
         </Box>
+        <CompletionSheet
+          open={logging.isSheetOpen}
+          benchmarks={logging.benchmarks}
+          drafts={logging.drafts}
+          note={logging.note}
+          canConfirm={logging.canConfirm}
+          isSubmitting={logging.isSubmitting}
+          onClose={logging.closeSheet}
+          onDraftField={logging.setDraftField}
+          onNote={logging.setNote}
+          onConfirm={logging.confirm}
+        />
       </Box>
     </Box>
   );
