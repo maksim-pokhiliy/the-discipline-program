@@ -224,3 +224,87 @@ The timetable is TIME, not DB rows: `buildPlanTimetable`'s `computeWeekRange` sy
 Content-bounded spans can be year-long. The center week-dots render one-per-week only while `weekCount <= DOTS_MAX_COUNT` (16); beyond that they collapse to a "Week N of M" caption. The desktop right Plan Weeks rail is the scalable, scrollable full week list at any length.
 
 **Why.** 52 dots is noise; the caption stays honest about scale, the rail carries the full list.
+
+---
+
+# Block-2 screen-2 (Session / Workout View) build decisions (ratified 2026-06-18, `/feature` execution)
+
+Promoted from `.feature-dev/1781777197/` (design.md §8 Decision Record + the Gate-A resolutions in `tasks.md` + the QA-001 fix wave). Branch `feat/athlete-session-view` (11 commits, off `main`). Load-bearing "why" for the remaining block-2 screens (3-4) and any later session-view work. Verified against the as-built code where the design diverged.
+
+## D-RESOLVER-LMS — the load-resolver family moved coaching→lms (whole dir)
+
+Moved the WHOLE `endpoints/coaching/athlete-records/` dir (5 src + 3 test: `resolve-load` / `load-records` / `derive-records` / `athlete-records.types` / `index` + tests) → `endpoints/lms/athlete-records/`; barrel edits only (drop the `coaching/index.ts` re-export, add `lms/index.ts`); the one `@repo/contracts/coaching/athlete-profile` import (`profileSelectionsSchema`) STAYS — legal (the dep-cruiser bans are `endpoints/lms → endpoints/coaching` and `contracts/lms → contracts/coaching`; an lms-endpoint importing a coaching-CONTRACT matches neither). A pure `git mv` — 0 content lines changed, zero external consumers (grep-verified: the only caller was the coaching barrel re-export).
+
+**Why.** The session-view endpoint is `lms` (athlete reads are lms, per `D-TT`) and `api-server-lms-no-coaching` (dep-cruiser, pre-push `dep:check`) FORBIDS `lms → coaching` — so the resolver it calls had to live in `lms`. Whole-dir is cohesive (shared types file), and `coaching → lms` stays a legal forward edge for block-3 coach-metrics. Splitting the move (load trio to lms, leave `derive-records` in coaching) was rejected — it fragments the shared types file and `derive-records` has zero coaching consumers.
+
+## D-SD-CONTRACT — bespoke Prisma-free session-detail view entity + `resolvedLoadSchema` zod mirror
+
+A bespoke Prisma-free `contracts/lms/session-detail/` view entity mirroring `plan-timetable/`'s triplet (schema + api.schema + types + index, added to the lms entities barrel), with `resolvedLoadSchema` as a zod mirror of the api-server `ResolvedLoad` + a structural-equality type-test safeguard (`session-detail.types.test.ts` asserts the contract and api-server `ResolvedLoad` are mutually assignable, so a drift in either fails the type-test). **As-built note (diverged from the design's spec):** `resolvedLoadSchema` shipped as **`z.union`, NOT `z.discriminatedUnion`** — two members share `status:"unresolved"` (differing on `reason`), and zod v3's `discriminatedUnion` throws at construction on duplicate discriminator values. The `z.union` fallback is type-correct; the parity type-test guards equivalence (a correction of a wrong spec, not a defect — code wins).
+
+**Why.** Detail endpoints return the full shape (manifesto 2.7); the contract must not import api-server types (the `ResolvedLoad` shape is re-expressed as a contract type); the structural type-test catches drift between the two declarations.
+
+## D-VIEW-SHAPE — embedded view (raw VOs + server-computed `resolvedLoad` per row), not raw-entities+id-maps
+
+The view embeds the raw mapped contract VOs AND the server-computed `resolvedLoad` per row (option B), NOT raw entities + a parallel `resolvedLoadByRowId` id-map (option A).
+
+**Why.** `D-TT-SERVER-COMPUTES` → a dumb client; option A pushes the id-join chore to the dumb client and is brittle. Screen-1 precedent.
+
+## D-SD-SERVER-RESOLVE — the server computes `ResolvedLoad` per row
+
+The builder computes `ResolvedLoad` per row server-side via `resolveLoad(load, ctx, row.exerciseId)` and attaches it to the row in the view shape; the client renders the 4-variant + the inline editors POST-then-refetch (zero client-side resolution or date math). `exerciseIds` for the ctx = every `row.exerciseId` ∪ every `percentage.reference.targetExerciseId` (other-exercise % needs the target's 1RM); `loadAthleteLoadContext` is fetched ONCE.
+
+**Why.** `D-TT-SERVER-COMPUTES` / `D-RESOLVED-SHAPE`; the resolver + ctx-builder are already server libs (block-1). Keeps the render off an N+1 (one subtree fetch + one ctx fetch + one performed fetch).
+
+## D-SD-DATES — absolute tz-stable date parts (`dayOfWeek` + `dayOfMonth`); no today-detection on this screen
+
+The session header date is ABSOLUTE: the server emits `dayOfWeek` (enum) + `dayOfMonth` (UTC calendar day of `weekMondayOf(week.startDate) + dayOfWeek offset`); the client renders the weekday from a static map + the raw integer (and `completedAt` via `getUTCMonth/getUTCDate`) — no `Intl`/`toLocale`/device-tz `getDate` anywhere in the module. **No today-detection on this screen** — the user-tz/now fetch is omitted, so the meta header carries `done` only; the **Today pill is deferred** (would need server-side today-detection).
+
+**Why.** `D-TT-DATES-ABSOLUTE`; avoids the screen-1 sub-UTC off-by-one (`6c97dcdc`) by construction, not by careful formatting. Today-detection is the only thing that needs the tz/now fetch and isn't needed for this read screen.
+
+## D-FMT-HOME — the ~6 pure display formatters COPIED into `athlete-session/utils/` (the rule-of-two fallback)
+
+**As-built: COPY, NOT the barrel (Gate-A resolution OQ-3 overrode the design's recommendation).** The ~6 pure display formatters the session view needs (`format-composition-summary`, `format-intensity`, `format-rep-notation`, `format-rest-spec`, `format-result`, `format-side`, `format-tempo-input`) were COPIED into `apps/platform/src/modules/athlete-session/utils/` (byte-identical to the coach `plan-detail` originals). The design RECOMMENDED a `plan-detail/lib/index.ts` barrel re-exporting the pure (Tier-1) cluster; the owner chose the rule-of-two copy instead at Gate A — no barrel was created. (`buildRowItems`/`buildBlockItems`/`deriveCompositionLabel` are imported directly from `@repo/contracts` — already shared.)
+
+**Why.** No existing barrel; the pure cluster couples to UI-coupled siblings in `plan-detail`, so a partial lift risks back-imports; a copy is the rule-of-two first-reuse with zero coupling. **Carry-forward:** lift the pure formatters to `@repo/contracts/lms/_shared/format/` on a 3rd consumer (see `deferred.md`).
+
+## D-SD-BADGE-TEXT — the schema shape badge uses `format-composition-summary` wording
+
+The schema shape badge ships the `format-composition-summary` wording ("cap 20’", "ladder 1-2-3", "N rounds", etc.); the prototype's richer CrossFit vocabulary (AMRAP / TABATA / EMOM) is NOT shipped (Gate-A resolution OQ-1 — CrossFit vocab is a walkthrough refinement only).
+
+**Why.** The prototype's CrossFit vocab is not data-derivable without a heuristic or richer data; the formatter is domain-honest + consistent with the coach side ("domain wins / don't invent"). **Deferred:** CrossFit-vocab badges (OQ-1) — see `deferred.md`.
+
+## D-SD-GROUP-LABELS — data-derivable group/track labels only
+
+Render only data-derivable group treatments: a parallel-group = "Parallel · N tracks" (N = member count via `buildBlockItems`), per-track = `schema.header` or a positional "Track {i}"; a row-group = a neutral bracket (no stored "Choose one" label). Flagged as partly illustrative at acceptance.
+
+**Why.** The domain has no stored row-group label/kind nor a schema `track` field; fabricating semantics violates "don't invent".
+
+## D-SD-SHEET — mobile `Drawer anchor="bottom"`, desktop inline rail
+
+The logging vehicle = a MUI `Drawer anchor="bottom"` on mobile (tap-opened, no swipe, no new dep) and an inline right "Completion" rail on `md+`; branch on breakpoint (both render the same completion card).
+
+**Why.** DSG-4; standard MUI; matches the prototype's tap-to-open sheet + desktop rail.
+
+## D-SD-NUMERIC — module-local `<DisplayNumber>` (no repo-wide typography variant)
+
+A module-local `<DisplayNumber>` leaf (Barlow Condensed 700, `textTransform:"none"`, `pxToRem` consts, `lineHeight:1`) for the big numbers; NO repo-wide typography variant added in this slice.
+
+**Why.** DSG-3; screen-1 hand-rolls the same display number, so this is now the **2nd consumer** — rule-of-two says a theme variant eventually, but no theme-wide churn in this slice. **Carry-forward:** a repo-wide `numeric`/`displayNumber` typography variant (see `deferred.md`).
+
+## D-SD-LOG-ATOMIC — benchmark logging is ONE transactional `performed-session` create accepting `results[]` (supersedes the planned D-SD-LOG-MULTISCHEMA)
+
+**Supersedes the planned D-SD-LOG-MULTISCHEMA two-step (QA-001 fix wave, commit `254e3fe3`).** Logging a benchmark session is ONE transactional request: `createPerformedSessionSchema` gained `results: z.array(createPerformedSchemaResultSchema).optional()` (with a duplicate-`plannedSchemaId` reject in the schema refine); the server handler validates every result, then in a single `prisma.$transaction` creates the performed-session AND all its schema results (commit-or-rollback together). The client `confirm()` posts ONCE (`createPerformedSession.mutateAsync({ sessionId, performedAt, athleteNotes, results })`); the standalone two-step loop is gone. A re-log = a new performed-session (D-STATS: every performance is history; `@@unique([performedSessionId, plannedSchemaId])`).
+
+**Why.** The planned two-step (create the performed-session, then loop `POST …/[id]/result` per schema) could ORPHAN a persisted performed-session + a partial subset of results on a mid-loop failure (QA-001 CRITICAL): the session would show `done=true` (sticky — any performance ⇒ done) while an un-posted schema showed no result, silently, on exactly the marginal-connectivity device this screen targets. Atomic create commits both or neither and collapses 1+N requests to 1.
+
+## D-VIEW-RESULT — `existingResult` = the LATEST logged result per benchmark schema (not best-of)
+
+`existingResult` per benchmark schema = the result on the most-recent performed-session that logged that schema (the "your last result" strip), NOT best-of / PR (Gate-A resolution R3). Falls out of `performed` ordered `performedAt:"asc"` + last-write-wins; no PR computed (the prototype stubs `hasPr:false`).
+
+**Why.** D-STATS best-of→profile is deferred to a later wave; this slice surfaces only the latest logged result. **Deferred:** PR / Records / best-of (block-2 screens 3-4 + the records lib).
+
+## D-SD-ROUTE-PADDED — the session page lives under `(secondary)` (padded `AthleteShell`)
+
+The session page lives under the athlete `(secondary)` route group (the `padded` `AthleteShell` variant from D-TT-DESKTOP-3PANE); the desktop right "Completion" rail is module-internal (not an app-shell pane).
+
+**Why.** The prototype desktop is a focused content page, not a full-bleed 3-pane app-shell (that's the timetable's `(home)` flush layout); `padded` matches. Reversible to `(home)` flush + a flush layout if the owner later wants full-bleed.
