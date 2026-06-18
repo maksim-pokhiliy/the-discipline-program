@@ -1,4 +1,5 @@
 export * from "./_shared";
+export * from "./athlete-records";
 export * from "./block";
 export * from "./day";
 export * from "./exercise";
