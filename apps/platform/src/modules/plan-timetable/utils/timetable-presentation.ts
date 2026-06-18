@@ -1,6 +1,10 @@
 import { alpha, type Theme } from "@mui/material";
 
-import { TimetableSlotStatus, type WeekTimetableView } from "@repo/contracts/lms/plan-timetable";
+import {
+  type PlanTimetableView,
+  TimetableSlotStatus,
+  type WeekTimetableView,
+} from "@repo/contracts/lms/plan-timetable";
 import { DEFAULT_LOCALE, LAST_DAY_OFFSET_IN_WEEK } from "@repo/shared";
 
 import {
@@ -11,6 +15,7 @@ import {
   DOT_W_CUR,
   DOT_W_OTHER,
   END_OF_PLAN_LABEL,
+  FIRST_WEEK_LABEL_OFFSET,
   NODE_HOLLOW_ALPHA,
   NODE_REST_ALPHA,
   NODE_SIZE_DONE_TODO,
@@ -205,3 +210,65 @@ export const countWeekProgress = (week: WeekTimetableView): WeekProgress =>
     }),
     { done: 0, total: 0 },
   );
+
+export type PlanRailItem = {
+  planId: string;
+  title: string;
+  weekOf: string;
+  progressText: string;
+  barPct: number;
+  selected: boolean;
+};
+
+export const buildPlanRailItems = (
+  plans: PlanTimetableView[],
+  currentWeekByPlan: Record<string, number>,
+  selectedPlanId: string,
+): PlanRailItem[] =>
+  plans.map((plan) => {
+    const weekIndex =
+      currentWeekByPlan[plan.planId] ?? plan.todayWeekIndex ?? plan.landingWeekIndex;
+    const week = plan.weeks[weekIndex];
+    const { done, total } = week ? countWeekProgress(week) : { done: 0, total: 0 };
+
+    return {
+      planId: plan.planId,
+      title: plan.planTitle,
+      weekOf: `Week ${weekIndex + FIRST_WEEK_LABEL_OFFSET} of ${plan.weeks.length}`,
+      progressText: `${done} / ${total} done`,
+      barPct: total > 0 ? Math.round((done / total) * 100) : 0,
+      selected: plan.planId === selectedPlanId,
+    };
+  });
+
+export type WeeksNavItem = {
+  index: number;
+  label: string;
+  range: string;
+  countText: string;
+  allDone: boolean;
+  isToday: boolean;
+  selected: boolean;
+};
+
+export const buildWeeksNavItems = (plan: PlanTimetableView, viewedIndex: number): WeeksNavItem[] =>
+  plan.weeks.map((week) => {
+    const { done, total } = countWeekProgress(week);
+    const selected = week.index === viewedIndex;
+    const isTodayWeek = plan.todayWeekIndex !== null && week.index === plan.todayWeekIndex;
+    const allDone =
+      total > 0 &&
+      done === total &&
+      plan.todayWeekIndex !== null &&
+      week.index < plan.todayWeekIndex;
+
+    return {
+      index: week.index,
+      label: `Week ${week.index + FIRST_WEEK_LABEL_OFFSET}`,
+      range: formatWeekRangeCompact(week.startDate),
+      countText: `${done}/${total}`,
+      allDone,
+      isToday: isTodayWeek && !selected,
+      selected,
+    };
+  });

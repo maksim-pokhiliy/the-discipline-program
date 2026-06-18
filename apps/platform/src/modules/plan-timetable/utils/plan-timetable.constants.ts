@@ -11,17 +11,51 @@ export const DAY_OF_WEEK_SHORT: Record<DayOfWeek, string> = {
 };
 
 export const DATE_COL_W = { xs: 46, md: 54 } as const;
-export const TIMELINE_COL_W = { xs: 28, md: 30 } as const;
 
 export const NODE_SIZE_TODAY = 16;
 export const NODE_SIZE_DONE_TODO = 14;
 export const NODE_SIZE_REST = 7;
 export const NEXT_HINT_NODE_SIZE = 10;
 
-export const RAIL_LEFT = { xs: 13, md: 14 } as const;
 export const RAIL_WIDTH_PX = 2;
-export const NODE_TOP = { xs: 17, md: 18 } as const;
+export const TIMELINE_COL_W = 18;
 export const NEXT_HINT_RAIL_HEIGHT = { xs: 30, md: 32 } as const;
+
+export const TIMELINE_DOT_OFFSET = { xs: 22, md: 24 } as const;
+export const DATE_LINE_GAP = 1.5;
+export const TIMELINE_DATE_PT = { xs: 1.25, md: 1.5 } as const;
+export const TIMELINE_CONTENT_PT = { xs: 1.25, md: 1.5 } as const;
+export const TIMELINE_CONTENT_PB = { xs: 1, md: 1.25 } as const;
+export const TIMELINE_CONTENT_PX = { xs: 1, md: 1.5 } as const;
+export const TIMELINE_HINT_CONTENT_PT = { xs: 0.75, md: 1 } as const;
+
+export const PLAN_RAIL_WIDTH_PX = 320;
+export const RAIL_PAD_Y = 3;
+export const PLAN_RAIL_PAD_X = 2.5;
+export const RAIL_HEADER_PB = 2;
+
+export const RAIL_EYEBROW_PX = 11;
+export const RAIL_CARD_TITLE_PX = 14;
+export const RAIL_CARD_PADDING_PX = 14;
+export const RAIL_META_PX = 12;
+export const RAIL_BAR_HEIGHT_PX = 4;
+export const RAIL_BAR_TRACK_ALPHA = 0.1;
+export const RAIL_CARD_SELECTED_BG_ALPHA = 0.06;
+
+export const WEEKS_NAV_LABEL_PX = 13;
+export const WEEKS_NAV_META_PX = 11;
+export const WEEKS_NAV_TODAY_DOT_PX = 6;
+export const WEEKS_NAV_CHECK_PX = 16;
+export const WEEKS_NAV_INDENT_PX = 13;
+export const WEEKS_NAV_SELECTED_BG_ALPHA = 0.08;
+export const WEEKS_NAV_SELECTED_BORDER_ALPHA = 0.5;
+
+export const WEEK_COUNT_INDICATOR_PX = 13;
+export const DOTS_MAX_COUNT = 16;
+
+export const PLAN_RAIL_EYEBROW_LABEL = "Your Plans";
+export const PLAN_WEEKS_EYEBROW_LABEL = "Plan Weeks";
+export const PLAN_ACTIVE_SUFFIX = "active";
 
 export const WEEK_LABEL_PX = { xs: 30, md: 38 } as const;
 export const DAY_NUM_PX = { xs: 24, md: 27 } as const;

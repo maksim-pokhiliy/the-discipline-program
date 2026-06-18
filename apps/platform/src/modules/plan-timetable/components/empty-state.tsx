@@ -16,7 +16,12 @@ import {
 } from "../utils/plan-timetable.constants";
 
 export const PlanTimetableEmptyState = (): ReactElement => (
-  <Stack alignItems="center" spacing={2} sx={{ px: { xs: 4.5, md: 6 }, py: { xs: 9, md: 12 } }}>
+  <Stack
+    alignItems="center"
+    justifyContent="center"
+    spacing={2}
+    sx={{ px: { xs: 4.5, md: 6 }, py: { xs: 9, md: 12 }, minHeight: "100%" }}
+  >
     <Box
       sx={(theme) => ({
         width: EMPTY_CIRCLE_PX,

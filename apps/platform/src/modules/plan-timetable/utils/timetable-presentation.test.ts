@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   type DaySlotView,
+  type PlanTimetableView,
   TimetableSlotStatus,
   type WeekTimetableView,
 } from "@repo/contracts/lms/plan-timetable";
@@ -15,6 +16,8 @@ import {
 } from "./plan-timetable.constants";
 import {
   aheadHintLabel,
+  buildPlanRailItems,
+  buildWeeksNavItems,
   countWeekProgress,
   formatWeekRangeCompact,
   resolveDotStyle,
@@ -137,5 +140,88 @@ describe("countWeekProgress", () => {
     ]);
 
     expect(countWeekProgress(week)).toEqual({ done: 1, total: 2 });
+  });
+});
+
+const buildPlan = (overrides: Partial<PlanTimetableView> = {}): PlanTimetableView => ({
+  planId: "plan-1",
+  planTitle: "Performance RX",
+  todayWeekIndex: 1,
+  landingWeekIndex: 1,
+  weeks: [],
+  ...overrides,
+});
+
+const weekAt = (index: number, days: DaySlotView[]): WeekTimetableView => ({
+  ...buildWeek(days),
+  index,
+});
+
+describe("buildPlanRailItems", () => {
+  it("formats week-of, progress and bar percent from each plan's current week", () => {
+    const plan = buildPlan({
+      todayWeekIndex: 0,
+      landingWeekIndex: 0,
+      weeks: [
+        weekAt(0, [buildSlot({ sessions: [buildCard(true, "a"), buildCard(false, "b")] })]),
+        weekAt(1, [buildSlot({ sessions: [buildCard(true, "c")] })]),
+      ],
+    });
+
+    const [item] = buildPlanRailItems([plan], {}, plan.planId);
+
+    expect(item?.weekOf).toBe("Week 1 of 2");
+    expect(item?.progressText).toBe("1 / 2 done");
+    expect(item?.barPct).toBe(50);
+    expect(item?.selected).toBe(true);
+  });
+
+  it("reflects the navigated week from currentWeekByPlan and marks non-selected plans", () => {
+    const plan = buildPlan({
+      planId: "p2",
+      todayWeekIndex: 0,
+      weeks: [weekAt(0, []), weekAt(1, [buildSlot({ sessions: [buildCard(true, "x")] })])],
+    });
+
+    const [item] = buildPlanRailItems([plan], { p2: 1 }, "other");
+
+    expect(item?.weekOf).toBe("Week 2 of 2");
+    expect(item?.progressText).toBe("1 / 1 done");
+    expect(item?.barPct).toBe(100);
+    expect(item?.selected).toBe(false);
+  });
+});
+
+describe("buildWeeksNavItems", () => {
+  it("marks a fully-done past week allDone and flags the today week only when unselected", () => {
+    const plan = buildPlan({
+      todayWeekIndex: 2,
+      landingWeekIndex: 2,
+      weeks: [
+        weekAt(0, [buildSlot({ sessions: [buildCard(true, "a"), buildCard(true, "b")] })]),
+        weekAt(1, [buildSlot({ sessions: [buildCard(false, "c")] })]),
+        weekAt(2, [buildSlot({ sessions: [buildCard(false, "d")] })]),
+      ],
+    });
+
+    const items = buildWeeksNavItems(plan, 0);
+
+    expect(items[0]?.allDone).toBe(true);
+    expect(items[0]?.selected).toBe(true);
+    expect(items[1]?.allDone).toBe(false);
+    expect(items[1]?.countText).toBe("0/1");
+    expect(items[2]?.isToday).toBe(true);
+  });
+
+  it("does not flag the today week as isToday when it is the viewed week", () => {
+    const plan = buildPlan({
+      todayWeekIndex: 1,
+      weeks: [weekAt(0, []), weekAt(1, [buildSlot({ sessions: [buildCard(false, "e")] })])],
+    });
+
+    const items = buildWeeksNavItems(plan, 1);
+
+    expect(items[1]?.selected).toBe(true);
+    expect(items[1]?.isToday).toBe(false);
   });
 });

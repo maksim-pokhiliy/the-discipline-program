@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@mui/icons-material": "catalog:",
+    "@mui/lab": "catalog:",
     "@mui/material": "catalog:",
     "@mui/x-date-pickers": "catalog:",
     "@repo/api-client": "workspace:*",

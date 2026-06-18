@@ -1,4 +1,5 @@
 export { AthleteCardLink } from "./athlete-card-link";
+export { AthleteShell } from "./athlete-shell";
 export { DateLocalizationProvider } from "./date-localization-provider";
 export { HealthStatusChip } from "./health-status-chip";
 export { PersonCard } from "./person-card";

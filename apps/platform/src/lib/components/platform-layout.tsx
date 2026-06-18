@@ -16,6 +16,7 @@ type PlatformLayoutProps = {
   logoHref: string;
   profileHref: string;
   navigation: PlatformNavigationConfig;
+  mainVariant?: "padded" | "flush";
   children: React.ReactNode;
 };
 
@@ -23,6 +24,7 @@ export const PlatformLayout = ({
   logoHref,
   profileHref,
   navigation,
+  mainVariant = "padded",
   children,
 }: PlatformLayoutProps) => {
   const { data: session } = useSession();
@@ -30,9 +32,11 @@ export const PlatformLayout = ({
     await signOut({ redirect: false });
   }, []);
 
+  const isFlush = mainVariant === "flush";
+
   return (
     <SessionGuard>
-      <Stack sx={{ minHeight: "100dvh" }}>
+      <Stack sx={{ minHeight: "100dvh", ...(isFlush ? { height: "100dvh" } : {}) }}>
         <SkipToContent />
 
         <PlatformHeader
@@ -44,20 +48,34 @@ export const PlatformLayout = ({
           onSignOut={handleSignOut}
         />
 
-        <Container
-          component="main"
-          id="main-content"
-          maxWidth="lg"
-          sx={(theme) => ({
-            flex: 1,
-            pt: 4,
-            pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
-            pl: `calc(${theme.spacing(3)} + env(safe-area-inset-left))`,
-            pr: `calc(${theme.spacing(3)} + env(safe-area-inset-right))`,
-          })}
-        >
-          <Box component="section">{children}</Box>
-        </Container>
+        {isFlush ? (
+          <Container
+            component="main"
+            id="main-content"
+            maxWidth={false}
+            disableGutters
+            sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+          >
+            <Box component="section" sx={{ height: "100%" }}>
+              {children}
+            </Box>
+          </Container>
+        ) : (
+          <Container
+            component="main"
+            id="main-content"
+            maxWidth="lg"
+            sx={(theme) => ({
+              flex: 1,
+              pt: 4,
+              pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+              pl: `calc(${theme.spacing(3)} + env(safe-area-inset-left))`,
+              pr: `calc(${theme.spacing(3)} + env(safe-area-inset-right))`,
+            })}
+          >
+            <Box component="section">{children}</Box>
+          </Container>
+        )}
 
         <PlatformBottomNav navigation={navigation} />
       </Stack>
