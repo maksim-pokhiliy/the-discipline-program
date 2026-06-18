@@ -15,5 +15,6 @@ export * from "./schema-group";
 export * from "./schema-row";
 export * from "./schema";
 export * from "./session";
+export * from "./session-detail";
 export * from "./training-plan";
 export * from "./week";
