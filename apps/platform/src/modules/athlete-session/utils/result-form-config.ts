@@ -65,7 +65,13 @@ const buildTime = (draft: ResultDraft): Result | null => {
   const minutes = parseNumber(draft[TIME_MINUTES_KEY]) ?? 0;
   const seconds = parseNumber(draft[TIME_SECONDS_KEY]) ?? 0;
 
-  if (!Number.isInteger(minutes) || !Number.isInteger(seconds) || seconds < 0) {
+  if (
+    !Number.isInteger(minutes) ||
+    !Number.isInteger(seconds) ||
+    minutes < 0 ||
+    seconds < 0 ||
+    seconds >= SECONDS_PER_MINUTE
+  ) {
     return null;
   }
 

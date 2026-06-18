@@ -446,3 +446,88 @@ describe("AthleteSessionView", () => {
     expect(screen.queryByText("Today")).not.toBeInTheDocument();
   });
 });
+
+const emptySession = (overrides: Partial<SessionDetailResponse> = {}): SessionDetailResponse => ({
+  session: {
+    sessionId: SESSION_ID,
+    planTitle: "Performance RX",
+    position: "Week 3 · Day 4 · Performance RX",
+    title: "Rest-ish",
+    dayOfWeek: "THURSDAY",
+    dayOfMonth: 18,
+    summary: "0 blocks",
+    done: false,
+    completedAt: null,
+  },
+  blocks: [],
+  ...overrides,
+});
+
+describe("AthleteSessionView — degenerate shapes", () => {
+  it("renders the header and Mark Completed for an empty session with no blocks (U1)", () => {
+    setView(emptySession());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(screen.getByText("Rest-ish")).toBeInTheDocument();
+    expect(screen.getByText("Week 3 · Day 4 · Performance RX")).toBeInTheDocument();
+    expect(screen.getByText("0 blocks")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /mark completed/i }).length).toBeGreaterThan(0);
+  });
+
+  it("renders a block whose items list is empty without crashing (U2)", () => {
+    setView(
+      emptySession({
+        blocks: [
+          {
+            blockId: "clz0000000000000000000blk1",
+            label: "Strength",
+            intensity: null,
+            note: null,
+            items: [],
+          },
+        ],
+      }),
+    );
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(screen.getByText("Strength")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /mark completed/i }).length).toBeGreaterThan(0);
+  });
+
+  it("renders a schema whose items list is empty without crashing (U3)", () => {
+    setView(
+      emptySession({
+        blocks: [
+          {
+            blockId: "clz0000000000000000000blk1",
+            label: "Strength",
+            intensity: null,
+            note: null,
+            items: [
+              {
+                kind: "schema",
+                schema: {
+                  schemaId: "clz000000000000000000sch1",
+                  header: "Back Squat",
+                  composition: { repetition: { kind: "count", count: 5 } },
+                  label: { kind: "rounds", family: "ROUNDS" },
+                  isBenchmark: false,
+                  resultType: null,
+                  intensity: null,
+                  existingResult: null,
+                  items: [],
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(screen.getByText("Back Squat")).toBeInTheDocument();
+  });
+});

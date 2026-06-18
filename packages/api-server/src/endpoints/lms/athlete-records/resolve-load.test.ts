@@ -170,6 +170,22 @@ describe("resolveLoad", () => {
     });
   });
 
+  it("returns missing_profile_pick when valid picks match no cell (QA-007)", () => {
+    const load: Load = {
+      kind: "byProfile",
+      axes: [{ name: "level", values: ["rx", "scaled"] }],
+      cells: [{ coords: ["rx"], kg: 60 }],
+    };
+    const ctx = makeCtx({ profileSelections: { level: "scaled" } });
+
+    expect(resolveLoad(load, ctx, ROW_EXERCISE_ID)).toEqual({
+      status: "unresolved",
+      reason: "missing_profile_pick",
+      prompt: "pick_profile",
+      axisNames: ["level"],
+    });
+  });
+
   it("resolves a two-axis byProfile load by positional coords", () => {
     const load: Load = {
       kind: "byProfile",

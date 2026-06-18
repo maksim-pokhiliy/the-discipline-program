@@ -269,6 +269,25 @@ describe("AthleteSessionView — inline Set 1RM", () => {
     expect(screen.getByRole("button", { name: /^set$/i })).toBeDisabled();
   });
 
+  it("rejects a negative 1rm by disabling Set rather than blocking the keystroke (QA-010)", () => {
+    setView(buildResponse([block(oneRmRow, "clz0000000000000000000blk1", "Strength")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /set 1rm/i }));
+
+    const input = screen.getByLabelText(/estimated 1rm/i);
+
+    fireEvent.change(input, { target: { value: "-5" } });
+
+    expect(input).toHaveValue(-5);
+    expect(screen.getByRole("button", { name: /^set$/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /^set$/i }));
+
+    expect(createOneRmMutate).not.toHaveBeenCalled();
+  });
+
   it("does not submit the one-rm twice while its mutation is pending (QA-002)", () => {
     createOneRmPending = true;
     setView(buildResponse([block(oneRmRow, "clz0000000000000000000blk1", "Strength")]));

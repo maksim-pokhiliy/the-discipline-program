@@ -2,7 +2,7 @@ import { DayOfWeek, EnrollmentStatus } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { type Load } from "@repo/contracts/lms/_shared";
-import { AppError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
 import {
@@ -244,7 +244,7 @@ describe("lmsSessionDetailApi.getDetail", () => {
     it("throws NotFound for an unknown session", async () => {
       await expect(
         lmsSessionDetailApi.getDetail("clz0000000000000000user01", "clz0000000000000000none01"),
-      ).rejects.toThrow(AppError);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("throws NotFound for an athlete with no enrollment", async () => {
@@ -253,7 +253,7 @@ describe("lmsSessionDetailApi.getDetail", () => {
 
       try {
         await expect(lmsSessionDetailApi.getDetail(stranger.id, fixture.sessionId)).rejects.toThrow(
-          AppError,
+          NotFoundError,
         );
       } finally {
         await cleanup({ table: "user", id: stranger.id }, ...fixture.toCleanup);
@@ -266,7 +266,36 @@ describe("lmsSessionDetailApi.getDetail", () => {
       try {
         await expect(
           lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId),
-        ).rejects.toThrow(AppError);
+        ).rejects.toThrow(NotFoundError);
+      } finally {
+        await cleanup(...fixture.toCleanup);
+      }
+    });
+
+    it("throws NotFound for a REMOVED enrollment", async () => {
+      const fixture = await buildSessionFixture({ status: EnrollmentStatus.REMOVED });
+
+      try {
+        await expect(
+          lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId),
+        ).rejects.toThrow(NotFoundError);
+      } finally {
+        await cleanup(...fixture.toCleanup);
+      }
+    });
+
+    it("throws NotFound for a soft-deleted enrollment", async () => {
+      const fixture = await buildSessionFixture();
+
+      await prisma.planEnrollment.updateMany({
+        where: { planId: fixture.plan.id, athleteId: fixture.athlete.id },
+        data: { deletedAt: new Date() },
+      });
+
+      try {
+        await expect(
+          lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId),
+        ).rejects.toThrow(NotFoundError);
       } finally {
         await cleanup(...fixture.toCleanup);
       }
@@ -281,7 +310,7 @@ describe("lmsSessionDetailApi.getDetail", () => {
       try {
         await expect(
           lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId),
-        ).rejects.toThrow(AppError);
+        ).rejects.toThrow(NotFoundError);
       } finally {
         await cleanup(...fixture.toCleanup);
       }
@@ -293,7 +322,7 @@ describe("lmsSessionDetailApi.getDetail", () => {
 
       try {
         await expect(lmsSessionDetailApi.getDetail(athleteB.id, fixture.sessionId)).rejects.toThrow(
-          AppError,
+          NotFoundError,
         );
       } finally {
         await cleanup({ table: "user", id: athleteB.id }, ...fixture.toCleanup);
@@ -311,7 +340,7 @@ describe("lmsSessionDetailApi.getDetail", () => {
       try {
         await expect(
           lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId),
-        ).rejects.toThrow(AppError);
+        ).rejects.toThrow(NotFoundError);
       } finally {
         await cleanup(...fixture.toCleanup);
       }

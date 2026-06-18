@@ -41,6 +41,32 @@ describe("RESULT_FORM_CONFIG", () => {
     expect(buildResult("time", { [TIME_MINUTES_KEY]: "0", [TIME_SECONDS_KEY]: "0" })).toBeNull();
   });
 
+  it("rejects a seconds field of 60 or more for time (QA-009)", () => {
+    expect(buildResult("time", { [TIME_MINUTES_KEY]: "0", [TIME_SECONDS_KEY]: "90" })).toBeNull();
+    expect(buildResult("time", { [TIME_MINUTES_KEY]: "1", [TIME_SECONDS_KEY]: "60" })).toBeNull();
+  });
+
+  it("accepts a seconds field under sixty for time (QA-009)", () => {
+    expect(buildResult("time", { [TIME_MINUTES_KEY]: "0", [TIME_SECONDS_KEY]: "45" })).toEqual({
+      type: "time",
+      seconds: 45,
+    });
+    expect(buildResult("time", { [TIME_MINUTES_KEY]: "1", [TIME_SECONDS_KEY]: "30" })).toEqual({
+      type: "time",
+      seconds: 90,
+    });
+  });
+
+  it("rejects a negative numeric result entry instead of submitting it (QA-010)", () => {
+    expect(buildResult("load", { [LOAD_KEY]: "-5" })).toBeNull();
+    expect(buildResult("max_reps", { [MAX_REPS_KEY]: "-5" })).toBeNull();
+    expect(buildResult("calories", { [CALORIES_KEY]: "-5" })).toBeNull();
+    expect(
+      buildResult("distance", { [DISTANCE_VALUE_KEY]: "-5", [DISTANCE_UNIT_KEY]: "km" }),
+    ).toBeNull();
+    expect(buildResult("time", { [TIME_MINUTES_KEY]: "-5", [TIME_SECONDS_KEY]: "0" })).toBeNull();
+  });
+
   it("builds a rounds_reps result", () => {
     const result = buildResult("rounds_reps", { [ROUNDS_KEY]: "8", [REPS_KEY]: "12" });
 

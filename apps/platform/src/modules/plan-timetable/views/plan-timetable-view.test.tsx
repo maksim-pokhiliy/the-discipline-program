@@ -12,6 +12,12 @@ import {
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+const routerPushMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPushMock }),
+}));
+
 const usePlanTimetableMock = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
