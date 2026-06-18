@@ -25,7 +25,7 @@ export type InlineProfilePickerProps = {
   load: Load;
   selections: Record<string, string>;
   isSubmitting: boolean;
-  onPick: (axisName: string, value: string) => void;
+  onPick: (axisNames: string[], axisName: string, value: string) => void;
 };
 
 export const InlineProfilePicker = ({
@@ -37,6 +37,8 @@ export const InlineProfilePicker = ({
   if (load.kind !== "byProfile") {
     return null;
   }
+
+  const axisNames = load.axes.map((axis) => axis.name);
 
   return (
     <Box
@@ -83,7 +85,7 @@ export const InlineProfilePicker = ({
                   label={value}
                   isActive={selections[axis.name] === value}
                   disabled={isSubmitting}
-                  onClick={() => onPick(axis.name, value)}
+                  onClick={() => onPick(axisNames, axis.name, value)}
                 />
               ))}
             </Stack>

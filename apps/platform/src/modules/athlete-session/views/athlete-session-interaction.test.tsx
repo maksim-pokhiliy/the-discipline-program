@@ -18,6 +18,9 @@ const updateProfileMutate = vi.fn();
 const createPerformedSessionAsync = vi.fn();
 const createSchemaResultAsync = vi.fn();
 
+let createOneRmPending = false;
+let updateProfilePending = false;
+
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
 
@@ -25,8 +28,11 @@ vi.mock("@app/lib/hooks", async () => {
     ...actual,
     useAthleteSessionView: (sessionId: string) => useAthleteSessionViewMock(sessionId),
     useAthleteProfile: () => useAthleteProfileMock(),
-    useCreateOneRMRecord: () => ({ mutate: createOneRmMutate, isPending: false }),
-    useUpdateAthleteProfile: () => ({ mutate: updateProfileMutate, isPending: false }),
+    useCreateOneRMRecord: () => ({ mutate: createOneRmMutate, isPending: createOneRmPending }),
+    useUpdateAthleteProfile: () => ({
+      mutate: updateProfileMutate,
+      isPending: updateProfilePending,
+    }),
     useCreatePerformedSession: () => ({
       mutateAsync: createPerformedSessionAsync,
       isPending: false,
@@ -232,6 +238,8 @@ const setProfile = (profileSelections: Record<string, string> | null): void => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  createOneRmPending = false;
+  updateProfilePending = false;
   setProfile(null);
   createPerformedSessionAsync.mockResolvedValue({ id: PERFORMED_ID });
   createSchemaResultAsync.mockResolvedValue({ id: "clz000000000000000res01" });
@@ -266,6 +274,25 @@ describe("AthleteSessionView — inline Set 1RM", () => {
 
     expect(screen.getByRole("button", { name: /^set$/i })).toBeDisabled();
   });
+
+  it("does not submit the one-rm twice while its mutation is pending (QA-002)", () => {
+    createOneRmPending = true;
+    setView(buildResponse([block(oneRmRow, "clz0000000000000000000blk1", "Strength")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /set 1rm/i }));
+    fireEvent.change(screen.getByLabelText(/estimated 1rm/i), { target: { value: "140" } });
+
+    const setButton = screen.getByRole("button", { name: /^set$/i });
+
+    expect(setButton).toBeDisabled();
+
+    fireEvent.click(setButton);
+    fireEvent.click(setButton);
+
+    expect(createOneRmMutate).not.toHaveBeenCalled();
+  });
 });
 
 describe("AthleteSessionView — inline Pick profile", () => {
@@ -293,6 +320,44 @@ describe("AthleteSessionView — inline Pick profile", () => {
     fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
 
     expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-contained");
+  });
+
+  it("stages a partial pick and PUTs once when every axis is chosen (QA-003)", () => {
+    setView(buildResponse([block(profileRow, "clz0000000000000000000blk2", "Power")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
+    fireEvent.click(screen.getByRole("button", { name: "RX" }));
+
+    expect(updateProfileMutate).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-contained");
+
+    fireEvent.click(screen.getByRole("button", { name: "M" }));
+
+    expect(updateProfileMutate).toHaveBeenCalledTimes(1);
+    expect(firstCallArg(updateProfileMutate)).toEqual({
+      profileSelections: { Level: "RX", Sex: "M" },
+    });
+  });
+
+  it("does not submit the profile twice while its mutation is pending (QA-002)", () => {
+    updateProfilePending = true;
+    setProfile({ Sex: "M" });
+    setView(buildResponse([block(profileRow, "clz0000000000000000000blk2", "Power")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
+
+    const scaled = screen.getByRole("button", { name: "Scaled" });
+
+    expect(scaled).toBeDisabled();
+
+    fireEvent.click(scaled);
+    fireEvent.click(scaled);
+
+    expect(updateProfileMutate).not.toHaveBeenCalled();
   });
 });
 

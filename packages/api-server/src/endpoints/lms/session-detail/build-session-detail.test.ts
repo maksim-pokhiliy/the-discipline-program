@@ -436,16 +436,25 @@ describe("buildSessionDetail header", () => {
     ).toBe("Workout");
   });
 
-  it("derives the position eyebrow from the week ordinal and plan name", () => {
+  it("derives the position eyebrow from the week ordinal, day ordinal, and plan name", () => {
     const session = makeSession({
       weekId: "clz0000000000000000wk0002",
       weekIds: ["clz0000000000000000wk0001", "clz0000000000000000wk0002"],
+      dayOfWeek: DayOfWeek.THURSDAY,
       planName: "Strength Cycle",
     });
 
     expect(buildSessionDetail({ session, ctx: makeCtx(), performed: [] }).session.position).toBe(
-      "Week 2 · Strength Cycle",
+      "Week 2 · Day 4 · Strength Cycle",
     );
+  });
+
+  it("uses a Monday-based day ordinal in the position eyebrow", () => {
+    const sunday = makeSession({ dayOfWeek: DayOfWeek.SUNDAY, planName: "Strength Cycle" });
+
+    expect(
+      buildSessionDetail({ session: sunday, ctx: makeCtx(), performed: [] }).session.position,
+    ).toBe("Week 1 · Day 7 · Strength Cycle");
   });
 
   it("emits a tz-stable dayOfWeek and dayOfMonth from the absolute UTC date", () => {

@@ -218,12 +218,18 @@ const collectExistingResults = (performed: PerformedSessionWithResults[]): Map<s
 const sessionTitle = (session: SessionDetailRecord): string =>
   session.label?.name ?? session.day.label?.name ?? DEFAULT_WORKOUT_TITLE;
 
+const dayOrdinalOf = (session: SessionDetailRecord): number =>
+  dayOfWeekValues.indexOf(dayOfWeekSchema.parse(session.day.dayOfWeek)) + 1;
+
 const sessionPosition = (session: SessionDetailRecord): string => {
   const weekOrdinal =
     session.day.week.plan.weeks.findIndex((week) => week.id === session.day.weekId) + 1;
+  const dayOrdinal = dayOrdinalOf(session);
   const planTitle = session.day.week.plan.name;
 
-  return weekOrdinal > 0 ? `Week ${weekOrdinal} · ${planTitle}` : planTitle;
+  return weekOrdinal > 0
+    ? `Week ${weekOrdinal} · Day ${dayOrdinal} · ${planTitle}`
+    : `Day ${dayOrdinal} · ${planTitle}`;
 };
 
 const sessionDatePart = (

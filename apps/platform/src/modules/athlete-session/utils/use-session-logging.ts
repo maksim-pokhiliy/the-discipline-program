@@ -31,13 +31,14 @@ export type SessionEditorControls = {
   activeEditor: ActiveEditor | null;
   oneRmValue: string;
   oneRmCanSubmit: boolean;
+  oneRmPending: boolean;
   profileSelections: Record<string, string>;
-  isSubmitting: boolean;
+  profilePending: boolean;
   openOneRmEditor: (rowId: string, exerciseId: string) => void;
   openProfileEditor: (rowId: string) => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
-  pickProfile: (axisName: string, value: string) => void;
+  pickProfile: (axisNames: string[], axisName: string, value: string) => void;
 };
 
 const EMPTY_DRAFT: ResultDraft = {};
@@ -53,7 +54,9 @@ export type SessionLogging = {
   activeEditor: ActiveEditor | null;
   oneRmValue: string;
   oneRmCanSubmit: boolean;
+  oneRmPending: boolean;
   profileSelections: Record<string, string>;
+  profilePending: boolean;
   benchmarks: BenchmarkSchema[];
   drafts: Record<string, ResultDraft>;
   note: string;
@@ -66,7 +69,7 @@ export type SessionLogging = {
   closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
-  pickProfile: (axisName: string, value: string) => void;
+  pickProfile: (axisNames: string[], axisName: string, value: string) => void;
   setDraftField: (schemaId: string, key: string, value: string) => void;
   setNote: (value: string) => void;
   openSheet: () => void;
@@ -81,6 +84,7 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
 
   const [activeEditor, setActiveEditor] = useState<ActiveEditor | null>(null);
   const [oneRmValue, setOneRmValueState] = useState("");
+  const [stagedProfile, setStagedProfile] = useState<Record<string, string>>(EMPTY_SELECTIONS);
   const [drafts, setDrafts] = useState<Record<string, ResultDraft>>({});
   const [note, setNoteState] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -93,7 +97,11 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   const createSchemaResult = useCreatePerformedSchemaResult();
 
   const benchmarks = useMemo(() => collectBenchmarkSchemas(data.blocks), [data.blocks]);
-  const profileSelections = athleteProfile.data?.profileSelections ?? EMPTY_SELECTIONS;
+  const savedSelections = athleteProfile.data?.profileSelections ?? EMPTY_SELECTIONS;
+  const profileSelections = useMemo(
+    () => ({ ...savedSelections, ...stagedProfile }),
+    [savedSelections, stagedProfile],
+  );
 
   const invalidateView = useCallback((): void => {
     queryClient.invalidateQueries({
@@ -107,15 +115,17 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   }, []);
 
   const openProfileEditor = useCallback((rowId: string): void => {
+    setStagedProfile(EMPTY_SELECTIONS);
     setActiveEditor({ rowId, kind: "profile" });
   }, []);
 
   const closeEditor = useCallback((): void => {
+    setStagedProfile(EMPTY_SELECTIONS);
     setActiveEditor(null);
   }, []);
 
   const commitOneRm = useCallback((): void => {
-    if (activeEditor?.kind !== "one_rm") {
+    if (activeEditor?.kind !== "one_rm" || createOneRm.isPending) {
       return;
     }
 
@@ -142,12 +152,31 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   }, [activeEditor, oneRmValue, createOneRm, invalidateView]);
 
   const pickProfile = useCallback(
-    (axisName: string, value: string): void => {
-      const merged = { ...profileSelections, [axisName]: value };
+    (axisNames: string[], axisName: string, value: string): void => {
+      if (updateProfile.isPending) {
+        return;
+      }
 
-      updateProfile.mutate({ profileSelections: merged }, { onSuccess: invalidateView });
+      const merged = { ...savedSelections, ...stagedProfile, [axisName]: value };
+      const isFullPick = axisNames.every((name) => merged[name] !== undefined);
+
+      if (!isFullPick) {
+        setStagedProfile((prev) => ({ ...prev, [axisName]: value }));
+
+        return;
+      }
+
+      updateProfile.mutate(
+        { profileSelections: merged },
+        {
+          onSuccess: () => {
+            invalidateView();
+            setActiveEditor(null);
+          },
+        },
+      );
     },
-    [profileSelections, updateProfile, invalidateView],
+    [savedSelections, stagedProfile, updateProfile, invalidateView],
   );
 
   const setDraftField = useCallback((schemaId: string, key: string, value: string): void => {
@@ -222,7 +251,9 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
     activeEditor,
     oneRmValue,
     oneRmCanSubmit: parseOneRm(oneRmValue) !== null,
+    oneRmPending: createOneRm.isPending,
     profileSelections,
+    profilePending: updateProfile.isPending,
     benchmarks,
     drafts,
     note,

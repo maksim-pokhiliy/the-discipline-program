@@ -110,7 +110,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
         <InlineOneRmEditor
           movement={row.movement}
           value={editor.oneRmValue}
-          isSubmitting={editor.isSubmitting}
+          isSubmitting={editor.oneRmPending}
           canSubmit={editor.oneRmCanSubmit}
           onChange={editor.setOneRmValue}
           onCommit={editor.commitOneRm}
@@ -121,7 +121,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
         <InlineProfilePicker
           load={row.load}
           selections={editor.profileSelections}
-          isSubmitting={editor.isSubmitting}
+          isSubmitting={editor.profilePending}
           onPick={editor.pickProfile}
         />
       ) : null}

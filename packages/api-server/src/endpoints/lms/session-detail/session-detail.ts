@@ -31,6 +31,7 @@ const assertAthleteCanRead = async (
       athleteId: userId,
       status: ENROLLMENT_STATUS_TO_PRISMA_MAP[EnrollmentStatus.ACTIVE],
       deletedAt: null,
+      plan: { deletedAt: null },
     },
   });
 

@@ -299,6 +299,23 @@ describe("lmsSessionDetailApi.getDetail", () => {
         await cleanup({ table: "user", id: athleteB.id }, ...fixture.toCleanup);
       }
     });
+
+    it("throws NotFound for a soft-deleted plan with a stale ACTIVE enrollment", async () => {
+      const fixture = await buildSessionFixture();
+
+      await prisma.trainingPlan.update({
+        where: { id: fixture.plan.id },
+        data: { deletedAt: new Date() },
+      });
+
+      try {
+        await expect(
+          lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId),
+        ).rejects.toThrow(AppError);
+      } finally {
+        await cleanup(...fixture.toCleanup);
+      }
+    });
   });
 
   describe("query-count invariant (no N+1)", () => {
