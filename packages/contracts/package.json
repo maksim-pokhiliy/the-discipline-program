@@ -32,6 +32,7 @@
     "./lms/schema-group": "./src/entities/lms/schema-group/index.ts",
     "./lms/schema-row": "./src/entities/lms/schema-row/index.ts",
     "./lms/session": "./src/entities/lms/session/index.ts",
+    "./lms/session-detail": "./src/entities/lms/session-detail/index.ts",
     "./lms/training-plan": "./src/entities/lms/training-plan/index.ts",
     "./lms/week": "./src/entities/lms/week/index.ts",
     "./coaching/admin-user-view": "./src/entities/coaching/admin-user-view/index.ts",
