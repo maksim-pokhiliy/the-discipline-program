@@ -17,6 +17,9 @@ export const platformKeys = {
   coachProfile: {
     data: () => [...ROOT, "coach-profile"] as const,
   },
+  athleteProfile: {
+    data: () => [...ROOT, "athlete-profile"] as const,
+  },
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
   },
@@ -41,6 +44,9 @@ export const platformKeys = {
   },
   planTimetable: {
     data: () => [...ROOT, "plan-timetable"] as const,
+  },
+  athleteSessionView: {
+    detail: (sessionId: string) => [...ROOT, "athlete-session-view", sessionId] as const,
   },
   rowGroups: {
     all: () => [...ROOT, "row-groups"] as const,

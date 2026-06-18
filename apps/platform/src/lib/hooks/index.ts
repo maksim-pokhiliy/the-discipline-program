@@ -1,3 +1,5 @@
+export * from "./use-athlete-profile";
+export * from "./use-athlete-session-view";
 export * from "./use-blocks";
 export * from "./use-blur-commit";
 export * from "./use-catalog";

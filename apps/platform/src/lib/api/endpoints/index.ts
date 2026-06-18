@@ -1,3 +1,5 @@
+export { createAthleteProfileAPI } from "./athlete-profile";
+export { createAthleteSessionViewAPI } from "./athlete-session-view";
 export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
