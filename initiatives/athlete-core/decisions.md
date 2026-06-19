@@ -369,3 +369,15 @@ After logging, the result intentionally renders in TWO places: (1) in place on t
 **Why.** Owner call on the live walkthrough — the schema-card strip is "your score on this piece, where you logged it"; the completion echo is "your results at a glance as you finish." They serve two reading moments; showing both matches the prototype and the owner's intent. QA flagged it as a possible double-render; the owner ruled it intentional.
 
 ---
+
+# Bodyweight-load semantics (ratified 2026-06-18, owner dialogue — planner-held, recorded 2026-06-19)
+
+## D-AC-BODYWEIGHT-LABEL — a `bodyweight` load renders as a label, never the profile weight in kg
+
+**Ratified 2026-06-18 (owner, live dialogue on a real plan). The fix shipped with the screen-2 re-home; this records the load-bearing "why" the executor close-out missed — it was a separate planner-thread ruling, not part of the re-home RFC.**
+
+A `bodyweight`-kind load is **"Bodyweight" / "со своим весом" — a LABEL, never the athlete's profile weight as a kg number.** The shipped resolver is correct: `resolve-load.ts` returns a distinct `{ status: "bodyweight" }` for the `bodyweight` kind (NOT `resolved {kg: bodyweightKg}`), `ResolvedLoad` carries the `bodyweight` variant, and the UI renders the label. The bug this fixed: block-1 substituted the profile weight, so a bodyweight movement showed e.g. "88 kg" (the athlete's own weight), mis-signalling external iron. Bodyweight is the athlete's _attribute_, not a load prescription — "Air Squat 100 kg" is nonsense; the body is the implement, not iron. `weightKg` stays in the resolver context (`loadAthleteLoadContext`) for the future %-of-bodyweight reference + coach tonnage analytics, but never flows into an athlete's prescription line.
+
+**Added load is NOT modeled on bodyweight** (owner: "тело всегда с тобой, это шум без ценности"): a weighted pull-up is a distinct _exercise_ ("Weighted Pull-Ups") carrying an `absolute` load (e.g. 20 kg) — the difference lives at the exercise level, not as a new load kind. There is NO "bodyweight + added" kind.
+
+**Why.** Showing the body weight as a kg load mis-signals external iron and confuses the everyday case (it surfaced the moment the owner set a real Bulgarian Split Squat to `bodyweight` and saw "88 kg"). The fix is semantic, not cosmetic. See `deferred.md` for the deferred **% of bodyweight** reference — the one legitimate place the body weight DOES become a number (a `percentageReference` scope `"bodyweight"`, its own load-model mini-wave).

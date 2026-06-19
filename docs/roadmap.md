@@ -1,96 +1,92 @@
 # Roadmap — the-discipline-program
 
-> **Mission.** Ship the MVP: a CrossFit coach (Denys) programs training cycles in our constructor faster than his Excel, his athletes follow the plan, log results, and see their records — and he pays for it. Everything below is the path from **today** to that launch. Nothing more.
+> **Mission.** Ship the MVP: a CrossFit coach (Denys) programs training cycles in our constructor faster than his Excel, his athletes follow the plan, log results, and see their records. Launch is a **closed, demo-driven onboarding** of Denys himself; paid self-serve onboarding follows once a second coach is in sight. Everything below is the path from **today** to that launch. Nothing more.
 
 **Owner:** Maksim. **Reviewed:** at the start of every working session (this file is the top of the planning stack — see `docs/process.md`).
-**Last synced:** 2026-06-16.
+**Last synced:** 2026-06-19.
 
 ---
 
 ## Where we are now (honest snapshot)
 
-- **Monorepo is mature:** 3 apps (marketing / platform / admin), contracts / api-server (Prisma) / api-client / query / auth (next-auth) / ui / mui — all real. Upstash ratelimit + redis, Sentry wired. Dev DB on Neon (`db:reset` world, no migrations yet).
-- **The session primitive is being rebuilt** (`initiatives/session-primitive`): the model the coach authors a workout in. **W1 → W4-editor all merged** (PRs #261–#265) — the W4 row-grammar model + the coach authoring page are built. The **W4E live-test follow-ups** (tempo smart-union, schema-group create-as-rows, in-group drag + DnD polish, session-with-block, row-summary chips) merged via **PR #268**. `primitive-spec.md` is FROZEN (zero open grid rows). The **catalog pass** is BUILT (`feat/session-primitive-catalog-pass`) with the gated api-server suite GREEN (84 files / 776 tests); the remaining Phase-1 gate is the owner's e2e self-test.
-- **Known-wrong, deliberately deferred:** `Performed*` / `OneRMRecord` (athlete logging + records) are stubs from before the rebuild — redesigned in Phase 3 against the frozen primitive, not patched now.
-- **Not started:** payments (no provider wired), production infra (Vercel/Neon-prod not configured), lifecycle emails beyond auth basics.
+- **Monorepo is mature:** 3 apps (marketing / platform / admin), contracts / api-server (Prisma) / api-client / query / auth (next-auth) / ui / mui — all real. Upstash ratelimit + redis, Sentry wired.
+- **The session primitive is FROZEN and PROVEN.** `primitive-spec.md` is frozen; `primitive-v2` (the reshape — cross-cutting `cap`, intensity trinity, interval `{value,unit}`, nested `byProfile`) is merged (#282). The **e2e evil corpus is PASSED**: the owner hand-built all three maximally-evil CrossFit sessions on a bare DB with **zero ❌** — including the two former gaps (cap-on-a-ladder, Tabata sub-minute interval) that primitive-v2 closed. The model holds Games-level programming. (`session-primitive` Phase-1 gate met → ready for its `/initiative-close`.)
+- **Coach station is substantively complete:** clone week/day/block, coach profile, authoring inline-create, the `/coach` dashboard + athletes redesigns — all merged. Programming-faster-than-Excel is demonstrable (the evil corpus built in ~10–12 min/session).
+- **Athlete core (the current initiative) is largely shipped:** block-1 data core (#283); screen-1 Plan Timetable (#284); screen-2 Session/Workout View + in-schema benchmark logging (#285). **The athlete training screen works end-to-end** — read-only plan content, all 4 `ResolvedLoad` states, inline set-1RM / pick-profile, and **athlete-owned, append-only benchmark logging decoupled from completion** (a re-log is a new attempt; logging never flips the done tick; a `load` log writes `OneRMRecord` atomically and resolves the % rows below it). Working-weight `%` resolves off the **latest** 1RM (current form); records/PR stay best-of.
+- **Deliberately deferred from launch:** payments (no provider wired — launch enrolls athletes by hand); production prod-hardening (GDPR/monitoring/CodeQL); lifecycle emails beyond auth basics.
+- **Prod infra:** Vercel is configured for per-monorepo-app deploys (env-vars pending → build goes green once added); Neon has prod + dev branches. The prod domain is set up live with Denys on the demo call.
 
 ## The launch bar (anti-"one more feature")
 
-**"Denys-ready" is a FIXED bar, set once, here.** The product launches when a real coach can run a real paid cohort through the happy path:
+**"Denys-ready" is a FIXED bar, set once, here.** The product launches when the **full demo-script runs clean on prod** — Maksim drives it on a real URL with Denys watching, and at the end Denys buys the domain handover:
 
-> bought on marketing → account → platform → trained → logged · and the coach _programmed a cycle faster than Excel_.
+> seed a coach → fill the marketing site via the admin console → invite a user by email → claim it as the athlete → as the coach build 1–2 plans / 2–4 sessions → enroll the athlete → as the athlete log a benchmark + mark a session complete → flip back to the coach and show his dashboard reflecting those actions → walk every platform + admin page (where, what, for whom) → discuss the domain; he buys, we connect it.
 
-Ideas that arrive after the bar is met go to the post-launch backlog, not into the launch. This is the single rule that protects the ship date.
+Payment automation is **not** in the bar — enrollment is by hand for the closed launch. Ideas that arrive after the bar is met go to the post-launch backlog, not into the launch. This is the single rule that protects the ship date.
 
 ## Operating model (how we get there without a team)
 
-- **Maksim is the only user until Phase 7** — coach, athlete, and admin at once. A **self-test per phase** (build it, then drive it as the user) replaces early external UAT.
-- **Denys sees a finished product**, not a half-built one. His only early touch is merchant paperwork (starts at Phase 5). True UAT = continuous iteration _after_ launch.
-- **Purchase-first onboarding** is canon: buying creates the account; the athlete claims it via an invite token.
-- **Manual billing is the Plan B** that de-risks the launch: an admin can activate a subscription by hand if the automated provider slips.
+- **Maksim is the only user through launch** — coach, athlete, and admin at once. A **self-test per surface** (build it, then drive it as the user) replaces early external UAT.
+- **Denys sees a finished product**, not a half-built one. His only touch before the demo is none; the demo IS the onboarding. True UAT = continuous iteration _after_ launch.
+- **Manual enrollment is the LAUNCH mechanism**, not a fallback: the coach enrolls athletes into plans directly from the platform; no purchase gates access. Purchase-first onboarding is a **post-launch** concern (it lands with billing).
+- **Lead-capture keeps the marketing channel open without a paywall:** a visitor who clicks "buy a plan" gets a short contact form (the plan is already chosen, carried under the hood); it notifies the head coach, who reaches out and invites by email. No checkout until billing lands.
 
 ---
 
-## Phases
+## The three blocks
 
-Each phase has an **Outcome** (what is TRUE when it's done) and an **Exit** (the demonstrable gate). Phases are sequential; the Exit of one is the Dependency of the next.
+Work is organized as **pre-launch scope → launch (closed) → post-launch (triggered)**. Pre-launch is the fixed set that makes the demo-script run clean; launch is the demo itself; post-launch is everything gated behind a real trigger.
 
-### Phase 1 — Primitive freeze · the coach can author ANYTHING ⟵ _in flight_
+### BLOCK 1 — Pre-launch scope (the fixed set before the demo)
 
-- **Outcome.** The coach can express any workout he writes — including a maximally-evil CrossFit session — in the constructor, and read it back unambiguously. The model has zero parsing-residue debt.
-- **Key work.** `session-primitive` W4 (the row-grammar model + the coach-platform authoring page — DONE, PRs #264/#265 + the W4E follow-ups in PR #268) → the **catalog pass** (equipment library, exercise nature `concrete|placeholder|rest`, drop dead movement-type tags + `SchemaRow.exerciseId` FK — DONE, `feat/session-primitive-catalog-pass`; the synthetic training seed was also retired to users-only, so the catalog is now populated via the admin console).
-- **Exit (self-test).** The orchestrator writes the hardest CrossFit workouts (the A–E evil fixture + more); Maksim builds each one **by hand in the UI** with no model gap. `primitive-spec.md` stays frozen; gated suites green on a reseeded DB.
-- **Status.** W4-model + W4-editor MERGED (PRs #264/#265); the W4E live-test follow-ups in PR #268; the **catalog pass BUILT** (`feat/session-primitive-catalog-pass` — equipment library + `concrete|placeholder|rest` nature enum + `SchemaRow.exerciseId` FK + drop dead movement-type tags; the synthetic training seed was retired to **users-only** — the catalog/plans are populated via the UI now). Remaining Phase-1 gate: the **e2e self-test** — Maksim hand-builds the evil A–E fixtures (+ more) directly in the UI, the catalog populated via the admin console, confirming zero model gap.
+Each item has an **Outcome** (what is TRUE when done). Athlete screens are the `athlete-core` initiative; the rest are infra/coach surfaces.
 
-### Phase 2 — Coach station complete · programming is faster than Excel
+| #   | Item                                    | Outcome                                                                                                                                                                                                                             | Zone                   |
+| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 1   | **Athlete Records / PR-history**        | The athlete sees his bests — 1RM per movement (history + trend) and benchmark bests per WOD (best-of, direction-aware PR). Reads the shipped `BenchmarkResult` + `OneRMRecord` history. (block-2 screen 3)                          | athlete-core (planner) |
+| 2   | **Athlete Profile**                     | The athlete edits bodyweight + sees/changes his remembered profile picks. (block-2 screen 4; the athlete-profile GET/PUT hook already exists)                                                                                       | athlete-core (planner) |
+| 3   | **Coach enrolls athletes into plans**   | From the platform, the coach enrolls an athlete into a plan directly (no purchase) — the launch onboarding mechanism.                                                                                                               | coach platform (owner) |
+| 4   | **Lifecycle email templates**           | The missing transactional emails exist and fire (invite already works + tested; password-reset email; lead-notify to the coach).                                                                                                    | infra                  |
+| 5   | **Password reset / recovery**           | A user can recover access — forgot-password flow end-to-end.                                                                                                                                                                        | infra (auth)           |
+| 6   | **Head-coach → admin access**           | The head coach reaches the admin console to author marketing CMS content. Done at the **role-gate** (`HEAD_COACH` allowed into the admin app, full), NOT via dual users or a second role — single user, single role, gate extended. | auth/role              |
+| 7   | **Marketing "buy" → lead-capture form** | Clicking "buy a plan" opens a 3-field form (name optional · contact method required, free text · message optional; the chosen `planId` carried under the hood) → a durable lead + email-notify the head coach. NO checkout.         | marketing              |
+| —   | **Prod env-vars**                       | Vercel per-app builds go green (env-vars added). Minor; not a feature.                                                                                                                                                              | infra                  |
 
-- **Outcome.** The coach's daily surface is fully usable and genuinely faster than his spreadsheet — the explicit promise of the bar.
-- **Key work.** Reuse features (clone week / day / block, saved compositions) — the persona's pain #1; coach profile UI; the authoring-flow polish surfaced during Phase 1's self-test (incl. the LABEL-FLOW-UX searchable create-on-the-fly picker, shared with the row-modifier picker). (DnD group-creation was scoped here but **DROPPED** — `coach-station` D-11; see "Explicitly OUT" below. The shipped select-mode group-create already covers the capability.)
-- **Exit.** Maksim programs a full multi-week cycle end-to-end, timed, and it beats the Excel baseline.
-- **Status (2026-06-16).** Substantively COMPLETE — clone (R1, PR #270/#274) + coach profile (P, #273/#275) + authoring inline-create (A-known, #277) + the `/coach` dashboard & athletes redesigns (#279/#278) all MERGED; equipment + `movementFamily` cut; G dropped (D-11). The remaining gate is the **timed-cycle Exit itself** (owner-owed, also closes Phase 1's e2e self-test) + the gated api-server suites. Detail → `initiatives/coach-station/`.
+**Exit of Block 1.** Every item above is built and self-tested; the demo-script can run start-to-finish on prod with no dead end.
 
-### Phase 3 — Athlete core + honest coach metrics
+### BLOCK 2 — Launch (closed, demo-driven)
 
-- **Outcome.** An athlete opens the app, sees the plan as a timetable (plan-as-train), logs a session in seconds, and sees benchmarks + records; the coach sees honest derived metrics.
-- **Key work.** **Redesign `Performed*` / `OneRMRecord` / scoring FROM SCRATCH** against the frozen primitive's repetition kinds — a mini design-cycle (initiative) _before_ contracts. Athlete plan view; result logging (post-workout, no in-workout timers — "the laziest athlete does it in 30 seconds"); 1RM history; benchmark catalog (seed ≥25) + results; records + PR graph; coach `/athletes` derived-field wire-up + reconcile cron.
-- **Exit.** Maksim-as-athlete logs a week against a Maksim-as-coach plan; records and coach metrics reconcile correctly.
+- **Outcome.** Denys is onboarded live: the demo-script (the launch bar) runs clean on the prod domain, every surface shown, and he buys the domain handover. His real programs start moving in.
+- **Key work.** The demo call itself: domain handover, walking Denys through coach + athlete + admin, moving 1–2 real programs in by hand, enrolling his first athletes manually.
+- **Exit = MVP LAUNCHED** (a real coach running a real cohort on prod, even if money still changes hands off-platform).
 
-### Phase 4 — Lifecycle infrastructure
+### BLOCK 3 — Post-launch (triggered, not scheduled)
 
-- **Outcome.** The account lifecycle is production-shaped: people can recover access, get the right transactional emails, and complete their profile.
-- **Key work.** Forgot-password; the core sync email templates (weekly-summary + queue are CUT to v1.1); bounce-lite; profile-completion onboarding; first-admin bootstrap.
-- **Exit.** A fresh account goes signup → verify → profile-complete → receives the right emails, no dead ends.
+Each item is gated behind a **real trigger**, so none of it blocks the ship date or creeps into the launch.
 
-### Phase 5 — Monetization
-
-- **Outcome.** Money works end-to-end, with a manual fallback so a provider hiccup can't block launch.
-- **Key work.** Wire the payment/UA provider at implementation time (supersede ADR-0014); canonize purchase-first onboarding (purchase → account → claim via invite token); webhook + idempotency (the idempotency layer already exists since W2); subscription FSM + enrollment coupling; access gate; **admin Subscription CRUD + manual activate = Plan B**; rename `stripe*` → `provider*`.
-- **Exit.** A test purchase creates an account, grants access, and an admin can also activate a subscription by hand.
-
-### Phase 6 — Production assembly + rehearsal
-
-- **Outcome.** The whole thing runs on production infra and a full happy-path has been rehearsed on a real URL.
-- **Key work.** Vercel ×3 + Neon prod + the migrations switch (ADR-0019) + monitoring (best-free) + CodeQL/Dependabot + GDPR/data-deletion. **Dress rehearsal:** the entire happy path on the production domain.
-- **Exit.** The bar's happy path runs green on production, observed.
-
-### Phase 7 — Denys onboarding & true UAT (LAUNCH)
-
-- **Outcome.** Denys is live: his real programs are in the system, he's running ≥5 paid athletes, and we iterate on real usage.
-- **Key work.** Domain handover; training calls to move his programs in by hand; ≥5 paying athletes; a **2–4 week iteration runway with ZERO new features** — only fixing what real usage surfaces.
-- **Exit = MVP LAUNCHED.**
+| Item                                                                                                                                              | Trigger                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Billing automation** (provider, purchase-first onboarding, subscription FSM, access gate, admin Subscription CRUD, `stripe*`→`provider*`)       | A **second paying coach** in sight, or public onboarding beyond Denys. Until then manual enroll + off-platform money. |
+| **Coach honest-metrics** (block 3 — derived fields + reconcile cron on `performedAt`)                                                             | **First** post-launch — Denys will want to see athlete progress/compliance.                                           |
+| **Benchmark / profile / template CATALOG** (admin CRUD, fusion form, save-as/use-as; re-homes `profileSelections` free-string axes → catalog ids) | When ad-hoc free-string axes start to bite (e.g. "RX" vs "Rx" mismatch in the field).                                 |
+| **Plan publish / version-gate** (D-SCOPE-PUBLISH — visibility gate #2)                                                                            | When the coach needs to edit a live plan without athletes watching the edits.                                         |
+| **% of bodyweight** load reference (new `percentageReference` scope `"bodyweight"` — primitive + resolver + coach editor + render, together)      | When a coach needs sled/carry "100% BW" prescriptions (see `athlete-core/deferred.md`, D-AC-BODYWEIGHT-LABEL).        |
+| **Cross-athlete leaderboard** (best-of ranked per 1RM / per benchmark)                                                                            | Surfaced scope; competitive feature, not MVP-blocking.                                                                |
+| **Granular admin scoping** (head coach → CMS-only, not full admin)                                                                                | A **second** coach (then one coach must not see another's data/users).                                                |
+| **Prod hardening** (GDPR/data-deletion, monitoring best-free, CodeQL/Dependabot)                                                                  | Before opening past the closed cohort.                                                                                |
 
 ---
 
 ## Explicitly OUT of the MVP (v1.1+)
 
-Gym-floor PWA · periodization above Week (micro/meso/macro) · weekly-summary + action queue · advanced analytics · military-rehab UI · Telegram · pause UI · Excel tooling · MFA · **DnD group-creation** (drag-to-group + drag-in/out — dropped from Phase 2, coach-station D-11) · the `Performed*` redesign's nice-to-haves beyond logging. These are real and wanted — they are _after the bar_.
+Gym-floor PWA · periodization above Week (micro/meso/macro) · weekly-summary + action queue · advanced analytics · military-rehab UI · Telegram · pause UI · Excel tooling · MFA · **DnD group-creation** (dropped from coach-station, D-11) · per-exercise actual logging (post-MVP, D-LOGGING-MINIMAL) · in-workout timers / scoring engine. These are real and wanted — they are _after the bar_.
 
 ## Fixed decisions (don't re-litigate)
 
-- 30-day access window = 30 days from purchase; re-subscribe any time, history preserved.
-- Benchmark seed = 25. PAUSED lives on `EnrollmentStatus` (NOT on `Subscription`). Session revocation + `CRON_SECRET` already done.
-- The corpus (Denys's one personal plan) is the FLOOR of expressiveness, not the ceiling — group-programming notations (m/f, RX/SC) are first-class despite low corpus cardinality.
+- **Billing is post-launch** (manual enrollment is the launch mechanism; automation triggers on a second paying coach). 30-day access window, re-subscribe, manual activate — all ride the post-launch billing wave.
+- Benchmark result = **athlete-owned, append-only history** (`BenchmarkResult`), decoupled from completion; a re-log is a new attempt (D-BR-OWNED-HISTORY). Working-weight `%` resolves off the **latest** 1RM; records/PR are **best-of** (D-1RM-LATEST — two laws, two layers).
+- The corpus (Denys's plans) is the FLOOR of expressiveness, not the ceiling — group-programming notations (m/f, RX/SC) are first-class despite low corpus cardinality.
 
 ## Cross-references
 
-Phase 1 detail → `initiatives/session-primitive/`. Architectural decisions → `docs/adr/`. Personas → `docs/personas/denys.md`. The plan-as-train domain metaphor and the coach-daily-UX priority govern every phase. How we execute phases → `docs/process.md`.
+athlete-core detail → `initiatives/athlete-core/`. Phase-1 primitive proof → `initiatives/session-primitive/e2e-evil-corpus.md`. Architectural decisions → `docs/adr/`. Personas → `docs/personas/denys.md`. The plan-as-train domain metaphor and the coach-daily-UX priority govern every block. How we execute → `docs/process.md`.
