@@ -27,6 +27,7 @@ export * from "./use-modifier-search";
 export * from "./use-benchmark-results";
 export * from "./use-one-rm-records";
 export * from "./use-performed-sessions";
+export * from "./use-plan-enrollments";
 export * from "./use-plan-timetable";
 export * from "./use-schema-rows";
 export * from "./use-schemas";
