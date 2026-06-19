@@ -10,9 +10,10 @@ import { USER_ROLE_LABELS } from "@repo/contracts/iam/user";
 import { DEFAULT_LOCALE } from "@repo/shared";
 import { InlineEditText } from "@repo/ui";
 
+import { ProfileAvatar } from "@app/lib/components";
 import { useUpdateCoachProfile, useUploadImage } from "@app/lib/hooks";
 
-import { ProfileAvatar, SpecialtiesEditor } from "../components";
+import { SpecialtiesEditor } from "../components";
 
 type IdentityHeroSectionProps = {
   pageData: CoachProfilePageData;

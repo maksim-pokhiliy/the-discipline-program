@@ -24,6 +24,7 @@ export const applyAthleteProfileUpdate = (
   data: UpdateAthleteProfileRequest,
 ): GetAthleteProfileResponse => ({
   ...prev,
+  ...(data.image !== undefined && { image: data.image }),
   ...(data.gender !== undefined && { gender: data.gender }),
   ...(data.heightCm !== undefined && { heightCm: data.heightCm }),
   ...(data.weightKg !== undefined && { weightKg: data.weightKg }),

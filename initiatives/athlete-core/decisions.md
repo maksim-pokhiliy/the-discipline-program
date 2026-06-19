@@ -512,3 +512,117 @@ The server flags **exactly one** series point per record as `isBest` (the determ
 For best / PR / delta / chart-scalar comparison, `distance` is normalized to **meters** (km × 1000) — in both `derive-records`'s `scoreVector` and the records builder's `magnitudeVector` / `resultScalar`. The DISPLAYED result keeps the athlete's ORIGINAL unit (m or km, as logged). This corrects screen-2's PR badge too (same comparison path).
 
 **Why (QA-002).** The logging UI permits per-log m OR km (D-DIST-UNITS: `["m","km"]`); comparing by raw value mis-ranks a "5 km" run BELOW a "4000 m" run (5 < 4000 by the bare number) and computes a nonsense delta. Normalizing to a canonical unit (meters) for comparison fixes ranking/delta while preserving the athlete's chosen display unit. `derive-records` was already the screen-2 PR source, so the fix lands once and corrects both screens.
+
+---
+
+# Block-2 screen-4 (Athlete Profile) (ratified 2026-06-19, `/feature` small execution)
+
+Promoted from `.feature-dev/1781842242/` (research.md §Domain Reconciliation + review.md). Branch `feat/athlete-profile` (own git worktree, parallel to the screen-3 Records session on `feat/athlete-records`). A `/feature` **small** run — UI + route-swap on the EXISTING athlete-profile contract/hooks/endpoint (all shipped with screen 2); NO new endpoint, NO contract change, NO Prisma change. The Claude Design prototype is the visual SSOT; where it shows data the domain lacks, the DOMAIN MODEL WINS and the gap is flagged — these decisions record those reconciliations. Verified against the as-built code (orchestrator `git diff` review caught + fixed a `borderRadius` MUI-sx-multiplier bug — 16px instead of 4px).
+
+## D-PROF-UI-ONLY — the Profile screen is UI + route-swap on the existing contract, no server change
+
+**Ratified 2026-06-19 (owner, in the executor prompt).**
+
+The athlete Profile screen (`/athlete/profile`) is built ENTIRELY on the athlete-profile read+write that shipped with screen 2: `useAthleteProfile()` (GET) + `useUpdateAthleteProfile()` (optimistic PUT) over `GET/PUT /api/platform/athlete/profile`, the `athleteProfileSchema`/`updateAthleteProfileSchema` contract, and the `coachingAthleteProfileApi.get/upsert` endpoint. The slice adds ONLY the `apps/platform/src/modules/athlete-profile/` UI module + the route-page swap (the `(secondary)` "Coming soon" placeholder → the real screen). NO new endpoint, NO contract change, NO Prisma change, NO new hook.
+
+**Why.** The producer was built on screen 2 (the inline pick-profile editor + the GET/PUT hook); the Profile screen is its dedicated home. A `small` slice with zero server radius is the honest scope — the only thing that would have escalated it to full (a server-side default-empty GET for the fresh-athlete 404) is unnecessary because the existing optimistic mutation already tolerates a missing cache (D-PROF-404-EMPTY).
+
+## D-PROF-404-EMPTY — a fresh athlete's missing profile (GET 404) renders as an empty editable form, client-side
+
+**Ratified 2026-06-19 (orchestrator, from the executor prompt §3.4; verified against the optimistic-mutation source).**
+
+A freshly-invited athlete who has never set bodyweight or picked a profile has NO `AthleteProfile` row → `coachingAthleteProfileApi.get` does `findOrThrow` → 404 → the client throws `NotFoundError`. The view treats `error instanceof NotFoundError` as the EMPTY case (a blank editable form: "Not set" bodyweight + the honest no-picks state), NOT an error; non-404 errors render an `Alert`. The FIRST save upserts the row: `useUpdateAthleteProfile`'s `onMutate` guards `if (previous !== undefined)` (verified in `packages/query/src/hooks/use-optimistic-mutation.ts`), so with no cache the optimistic patch is SKIPPED, the PUT still fires (server upserts), and `onSettled` invalidates → refetch → 200.
+
+**Why.** Keeps the slice client-only/small — the alternative (a server-side default-empty GET) was unnecessary because the existing optimistic mutation no-ops cleanly on a missing cache. Establishes the 404-as-empty pattern for the platform (no prior art).
+
+## D-PROF-NO-CLEAR-WEIGHT — bodyweight cannot be cleared (the update contract is non-nullable); the prototype's "Clear weight" is dropped
+
+**Ratified 2026-06-19 (orchestrator domain-vs-prototype reconciliation; owner walkthrough flag).**
+
+The prototype offers a "Clear weight" action (sets `weightKg = null`). The contract CANNOT express it: `updateAthleteProfileSchema.weightKg = z.number().finite().positive().max(500).optional()` — **`.optional()` but NOT `.nullable()`** (only `healthNote` is nullable in the update schema). Sending `weightKg: null` fails validation. Per D-PROF-UI-ONLY (no contract change), "Clear weight" is **DROPPED**. Body-weight states = display (set) / not-set (only reachable for a never-saved athlete) / editing (Save a valid `>0 ≤500` value, Cancel — no clear). Save clamps to `MAX_WEIGHT_KG` and rounds to 0.1 (D-PROF-SAVE-CLAMP).
+
+**Why.** The domain model wins over the prototype where they conflict. Clearing bodyweight would need a deliberate contract decision (nullable `weightKg` + the server upsert handling null) — out of this UI-only slice. Deferred (see `deferred.md`).
+
+## D-PROF-SELECTIONS-HONEST — Profile Picks renders the REAL `profileSelections` map (+ clear), never a fabricated catalog
+
+**Ratified 2026-06-19 (orchestrator reconciliation; consistent with D-PROFILE-SELECTIONS).**
+
+`profileSelections` is a FREE-STRING `{axis: value}` map (`z.record(string.trim.min1, string.trim.min1)`) with NO canonical catalog — the valid axes/values live in plan `byProfile` loads, not the profile (D-PROFILE-SELECTIONS; the catalog is the deferred library wave). The prototype's Profile Picks shows a CURATED picker (hardcoded axes RX/SC, M/F, Masters + alternative-value buttons + per-axis descriptions + a "Not picked" empty-axis state). The shipped screen renders ONLY the accumulated map: one row per `[axis, value]` actually picked, each as a primary `Chip` (the resolved value) + a "Resolved" badge + a clear (the chip's `onDelete` ×). Clearing sends `profileSelections` = the map MINUS that key (the PUT overwrites via `applyAthleteProfileUpdate`'s spread); clearing the last pick sends `{}` (a valid empty record — NEVER `null`, which the update schema rejects). It does NOT fabricate the hardcoded axes, alternative-value buttons (we don't know the other valid values), descriptions, or "Not picked" rows (we don't know unpicked axes).
+
+**Why.** The domain has no axis/value catalog yet, so a curated picker would be invented data — and free-text re-entry is a footgun (a typo "Rx" vs "RX" silently breaks load resolution). The honest model is "see your remembered picks, clear one to re-pick it on the next session view" — the session view IS the curated picker (the axis + valid values come from the load in context). Flagged at the walkthrough: a curated profile-picks picker needs the profile-type catalog (deferred library wave).
+
+## D-PROF-FIELDS — only `weightKg` + `profileSelections` are surfaced (exactly what the prototype shows); identity is display-only from session
+
+**Ratified 2026-06-19 (orchestrator reconciliation).**
+
+The prototype surfaces exactly two editable contract fields — `weightKg` (Body Weight) and `profileSelections` (Profile Picks). The other `updateAthleteProfileSchema` fields — `gender`, `heightCm`, `healthStatus`, `healthNote` — are NOT shown as controls (the prototype's "M / F" is a free-string profile-pick AXIS, not the `Gender` enum), so they are NOT built. The identity card (avatar + name + "Athlete" role badge) is DISPLAY-ONLY, drawn from `useSession()` (`@repo/auth/client`), not the profile; the prototype's subtitle "Performance RX · Lviv" is DROPPED (no domain backing — no city/descriptor field). The role badge is a constant string "Athlete" (the route is athlete-gated; there is no `USER_ROLE_LABELS` map in the contract).
+
+**Why.** Cover exactly what the prototype surfaces, backed by the contract — no invented fields, no dropped contract fields the prototype shows. The absent fields exist in the contract but have no home in this design; a future "full profile" or coach-edit surface could expose them (deferred). Identity is the user's, not the profile's, so it stays read-only.
+
+## D-PROF-FLOATING-LABEL / D-PROF-SAVE-CLAMP — edit via a MUI floating-label field; clamp on save
+
+**Ratified 2026-06-19 (house-rule application + prototype save logic).**
+
+The body-weight EDIT control is a MUI `TextField` with a floating `label="Body weight"` + a "kg" end-adornment (house rule `mui-floating-labels-everywhere` — never a hand-written caption-as-label), a deliberate divergence from the prototype's bespoke big-number input (the 60px Barlow-Condensed treatment is kept for the read-only DISPLAY state). Save parses the draft, rejects `NaN`/`≤0` (Save disabled, nothing sent), else clamps to `MAX_WEIGHT_KG` (=500, from the contract constant — no magic literal) and rounds to 0.1 before the PUT.
+
+**Why.** Floating labels are a ratified project pattern; the clamp mirrors the prototype and the server's own `≤500 positive` bound (defence-in-depth for UX). Minor visual divergence flagged at the walkthrough.
+
+---
+
+# Block-2 screen-4 (Athlete Profile) v2 — avatar + editable fields + height twin (ratified 2026-06-19, `/feature` full, post-walkthrough)
+
+Promoted from `.feature-dev/1781848254/` + the owner's live-walkthrough steers. Branch `feat/athlete-profile` (extends PR #286 — same screen, iterated after the owner reviewed the live screen-4). A `/feature` **full** run. NO Prisma change (`User.image` exists). Verified as-built (orchestrator `git diff` review + independent Review + adversarial QA; one bounded security fix applied, the systemic part deferred).
+
+## D-AV-CONTRACT-FLAT — the avatar is `User.image`, added to the FLAT athlete-profile contract (no coach page-data restructure)
+
+**Ratified 2026-06-19 (owner, "аватар как у тренера").**
+
+The avatar is `User.image` (the SAME field the coach uses — shared, not duplicated per role; `AthleteProfile` gets no image column). `athleteProfileSchema += image` (required, nullable, READ); `updateAthleteProfileSchema += image` (UPDATE — write-side restricted per D-AV-IMAGE-BLOB-WRITE). api-server `get` joins `User.image` (`include:{ user:{ select:{ image:true } } }`); `upsert` split-writes `image` → `tx.user.update` inside a `$transaction` (mirrors the coach split-payload), filtering `image` OUT of the `athleteProfile` upsert data (it's a User column). The flat GET stays flat — REJECTED the coach `{ user, profile }` page-data restructure (the athlete screen uses none of the coach hero's email/role/timezone/track-record).
+
+**Why.** The athlete deliberately ships a flat GET (screen-4 pattern); the coach uses page-data because its hero is composite. Add only what the screen needs. Three `mapToAthleteProfile` callers updated (`get`, `upsert`, AND `admin-user-view.mapper` — admin shows athlete profiles; research's "2 callers" missed the 3rd, caught by check-types).
+
+## D-AV-READ-FROM-QUERY + D-AV-SESSION-UPDATE — avatar reads from the profile QUERY; after upload, the session is refreshed so the app-wide header avatar updates too
+
+**Ratified 2026-06-19 (owner, "консистентно тренеру" — the header must show it).**
+
+The next-auth session is a JWT — `session.user.image` is STALE after a `User.image` write until the token refreshes (the jwt callback set `token.image` only at login; the refresh path re-read only role+tokenVersion). So: (1) the identity-card avatar reads `image` from the profile QUERY (live after the optimistic write + invalidate); name/role stay from session (not written here). (2) For the **app-wide header** (`PlatformHeader` reads `session.user.image`, unreachable from the profile query), the jwt callback now handles `trigger==="update"` (accepts the new image via the `readSessionImageUpdate` type-guard; tokenVersion revocation still enforced after), and the view calls `useSession().update({ image:url })` after a successful upload. Uploaded avatar shows immediately everywhere, no re-login.
+
+**Why.** Reading from the query fixes the profile screen; `session.update` fixes the header (the only session-sourced surface). **Trust note:** `update({image})` lets a client set its OWN session's displayed image to any string the WRITE schema accepts — bounded by D-AV-IMAGE-BLOB-WRITE (blob-host only) and cosmetic-self-only (the real `User.image` is the server-written PUT value). The coach has the same latent header-staleness on a RE-upload (deferred — see `deferred.md`).
+
+## D-AV-AUTH-BROADEN — the shared `/upload/image` route opens from `withCoachAuth` to `withAuthenticated`
+
+**Ratified 2026-06-19.**
+
+The shared upload route was coach-gated, blocking athletes. Broadened to `withAuthenticated` (ANY_ROLE — already in `@repo/api-routes`, just not re-exported in `lib/server/auth.ts`). Safe: the handler hard-rejects any `context !== "avatar"` (the only capability granted is avatar upload); `withAuthenticated` still requires a valid session; rate-limit unchanged; ANY_ROLE ⊇ all coach roles (no coach regression). NOT a separate athlete route (DRY); NOT `withAthleteAuth` (it excludes ADMIN — a regression).
+
+## D-AV-IMAGE-BLOB-WRITE — the athlete image UPDATE is restricted to the Vercel Blob host (QA-002 bounded fix); READ stays permissive
+
+**Ratified 2026-06-19 (orchestrator, from adversarial QA-002).**
+
+`imageUrlSchema = z.string().url().nullable()` accepts ANY url-shaped string — an attacker-controlled external URL would persist to `User.image` and render (`<img src>`) on the athlete header AND the coach roster / admin console (no live XSS — img sink; no SSRF — never fetched server-side; but a stored attacker URL → IP-leak/content-injection into privileged screens, + no length cap). The athlete WRITE path is hardened: `updateAthleteProfileSchema.image = blobImageUrlSchema` (`url` + `hostname.endsWith(BLOB_STORAGE_DOMAIN)` + 2048 length cap, nullable; `common/image.ts`) — only an uploaded blob URL passes. The READ schema stays `imageUrlSchema` (permissive — existing/seeded non-blob image data must still parse on GET).
+
+**Why.** Close the NEW write surface cheaply (the legit upload→save produces a blob URL; athletes had no prior image → zero data-break) without touching the shared `imageUrlSchema` (8+ usages). The SYSTEMIC hardening (coach selfUpdate + iam/user writes + a data audit + the read schema) is deferred (`deferred.md`).
+
+## D-FIELDS-DETAILS-CARD — gender / healthStatus / healthNote in an always-editable "Details" settings-form
+
+**Ratified 2026-06-19 (owner, "больше полей, на твоё усмотрение").**
+
+The contract fields `gender`/`healthStatus`/`healthNote` (already in `updateAthleteProfileSchema`, already split-mapped server-side — pure UI) get a new always-editable "Details" card (NOT the body-weight inline display→edit; detail fields have no hero display, the control IS the display): gender `<TextField select>` (MALE/FEMALE, no clear — non-nullable in update), healthStatus select + a live `HealthStatusChip` preview, healthNote multiline (clearable — nullable, empty→null). Selects save on change; note on blur. Floating labels, theme tokens, single-owner mutation.
+
+## D-FIELDS-HEIGHT-TWIN — height is a hero-stat card TWIN of body-weight (SUPERSEDES design.md's height-in-Details)
+
+**Ratified 2026-06-19 (owner, live walkthrough: "вес в красивой карточке, рост в инпуте — делаем близнец").**
+
+`design.md §8.3` put `heightCm` as a field inside the Details card. The owner, seeing the live screen, ruled height must match body-weight's hero treatment (both are quantitative body measurements). So `BodyWeightCard` was generalized (rule-of-two) into a shared `BodyStatCard` (the 3-state display-60px/empty/edit machinery, parametrized; an injected `parseValue` does weight float/round-0.1/clamp-500 vs height integer/clamp-300), with thin `BodyWeightCard` + `BodyHeightCard` wrappers (the weight card's external API + test preserved). Layout: a twin row (Weight + Height, px-free `flex:{md:1}`, stretch) → Picks → Details (height removed). **This supersedes design.md §8.3.**
+
+## D-FIELDS-GENDER-INERT — `gender` is a stored athlete attribute, NOT a resolver input (the resolver reads only `profileSelections`)
+
+**Ratified 2026-06-19 (owner ruling after the resolver was verified: "гендер не трогаем").**
+
+Owner asked why `gender` isn't wired to byProfile load resolution. **Verified:** `loadAthleteLoadContext` (`load-records.ts`) selects only `{ weightKg, profileSelections }` — `gender` is read NOWHERE in the resolver. byProfile axes (incl. any gender-like "M/F" axis a coach authors) resolve PURELY from the free-string `profileSelections` map. So the typed `gender` enum and a gender-like profile-pick are disconnected; `gender` is an inert stored attribute (coach-visible info). (design.md §1's claim that gender "feeds gendered RX/SC resolution" was inaccurate — corrected here.) Owner ruling: **keep gender editable as an attribute, do NOT wire it to the resolver now.** Proper wiring (a typed gender axis bound to the field) is the deferred profile-type-catalog wave; a brittle axis-name convention is rejected (kin to D-PROF-SELECTIONS-HONEST).
+
+## D-AV-LIFT + D-AV-SINGLE-OWNER — `ProfileAvatar` lifted to shared `lib/components`; the view owns all mutation/upload/session hooks
+
+**Ratified 2026-06-19.**
+
+`ProfileAvatar` (the presentational upload widget) lifted from `modules/coach-profile/components/` → `apps/platform/src/lib/components/` (both features depend downward — no athlete→coach feature reach; the coach section re-points its import). The view owns the single `useUpdateAthleteProfile` + `useUploadImage` + `useSession().update`; the cards take leaf props — one optimistic-snapshot lifecycle per query key.

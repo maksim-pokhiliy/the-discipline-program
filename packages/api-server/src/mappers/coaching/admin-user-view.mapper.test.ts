@@ -80,6 +80,7 @@ describe("mapToAdminUserView", () => {
     expect(result.athleteProfile).toEqual({
       id: "cls_ap_1",
       userId: "cls_user_1",
+      image: "https://example.com/avatar.jpg",
       gender: Gender.MALE,
       heightCm: 180,
       weightKg: 82.5,

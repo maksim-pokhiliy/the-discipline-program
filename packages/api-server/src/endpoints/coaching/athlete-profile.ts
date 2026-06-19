@@ -14,11 +14,14 @@ import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 export const coachingAthleteProfileApi = {
   get: async (userId: string): Promise<AthleteProfile> => {
     const profile = await findOrThrow(
-      prisma.athleteProfile.findUnique({ where: { userId } }),
+      prisma.athleteProfile.findUnique({
+        where: { userId },
+        include: { user: { select: { image: true } } },
+      }),
       "Athlete profile",
     );
 
-    return mapToAthleteProfile(profile);
+    return mapToAthleteProfile(profile, profile.user.image);
   },
 
   upsert: async (userId: string, data: UpdateAthleteProfileData): Promise<AthleteProfile> => {
@@ -34,13 +37,20 @@ export const coachingAthleteProfileApi = {
     };
 
     try {
-      const profile = await prisma.athleteProfile.upsert({
-        where: { userId },
-        create: { userId, ...prismaData },
-        update: prismaData,
+      const profile = await prisma.$transaction(async (tx) => {
+        if (data.image !== undefined) {
+          await tx.user.update({ where: { id: userId }, data: { image: data.image } });
+        }
+
+        return tx.athleteProfile.upsert({
+          where: { userId },
+          create: { userId, ...prismaData },
+          update: prismaData,
+          include: { user: { select: { image: true } } },
+        });
       });
 
-      return mapToAthleteProfile(profile);
+      return mapToAthleteProfile(profile, profile.user.image);
     } catch (error) {
       return handlePrismaError(error, { entity: "Athlete profile" });
     }

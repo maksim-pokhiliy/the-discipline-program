@@ -3,7 +3,7 @@ import { storageUploadAdminApi } from "@repo/api-server/storage";
 import { uploadImageResponseSchema } from "@repo/contracts/storage/upload";
 import { BadRequestError } from "@repo/errors";
 
-import { withCoachAuth } from "@app/lib/server/auth";
+import { withAuthenticated } from "@app/lib/server/auth";
 
 const processUpload = async (formData: FormData) => {
   const file = formData.get("file");
@@ -20,7 +20,7 @@ const processUpload = async (formData: FormData) => {
   return storageUploadAdminApi.uploadImage(file, "avatar");
 };
 
-export const POST = withCoachAuth(
+export const POST = withAuthenticated(
   withAuthRateLimit(
     createFormDataPostHandler(processUpload, uploadImageResponseSchema),
     RATE_LIMIT_TIER.API,

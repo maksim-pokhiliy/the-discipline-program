@@ -1,14 +1,5 @@
-import { Stack, Typography } from "@mui/material";
+import { AthleteProfileView } from "@app/modules/athlete-profile";
 
-const AthleteProfilePage = () => {
-  return (
-    <Stack>
-      <Typography variant="h5">Profile</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Coming soon
-      </Typography>
-    </Stack>
-  );
-};
+const AthleteProfilePage = () => <AthleteProfileView />;
 
 export default AthleteProfilePage;
