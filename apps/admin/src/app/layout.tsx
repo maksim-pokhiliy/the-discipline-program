@@ -9,8 +9,6 @@ import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { SkipToContent, Toaster } from "@repo/ui";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "The Discipline Program - Admin",
   description: "Admin panel for The Discipline Program",
