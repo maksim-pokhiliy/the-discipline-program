@@ -25,7 +25,6 @@
     "db:reset:prisma": "prisma db push --force-reset",
     "db:reset": "prisma db push --force-reset && tsx scripts/apply-sql-checks.ts",
     "db:seed": "prisma db seed",
-    "db:seed:pages": "tsx prisma/seed-pages.ts",
     "db:apply-checks": "tsx scripts/apply-sql-checks.ts"
   },
   "prisma": {

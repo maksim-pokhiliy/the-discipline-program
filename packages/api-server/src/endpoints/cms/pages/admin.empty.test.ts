@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PageSlug, PAGE_SECTIONS_MAP } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { cmsPagesAdminApi } from "./admin";
@@ -39,6 +40,23 @@ describe("cmsPagesAdminApi — empty DB", () => {
       await expect(cmsPagesAdminApi.getPageBySlug(`${TEST_PREFIX}-non-existent`)).rejects.toThrow(
         NotFoundError,
       );
+    });
+  });
+
+  describe("lazy materialization", () => {
+    it("getPages materializes and includes every canonical page slug", async () => {
+      const pages = await cmsPagesAdminApi.getPages();
+
+      for (const slug of Object.values(PageSlug)) {
+        expect(pages.some((page) => page.slug === slug)).toBe(true);
+      }
+    });
+
+    it("getPageBySlug resolves a valid slug and returns its canonical sections", async () => {
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.HOME);
+
+      expect(details.slug).toBe(PageSlug.HOME);
+      expect(details.sections).toHaveLength(Object.values(PAGE_SECTIONS_MAP.home).length);
     });
   });
 });
