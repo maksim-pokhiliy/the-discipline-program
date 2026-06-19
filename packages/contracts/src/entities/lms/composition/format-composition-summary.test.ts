@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Composition } from "@repo/contracts/lms/composition";
-
+import { type Composition } from "./composition.types";
 import {
   formatCapSummary,
   formatCompositionSummary,

@@ -6,6 +6,7 @@ import {
   type Result,
   type ResultType,
 } from "@repo/contracts/lms/_shared";
+import { formatRepetitionLabel } from "@repo/contracts/lms/composition";
 import {
   type BlockView,
   type ResolvedLoad,
@@ -36,7 +37,6 @@ import {
   VOLUME_SEPARATOR,
   WEEKDAY_LONG,
 } from "./athlete-session.constants";
-import { formatRepetitionLabel } from "./format-composition-summary";
 import { formatIntensity } from "./format-intensity";
 import { formatRepNotation } from "./format-rep-notation";
 import { formatSide } from "./format-side";

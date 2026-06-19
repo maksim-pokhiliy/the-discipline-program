@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { RestSpec } from "@repo/contracts/lms/_shared";
+import { type RestSpec } from "../_shared";
 
 import { formatRestSpec } from "./format-rest-spec";
 
