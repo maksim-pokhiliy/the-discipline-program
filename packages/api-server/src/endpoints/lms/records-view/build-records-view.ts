@@ -19,6 +19,11 @@ import { type OneRMRecordRecord, type RecordsBenchmarkResultRecord } from "./rec
 
 type NonEmptyArray<T> = [T, ...T[]];
 
+const METERS_PER_KM = 1000;
+
+const distanceToMeters = (result: Extract<Result, { type: "distance" }>): number =>
+  result.unit === "km" ? result.value * METERS_PER_KM : result.value;
+
 const groupBy = <T, K>(items: readonly T[], keyOf: (item: T) => K): Map<K, NonEmptyArray<T>> => {
   const groups = new Map<K, NonEmptyArray<T>>();
 
@@ -110,7 +115,7 @@ const magnitudeVector = (result: Result): number[] => {
     case "max_reps":
       return [result.reps];
     case "distance":
-      return [result.value];
+      return [distanceToMeters(result)];
     case "calories":
       return [result.value];
     default:
@@ -152,7 +157,7 @@ const resultScalar = (result: Result): number => {
     case "max_reps":
       return result.reps;
     case "distance":
-      return result.value;
+      return distanceToMeters(result);
     case "calories":
       return result.value;
     default:

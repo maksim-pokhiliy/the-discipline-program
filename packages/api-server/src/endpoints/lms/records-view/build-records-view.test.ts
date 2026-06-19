@@ -263,7 +263,7 @@ describe("buildRecordsView", () => {
           },
         ],
         best: { type: "distance", value: 5, unit: "km" },
-        deltaValue: 5 - 4,
+        deltaValue: 5000 - 4000,
       },
       {
         type: "calories",
@@ -377,6 +377,25 @@ describe("buildRecordsView", () => {
 
       expect(record?.delta).toBeNull();
       expect(record?.attemptCount).toBe(1);
+    });
+
+    it("normalizes mixed-unit distance to meters for best, delta, and series", () => {
+      const benchmarkRows = [
+        benchmarkRow({
+          result: { type: "distance", value: 1402, unit: "m" },
+          recordedAt: at("2026-01-01T00:00:00.000Z"),
+        }),
+        benchmarkRow({
+          result: { type: "distance", value: 1.45, unit: "km" },
+          recordedAt: at("2026-02-01T00:00:00.000Z"),
+        }),
+      ];
+
+      const [record] = buildRecordsView({ oneRMRows: [], benchmarkRows }).benchmarks;
+
+      expect(record?.best).toEqual({ type: "distance", value: 1.45, unit: "km" });
+      expect(record?.delta).toEqual({ value: 1450 - 1402, improved: true });
+      expect(record?.series.map((point) => point.scalar)).toEqual([1402, 1450]);
     });
 
     it("computes delta from the two most-recent attempts, not max minus previous max", () => {
