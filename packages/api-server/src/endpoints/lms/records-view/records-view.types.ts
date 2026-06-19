@@ -35,6 +35,6 @@ export type OneRMRecordRecord = Prisma.OneRMRecordGetPayload<{
   include: typeof oneRMRecordExerciseInclude;
 }>;
 
-export type BenchmarkResultRecord = Prisma.BenchmarkResultGetPayload<{
+export type RecordsBenchmarkResultRecord = Prisma.BenchmarkResultGetPayload<{
   include: typeof benchmarkRecordSchemaInclude;
 }>;

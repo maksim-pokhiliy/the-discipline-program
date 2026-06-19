@@ -6,7 +6,7 @@ import {
   formatRepetitionLabel,
 } from "@repo/contracts/lms/composition";
 
-import { type BenchmarkResultRecord } from "./records-view.types";
+import { type RecordsBenchmarkResultRecord } from "./records-view.types";
 
 const SUBLINE_PART_SEPARATOR = " · ";
 const MOVEMENT_SEPARATOR = " / ";
@@ -21,7 +21,7 @@ const BENCHMARK_LABEL_BY_RESULT_TYPE: Record<ResultType, string> = {
   calories: "Calories",
 };
 
-type BenchmarkPlannedSchema = BenchmarkResultRecord["plannedSchema"];
+type BenchmarkPlannedSchema = RecordsBenchmarkResultRecord["plannedSchema"];
 type BenchmarkSchemaRow = BenchmarkPlannedSchema["rows"][number];
 
 const parseComposition = (

@@ -5,7 +5,7 @@ import { type Load, type Result } from "@repo/contracts/lms/_shared";
 import { type Composition } from "@repo/contracts/lms/composition";
 
 import { buildRecordsView } from "./build-records-view";
-import { type BenchmarkResultRecord, type OneRMRecordRecord } from "./records-view.types";
+import { type OneRMRecordRecord, type RecordsBenchmarkResultRecord } from "./records-view.types";
 
 const at = (iso: string): Date => new Date(iso);
 
@@ -37,7 +37,7 @@ type BenchmarkSchemaOverrides = {
 
 const benchmarkSchema = (
   overrides: BenchmarkSchemaOverrides = {},
-): BenchmarkResultRecord["plannedSchema"] => ({
+): RecordsBenchmarkResultRecord["plannedSchema"] => ({
   header: overrides.header ?? null,
   composition: overrides.composition ?? null,
   block: {
@@ -60,7 +60,7 @@ type BenchmarkRowOverrides = {
   schema?: BenchmarkSchemaOverrides;
 };
 
-const benchmarkRow = (overrides: BenchmarkRowOverrides): BenchmarkResultRecord => ({
+const benchmarkRow = (overrides: BenchmarkRowOverrides): RecordsBenchmarkResultRecord => ({
   id: `bench-${overrides.recordedAt?.toISOString() ?? "x"}`,
   userId: "user-1",
   plannedSchemaId: overrides.plannedSchemaId ?? "schema-fran",

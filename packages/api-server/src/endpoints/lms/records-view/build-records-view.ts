@@ -15,7 +15,7 @@ import {
 } from "../athlete-records";
 
 import { buildSubline, resolveBenchmarkTitle } from "./build-records-view.helpers";
-import { type BenchmarkResultRecord, type OneRMRecordRecord } from "./records-view.types";
+import { type OneRMRecordRecord, type RecordsBenchmarkResultRecord } from "./records-view.types";
 
 type NonEmptyArray<T> = [T, ...T[]];
 
@@ -159,7 +159,7 @@ const findBestRecordedAt = (entries: NonEmptyArray<BenchmarkResultEntry>, best: 
 
 const buildBenchmarkRecord = (
   plannedSchemaId: string,
-  rows: NonEmptyArray<BenchmarkResultRecord>,
+  rows: NonEmptyArray<RecordsBenchmarkResultRecord>,
 ): BenchmarkRecordView => {
   const entries = mapNonEmpty(rows, (row) => ({
     result: resultSchema.parse(row.result),
@@ -187,14 +187,14 @@ const buildBenchmarkRecord = (
   };
 };
 
-const buildBenchmarkSection = (rows: BenchmarkResultRecord[]): BenchmarkRecordView[] =>
+const buildBenchmarkSection = (rows: RecordsBenchmarkResultRecord[]): BenchmarkRecordView[] =>
   [...groupBy(rows, (row) => row.plannedSchemaId).entries()]
     .map(([plannedSchemaId, group]) => buildBenchmarkRecord(plannedSchemaId, group))
     .sort((a, b) => a.title.localeCompare(b.title));
 
 type BuildRecordsViewArgs = {
   oneRMRows: OneRMRecordRecord[];
-  benchmarkRows: BenchmarkResultRecord[];
+  benchmarkRows: RecordsBenchmarkResultRecord[];
 };
 
 export const buildRecordsView = ({
