@@ -12,6 +12,8 @@ import { DateLocalizationProvider } from "@app/lib/components";
 
 type RootLayoutProps = Readonly<{ children: React.ReactNode }>;
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "The Discipline Program",
   description: "Coach & Athlete training platform",
