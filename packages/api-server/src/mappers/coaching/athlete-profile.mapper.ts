@@ -7,9 +7,13 @@ import {
 
 import { GENDER_MAP, HEALTH_STATUS_MAP } from "./enum-maps";
 
-export const mapToAthleteProfile = (p: PrismaAthleteProfile): AthleteProfile => ({
+export const mapToAthleteProfile = (
+  p: PrismaAthleteProfile,
+  image: string | null,
+): AthleteProfile => ({
   id: p.id,
   userId: p.userId,
+  image,
   gender: p.gender ? GENDER_MAP[p.gender] : null,
   heightCm: p.heightCm,
   weightKg: p.weightKg ? Number(p.weightKg) : null,

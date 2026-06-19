@@ -4,4 +4,5 @@ import { createAuthOptions } from "@repo/auth/config";
 
 export const authOptions = createAuthOptions(iamAuthService);
 
-export const { withAdminAuth, withAthleteAuth, withCoachAuth } = createAuthWrappers(authOptions);
+export const { withAdminAuth, withAthleteAuth, withCoachAuth, withAuthenticated } =
+  createAuthWrappers(authOptions);

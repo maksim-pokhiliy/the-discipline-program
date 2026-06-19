@@ -2,19 +2,17 @@
 
 import { type ReactElement } from "react";
 
-import { alpha, Avatar, Box, Stack, Typography } from "@mui/material";
+import { alpha, Box, Stack, Typography } from "@mui/material";
 
 import { useSession } from "@repo/auth/client";
+
+import { ProfileAvatar } from "@app/lib/components";
 
 import {
   CARD_GAP,
   CARD_PADDING,
   CARD_RADIUS_PX,
-  FONT_WEIGHT_DISPLAY,
   FONT_WEIGHT_SEMI_BOLD,
-  IDENTITY_AVATAR_BG_ALPHA,
-  IDENTITY_AVATAR_BORDER_ALPHA,
-  IDENTITY_AVATAR_PX,
   IDENTITY_NAME_PX,
   ROLE_BADGE_BG_ALPHA,
   ROLE_BADGE_LABEL,
@@ -24,21 +22,21 @@ import {
   ROLE_BADGE_PX,
 } from "../utils/athlete-profile.constants";
 
-const getInitial = (name?: string | null, email?: string | null): string => {
-  const source = name || email;
-
-  if (!source) {
-    return "";
-  }
-
-  return (source[0] ?? "").toUpperCase();
+export type ProfileIdentityCardProps = {
+  image: string | null;
+  isUploadingAvatar: boolean;
+  onSelectAvatarFile: (file: File) => void;
 };
 
-export const ProfileIdentityCard = (): ReactElement => {
+export const ProfileIdentityCard = ({
+  image,
+  isUploadingAvatar,
+  onSelectAvatarFile,
+}: ProfileIdentityCardProps): ReactElement => {
   const { data } = useSession();
   const user = data?.user;
   const name = user?.name ?? "";
-  const image = user?.image ?? null;
+  const email = user?.email ?? "";
 
   return (
     <Stack
@@ -52,22 +50,13 @@ export const ProfileIdentityCard = (): ReactElement => {
         borderRadius: `${CARD_RADIUS_PX}px`,
       })}
     >
-      <Avatar
-        variant="rounded"
-        {...(image != null && { src: image })}
-        sx={(theme) => ({
-          width: IDENTITY_AVATAR_PX,
-          height: IDENTITY_AVATAR_PX,
-          borderRadius: `${CARD_RADIUS_PX}px`,
-          fontFamily: theme.typography.h4.fontFamily,
-          fontWeight: FONT_WEIGHT_DISPLAY,
-          color: theme.palette.primary.main,
-          bgcolor: alpha(theme.palette.primary.main, IDENTITY_AVATAR_BG_ALPHA),
-          border: `1px solid ${alpha(theme.palette.primary.main, IDENTITY_AVATAR_BORDER_ALPHA)}`,
-        })}
-      >
-        {getInitial(name, user?.email)}
-      </Avatar>
+      <ProfileAvatar
+        name={name}
+        email={email}
+        image={image}
+        isUploading={isUploadingAvatar}
+        onFileSelect={onSelectAvatarFile}
+      />
 
       <Typography
         component="div"

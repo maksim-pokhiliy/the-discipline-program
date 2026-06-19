@@ -9,10 +9,7 @@ export const SECTION_GAP = 2;
 export const CARD_GAP = 1.75;
 export const CARD_PADDING = 2;
 
-export const IDENTITY_AVATAR_PX = 56;
 export const IDENTITY_NAME_PX = 20;
-export const IDENTITY_AVATAR_BG_ALPHA = 0.12;
-export const IDENTITY_AVATAR_BORDER_ALPHA = 0.35;
 
 export const ROLE_BADGE_PX = 11;
 export const ROLE_BADGE_LETTER_SPACING = "0.06em";
@@ -28,12 +25,12 @@ export const EYEBROW_LETTER_SPACING = "0.06em";
 export const CAPTION_PX = 12;
 export const CAPTION_LINE_HEIGHT = 1.5;
 
-export const BODY_WEIGHT_VALUE_PX = 60;
-export const BODY_WEIGHT_VALUE_LETTER_SPACING = "-0.02em";
-export const BODY_WEIGHT_VALUE_LINE_HEIGHT = 0.9;
-export const BODY_WEIGHT_UNIT_PX = 16;
-export const BODY_WEIGHT_EMPTY_PX = 18;
-export const BODY_WEIGHT_EMPTY_ICON_PX = 22;
+export const BODY_STAT_VALUE_PX = 60;
+export const BODY_STAT_VALUE_LETTER_SPACING = "-0.02em";
+export const BODY_STAT_VALUE_LINE_HEIGHT = 0.9;
+export const BODY_STAT_UNIT_PX = 16;
+export const BODY_STAT_EMPTY_PX = 18;
+export const BODY_STAT_EMPTY_ICON_PX = 22;
 
 export const ACTION_LABEL_PX = 12;
 export const ACTION_ICON_PX = 14;
@@ -58,6 +55,11 @@ export const KG_LABEL = "kg";
 export const LOADING_LABEL = "Loading your profile...";
 export const ERROR_LABEL = "We couldn't load your profile. Please try again.";
 
+export const BODY_STAT_EDIT_ACTION_LABEL = "Edit";
+export const BODY_STAT_SET_ACTION_LABEL = "Set";
+export const BODY_STAT_SAVE_LABEL = "Save";
+export const BODY_STAT_CANCEL_LABEL = "Cancel";
+
 export const BODY_WEIGHT_EYEBROW = "Body weight";
 export const BODY_WEIGHT_CAPTION =
   "Used to resolve bodyweight and percentage loads across your plans.";
@@ -66,13 +68,32 @@ export const BODY_WEIGHT_EMPTY_CAPTION =
   "Loads that scale to bodyweight can't be resolved until you set your weight.";
 export const BODY_WEIGHT_FIELD_LABEL = "Body weight";
 export const BODY_WEIGHT_SET_LABEL = "Set weight";
-export const BODY_WEIGHT_SET_ACTION_LABEL = "Set";
-export const BODY_WEIGHT_EDIT_ACTION_LABEL = "Edit";
-export const BODY_WEIGHT_SAVE_LABEL = "Save";
-export const BODY_WEIGHT_CANCEL_LABEL = "Cancel";
+export const BODY_WEIGHT_SET_ACTION_LABEL = BODY_STAT_SET_ACTION_LABEL;
+export const BODY_WEIGHT_EDIT_ACTION_LABEL = BODY_STAT_EDIT_ACTION_LABEL;
+export const BODY_WEIGHT_SAVE_LABEL = BODY_STAT_SAVE_LABEL;
+export const BODY_WEIGHT_CANCEL_LABEL = BODY_STAT_CANCEL_LABEL;
 
 export const WEIGHT_INPUT_STEP = 0.1;
 export const WEIGHT_INPUT_MIN = 0;
+
+export const BODY_HEIGHT_EYEBROW = "Height";
+export const BODY_HEIGHT_CAPTION =
+  "Reference for your coach when programming and scaling movements.";
+export const BODY_HEIGHT_EMPTY_TITLE = "No height yet";
+export const BODY_HEIGHT_EMPTY_CAPTION = "Add your height so your coach has it for programming.";
+export const BODY_HEIGHT_SET_LABEL = "Set height";
+export const BODY_HEIGHT_SET_ACTION_LABEL = BODY_STAT_SET_ACTION_LABEL;
+export const BODY_HEIGHT_EDIT_ACTION_LABEL = BODY_STAT_EDIT_ACTION_LABEL;
+
+export const ATHLETE_DETAILS_EYEBROW = "Details";
+export const GENDER_FIELD_LABEL = "Gender";
+export const HEIGHT_FIELD_LABEL = "Height";
+export const HEIGHT_UNIT_LABEL = "cm";
+export const HEALTH_STATUS_FIELD_LABEL = "Health status";
+export const HEALTH_NOTE_FIELD_LABEL = "Health note";
+
+export const HEIGHT_INPUT_STEP = 1;
+export const HEIGHT_INPUT_MIN = 0;
 
 export const PROFILE_PICKS_EYEBROW = "Profile picks";
 export const PROFILE_PICKS_CAPTION =

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { blobImageUrlSchema, imageUrlSchema } from "../../../common/image";
+
 import { ATHLETE_PROFILE_CONSTANTS, Gender, HealthStatus } from "./athlete-profile.constants";
 
 export const healthStatusSchema = z.nativeEnum(HealthStatus);
@@ -9,6 +11,7 @@ export const profileSelectionsSchema = z.record(z.string().trim().min(1), z.stri
 export const athleteProfileSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
+  image: imageUrlSchema,
   gender: z.nativeEnum(Gender).nullable(),
   heightCm: z.number().int().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_HEIGHT_CM).nullable(),
   weightKg: z.number().finite().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_WEIGHT_KG).nullable(),
@@ -20,6 +23,7 @@ export const athleteProfileSchema = z.object({
 });
 
 export const updateAthleteProfileSchema = z.object({
+  image: blobImageUrlSchema.optional(),
   gender: z.nativeEnum(Gender).optional(),
   heightCm: z.number().int().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_HEIGHT_CM).optional(),
   weightKg: z.number().finite().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_WEIGHT_KG).optional(),

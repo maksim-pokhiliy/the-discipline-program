@@ -30,7 +30,7 @@ export const mapToAdminUserView = (u: AdminUserViewRow): AdminUserView => ({
   hasPassword: u.password !== null,
   athleteProfile: u.athleteProfile
     ? {
-        ...mapToAthleteProfile(u.athleteProfile),
+        ...mapToAthleteProfile(u.athleteProfile, u.image),
         assignedCoaches: (u.athleteAssignments ?? []).map((a) =>
           mapToCoachListItem({ ...a.coach, user: a.coach.user }),
         ),

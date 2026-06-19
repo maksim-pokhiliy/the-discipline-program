@@ -23,6 +23,20 @@ export type AuthServiceAdapter = {
   getUserById: (id: string) => Promise<{ role: UserRole; tokenVersion: number } | null>;
 };
 
+const readSessionImageUpdate = (value: unknown): string | null | undefined => {
+  if (typeof value !== "object" || value === null || !("image" in value)) {
+    return undefined;
+  }
+
+  const image = value.image;
+
+  if (typeof image === "string" || image === null) {
+    return image;
+  }
+
+  return undefined;
+};
+
 export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions => ({
   providers: [
     CredentialsProvider({
@@ -54,7 +68,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
     }),
   ],
   callbacks: {
-    jwt: async ({ token, user }) => {
+    jwt: async ({ token, user, trigger, session }) => {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -64,6 +78,14 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
         token.tokenVersion = user.tokenVersion;
 
         return token;
+      }
+
+      if (trigger === "update") {
+        const image = readSessionImageUpdate(session);
+
+        if (image !== undefined) {
+          token.image = image;
+        }
       }
 
       const dbUser = await service.getUserById(token.id);
