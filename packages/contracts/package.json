@@ -47,6 +47,7 @@
     "./coaching/coach-profile": "./src/entities/coaching/coach-profile/index.ts",
     "./iam/auth": "./src/entities/iam/auth/index.ts",
     "./iam/invite-token": "./src/entities/iam/invite-token/index.ts",
+    "./iam/password-reset": "./src/entities/iam/password-reset/index.ts",
     "./iam/user": "./src/entities/iam/user/index.ts",
     "./storage/upload": "./src/entities/storage/upload/index.ts"
   },
