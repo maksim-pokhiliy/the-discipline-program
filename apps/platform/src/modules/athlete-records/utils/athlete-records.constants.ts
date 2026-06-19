@@ -127,3 +127,29 @@ export const LOWER_IS_BETTER_LABEL = "Lower is better";
 export const UPDATE_ONE_RM_LABEL = "Update this 1RM";
 
 export const TIME_RESULT_TYPE: ResultType = "time";
+
+export const RECORDS_TITLE = "Records";
+export const RECORDS_SUBTITLE = "Your personal bests — your data, visible to your coach.";
+export const LOADING_LABEL = "Loading your records...";
+
+export const SECTION_ONE_RM = "oneRM";
+export const SECTION_BENCHMARK = "benchmark";
+
+export const ONE_RM_TAB_LABEL = "1RM";
+export const BENCHMARK_TAB_LABEL = "Benchmarks";
+export const UPDATE_ONE_RM_BUTTON_LABEL = "Update 1RM";
+
+export const SEARCH_PLACEHOLDER_ONE_RM = "Search movements…";
+export const SEARCH_PLACEHOLDER_BENCHMARK = "Search benchmarks…";
+
+export const EMPTY_ONE_RM_LABEL = "No 1RMs logged yet";
+export const EMPTY_BENCHMARK_LABEL = "No benchmark results yet";
+export const NO_RESULTS_LABEL = "No records match your search.";
+
+export const TOOLBAR_GAP = 2;
+export const TOOLBAR_CONTROLS_GAP = 1;
+export const CONTENT_STACK_GAP = 1.25;
+export const TOOLBAR_TITLE_GAP = 0.5;
+export const LIST_GAP = 1.25;
+export const SEARCH_FIELD_MIN_WIDTH_PX = 220;
+export const UPDATE_BUTTON_ICON_PX = 18;

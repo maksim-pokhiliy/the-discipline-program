@@ -1,14 +1,7 @@
-import { Stack, Typography } from "@mui/material";
+import { AthleteRecordsView } from "@app/modules/athlete-records";
 
 const AthleteRecordsPage = () => {
-  return (
-    <Stack>
-      <Typography variant="h5">Records</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Coming soon
-      </Typography>
-    </Stack>
-  );
+  return <AthleteRecordsView />;
 };
 
 export default AthleteRecordsPage;
