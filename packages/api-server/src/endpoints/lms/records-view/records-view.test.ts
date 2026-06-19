@@ -86,12 +86,12 @@ describe("lmsRecordsViewApi.getRecords", () => {
       const first = await createTestOneRMRecord(fixture.athlete.id, fixture.squatExerciseId, {
         valueKg: 100,
         recordedAt: new Date("2026-01-01T00:00:00.000Z"),
-        source: OneRMRecordSource.TESTED,
+        source: OneRMRecordSource.MANUAL,
       });
       const second = await createTestOneRMRecord(fixture.athlete.id, fixture.squatExerciseId, {
         valueKg: 120,
         recordedAt: new Date("2026-02-01T00:00:00.000Z"),
-        source: OneRMRecordSource.MANUAL,
+        source: OneRMRecordSource.TESTED,
       });
       const third = await createTestOneRMRecord(fixture.athlete.id, fixture.squatExerciseId, {
         valueKg: 110,
