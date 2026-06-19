@@ -10,6 +10,7 @@ export * from "./one-rm-record";
 export * from "./performed-session";
 export * from "./plan-enrollment";
 export * from "./plan-timetable";
+export * from "./records-view";
 export * from "./row-group";
 export * from "./schema";
 export * from "./schema-group";
