@@ -48,9 +48,7 @@ export const buildOneRmView = (record: OneRMRecordView): RecordView => ({
     valueLabel: String(point.valueKg),
     dateLabel: formatShortDate(point.recordedAt),
   })),
-  history: (
-    <RecordHistoryList kind="oneRM" series={record.series} bestRecordedAt={record.bestRecordedAt} />
-  ),
+  history: <RecordHistoryList kind="oneRM" series={record.series} />,
 });
 
 const resolveBenchmarkTrend = (record: BenchmarkRecordView): Trend | null => {
@@ -80,11 +78,5 @@ export const buildBenchmarkView = (record: BenchmarkRecordView): RecordView => (
     valueLabel: formatResultParts(point.result).value,
     dateLabel: formatShortDate(point.recordedAt),
   })),
-  history: (
-    <RecordHistoryList
-      kind="benchmark"
-      series={record.series}
-      bestRecordedAt={record.bestRecordedAt}
-    />
-  ),
+  history: <RecordHistoryList kind="benchmark" series={record.series} />,
 });

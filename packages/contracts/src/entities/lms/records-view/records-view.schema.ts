@@ -9,6 +9,7 @@ export const oneRMSeriesPointSchema = z.object({
   valueKg: z.number().finite().positive(),
   source: oneRMRecordSourceSchema,
   recordedAt: isoInstant,
+  isBest: z.boolean(),
 });
 
 export const oneRMRecordViewSchema = z.object({
@@ -27,6 +28,7 @@ export const benchmarkSeriesPointSchema = z.object({
   result: resultSchema,
   scalar: z.number(),
   recordedAt: isoInstant,
+  isBest: z.boolean(),
 });
 
 export const benchmarkDeltaSchema = z.object({

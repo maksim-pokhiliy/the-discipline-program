@@ -145,18 +145,49 @@ describe("buildRecordsView", () => {
           valueKg: 100,
           source: OneRMRecordSource.MANUAL,
           recordedAt: at("2026-01-01T00:00:00.000Z").toISOString(),
+          isBest: false,
         },
         {
           valueKg: 105,
           source: OneRMRecordSource.MANUAL,
           recordedAt: at("2026-02-01T00:00:00.000Z").toISOString(),
+          isBest: false,
         },
         {
           valueKg: 110,
           source: OneRMRecordSource.MANUAL,
           recordedAt: at("2026-03-01T00:00:00.000Z").toISOString(),
+          isBest: true,
         },
       ]);
+    });
+
+    it("flags exactly one series point as isBest — the all-time max", () => {
+      const rows = [
+        oneRMRow({ valueKg: 100, recordedAt: at("2026-01-01T00:00:00.000Z") }),
+        oneRMRow({ valueKg: 120, recordedAt: at("2026-02-01T00:00:00.000Z") }),
+        oneRMRow({ valueKg: 110, recordedAt: at("2026-03-01T00:00:00.000Z") }),
+      ];
+
+      const [record] = buildRecordsView({ oneRMRows: rows, benchmarkRows: [] }).oneRM;
+      const flagged = record?.series.filter((point) => point.isBest) ?? [];
+
+      expect(flagged).toHaveLength(1);
+      expect(flagged[0]?.valueKg).toBe(120);
+    });
+
+    it("flags only the true-best row when two rows share recordedAt (QA-001 regression)", () => {
+      const sameDay = at("2026-01-01T00:00:00.000Z");
+      const rows = [
+        oneRMRow({ valueKg: 100, recordedAt: sameDay }),
+        oneRMRow({ valueKg: 120, recordedAt: sameDay }),
+      ];
+
+      const [record] = buildRecordsView({ oneRMRows: rows, benchmarkRows: [] }).oneRM;
+      const flagged = record?.series.filter((point) => point.isBest) ?? [];
+
+      expect(flagged).toHaveLength(1);
+      expect(flagged[0]?.valueKg).toBe(120);
     });
 
     it("groups two exercises into two records ordered by name", () => {

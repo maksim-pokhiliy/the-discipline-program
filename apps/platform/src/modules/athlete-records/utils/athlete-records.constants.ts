@@ -118,8 +118,6 @@ export const CHART_PANEL_PADDING_PX = 14;
 export const CHART_PANEL_RADIUS_PX = 6;
 export const CHART_PANEL_BORDER_ALPHA = 0.14;
 
-export const DELTA_CHIP_BG_ALPHA = 0.18;
-
 export const ONE_RM_SUBLINE_PREFIX = " records · best of all-time";
 export const PROGRESS_LABEL = "Progress";
 export const HISTORY_LABEL = "History";

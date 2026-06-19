@@ -25,13 +25,14 @@ import { PrChip } from "./pr-chip";
 import { SourceChip } from "./source-chip";
 
 export type RecordHistoryListProps =
-  | { kind: "oneRM"; series: OneRMSeriesPoint[]; bestRecordedAt: string }
-  | { kind: "benchmark"; series: BenchmarkSeriesPoint[]; bestRecordedAt: string };
+  | { kind: "oneRM"; series: OneRMSeriesPoint[] }
+  | { kind: "benchmark"; series: BenchmarkSeriesPoint[] };
 
 type HistoryRowModel = {
   recordedAt: string;
   valueLabel: string;
   source: OneRMRecordSourceValue | null;
+  isBest: boolean;
 };
 
 const FIRST_ROW_INDEX = 0;
@@ -42,6 +43,7 @@ const toRowModel = (props: RecordHistoryListProps): HistoryRowModel[] => {
       recordedAt: point.recordedAt,
       valueLabel: `${point.valueKg} ${KG_UNIT}`,
       source: point.source,
+      isBest: point.isBest,
     }));
   }
 
@@ -52,6 +54,7 @@ const toRowModel = (props: RecordHistoryListProps): HistoryRowModel[] => {
       recordedAt: point.recordedAt,
       valueLabel: unit.length > 0 ? `${value} ${unit}` : value,
       source: null,
+      isBest: point.isBest,
     };
   });
 };
@@ -84,7 +87,7 @@ export const RecordHistoryList = (props: RecordHistoryListProps): ReactElement =
           >
             <DisplayNumber value={row.valueLabel} sizePx={HISTORY_VALUE_PX} />
             {row.source !== null ? <SourceChip source={row.source} /> : null}
-            {row.recordedAt === props.bestRecordedAt ? <PrChip label={prLabel} /> : null}
+            {row.isBest ? <PrChip label={prLabel} /> : null}
           </Stack>
           <Typography
             component="span"

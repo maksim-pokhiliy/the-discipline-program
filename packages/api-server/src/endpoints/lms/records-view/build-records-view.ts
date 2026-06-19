@@ -89,6 +89,7 @@ const build1RMRecord = (
       valueKg: Number(row.valueKg),
       source: ONE_RM_RECORD_SOURCE_MAP[row.source],
       recordedAt: row.recordedAt.toISOString(),
+      isBest: row === bestRow,
     })),
   };
 };
@@ -175,12 +176,6 @@ const benchmarkDelta = (entries: NonEmptyArray<BenchmarkResultEntry>): Benchmark
   };
 };
 
-const findBestRecordedAt = (entries: NonEmptyArray<BenchmarkResultEntry>, best: Result): string => {
-  const bestEntry = entries.find((entry) => entry.result === best) ?? entries[0];
-
-  return bestEntry.recordedAt.toISOString();
-};
-
 const buildBenchmarkRecord = (
   plannedSchemaId: string,
   rows: NonEmptyArray<RecordsBenchmarkResultRecord>,
@@ -191,6 +186,7 @@ const buildBenchmarkRecord = (
   }));
   const ordered = ensureNonEmpty(buildResultSeries(entries), entries);
   const best = deriveBestResult(ordered) ?? ordered[0].result;
+  const bestEntry = ordered.find((entry) => entry.result === best) ?? ordered[0];
   const resultType = best.type;
   const schema = rows[0].plannedSchema;
 
@@ -200,13 +196,14 @@ const buildBenchmarkRecord = (
     subline: buildSubline(schema, resultType),
     resultType,
     best,
-    bestRecordedAt: findBestRecordedAt(ordered, best),
+    bestRecordedAt: bestEntry.recordedAt.toISOString(),
     lastRecordedAt: lastOf(ordered).recordedAt.toISOString(),
     delta: benchmarkDelta(ordered),
     series: ordered.map((entry) => ({
       result: entry.result,
       scalar: resultScalar(entry.result),
       recordedAt: entry.recordedAt.toISOString(),
+      isBest: entry === bestEntry,
     })),
     attemptCount: ordered.length,
   };
