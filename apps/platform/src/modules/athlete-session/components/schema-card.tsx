@@ -3,6 +3,7 @@ import { type ReactElement } from "react";
 import ScheduleRounded from "@mui/icons-material/ScheduleRounded";
 import { alpha, Box, Card, Stack, Typography } from "@mui/material";
 
+import { formatCapSummary, formatRestSummary } from "@repo/contracts/lms/composition";
 import { type SchemaCardView } from "@repo/contracts/lms/session-detail";
 
 import { benchmarkTitle, resolveCardDecoration } from "../utils/athlete-session-presentation";
@@ -18,7 +19,6 @@ import {
   SCHEMA_META_PX,
   SUMMARY_SEPARATOR,
 } from "../utils/athlete-session.constants";
-import { formatCapSummary, formatRestSummary } from "../utils/format-composition-summary";
 import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { BenchmarkChip } from "./benchmark-chip";

@@ -1,4 +1,5 @@
 export { createAthleteProfileAPI } from "./athlete-profile";
+export { createAthleteRecordsAPI } from "./athlete-records";
 export { createAthleteSessionViewAPI } from "./athlete-session-view";
 export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";

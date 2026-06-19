@@ -1,6 +1,7 @@
 export * from "./cap-spec";
 export * from "./day-of-week";
 export * from "./exact-or-range";
+export * from "./format-result";
 export * from "./intensity";
 export * from "./load";
 export * from "./media";

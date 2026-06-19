@@ -1,10 +1,6 @@
-import { type ResultType, type TimeCap } from "@repo/contracts/lms/_shared";
-import {
-  type Composition,
-  type RepetitionAxis,
-  type RestAxis,
-} from "@repo/contracts/lms/composition";
+import { type ResultType, type TimeCap } from "../_shared";
 
+import { type Composition, type RepetitionAxis, type RestAxis } from "./composition.types";
 import { formatRestSpec } from "./format-rest-spec";
 
 const MINUTE_MARK = "’";
