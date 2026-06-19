@@ -61,6 +61,7 @@ export const SessionMetaHeader = ({ session }: SessionMetaHeaderProps): ReactEle
           },
           fontWeight: FONT_WEIGHT_SEMI_BOLD,
           lineHeight: 1.15,
+          textTransform: "uppercase",
           color: theme.palette.text.primary,
         })}
       >

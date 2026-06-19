@@ -13,9 +13,9 @@ describe("deriveBestResult", () => {
 
   it("picks the lowest time (lower is better)", () => {
     const best = deriveBestResult([
-      { result: { type: "time", seconds: 180 }, performedAt: at("2026-01-01") },
-      { result: { type: "time", seconds: 150 }, performedAt: at("2026-02-01") },
-      { result: { type: "time", seconds: 165 }, performedAt: at("2026-03-01") },
+      { result: { type: "time", seconds: 180 }, recordedAt: at("2026-01-01") },
+      { result: { type: "time", seconds: 150 }, recordedAt: at("2026-02-01") },
+      { result: { type: "time", seconds: 165 }, recordedAt: at("2026-03-01") },
     ]);
 
     expect(best).toEqual({ type: "time", seconds: 150 });
@@ -23,8 +23,8 @@ describe("deriveBestResult", () => {
 
   it("picks the highest load (higher is better)", () => {
     const best = deriveBestResult([
-      { result: { type: "load", kg: 100 }, performedAt: at("2026-01-01") },
-      { result: { type: "load", kg: 120 }, performedAt: at("2026-02-01") },
+      { result: { type: "load", kg: 100 }, recordedAt: at("2026-01-01") },
+      { result: { type: "load", kg: 120 }, recordedAt: at("2026-02-01") },
     ]);
 
     expect(best).toEqual({ type: "load", kg: 120 });
@@ -32,9 +32,9 @@ describe("deriveBestResult", () => {
 
   it("breaks rounds_reps ties by reps after rounds", () => {
     const best = deriveBestResult([
-      { result: { type: "rounds_reps", rounds: 5, reps: 3 }, performedAt: at("2026-01-01") },
-      { result: { type: "rounds_reps", rounds: 5, reps: 10 }, performedAt: at("2026-02-01") },
-      { result: { type: "rounds_reps", rounds: 4, reps: 20 }, performedAt: at("2026-03-01") },
+      { result: { type: "rounds_reps", rounds: 5, reps: 3 }, recordedAt: at("2026-01-01") },
+      { result: { type: "rounds_reps", rounds: 5, reps: 10 }, recordedAt: at("2026-02-01") },
+      { result: { type: "rounds_reps", rounds: 4, reps: 20 }, recordedAt: at("2026-03-01") },
     ]);
 
     expect(best).toEqual({ type: "rounds_reps", rounds: 5, reps: 10 });
@@ -68,12 +68,12 @@ describe("isNewPR", () => {
 describe("buildResultSeries", () => {
   it("orders entries chronologically", () => {
     const series = buildResultSeries([
-      { result: { type: "max_reps", reps: 12 }, performedAt: at("2026-03-01") },
-      { result: { type: "max_reps", reps: 8 }, performedAt: at("2026-01-01") },
-      { result: { type: "max_reps", reps: 15 }, performedAt: at("2026-02-01") },
+      { result: { type: "max_reps", reps: 12 }, recordedAt: at("2026-03-01") },
+      { result: { type: "max_reps", reps: 8 }, recordedAt: at("2026-01-01") },
+      { result: { type: "max_reps", reps: 15 }, recordedAt: at("2026-02-01") },
     ]);
 
-    expect(series.map((entry) => entry.performedAt.toISOString())).toEqual([
+    expect(series.map((entry) => entry.recordedAt.toISOString())).toEqual([
       at("2026-01-01").toISOString(),
       at("2026-02-01").toISOString(),
       at("2026-03-01").toISOString(),

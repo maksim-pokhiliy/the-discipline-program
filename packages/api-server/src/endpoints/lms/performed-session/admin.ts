@@ -7,8 +7,7 @@ import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
 import { ENROLLMENT_STATUS_TO_PRISMA_MAP, mapToPerformedSession } from "../../../mappers/lms";
-import { handlePrismaError, toInputJson } from "../../../utils";
-import { validateBenchmarkResultForSession } from "../performed-schema-result/admin";
+import { handlePrismaError } from "../../../utils";
 
 const verifySessionReachableByAthlete = async (
   sessionId: string,
@@ -48,35 +47,17 @@ export const lmsPerformedSessionApi = {
   create: async (userId: string, data: CreatePerformedSessionData): Promise<PerformedSession> => {
     await verifySessionReachableByAthlete(data.sessionId, userId);
 
-    const results = data.results ?? [];
-
-    for (const entry of results) {
-      await validateBenchmarkResultForSession(data.sessionId, entry.plannedSchemaId, entry.result);
-    }
-
     try {
-      const performed = await prisma.$transaction(async (tx) => {
-        const created = await tx.performedSession.create({
+      const performed = await prisma.$transaction(async (tx) =>
+        tx.performedSession.create({
           data: {
             sessionId: data.sessionId,
             userId,
             performedAt: data.performedAt,
             athleteNotes: data.athleteNotes ?? null,
           },
-        });
-
-        for (const entry of results) {
-          await tx.performedSchemaResult.create({
-            data: {
-              performedSessionId: created.id,
-              plannedSchemaId: entry.plannedSchemaId,
-              result: toInputJson(entry.result),
-            },
-          });
-        }
-
-        return created;
-      });
+        }),
+      );
 
       return mapToPerformedSession(performed);
     } catch (error) {

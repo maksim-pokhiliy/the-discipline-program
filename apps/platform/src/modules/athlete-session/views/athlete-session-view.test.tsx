@@ -168,6 +168,7 @@ const benchmarkSchema = (): SchemaCardView => ({
   items: [
     {
       kind: "group",
+      label: null,
       members: [
         {
           rowId: "clz000000000000000000row4",
@@ -176,7 +177,7 @@ const benchmarkSchema = (): SchemaCardView => ({
           sets: null,
           reps: { kind: "count", value: 5 },
           load: { kind: "bodyweight" },
-          resolvedLoad: { status: "not_applicable" },
+          resolvedLoad: { status: "bodyweight" },
           intensity: null,
           tempo: null,
           side: null,
@@ -191,7 +192,7 @@ const benchmarkSchema = (): SchemaCardView => ({
           sets: null,
           reps: { kind: "count", value: 5 },
           load: { kind: "bodyweight" },
-          resolvedLoad: { status: "not_applicable" },
+          resolvedLoad: { status: "bodyweight" },
           intensity: null,
           tempo: null,
           side: null,
@@ -210,7 +211,7 @@ const benchmarkSchema = (): SchemaCardView => ({
         sets: null,
         reps: { kind: "count", value: 15 },
         load: { kind: "bodyweight" },
-        resolvedLoad: { status: "not_applicable" },
+        resolvedLoad: { status: "bodyweight" },
         intensity: null,
         tempo: null,
         side: null,
@@ -253,7 +254,7 @@ const gymnasticsBlock = (): BlockView => ({
                   sets: null,
                   reps: null,
                   load: { kind: "bodyweight" },
-                  resolvedLoad: { status: "not_applicable" },
+                  resolvedLoad: { status: "bodyweight" },
                   intensity: null,
                   tempo: null,
                   side: null,
@@ -286,7 +287,7 @@ const gymnasticsBlock = (): BlockView => ({
                   sets: null,
                   reps: null,
                   load: { kind: "bodyweight" },
-                  resolvedLoad: { status: "not_applicable" },
+                  resolvedLoad: { status: "bodyweight" },
                   intensity: null,
                   tempo: null,
                   side: null,
@@ -362,16 +363,16 @@ describe("AthleteSessionView", () => {
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    expect(screen.getByRole("button", { name: /pick profile/i })).toBeInTheDocument();
-    expect(screen.getByText("RX/Scaled · M/F")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /pick your/i })).toBeInTheDocument();
+    expect(screen.getByText("RX M:60 F:42 / Scaled M:45 F:30")).toBeInTheDocument();
   });
 
-  it("renders a per-hand resolved load with its kg value and per-hand sub", () => {
+  it("renders a paired absolute load with the 2x at-notation", () => {
     setView(buildResponse());
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    expect(screen.getByText("24 kg / hand")).toBeInTheDocument();
+    expect(screen.getByText("2x24 kg")).toBeInTheDocument();
   });
 
   it("renders bodyweight rows under the bodyweight idiom", () => {
@@ -382,14 +383,14 @@ describe("AthleteSessionView", () => {
     expect(screen.getAllByText("Bodyweight").length).toBeGreaterThan(0);
   });
 
-  it("renders the benchmark chip and the logged result strip for a done benchmark schema", () => {
+  it("renders the benchmark chip and the logged result strip for a benchmark schema", () => {
     setView(buildResponse());
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
     expect(screen.getByText("Rounds + Reps")).toBeInTheDocument();
     expect(screen.getByText("Your result")).toBeInTheDocument();
-    expect(screen.getByText("18 rounds + 7 reps")).toBeInTheDocument();
+    expect(screen.getAllByText("18 rounds + 7 reps").length).toBeGreaterThan(1);
   });
 
   it("renders the shape badge wording from the composition summary", () => {

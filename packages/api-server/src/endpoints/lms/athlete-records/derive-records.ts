@@ -1,6 +1,6 @@
 import { type Result, RESULT_DIRECTIONS } from "@repo/contracts/lms";
 
-export type BenchmarkResultEntry = { result: Result; performedAt: Date };
+export type BenchmarkResultEntry = { result: Result; recordedAt: Date };
 
 const scoreVector = (result: Result): number[] => {
   switch (result.type) {
@@ -58,4 +58,4 @@ export const isNewPR = (prior: Result | null, candidate: Result): boolean =>
   prior === null || beats(candidate, prior);
 
 export const buildResultSeries = (entries: BenchmarkResultEntry[]): BenchmarkResultEntry[] =>
-  [...entries].sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime());
+  [...entries].sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime());

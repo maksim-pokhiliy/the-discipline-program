@@ -25,7 +25,8 @@ import { resolveLoad } from "../athlete-records";
 import { type AthleteLoadContext } from "../athlete-records";
 
 import {
-  type PerformedSessionWithResults,
+  type BenchmarkResultRecord,
+  type PerformedSessionRecord,
   type SessionDetailRecord,
   type SessionDetailRow,
 } from "./session-detail.types";
@@ -39,7 +40,8 @@ type ExerciseMeta = { movement: string; demoUrl: string | null };
 type BuildSessionDetailArgs = {
   session: SessionDetailRecord;
   ctx: AthleteLoadContext;
-  performed: PerformedSessionWithResults[];
+  performed: PerformedSessionRecord[];
+  latestResults: BenchmarkResultRecord[];
 };
 
 const toUtcMidnight = (date: Date): Date =>
@@ -141,7 +143,11 @@ const buildRowItemViews = (
   buildRowItems(body.rows, body.rowGroups).map((item) =>
     item.kind === "row"
       ? { kind: "row", row: buildRowView(item.row, ctx, metaByRowId) }
-      : { kind: "group", members: item.members.map((row) => buildRowView(row, ctx, metaByRowId)) },
+      : {
+          kind: "group",
+          label: item.group.notes?.[0] ?? null,
+          members: item.members.map((row) => buildRowView(row, ctx, metaByRowId)),
+        },
   );
 
 const buildSchemaCard = (
@@ -203,13 +209,11 @@ const buildBlockView = (
   items: buildBlockItemViews(block, ctx, metaByRowId, existingResultBySchemaId),
 });
 
-const collectExistingResults = (performed: PerformedSessionWithResults[]): Map<string, Result> => {
+const collectExistingResults = (latestResults: BenchmarkResultRecord[]): Map<string, Result> => {
   const bySchemaId = new Map<string, Result>();
 
-  for (const session of performed) {
-    for (const entry of session.results) {
-      bySchemaId.set(entry.plannedSchemaId, resultSchema.parse(entry.result));
-    }
+  for (const entry of latestResults) {
+    bySchemaId.set(entry.plannedSchemaId, resultSchema.parse(entry.result));
   }
 
   return bySchemaId;
@@ -263,9 +267,10 @@ export const buildSessionDetail = ({
   session,
   ctx,
   performed,
+  latestResults,
 }: BuildSessionDetailArgs): SessionDetailResponse => {
   const metaByRowId = collectExerciseMeta(session);
-  const existingResultBySchemaId = collectExistingResults(performed);
+  const existingResultBySchemaId = collectExistingResults(latestResults);
   const mappedBlocks = session.blocks.map(mapToBlockWithSchemas);
   const blocks = mappedBlocks.map((block) =>
     buildBlockView(block, ctx, metaByRowId, existingResultBySchemaId),

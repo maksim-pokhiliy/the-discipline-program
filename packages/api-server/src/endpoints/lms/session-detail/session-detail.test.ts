@@ -14,9 +14,9 @@ import {
 } from "../../../test/helpers";
 import {
   type CleanupEntry,
+  createTestBenchmarkResult,
   createTestEnrollment,
   createTestOneRMRecord,
-  createTestPerformedSchemaResult,
   createTestPerformedSession,
 } from "../../../test/schedule-helpers";
 import { toInputJson } from "../../../utils/to-input-json";
@@ -75,13 +75,14 @@ const buildSessionFixture = async (options: FixtureOptions = {}): Promise<Sessio
     });
   }
 
+  const exerciseKey = crypto.randomUUID().slice(0, 8);
   const squat = await createTestExercise({
-    canonicalName: "Back Squat",
-    canonicalNameLower: "back squat",
+    canonicalName: `Back Squat ${exerciseKey}`,
+    canonicalNameLower: `back squat ${exerciseKey}`,
   });
   const pullup = await createTestExercise({
-    canonicalName: "Pull-up",
-    canonicalNameLower: "pull-up",
+    canonicalName: `Pull-up ${exerciseKey}`,
+    canonicalNameLower: `pull-up ${exerciseKey}`,
   });
 
   toCleanup.push({ table: "exercise", id: squat.id }, { table: "exercise", id: pullup.id });
@@ -198,7 +199,7 @@ describe("lmsSessionDetailApi.getDetail", () => {
         .filter((status) => status !== null);
 
       expect(statuses).toContain("resolved");
-      expect(statuses).toContain("not_applicable");
+      expect(statuses).toContain("bodyweight");
     });
 
     it("marks the benchmark schema and surfaces its result type", async () => {
@@ -214,15 +215,11 @@ describe("lmsSessionDetailApi.getDetail", () => {
       expect(benchmark?.resultType).toBe("load");
     });
 
-    it("surfaces the latest logged result for the benchmark schema and flips done", async () => {
-      const performed = await createTestPerformedSession(fixture.sessionId, fixture.athlete.id);
-      const result = await createTestPerformedSchemaResult(
-        performed.performed.id,
+    it("surfaces the latest logged BenchmarkResult without flipping done (Must-Test 4)", async () => {
+      const result = await createTestBenchmarkResult(
+        fixture.athlete.id,
         fixture.benchmarkSchemaId,
-        {
-          type: "load",
-          kg: 95,
-        },
+        { type: "load", kg: 95 },
       );
 
       try {
@@ -232,10 +229,50 @@ describe("lmsSessionDetailApi.getDetail", () => {
         );
         const benchmark = schemas.find((schema) => schema.schemaId === fixture.benchmarkSchemaId);
 
-        expect(response.session.done).toBe(true);
         expect(benchmark?.existingResult).toEqual({ type: "load", kg: 95 });
+        expect(response.session.done).toBe(false);
+        expect(response.session.completedAt).toBeNull();
       } finally {
-        await cleanup(...result.toCleanup, ...performed.toCleanup);
+        await cleanup(...result.toCleanup);
+      }
+    });
+
+    it("surfaces the latest of multiple BenchmarkResult appends by recordedAt", async () => {
+      const earlier = await createTestBenchmarkResult(
+        fixture.athlete.id,
+        fixture.benchmarkSchemaId,
+        { type: "load", kg: 95 },
+        { recordedAt: new Date("2026-06-15T10:00:00.000Z") },
+      );
+      const later = await createTestBenchmarkResult(
+        fixture.athlete.id,
+        fixture.benchmarkSchemaId,
+        { type: "load", kg: 102.5 },
+        { recordedAt: new Date("2026-06-18T10:00:00.000Z") },
+      );
+
+      try {
+        const response = await lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId);
+        const schemas = response.blocks.flatMap((block) =>
+          block.items.flatMap((item) => (item.kind === "schema" ? [item.schema] : [])),
+        );
+        const benchmark = schemas.find((schema) => schema.schemaId === fixture.benchmarkSchemaId);
+
+        expect(benchmark?.existingResult).toEqual({ type: "load", kg: 102.5 });
+      } finally {
+        await cleanup(...later.toCleanup, ...earlier.toCleanup);
+      }
+    });
+
+    it("flips done only when the session is completed (a tick), not when a result is logged", async () => {
+      const performed = await createTestPerformedSession(fixture.sessionId, fixture.athlete.id);
+
+      try {
+        const response = await lmsSessionDetailApi.getDetail(fixture.athlete.id, fixture.sessionId);
+
+        expect(response.session.done).toBe(true);
+      } finally {
+        await cleanup(...performed.toCleanup);
       }
     });
   });

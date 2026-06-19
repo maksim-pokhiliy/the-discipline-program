@@ -72,28 +72,47 @@ describe("loadAthleteLoadContext", () => {
     await cleanup(...toCleanup);
   });
 
-  it("holds the max valueKg per exercise as the current 1RM (QA-011)", async () => {
+  it("holds the latest-by-recordedAt valueKg per exercise as the current 1RM, not the max (QA-011)", async () => {
     const ctx = await loadAthleteLoadContext(athlete.id, [exerciseAId]);
 
-    expect(ctx.currentOneRMByExercise.get(exerciseAId)).toBe(120);
+    expect(ctx.currentOneRMByExercise.get(exerciseAId)).toBe(110);
   });
 
-  it("breaks an equal-valueKg tie by the latest recordedAt (QA-011)", async () => {
-    const tied = await Promise.all([
-      createTestOneRMRecord(athlete.id, exerciseBId, {
-        valueKg: 90,
-        recordedAt: new Date("2026-01-01T00:00:00.000Z"),
-      }),
-      createTestOneRMRecord(athlete.id, exerciseBId, {
-        valueKg: 90,
-        recordedAt: new Date("2026-05-01T00:00:00.000Z"),
-      }),
-    ]);
+  it("lets a newer, lower 1RM lower the resolved current value (QA-011)", async () => {
+    const dropped = await createTestOneRMRecord(athlete.id, exerciseBId, {
+      valueKg: 130,
+      recordedAt: new Date("2026-02-01T00:00:00.000Z"),
+    });
+    const later = await createTestOneRMRecord(athlete.id, exerciseBId, {
+      valueKg: 105,
+      recordedAt: new Date("2026-04-01T00:00:00.000Z"),
+    });
 
     try {
       const ctx = await loadAthleteLoadContext(athlete.id, [exerciseBId]);
 
-      expect(ctx.currentOneRMByExercise.get(exerciseBId)).toBe(90);
+      expect(ctx.currentOneRMByExercise.get(exerciseBId)).toBe(105);
+    } finally {
+      await cleanupRaw.oneRMRecord
+        .deleteMany({ where: { id: { in: [dropped.record.id, later.record.id] } } })
+        .catch(() => {});
+    }
+  });
+
+  it("breaks an equal-recordedAt tie by the higher id, deterministically (QA-011)", async () => {
+    const recordedAt = new Date("2026-05-01T00:00:00.000Z");
+    const tied = await Promise.all([
+      createTestOneRMRecord(athlete.id, exerciseBId, { valueKg: 80, recordedAt }),
+      createTestOneRMRecord(athlete.id, exerciseBId, { valueKg: 95, recordedAt }),
+    ]);
+
+    try {
+      const [first, second] = tied;
+      const winner = (first?.record.id ?? "") > (second?.record.id ?? "") ? first : second;
+
+      const ctx = await loadAthleteLoadContext(athlete.id, [exerciseBId]);
+
+      expect(ctx.currentOneRMByExercise.get(exerciseBId)).toBe(Number(winner?.record.valueKg));
     } finally {
       for (const record of tied) {
         await cleanupRaw.oneRMRecord.delete({ where: { id: record.record.id } }).catch(() => {});

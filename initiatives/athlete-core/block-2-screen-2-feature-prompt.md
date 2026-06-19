@@ -54,7 +54,7 @@ type ResolvedLoad =
 // resolve-load.ts — PURE, no DB
 resolveLoad(load: Load, ctx: AthleteLoadContext, rowExerciseId: string): ResolvedLoad
 //  absolute    → resolved {kg, perHand: count===2}
-//  bodyweight  → bodyweightKg===null ? not_applicable : resolved {kg: bodyweightKg, perHand:false}
+//  bodyweight  → CURRENT (BUGGY): null ? not_applicable : resolved {kg: bodyweightKg}  ⚠ §4.A FIXES this → a 'bodyweight' status rendered as a LABEL, never the profile weight
 //  percentage  → exercise = self ? rowExerciseId : reference.targetExerciseId;
 //                oneRM missing → unresolved/missing_one_rm{exerciseId}; else resolved {kg = round1(oneRM*value/100)}
 //  byProfile   → any axis the athlete hasn't picked → unresolved/missing_profile_pick{axisNames};
@@ -151,6 +151,8 @@ Server-side guards already enforced (D-RESULT-RELATION): result-create verifies 
 - The `load-records.ts` import of `@repo/contracts/coaching/athlete-profile` (`profileSelectionsSchema`) **stays and is legal** — the dep-cruiser bans are `endpoints/lms → endpoints/coaching` and `contracts/lms → contracts/coaching`; an lms-endpoint importing a coaching-_contract_ matches neither.
 - After the move: `pnpm dep:check` clean, `check-types` clean (catches any missed importer). This is `D-TT`-aligned and keeps block-3 coach-metrics legal (coaching→lms is a forward edge).
 
+**While in the resolver, also FIX bodyweight semantics (`D-AC-BODYWEIGHT-LABEL`):** the shipped block-1 branch substitutes the profile weight — `bodyweight → resolved {kg: bodyweightKg}` — so a bodyweight movement shows "88 kg" (the athlete's own weight), mis-signalling external iron ("Air Squat 100 kg" is nonsense — the body is the implement, not iron). Change it: a `bodyweight` load resolves to a distinct **`bodyweight` status** (a new `ResolvedLoad` variant) that the UI renders as a «Bodyweight» / «со своим весом» label, **never a kg number**. `weightKg` stays in the context (coach tonnage analytics + the future %-of-bodyweight reference) but no longer flows into a bodyweight prescription line. Update the resolver tests + the contract `ResolvedLoad` re-expression accordingly.
+
 ### B. [READ] Session-view aggregate endpoint (`lms/`, derived view — mirror `plan-timetable`)
 
 `GET /api/platform/athlete/sessions/[sessionId]`, `withAthleteAuth`. A pure builder + a fetch wrapper:
@@ -173,7 +175,7 @@ New derived-view contract under `packages/contracts/src/entities/lms/` (mirror `
 
 `apps/platform/src/modules/athlete-session/` (one component per file, `@repo/ui` + MUI + tokens). The read surface: session header → blocks → schema cards → exercise rows. **Mandatory domain coverage (§0):**
 
-- **Load — all 4 `ResolvedLoad` states, every row:** `resolved` → the kg (+ "/ hand" when `perHand`); `missing_one_rm` → the `%` + an inline **"set your 1RM"** affordance; `missing_profile_pick` → a **"pick your profile"** affordance (names the axes); `not_applicable` → bodyweight ("BW"). A `%` _range_ (`rangeMax`) shows the resolved kg honestly as a range/“from”.
+- **Load — every `ResolvedLoad` state, every row:** `resolved` → the kg (+ "/ hand" when `perHand`); `missing_one_rm` → the `%` + an inline **"set your 1RM"** affordance; `missing_profile_pick` → a **"pick your profile"** affordance (names the axes); **`bodyweight` → a «Bodyweight» / «со своим весом» LABEL, never a kg number** (`D-AC-BODYWEIGHT-LABEL` — the body is the implement, not iron); `not_applicable` → no load line (exhaustive-guard fallback). A `%` _range_ (`rangeMax`) shows the resolved kg honestly as a range/“from”.
 - **Benchmark schema** → the **green chip** (theme semantic green token, never hex) + the result type; primary action **"Log result"**. Ordinary schema/session → **"Mark completed"**.
 - **Intensity / tempo / reps / sets / side / rest / modifiers / notes / media** rendered when present (all nullable).
 - The action **never disappears** (re-do any time — `D-LAYERS`); a **done** session shows done state but stays re-loggable.
@@ -221,6 +223,7 @@ So the owner can see every state on real data, provide a dev-only fixture (or ex
 
 - The standalone **Records / PR-history screen** and the standalone **Profile-management screen** (block-2 screens 3-4; own nav, currently "Coming soon"). Inline set-1RM + pick-profile close the resolve holes on the training screen itself — the dedicated screens are the next wave.
 - The **benchmark / template / profile-type CATALOG** (admin CRUD, fusion form, save-as/use-as) — the deferred library wave; free-string profile axes suffice here (`D-PROFILE-SELECTIONS`).
+- **% of bodyweight** as a load reference (sled / carry "100% BW") — a NEW `percentageReference` scope `"bodyweight"`; its own load-model mini-wave (the `load.ts` primitive + the resolver branch + a coach load-editor control + the athlete render, done together so the field isn't inert). Owner-agreed real gap (percentage today references only 1RM self/other), NOT this screen (`D-AC-BODYWEIGHT-LABEL` deferred note).
 - **Plan publish / version gate** (`D-SCOPE-PUBLISH`) · cross-athlete **leaderboard** · per-exercise actual logging · in-workout timers/scoring engine.
 - Coach-side date-display tz fix (the latent `DayRowHead` bug) — a repo-wide pass, not this slice.
 

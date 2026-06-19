@@ -31,6 +31,7 @@ export const resolvedLoadSchema = z.union([
     prompt: z.literal("pick_profile"),
     axisNames: z.array(z.string()),
   }),
+  z.object({ status: z.literal("bodyweight") }),
   z.object({ status: z.literal("not_applicable") }),
 ]);
 
@@ -52,7 +53,11 @@ export const rowViewSchema = z.object({
 
 export const rowItemViewSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("row"), row: rowViewSchema }),
-  z.object({ kind: z.literal("group"), members: z.array(rowViewSchema) }),
+  z.object({
+    kind: z.literal("group"),
+    label: z.string().nullable(),
+    members: z.array(rowViewSchema),
+  }),
 ]);
 
 export const schemaCardViewSchema = z.object({

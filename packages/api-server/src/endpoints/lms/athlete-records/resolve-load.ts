@@ -76,9 +76,7 @@ export const resolveLoad = (
     case "absolute":
       return { status: "resolved", kg: load.kg, perHand: load.count === PER_HAND_COUNT };
     case "bodyweight":
-      return ctx.bodyweightKg === null
-        ? { status: "not_applicable" }
-        : { status: "resolved", kg: ctx.bodyweightKg, perHand: false };
+      return { status: "bodyweight" };
     case "percentage": {
       const exerciseId =
         load.reference.scope === "self" ? rowExerciseId : load.reference.targetExerciseId;

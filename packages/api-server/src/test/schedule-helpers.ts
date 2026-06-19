@@ -2,11 +2,11 @@ import {
   DayOfWeek,
   EnrollmentStatus,
   OneRMRecordSource,
+  type BenchmarkResult,
   type Block,
   type Day,
   type Label,
   type OneRMRecord,
-  type PerformedSchemaResult,
   type PerformedSession,
   type PlanEnrollment,
   type Schema,
@@ -337,18 +337,20 @@ export const createTestBenchmarkSchema = async (
   };
 };
 
-export const createTestPerformedSchemaResult = async (
-  performedSessionId: string,
+export const createTestBenchmarkResult = async (
+  userId: string,
   plannedSchemaId: string,
   result: Result,
-): Promise<{ result: PerformedSchemaResult; toCleanup: CleanupEntry[] }> => {
-  const created = await cleanupRaw.performedSchemaResult.create({
+  overrides: { recordedAt?: Date } = {},
+): Promise<{ result: BenchmarkResult; toCleanup: CleanupEntry[] }> => {
+  const created = await cleanupRaw.benchmarkResult.create({
     data: {
-      performedSessionId,
+      userId,
       plannedSchemaId,
       result: toInputJson(result),
+      recordedAt: overrides.recordedAt ?? new Date(),
     },
   });
 
-  return { result: created, toCleanup: [{ table: "performedSchemaResult", id: created.id }] };
+  return { result: created, toCleanup: [{ table: "benchmarkResult", id: created.id }] };
 };

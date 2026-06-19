@@ -4,6 +4,7 @@ import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import ReplayRounded from "@mui/icons-material/ReplayRounded";
 import { alpha, Box, Button, Card, Stack, Typography } from "@mui/material";
 
+import { type BenchmarkSchema } from "../utils/athlete-session-presentation";
 import {
   COMPLETION_DONE_DATE_ALPHA,
   COMPLETION_DONE_DATE_PX,
@@ -17,13 +18,17 @@ import {
   RESULT_STRIP_BORDER_ALPHA,
 } from "../utils/athlete-session.constants";
 
+import { BenchmarkStatusStrip } from "./benchmark-status-strip";
+
 export type CompletionDoneCardProps = {
   completedLabel: string | null;
+  benchmarks: BenchmarkSchema[];
   onReopen: () => void;
 };
 
 export const CompletionDoneCard = ({
   completedLabel,
+  benchmarks,
   onReopen,
 }: CompletionDoneCardProps): ReactElement => (
   <Fragment>
@@ -63,6 +68,18 @@ export const CompletionDoneCard = ({
           ) : null}
         </Box>
       </Stack>
+
+      {benchmarks.length > 0 ? (
+        <Stack spacing={1.25} sx={{ mt: 1.75 }}>
+          {benchmarks.map((benchmark) => (
+            <BenchmarkStatusStrip
+              key={benchmark.schemaId}
+              title={benchmark.title}
+              result={benchmark.existingResult}
+            />
+          ))}
+        </Stack>
+      ) : null}
     </Card>
     <Button
       fullWidth

@@ -5,7 +5,7 @@ import { alpha, Box, Card, Stack, Typography } from "@mui/material";
 
 import { type SchemaCardView } from "@repo/contracts/lms/session-detail";
 
-import { resolveCardDecoration } from "../utils/athlete-session-presentation";
+import { benchmarkTitle, resolveCardDecoration } from "../utils/athlete-session-presentation";
 import {
   CARD_RADIUS_PX,
   FONT_WEIGHT_SEMI_BOLD,
@@ -22,7 +22,7 @@ import { formatCapSummary, formatRestSummary } from "../utils/format-composition
 import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { BenchmarkChip } from "./benchmark-chip";
-import { LoggedResultStrip } from "./logged-result-strip";
+import { BenchmarkLogPanel } from "./benchmark-log-panel";
 import { RowGroup } from "./row-group";
 import { SchemaRow } from "./schema-row";
 import { SchemaShapeBadge } from "./schema-shape-badge";
@@ -44,7 +44,6 @@ const buildMetaText = (schema: SchemaCardView): string => {
 
 export const SchemaCard = ({ schema, editor }: SchemaCardProps): ReactElement => {
   const metaText = buildMetaText(schema);
-  const hasResult = schema.isBenchmark && schema.existingResult !== null;
 
   return (
     <Card
@@ -72,6 +71,7 @@ export const SchemaCard = ({ schema, editor }: SchemaCardProps): ReactElement =>
               sx={(theme) => ({
                 fontSize: theme.typography.pxToRem(SCHEMA_HEADER_PX),
                 fontWeight: FONT_WEIGHT_SEMI_BOLD,
+                textTransform: "uppercase",
                 color: theme.palette.text.primary,
               })}
             >
@@ -106,10 +106,6 @@ export const SchemaCard = ({ schema, editor }: SchemaCardProps): ReactElement =>
         ) : null}
       </Box>
 
-      {hasResult && schema.existingResult !== null ? (
-        <LoggedResultStrip result={schema.existingResult} />
-      ) : null}
-
       <Box>
         {schema.items.map((item, index) => (
           <Box
@@ -124,11 +120,27 @@ export const SchemaCard = ({ schema, editor }: SchemaCardProps): ReactElement =>
             {item.kind === "row" ? (
               <SchemaRow row={item.row} editor={editor} />
             ) : (
-              <RowGroup members={item.members} />
+              <RowGroup label={item.label} members={item.members} />
             )}
           </Box>
         ))}
       </Box>
+
+      {schema.isBenchmark && schema.resultType !== null ? (
+        <BenchmarkLogPanel
+          schemaId={schema.schemaId}
+          resultType={schema.resultType}
+          title={benchmarkTitle(schema)}
+          existingResult={schema.existingResult}
+          draft={editor.draftFor(schema.schemaId)}
+          isPending={editor.isLoggingBenchmark}
+          isOpen={editor.activeLogSchemaId === schema.schemaId}
+          onOpen={editor.openLog}
+          onSave={editor.saveLog}
+          onCancel={editor.cancelLog}
+          onChange={editor.setDraftField}
+        />
+      ) : null}
     </Card>
   );
 };

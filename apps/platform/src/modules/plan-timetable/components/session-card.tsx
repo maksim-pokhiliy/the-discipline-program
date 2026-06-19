@@ -73,6 +73,7 @@ export const SessionCard = ({
             },
             fontWeight: FONT_WEIGHT_SEMI_BOLD,
             color: decoration.titleColor,
+            textTransform: "uppercase",
             minWidth: 0,
             ...ellipsisSx,
           })}
@@ -107,6 +108,7 @@ export const SessionCard = ({
           sx={{
             fontSize: (theme) => theme.typography.pxToRem(CARD_SUBTITLE_PX),
             color: "text.secondary",
+            textTransform: "uppercase",
             ...ellipsisSx,
           }}
         >

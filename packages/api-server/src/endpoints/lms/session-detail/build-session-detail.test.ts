@@ -7,7 +7,8 @@ import { type AthleteLoadContext } from "../athlete-records";
 
 import { buildSessionDetail, collectExerciseIds } from "./build-session-detail";
 import {
-  type PerformedSessionWithResults,
+  type BenchmarkResultRecord,
+  type PerformedSessionRecord,
   type SessionDetailBlock,
   type SessionDetailRecord,
   type SessionDetailRow,
@@ -101,6 +102,7 @@ type SchemaOverrides = {
   composition?: SessionDetailSchema["composition"];
   rows?: SessionDetailRow[];
   rowGroupIds?: string[];
+  rowGroupNotes?: string[] | null;
 };
 
 const makeSchema = (overrides: SchemaOverrides = {}): SessionDetailSchema => ({
@@ -118,7 +120,7 @@ const makeSchema = (overrides: SchemaOverrides = {}): SessionDetailSchema => ({
   rowGroups: (overrides.rowGroupIds ?? []).map((id) => ({
     id,
     schemaId: overrides.id ?? "clz0000000000000000schm01",
-    notes: null,
+    notes: overrides.rowGroupNotes ?? null,
     createdAt: EPOCH,
     updatedAt: EPOCH,
   })),
@@ -259,7 +261,9 @@ describe("buildSessionDetail load resolution", () => {
     });
 
     expect(
-      firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).resolvedLoad,
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).resolvedLoad,
     ).toEqual({
       status: "resolved",
       kg: 40,
@@ -279,7 +283,9 @@ describe("buildSessionDetail load resolution", () => {
     });
 
     expect(
-      firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).resolvedLoad,
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).resolvedLoad,
     ).toEqual({
       status: "resolved",
       kg: 16,
@@ -287,7 +293,7 @@ describe("buildSessionDetail load resolution", () => {
     });
   });
 
-  it("resolves a bodyweight load to the athlete's weight", () => {
+  it("resolves a bodyweight load to the bodyweight status, never the athlete's weight", () => {
     const session = makeSession({
       blocks: [
         makeBlock({ schemas: [makeSchema({ rows: [makeRow({ load: { kind: "bodyweight" } })] })] }),
@@ -296,9 +302,14 @@ describe("buildSessionDetail load resolution", () => {
 
     expect(
       firstRowView(
-        buildSessionDetail({ session, ctx: makeCtx({ bodyweightKg: 72 }), performed: [] }),
+        buildSessionDetail({
+          session,
+          ctx: makeCtx({ bodyweightKg: 72 }),
+          performed: [],
+          latestResults: [],
+        }),
       ).resolvedLoad,
-    ).toEqual({ status: "resolved", kg: 72, perHand: false });
+    ).toEqual({ status: "bodyweight" });
   });
 
   it("resolves a self-referenced percentage against the row 1RM", () => {
@@ -317,7 +328,10 @@ describe("buildSessionDetail load resolution", () => {
     });
     const ctx = makeCtx({ currentOneRMByExercise: new Map([[ROW_EXERCISE_ID, 100]]) });
 
-    expect(firstRowView(buildSessionDetail({ session, ctx, performed: [] })).resolvedLoad).toEqual({
+    expect(
+      firstRowView(buildSessionDetail({ session, ctx, performed: [], latestResults: [] }))
+        .resolvedLoad,
+    ).toEqual({
       status: "resolved",
       kg: 80,
       perHand: false,
@@ -335,7 +349,10 @@ describe("buildSessionDetail load resolution", () => {
     });
     const ctx = makeCtx({ currentOneRMByExercise: new Map([[OTHER_EXERCISE_ID, 90]]) });
 
-    expect(firstRowView(buildSessionDetail({ session, ctx, performed: [] })).resolvedLoad).toEqual({
+    expect(
+      firstRowView(buildSessionDetail({ session, ctx, performed: [], latestResults: [] }))
+        .resolvedLoad,
+    ).toEqual({
       status: "resolved",
       kg: 45,
       perHand: false,
@@ -358,7 +375,9 @@ describe("buildSessionDetail load resolution", () => {
     });
 
     expect(
-      firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).resolvedLoad,
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).resolvedLoad,
     ).toEqual({
       status: "unresolved",
       reason: "missing_one_rm",
@@ -381,7 +400,9 @@ describe("buildSessionDetail load resolution", () => {
     });
 
     expect(
-      firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).resolvedLoad,
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).resolvedLoad,
     ).toEqual({
       status: "unresolved",
       reason: "missing_profile_pick",
@@ -390,7 +411,7 @@ describe("buildSessionDetail load resolution", () => {
     });
   });
 
-  it("emits not_applicable for bodyweight with no recorded weight", () => {
+  it("emits the bodyweight status for bodyweight with no recorded weight", () => {
     const session = makeSession({
       blocks: [
         makeBlock({ schemas: [makeSchema({ rows: [makeRow({ load: { kind: "bodyweight" } })] })] }),
@@ -398,9 +419,11 @@ describe("buildSessionDetail load resolution", () => {
     });
 
     expect(
-      firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).resolvedLoad,
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).resolvedLoad,
     ).toEqual({
-      status: "not_applicable",
+      status: "bodyweight",
     });
   });
 
@@ -410,7 +433,9 @@ describe("buildSessionDetail load resolution", () => {
     });
 
     expect(
-      firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).resolvedLoad,
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).resolvedLoad,
     ).toBeNull();
   });
 });
@@ -422,6 +447,7 @@ describe("buildSessionDetail header", () => {
         session: makeSession({ sessionLabel: "Back Squat" }),
         ctx: makeCtx(),
         performed: [],
+        latestResults: [],
       }).session.title,
     ).toBe("Back Squat");
     expect(
@@ -429,10 +455,16 @@ describe("buildSessionDetail header", () => {
         session: makeSession({ dayLabel: "Lower Body" }),
         ctx: makeCtx(),
         performed: [],
+        latestResults: [],
       }).session.title,
     ).toBe("Lower Body");
     expect(
-      buildSessionDetail({ session: makeSession(), ctx: makeCtx(), performed: [] }).session.title,
+      buildSessionDetail({
+        session: makeSession(),
+        ctx: makeCtx(),
+        performed: [],
+        latestResults: [],
+      }).session.title,
     ).toBe("Workout");
   });
 
@@ -444,22 +476,29 @@ describe("buildSessionDetail header", () => {
       planName: "Strength Cycle",
     });
 
-    expect(buildSessionDetail({ session, ctx: makeCtx(), performed: [] }).session.position).toBe(
-      "Week 2 · Day 4 · Strength Cycle",
-    );
+    expect(
+      buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }).session
+        .position,
+    ).toBe("Week 2 · Day 4 · Strength Cycle");
   });
 
   it("uses a Monday-based day ordinal in the position eyebrow", () => {
     const sunday = makeSession({ dayOfWeek: DayOfWeek.SUNDAY, planName: "Strength Cycle" });
 
     expect(
-      buildSessionDetail({ session: sunday, ctx: makeCtx(), performed: [] }).session.position,
+      buildSessionDetail({ session: sunday, ctx: makeCtx(), performed: [], latestResults: [] })
+        .session.position,
     ).toBe("Week 1 · Day 7 · Strength Cycle");
   });
 
   it("emits a tz-stable dayOfWeek and dayOfMonth from the absolute UTC date", () => {
     const session = makeSession({ dayOfWeek: DayOfWeek.WEDNESDAY, startDate: MONDAY });
-    const header = buildSessionDetail({ session, ctx: makeCtx(), performed: [] }).session;
+    const header = buildSessionDetail({
+      session,
+      ctx: makeCtx(),
+      performed: [],
+      latestResults: [],
+    }).session;
 
     expect(header.dayOfWeek).toBe("WEDNESDAY");
     expect(header.dayOfMonth).toBe(17);
@@ -471,14 +510,15 @@ describe("buildSessionDetail header", () => {
       startDate: new Date("2026-06-29T00:00:00.000Z"),
     });
 
-    expect(buildSessionDetail({ session, ctx: makeCtx(), performed: [] }).session.dayOfMonth).toBe(
-      1,
-    );
+    expect(
+      buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }).session
+        .dayOfMonth,
+    ).toBe(1);
   });
 });
 
 describe("buildSessionDetail done and existingResult", () => {
-  const performedAt = (iso: string): PerformedSessionWithResults => ({
+  const performedAt = (iso: string): PerformedSessionRecord => ({
     id: cuid("perf"),
     sessionId: "clz0000000000000000sess01",
     userId: "clz0000000000000000user01",
@@ -487,27 +527,20 @@ describe("buildSessionDetail done and existingResult", () => {
     athleteNotes: null,
     createdAt: EPOCH,
     updatedAt: EPOCH,
-    results: [],
   });
 
-  it("marks done and pins completedAt to the earliest performance", () => {
-    const performed = [
-      performedAt("2026-06-15T10:00:00.000Z"),
-      performedAt("2026-06-16T10:00:00.000Z"),
-    ];
-    const header = buildSessionDetail({
-      session: makeSession(),
-      ctx: makeCtx(),
-      performed,
-    }).session;
-
-    expect(header.done).toBe(true);
-    expect(header.completedAt?.toISOString()).toBe("2026-06-15T10:00:00.000Z");
+  const benchmarkResultAt = (
+    schemaId: string,
+    result: BenchmarkResultRecord["result"],
+    iso: string,
+  ): BenchmarkResultRecord => ({
+    plannedSchemaId: schemaId,
+    result,
+    recordedAt: new Date(iso),
   });
 
-  it("surfaces the latest logged result per benchmark schema, not the best", () => {
-    const schemaId = "clz0000000000000000schm09";
-    const session = makeSession({
+  const loadBenchmarkSession = (schemaId: string): SessionDetailRecord =>
+    makeSession({
       blocks: [
         makeBlock({
           schemas: [
@@ -516,29 +549,51 @@ describe("buildSessionDetail done and existingResult", () => {
         }),
       ],
     });
-    const early = performedAt("2026-06-15T10:00:00.000Z");
-    const late = performedAt("2026-06-18T10:00:00.000Z");
 
-    early.results = [
-      {
-        id: cuid("psr"),
-        performedSessionId: early.id,
-        plannedSchemaId: schemaId,
-        result: { type: "load", kg: 120 },
-        createdAt: EPOCH,
-      },
+  it("marks done and pins completedAt to the earliest performance, ignoring latestResults", () => {
+    const performed = [
+      performedAt("2026-06-15T10:00:00.000Z"),
+      performedAt("2026-06-16T10:00:00.000Z"),
     ];
-    late.results = [
-      {
-        id: cuid("psr"),
-        performedSessionId: late.id,
-        plannedSchemaId: schemaId,
-        result: { type: "load", kg: 90 },
-        createdAt: EPOCH,
-      },
+    const header = buildSessionDetail({
+      session: makeSession(),
+      ctx: makeCtx(),
+      performed,
+      latestResults: [],
+    }).session;
+
+    expect(header.done).toBe(true);
+    expect(header.completedAt?.toISOString()).toBe("2026-06-15T10:00:00.000Z");
+  });
+
+  it("keeps done false and completedAt null when only a result is logged (Must-Test 4/14)", () => {
+    const schemaId = "clz0000000000000000schm08";
+    const header = buildSessionDetail({
+      session: loadBenchmarkSession(schemaId),
+      ctx: makeCtx(),
+      performed: [],
+      latestResults: [
+        benchmarkResultAt(schemaId, { type: "load", kg: 100 }, "2026-06-18T10:00:00.000Z"),
+      ],
+    }).session;
+
+    expect(header.done).toBe(false);
+    expect(header.completedAt).toBeNull();
+  });
+
+  it("surfaces the latest logged result per benchmark schema from latestResults, not the best", () => {
+    const schemaId = "clz0000000000000000schm09";
+    const latestResults = [
+      benchmarkResultAt(schemaId, { type: "load", kg: 120 }, "2026-06-15T10:00:00.000Z"),
+      benchmarkResultAt(schemaId, { type: "load", kg: 90 }, "2026-06-18T10:00:00.000Z"),
     ];
 
-    const response = buildSessionDetail({ session, ctx: makeCtx(), performed: [early, late] });
+    const response = buildSessionDetail({
+      session: loadBenchmarkSession(schemaId),
+      ctx: makeCtx(),
+      performed: [],
+      latestResults,
+    });
     const item = response.blocks[0]?.items[0];
 
     expect(item?.kind).toBe("schema");
@@ -566,7 +621,8 @@ describe("buildSessionDetail grouping", () => {
       ],
     });
 
-    const item = buildSessionDetail({ session, ctx: makeCtx(), performed: [] }).blocks[0]?.items[0];
+    const item = buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] })
+      .blocks[0]?.items[0];
 
     expect(item?.kind).toBe("parallel-group");
 
@@ -584,6 +640,7 @@ describe("buildSessionDetail grouping", () => {
           schemas: [
             makeSchema({
               rowGroupIds: [groupId],
+              rowGroupNotes: ["super-set"],
               rows: [
                 makeRow({ rowGroupId: groupId, exerciseId: ROW_EXERCISE_ID }),
                 makeRow({ rowGroupId: groupId, exerciseId: OTHER_EXERCISE_ID }),
@@ -594,8 +651,12 @@ describe("buildSessionDetail grouping", () => {
       ],
     });
 
-    const blockItem = buildSessionDetail({ session, ctx: makeCtx(), performed: [] }).blocks[0]
-      ?.items[0];
+    const blockItem = buildSessionDetail({
+      session,
+      ctx: makeCtx(),
+      performed: [],
+      latestResults: [],
+    }).blocks[0]?.items[0];
 
     if (blockItem?.kind !== "schema") {
       throw new Error("expected a schema block item");
@@ -606,6 +667,7 @@ describe("buildSessionDetail grouping", () => {
     expect(rowItem?.kind).toBe("group");
 
     if (rowItem?.kind === "group") {
+      expect(rowItem.label).toBe("super-set");
       expect(rowItem.members).toHaveLength(2);
     }
   });
@@ -630,7 +692,9 @@ describe("buildSessionDetail row presentation", () => {
       ],
     });
 
-    const row = firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] }));
+    const row = firstRowView(
+      buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+    );
 
     expect(row.movement).toBe("Back Squat");
     expect(row.modifiers).toEqual(["Tempo", "Pause"]);
@@ -655,9 +719,11 @@ describe("buildSessionDetail row presentation", () => {
       ],
     });
 
-    expect(firstRowView(buildSessionDetail({ session, ctx: makeCtx(), performed: [] })).media).toBe(
-      "https://demo.example/override.mp4",
-    );
+    expect(
+      firstRowView(
+        buildSessionDetail({ session, ctx: makeCtx(), performed: [], latestResults: [] }),
+      ).media,
+    ).toBe("https://demo.example/override.mp4");
   });
 });
 

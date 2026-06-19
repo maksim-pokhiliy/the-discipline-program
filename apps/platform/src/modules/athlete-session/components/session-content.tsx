@@ -8,8 +8,8 @@ import { PageHeader } from "@repo/ui";
 import { formatCompletedDate } from "../utils/athlete-session-presentation";
 import {
   BLOCK_GAP_PX,
-  CONTENT_BOTTOM_SPACER_PX,
-  CONTENT_MAX_WIDTH_PX,
+  CONTENT_PAD_TOP,
+  CONTENT_PAD_X,
   RAIL_PADDING_X_PX,
   RAIL_PADDING_Y_PX,
   RAIL_WIDTH_PX,
@@ -42,11 +42,19 @@ export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
     oneRmPending: logging.oneRmPending,
     profileSelections: logging.profileSelections,
     profilePending: logging.profilePending,
+    activeLogSchemaId: logging.activeLogSchemaId,
+    isLoggingBenchmark: logging.isLoggingBenchmark,
     openOneRmEditor: logging.openOneRmEditor,
     openProfileEditor: logging.openProfileEditor,
+    closeEditor: logging.closeEditor,
     setOneRmValue: logging.setOneRmValue,
     commitOneRm: logging.commitOneRm,
     pickProfile: logging.pickProfile,
+    draftFor: logging.draftFor,
+    openLog: logging.openLog,
+    cancelLog: logging.cancelLog,
+    saveLog: logging.saveLog,
+    setDraftField: logging.setDraftField,
   };
 
   const workout = (
@@ -62,39 +70,55 @@ export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
   );
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: { md: 4 } }}>
-        <Box sx={{ flex: 1, minWidth: 0, maxWidth: { md: CONTENT_MAX_WIDTH_PX } }}>{workout}</Box>
-        <Box
-          component="aside"
-          sx={(theme) => ({
-            display: { xs: "none", md: "block" },
-            flex: `0 0 ${RAIL_WIDTH_PX}px`,
-            position: "sticky",
-            top: theme.spacing(3),
-            px: `${RAIL_PADDING_X_PX}px`,
-            py: `${RAIL_PADDING_Y_PX}px`,
-            borderLeft: `1px solid ${theme.palette.divider}`,
-          })}
-        >
-          <CompletionRail
-            isLoggingState={logging.isLoggingState}
-            completedLabel={completedLabel}
-            benchmarks={logging.benchmarks}
-            drafts={logging.drafts}
-            note={logging.note}
-            canConfirm={logging.canConfirm}
-            isSubmitting={logging.isSubmitting}
-            onDraftField={logging.setDraftField}
-            onNote={logging.setNote}
-            onConfirm={logging.confirm}
-            onReopen={logging.reopen}
-          />
-        </Box>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <Box
+        sx={(theme) => ({
+          flex: 1,
+          minWidth: 0,
+          minHeight: 0,
+          overflowY: "auto",
+          px: CONTENT_PAD_X,
+          pt: CONTENT_PAD_TOP,
+          pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+        })}
+      >
+        {workout}
+      </Box>
+
+      <Box
+        component="aside"
+        sx={(theme) => ({
+          display: { xs: "none", md: "block" },
+          width: `${RAIL_WIDTH_PX}px`,
+          flexShrink: 0,
+          height: "100%",
+          overflowY: "auto",
+          borderLeft: `1px solid ${theme.palette.divider}`,
+          px: `${RAIL_PADDING_X_PX}px`,
+          pt: `${RAIL_PADDING_Y_PX}px`,
+          pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+        })}
+      >
+        <CompletionRail
+          isLoggingState={logging.isLoggingState}
+          completedLabel={completedLabel}
+          benchmarks={logging.benchmarks}
+          note={logging.note}
+          isSubmitting={logging.isSubmitting}
+          onNote={logging.setNote}
+          onConfirm={logging.confirm}
+          onReopen={logging.reopen}
+        />
       </Box>
 
       <Box sx={{ display: { xs: "block", md: "none" } }}>
-        <Box sx={{ height: `${CONTENT_BOTTOM_SPACER_PX}px` }} />
         <Box
           sx={(theme) => ({
             position: "fixed",
@@ -114,12 +138,9 @@ export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
         <CompletionSheet
           open={logging.isSheetOpen}
           benchmarks={logging.benchmarks}
-          drafts={logging.drafts}
           note={logging.note}
-          canConfirm={logging.canConfirm}
           isSubmitting={logging.isSubmitting}
           onClose={logging.closeSheet}
-          onDraftField={logging.setDraftField}
           onNote={logging.setNote}
           onConfirm={logging.confirm}
         />

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createPerformedSchemaResultSchema } from "../performed-schema-result/performed-schema-result.schema";
+import { createBenchmarkResultSchema } from "../benchmark-result/benchmark-result.schema";
 
 import { PERFORMED_SESSION_CONSTANTS } from "./performed-session.constants";
 
@@ -20,7 +20,7 @@ export const createPerformedSessionSchema = z
     sessionId: z.string().cuid(),
     performedAt: z.coerce.date(),
     athleteNotes: z.string().max(PERFORMED_SESSION_CONSTANTS.MAX_NOTE_LENGTH).nullable().optional(),
-    results: z.array(createPerformedSchemaResultSchema).optional(),
+    results: z.array(createBenchmarkResultSchema).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.results === undefined) {

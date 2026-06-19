@@ -4,8 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 
+import { type ResultType } from "@repo/contracts/lms/_shared";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
-import { type CreatePerformedSchemaResultData } from "@repo/contracts/lms/performed-schema-result";
 import { type SessionDetailResponse } from "@repo/contracts/lms/session-detail";
 
 import { platformKeys } from "@app/lib/api/keys";
@@ -13,15 +13,12 @@ import {
   useAthleteProfile,
   useCreateOneRMRecord,
   useCreatePerformedSession,
+  useLogBenchmarkResult,
   useUpdateAthleteProfile,
 } from "@app/lib/hooks";
 
-import {
-  areBenchmarksReady,
-  type BenchmarkSchema,
-  collectBenchmarkSchemas,
-} from "./athlete-session-presentation";
-import { buildResult, type ResultDraft } from "./result-form-config";
+import { type BenchmarkSchema, collectBenchmarkSchemas } from "./athlete-session-presentation";
+import { buildResult, type ResultDraft, resultToDraft } from "./result-form-config";
 
 export type ActiveEditor =
   | { rowId: string; kind: "one_rm"; exerciseId: string }
@@ -34,11 +31,19 @@ export type SessionEditorControls = {
   oneRmPending: boolean;
   profileSelections: Record<string, string>;
   profilePending: boolean;
+  activeLogSchemaId: string | null;
+  isLoggingBenchmark: boolean;
   openOneRmEditor: (rowId: string, exerciseId: string) => void;
   openProfileEditor: (rowId: string) => void;
+  closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
   pickProfile: (axisNames: string[], axisName: string, value: string) => void;
+  draftFor: (schemaId: string) => ResultDraft;
+  openLog: (schemaId: string) => void;
+  cancelLog: () => void;
+  saveLog: (schemaId: string, resultType: ResultType) => void;
+  setDraftField: (schemaId: string, key: string, value: string) => void;
 };
 
 const EMPTY_DRAFT: ResultDraft = {};
@@ -57,19 +62,23 @@ export type SessionLogging = {
   oneRmPending: boolean;
   profileSelections: Record<string, string>;
   profilePending: boolean;
+  activeLogSchemaId: string | null;
+  isLoggingBenchmark: boolean;
   benchmarks: BenchmarkSchema[];
-  drafts: Record<string, ResultDraft>;
   note: string;
   isSheetOpen: boolean;
   isSubmitting: boolean;
   isLoggingState: boolean;
-  canConfirm: boolean;
   openOneRmEditor: (rowId: string, exerciseId: string) => void;
   openProfileEditor: (rowId: string) => void;
   closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
   pickProfile: (axisNames: string[], axisName: string, value: string) => void;
+  draftFor: (schemaId: string) => ResultDraft;
+  openLog: (schemaId: string) => void;
+  cancelLog: () => void;
+  saveLog: (schemaId: string, resultType: ResultType) => void;
   setDraftField: (schemaId: string, key: string, value: string) => void;
   setNote: (value: string) => void;
   openSheet: () => void;
@@ -86,6 +95,7 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   const [oneRmValue, setOneRmValueState] = useState("");
   const [stagedProfile, setStagedProfile] = useState<Record<string, string>>(EMPTY_SELECTIONS);
   const [drafts, setDrafts] = useState<Record<string, ResultDraft>>({});
+  const [activeLogSchemaId, setActiveLogSchemaId] = useState<string | null>(null);
   const [note, setNoteState] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isReopened, setIsReopened] = useState(false);
@@ -94,20 +104,9 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   const updateProfile = useUpdateAthleteProfile();
   const createOneRm = useCreateOneRMRecord();
   const createPerformedSession = useCreatePerformedSession();
+  const logBenchmark = useLogBenchmarkResult();
 
   const benchmarks = useMemo(() => collectBenchmarkSchemas(data.blocks), [data.blocks]);
-  const buildBenchmarkResults = useCallback(
-    (currentDrafts: Record<string, ResultDraft>): CreatePerformedSchemaResultData[] =>
-      benchmarks.flatMap((benchmark) => {
-        const result = buildResult(
-          benchmark.resultType,
-          currentDrafts[benchmark.schemaId] ?? EMPTY_DRAFT,
-        );
-
-        return result === null ? [] : [{ plannedSchemaId: benchmark.schemaId, result }];
-      }),
-    [benchmarks],
-  );
   const savedSelections = athleteProfile.data?.profileSelections ?? EMPTY_SELECTIONS;
   const profileSelections = useMemo(
     () => ({ ...savedSelections, ...stagedProfile }),
@@ -197,6 +196,58 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
     }));
   }, []);
 
+  const draftFor = useCallback(
+    (schemaId: string): ResultDraft => drafts[schemaId] ?? EMPTY_DRAFT,
+    [drafts],
+  );
+
+  const openLog = useCallback(
+    (schemaId: string): void => {
+      const benchmark = benchmarks.find((entry) => entry.schemaId === schemaId);
+      const existing = benchmark?.existingResult ?? null;
+
+      if (existing !== null) {
+        setDrafts((prev) => ({ ...prev, [schemaId]: resultToDraft(existing) }));
+      }
+
+      setActiveLogSchemaId(schemaId);
+    },
+    [benchmarks],
+  );
+
+  const cancelLog = useCallback((): void => setActiveLogSchemaId(null), []);
+
+  const saveLog = useCallback(
+    (schemaId: string, resultType: ResultType): void => {
+      if (logBenchmark.isPending) {
+        return;
+      }
+
+      const result = buildResult(resultType, drafts[schemaId] ?? EMPTY_DRAFT);
+
+      if (result === null) {
+        return;
+      }
+
+      logBenchmark.mutate(
+        { sessionId, data: { plannedSchemaId: schemaId, result } },
+        {
+          onSuccess: () => {
+            setActiveLogSchemaId(null);
+            setDrafts((prev) => {
+              const next = { ...prev };
+
+              delete next[schemaId];
+
+              return next;
+            });
+          },
+        },
+      );
+    },
+    [logBenchmark, drafts, sessionId],
+  );
+
   const openSheet = useCallback((): void => setIsSheetOpen(true), []);
   const closeSheet = useCallback((): void => setIsSheetOpen(false), []);
 
@@ -206,11 +257,10 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   }, []);
 
   const isLoggingState = !done || isReopened;
-  const canConfirm = areBenchmarksReady(benchmarks, drafts);
   const isSubmitting = createPerformedSession.isPending;
 
   const confirm = useCallback((): void => {
-    if (!canConfirm || isSubmitting) {
+    if (isSubmitting) {
       return;
     }
 
@@ -221,7 +271,6 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
         sessionId,
         performedAt: new Date(),
         athleteNotes: trimmedNote.length > 0 ? trimmedNote : null,
-        results: buildBenchmarkResults(drafts),
       })
       .then(
         () => {
@@ -230,15 +279,7 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
         },
         () => {},
       );
-  }, [
-    canConfirm,
-    isSubmitting,
-    note,
-    sessionId,
-    drafts,
-    buildBenchmarkResults,
-    createPerformedSession,
-  ]);
+  }, [isSubmitting, note, sessionId, createPerformedSession]);
 
   return {
     activeEditor,
@@ -247,19 +288,23 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
     oneRmPending: createOneRm.isPending,
     profileSelections,
     profilePending: updateProfile.isPending,
+    activeLogSchemaId,
+    isLoggingBenchmark: logBenchmark.isPending,
     benchmarks,
-    drafts,
     note,
     isSheetOpen,
     isSubmitting,
     isLoggingState,
-    canConfirm,
     openOneRmEditor,
     openProfileEditor,
     closeEditor,
     setOneRmValue: setOneRmValueState,
     commitOneRm,
     pickProfile,
+    draftFor,
+    openLog,
+    cancelLog,
+    saveLog,
     setDraftField,
     setNote: setNoteState,
     openSheet,

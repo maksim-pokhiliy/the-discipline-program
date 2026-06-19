@@ -2,15 +2,16 @@ import { z } from "zod";
 
 import { resultSchema } from "../_shared";
 
-export const performedSchemaResultSchema = z.object({
+export const benchmarkResultSchema = z.object({
   id: z.string().cuid(),
-  performedSessionId: z.string().cuid(),
+  userId: z.string().cuid(),
   plannedSchemaId: z.string().cuid(),
   result: resultSchema,
+  recordedAt: z.coerce.date(),
   createdAt: z.date(),
 });
 
-export const createPerformedSchemaResultSchema = z.object({
+export const createBenchmarkResultSchema = z.object({
   plannedSchemaId: z.string().cuid(),
   result: resultSchema,
 });

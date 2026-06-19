@@ -53,10 +53,15 @@ export const lmsSessionDetailApi = {
 
     const performed = await prisma.performedSession.findMany({
       where: { sessionId, userId },
-      include: { results: true },
       orderBy: { performedAt: "asc" },
     });
 
-    return buildSessionDetail({ session, ctx, performed });
+    const latestResults = await prisma.benchmarkResult.findMany({
+      where: { userId, plannedSchema: { block: { session: { id: sessionId } } } },
+      orderBy: [{ recordedAt: "asc" }, { id: "asc" }],
+      select: { plannedSchemaId: true, result: true, recordedAt: true },
+    });
+
+    return buildSessionDetail({ session, ctx, performed, latestResults });
   },
 };

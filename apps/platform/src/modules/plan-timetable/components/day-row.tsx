@@ -37,6 +37,7 @@ import {
 } from "../utils/plan-timetable.constants";
 import { resolveCardDecoration, resolveSlotDecoration } from "../utils/timetable-presentation";
 
+import { RestDayCard } from "./rest-day-card";
 import { SessionCard } from "./session-card";
 
 export type DayRowProps = {
@@ -49,7 +50,6 @@ export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): React
   const theme = useTheme();
   const { dateColor, node } = resolveSlotDecoration(slot.status, theme);
   const hasSessions = slot.sessions.length > 0;
-  const emptyLabel = slot.isRestDay ? REST_DAY_LABEL : EMPTY_DAY_LABEL;
   const railColor = alpha(theme.palette.common.white, RAIL_ALPHA);
 
   return (
@@ -153,11 +153,13 @@ export const DayRow = ({ slot, todayRowRef, onOpenSession }: DayRowProps): React
               />
             ))}
           </Stack>
+        ) : slot.isRestDay ? (
+          <RestDayCard label={slot.restLabel ?? REST_DAY_LABEL} />
         ) : (
           <Typography
             sx={{ fontSize: (t) => t.typography.pxToRem(REST_DAY_PX), color: "text.disabled" }}
           >
-            {emptyLabel}
+            {EMPTY_DAY_LABEL}
           </Typography>
         )}
       </TimelineContent>

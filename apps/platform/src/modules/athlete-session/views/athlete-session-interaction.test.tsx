@@ -16,6 +16,7 @@ const useAthleteProfileMock = vi.fn();
 const createOneRmMutate = vi.fn();
 const updateProfileMutate = vi.fn();
 const createPerformedSessionAsync = vi.fn();
+const logBenchmarkMutate = vi.fn();
 
 let createOneRmPending = false;
 let updateProfilePending = false;
@@ -36,6 +37,7 @@ vi.mock("@app/lib/hooks", async () => {
       mutateAsync: createPerformedSessionAsync,
       isPending: false,
     }),
+    useLogBenchmarkResult: () => ({ mutate: logBenchmarkMutate, isPending: false }),
   };
 });
 
@@ -154,7 +156,43 @@ const benchmarkSchema: SchemaCardView = {
         sets: null,
         reps: { kind: "count", value: 15 },
         load: { kind: "bodyweight" },
-        resolvedLoad: { status: "not_applicable" },
+        resolvedLoad: { status: "bodyweight" },
+        intensity: null,
+        tempo: null,
+        side: null,
+        rest: null,
+        modifiers: [],
+        notes: null,
+      },
+    },
+  ],
+};
+
+const loadBenchmarkSchema: SchemaCardView = {
+  schemaId: BENCHMARK_SCHEMA_ID,
+  header: "Find 1RM",
+  composition: { repetition: { kind: "count", count: 1 }, benchmark: { resultType: "load" } },
+  label: { kind: "rounds", family: "ROUNDS" },
+  isBenchmark: true,
+  resultType: "load",
+  intensity: null,
+  existingResult: null,
+  items: [
+    {
+      kind: "row",
+      row: {
+        rowId: "clz000000000000000000row4",
+        movement: "Back Squat",
+        media: null,
+        sets: 1,
+        reps: { kind: "count", value: 1 },
+        load: { kind: "percentage", value: 100, reference: { scope: "self" } },
+        resolvedLoad: {
+          status: "unresolved",
+          reason: "missing_one_rm",
+          prompt: "set_one_rm",
+          exerciseId: EX_ID,
+        },
         intensity: null,
         tempo: null,
         side: null,
@@ -315,7 +353,7 @@ describe("AthleteSessionView — inline Pick profile", () => {
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
+    fireEvent.click(screen.getByRole("button", { name: /pick your/i }));
     fireEvent.click(screen.getByRole("button", { name: "Scaled" }));
 
     expect(updateProfileMutate).toHaveBeenCalledTimes(1);
@@ -330,7 +368,7 @@ describe("AthleteSessionView — inline Pick profile", () => {
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
+    fireEvent.click(screen.getByRole("button", { name: /pick your/i }));
 
     expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-contained");
   });
@@ -340,7 +378,7 @@ describe("AthleteSessionView — inline Pick profile", () => {
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
+    fireEvent.click(screen.getByRole("button", { name: /pick your/i }));
     fireEvent.click(screen.getByRole("button", { name: "RX" }));
 
     expect(updateProfileMutate).not.toHaveBeenCalled();
@@ -361,7 +399,7 @@ describe("AthleteSessionView — inline Pick profile", () => {
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /pick profile/i }));
+    fireEvent.click(screen.getByRole("button", { name: /pick your/i }));
 
     const scaled = screen.getByRole("button", { name: "Scaled" });
 
@@ -374,8 +412,82 @@ describe("AthleteSessionView — inline Pick profile", () => {
   });
 });
 
-describe("AthleteSessionView — Mark Completed", () => {
-  it("creates one performed-session with an empty results array for an ordinary session", async () => {
+describe("AthleteSessionView — in-schema benchmark logging", () => {
+  it("logs the benchmark result from its schema card in a single decoupled request (Must-Test 15)", () => {
+    setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /log your result/i }));
+    fireEvent.change(screen.getByLabelText(/rounds/i), { target: { value: "18" } });
+    fireEvent.change(screen.getByLabelText(/^reps$/i), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: /save result/i }));
+
+    expect(logBenchmarkMutate).toHaveBeenCalledTimes(1);
+    expect(firstCallArg(logBenchmarkMutate)).toEqual({
+      sessionId: SESSION_ID,
+      data: {
+        plannedSchemaId: BENCHMARK_SCHEMA_ID,
+        result: { type: "rounds_reps", rounds: 18, reps: 7 },
+      },
+    });
+  });
+
+  it("never carries the benchmark result through Mark Completed (Must-Test 15)", () => {
+    setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /log your result/i }));
+    fireEvent.change(screen.getByLabelText(/rounds/i), { target: { value: "18" } });
+    fireEvent.change(screen.getByLabelText(/^reps$/i), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: /save result/i }));
+
+    expect(createPerformedSessionAsync).not.toHaveBeenCalled();
+  });
+
+  it("keeps the in-schema editor open and retains the draft when the log mutation rejects (Must-Test 18)", () => {
+    logBenchmarkMutate.mockImplementation(() => {});
+    setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /log your result/i }));
+    fireEvent.change(screen.getByLabelText(/rounds/i), { target: { value: "18" } });
+    fireEvent.change(screen.getByLabelText(/^reps$/i), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: /save result/i }));
+
+    expect(screen.getByRole("button", { name: /save result/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/rounds/i)).toHaveValue(18);
+    expect(screen.getByLabelText(/^reps$/i)).toHaveValue(7);
+  });
+
+  it("logs a load benchmark as a load payload and coexists with the inline Set 1RM editor (Must-Test 19)", () => {
+    setView(buildResponse([block(loadBenchmarkSchema, "clz0000000000000000000blk3", "Strength")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /log your result/i }));
+    fireEvent.change(screen.getByLabelText(/load \(kg\)/i), { target: { value: "142.5" } });
+    fireEvent.click(screen.getByRole("button", { name: /save result/i }));
+
+    expect(firstCallArg(logBenchmarkMutate)).toEqual({
+      sessionId: SESSION_ID,
+      data: {
+        plannedSchemaId: BENCHMARK_SCHEMA_ID,
+        result: { type: "load", kg: 142.5 },
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /set 1rm/i }));
+
+    expect(screen.getByLabelText(/estimated 1rm/i)).toBeInTheDocument();
+    expect(createOneRmMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("AthleteSessionView — Mark Completed (decoupled)", () => {
+  it("creates one performed-session with no results key for an ordinary session (Must-Test 16)", async () => {
     setView(buildResponse([block(oneRmRow, "clz0000000000000000000blk1", "Strength")]));
 
     const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
@@ -384,67 +496,58 @@ describe("AthleteSessionView — Mark Completed", () => {
 
     await waitFor(() => expect(createPerformedSessionAsync).toHaveBeenCalledTimes(1));
 
-    expect(firstCallArg(createPerformedSessionAsync)).toMatchObject({
+    const arg = firstCallArg(createPerformedSessionAsync);
+
+    expect(arg).toMatchObject({
       sessionId: SESSION_ID,
       athleteNotes: null,
       performedAt: expect.any(Date),
-      results: [],
     });
+    expect(arg).not.toHaveProperty("results");
   });
 
-  it("logs one performed-session carrying the benchmark results in a single request (QA-001)", async () => {
+  it("completes with zero benchmarks logged and never posts a result (Must-Test 16)", async () => {
     setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
 
     const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
-    const rail = getRail(container);
-    const roundsInput = within(rail).getByLabelText(/rounds/i);
-    const repsInput = within(rail).getByLabelText(/^reps$/i);
 
-    fireEvent.change(roundsInput, { target: { value: "18" } });
-    fireEvent.change(repsInput, { target: { value: "7" } });
-
-    fireEvent.click(within(rail).getByRole("button", { name: /mark completed/i }));
+    fireEvent.click(within(getRail(container)).getByRole("button", { name: /mark completed/i }));
 
     await waitFor(() => expect(createPerformedSessionAsync).toHaveBeenCalledTimes(1));
 
-    expect(firstCallArg(createPerformedSessionAsync)).toMatchObject({
-      sessionId: SESSION_ID,
-      performedAt: expect.any(Date),
-      results: [
-        {
-          plannedSchemaId: BENCHMARK_SCHEMA_ID,
-          result: { type: "rounds_reps", rounds: 18, reps: 7 },
-        },
-      ],
-    });
+    expect(firstCallArg(createPerformedSessionAsync)).not.toHaveProperty("results");
+    expect(logBenchmarkMutate).not.toHaveBeenCalled();
   });
 
-  it("keeps the logging form open and does not flip done when the single request rejects (QA-001)", async () => {
-    createPerformedSessionAsync.mockRejectedValueOnce(new Error("network"));
-    setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
-
-    const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
-    const rail = getRail(container);
-
-    fireEvent.change(within(rail).getByLabelText(/rounds/i), { target: { value: "18" } });
-    fireEvent.change(within(rail).getByLabelText(/^reps$/i), { target: { value: "7" } });
-
-    fireEvent.click(within(rail).getByRole("button", { name: /mark completed/i }));
-
-    await waitFor(() => expect(createPerformedSessionAsync).toHaveBeenCalledTimes(1));
-
-    expect(
-      within(getRail(container)).getByRole("button", { name: /mark completed/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("keeps confirm disabled until the benchmark result is filled", () => {
+  it("enables Mark Completed without filling any benchmark (Must-Test 17)", () => {
     setView(buildResponse([block(benchmarkSchema, "clz0000000000000000000blk3", "Metcon")]));
 
     const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
     const confirm = within(getRail(container)).getByRole("button", { name: /mark completed/i });
 
-    expect(confirm).toBeDisabled();
+    expect(confirm).not.toBeDisabled();
+  });
+
+  it("echoes a logged and an unlogged benchmark in the ready card and stays enabled (Must-Test 21)", () => {
+    const logged: SchemaCardView = {
+      ...benchmarkSchema,
+      schemaId: "clz000000000000000000sch9",
+      existingResult: { type: "rounds_reps", rounds: 18, reps: 7 },
+    };
+
+    setView(
+      buildResponse([
+        block(logged, "clz0000000000000000000blk3", "Metcon"),
+        block(benchmarkSchema, "clz0000000000000000000blk4", "Metcon 2"),
+      ]),
+    );
+
+    const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
+    const rail = getRail(container);
+
+    expect(within(rail).getByText(/· logged/i)).toBeInTheDocument();
+    expect(within(rail).getByText(/isn't logged yet/i)).toBeInTheDocument();
+    expect(within(rail).getByRole("button", { name: /mark completed/i })).not.toBeDisabled();
   });
 });
 
@@ -478,5 +581,25 @@ describe("AthleteSessionView — done and re-open", () => {
     fireEvent.click(lastElement(reopen));
 
     expect(screen.getAllByRole("button", { name: /mark completed/i }).length).toBeGreaterThan(0);
+  });
+
+  it("echoes a logged benchmark on both the schema card and the done card (Must-Test 20)", () => {
+    const logged: SchemaCardView = {
+      ...benchmarkSchema,
+      existingResult: { type: "rounds_reps", rounds: 18, reps: 7 },
+    };
+
+    setView(
+      buildResponse([block(logged, "clz0000000000000000000blk3", "Metcon")], {
+        done: true,
+        completedAt: new Date("2026-06-18T12:00:00.000Z"),
+      }),
+    );
+
+    const { container } = render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(screen.getAllByText("18 rounds + 7 reps").length).toBeGreaterThan(1);
+    expect(within(getRail(container)).getByText(/· logged/i)).toBeInTheDocument();
+    expect(within(getRail(container)).getByText("18 rounds + 7 reps")).toBeInTheDocument();
   });
 });

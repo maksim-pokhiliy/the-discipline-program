@@ -1,12 +1,6 @@
 import { type ReactElement } from "react";
 
-import { alpha, Button } from "@mui/material";
-
-import {
-  INLINE_AXIS_OPTION_HEIGHT_PX,
-  INLINE_OPTION_INACTIVE_BG_ALPHA,
-  INLINE_OPTION_INACTIVE_BORDER_ALPHA,
-} from "../utils/athlete-session.constants";
+import { Button } from "@mui/material";
 
 export type ProfileOptionButtonProps = {
   label: string;
@@ -23,20 +17,11 @@ export const ProfileOptionButton = ({
 }: ProfileOptionButtonProps): ReactElement => (
   <Button
     fullWidth
+    size="small"
+    color="primary"
+    variant={isActive ? "contained" : "outlined"}
     disabled={disabled}
     onClick={onClick}
-    variant={isActive ? "contained" : "outlined"}
-    color={isActive ? "primary" : "inherit"}
-    sx={(theme) => ({
-      height: INLINE_AXIS_OPTION_HEIGHT_PX,
-      ...(isActive
-        ? {}
-        : {
-            bgcolor: alpha(theme.palette.common.white, INLINE_OPTION_INACTIVE_BG_ALPHA),
-            borderColor: alpha(theme.palette.common.white, INLINE_OPTION_INACTIVE_BORDER_ALPHA),
-            color: theme.palette.text.secondary,
-          }),
-    })}
   >
     {label}
   </Button>

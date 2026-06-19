@@ -7,10 +7,9 @@ import { type ResultType } from "@repo/contracts/lms/_shared";
 
 import {
   BENCHMARK_LABEL_BY_RESULT_TYPE,
+  BLOCK_RULE_ALPHA,
   FONT_WEIGHT_SEMI_BOLD,
-  RESULT_CARD_BORDER_ALPHA,
   RESULT_CARD_ICON_PX,
-  RESULT_CARD_PADDING_PX,
   RESULT_CARD_TITLE_ALPHA,
   RESULT_CARD_TITLE_PX,
   RESULT_CARD_TYPE_ALPHA,
@@ -57,10 +56,8 @@ export const ResultForm = ({
   return (
     <Box
       sx={(theme) => ({
-        p: `${RESULT_CARD_PADDING_PX}px`,
-        borderRadius: theme.shape.borderRadius,
-        bgcolor: theme.palette.background.recessed,
-        border: `1px solid ${alpha(theme.palette.success.main, RESULT_CARD_BORDER_ALPHA)}`,
+        pt: 2,
+        borderTop: `1px solid ${alpha(theme.palette.common.white, BLOCK_RULE_ALPHA)}`,
       })}
     >
       <Stack direction="row" alignItems="center" spacing={1}>

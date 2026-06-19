@@ -1,4 +1,5 @@
 export * from "./_shared";
+export * from "./benchmark-result";
 export * from "./block";
 export * from "./composition";
 export * from "./day";
@@ -6,7 +7,6 @@ export * from "./exercise";
 export * from "./label";
 export * from "./modifier";
 export * from "./one-rm-record";
-export * from "./performed-schema-result";
 export * from "./performed-session";
 export * from "./plan-enrollment";
 export * from "./plan-timetable";

@@ -166,3 +166,27 @@ export const buildResult = (resultType: ResultType, draft: ResultDraft): Result 
 
 export const isResultDraftValid = (resultType: ResultType, draft: ResultDraft): boolean =>
   RESULT_FORM_CONFIG[resultType].validate(draft);
+
+export const resultToDraft = (result: Result): ResultDraft => {
+  switch (result.type) {
+    case "time":
+      return {
+        [TIME_MINUTES_KEY]: String(Math.floor(result.seconds / SECONDS_PER_MINUTE)),
+        [TIME_SECONDS_KEY]: String(result.seconds % SECONDS_PER_MINUTE),
+      };
+    case "rounds_reps":
+      return { [ROUNDS_KEY]: String(result.rounds), [REPS_KEY]: String(result.reps) };
+    case "load":
+      return { [LOAD_KEY]: String(result.kg) };
+    case "max_reps":
+      return { [MAX_REPS_KEY]: String(result.reps) };
+    case "distance":
+      return { [DISTANCE_VALUE_KEY]: String(result.value), [DISTANCE_UNIT_KEY]: result.unit };
+    case "calories":
+      return { [CALORIES_KEY]: String(result.value) };
+    default:
+      result satisfies never;
+
+      return {};
+  }
+};

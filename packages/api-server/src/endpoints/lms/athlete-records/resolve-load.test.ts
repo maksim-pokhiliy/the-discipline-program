@@ -36,20 +36,18 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("resolves bodyweight to the athlete's weight when known", () => {
+  it("resolves bodyweight to the bodyweight status, never a kg number, when weight is known", () => {
     const load: Load = { kind: "bodyweight" };
 
     expect(resolveLoad(load, makeCtx({ bodyweightKg: 72 }), ROW_EXERCISE_ID)).toEqual({
-      status: "resolved",
-      kg: 72,
-      perHand: false,
+      status: "bodyweight",
     });
   });
 
-  it("returns not_applicable for bodyweight when the weight is unknown", () => {
+  it("resolves bodyweight to the bodyweight status even when weight is unknown", () => {
     const load: Load = { kind: "bodyweight" };
 
-    expect(resolveLoad(load, makeCtx(), ROW_EXERCISE_ID)).toEqual({ status: "not_applicable" });
+    expect(resolveLoad(load, makeCtx(), ROW_EXERCISE_ID)).toEqual({ status: "bodyweight" });
   });
 
   it("resolves a self-referenced percentage against the row's current 1RM", () => {

@@ -13,4 +13,5 @@ export type ResolvedLoad =
       prompt: "pick_profile";
       axisNames: string[];
     }
+  | { status: "bodyweight" }
   | { status: "not_applicable" };

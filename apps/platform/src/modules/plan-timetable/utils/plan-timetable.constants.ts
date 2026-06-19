@@ -94,6 +94,13 @@ export const DOT_FUTURE_ALPHA = 0.14;
 export const PILL_BORDER_ALPHA = 0.18;
 export const NAV_DISABLED_OPACITY = 0.25;
 
+export const REST_CARD_SURFACE_ALPHA = 0.025;
+export const REST_CARD_STRIPE_ALPHA = 0.06;
+export const REST_STRIPE_TRANSPARENT_PX = 9;
+export const REST_STRIPE_PERIOD_PX = 10;
+export const REST_CARD_PAD_X = 2;
+export const REST_CARD_PAD_Y = 1.5;
+
 export const DOT_HEIGHT_PX = 4;
 export const DOT_TRANSITION_MS = 195;
 export const DOT_W_CUR = { xs: 26, md: 30 } as const;

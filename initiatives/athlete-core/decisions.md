@@ -308,3 +308,64 @@ A module-local `<DisplayNumber>` leaf (Barlow Condensed 700, `textTransform:"non
 The session page lives under the athlete `(secondary)` route group (the `padded` `AthleteShell` variant from D-TT-DESKTOP-3PANE); the desktop right "Completion" rail is module-internal (not an app-shell pane).
 
 **Why.** The prototype desktop is a focused content page, not a full-bleed 3-pane app-shell (that's the timetable's `(home)` flush layout); `padded` matches. Reversible to `(home)` flush + a flush layout if the owner later wants full-bleed.
+
+---
+
+# Block-2 screen-2 (Session / Workout View) in-schema benchmark-logging re-home (ratified 2026-06-19, `/feature` execution)
+
+Promoted from `.feature-dev/1781807202/` (design.md §7 Decision Record D1-D12 + the Gate-A resolutions + owner live-test rulings in `tasks.md`). Branch `feat/athlete-session-view` (dirty tree = baseline; one working-tree commit after the owner's manual test). A `/feature` FULL run, **escalated from `small` at Gate A** when the design re-home surfaced (Prisma model change + a new endpoint + completion refactor). Owner-ratified at Gate A AND on the live test. This wave **decouples benchmark result-logging from completion** and **re-homes the result to an athlete-owned, append-only model** — it supersedes D-SD-LOG-ATOMIC's batching while preserving its atomicity invariant, and retires D-RESULT-RELATION's `@@unique`. Load-bearing "why" for screens 3-4 (their records/PR UI reads this history) and any later session-view / records work. Verified against the as-built code.
+
+## D-BR-OWNED-HISTORY — the benchmark result is athlete-owned, append-only HISTORY; logging is decoupled from completion (supersedes D-SD-LOG-ATOMIC's batching, retires D-RESULT-RELATION's `@@unique`)
+
+**Ratified 2026-06-19 (owner, Gate A + live test). RFC D1/D2. Supersedes D-SD-LOG-ATOMIC's batching; retires D-RESULT-RELATION's `@@unique`.**
+
+A benchmark result is **re-homed out of `performed-session` into an athlete-owned, append-only `BenchmarkResult`** model: `{ id, userId, plannedSchemaId, result, recordedAt, createdAt }` — NO `performedSessionId`, NO `@@unique` anywhere (`@@index([userId, plannedSchemaId, recordedAt])` for the latest-per-schema read + the per-athlete history; `@@map("training_benchmark_results")`). Each log is a **NEW row** (append; `prisma.$transaction` create, no upsert) — **a re-log is a new attempt, never an overwrite** (owner verbatim: «повторный лог это повторный лог, не перезапись, нам нужна история»). The result is logged in place per benchmark schema via a NEW endpoint and **does NOT flip the done tick** — logging a result and completing a workout are two independent events (owner: «результат становится частью профайла АТЛЕТА (его рекорды)… "completion" тренировки это другое событие»). `existingResult` reads the LATEST by `recordedAt` (D-VIEW-RESULT, unchanged shape — only the source query moved to the athlete-owned model, deterministic tiebreak `orderBy [recordedAt, id]`).
+
+**Supersession of D-SD-LOG-ATOMIC.** D-SD-LOG-ATOMIC folded logging INTO the completion transaction (one `performed-session` create carrying `results[]`). That batching is **superseded** — logging is no longer folded into completion. Its **atomicity invariant is PRESERVED**: each write is still its own atomic transaction (and the `load` case writes two rows in one tx — D-BR-1RM-ATOMIC). The QA-001 orphan CRITICAL ("done=true while an un-posted schema showed no result") **dissolves entirely** — the result no longer lives on the performed-session, so there is no "session done + missing result" coupling that any path can half-apply.
+
+**Retirement of D-RESULT-RELATION's `@@unique`.** `D-RESULT-RELATION`'s `@@unique([performedSessionId, plannedSchemaId])` (one result per schema per performance) is **retired** — append history wants every attempt as a row. The rest of D-RESULT-RELATION holds: the result still pins its schema (`plannedSchema` FK `onDelete: Restrict`), and the create still verifies schema-is-benchmark + schema-belongs-to-session + result-type-match (the `validateBenchmarkResultForSession` validator is reused, relocated).
+
+**Why.** Owner domain ruling — the result is the athlete's record/history (coach-readable, his property), a re-log is a fresh attempt → trend (D-STATS: "all → trend; history = every performance stored, never discarded"); completion is a separate explicit tick. The 1RM→percentage chain demands immediate persistence of a `load` result + its `OneRMRecord` mid-workout — folding into completion makes the prescription stay an unresolved hint for the whole working set (backwards from HWPO / D-LOAD-RESOLVE). The athlete-owned split is strictly cleaner than the rejected `completedAt`-marker design (RFC §6 alt-a) on ownership fidelity, coach-metrics radius (zero files), native append-history, and orphan-safety.
+
+**Reversibility.** Low-medium — the re-home is a Prisma schema change (non-prod, no data to migrate, `db:reset` per ADR-0019, NO migration files); reverting means re-attaching to performed-session, mechanical but touches the same surface. No reason to.
+
+## D-BR-COMPLETION-PURE — completion is the pure tick, UNTOUCHED in radius (coach-metrics zero files changed)
+
+**Ratified 2026-06-19 (owner, Gate A). RFC D3.**
+
+`performed-session` loses ONLY its `results` relation; it keeps `sessionId, userId, performedAt, athleteNotes`. `lmsPerformedSessionApi.create` drops its `results[]` validation loop and per-result writes — completion no longer carries results (it creates one `performed-session` row + the optional note). `done = performed.length > 0` is **UNCHANGED** (byte-for-byte). `verifySessionReachableByAthlete` (the completion IDOR guard, throws `ForbiddenError`, test-locked QA-004) is kept **AS-IS** (NOT swapped to NotFound — see D-BR-IDOR-NOTFOUND / D9). The `performedAt`-migration, `isSessionCompleted` (coach-metrics), and **ALL of `endpoints/coaching/coach-metrics/*` change ZERO files** (grep-verified: `coaching/*` has no reference to the results model at all).
+
+**Why.** The result no longer lives on the performed-session, so completion is genuinely just the tick. Coach-metrics derive adherence/streak/last-activity from `PerformedSession` rows and never read the results relation — re-homing the result touches them not at all. This zero coach-metrics radius is the decisive advantage over the rejected `completedAt`-marker framing (which would force every metric to learn a "logged-but-not-done" marker).
+
+## D-BR-1RM-ATOMIC — a `load` result writes `OneRMRecord` inside the SAME transaction; new `sessionId`-keyed endpoint, old standalone endpoint removed
+
+**Ratified 2026-06-19 (owner, Gate A). RFC D4/D5/D7/D8/D10.**
+
+When `result.type === "load"`, the transaction also creates an `OneRMRecord` `{ userId, exerciseId: <benchmark first SchemaRow by order>, valueKg: kg, recordedAt: <single now>, source: MANUAL }` — result and 1RM commit-or-rollback together so they never diverge (a load result with no 1RM → percentage rows stay unresolved; a 1RM with no result → a phantom attempt). The write is a plain append `create` inside `prisma.$transaction`, wrapped in `retryOnP2034` (the codebase SSI remedy); NO ensure-session, NO DB unique. A `load` benchmark with no rows → `BadRequestError` before the tx (D8 — no exercise to attach the 1RM to). The inline Set-1RM popup's `OneRMRecord` write is untouched and **coexists** (both feed the same 1RM layer).
+
+New endpoint: **`POST /api/platform/athlete/sessions/[sessionId]/result`** — sessionId-keyed (the client holds only `sessionId`; the sessionId is required by both the IDOR guard AND `validateBenchmarkResultForSession`'s schema-belongs-to-session check; mirrors the GET key). Body REUSES the (renamed) `createBenchmarkResultSchema` `{ plannedSchemaId, result }` (the six-variant discriminated union — no JSON editor); response is the reshaped `benchmarkResultSchema`. The **old standalone endpoint is REMOVED** (`POST .../performed-sessions/[performedSessionId]/result` route + `lmsPerformedSchemaResultApi.create` + its private `loadPerformedSessionForAthlete` + the old params schema + the API-client `create(performedSessionId,…)`) — it wrote a `performedSessionId`-bound row that no longer exists. The block-1 **hook + validator + body/response contracts are REVIVED** on the new endpoint (the owner's "don't delete, revive" instruction honored — only the dead `performedSessionId`-route is dropped); `validateBenchmarkResultForSession` is KEPT, relocated into `benchmark-result/validate.ts` so the old `create`'s removal doesn't drop it.
+
+**Why.** Atomicity guarantees result+1RM both-or-neither; the resolver reads `OneRMRecord` on the next GET → percentage rows resolve in place (server-computes/client-presents, resolver UNCHANGED). The deferred.md candidate-cleanup (the standalone route + hook were UI-unused after D-SD-LOG-ATOMIC) is realized AS the revive — two parallel result-write paths would be the exact debt that note warned of (manifesto 2.2). IDOR→NotFound on the new endpoint (D-BR-IDOR-NOTFOUND). `retryOnP2034` absorbs the rare SSI conflict when the `OneRMRecord` insert races a concurrent inline Set-1RM on the same exercise.
+
+## D-1RM-LATEST — working-weight `%` resolution reads the LATEST `OneRMRecord`, not the all-time MAX (benchmark records/PR stay best-of)
+
+**Ratified 2026-06-19 (owner, live-test ruling). New owner law — supersedes the block-1 MAX-1RM resolution semantics.**
+
+Two laws, two layers:
+
+- **Resolution layer (working-weight `%` → kg).** `loadAthleteLoadContext` (`load-records.ts`) builds `currentOneRMByExercise` from `OneRMRecord` rows ordered `recordedAt desc, id desc`, taking the FIRST per exercise = the **LATEST recorded 1RM** (NOT the all-time MAX `valueKg`). So "75% of 1RM" resolves off the athlete's **current** form. A re-logged _lower_ 1RM now correctly _lowers_ the resolved %.
+- **Records / PR layer.** Benchmark records and PR detection remain **best-of** — `derive-records.ts` (`deriveBestResult` / `isNewPR`, direction-aware via `RESULT_DIRECTIONS`) is unchanged. The records screen still celebrates the all-time best.
+
+**Why.** Owner ruling on the live test: the working-weight prescription must reflect the athlete's **current** capacity — after detraining (illness, layoff), a deliberate de-load, or a peak-before-competition taper, prescribing off an all-time-max 1RM is wrong (too heavy when detrained, stale when peaked). HWPO programs the working weight off _today's_ number, not a personal record set a year ago. The PR/records story is the opposite concern — there "best ever" is exactly right — so the two layers diverge by design: resolution = latest (current form), records = best-of (achievement). This corrects the block-1 `buildCurrentOneRMMap` MAX semantics (a code change in `load-records.ts`, with `load-records.test.ts` re-asserted MAX→latest); `derive-records` is untouched.
+
+**Reversibility.** Easy — flip the resolution `orderBy`/picker back to MAX `valueKg` (would re-stale the prescription). No reason to.
+
+## D-DUAL-RENDER-KEPT — a logged result shows on BOTH the schema card and the completion echo (intentional, not a bug)
+
+**Ratified 2026-06-19 (owner, live test). Closes QA-005.**
+
+After logging, the result intentionally renders in TWO places: (1) in place on the benchmark schema card (the `<LoggedResultStrip>` inside `<BenchmarkLogPanel>`'s logged state), AND (2) as a read-only echo in the completion rail/sheet and the done card (`<BenchmarkStatusStrip>` — logged → green `EmojiEventsRounded` + `formatResult`; not-logged → muted "result isn't logged yet — log it from the workout above. You can still complete now"). This is **ratified-faithful to the prototype** ("как в прото"), NOT a double-render defect.
+
+**Why.** Owner call on the live walkthrough — the schema-card strip is "your score on this piece, where you logged it"; the completion echo is "your results at a glance as you finish." They serve two reading moments; showing both matches the prototype and the owner's intent. QA flagged it as a possible double-render; the owner ruled it intentional.
+
+---

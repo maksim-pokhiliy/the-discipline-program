@@ -9,46 +9,39 @@ import {
   CONFIRM_LABEL,
   NOTE_FIELD_LABEL,
   NOTE_FIELD_MAX_LENGTH,
+  NOTE_FIELD_PLACEHOLDER,
   NOTE_FIELD_ROWS,
 } from "../utils/athlete-session.constants";
-import { type ResultDraft } from "../utils/result-form-config";
 
-import { ResultForm } from "./result-form";
+import { BenchmarkStatusStrip } from "./benchmark-status-strip";
 
 export type CompletionReadyCardProps = {
   benchmarks: BenchmarkSchema[];
-  drafts: Record<string, ResultDraft>;
   note: string;
-  canConfirm: boolean;
   isSubmitting: boolean;
-  onDraftField: (schemaId: string, key: string, value: string) => void;
   onNote: (value: string) => void;
   onConfirm: () => void;
 };
 
 export const CompletionReadyCard = ({
   benchmarks,
-  drafts,
   note,
-  canConfirm,
   isSubmitting,
-  onDraftField,
   onNote,
   onConfirm,
 }: CompletionReadyCardProps): ReactElement => (
   <Stack spacing={2}>
     {benchmarks.map((benchmark) => (
-      <ResultForm
+      <BenchmarkStatusStrip
         key={benchmark.schemaId}
         title={benchmark.title}
-        resultType={benchmark.resultType}
-        draft={drafts[benchmark.schemaId] ?? {}}
-        onChange={(key, value) => onDraftField(benchmark.schemaId, key, value)}
+        result={benchmark.existingResult}
       />
     ))}
 
     <TextField
       label={NOTE_FIELD_LABEL}
+      placeholder={NOTE_FIELD_PLACEHOLDER}
       value={note}
       onChange={(event) => onNote(event.target.value)}
       fullWidth
@@ -63,7 +56,7 @@ export const CompletionReadyCard = ({
       color="primary"
       startIcon={<CheckRounded />}
       onClick={onConfirm}
-      disabled={!canConfirm || isSubmitting}
+      disabled={isSubmitting}
       sx={{ height: COMPLETION_BUTTON_HEIGHT_PX }}
     >
       {CONFIRM_LABEL}

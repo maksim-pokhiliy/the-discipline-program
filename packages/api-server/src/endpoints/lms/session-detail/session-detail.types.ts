@@ -42,6 +42,8 @@ export type SessionDetailBlock = SessionDetailRecord["blocks"][number];
 export type SessionDetailSchema = SessionDetailBlock["schemas"][number];
 export type SessionDetailRow = SessionDetailSchema["rows"][number];
 
-export type PerformedSessionWithResults = Prisma.PerformedSessionGetPayload<{
-  include: { results: true };
+export type PerformedSessionRecord = Prisma.PerformedSessionGetPayload<object>;
+
+export type BenchmarkResultRecord = Prisma.BenchmarkResultGetPayload<{
+  select: { plannedSchemaId: true; result: true; recordedAt: true };
 }>;

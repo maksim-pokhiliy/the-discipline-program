@@ -33,7 +33,7 @@ export const loadAthleteLoadContext = async (
       ? Promise.resolve([])
       : prisma.oneRMRecord.findMany({
           where: { userId, exerciseId: { in: exerciseIds } },
-          orderBy: [{ valueKg: "desc" }, { recordedAt: "desc" }],
+          orderBy: [{ recordedAt: "desc" }, { id: "desc" }],
           select: { exerciseId: true, valueKg: true },
         }),
   ]);

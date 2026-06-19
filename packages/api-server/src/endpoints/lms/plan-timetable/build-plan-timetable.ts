@@ -132,13 +132,15 @@ const buildDaySlots = (
     const day = dayMap.get(DAY_OF_WEEK_TO_PRISMA[dayOfWeek]) ?? null;
     const sessions = buildSessionCards(day, performedSessionIds);
     const isToday = date.getTime() === todayUtc.getTime();
+    const isRestDay = day?.label?.rest === true;
 
     return {
       date,
       dayOfWeek,
       dayOfMonth: date.getUTCDate(),
       isToday,
-      isRestDay: day?.label?.rest === true,
+      isRestDay,
+      restLabel: isRestDay ? (day?.label?.name ?? null) : null,
       status: computeSlotStatus({ isToday, sessions }),
       sessions,
     };

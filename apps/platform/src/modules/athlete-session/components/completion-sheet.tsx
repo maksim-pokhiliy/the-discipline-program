@@ -23,19 +23,15 @@ import {
   SHEET_TITLE_ALPHA,
   SHEET_TITLE_PX,
 } from "../utils/athlete-session.constants";
-import { type ResultDraft } from "../utils/result-form-config";
 
 import { CompletionReadyCard } from "./completion-ready-card";
 
 export type CompletionSheetProps = {
   open: boolean;
   benchmarks: BenchmarkSchema[];
-  drafts: Record<string, ResultDraft>;
   note: string;
-  canConfirm: boolean;
   isSubmitting: boolean;
   onClose: () => void;
-  onDraftField: (schemaId: string, key: string, value: string) => void;
   onNote: (value: string) => void;
   onConfirm: () => void;
 };
@@ -43,12 +39,9 @@ export type CompletionSheetProps = {
 export const CompletionSheet = ({
   open,
   benchmarks,
-  drafts,
   note,
-  canConfirm,
   isSubmitting,
   onClose,
-  onDraftField,
   onNote,
   onConfirm,
 }: CompletionSheetProps): ReactElement => {
@@ -110,11 +103,8 @@ export const CompletionSheet = ({
 
       <CompletionReadyCard
         benchmarks={benchmarks}
-        drafts={drafts}
         note={note}
-        canConfirm={canConfirm}
         isSubmitting={isSubmitting}
-        onDraftField={onDraftField}
         onNote={onNote}
         onConfirm={onConfirm}
       />
