@@ -59,4 +59,18 @@ describe("createLeadSubmissionSchema — lead field-rule divergence from contact
       expect(result.data.message).toBe("hello");
     }
   });
+
+  it("rejects a required field that strips to empty (all-HTML or formatting-only)", () => {
+    expect(
+      createLeadSubmissionSchema.safeParse({ contact: "tg:@x", program: "<b></b>" }).success,
+    ).toBe(false);
+    expect(
+      createLeadSubmissionSchema.safeParse({ contact: "tg:@x", program: "<script>x</script>" })
+        .success,
+    ).toBe(false);
+    expect(
+      createLeadSubmissionSchema.safeParse({ contact: "<span></span>", program: "strength-base" })
+        .success,
+    ).toBe(false);
+  });
 });
