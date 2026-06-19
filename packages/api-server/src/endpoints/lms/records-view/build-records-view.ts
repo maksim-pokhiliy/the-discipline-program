@@ -87,6 +87,7 @@ const build1RMRecord = (
     recordCount: ordered.length,
     series: ordered.map((row) => ({
       valueKg: Number(row.valueKg),
+      source: ONE_RM_RECORD_SOURCE_MAP[row.source],
       recordedAt: row.recordedAt.toISOString(),
     })),
   };

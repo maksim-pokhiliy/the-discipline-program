@@ -7,6 +7,7 @@ const isoInstant = z.string().datetime();
 
 export const oneRMSeriesPointSchema = z.object({
   valueKg: z.number().finite().positive(),
+  source: oneRMRecordSourceSchema,
   recordedAt: isoInstant,
 });
 

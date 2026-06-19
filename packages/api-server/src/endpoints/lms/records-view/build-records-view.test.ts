@@ -141,9 +141,21 @@ describe("buildRecordsView", () => {
       const [record] = buildRecordsView({ oneRMRows: rows, benchmarkRows: [] }).oneRM;
 
       expect(record?.series).toEqual([
-        { valueKg: 100, recordedAt: at("2026-01-01T00:00:00.000Z").toISOString() },
-        { valueKg: 105, recordedAt: at("2026-02-01T00:00:00.000Z").toISOString() },
-        { valueKg: 110, recordedAt: at("2026-03-01T00:00:00.000Z").toISOString() },
+        {
+          valueKg: 100,
+          source: OneRMRecordSource.MANUAL,
+          recordedAt: at("2026-01-01T00:00:00.000Z").toISOString(),
+        },
+        {
+          valueKg: 105,
+          source: OneRMRecordSource.MANUAL,
+          recordedAt: at("2026-02-01T00:00:00.000Z").toISOString(),
+        },
+        {
+          valueKg: 110,
+          source: OneRMRecordSource.MANUAL,
+          recordedAt: at("2026-03-01T00:00:00.000Z").toISOString(),
+        },
       ]);
     });
 
