@@ -19,6 +19,7 @@ declare module "@mui/material/styles" {
 
   interface TypeBackground {
     recessed: string;
+    sunken: string;
   }
 
   interface Palette {
@@ -54,6 +55,7 @@ export const palette: PaletteOptions = {
     default: "#191919",
     paper: "#1F1F1F",
     recessed: "#232323",
+    sunken: "#161616",
   },
   text: {
     primary: TEXT_PRIMARY,
