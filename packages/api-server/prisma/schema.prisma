@@ -36,6 +36,7 @@ model User {
   planEnrollmentsCreated   PlanEnrollment[]         @relation("EnrollmentEnrolledBy")
   oneRMRecords             OneRMRecord[]
   performedSessions        PerformedSession[]
+  benchmarkResults         BenchmarkResult[]
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -637,11 +638,11 @@ model Schema {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  block     Block                   @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  group     SchemaGroup?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  rows      SchemaRow[]
-  rowGroups RowGroup[]
-  results   PerformedSchemaResult[]
+  block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  group            SchemaGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rows             SchemaRow[]
+  rowGroups        RowGroup[]
+  benchmarkResults BenchmarkResult[]
 
   @@index([blockId, order])
   @@index([groupId])
@@ -783,26 +784,26 @@ model PerformedSession {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  session Session                 @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  results PerformedSchemaResult[]
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, userId, performedAt])
   @@index([userId])
   @@map("training_performed_sessions")
 }
 
-model PerformedSchemaResult {
-  id                 String   @id @default(cuid())
-  performedSessionId String
-  plannedSchemaId    String
-  result             Json
-  createdAt          DateTime @default(now())
+model BenchmarkResult {
+  id              String   @id @default(cuid())
+  userId          String
+  plannedSchemaId String
+  result          Json
+  recordedAt      DateTime
+  createdAt       DateTime @default(now())
 
-  performedSession PerformedSession @relation(fields: [performedSessionId], references: [id], onDelete: Cascade)
-  plannedSchema    Schema           @relation(fields: [plannedSchemaId], references: [id], onDelete: Restrict)
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plannedSchema Schema @relation(fields: [plannedSchemaId], references: [id], onDelete: Restrict)
 
-  @@unique([performedSessionId, plannedSchemaId])
+  @@index([userId, plannedSchemaId, recordedAt])
   @@index([plannedSchemaId])
-  @@map("training_performed_schema_results")
+  @@map("training_benchmark_results")
 }

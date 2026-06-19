@@ -1,3 +1,5 @@
+export * from "./use-athlete-profile";
+export * from "./use-athlete-session-view";
 export * from "./use-blocks";
 export * from "./use-blur-commit";
 export * from "./use-catalog";
@@ -22,8 +24,8 @@ export * from "./use-groups";
 export * from "./use-label-options";
 export * from "./use-label-search";
 export * from "./use-modifier-search";
+export * from "./use-benchmark-results";
 export * from "./use-one-rm-records";
-export * from "./use-performed-schema-results";
 export * from "./use-performed-sessions";
 export * from "./use-plan-timetable";
 export * from "./use-schema-rows";

@@ -19,6 +19,7 @@ export const daySlotViewSchema = z.object({
   dayOfMonth: z.number().int().min(1).max(31),
   isToday: z.boolean(),
   isRestDay: z.boolean(),
+  restLabel: z.string().nullable(),
   status: timetableSlotStatusSchema,
   sessions: z.array(sessionCardViewSchema),
 });

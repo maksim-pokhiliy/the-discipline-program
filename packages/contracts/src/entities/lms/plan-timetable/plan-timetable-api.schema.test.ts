@@ -25,6 +25,7 @@ const buildDaySlot = (overrides: Record<string, unknown> = {}) => ({
   dayOfMonth: 15,
   isToday: true,
   isRestDay: false,
+  restLabel: null,
   status: TimetableSlotStatus.TODAY,
   sessions: [buildSessionCard()],
   ...overrides,

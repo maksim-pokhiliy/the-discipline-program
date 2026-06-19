@@ -5,6 +5,7 @@ export * from "./plan-rail";
 export * from "./plan-switcher";
 export * from "./plan-timetable-board";
 export * from "./plan-weeks-nav";
+export * from "./rest-day-card";
 export * from "./session-card";
 export * from "./timetable-progress-row";
 export * from "./week-count-indicator";

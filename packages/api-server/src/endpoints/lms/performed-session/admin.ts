@@ -48,14 +48,16 @@ export const lmsPerformedSessionApi = {
     await verifySessionReachableByAthlete(data.sessionId, userId);
 
     try {
-      const performed = await prisma.performedSession.create({
-        data: {
-          sessionId: data.sessionId,
-          userId,
-          performedAt: data.performedAt,
-          athleteNotes: data.athleteNotes ?? null,
-        },
-      });
+      const performed = await prisma.$transaction(async (tx) =>
+        tx.performedSession.create({
+          data: {
+            sessionId: data.sessionId,
+            userId,
+            performedAt: data.performedAt,
+            athleteNotes: data.athleteNotes ?? null,
+          },
+        }),
+      );
 
       return mapToPerformedSession(performed);
     } catch (error) {

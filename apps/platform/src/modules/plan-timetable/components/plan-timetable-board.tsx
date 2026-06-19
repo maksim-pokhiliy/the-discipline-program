@@ -4,6 +4,7 @@ import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } 
 
 import { Timeline } from "@mui/lab";
 import { Box, Divider, Stack, Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
 
 import { type PlanTimetableView } from "@repo/contracts/lms/plan-timetable";
 import { LAYOUT } from "@repo/shared";
@@ -96,7 +97,14 @@ export const PlanTimetableBoard = ({ plans }: PlanTimetableBoardProps): ReactEle
     }
   }, [setWeek, todayWeekIndex]);
 
-  const onOpenSession = useCallback((_sessionId: string) => {}, []);
+  const router = useRouter();
+
+  const onOpenSession = useCallback(
+    (sessionId: string) => {
+      router.push(`/athlete/session/${sessionId}`);
+    },
+    [router],
+  );
 
   const isViewingTodayWeek = todayWeekIndex !== null && viewedIndex === todayWeekIndex;
 

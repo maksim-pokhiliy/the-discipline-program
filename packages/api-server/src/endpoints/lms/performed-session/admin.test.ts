@@ -136,5 +136,31 @@ describe("lmsPerformedSessionApi", () => {
 
       expect(result.success).toBe(true);
     });
+
+    it("rejects duplicate plannedSchemaId values in results (QA-001)", () => {
+      const result = createPerformedSessionRequestSchema.safeParse({
+        sessionId: "clz000000000000000000sess1",
+        performedAt: "2026-02-01T00:00:00.000Z",
+        results: [
+          { plannedSchemaId: "clz000000000000000000sch1", result: { type: "time", seconds: 540 } },
+          { plannedSchemaId: "clz000000000000000000sch1", result: { type: "time", seconds: 600 } },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("accepts distinct plannedSchemaId values in results (QA-001)", () => {
+      const result = createPerformedSessionRequestSchema.safeParse({
+        sessionId: "clz000000000000000000sess1",
+        performedAt: "2026-02-01T00:00:00.000Z",
+        results: [
+          { plannedSchemaId: "clz000000000000000000sch1", result: { type: "time", seconds: 540 } },
+          { plannedSchemaId: "clz000000000000000000sch2", result: { type: "time", seconds: 600 } },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+    });
   });
 });

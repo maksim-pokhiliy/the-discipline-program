@@ -1,3 +1,4 @@
+export * from "./benchmark-result.mapper";
 export * from "./block.mapper";
 export * from "./compose-projection.mapper";
 export * from "./day.mapper";
@@ -8,7 +9,6 @@ export * from "./label.mapper";
 export * from "./modifier.mapper";
 export * from "./one-rm-record.enum-maps";
 export * from "./one-rm-record.mapper";
-export * from "./performed-schema-result.mapper";
 export * from "./performed-session.mapper";
 export * from "./plan-enrollment.mapper";
 export * from "./row-group.mapper";

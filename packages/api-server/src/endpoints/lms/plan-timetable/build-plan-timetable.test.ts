@@ -183,8 +183,10 @@ describe("buildPlanTimetable slot materialization", () => {
     expect(days[0]?.status).toBe(TimetableSlotStatus.REST);
     expect(days[0]?.sessions).toHaveLength(0);
     expect(days[0]?.isRestDay).toBe(true);
+    expect(days[0]?.restLabel).toBe("Active recovery");
     expect(days[1]?.status).toBe(TimetableSlotStatus.REST);
     expect(days[1]?.isRestDay).toBe(false);
+    expect(days[1]?.restLabel).toBeNull();
     expect(days[2]?.isRestDay).toBe(false);
   });
 });

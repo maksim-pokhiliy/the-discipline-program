@@ -4,6 +4,8 @@ import { browserApiClient } from "./client";
 import * as endpoints from "./endpoints";
 
 export const createApi = (client: ApiClient) => ({
+  athleteProfile: endpoints.createAthleteProfileAPI(client),
+  athleteSessionView: endpoints.createAthleteSessionViewAPI(client),
   blocks: endpoints.createBlocksAPI(client),
   coachAthletes: endpoints.createCoachAthletesAPI(client),
   coachActionItems: endpoints.createCoachActionItemsAPI(client),
@@ -17,8 +19,8 @@ export const createApi = (client: ApiClient) => ({
   groups: endpoints.createGroupsAPI(client),
   labels: endpoints.createLabelsAPI(client),
   modifiers: endpoints.createModifiersAPI(client),
+  benchmarkResults: endpoints.createBenchmarkResultsAPI(client),
   oneRMRecords: endpoints.createOneRMRecordsAPI(client),
-  performedSchemaResults: endpoints.createPerformedSchemaResultsAPI(client),
   performedSessions: endpoints.createPerformedSessionsAPI(client),
   planTimetable: endpoints.createPlanTimetableAPI(client),
   rowGroups: endpoints.createRowGroupsAPI(client),

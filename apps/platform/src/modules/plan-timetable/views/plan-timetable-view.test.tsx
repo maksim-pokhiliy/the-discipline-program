@@ -12,6 +12,12 @@ import {
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+const routerPushMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPushMock }),
+}));
+
 const usePlanTimetableMock = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
@@ -47,6 +53,7 @@ const buildSlot = (overrides: Partial<DaySlotView>): DaySlotView => ({
   dayOfMonth: 15,
   isToday: false,
   isRestDay: false,
+  restLabel: null,
   status: TimetableSlotStatus.TODO,
   sessions: [],
   ...overrides,
@@ -84,6 +91,7 @@ const buildTodayWeek = (overrides: Partial<WeekTimetableView> = {}): WeekTimetab
       dayOfWeek: "THURSDAY",
       dayOfMonth: 18,
       isRestDay: true,
+      restLabel: "Active Recovery",
       status: TimetableSlotStatus.REST,
       sessions: [],
     }),
@@ -131,7 +139,7 @@ describe("PlanTimetableView", () => {
     expect(screen.getByText("Today Workout")).toBeInTheDocument();
     expect(screen.getByText("Done Workout")).toBeInTheDocument();
     expect(screen.getByText("Todo Workout")).toBeInTheDocument();
-    expect(screen.getByText("Rest day")).toBeInTheDocument();
+    expect(screen.getByText("Active Recovery")).toBeInTheDocument();
 
     expect(screen.getByText("Today")).toBeInTheDocument();
   });
