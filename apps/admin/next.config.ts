@@ -5,6 +5,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["jsdom"],
   experimental: {
     optimizePackageImports: ["@mui/icons-material", "@mui/material"],
   },
