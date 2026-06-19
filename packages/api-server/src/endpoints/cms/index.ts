@@ -2,6 +2,7 @@ export * from "./blog/admin";
 export * from "./blog/public";
 export * from "./contact/admin";
 export * from "./contact/inbound";
+export * from "./contact/lead-inbound";
 export * from "./dashboard/admin";
 export * from "./pages/admin";
 export * from "./pages/public";
