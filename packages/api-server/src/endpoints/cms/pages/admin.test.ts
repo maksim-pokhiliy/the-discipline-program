@@ -66,6 +66,12 @@ describe("cmsPagesAdminApi", () => {
   });
 
   afterAll(async () => {
+    await cleanupRaw.marketingPageSection
+      .deleteMany({
+        where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews },
+      })
+      .catch(() => {});
+
     if (createdSection) {
       await cleanupRaw.marketingPageSection
         .deleteMany({
@@ -155,7 +161,7 @@ describe("cmsPagesAdminApi", () => {
   });
 
   describe("updateSection", () => {
-    it("throws NotFoundError for non-existent section", async () => {
+    it("throws NotFoundError for a section that is not canonical for the page", async () => {
       await expect(
         cmsPagesAdminApi.updateSection({
           pageSlug: PageSlug.HOME,
@@ -163,6 +169,21 @@ describe("cmsPagesAdminApi", () => {
           data: heroSectionData,
         }),
       ).rejects.toThrow(NotFoundError);
+    });
+
+    it("upserts a canonical section that does not exist yet", async () => {
+      await cmsPagesAdminApi.updateSection({
+        pageSlug: PageSlug.HOME,
+        section: PAGE_SECTIONS_MAP.home.reviews,
+        data: { title: "Lazy Reviews" },
+      });
+
+      const created = await cleanupRaw.marketingPageSection.findFirst({
+        where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews },
+      });
+
+      expect(created).not.toBeNull();
+      expect(created?.data).toMatchObject({ title: "Lazy Reviews" });
     });
   });
 });
