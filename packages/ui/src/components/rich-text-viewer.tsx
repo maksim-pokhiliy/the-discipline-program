@@ -1,3 +1,5 @@
+"use client";
+
 import { Box, type BoxProps, type SxProps, type Theme } from "@mui/material";
 import DOMPurify from "isomorphic-dompurify";
 

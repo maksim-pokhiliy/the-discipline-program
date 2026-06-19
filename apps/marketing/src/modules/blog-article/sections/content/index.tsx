@@ -1,5 +1,14 @@
+"use client";
+
+import dynamic from "next/dynamic";
+
 import { type PublicBlogPost } from "@repo/contracts/cms/blog";
-import { ContentSection, RichTextViewer } from "@repo/ui";
+import { ContentSection } from "@repo/ui";
+
+const RichTextViewer = dynamic(
+  () => import("@repo/ui/rich-text-viewer").then((mod) => mod.RichTextViewer),
+  { ssr: false },
+);
 
 type BlogArticleContentProps = {
   post: PublicBlogPost;
