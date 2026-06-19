@@ -1,6 +1,5 @@
 import { type ReactElement } from "react";
 
-import { type SvgIconComponent } from "@mui/icons-material";
 import TrendingDownRounded from "@mui/icons-material/TrendingDownRounded";
 import TrendingFlatRounded from "@mui/icons-material/TrendingFlatRounded";
 import TrendingUpRounded from "@mui/icons-material/TrendingUpRounded";
@@ -15,8 +14,10 @@ import { DELTA_UNIT_BY_RESULT_TYPE, KG_UNIT } from "./athlete-records.constants"
 import { type ChartPoint } from "./build-chart-geometry";
 import { formatDelta, formatShortDate } from "./format-records";
 
+type IconComponent = typeof TrendingUpRounded;
+
 export type Trend = {
-  Icon: SvgIconComponent;
+  Icon: IconComponent;
   color: (theme: Theme) => string;
   deltaText: string | null;
 };
@@ -29,7 +30,7 @@ export type RecordView = {
 
 const ZERO = 0;
 
-const trendIcon = (value: number): SvgIconComponent =>
+const trendIcon = (value: number): IconComponent =>
   value > ZERO ? TrendingUpRounded : value < ZERO ? TrendingDownRounded : TrendingFlatRounded;
 
 export const buildOneRmView = (record: OneRMRecordView): RecordView => ({
