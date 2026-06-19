@@ -31,6 +31,7 @@ export const ForgotPasswordForm = ({ onSubmit, isLoading = false }: ForgotPasswo
       <TextField
         label="Email"
         type="email"
+        autoComplete="email"
         fullWidth
         disabled={isLoading}
         error={!!errors.email}
