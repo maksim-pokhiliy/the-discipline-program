@@ -132,21 +132,21 @@ describe("RecordCard collapsed", () => {
 });
 
 describe("RecordCard trend orientation", () => {
-  it("renders an up-green trend for a positive 1RM delta", () => {
+  it("renders an up-green trend with a magnitude for a positive 1RM delta", () => {
     renderOneRm(oneRMRecord({ delta: 15 }));
 
     expect(trendUp()).toHaveStyle({ color: SUCCESS_GREEN });
-    expect(screen.getByText("+15 kg")).toBeInTheDocument();
+    expect(screen.getByText("15 kg")).toBeInTheDocument();
   });
 
-  it("renders a down-red trend for a de-load (negative) 1RM delta", () => {
+  it("renders a down-red trend with a magnitude for a de-load (negative) 1RM delta", () => {
     renderOneRm(oneRMRecord({ delta: -10 }));
 
     expect(trendDown()).toHaveStyle({ color: ERROR_RED });
-    expect(screen.getByText("−10 kg")).toBeInTheDocument();
+    expect(screen.getByText("10 kg")).toBeInTheDocument();
   });
 
-  it("renders a green trend for a faster-time benchmark PR", () => {
+  it("renders an up-green trend with a magnitude for a faster-time benchmark PR", () => {
     renderBenchmark(
       benchmarkRecord({
         resultType: "time",
@@ -156,11 +156,11 @@ describe("RecordCard trend orientation", () => {
       }),
     );
 
-    expect(trendDown()).toHaveStyle({ color: SUCCESS_GREEN });
-    expect(screen.getByText("−30 s")).toBeInTheDocument();
+    expect(trendUp()).toHaveStyle({ color: SUCCESS_GREEN });
+    expect(screen.getByText("30 s")).toBeInTheDocument();
   });
 
-  it("renders a red trend for a slower-time benchmark regression", () => {
+  it("renders a down-red trend with a magnitude for a slower-time benchmark regression", () => {
     renderBenchmark(
       benchmarkRecord({
         resultType: "time",
@@ -170,8 +170,8 @@ describe("RecordCard trend orientation", () => {
       }),
     );
 
-    expect(trendUp()).toHaveStyle({ color: ERROR_RED });
-    expect(screen.getByText("+20 s")).toBeInTheDocument();
+    expect(trendDown()).toHaveStyle({ color: ERROR_RED });
+    expect(screen.getByText("20 s")).toBeInTheDocument();
   });
 });
 

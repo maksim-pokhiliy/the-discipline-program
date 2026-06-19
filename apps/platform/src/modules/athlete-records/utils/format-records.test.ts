@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDelta, formatLongDate, formatShortDate } from "./format-records";
+import { formatLongDate, formatMagnitude, formatShortDate } from "./format-records";
 
 const UTC_LATE_NIGHT = "2026-04-22T23:30:00.000Z";
 const SAME_INSTANT_PLUS_ONE = "2026-04-23T00:30:00.000+01:00";
@@ -37,24 +37,24 @@ describe("format-records date formatters (tz-stable)", () => {
   });
 });
 
-describe("formatDelta", () => {
-  it("prefixes a positive value with a plus sign and a spaced unit", () => {
-    expect(formatDelta(5, "kg")).toBe("+5 kg");
+describe("formatMagnitude", () => {
+  it("renders a positive value with a spaced unit and no sign", () => {
+    expect(formatMagnitude(10, "kg")).toBe("10 kg");
   });
 
-  it("prefixes a negative value with a real minus sign and a spaced unit", () => {
-    expect(formatDelta(-3, "s")).toBe("−3 s");
+  it("drops the sign of a negative value, keeping only the magnitude", () => {
+    expect(formatMagnitude(-5, "s")).toBe("5 s");
   });
 
-  it("renders the magnitude without the sign character", () => {
-    expect(formatDelta(-12, "kg")).toBe("−12 kg");
+  it("renders the magnitude of a larger negative value without a sign", () => {
+    expect(formatMagnitude(-12, "kg")).toBe("12 kg");
   });
 
-  it("treats zero as non-negative with a plus sign", () => {
-    expect(formatDelta(0, "kg")).toBe("+0 kg");
+  it("renders zero with the unit", () => {
+    expect(formatMagnitude(0, "kg")).toBe("0 kg");
   });
 
   it("omits the trailing space when the unit is empty", () => {
-    expect(formatDelta(8, "")).toBe("+8");
+    expect(formatMagnitude(8, "")).toBe("8");
   });
 });

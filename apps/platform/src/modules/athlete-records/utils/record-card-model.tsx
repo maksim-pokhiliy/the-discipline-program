@@ -12,7 +12,7 @@ import { RecordHistoryList } from "../components/record-history-list";
 
 import { DELTA_UNIT_BY_RESULT_TYPE, KG_UNIT } from "./athlete-records.constants";
 import { type ChartPoint } from "./build-chart-geometry";
-import { formatDelta, formatShortDate } from "./format-records";
+import { formatMagnitude, formatShortDate } from "./format-records";
 
 type IconComponent = typeof TrendingUpRounded;
 
@@ -30,27 +30,36 @@ export type RecordView = {
 
 const ZERO = 0;
 
-const trendIcon = (value: number): IconComponent =>
-  value > ZERO ? TrendingUpRounded : value < ZERO ? TrendingDownRounded : TrendingFlatRounded;
+const improvementIcon = (improved: boolean, isFlat: boolean): IconComponent =>
+  improved ? TrendingUpRounded : isFlat ? TrendingFlatRounded : TrendingDownRounded;
 
-export const buildOneRmView = (record: OneRMRecordView): RecordView => ({
-  trend: {
-    Icon: trendIcon(record.delta),
-    color: (theme) =>
-      record.delta > ZERO
-        ? theme.palette.success.main
-        : record.delta < ZERO
-          ? theme.palette.error.main
-          : theme.palette.text.disabled,
-    deltaText: record.delta === ZERO ? null : formatDelta(record.delta, KG_UNIT),
-  },
-  series: record.series.map((point) => ({
-    value: point.valueKg,
-    valueLabel: String(point.valueKg),
-    dateLabel: formatShortDate(point.recordedAt),
-  })),
-  history: <RecordHistoryList kind="oneRM" series={record.series} />,
-});
+const improvementColor =
+  (improved: boolean, isFlat: boolean) =>
+  (theme: Theme): string =>
+    improved
+      ? theme.palette.success.main
+      : isFlat
+        ? theme.palette.text.disabled
+        : theme.palette.error.main;
+
+export const buildOneRmView = (record: OneRMRecordView): RecordView => {
+  const improved = record.delta > ZERO;
+  const isFlat = record.delta === ZERO;
+
+  return {
+    trend: {
+      Icon: improvementIcon(improved, isFlat),
+      color: improvementColor(improved, isFlat),
+      deltaText: isFlat ? null : formatMagnitude(record.delta, KG_UNIT),
+    },
+    series: record.series.map((point) => ({
+      value: point.valueKg,
+      valueLabel: String(point.valueKg),
+      dateLabel: formatShortDate(point.recordedAt),
+    })),
+    history: <RecordHistoryList kind="oneRM" series={record.series} />,
+  };
+};
 
 const resolveBenchmarkTrend = (record: BenchmarkRecordView): Trend | null => {
   if (record.delta === null) {
@@ -58,17 +67,12 @@ const resolveBenchmarkTrend = (record: BenchmarkRecordView): Trend | null => {
   }
 
   const { value, improved } = record.delta;
+  const isFlat = value === ZERO;
 
   return {
-    Icon: trendIcon(value),
-    color: (theme) =>
-      improved
-        ? theme.palette.success.main
-        : value === ZERO
-          ? theme.palette.text.disabled
-          : theme.palette.error.main,
-    deltaText:
-      value === ZERO ? null : formatDelta(value, DELTA_UNIT_BY_RESULT_TYPE[record.resultType]),
+    Icon: improvementIcon(improved, isFlat),
+    color: improvementColor(improved, isFlat),
+    deltaText: isFlat ? null : formatMagnitude(value, DELTA_UNIT_BY_RESULT_TYPE[record.resultType]),
   };
 };
 
