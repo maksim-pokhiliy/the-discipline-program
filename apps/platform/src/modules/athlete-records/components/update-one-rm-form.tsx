@@ -10,13 +10,13 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useQueryClient } from "@tanstack/react-query";
+import { isValid } from "date-fns";
 
-import { type Exercise } from "@repo/contracts/lms/exercise";
 import { OneRMRecordSource, ONE_RM_RECORD_SOURCE_LABELS } from "@repo/contracts/lms/one-rm-record";
 
 import { platformKeys } from "@app/lib/api/keys";
-import { useExercises } from "@app/lib/hooks/use-exercises";
 import { useCreateOneRMRecord } from "@app/lib/hooks/use-one-rm-records";
 
 const MOVEMENT_LABEL = "Movement";
@@ -25,14 +25,19 @@ const DATE_LABEL = "Date";
 const CANCEL_LABEL = "Cancel";
 const SAVE_LABEL = "Save Record";
 const VALUE_INPUT_MODE = "numeric";
-const ISO_DATE_LENGTH = 10;
 const FORM_GAP = 2;
 const SOURCE_GAP = 1;
 const ACTIONS_GAP = 1;
 const DEFAULT_SOURCE = OneRMRecordSource.TESTED;
 const PICKABLE_SOURCES = [OneRMRecordSource.TESTED, OneRMRecordSource.MANUAL] as const;
 
-const todayUtcDate = (): string => new Date().toISOString().slice(0, ISO_DATE_LENGTH);
+export type OneRmMovementOption = {
+  exerciseId: string;
+  exerciseName: string;
+};
+
+const utcAnchored = (date: Date): Date =>
+  new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 
 const parseValue = (raw: string): number | null => {
   const parsed = Number(raw.trim());
@@ -42,31 +47,33 @@ const parseValue = (raw: string): number | null => {
 
 export type UpdateOneRmFormProps = {
   presetExerciseId?: string | undefined;
+  movements: OneRmMovementOption[];
   onClose: () => void;
 };
 
 export const UpdateOneRmForm = ({
   presetExerciseId,
+  movements,
   onClose,
 }: UpdateOneRmFormProps): ReactElement => {
   const queryClient = useQueryClient();
-  const exercises = useExercises();
   const createOneRm = useCreateOneRMRecord();
 
-  const options = useMemo(() => exercises.data ?? [], [exercises.data]);
   const presetMovement = useMemo(
-    () => options.find((option) => option.id === presetExerciseId) ?? null,
-    [options, presetExerciseId],
+    () => movements.find((option) => option.exerciseId === presetExerciseId) ?? null,
+    [movements, presetExerciseId],
   );
 
-  const [movement, setMovement] = useState<Exercise | null>(presetMovement);
+  const [movement, setMovement] = useState<OneRmMovementOption | null>(presetMovement);
   const [value, setValue] = useState("");
-  const [dateStr, setDateStr] = useState(todayUtcDate);
+  const [date, setDate] = useState<Date | null>(() => new Date());
   const [source, setSource] = useState<OneRMRecordSource>(DEFAULT_SOURCE);
 
   const activeMovement = movement ?? presetMovement;
   const parsedValue = parseValue(value);
-  const canSubmit = activeMovement !== null && parsedValue !== null && !createOneRm.isPending;
+  const hasDate = date !== null && isValid(date);
+  const canSubmit =
+    activeMovement !== null && parsedValue !== null && hasDate && !createOneRm.isPending;
 
   const handleSource = (_event: SyntheticEvent, next: OneRMRecordSource | null): void => {
     if (next !== null) {
@@ -75,15 +82,15 @@ export const UpdateOneRmForm = ({
   };
 
   const handleSubmit = (): void => {
-    if (activeMovement === null || parsedValue === null || createOneRm.isPending) {
+    if (activeMovement === null || parsedValue === null || date === null || createOneRm.isPending) {
       return;
     }
 
     createOneRm.mutate(
       {
-        exerciseId: activeMovement.id,
+        exerciseId: activeMovement.exerciseId,
         valueKg: parsedValue,
-        recordedAt: new Date(`${dateStr}T00:00:00.000Z`),
+        recordedAt: utcAnchored(date),
         source,
       },
       {
@@ -97,13 +104,12 @@ export const UpdateOneRmForm = ({
 
   return (
     <Stack spacing={FORM_GAP}>
-      <Autocomplete<Exercise>
-        options={options}
+      <Autocomplete<OneRmMovementOption>
+        options={movements}
         value={activeMovement}
         onChange={(_event, next) => setMovement(next)}
-        getOptionLabel={(option) => option.canonicalName}
-        isOptionEqualToValue={(a, b) => a.id === b.id}
-        loading={exercises.isLoading}
+        getOptionLabel={(option) => option.exerciseName}
+        isOptionEqualToValue={(a, b) => a.exerciseId === b.exerciseId}
         renderInput={(params) => {
           const { InputProps, inputProps, InputLabelProps, id } = params;
 
@@ -126,13 +132,11 @@ export const UpdateOneRmForm = ({
         slotProps={{ htmlInput: { inputMode: VALUE_INPUT_MODE, min: 0 } }}
       />
 
-      <TextField
+      <DatePicker
         label={DATE_LABEL}
-        type="date"
-        value={dateStr}
-        onChange={(event) => setDateStr(event.target.value)}
-        fullWidth
-        slotProps={{ inputLabel: { shrink: true } }}
+        value={date}
+        onChange={(next) => setDate(next)}
+        slotProps={{ textField: { fullWidth: true } }}
       />
 
       <ToggleButtonGroup exclusive value={source} onChange={handleSource} fullWidth size="small">

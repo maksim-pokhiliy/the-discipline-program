@@ -16,10 +16,6 @@ vi.mock("@app/lib/hooks/use-athlete-records", () => ({
   useAthleteRecords: () => useAthleteRecordsMock(),
 }));
 
-vi.mock("@app/lib/hooks/use-exercises", () => ({
-  useExercises: () => ({ data: [], isLoading: false }),
-}));
-
 vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
   useCreateOneRMRecord: () => ({ mutate: vi.fn(), isPending: false }),
 }));

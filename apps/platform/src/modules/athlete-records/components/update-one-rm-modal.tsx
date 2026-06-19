@@ -7,7 +7,7 @@ import { Box, Drawer, IconButton, Stack, Typography, useMediaQuery, useTheme } f
 
 import { BaseModal } from "@repo/ui";
 
-import { UpdateOneRmForm } from "./update-one-rm-form";
+import { UpdateOneRmForm, type OneRmMovementOption } from "./update-one-rm-form";
 
 const MODAL_TITLE = "Update 1RM";
 const MODAL_SUBTITLE = "Log a tested or manually estimated max. Coach can see every entry.";
@@ -27,12 +27,14 @@ export type UpdateOneRmModalProps = {
   open: boolean;
   onClose: () => void;
   presetExerciseId?: string | undefined;
+  movements: OneRmMovementOption[];
 };
 
 export const UpdateOneRmModal = ({
   open,
   onClose,
   presetExerciseId,
+  movements,
 }: UpdateOneRmModalProps): ReactElement => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
@@ -46,7 +48,11 @@ export const UpdateOneRmModal = ({
         subtitle={MODAL_SUBTITLE}
         maxWidth={DIALOG_MAX_WIDTH}
       >
-        <UpdateOneRmForm presetExerciseId={presetExerciseId} onClose={onClose} />
+        <UpdateOneRmForm
+          presetExerciseId={presetExerciseId}
+          movements={movements}
+          onClose={onClose}
+        />
       </BaseModal>
     );
   }
@@ -98,7 +104,11 @@ export const UpdateOneRmModal = ({
         </IconButton>
       </Stack>
 
-      <UpdateOneRmForm presetExerciseId={presetExerciseId} onClose={onClose} />
+      <UpdateOneRmForm
+        presetExerciseId={presetExerciseId}
+        movements={movements}
+        onClose={onClose}
+      />
     </Drawer>
   );
 };

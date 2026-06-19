@@ -27,8 +27,6 @@ export const CARD_VALUE_PX = 27;
 export const HISTORY_VALUE_PX = 17;
 
 export const KG_UNIT = "kg";
-export const DELTA_SIGN_POSITIVE = "+";
-export const DELTA_SIGN_NEGATIVE = "−";
 export const DELTA_UNIT_SEPARATOR = " ";
 export const SHORT_DATE_SEPARATOR = " ";
 export const LONG_DATE_SEPARATOR = " ";
@@ -149,5 +147,5 @@ export const TOOLBAR_CONTROLS_GAP = 1;
 export const CONTENT_STACK_GAP = 1.25;
 export const TOOLBAR_TITLE_GAP = 0.5;
 export const LIST_GAP = 1.25;
-export const SEARCH_FIELD_MIN_WIDTH_PX = 220;
+export const SEARCH_FIELD_WIDTH_DESKTOP_PX = 240;
 export const UPDATE_BUTTON_ICON_PX = 18;

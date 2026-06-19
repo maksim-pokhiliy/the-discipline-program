@@ -19,7 +19,7 @@ import {
   ONE_RM_TAB_LABEL,
   RECORDS_SUBTITLE,
   RECORDS_TITLE,
-  SEARCH_FIELD_MIN_WIDTH_PX,
+  SEARCH_FIELD_WIDTH_DESKTOP_PX,
   SEARCH_PLACEHOLDER_BENCHMARK,
   SEARCH_PLACEHOLDER_ONE_RM,
   SECTION_BENCHMARK,
@@ -60,7 +60,7 @@ const renderSearch = (filter: RecordsFilter, placeholder: string): ReactElement 
     value={filter.query}
     onChange={(event) => filter.setQuery(event.target.value)}
     placeholder={placeholder}
-    sx={{ minWidth: SEARCH_FIELD_MIN_WIDTH_PX }}
+    sx={{ width: { xs: "100%", md: SEARCH_FIELD_WIDTH_DESKTOP_PX } }}
     slotProps={{
       input: {
         startAdornment: (
@@ -79,15 +79,16 @@ const renderControls = (filter: RecordsFilter): ReactElement => {
 
   return (
     <Stack
-      direction="row"
+      direction={{ xs: "column", md: "row" }}
       spacing={TOOLBAR_CONTROLS_GAP}
-      alignItems="center"
-      flexWrap="wrap"
+      alignItems={{ xs: "stretch", md: "center" }}
       useFlexGap
     >
       <Tabs
         value={filter.section}
         onChange={(_event, value: RecordsSection) => filter.setSection(value)}
+        variant="fullWidth"
+        sx={{ width: { md: "auto" } }}
       >
         <ChipTab value={SECTION_ONE_RM} label={ONE_RM_TAB_LABEL} count={filter.oneRMCount} />
         <ChipTab
@@ -102,6 +103,7 @@ const renderControls = (filter: RecordsFilter): ReactElement => {
           variant="outlined"
           startIcon={<AddRounded sx={{ fontSize: UPDATE_BUTTON_ICON_PX }} />}
           onClick={() => filter.openModal()}
+          sx={{ flexShrink: 0 }}
         >
           {UPDATE_ONE_RM_BUTTON_LABEL}
         </Button>
@@ -185,6 +187,10 @@ export const RecordsContent = ({ data }: RecordsContentProps): ReactElement => {
         open={filter.isModalOpen}
         onClose={filter.closeModal}
         presetExerciseId={filter.modalExerciseId ?? undefined}
+        movements={data.oneRM.map((record) => ({
+          exerciseId: record.exerciseId,
+          exerciseName: record.exerciseName,
+        }))}
       />
     </Stack>
   );

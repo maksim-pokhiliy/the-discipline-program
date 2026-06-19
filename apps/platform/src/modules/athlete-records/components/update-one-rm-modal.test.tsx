@@ -3,40 +3,41 @@ import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
-import { type Exercise } from "@repo/contracts/lms/exercise";
-
 import { platformKeys } from "@app/lib/api/keys";
 import { render } from "@app/test/render";
 
-const NOW = new Date("2026-01-06T00:00:00.000Z");
+import { type OneRmMovementOption } from "./update-one-rm-form";
 
-const makeExercise = (overrides: Partial<Exercise> & Pick<Exercise, "id">): Exercise => ({
-  canonicalName: "Back Squat",
-  canonicalNameLower: "back squat",
-  nature: "CONCRETE",
-  defaultDemoUrls: [],
-  aliases: [],
-  notes: null,
-  createdAt: NOW,
-  updatedAt: NOW,
-  ...overrides,
-});
+const BACK_SQUAT: OneRmMovementOption = {
+  exerciseId: "ckxw5p7gp0000q1mnzv5cuq01",
+  exerciseName: "Back Squat",
+};
 
-const BACK_SQUAT = makeExercise({ id: "ckxw5p7gp0000q1mnzv5cuq01", canonicalName: "Back Squat" });
+const MOVEMENTS: OneRmMovementOption[] = [BACK_SQUAT];
 
-const exercisesState: { data: Exercise[] } = { data: [BACK_SQUAT] };
 const createOneRmState = { isPending: false };
 const createOneRmMock: Mock = vi.fn();
-
-vi.mock("@app/lib/hooks/use-exercises", () => ({
-  useExercises: () => ({ data: exercisesState.data, isLoading: false }),
-}));
 
 vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
   useCreateOneRMRecord: () => ({
     mutate: createOneRmMock,
     isPending: createOneRmState.isPending,
   }),
+}));
+
+type DatePickerProps = {
+  value: Date | null;
+  onChange: (next: Date | null) => void;
+};
+
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({
+  DatePicker: ({ value, onChange }: DatePickerProps) => (
+    <input
+      data-testid="datepicker"
+      data-value={value ? value.toISOString() : ""}
+      onChange={(event) => onChange(new Date(event.target.value))}
+    />
+  ),
 }));
 
 const { UpdateOneRmModal } = await import("./update-one-rm-modal");
@@ -50,14 +51,13 @@ const selectBackSquat = (): void => {
 };
 
 afterEach(() => {
-  exercisesState.data = [BACK_SQUAT];
   createOneRmState.isPending = false;
   createOneRmMock.mockReset();
 });
 
 describe("UpdateOneRmModal", () => {
   it("disables Save until both a movement and a positive value are present", () => {
-    render(<UpdateOneRmModal open onClose={vi.fn()} />);
+    render(<UpdateOneRmModal open onClose={vi.fn()} movements={MOVEMENTS} />);
 
     expect(saveButton()).toBeDisabled();
 
@@ -69,7 +69,14 @@ describe("UpdateOneRmModal", () => {
   });
 
   it("keeps Save disabled for a non-positive value", () => {
-    render(<UpdateOneRmModal open onClose={vi.fn()} presetExerciseId={BACK_SQUAT.id} />);
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
 
     fireEvent.change(valueField(), { target: { value: "0" } });
 
@@ -77,14 +84,21 @@ describe("UpdateOneRmModal", () => {
   });
 
   it("submits the mutation with the picked movement and parsed value", () => {
-    render(<UpdateOneRmModal open onClose={vi.fn()} presetExerciseId={BACK_SQUAT.id} />);
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
 
     fireEvent.change(valueField(), { target: { value: "120" } });
     fireEvent.click(saveButton());
 
     expect(createOneRmMock).toHaveBeenCalledTimes(1);
     expect(createOneRmMock.mock.calls[0]?.[0]).toMatchObject({
-      exerciseId: BACK_SQUAT.id,
+      exerciseId: BACK_SQUAT.exerciseId,
       valueKg: 120,
     });
   });
@@ -101,7 +115,14 @@ describe("UpdateOneRmModal", () => {
       },
     );
 
-    render(<UpdateOneRmModal open onClose={vi.fn()} presetExerciseId={BACK_SQUAT.id} />);
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
 
     fireEvent.change(valueField(), { target: { value: "120" } });
     fireEvent.click(saveButton());
@@ -125,7 +146,14 @@ describe("UpdateOneRmModal", () => {
       },
     );
 
-    render(<UpdateOneRmModal open onClose={onClose} presetExerciseId={BACK_SQUAT.id} />);
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={onClose}
+        movements={MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
 
     fireEvent.change(valueField(), { target: { value: "120" } });
     fireEvent.click(saveButton());
@@ -136,7 +164,14 @@ describe("UpdateOneRmModal", () => {
   it("disables Save while the mutation is pending to guard against double-submit", () => {
     createOneRmState.isPending = true;
 
-    render(<UpdateOneRmModal open onClose={vi.fn()} presetExerciseId={BACK_SQUAT.id} />);
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
 
     fireEvent.change(valueField(), { target: { value: "120" } });
 
