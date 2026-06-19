@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
@@ -38,6 +38,9 @@ const ALREADY_ENROLLED_PATTERN = /already enrolled/i;
 const REMOVED_HINT = "· previously removed";
 const NO_MATCH_MESSAGE = "No athletes match.";
 const NONE_SELECTABLE_MESSAGE = "Every athlete is already enrolled.";
+const LOADING_MESSAGE = "Loading athletes…";
+
+const pluralizeAthletes = (count: number): string => (count === 1 ? "athlete" : "athletes");
 
 export type EnrollOutcome = {
   enrolled: number;
@@ -76,7 +79,7 @@ const announceOutcome = (outcome: EnrollOutcome): void => {
     return;
   }
 
-  toast.success(`Enrolled ${outcome.enrolled} athlete(s)`);
+  toast.success(`Enrolled ${outcome.enrolled} ${pluralizeAthletes(outcome.enrolled)}`);
 };
 
 type EnrollAddViewProps = {
@@ -102,6 +105,7 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
   const [boardingDate, setBoardingDate] = useState<Date>(new Date());
   const [shouldHidePast, setShouldHidePast] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef(false);
 
   const enrolledAthleteIds = useMemo(
     () => new Set((enrollmentsQuery.data ?? []).map((enrollment) => enrollment.athleteId)),
@@ -155,6 +159,11 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
   };
 
   const handleSubmit = async () => {
+    if (isSubmittingRef.current) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     const ids = [...selectedIds];
@@ -174,6 +183,7 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
 
     announceOutcome(outcome);
     setIsSubmitting(false);
+    isSubmittingRef.current = false;
 
     if (outcome.enrolled > 0) {
       onEnrolled();
@@ -181,6 +191,7 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
   };
 
   const selectedCount = selectedIds.size;
+  const isRosterLoading = athletesQuery.isPending || enrollmentsQuery.isPending;
   const isPicklistEmpty = filtered.length === 0;
   const hasNoneSelectable = selectable.length === 0;
   const isEnrollDisabled = selectedCount === 0 || isSubmitting || !canEnroll;
@@ -212,7 +223,11 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
       <Box sx={{ maxHeight: PICKLIST_MAX_HEIGHT, overflowY: "auto" }}>
         {isPicklistEmpty ? (
           <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
-            {hasNoneSelectable ? NONE_SELECTABLE_MESSAGE : NO_MATCH_MESSAGE}
+            {isRosterLoading
+              ? LOADING_MESSAGE
+              : hasNoneSelectable
+                ? NONE_SELECTABLE_MESSAGE
+                : NO_MATCH_MESSAGE}
           </Typography>
         ) : (
           <Stack>
@@ -227,6 +242,7 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
                   checked={selectedIds.has(athlete.userId)}
                   tabIndex={-1}
                   disableRipple
+                  readOnly
                 />
                 <UserChip
                   size="small"
@@ -277,7 +293,7 @@ export const EnrollAddView: React.FC<EnrollAddViewProps> = ({
           disabled={isEnrollDisabled}
           onClick={handleSubmit}
         >
-          Enroll {selectedCount} athlete(s)
+          Enroll {selectedCount} {pluralizeAthletes(selectedCount)}
         </Button>
       </Stack>
     </Stack>

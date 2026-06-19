@@ -22,7 +22,7 @@ import {
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 import { EnrollmentStatus, type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
-import { formatDate } from "@repo/shared";
+import { formatCalendarDate } from "@repo/shared";
 import { ConfirmationModal, UserChip } from "@repo/ui";
 
 import { EnrollmentStatusChip } from "./enrollment-status-chip";
@@ -89,7 +89,7 @@ export const EnrollmentRow: React.FC<EnrollmentRowProps> = ({
 
   const secondary = (
     <Typography variant="caption" color="text.secondary" component="span">
-      Boarded {formatDate(enrollment.boardedAt, "day")}
+      Boarded {formatCalendarDate(enrollment.boardedAt, "day")}
       {enrollment.hidePastBeforeBoarding ? (
         <Tooltip title={HIDE_HISTORY_TOOLTIP} arrow>
           <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
