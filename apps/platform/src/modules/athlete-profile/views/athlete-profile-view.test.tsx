@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,6 +10,10 @@ import { NotFoundError } from "@repo/errors";
 import { render } from "@app/test/render";
 
 import {
+  BODY_HEIGHT_EMPTY_TITLE,
+  BODY_HEIGHT_EYEBROW,
+  BODY_HEIGHT_SET_LABEL,
+  BODY_STAT_SAVE_LABEL,
   BODY_WEIGHT_CANCEL_LABEL,
   BODY_WEIGHT_EMPTY_TITLE,
   BODY_WEIGHT_SAVE_LABEL,
@@ -17,6 +21,10 @@ import {
   CLEAR_PICK_ARIA_PREFIX,
   CLEAR_PICK_ARIA_SUFFIX,
   ERROR_LABEL,
+  GENDER_FIELD_LABEL,
+  HEALTH_NOTE_FIELD_LABEL,
+  HEALTH_STATUS_FIELD_LABEL,
+  HEIGHT_UNIT_LABEL,
   KG_LABEL,
   PROFILE_PICKS_EMPTY,
   RESOLVED_BADGE_LABEL,
@@ -34,6 +42,8 @@ const profileState = {
   error: null as Error | null,
 };
 const updateMutate = vi.fn();
+const uploadMutate = vi.fn();
+const updateSession = vi.fn().mockResolvedValue(null);
 const sessionUser = {
   name: "Aria Stone" as string | null,
   email: "aria@example.com" as string | null,
@@ -47,6 +57,7 @@ vi.mock("@app/lib/hooks", () => ({
     error: profileState.error,
   }),
   useUpdateAthleteProfile: () => ({ mutate: updateMutate, isPending: false }),
+  useUploadImage: () => ({ mutate: uploadMutate, isPending: false }),
 }));
 
 vi.mock("@repo/auth/client", () => ({
@@ -59,6 +70,7 @@ vi.mock("@repo/auth/client", () => ({
         role: "ATHLETE",
       },
     },
+    update: updateSession,
   }),
 }));
 
@@ -69,6 +81,7 @@ const makeProfile = (
 ): GetAthleteProfileResponse => ({
   id: VALID_CUID,
   userId: VALID_USER_CUID,
+  image: null,
   gender: null,
   heightCm: null,
   weightKg: 82.5,
@@ -80,6 +93,23 @@ const makeProfile = (
   ...overrides,
 });
 
+const statCardByEyebrow = (eyebrow: string): HTMLElement => {
+  let node: HTMLElement | null = screen.getByText(eyebrow);
+  let card: HTMLElement = node;
+
+  while (node?.parentElement) {
+    node = node.parentElement;
+
+    if (within(node).queryAllByRole("button", { name: /edit/i }).length === 1) {
+      card = node;
+    } else {
+      break;
+    }
+  }
+
+  return card;
+};
+
 beforeEach(() => {
   profileState.data = makeProfile();
   profileState.isLoading = false;
@@ -88,6 +118,8 @@ beforeEach(() => {
   sessionUser.email = "aria@example.com";
   sessionUser.image = null;
   updateMutate.mockReset();
+  uploadMutate.mockReset();
+  updateSession.mockReset();
 });
 
 afterEach(() => {
@@ -156,6 +188,80 @@ describe("AthleteProfileView body weight display", () => {
 
     expect(screen.getByText("82.5")).toBeInTheDocument();
     expect(screen.getByText(KG_LABEL)).toBeInTheDocument();
+  });
+});
+
+describe("AthleteProfileView body height", () => {
+  it("displays the set height value and the cm unit as a stat card twin of weight", () => {
+    profileState.data = makeProfile({ heightCm: 180 });
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByText("180")).toBeInTheDocument();
+    expect(screen.getByText(HEIGHT_UNIT_LABEL)).toBeInTheDocument();
+  });
+
+  it("renders the empty height state with a Set height action when height is null", () => {
+    profileState.data = makeProfile({ heightCm: null });
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByText(BODY_HEIGHT_EMPTY_TITLE)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: BODY_HEIGHT_SET_LABEL })).toBeInTheDocument();
+  });
+
+  it("saves the parsed integer height via mutate when a valid height is entered", () => {
+    profileState.data = makeProfile({ heightCm: 180 });
+
+    render(<AthleteProfileView />);
+
+    const heightCard = statCardByEyebrow(BODY_HEIGHT_EYEBROW);
+
+    fireEvent.click(within(heightCard).getByRole("button", { name: /edit/i }));
+    fireEvent.change(within(heightCard).getByRole("spinbutton"), { target: { value: "185" } });
+    fireEvent.click(within(heightCard).getByRole("button", { name: BODY_STAT_SAVE_LABEL }));
+
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    expect(updateMutate).toHaveBeenCalledWith({ heightCm: 185 });
+  });
+
+  it("clamps a height above the max to 300 on save", () => {
+    profileState.data = makeProfile({ heightCm: 180 });
+
+    render(<AthleteProfileView />);
+
+    const heightCard = statCardByEyebrow(BODY_HEIGHT_EYEBROW);
+
+    fireEvent.click(within(heightCard).getByRole("button", { name: /edit/i }));
+    fireEvent.change(within(heightCard).getByRole("spinbutton"), { target: { value: "420" } });
+    fireEvent.click(within(heightCard).getByRole("button", { name: BODY_STAT_SAVE_LABEL }));
+
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    expect(updateMutate).toHaveBeenCalledWith({ heightCm: 300 });
+  });
+
+  it.each([
+    ["zero", "0"],
+    ["a negative number", "-5"],
+    ["a non-numeric string", "abc"],
+    ["an empty string", ""],
+  ])("keeps Save disabled and does not call mutate for %s", (_label, value) => {
+    profileState.data = makeProfile({ heightCm: 180 });
+
+    render(<AthleteProfileView />);
+
+    const heightCard = statCardByEyebrow(BODY_HEIGHT_EYEBROW);
+
+    fireEvent.click(within(heightCard).getByRole("button", { name: /edit/i }));
+    fireEvent.change(within(heightCard).getByRole("spinbutton"), { target: { value } });
+
+    const saveButton = within(heightCard).getByRole("button", { name: BODY_STAT_SAVE_LABEL });
+
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.click(saveButton);
+
+    expect(updateMutate).not.toHaveBeenCalled();
   });
 });
 
@@ -304,5 +410,86 @@ describe("AthleteProfileView identity card", () => {
     render(<AthleteProfileView />);
 
     expect(screen.getByText(ROLE_BADGE_LABEL)).toBeInTheDocument();
+  });
+});
+
+const getAvatarFileInput = (): HTMLInputElement => {
+  const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+
+  if (input === null) {
+    throw new Error("avatar file input not found");
+  }
+
+  return input;
+};
+
+describe("AthleteProfileView avatar", () => {
+  it("renders the add-avatar affordance and the initials when there is no image", () => {
+    profileState.data = makeProfile({ image: null });
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByRole("button", { name: /add avatar/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /change avatar/i })).toBeNull();
+    expect(screen.getByText("AS")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("renders the uploaded image and the change-avatar affordance when an image is set", () => {
+    const imageUrl = "https://blob/x.png";
+
+    profileState.data = makeProfile({ image: imageUrl });
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByRole("img")).toHaveAttribute("src", imageUrl);
+    expect(screen.getByRole("button", { name: /change avatar/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add avatar/i })).toBeNull();
+  });
+
+  it("uploads the selected file with the avatar context and an onSuccess handler", () => {
+    profileState.data = makeProfile({ image: null });
+
+    render(<AthleteProfileView />);
+
+    const file = new File(["binary"], "avatar.png", { type: "image/png" });
+
+    fireEvent.change(getAvatarFileInput(), { target: { files: [file] } });
+
+    expect(uploadMutate).toHaveBeenCalledTimes(1);
+    expect(uploadMutate).toHaveBeenCalledWith(
+      { file, context: "avatar" },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+  });
+
+  it("does not upload when no file is selected", () => {
+    profileState.data = makeProfile({ image: null });
+
+    render(<AthleteProfileView />);
+
+    fireEvent.change(getAvatarFileInput(), { target: { files: [] } });
+
+    expect(uploadMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("AthleteProfileView details card", () => {
+  it("renders the gender, health status, and health note controls", () => {
+    profileState.data = makeProfile();
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByRole("combobox", { name: GENDER_FIELD_LABEL })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: HEALTH_STATUS_FIELD_LABEL })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: HEALTH_NOTE_FIELD_LABEL })).toBeInTheDocument();
+  });
+
+  it("keeps the height field out of the details card (it is its own stat card)", () => {
+    profileState.data = makeProfile();
+
+    render(<AthleteProfileView />);
+
+    expect(screen.queryByRole("combobox", { name: /height/i })).toBeNull();
   });
 });
