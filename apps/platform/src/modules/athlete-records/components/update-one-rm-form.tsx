@@ -36,8 +36,21 @@ export type OneRmMovementOption = {
   exerciseName: string;
 };
 
-const utcAnchored = (date: Date): Date =>
-  new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+const recordedAtForDay = (date: Date): Date => {
+  const now = new Date();
+
+  return new Date(
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds(),
+      now.getUTCMilliseconds(),
+    ),
+  );
+};
 
 const parseValue = (raw: string): number | null => {
   const parsed = Number(raw.trim());
@@ -90,7 +103,7 @@ export const UpdateOneRmForm = ({
       {
         exerciseId: activeMovement.exerciseId,
         valueKg: parsedValue,
-        recordedAt: utcAnchored(date),
+        recordedAt: recordedAtForDay(date),
         source,
       },
       {
