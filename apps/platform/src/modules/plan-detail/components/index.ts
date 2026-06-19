@@ -5,6 +5,8 @@ export { BlockList } from "./block-list";
 export { CloneWeekModal } from "./clone-week-modal";
 export { CountOrRange } from "./count-or-range-field";
 export { DayRow } from "./day-row";
+export { EnrollmentsStrip } from "./enrollments-strip";
+export { ManageEnrollmentsModal } from "./manage-enrollments-modal";
 export { NumberField } from "./number-field";
 export { RestSpecFields } from "./rest-spec-fields";
 export { SchemaCard } from "./schema-card";
