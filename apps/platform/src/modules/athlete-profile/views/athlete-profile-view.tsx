@@ -12,7 +12,6 @@ import { useAthleteProfile, useUpdateAthleteProfile } from "@app/lib/hooks";
 import { BodyWeightCard, ProfileIdentityCard, ProfilePicksCard } from "../components";
 import {
   CONTENT_GAP,
-  CONTENT_MAX_WIDTH_PX,
   ERROR_LABEL,
   FONT_WEIGHT_MEDIUM,
   LOADING_LABEL,
@@ -49,7 +48,7 @@ export const AthleteProfileView = (): ReactElement => {
   };
 
   return (
-    <Stack spacing={CONTENT_GAP} sx={{ width: "100%", maxWidth: CONTENT_MAX_WIDTH_PX, mx: "auto" }}>
+    <Stack spacing={CONTENT_GAP}>
       <Typography
         component="div"
         sx={(theme) => ({

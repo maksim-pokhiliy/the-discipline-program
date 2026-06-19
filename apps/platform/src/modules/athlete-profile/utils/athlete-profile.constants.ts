@@ -3,7 +3,6 @@ export const FONT_WEIGHT_SEMI_BOLD = 600;
 export const FONT_WEIGHT_DISPLAY = 700;
 
 export const CARD_RADIUS_PX = 4;
-export const CONTENT_MAX_WIDTH_PX = 760;
 export const CONTENT_GAP = 2;
 
 export const SECTION_GAP = 2;
