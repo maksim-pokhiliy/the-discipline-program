@@ -13,6 +13,8 @@ import { Footer, MarketingHeader } from "@app/lib/components/layout";
 import { StructuredData } from "@app/lib/components/seo";
 import { SEO_CONFIG } from "@app/lib/seo";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: SEO_CONFIG.defaultTitle,
   description: SEO_CONFIG.defaultDescription,
