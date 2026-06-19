@@ -1,12 +1,11 @@
 "use client";
 
 import { Grid } from "@mui/material";
-import { useRouter } from "next/navigation";
 
 import { type StorefrontProgramsPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-import { ProductCard, ProductModal } from "@app/lib/components/ui";
+import { LeadFormModal, ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
 
 type StorefrontProgramsGridSectionProps = {
@@ -18,7 +17,6 @@ export const StorefrontProgramsGridSection = ({
   grid,
   productsList,
 }: StorefrontProgramsGridSectionProps) => {
-  const router = useRouter();
   const modal = useProductModal({ products: productsList, basePath: "/storefront" });
 
   return (
@@ -45,8 +43,17 @@ export const StorefrontProgramsGridSection = ({
         onClose={modal.close}
         onGetStarted={() => {
           modal.close();
-          router.push(`/contact?program=${modal.selectedProduct?.slug ?? ""}`);
+
+          if (modal.selectedProduct) {
+            modal.openLead(modal.selectedProduct);
+          }
         }}
+      />
+
+      <LeadFormModal
+        product={modal.leadProduct}
+        open={modal.isLeadOpen}
+        onClose={modal.closeLead}
       />
     </ContentSection>
   );

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-import { ProductCard, ProductModal } from "@app/lib/components/ui";
+import { LeadFormModal, ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
 
 type HomeProgramsPreviewProps = {
@@ -56,6 +56,19 @@ export const HomeStorefrontProgramsPreview = ({
         actionLabel={programs.modalActionLabel ?? ""}
         open={modal.isOpen}
         onClose={modal.close}
+        onGetStarted={() => {
+          modal.close();
+
+          if (modal.selectedProduct) {
+            modal.openLead(modal.selectedProduct);
+          }
+        }}
+      />
+
+      <LeadFormModal
+        product={modal.leadProduct}
+        open={modal.isLeadOpen}
+        onClose={modal.closeLead}
       />
     </ContentSection>
   );
