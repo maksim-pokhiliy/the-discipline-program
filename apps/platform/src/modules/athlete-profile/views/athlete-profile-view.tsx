@@ -63,7 +63,7 @@ export const AthleteProfileView = (): ReactElement => {
 
       <ProfileIdentityCard />
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={SECTION_GAP} flexWrap="wrap">
+      <Stack direction={{ xs: "column", md: "row" }} spacing={SECTION_GAP}>
         <BodyWeightCard weightKg={weightKg} isSaving={isPending} onSave={handleSaveWeight} />
         <ProfilePicksCard
           selections={selections}

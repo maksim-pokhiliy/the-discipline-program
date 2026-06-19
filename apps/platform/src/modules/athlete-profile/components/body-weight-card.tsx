@@ -97,7 +97,7 @@ export const BodyWeightCard = ({
     <Stack
       spacing={1.5}
       sx={(theme) => ({
-        flex: { xs: "0 0 auto", md: "1 1 290px" },
+        flex: { md: 1 },
         p: CARD_PADDING,
         bgcolor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,

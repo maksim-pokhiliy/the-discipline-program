@@ -14,6 +14,8 @@ import {
   BODY_WEIGHT_EMPTY_TITLE,
   BODY_WEIGHT_SAVE_LABEL,
   BODY_WEIGHT_SET_LABEL,
+  CLEAR_PICK_ARIA_PREFIX,
+  CLEAR_PICK_ARIA_SUFFIX,
   ERROR_LABEL,
   KG_LABEL,
   PROFILE_PICKS_EMPTY,
@@ -251,13 +253,13 @@ describe("AthleteProfileView profile picks", () => {
       profileSelections: { "RX / SC": "RX", Masters: "Open" },
     });
 
-    const { container } = render(<AthleteProfileView />);
+    render(<AthleteProfileView />);
 
-    const deleteIcons = container.querySelectorAll(".MuiChip-deleteIcon");
-
-    expect(deleteIcons).toHaveLength(2);
-
-    fireEvent.click(deleteIcons[0] as Element);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `${CLEAR_PICK_ARIA_PREFIX}RX / SC${CLEAR_PICK_ARIA_SUFFIX}`,
+      }),
+    );
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
     expect(updateMutate).toHaveBeenCalledWith({ profileSelections: { Masters: "Open" } });
@@ -266,17 +268,13 @@ describe("AthleteProfileView profile picks", () => {
   it("clears the sole pick via mutate with an empty object, never null", () => {
     profileState.data = makeProfile({ profileSelections: { Masters: "Open" } });
 
-    const { container } = render(<AthleteProfileView />);
+    render(<AthleteProfileView />);
 
-    const deleteIcon = container.querySelector(".MuiChip-deleteIcon");
-
-    expect(deleteIcon).not.toBeNull();
-
-    if (deleteIcon === null) {
-      throw new Error("expected a chip deleteIcon");
-    }
-
-    fireEvent.click(deleteIcon);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `${CLEAR_PICK_ARIA_PREFIX}Masters${CLEAR_PICK_ARIA_SUFFIX}`,
+      }),
+    );
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
     expect(updateMutate).toHaveBeenCalledWith({ profileSelections: {} });

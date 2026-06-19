@@ -44,6 +44,12 @@ export const RESOLVED_BADGE_PX = 11;
 export const RESOLVED_BADGE_ICON_PX = 14;
 export const RESOLVED_BADGE_LETTER_SPACING = "0.04em";
 
+export const PICK_CELL_HEIGHT_PX = 42;
+export const PICK_VALUE_PX = 13;
+export const PICK_VALUE_LETTER_SPACING = "0.02em";
+export const PICK_ACTIVE_BG_ALPHA = 0.08;
+export const PICK_CLEAR_ICON_PX = 18;
+
 export const WEIGHT_ROUNDING_FACTOR = 10;
 
 export const TITLE_LABEL = "Profile";
@@ -77,3 +83,5 @@ export const PROFILE_PICKS_COUNT_SINGULAR = "pick";
 export const PROFILE_PICKS_COUNT_PLURAL = "picks";
 export const PROFILE_PICKS_COUNT_SEPARATOR = " ";
 export const RESOLVED_BADGE_LABEL = "Resolved";
+export const CLEAR_PICK_ARIA_PREFIX = "Clear the ";
+export const CLEAR_PICK_ARIA_SUFFIX = " pick";

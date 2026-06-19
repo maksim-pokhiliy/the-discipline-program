@@ -43,7 +43,7 @@ export const ProfilePicksCard = ({
     <Stack
       spacing={1.5}
       sx={(theme) => ({
-        flex: { xs: "0 0 auto", md: "2 1 380px" },
+        flex: { md: 2 },
         p: CARD_PADDING,
         bgcolor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,
