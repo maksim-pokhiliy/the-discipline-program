@@ -39,6 +39,33 @@ describe("deriveBestResult", () => {
 
     expect(best).toEqual({ type: "rounds_reps", rounds: 5, reps: 10 });
   });
+
+  it("picks the longest within-unit distance (higher is better)", () => {
+    const best = deriveBestResult([
+      { result: { type: "distance", value: 1200, unit: "m" }, recordedAt: at("2026-01-01") },
+      { result: { type: "distance", value: 1500, unit: "m" }, recordedAt: at("2026-02-01") },
+    ]);
+
+    expect(best).toEqual({ type: "distance", value: 1500, unit: "m" });
+  });
+
+  it("compares distance in meters across mixed units, keeping the original unit", () => {
+    const best = deriveBestResult([
+      { result: { type: "distance", value: 1402, unit: "m" }, recordedAt: at("2026-01-01") },
+      { result: { type: "distance", value: 5, unit: "km" }, recordedAt: at("2026-02-01") },
+    ]);
+
+    expect(best).toEqual({ type: "distance", value: 5, unit: "km" });
+  });
+
+  it("resolves a near-tie across units by meters (1.45 km beats 1402 m)", () => {
+    const best = deriveBestResult([
+      { result: { type: "distance", value: 1402, unit: "m" }, recordedAt: at("2026-01-01") },
+      { result: { type: "distance", value: 1.45, unit: "km" }, recordedAt: at("2026-02-01") },
+    ]);
+
+    expect(best).toEqual({ type: "distance", value: 1.45, unit: "km" });
+  });
 });
 
 describe("isNewPR", () => {
@@ -62,6 +89,18 @@ describe("isNewPR", () => {
     const prior: Result = { type: "time", seconds: 150 };
 
     expect(isNewPR(prior, { type: "time", seconds: 160 })).toBe(false);
+  });
+
+  it("is a PR when a longer distance beats the prior best across units", () => {
+    const prior: Result = { type: "distance", value: 1402, unit: "m" };
+
+    expect(isNewPR(prior, { type: "distance", value: 1.5, unit: "km" })).toBe(true);
+  });
+
+  it("is not a PR when a shorter distance does not beat the prior best across units", () => {
+    const prior: Result = { type: "distance", value: 1.5, unit: "km" };
+
+    expect(isNewPR(prior, { type: "distance", value: 1402, unit: "m" })).toBe(false);
   });
 });
 

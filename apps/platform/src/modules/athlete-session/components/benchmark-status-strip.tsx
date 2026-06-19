@@ -4,7 +4,7 @@ import EmojiEventsRounded from "@mui/icons-material/EmojiEventsRounded";
 import MilitaryTechRounded from "@mui/icons-material/MilitaryTechRounded";
 import { alpha, Box, Stack, Typography } from "@mui/material";
 
-import { type Result } from "@repo/contracts/lms/_shared";
+import { type Result, formatResult } from "@repo/contracts/lms/_shared";
 
 import {
   FONT_WEIGHT_DISPLAY,
@@ -22,7 +22,6 @@ import {
   STATUS_STRIP_TITLE_PX,
   STATUS_STRIP_VALUE_PX,
 } from "../utils/athlete-session.constants";
-import { formatResult } from "../utils/format-result";
 
 export type BenchmarkStatusStripProps = {
   title: string;

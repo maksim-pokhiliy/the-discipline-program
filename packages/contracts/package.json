@@ -27,6 +27,7 @@
     "./lms/performed-session": "./src/entities/lms/performed-session/index.ts",
     "./lms/plan-enrollment": "./src/entities/lms/plan-enrollment/index.ts",
     "./lms/plan-timetable": "./src/entities/lms/plan-timetable/index.ts",
+    "./lms/records-view": "./src/entities/lms/records-view/index.ts",
     "./lms/row-group": "./src/entities/lms/row-group/index.ts",
     "./lms/schema": "./src/entities/lms/schema/index.ts",
     "./lms/schema-group": "./src/entities/lms/schema-group/index.ts",

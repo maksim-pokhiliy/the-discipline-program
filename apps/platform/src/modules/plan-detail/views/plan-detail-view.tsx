@@ -20,7 +20,14 @@ import {
   useWeek,
 } from "@app/lib/hooks";
 
-import { CloneWeekModal, WeekGrid, WeekNavigator, WeekNotes } from "../components";
+import {
+  CloneWeekModal,
+  EnrollmentsStrip,
+  ManageEnrollmentsModal,
+  WeekGrid,
+  WeekNavigator,
+  WeekNotes,
+} from "../components";
 
 type PlanDetailViewProps = { planId: string };
 
@@ -30,6 +37,7 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const searchParams = useSearchParams();
 
   const [isCloneWeekOpen, setIsCloneWeekOpen] = useState(false);
+  const [isManageOpen, setIsManageOpen] = useState(false);
 
   const weekParam = searchParams.get("week");
   const parsed = weekParam ? parseDateParam(weekParam) : null;
@@ -98,6 +106,8 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
                   }
                 />
 
+                <EnrollmentsStrip planId={planId} onManage={() => setIsManageOpen(true)} />
+
                 <WeekNavigator
                   monday={activeMonday}
                   onChange={pushWeekParam}
@@ -118,6 +128,13 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
                   planId={planId}
                   targetStartDate={formatDateParam(activeMonday)}
                   currentSessionCount={currentSessionCount}
+                />
+
+                <ManageEnrollmentsModal
+                  open={isManageOpen}
+                  onClose={() => setIsManageOpen(false)}
+                  planId={planId}
+                  planStatus={plan.status}
                 />
               </Stack>
             </CloneHighlightProvider>

@@ -3,6 +3,8 @@ import { type z } from "zod";
 import {
   type createContactSubmissionRequestSchema,
   type createContactSubmissionResponseSchema,
+  type createLeadSubmissionRequestSchema,
+  type createLeadSubmissionResponseSchema,
   type getContactSubmissionsResponseSchema,
   type getContactByIdParamsSchema,
   type getContactByIdResponseSchema,
@@ -18,6 +20,10 @@ export type ContactSubmissionItem = z.infer<typeof contactSubmissionItemSchema>;
 export type CreateContactSubmissionRequest = z.infer<typeof createContactSubmissionRequestSchema>;
 
 export type CreateContactSubmissionResponse = z.infer<typeof createContactSubmissionResponseSchema>;
+
+export type CreateLeadSubmissionRequest = z.infer<typeof createLeadSubmissionRequestSchema>;
+
+export type CreateLeadSubmissionResponse = z.infer<typeof createLeadSubmissionResponseSchema>;
 
 export type GetContactSubmissionsResponse = z.infer<typeof getContactSubmissionsResponseSchema>;
 

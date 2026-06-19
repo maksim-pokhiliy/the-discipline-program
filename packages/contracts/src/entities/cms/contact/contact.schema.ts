@@ -82,3 +82,26 @@ export const createContactSubmissionSchema = z.object({
     .max(CONTACT_CONSTANTS.MAX_MESSAGE_LENGTH)
     .transform(stripHtmlAndControlChars),
 });
+
+export const createLeadSubmissionSchema = z.object({
+  name: z
+    .string()
+    .max(CONTACT_CONSTANTS.MAX_NAME_LENGTH)
+    .transform(stripHtmlAndControlChars)
+    .optional(),
+  contact: z
+    .string()
+    .max(CONTACT_CONSTANTS.MAX_CONTACT_LENGTH)
+    .transform(stripHtmlAndControlChars)
+    .pipe(z.string().min(1, "Phone, Telegram, or other contact is required")),
+  program: z
+    .string()
+    .max(CONTACT_CONSTANTS.MAX_PROGRAM_LENGTH)
+    .transform(stripHtmlAndControlChars)
+    .pipe(z.string().min(1, "Program is required")),
+  message: z
+    .string()
+    .max(CONTACT_CONSTANTS.MAX_MESSAGE_LENGTH)
+    .transform(stripHtmlAndControlChars)
+    .optional(),
+});

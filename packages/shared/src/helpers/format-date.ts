@@ -20,3 +20,13 @@ export const formatDate = (
 
   return new Intl.DateTimeFormat(locale, STYLE_OPTIONS[style]).format(d);
 };
+
+export const formatCalendarDate = (
+  date: Date | string,
+  style: DateFormatStyle = "day",
+  locale: string = DEFAULT_LOCALE,
+): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+
+  return new Intl.DateTimeFormat(locale, { ...STYLE_OPTIONS[style], timeZone: "UTC" }).format(d);
+};

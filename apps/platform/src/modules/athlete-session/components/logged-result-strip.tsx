@@ -3,7 +3,7 @@ import { type ReactElement } from "react";
 import EmojiEventsRounded from "@mui/icons-material/EmojiEventsRounded";
 import { alpha, Box, Stack, Typography } from "@mui/material";
 
-import { type Result } from "@repo/contracts/lms/_shared";
+import { type Result, formatResult } from "@repo/contracts/lms/_shared";
 
 import {
   FONT_WEIGHT_DISPLAY,
@@ -18,7 +18,6 @@ import {
   RESULT_STRIP_PADDING_Y_PX,
   RESULT_STRIP_VALUE_PX,
 } from "../utils/athlete-session.constants";
-import { formatResult } from "../utils/format-result";
 
 export type LoggedResultStripProps = {
   result: Result;

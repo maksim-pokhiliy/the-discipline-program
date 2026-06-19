@@ -1,4 +1,4 @@
-import { type RestSpec } from "@repo/contracts/lms/_shared";
+import { type RestSpec } from "../_shared";
 
 const REST_PREFIX = "rest ";
 const RANGE_SEPARATOR = "–";

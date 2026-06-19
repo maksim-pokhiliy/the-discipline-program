@@ -5,6 +5,7 @@ import * as endpoints from "./endpoints";
 
 export const createApi = (client: ApiClient) => ({
   athleteProfile: endpoints.createAthleteProfileAPI(client),
+  athleteRecords: endpoints.createAthleteRecordsAPI(client),
   athleteSessionView: endpoints.createAthleteSessionViewAPI(client),
   blocks: endpoints.createBlocksAPI(client),
   coachAthletes: endpoints.createCoachAthletesAPI(client),
@@ -22,6 +23,7 @@ export const createApi = (client: ApiClient) => ({
   benchmarkResults: endpoints.createBenchmarkResultsAPI(client),
   oneRMRecords: endpoints.createOneRMRecordsAPI(client),
   performedSessions: endpoints.createPerformedSessionsAPI(client),
+  planEnrollments: endpoints.createPlanEnrollmentsAPI(client),
   planTimetable: endpoints.createPlanTimetableAPI(client),
   rowGroups: endpoints.createRowGroupsAPI(client),
   schemaRows: endpoints.createSchemaRowsAPI(client),

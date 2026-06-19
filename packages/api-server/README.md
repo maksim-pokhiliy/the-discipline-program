@@ -24,7 +24,7 @@ src/
   services/<context>/   Cross-entity orchestration helpers
   infrastructure/       Cache, email port, monitoring, payment, queue ports
   db/                   Prisma client + soft-delete extension (client.ts)
-prisma/                 schema.prisma + seed.ts + seed-pages.ts
+prisma/                 schema.prisma + seed.ts
 scripts/                apply-sql-checks.ts (DB-level CHECK constraints)
 ```
 

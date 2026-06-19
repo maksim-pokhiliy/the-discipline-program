@@ -15,6 +15,7 @@ export const useProductModal = ({ products, basePath }: UseProductModalOptions) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [leadProduct, setLeadProduct] = useState<Product | null>(null);
   const productsRef = useRef(products);
 
   productsRef.current = products;
@@ -46,10 +47,22 @@ export const useProductModal = ({ products, basePath }: UseProductModalOptions) 
     router.push(basePath, { scroll: false });
   }, [router, basePath]);
 
+  const openLead = useCallback((product: Product) => {
+    setLeadProduct(product);
+  }, []);
+
+  const closeLead = useCallback(() => {
+    setLeadProduct(null);
+  }, []);
+
   return {
     selectedProduct,
     isOpen: selectedProduct !== null,
     open,
     close,
+    leadProduct,
+    isLeadOpen: leadProduct !== null,
+    openLead,
+    closeLead,
   };
 };

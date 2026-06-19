@@ -1,4 +1,5 @@
 export { createAthleteProfileAPI } from "./athlete-profile";
+export { createAthleteRecordsAPI } from "./athlete-records";
 export { createAthleteSessionViewAPI } from "./athlete-session-view";
 export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";
@@ -16,6 +17,7 @@ export { createModifiersAPI } from "./modifiers";
 export { createBenchmarkResultsAPI } from "./benchmark-results";
 export { createOneRMRecordsAPI } from "./one-rm-records";
 export { createPerformedSessionsAPI } from "./performed-sessions";
+export { createPlanEnrollmentsAPI } from "./plan-enrollments";
 export { createPlanTimetableAPI } from "./plan-timetable";
 export { createRowGroupsAPI } from "./row-groups";
 export { createSchemaRowsAPI } from "./schema-rows";

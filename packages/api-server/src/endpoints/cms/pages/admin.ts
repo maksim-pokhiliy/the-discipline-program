@@ -7,6 +7,7 @@ import {
   SECTION_SCHEMAS,
 } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
+import { capitalize } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
 import { handlePrismaError } from "../../../utils";
@@ -22,8 +23,26 @@ type SectionKey = keyof typeof SECTION_SCHEMAS;
 const isValidPageSlug = (slug: string): slug is PageSlug => PAGE_SLUGS.has(slug);
 const isValidSectionKey = (key: string): key is SectionKey => SECTION_KEYS.has(key);
 
+const ensurePages = async (slugs: readonly PageSlug[]): Promise<void> => {
+  await prisma.marketingPage.createMany({
+    data: slugs.map((slug) => ({ slug, title: capitalize(slug) })),
+    skipDuplicates: true,
+  });
+};
+
+const ensurePageScaffold = async (slug: PageSlug): Promise<void> => {
+  await ensurePages([slug]);
+
+  await prisma.marketingPageSection.createMany({
+    data: getPageSectionsOrder(slug).map((section) => ({ pageSlug: slug, section, data: {} })),
+    skipDuplicates: true,
+  });
+};
+
 export const cmsPagesAdminApi = {
   getPages: async (): Promise<AdminPageListItem[]> => {
+    await ensurePages(Object.values(PageSlug));
+
     const pages = await prisma.marketingPage.findMany({
       orderBy: { slug: "asc" },
     });
@@ -39,6 +58,12 @@ export const cmsPagesAdminApi = {
   },
 
   getPageBySlug: async (slug: string): Promise<AdminPageDetails> => {
+    if (!isValidPageSlug(slug)) {
+      throw new NotFoundError(`Page with slug ${slug} not found`);
+    }
+
+    await ensurePageScaffold(slug);
+
     const page = await prisma.marketingPage.findUnique({
       where: { slug },
       include: {
@@ -50,11 +75,7 @@ export const cmsPagesAdminApi = {
       throw new NotFoundError(`Page with slug ${slug} not found`);
     }
 
-    if (!isValidPageSlug(page.slug)) {
-      throw new NotFoundError(`Invalid page slug: ${slug}`);
-    }
-
-    const sectionsOrder = getPageSectionsOrder(page.slug);
+    const sectionsOrder = getPageSectionsOrder(slug);
     const sortedSections = [...page.sections].sort((a, b) => {
       const aIndex = sectionsOrder.indexOf(a.section);
       const bIndex = sectionsOrder.indexOf(b.section);
@@ -63,7 +84,7 @@ export const cmsPagesAdminApi = {
     });
 
     return {
-      slug: page.slug,
+      slug,
       sections: sortedSections
         .filter((s): s is typeof s & { section: SectionKey } => isValidSectionKey(s.section))
         .map((s) => ({
@@ -76,10 +97,20 @@ export const cmsPagesAdminApi = {
   },
 
   updatePageMetadata: async (slug: string, payload: UpdatePageMetadataInput): Promise<void> => {
+    if (!isValidPageSlug(slug)) {
+      throw new NotFoundError(`Page with slug ${slug} not found`);
+    }
+
     try {
-      await prisma.marketingPage.update({
+      await prisma.marketingPage.upsert({
         where: { slug },
-        data: {
+        create: {
+          slug,
+          title: payload.title,
+          seoTitle: payload.seoTitle ?? null,
+          seoDesc: payload.seoDesc ?? null,
+        },
+        update: {
           title: payload.title,
           ...(payload.seoTitle !== undefined && { seoTitle: payload.seoTitle }),
           ...(payload.seoDesc !== undefined && { seoDesc: payload.seoDesc }),
@@ -91,23 +122,26 @@ export const cmsPagesAdminApi = {
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {
-    const existing = await prisma.marketingPageSection.findUnique({
-      where: {
-        pageSlug_section: {
-          pageSlug: payload.pageSlug,
-          section: payload.section,
-        },
-      },
-    });
-
-    if (!existing) {
+    if (!getPageSectionsOrder(payload.pageSlug).includes(payload.section)) {
       throw new NotFoundError(`Section ${payload.section} for page ${payload.pageSlug} not found`);
     }
 
+    await ensurePages([payload.pageSlug]);
+
     try {
-      await prisma.marketingPageSection.update({
-        where: { id: existing.id },
-        data: {
+      await prisma.marketingPageSection.upsert({
+        where: {
+          pageSlug_section: {
+            pageSlug: payload.pageSlug,
+            section: payload.section,
+          },
+        },
+        create: {
+          pageSlug: payload.pageSlug,
+          section: payload.section,
+          data: structuredClone(payload.data),
+        },
+        update: {
           data: structuredClone(payload.data),
         },
       });

@@ -1,4 +1,4 @@
-import { type Result } from "@repo/contracts/lms/_shared";
+import { type Result } from "./result";
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PAD_LENGTH = 2;
@@ -38,5 +38,26 @@ export const formatResult = (result: Result): string => {
       result satisfies never;
 
       return "";
+  }
+};
+
+export const formatResultParts = (result: Result): { value: string; unit: string } => {
+  switch (result.type) {
+    case "time":
+      return { value: formatTime(result.seconds), unit: "" };
+    case "rounds_reps":
+      return { value: `${result.rounds}${ROUNDS_REPS_JOIN}${result.reps}`, unit: ROUNDS_LABEL };
+    case "load":
+      return { value: String(result.kg), unit: KG_LABEL };
+    case "max_reps":
+      return { value: String(result.reps), unit: MAX_REPS_LABEL };
+    case "distance":
+      return { value: String(result.value), unit: result.unit };
+    case "calories":
+      return { value: String(result.value), unit: CALORIES_LABEL };
+    default:
+      result satisfies never;
+
+      return { value: "", unit: "" };
   }
 };

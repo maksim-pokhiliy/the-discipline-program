@@ -2,6 +2,8 @@ import { type Result, RESULT_DIRECTIONS } from "@repo/contracts/lms";
 
 export type BenchmarkResultEntry = { result: Result; recordedAt: Date };
 
+const METERS_PER_KM = 1000;
+
 const scoreVector = (result: Result): number[] => {
   switch (result.type) {
     case "time":
@@ -13,7 +15,7 @@ const scoreVector = (result: Result): number[] => {
     case "max_reps":
       return [result.reps];
     case "distance":
-      return [result.value];
+      return [result.unit === "km" ? result.value * METERS_PER_KM : result.value];
     case "calories":
       return [result.value];
     default:

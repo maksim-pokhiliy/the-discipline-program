@@ -384,6 +384,137 @@ A `bodyweight`-kind load is **"Bodyweight" / "со своим весом" — a 
 
 ---
 
+# Block-2 screen-3 (Athlete Records) build decisions (ratified 2026-06-19, `/feature` execution)
+
+Promoted from `.feature-dev/1781838942/` (design.md §7 Decision Record + the Gate-A / Gate-B owner rulings). Branch `feat/athlete-records` (off `main`). A `/feature` FULL run. This wave SHIPS the standalone **Athlete Records** screen (`/athlete/records`) — a READ + presentation slice over the producers that screens 1-2 laid (athlete-owned append-only `BenchmarkResult` + `OneRMRecord` history) + the block-1 `derive-records` best-of/PR/series lib, which got its **first production caller** here (deferred.md). NO new write model, NO schema change. Load-bearing "why" for block-2 screen-4 (Profile) and any later records / leaderboard work. Verified against the as-built code.
+
+## D-RV-1 — endpoint + contract dir = `records-view` (avoids colliding with the `athlete-records/` derive-lib dir)
+
+**Ratified 2026-06-19 (owner, Gate A).**
+
+The endpoint + contract directory is named **`records-view`** — NOT `athlete-records` — to avoid colliding with the existing `endpoints/lms/athlete-records/` derive-lib dir (the `derive-records`/`resolve-load`/`load-records` family moved there in screen-2, D-RESOLVER-LMS). The full naming set: api `lmsRecordsViewApi`; builder `buildRecordsView`; response `recordsViewResponseSchema` / `RecordsViewResponse`; client `createAthleteRecordsAPI` / `api.athleteRecords`; key `platformKeys.athleteRecords.data()`; hook `useAthleteRecords`; UI module `modules/athlete-records/`. (The CLIENT-facing names keep `athleteRecords` — the collision risk is only server-side, where the derive-lib dir lives.)
+
+**Why.** `records-view` is the derived-VIEW (mirrors `plan-timetable`/`session-detail`); `athlete-records` is the pure derive LIB it consumes. Two dirs, two roles — naming the view dir `athlete-records` would shadow the lib dir in `endpoints/lms/`. Confirmed buildable at design time: greenfield paths, all barrel slots free.
+
+## D-RV-2 — delta = recent change (latest − prior), direction-aware, BOTH sections; headline = the BEST
+
+**Ratified 2026-06-19 (owner, Gate A).**
+
+The **delta** = `latest − prior` (the two most-recent rows) — the most-recent CHANGE, direction-aware, for the 1RM section AND the benchmark section (unified). The prototype computed the 1RM delta as a PR-jump (best vs prev-best); we follow spec §3.3 + internal consistency and make BOTH sections recent-change. The **headline** = the BEST (1RM = `max(valueKg)`; benchmark = `deriveBestResult`, direction-aware). Server emits the delta structured (1RM: signed `number`; benchmark: `{value, improved}` where `improved = isNewPR(prior, latest)`); the trend icon derives client-side from the sign / `improved`. Honest negative on a de-load (a re-logged lower number shows a real negative delta — acceptance gate).
+
+**Why.** A unified "recent change, both sections" delta is internally consistent and matches spec §3.3; `isNewPR` (direction-aware, `derive-records.ts`) already gives `improved`. The headline stays best-of (the records story is "best ever"); the delta is the orthogonal "where are you trending" cue.
+
+## D-RV-3 — headline date = date-of-best (`bestRecordedAt`); contract also carries `lastRecordedAt`
+
+**Ratified 2026-06-19 (owner, Gate A).**
+
+The headline date is the **date the best was set** (`bestRecordedAt` — the `recordedAt` of the first row achieving the best, ascending → earliest-set best). The contract ALSO carries `lastRecordedAt` (the most-recent log) for a future "last logged" affordance.
+
+**Why.** A record celebrates an achievement — the relevant date is WHEN it was set, not when the athlete last touched the movement. Both are derivable from the grouped series; carrying `lastRecordedAt` costs one field and unblocks a later "last activity" cue without a contract change.
+
+## D-RV-4 — format lift (widened): `formatResult`/`formatResultParts` → `_shared`; composition formatters → `composition` (NOT `_shared` — barrel-cycle)
+
+**Ratified 2026-06-19 (owner, Gate A). Advances D-FMT-HOME (the 3rd consumer triggers the lift).**
+
+Screen-3 is the **3rd consumer** of result formatting → the D-FMT-HOME carry-forward fires. Two lifts, two homes:
+
+- **`formatResult` + the NEW `formatResultParts`** (the `numStr`/`unitOf` split — `{value, unit}` for the big-number + small-unit) → `@repo/contracts/lms/_shared/format-result.ts` (pure of the `Result` union; same purity class as `RESULT_DIRECTIONS`/`resultSchema` already co-located there). Screen-2's import re-pointed; `formatResult`'s combined wording UNCHANGED ("21 rounds + 9 reps").
+- **The composition pure-formatters** (`formatRepetitionLabel` / `formatCompositionSummary` / `formatRestSpec`) → `@repo/contracts/lms/composition` — **NOT `_shared`.** `_shared` is a strict LEAF; the composition formatters depend on composition types, so homing them in `_shared` would create a `_shared ⇄ composition` barrel CYCLE. Screen-2 re-pointed.
+
+The coach `plan-detail/lib/format-*` copies were **intentionally left** (rule-of-two coach copy → carry-forward to re-point coach later).
+
+**Why.** Both clusters are pure-of-contract and hit rule-of-three with this screen (the benchmark subline, D-RV-7, needs `formatRepetitionLabel` server-side; the builder is api-server and can't import from `apps/platform`). The `_shared`-vs-`composition` split is forced by the dependency graph: a pure function homes WITH the type it's pure of, and `_shared` must stay a leaf to avoid the cycle. Leaving the coach copy is the rule-of-two boundary — coach `plan-detail` is its own re-point pass (D-FMT-HOME not fully closed).
+
+## D-RV-5 — module-local `<DisplayNumber>` leaf (the repo-wide numeric variant stays deferred)
+
+**Ratified 2026-06-19 (owner, Gate A). Follows D-SD-NUMERIC.**
+
+The big numbers render via a module-local `<DisplayNumber>` leaf (Barlow Condensed 700, `textTransform:"none"`, `pxToRem` consts, `lineHeight:1`) — extracted from the as-built screen-1/2 inline `sx` idiom (`logged-result-strip.tsx`). NO repo-wide typography variant added; the shared theme variant / `@repo/ui` leaf stays deferred.
+
+**Why.** D-SD-NUMERIC shipped the same module-local leaf for screen-2; this is now the 3rd hand-roll, but the slice takes no theme-wide churn. **Carry-forward:** the repo-wide `numeric`/`displayNumber` typography variant (see `deferred.md`).
+
+## D-RV-6 — palette token `background.sunken = #161616` (chart inset, the step below `recessed`)
+
+**Ratified 2026-06-19 (owner, Gate A). INFO-level, additive.**
+
+ONE new palette token: `background.sunken = #161616` (the chart inner-panel / dot-fill inset color), added to `packages/mui/src/theme/palette.ts` as the next step BELOW `background.recessed` (`#232323`, too light for the inset). Used as `theme.palette.background.sunken` — never a hex literal in a component (`no-hex-outside-theme`).
+
+**Why.** The chart inset has no existing token and `no-hex-outside-theme` mandates one; an additive single-token theme touch matching the `background.*` naming ladder.
+
+## D-RV-7 — benchmark subline = faithful reconstruction from real header/composition/rows, never fabricated
+
+**Ratified 2026-06-19 (owner, Gate A).**
+
+The benchmark subline is reconstructed server-side, priority chain: (1) a compact scheme from `schema.composition` + rows — `formatRepetitionLabel(composition)` + the movement list from `rows` (each `exercise.canonicalName` + its absolute kg when `load.kind === "absolute"`, else omit) → (2) the `formatCompositionSummary` structural label (e.g. "cap 20'", "EMOM 10'×10") → (3) the result-type label (`BENCHMARK_LABEL_BY_RESULT_TYPE[resultType]`). `composition.benchmark` carries ONLY `resultType` (verified) — every displayed part comes from real `header`/`composition`/`rows`, NEVER fabricated. A bare schema (no header/rows/composition) falls to (3) gracefully.
+
+**Why.** The athlete recognizes a WOD by its movements (coach-UX priority); the faithful reconstruction is honestly derivable from the authored schema — no invention. The priority chain degrades cleanly so a sparse schema never breaks the render.
+
+## D-RV-8 — Update-1RM modal honors the prototype (Movement + Value + Date + Tested|Manual), deliberately richer than screen-2's nudge
+
+**Ratified 2026-06-19 (owner, Gate A).**
+
+The standalone "Update 1RM" surface honors the prototype: **Movement** (`Autocomplete` over `useExercises`) + **Value (kg)** + **Date** + a **Tested|Manual** source toggle (default `TESTED`). Responsive vehicle (D-SD-SHEET precedent): mobile `Drawer anchor="bottom"`, desktop `BaseModal` — ONE component, branch on breakpoint. It is **deliberately richer** than screen-2's fixed inline nudge (`commitOneRm` fixes `{MANUAL, now, fixed exercise}`). On success it invalidates BOTH `oneRMRecords.list()` AND `athleteRecords.data()` — via a per-call `onSuccess` in the modal (NOT by mutating the shared `useCreateOneRMRecord` hook, which is screen-2's too).
+
+**Why.** Two different jobs: screen-2 fills a known row's gap mid-workout (fixed exercise / now / MANUAL); screen-3 is the deliberate "log a tested max" surface, so Movement+Date+Source is domain-legitimate, not gold-plating. `createOneRMRecordSchema` already accepts arbitrary `source`/`recordedAt`/`exerciseId` (only `AUTO_INFERRED` is system-only); the dual invalidation keeps both the existing list and the records view fresh without coupling screen-2's hook to screen-3's key.
+
+## D-RV-9 — builder emits ISO instants; client formats via `getUTC*` + static MONTH maps; modal write UTC-anchored
+
+**Ratified 2026-06-19 (owner, Gate A). Follows D-SD-DATES.**
+
+The builder emits each date as ONE ISO instant (`recordedAt.toISOString()`, `z.string().datetime()` at the boundary); the client formats via `getUTCFullYear`/`getUTCMonth`/`getUTCDate` + static `MONTH_SHORT` maps for both granularities ("Apr 2026" chart-short / "22 Apr 2026" history-long) — NO device-tz `getDate`/`toLocale`/`Intl` anywhere. The modal's Date input constructs a **UTC-anchored** Date on write (`new Date(\`${yyyy-mm-dd}T00:00:00.000Z\`)`) so the round-trip is tz-stable.
+
+**Why.** A `recordedAt` is a genuine instant (unlike `session-detail`'s tz-stable calendar day, which splits `dayOfMonth`); ONE ISO + client `getUTC*` DRYs to a single formatter for both granularities and avoids the screen-1 sub-UTC off-by-one by construction (D-SD-DATES), not by careful formatting.
+
+## D-RV-10 — hand-rolled token SVG `<TrendChart>`, NO charting dependency
+
+**Ratified 2026-06-19 (owner, Gate A).**
+
+The progression chart is a hand-rolled token SVG `<TrendChart>` (`viewBox` 600×180; area fill `alpha(primary.main, …)`, polyline `primary.main`, dots filled `background.sunken`; value/date labels as SVG `<text>`; single-point + flat-series guards). NO charting dependency (recharts/visx/etc.) added — zero chart deps repo-wide. The chart is value-type-agnostic: it plots numbers; the card supplies the labels.
+
+**Why.** A single small line chart does not justify a charting dependency's weight; the prototype hand-rolls SVG and the codebase has zero chart deps to match.
+
+## D-RV-11 — no N+1: exactly ONE `oneRMRecord.findMany` + ONE `benchmarkResult.findMany`, derive in-memory
+
+**Ratified 2026-06-19 (owner, Gate A). Follows D-TT-SERVER-COMPUTES / D-SD-SERVER-RESOLVE.**
+
+The fetch wrapper (`lmsRecordsViewApi.getRecords`) issues exactly ONE `prisma.oneRMRecord.findMany` (include `exercise`) + ONE `prisma.benchmarkResult.findMany` (include schema header+composition+block→session labels + rows→exercise), both `orderBy [recordedAt asc, id asc]` (the D-BR-OWNED-HISTORY tiebreak); `buildRecordsView` derives both sections 100% in-memory. Spy-asserted ≤1× each. No `user.findUnique` (dates are UTC-formatted client-side, no tz needed — unlike `plan-timetable`).
+
+**Why.** The includes carry every JOIN the builder needs; the two `@@index([userId, …, recordedAt])` cover the `where {userId}` reads. The render stays off an N+1 by construction (the screen-1/2 server-computes pattern).
+
+## D-RV-12 — server emits a numeric `scalar` per benchmark series point (the chart plot value)
+
+**Ratified 2026-06-19 (owner). Refinement over design §5.8 (the chart-plot seam).**
+
+The server emits a numeric **`scalar`** per benchmark series point — the value the chart plots — so the `scoreOf`-style "turn a Result into a plottable number" logic stays SERVER-side (D-SD-SERVER-RESOLVE). The client never re-derives a plot number from the raw `Result`; the chart reads the server's `scalar`.
+
+**Why.** Turning a six-variant `Result` into one comparable number is domain logic (it must agree with the direction-aware best/PR derivation); pushing it client-side would duplicate `scoreOf` and risk a chart that disagrees with the headline. Server-emits the scalar → the chart and the records logic share one source of truth.
+
+## D-RV-13 — server emits each 1RM series point's `source` (per-row provenance chips)
+
+**Ratified 2026-06-19 (owner). Refinement over design §5.2 (the history-list provenance seam).**
+
+Each 1RM series point carries its `source` (`TESTED` / `MANUAL` / `AUTO_INFERRED`) so the expanded history list renders a per-ROW provenance chip (prototype fidelity), not just one chip on the headline best. The builder already has `row.source` in hand.
+
+**Why.** The prototype's 1RM history shows where each entry came from (a tested max vs a hand-typed estimate); the per-row source is free (already fetched) and the athlete reads provenance per attempt, not only for the best.
+
+## D-RV-14 — server-authoritative `isBest`: the server flags exactly one series point as the PR row (fixes QA-001)
+
+**Ratified 2026-06-19 (owner, Gate B QA-001 fix). Supersedes design §5.4's "client matches the PR row by date".**
+
+The server flags **exactly one** series point per record as `isBest` (the deterministically-chosen best row — the first achieving the best by ascending `[recordedAt, id]`); the client marks the PR row by reading `isBest`, NOT by `recordedAt`-equality against the headline.
+
+**Why (QA-001).** Design §5.4 had the client match the PR row by `(value, recordedAt) === (best, bestRecordedAt)`. But same-day 1RM logs are midnight-UTC-anchored (D-RV-9 / D-SD-DATES) → multiple rows collide on the SAME instant, so date-matching mislabels (or double-labels) the PR row. A server-authoritative `isBest` flag — decided once by the same deterministic tiebreak as the headline — is unambiguous; the client does zero best-row logic.
+
+## D-RV-15 — distance normalized to meters for comparison; displayed value keeps the athlete's original unit (fixes QA-002)
+
+**Ratified 2026-06-19 (owner, Gate B QA-002 fix).**
+
+For best / PR / delta / chart-scalar comparison, `distance` is normalized to **meters** (km × 1000) — in both `derive-records`'s `scoreVector` and the records builder's `magnitudeVector` / `resultScalar`. The DISPLAYED result keeps the athlete's ORIGINAL unit (m or km, as logged). This corrects screen-2's PR badge too (same comparison path).
+
+**Why (QA-002).** The logging UI permits per-log m OR km (D-DIST-UNITS: `["m","km"]`); comparing by raw value mis-ranks a "5 km" run BELOW a "4000 m" run (5 < 4000 by the bare number) and computes a nonsense delta. Normalizing to a canonical unit (meters) for comparison fixes ranking/delta while preserving the athlete's chosen display unit. `derive-records` was already the screen-2 PR source, so the fix lands once and corrects both screens.
+
+---
+
 # Block-2 screen-4 (Athlete Profile) (ratified 2026-06-19, `/feature` small execution)
 
 Promoted from `.feature-dev/1781842242/` (research.md §Domain Reconciliation + review.md). Branch `feat/athlete-profile` (own git worktree, parallel to the screen-3 Records session on `feat/athlete-records`). A `/feature` **small** run — UI + route-swap on the EXISTING athlete-profile contract/hooks/endpoint (all shipped with screen 2); NO new endpoint, NO contract change, NO Prisma change. The Claude Design prototype is the visual SSOT; where it shows data the domain lacks, the DOMAIN MODEL WINS and the gap is flagged — these decisions record those reconciliations. Verified against the as-built code (orchestrator `git diff` review caught + fixed a `borderRadius` MUI-sx-multiplier bug — 16px instead of 4px).

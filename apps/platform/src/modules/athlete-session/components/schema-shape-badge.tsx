@@ -2,9 +2,7 @@ import { type ReactElement } from "react";
 
 import { Chip } from "@mui/material";
 
-import { type Composition } from "@repo/contracts/lms/composition";
-
-import { formatRepetitionLabel } from "../utils/format-composition-summary";
+import { type Composition, formatRepetitionLabel } from "@repo/contracts/lms/composition";
 
 const ONCE_LABEL = "once";
 
