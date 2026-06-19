@@ -51,7 +51,9 @@ export const LeadFormModal = ({ product, open, onClose }: LeadFormModalProps) =>
   }
 
   const onSubmit = (data: CreateLeadSubmissionRequest) => {
-    mutate(data, { onSuccess: () => resetForm() });
+    mutate(data, {
+      onSuccess: () => resetForm({ name: "", contact: "", program: product.slug, message: "" }),
+    });
   };
 
   return (
