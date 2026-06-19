@@ -381,3 +381,57 @@ A `bodyweight`-kind load is **"Bodyweight" / "со своим весом" — a 
 **Added load is NOT modeled on bodyweight** (owner: "тело всегда с тобой, это шум без ценности"): a weighted pull-up is a distinct _exercise_ ("Weighted Pull-Ups") carrying an `absolute` load (e.g. 20 kg) — the difference lives at the exercise level, not as a new load kind. There is NO "bodyweight + added" kind.
 
 **Why.** Showing the body weight as a kg load mis-signals external iron and confuses the everyday case (it surfaced the moment the owner set a real Bulgarian Split Squat to `bodyweight` and saw "88 kg"). The fix is semantic, not cosmetic. See `deferred.md` for the deferred **% of bodyweight** reference — the one legitimate place the body weight DOES become a number (a `percentageReference` scope `"bodyweight"`, its own load-model mini-wave).
+
+---
+
+# Block-2 screen-4 (Athlete Profile) (ratified 2026-06-19, `/feature` small execution)
+
+Promoted from `.feature-dev/1781842242/` (research.md §Domain Reconciliation + review.md). Branch `feat/athlete-profile` (own git worktree, parallel to the screen-3 Records session on `feat/athlete-records`). A `/feature` **small** run — UI + route-swap on the EXISTING athlete-profile contract/hooks/endpoint (all shipped with screen 2); NO new endpoint, NO contract change, NO Prisma change. The Claude Design prototype is the visual SSOT; where it shows data the domain lacks, the DOMAIN MODEL WINS and the gap is flagged — these decisions record those reconciliations. Verified against the as-built code (orchestrator `git diff` review caught + fixed a `borderRadius` MUI-sx-multiplier bug — 16px instead of 4px).
+
+## D-PROF-UI-ONLY — the Profile screen is UI + route-swap on the existing contract, no server change
+
+**Ratified 2026-06-19 (owner, in the executor prompt).**
+
+The athlete Profile screen (`/athlete/profile`) is built ENTIRELY on the athlete-profile read+write that shipped with screen 2: `useAthleteProfile()` (GET) + `useUpdateAthleteProfile()` (optimistic PUT) over `GET/PUT /api/platform/athlete/profile`, the `athleteProfileSchema`/`updateAthleteProfileSchema` contract, and the `coachingAthleteProfileApi.get/upsert` endpoint. The slice adds ONLY the `apps/platform/src/modules/athlete-profile/` UI module + the route-page swap (the `(secondary)` "Coming soon" placeholder → the real screen). NO new endpoint, NO contract change, NO Prisma change, NO new hook.
+
+**Why.** The producer was built on screen 2 (the inline pick-profile editor + the GET/PUT hook); the Profile screen is its dedicated home. A `small` slice with zero server radius is the honest scope — the only thing that would have escalated it to full (a server-side default-empty GET for the fresh-athlete 404) is unnecessary because the existing optimistic mutation already tolerates a missing cache (D-PROF-404-EMPTY).
+
+## D-PROF-404-EMPTY — a fresh athlete's missing profile (GET 404) renders as an empty editable form, client-side
+
+**Ratified 2026-06-19 (orchestrator, from the executor prompt §3.4; verified against the optimistic-mutation source).**
+
+A freshly-invited athlete who has never set bodyweight or picked a profile has NO `AthleteProfile` row → `coachingAthleteProfileApi.get` does `findOrThrow` → 404 → the client throws `NotFoundError`. The view treats `error instanceof NotFoundError` as the EMPTY case (a blank editable form: "Not set" bodyweight + the honest no-picks state), NOT an error; non-404 errors render an `Alert`. The FIRST save upserts the row: `useUpdateAthleteProfile`'s `onMutate` guards `if (previous !== undefined)` (verified in `packages/query/src/hooks/use-optimistic-mutation.ts`), so with no cache the optimistic patch is SKIPPED, the PUT still fires (server upserts), and `onSettled` invalidates → refetch → 200.
+
+**Why.** Keeps the slice client-only/small — the alternative (a server-side default-empty GET) was unnecessary because the existing optimistic mutation no-ops cleanly on a missing cache. Establishes the 404-as-empty pattern for the platform (no prior art).
+
+## D-PROF-NO-CLEAR-WEIGHT — bodyweight cannot be cleared (the update contract is non-nullable); the prototype's "Clear weight" is dropped
+
+**Ratified 2026-06-19 (orchestrator domain-vs-prototype reconciliation; owner walkthrough flag).**
+
+The prototype offers a "Clear weight" action (sets `weightKg = null`). The contract CANNOT express it: `updateAthleteProfileSchema.weightKg = z.number().finite().positive().max(500).optional()` — **`.optional()` but NOT `.nullable()`** (only `healthNote` is nullable in the update schema). Sending `weightKg: null` fails validation. Per D-PROF-UI-ONLY (no contract change), "Clear weight" is **DROPPED**. Body-weight states = display (set) / not-set (only reachable for a never-saved athlete) / editing (Save a valid `>0 ≤500` value, Cancel — no clear). Save clamps to `MAX_WEIGHT_KG` and rounds to 0.1 (D-PROF-SAVE-CLAMP).
+
+**Why.** The domain model wins over the prototype where they conflict. Clearing bodyweight would need a deliberate contract decision (nullable `weightKg` + the server upsert handling null) — out of this UI-only slice. Deferred (see `deferred.md`).
+
+## D-PROF-SELECTIONS-HONEST — Profile Picks renders the REAL `profileSelections` map (+ clear), never a fabricated catalog
+
+**Ratified 2026-06-19 (orchestrator reconciliation; consistent with D-PROFILE-SELECTIONS).**
+
+`profileSelections` is a FREE-STRING `{axis: value}` map (`z.record(string.trim.min1, string.trim.min1)`) with NO canonical catalog — the valid axes/values live in plan `byProfile` loads, not the profile (D-PROFILE-SELECTIONS; the catalog is the deferred library wave). The prototype's Profile Picks shows a CURATED picker (hardcoded axes RX/SC, M/F, Masters + alternative-value buttons + per-axis descriptions + a "Not picked" empty-axis state). The shipped screen renders ONLY the accumulated map: one row per `[axis, value]` actually picked, each as a primary `Chip` (the resolved value) + a "Resolved" badge + a clear (the chip's `onDelete` ×). Clearing sends `profileSelections` = the map MINUS that key (the PUT overwrites via `applyAthleteProfileUpdate`'s spread); clearing the last pick sends `{}` (a valid empty record — NEVER `null`, which the update schema rejects). It does NOT fabricate the hardcoded axes, alternative-value buttons (we don't know the other valid values), descriptions, or "Not picked" rows (we don't know unpicked axes).
+
+**Why.** The domain has no axis/value catalog yet, so a curated picker would be invented data — and free-text re-entry is a footgun (a typo "Rx" vs "RX" silently breaks load resolution). The honest model is "see your remembered picks, clear one to re-pick it on the next session view" — the session view IS the curated picker (the axis + valid values come from the load in context). Flagged at the walkthrough: a curated profile-picks picker needs the profile-type catalog (deferred library wave).
+
+## D-PROF-FIELDS — only `weightKg` + `profileSelections` are surfaced (exactly what the prototype shows); identity is display-only from session
+
+**Ratified 2026-06-19 (orchestrator reconciliation).**
+
+The prototype surfaces exactly two editable contract fields — `weightKg` (Body Weight) and `profileSelections` (Profile Picks). The other `updateAthleteProfileSchema` fields — `gender`, `heightCm`, `healthStatus`, `healthNote` — are NOT shown as controls (the prototype's "M / F" is a free-string profile-pick AXIS, not the `Gender` enum), so they are NOT built. The identity card (avatar + name + "Athlete" role badge) is DISPLAY-ONLY, drawn from `useSession()` (`@repo/auth/client`), not the profile; the prototype's subtitle "Performance RX · Lviv" is DROPPED (no domain backing — no city/descriptor field). The role badge is a constant string "Athlete" (the route is athlete-gated; there is no `USER_ROLE_LABELS` map in the contract).
+
+**Why.** Cover exactly what the prototype surfaces, backed by the contract — no invented fields, no dropped contract fields the prototype shows. The absent fields exist in the contract but have no home in this design; a future "full profile" or coach-edit surface could expose them (deferred). Identity is the user's, not the profile's, so it stays read-only.
+
+## D-PROF-FLOATING-LABEL / D-PROF-SAVE-CLAMP — edit via a MUI floating-label field; clamp on save
+
+**Ratified 2026-06-19 (house-rule application + prototype save logic).**
+
+The body-weight EDIT control is a MUI `TextField` with a floating `label="Body weight"` + a "kg" end-adornment (house rule `mui-floating-labels-everywhere` — never a hand-written caption-as-label), a deliberate divergence from the prototype's bespoke big-number input (the 60px Barlow-Condensed treatment is kept for the read-only DISPLAY state). Save parses the draft, rejects `NaN`/`≤0` (Save disabled, nothing sent), else clamps to `MAX_WEIGHT_KG` (=500, from the contract constant — no magic literal) and rounds to 0.1 before the PUT.
+
+**Why.** Floating labels are a ratified project pattern; the clamp mirrors the prototype and the server's own `≤500 positive` bound (defence-in-depth for UX). Minor visual divergence flagged at the walkthrough.
