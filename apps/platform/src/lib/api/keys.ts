@@ -45,6 +45,9 @@ export const platformKeys = {
   planTimetable: {
     data: () => [...ROOT, "plan-timetable"] as const,
   },
+  athleteRecords: {
+    data: () => [...ROOT, "athlete-records"] as const,
+  },
   athleteSessionView: {
     detail: (sessionId: string) => [...ROOT, "athlete-session-view", sessionId] as const,
   },
