@@ -137,6 +137,29 @@ const resultMagnitude = (prior: Result, latest: Result): number => {
   return 0;
 };
 
+const ROUNDS_REPS_SCALE = 1000;
+
+const resultScalar = (result: Result): number => {
+  switch (result.type) {
+    case "time":
+      return result.seconds;
+    case "rounds_reps":
+      return result.rounds * ROUNDS_REPS_SCALE + result.reps;
+    case "load":
+      return result.kg;
+    case "max_reps":
+      return result.reps;
+    case "distance":
+      return result.value;
+    case "calories":
+      return result.value;
+    default:
+      result satisfies never;
+
+      return 0;
+  }
+};
+
 const benchmarkDelta = (entries: NonEmptyArray<BenchmarkResultEntry>): BenchmarkDelta | null => {
   const prior = priorOf(entries);
   const latest = lastOf(entries);
@@ -181,6 +204,7 @@ const buildBenchmarkRecord = (
     delta: benchmarkDelta(ordered),
     series: ordered.map((entry) => ({
       result: entry.result,
+      scalar: resultScalar(entry.result),
       recordedAt: entry.recordedAt.toISOString(),
     })),
     attemptCount: ordered.length,

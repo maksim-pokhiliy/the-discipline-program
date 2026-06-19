@@ -359,6 +359,25 @@ describe("buildRecordsView", () => {
     });
   });
 
+  describe("benchmark series scalar", () => {
+    it("emits a plottable numeric scalar per series point", () => {
+      const benchmarkRows = [
+        benchmarkRow({
+          result: { type: "time", seconds: 180 },
+          recordedAt: at("2026-01-01T00:00:00.000Z"),
+        }),
+        benchmarkRow({
+          result: { type: "time", seconds: 150 },
+          recordedAt: at("2026-02-01T00:00:00.000Z"),
+        }),
+      ];
+
+      const [record] = buildRecordsView({ oneRMRows: [], benchmarkRows }).benchmarks;
+
+      expect(record?.series.map((point) => point.scalar)).toEqual([180, 150]);
+    });
+  });
+
   describe("benchmark title resolution", () => {
     const result: Result = { type: "time", seconds: 120 };
 

@@ -24,6 +24,7 @@ export const oneRMRecordViewSchema = z.object({
 
 export const benchmarkSeriesPointSchema = z.object({
   result: resultSchema,
+  scalar: z.number(),
   recordedAt: isoInstant,
 });
 
