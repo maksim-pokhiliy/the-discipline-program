@@ -177,4 +177,21 @@ describe("sendLeadNotificationEmail", () => {
       expect.objectContaining({ program: "strength-base" }),
     );
   });
+
+  it("never leaks the head-coach email address into any logger call", async () => {
+    mocks.sendMock.mockImplementationOnce(async () => {
+      throw new Error("Network down");
+    });
+
+    await sendLeadNotificationEmail(testInput);
+
+    const loggedArgs = JSON.stringify([
+      ...mocks.loggerInfoMock.mock.calls,
+      ...mocks.loggerWarnMock.mock.calls,
+      ...mocks.loggerErrorMock.mock.calls,
+    ]);
+
+    expect(mocks.loggerErrorMock).toHaveBeenCalled();
+    expect(loggedArgs).not.toContain("head-coach@example.com");
+  });
 });
