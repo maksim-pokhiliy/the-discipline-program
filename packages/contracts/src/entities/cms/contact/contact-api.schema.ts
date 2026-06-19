@@ -3,11 +3,22 @@ import { z } from "zod";
 import { idParamSchema } from "../../../common";
 
 import { CONTACT_CONSTANTS, ContactStatus } from "./contact.constants";
-import { contactSubmissionItemSchema, createContactSubmissionSchema } from "./contact.schema";
+import {
+  contactSubmissionItemSchema,
+  createContactSubmissionSchema,
+  createLeadSubmissionSchema,
+} from "./contact.schema";
 
 export const createContactSubmissionRequestSchema = createContactSubmissionSchema;
 
 export const createContactSubmissionResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export const createLeadSubmissionRequestSchema = createLeadSubmissionSchema;
+
+export const createLeadSubmissionResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
 });
