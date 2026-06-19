@@ -23,7 +23,7 @@ export const usePlanEnrollments = (planId: string) =>
     enabled: !!planId,
   });
 
-const useInvalidateEnrollmentCaches = (planId: string) => {
+export const useInvalidateEnrollmentCaches = (planId: string) => {
   const queryClient = useQueryClient();
 
   return () => {
