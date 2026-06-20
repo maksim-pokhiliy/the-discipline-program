@@ -170,7 +170,7 @@ Welcome aboard.
 
 ### Pages (admin `/pages` → open each page → edit section by section)
 
-Each section saves on its own. **Button/form/modal micro-labels are usually pre-seeded — fill only if blank** (given here in `(parens)`). Image fields (`backgroundImage`, personal `image`) — keep existing or upload. `iconName` takes any MUI icon name. ⚠️ **About-page years/credentials are from your bio — verify with Denys before showing.**
+Each section saves on its own. **Button/form/modal micro-labels are usually pre-seeded — fill only if blank** (given here in `(parens)`). Image fields (`backgroundImage`, personal `image`) — keep existing or upload. `iconName` must be one of the 6 wired into the marketing renderer — `Shuffle`, `Bolt`, `FitnessCenter`, `School`, `TrendingUp`, `Groups` — anything else falls back to a generic icon. ⚠️ **About-page years/credentials are from your bio — verify with Denys before showing.**
 
 #### HOME (`/`)
 
@@ -185,10 +185,10 @@ Each section saves on its own. **Button/form/modal micro-labels are usually pre-
 - title: `Why train with The Discipline Program`
 - subtitle: `No fluff, no guesswork — a plan that works if you show up.`
 - features (4):
-  1. `A plan, not a feed` — `Every day is programmed with intent: strength, conditioning, and skill in the right dose. You just execute.` · icon `AssignmentTurnedIn`
-  2. `Coached, not automated` — `12+ years of coaching behind every progression. Log your work and get real feedback.` · icon `SelfImprovement`
+  1. `A plan, not a feed` — `Every day is programmed with intent: strength, conditioning, and skill in the right dose. You just execute.` · icon `FitnessCenter`
+  2. `Coached, not automated` — `12+ years of coaching behind every progression. Log your work and get real feedback.` · icon `School`
   3. `Built for every level` — `From your first pull-up to the competition floor, every workout scales to you.` · icon `TrendingUp`
-  4. `Discipline over motivation` — `The train runs on schedule. Miss a day and it moves on — consistency is the whole game.` · icon `Schedule`
+  4. `Discipline over motivation` — `The train runs on schedule. Miss a day and it moves on — consistency is the whole game.` · icon `Bolt`
 
 **storefront**
 
