@@ -50,10 +50,6 @@ export const MuiTab: NonNullable<Components<Theme>["MuiTab"]> = {
             backgroundColor: alpha(theme.palette.primary.main, SELECTED_TINT_HOVER),
           },
         },
-
-        "&.Mui-focusVisible": {
-          backgroundColor: "transparent",
-        },
       };
     },
   },

@@ -1,42 +1,7 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-import { focusRing } from "../focus";
-
-const GLYPH_PX = 20;
+import { selectionControlStyleOverrides } from "./selection-control";
 
 export const MuiRadio: NonNullable<Components<Theme>["MuiRadio"]> = {
-  styleOverrides: {
-    root: ({ theme }) => ({
-      color: theme.palette.text.muted,
-      transition: theme.transitions.create(["color", "transform"], {
-        duration: theme.transitions.duration.shortest,
-      }),
-
-      "& .MuiSvgIcon-root": {
-        fontSize: theme.typography.pxToRem(GLYPH_PX),
-      },
-
-      "&:hover": {
-        color: theme.palette.text.secondary,
-        backgroundColor: "transparent",
-      },
-
-      "&:active": {
-        transform: "scale(0.9)",
-      },
-
-      "&.Mui-checked": {
-        color: theme.palette.primary.main,
-      },
-
-      "&.Mui-focusVisible .MuiSvgIcon-root": {
-        borderRadius: "50%",
-        boxShadow: focusRing(theme),
-      },
-
-      "&.Mui-disabled": {
-        color: theme.palette.text.disabled,
-      },
-    }),
-  },
+  styleOverrides: selectionControlStyleOverrides("50%"),
 };
