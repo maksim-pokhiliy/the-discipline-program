@@ -1,18 +1,20 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
+import { focusRing } from "../focus";
+
 export const MuiCssBaseline: NonNullable<Components<Theme>["MuiCssBaseline"]> = {
   styleOverrides: (theme) => ({
     html: {
       scrollBehavior: "smooth",
     },
     "*:focus-visible": {
-      outline: "2px solid",
-      outlineColor: theme.palette.primary.main,
-      outlineOffset: "2px",
+      outline: "none",
+      boxShadow: focusRing(theme),
     },
     "input:focus-visible, textarea:focus-visible, select:focus-visible, [contenteditable]:focus-visible, .MuiInputBase-input:focus-visible":
       {
         outline: "none",
+        boxShadow: "none",
       },
     ".MuiButtonBase-root.Mui-focusVisible": {
       backgroundColor: "transparent",

@@ -1,5 +1,7 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
+import { focusRingSubtle } from "../focus";
+
 const SEG_FONT_FAMILY = "var(--font-base), Barlow, sans-serif";
 const SEG_FONT_SIZE_PX = 11;
 const SEG_FONT_SIZE_SM_PX = 10.5;
@@ -27,7 +29,7 @@ export const MuiToggleButton: NonNullable<Components<Theme>["MuiToggleButton"]> 
       borderColor: theme.palette.divider,
       borderRadius: 0,
       padding: theme.spacing(SEG_PADDING_Y_FACTOR, SEG_PADDING_X_FACTOR),
-      transition: theme.transitions.create(["background-color", "color"], {
+      transition: theme.transitions.create(["background-color", "color", "box-shadow", "filter"], {
         duration: theme.transitions.duration.shortest,
       }),
 
@@ -40,12 +42,23 @@ export const MuiToggleButton: NonNullable<Components<Theme>["MuiToggleButton"]> 
         color: theme.palette.text.primary,
       },
 
+      "&:active": {
+        filter: "brightness(0.94)",
+      },
+
+      "&.Mui-focusVisible": {
+        boxShadow: focusRingSubtle(theme),
+        position: "relative",
+        zIndex: 1,
+      },
+
       "&.Mui-selected": {
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.primary.contrastText,
 
         "&:hover": {
-          backgroundColor: theme.palette.primary.dark,
+          backgroundColor: theme.palette.primary.main,
+          filter: "brightness(1.06)",
         },
       },
     }),
@@ -77,6 +90,13 @@ export const MuiToggleButtonGroup: NonNullable<Components<Theme>["MuiToggleButto
       borderColor: theme.palette.divider,
       borderRadius: theme.shape.borderRadius,
       overflow: "hidden",
+      transition: theme.transitions.create("border-color", {
+        duration: theme.transitions.duration.shortest,
+      }),
+
+      "&:hover": {
+        borderColor: theme.palette.dividerStrong,
+      },
     }),
 
     firstButton: {

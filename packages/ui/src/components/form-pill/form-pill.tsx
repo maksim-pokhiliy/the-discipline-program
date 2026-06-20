@@ -2,7 +2,7 @@ import { type ReactElement } from "react";
 
 import { Chip, alpha } from "@mui/material";
 
-const FORM_PILL_HEIGHT_PX = 16;
+const FORM_PILL_HEIGHT_PX = 18;
 const FORM_PILL_LABEL_PX = 0.75;
 const FORM_PILL_FONT_SIZE_PT = 9.5;
 const FORM_PILL_FONT_WEIGHT = 700;

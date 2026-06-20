@@ -11,6 +11,7 @@ import { MuiBottomNavigation, MuiBottomNavigationAction } from "./bottom-navigat
 import { MuiButton } from "./button";
 import { MuiButtonBase } from "./button-base";
 import { MuiCard, MuiCardActionArea, MuiCardActions, MuiCardContent } from "./card";
+import { MuiCheckbox } from "./checkbox";
 import { MuiChip } from "./chip";
 import { MuiCssBaseline } from "./css-baseline";
 import { MuiDialogActions, MuiDialogContent, MuiDialogTitle } from "./dialog";
@@ -20,6 +21,9 @@ import { MuiListItemButton } from "./list-item-button";
 import { MuiMenu, MuiMenuItem } from "./menu";
 import { MuiPaper } from "./paper";
 import { MuiDatePicker, MuiPickersOutlinedInput } from "./pickers";
+import { MuiRadio } from "./radio";
+import { MuiSelect } from "./select";
+import { MuiSwitch } from "./switch";
 import { MuiTab, MuiTabs } from "./tab";
 import { MuiTableCell, MuiTableRow } from "./table";
 import { MuiTablePagination } from "./table-pagination";
@@ -29,7 +33,6 @@ import {
   MuiInput,
   MuiInputLabel,
   MuiOutlinedInput,
-  MuiSelect,
   MuiTextField,
 } from "./text-field";
 import { MuiToggleButton, MuiToggleButtonGroup } from "./toggle-button";
@@ -50,6 +53,7 @@ export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiCardActionArea,
   MuiCardActions,
   MuiCardContent,
+  MuiCheckbox,
   MuiChip,
   MuiCssBaseline,
   MuiDialogActions,
@@ -68,7 +72,9 @@ export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiDatePicker,
   MuiPaper,
   MuiPickersOutlinedInput,
+  MuiRadio,
   MuiSelect,
+  MuiSwitch,
   MuiTab,
   MuiTableCell,
   MuiTablePagination,
