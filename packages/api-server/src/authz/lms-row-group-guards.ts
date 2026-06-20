@@ -1,11 +1,9 @@
 import { type TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { TRAINING_PLAN_STATUS_MAP } from "../mappers/lms";
 
-import { isAdminOrHeadCoach } from "./_role-helpers";
-import { resolveCallerRole } from "./resolve-caller-role";
+import { assertPlanAccess } from "./_ownership-grant";
 
 export const verifyRowGroupOwnership = async (
   rowGroupId: string,
@@ -52,31 +50,22 @@ export const verifyRowGroupOwnership = async (
     },
   });
 
-  if (!rowGroup || rowGroup.schema.block.session.day.week.plan.deletedAt !== null) {
+  if (rowGroup === null) {
     throw new NotFoundError("Row group not found", { rowGroupId });
   }
 
-  const plan = rowGroup.schema.block.session.day.week.plan;
+  const status = await assertPlanAccess(rowGroup.schema.block.session.day.week.plan, userId, {
+    message: "Row group not found",
+    meta: { rowGroupId },
+  });
 
-  const buildResponse = () => ({
-    status: TRAINING_PLAN_STATUS_MAP[plan.status],
+  return {
+    status,
     schemaId: rowGroup.schemaId,
     blockId: rowGroup.schema.blockId,
     sessionId: rowGroup.schema.block.sessionId,
     dayId: rowGroup.schema.block.session.dayId,
     weekId: rowGroup.schema.block.session.day.weekId,
     planId: rowGroup.schema.block.session.day.week.planId,
-  });
-
-  if (plan.creatorId === userId) {
-    return buildResponse();
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return buildResponse();
-  }
-
-  throw new ForbiddenError("Row group does not belong to this coach");
+  };
 };

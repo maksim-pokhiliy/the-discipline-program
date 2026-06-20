@@ -1,11 +1,9 @@
 import { type TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { TRAINING_PLAN_STATUS_MAP } from "../mappers/lms";
 
-import { isAdminOrHeadCoach } from "./_role-helpers";
-import { resolveCallerRole } from "./resolve-caller-role";
+import { assertPlanAccess } from "./_ownership-grant";
 
 export const verifyGroupOwnership = async (
   groupId: string,
@@ -46,30 +44,21 @@ export const verifyGroupOwnership = async (
     },
   });
 
-  if (!group || group.block.session.day.week.plan.deletedAt !== null) {
+  if (group === null) {
     throw new NotFoundError("Schema group not found", { groupId });
   }
 
-  const plan = group.block.session.day.week.plan;
+  const status = await assertPlanAccess(group.block.session.day.week.plan, userId, {
+    message: "Schema group not found",
+    meta: { groupId },
+  });
 
-  const buildResponse = () => ({
-    status: TRAINING_PLAN_STATUS_MAP[plan.status],
+  return {
+    status,
     blockId: group.blockId,
     sessionId: group.block.sessionId,
     dayId: group.block.session.dayId,
     weekId: group.block.session.day.weekId,
     planId: group.block.session.day.week.planId,
-  });
-
-  if (plan.creatorId === userId) {
-    return buildResponse();
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return buildResponse();
-  }
-
-  throw new ForbiddenError("Schema group does not belong to this coach");
+  };
 };

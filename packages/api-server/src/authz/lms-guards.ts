@@ -2,10 +2,8 @@ import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { TRAINING_PLAN_STATUS_MAP } from "../mappers/lms";
 
-import { isAdminOrHeadCoach } from "./_role-helpers";
-import { resolveCallerRole } from "./resolve-caller-role";
+import { assertPlanAccess } from "./_ownership-grant";
 
 export const verifyPlanOwnership = async (
   planId: string,
@@ -16,21 +14,12 @@ export const verifyPlanOwnership = async (
     select: { creatorId: true, deletedAt: true, status: true },
   });
 
-  if (!plan || plan.deletedAt !== null) {
-    throw new NotFoundError("Training plan not found", { planId });
-  }
+  const status = await assertPlanAccess(plan, userId, {
+    message: "Training plan not found",
+    meta: { planId },
+  });
 
-  if (plan.creatorId === userId) {
-    return { status: TRAINING_PLAN_STATUS_MAP[plan.status] };
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return { status: TRAINING_PLAN_STATUS_MAP[plan.status] };
-  }
-
-  throw new ForbiddenError("Training plan does not belong to this coach");
+  return { status };
 };
 
 export const verifyPlanEditable = (plan: { status: TrainingPlanStatus }): void => {
@@ -61,33 +50,21 @@ export const verifySessionOwnership = async (
     },
   });
 
-  if (!session || session.day.week.plan.deletedAt !== null) {
+  if (session === null) {
     throw new NotFoundError("Session not found", { sessionId });
   }
 
-  const plan = session.day.week.plan;
+  const status = await assertPlanAccess(session.day.week.plan, userId, {
+    message: "Session not found",
+    meta: { sessionId },
+  });
 
-  if (plan.creatorId === userId) {
-    return {
-      status: TRAINING_PLAN_STATUS_MAP[plan.status],
-      dayId: session.dayId,
-      weekId: session.day.weekId,
-      planId: session.day.week.planId,
-    };
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return {
-      status: TRAINING_PLAN_STATUS_MAP[plan.status],
-      dayId: session.dayId,
-      weekId: session.day.weekId,
-      planId: session.day.week.planId,
-    };
-  }
-
-  throw new ForbiddenError("Session does not belong to this coach");
+  return {
+    status,
+    dayId: session.dayId,
+    weekId: session.day.weekId,
+    planId: session.day.week.planId,
+  };
 };
 
 export const verifyBlockOwnership = async (
@@ -123,35 +100,22 @@ export const verifyBlockOwnership = async (
     },
   });
 
-  if (!block || block.session.day.week.plan.deletedAt !== null) {
+  if (block === null) {
     throw new NotFoundError("Block not found", { blockId });
   }
 
-  const plan = block.session.day.week.plan;
+  const status = await assertPlanAccess(block.session.day.week.plan, userId, {
+    message: "Block not found",
+    meta: { blockId },
+  });
 
-  if (plan.creatorId === userId) {
-    return {
-      status: TRAINING_PLAN_STATUS_MAP[plan.status],
-      sessionId: block.sessionId,
-      dayId: block.session.dayId,
-      weekId: block.session.day.weekId,
-      planId: block.session.day.week.planId,
-    };
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return {
-      status: TRAINING_PLAN_STATUS_MAP[plan.status],
-      sessionId: block.sessionId,
-      dayId: block.session.dayId,
-      weekId: block.session.day.weekId,
-      planId: block.session.day.week.planId,
-    };
-  }
-
-  throw new ForbiddenError("Block does not belong to this coach");
+  return {
+    status,
+    sessionId: block.sessionId,
+    dayId: block.session.dayId,
+    weekId: block.session.day.weekId,
+    planId: block.session.day.week.planId,
+  };
 };
 
 export const verifySchemaOwnership = async (
@@ -193,37 +157,23 @@ export const verifySchemaOwnership = async (
     },
   });
 
-  if (!schema || schema.block.session.day.week.plan.deletedAt !== null) {
+  if (schema === null) {
     throw new NotFoundError("Schema not found", { schemaId });
   }
 
-  const plan = schema.block.session.day.week.plan;
+  const status = await assertPlanAccess(schema.block.session.day.week.plan, userId, {
+    message: "Schema not found",
+    meta: { schemaId },
+  });
 
-  if (plan.creatorId === userId) {
-    return {
-      status: TRAINING_PLAN_STATUS_MAP[plan.status],
-      blockId: schema.blockId,
-      sessionId: schema.block.sessionId,
-      dayId: schema.block.session.dayId,
-      weekId: schema.block.session.day.weekId,
-      planId: schema.block.session.day.week.planId,
-    };
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return {
-      status: TRAINING_PLAN_STATUS_MAP[plan.status],
-      blockId: schema.blockId,
-      sessionId: schema.block.sessionId,
-      dayId: schema.block.session.dayId,
-      weekId: schema.block.session.day.weekId,
-      planId: schema.block.session.day.week.planId,
-    };
-  }
-
-  throw new ForbiddenError("Schema does not belong to this coach");
+  return {
+    status,
+    blockId: schema.blockId,
+    sessionId: schema.block.sessionId,
+    dayId: schema.block.session.dayId,
+    weekId: schema.block.session.day.weekId,
+    planId: schema.block.session.day.week.planId,
+  };
 };
 
 export const verifySchemaRowOwnership = async (
@@ -271,31 +221,22 @@ export const verifySchemaRowOwnership = async (
     },
   });
 
-  if (!row || row.schema.block.session.day.week.plan.deletedAt !== null) {
+  if (row === null) {
     throw new NotFoundError("SchemaRow not found", { schemaRowId });
   }
 
-  const plan = row.schema.block.session.day.week.plan;
+  const status = await assertPlanAccess(row.schema.block.session.day.week.plan, userId, {
+    message: "SchemaRow not found",
+    meta: { schemaRowId },
+  });
 
-  const buildResponse = () => ({
-    status: TRAINING_PLAN_STATUS_MAP[plan.status],
+  return {
+    status,
     schemaId: row.schemaId,
     blockId: row.schema.blockId,
     sessionId: row.schema.block.sessionId,
     dayId: row.schema.block.session.dayId,
     weekId: row.schema.block.session.day.weekId,
     planId: row.schema.block.session.day.week.planId,
-  });
-
-  if (plan.creatorId === userId) {
-    return buildResponse();
-  }
-
-  const role = await resolveCallerRole(userId);
-
-  if (role !== null && isAdminOrHeadCoach(role)) {
-    return buildResponse();
-  }
-
-  throw new ForbiddenError("SchemaRow does not belong to this coach");
+  };
 };
