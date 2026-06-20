@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { Box, Container, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { SessionGuard } from "@repo/auth";
 import { signOut, useSession } from "@repo/auth/client";
@@ -10,6 +10,7 @@ import { type PlatformNavigationConfig } from "@repo/shared";
 import { SkipToContent } from "@repo/ui";
 
 import { PlatformBottomNav } from "@app/lib/components/platform-bottom-nav";
+import { PlatformContent } from "@app/lib/components/platform-content";
 import { PlatformHeader } from "@app/lib/components/platform-header";
 
 type PlatformLayoutProps = {
@@ -48,34 +49,9 @@ export const PlatformLayout = ({
           onSignOut={handleSignOut}
         />
 
-        {isFlush ? (
-          <Container
-            component="main"
-            id="main-content"
-            maxWidth={false}
-            disableGutters
-            sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}
-          >
-            <Box component="section" sx={{ height: "100%" }}>
-              {children}
-            </Box>
-          </Container>
-        ) : (
-          <Container
-            component="main"
-            id="main-content"
-            maxWidth="lg"
-            sx={(theme) => ({
-              flex: 1,
-              pt: 4,
-              pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
-              pl: `calc(${theme.spacing(3)} + env(safe-area-inset-left))`,
-              pr: `calc(${theme.spacing(3)} + env(safe-area-inset-right))`,
-            })}
-          >
-            <Box component="section">{children}</Box>
-          </Container>
-        )}
+        <PlatformContent mainVariant={mainVariant} reserveBottomNav>
+          {children}
+        </PlatformContent>
 
         <PlatformBottomNav navigation={navigation} />
       </Stack>
