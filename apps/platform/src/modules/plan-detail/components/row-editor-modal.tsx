@@ -8,10 +8,10 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { FormModal } from "@repo/ui";
 
 import { useCreateSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
+import { formatTempoInput } from "@app/lib/training-format";
 
 import { buildRowRequest } from "../lib/build-row-request";
 import { DEFAULT_REST, restErrorsFromParse } from "../lib/field-error-bridge";
-import { formatTempoInput } from "../lib/format-tempo-input";
 import type { RowFormState, RowRequestMode } from "../lib/row-form-state.types";
 
 import { AxisFieldSection } from "./axes/axis-field-section";
