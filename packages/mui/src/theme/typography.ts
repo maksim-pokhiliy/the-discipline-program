@@ -1,4 +1,22 @@
+import { type CSSProperties } from "react";
+
 import { type Theme, type ThemeOptions } from "@mui/material";
+
+declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    hero: CSSProperties;
+  }
+
+  interface TypographyVariantsOptions {
+    hero?: CSSProperties;
+  }
+}
+
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    hero: true;
+  }
+}
 
 const FONT_BASE = 'var(--font-base), "Barlow", sans-serif';
 const FONT_DISPLAY = 'var(--font-display), "Barlow Condensed", sans-serif';
@@ -8,6 +26,15 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
 
   return {
     fontFamily: FONT_BASE,
+
+    hero: {
+      fontFamily: FONT_DISPLAY,
+      fontWeight: 800,
+      fontSize: "clamp(40px, 5.5vw, 68px)",
+      lineHeight: 0.95,
+      letterSpacing: "-0.02em",
+      textTransform: "uppercase" as const,
+    },
 
     h1: {
       fontFamily: FONT_DISPLAY,

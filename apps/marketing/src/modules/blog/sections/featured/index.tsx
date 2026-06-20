@@ -7,24 +7,27 @@ import { BlogPostCard } from "@app/lib/components/ui";
 type BlogFeaturedSectionProps = {
   hero: NonNullable<BlogPageData["hero"]>;
   grid: NonNullable<BlogPageData["grid"]>;
-  featuredPost: PublicBlogPost;
+  featuredPost?: PublicBlogPost | undefined;
 };
 
 export const BlogFeaturedSection = ({ hero, grid, featuredPost }: BlogFeaturedSectionProps) => {
   return (
     <ContentSection id="featured" title={hero.title} subtitle={hero.subtitle} offset={1}>
-      <BlogPostCard
-        slug={featuredPost.slug}
-        title={featuredPost.title}
-        excerpt={featuredPost.excerpt}
-        coverImage={featuredPost.coverImage}
-        readTime={featuredPost.readTime}
-        category={featuredPost.category}
-        authorName={featuredPost.authorName}
-        readMoreLabel={grid.readMoreLabel ?? ""}
-        minReadSuffix={grid.minReadSuffix ?? ""}
-        variant="featured"
-      />
+      {featuredPost && (
+        <BlogPostCard
+          slug={featuredPost.slug}
+          title={featuredPost.title}
+          excerpt={featuredPost.excerpt}
+          coverImage={featuredPost.coverImage}
+          readTime={featuredPost.readTime}
+          category={featuredPost.category}
+          authorName={featuredPost.authorName}
+          tags={featuredPost.tags}
+          readMoreLabel={grid.readMoreLabel ?? "Read more"}
+          minReadSuffix={grid.minReadSuffix ?? "min read"}
+          variant="featured"
+        />
+      )}
     </ContentSection>
   );
 };

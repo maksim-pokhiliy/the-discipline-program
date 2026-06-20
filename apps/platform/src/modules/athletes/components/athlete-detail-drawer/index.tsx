@@ -197,12 +197,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
             </Stack>
           </Stack>
 
-          <Tabs
-            value={tab}
-            onChange={(_, value: DrawerTab) => setTab(value)}
-            variant="fullWidth"
-            sx={(theme) => ({ borderBottom: `1px solid ${theme.palette.divider}` })}
-          >
+          <Tabs value={tab} onChange={(_, value: DrawerTab) => setTab(value)} variant="fullWidth">
             <Tab value="today" label="Today" />
             <Tab value="plan" label="Plan" />
             <Tab

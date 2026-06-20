@@ -91,28 +91,26 @@ export const AthletesControlsSection: React.FC<AthletesControlsSectionProps> = (
       }}
     />
 
-    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-      <Tabs
-        value={segment}
-        onChange={(_, value: AthleteSegment) => onSegmentChange(value)}
-        variant="scrollable"
-        scrollButtons="auto"
-      >
-        <ChipTab value="all" label="All" count={segmentCounts.all} />
-        <ChipTab
-          value="attention"
-          label="Needs attention"
-          count={segmentCounts.attention}
-          {...(segmentCounts.attention > 0 && { chipColor: "warning" as const })}
-        />
-        <ChipTab
-          value="invited"
-          label="Invited"
-          count={segmentCounts.invited}
-          {...(segmentCounts.invited > 0 && { chipColor: "info" as const })}
-        />
-      </Tabs>
-    </Box>
+    <Tabs
+      value={segment}
+      onChange={(_, value: AthleteSegment) => onSegmentChange(value)}
+      variant="scrollable"
+      scrollButtons="auto"
+    >
+      <ChipTab value="all" label="All" count={segmentCounts.all} />
+      <ChipTab
+        value="attention"
+        label="Needs attention"
+        count={segmentCounts.attention}
+        {...(segmentCounts.attention > 0 && { chipColor: "warning" as const })}
+      />
+      <ChipTab
+        value="invited"
+        label="Invited"
+        count={segmentCounts.invited}
+        {...(segmentCounts.invited > 0 && { chipColor: "info" as const })}
+      />
+    </Tabs>
 
     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
       <AthletesFilterMenu

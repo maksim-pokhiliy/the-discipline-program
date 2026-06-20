@@ -26,6 +26,7 @@ type BlogPostCardProps = {
   minReadSuffix: string;
   variant?: "default" | "featured";
   authorName?: string | null;
+  tags?: string[];
 };
 
 export const BlogPostCard = ({
@@ -39,6 +40,7 @@ export const BlogPostCard = ({
   minReadSuffix,
   variant = "default",
   authorName,
+  tags,
 }: BlogPostCardProps) => {
   const isFeatured = variant === "featured";
 
@@ -75,6 +77,7 @@ export const BlogPostCard = ({
             label={BLOG_CATEGORY_LABELS[category]}
             size={isFeatured ? "medium" : "small"}
             color="primary"
+            sx={{ bgcolor: "primary.main", color: "primary.contrastText" }}
           />
         </Box>
       </Box>
@@ -88,6 +91,14 @@ export const BlogPostCard = ({
           <Typography variant={isFeatured ? "h5" : "body2"} color="text.secondary">
             {excerpt}
           </Typography>
+
+          {tags && tags.length > 0 && (
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {tags.map((tag) => (
+                <Chip key={tag} label={tag} variant="tag" />
+              ))}
+            </Stack>
+          )}
         </Stack>
       </CardContent>
 

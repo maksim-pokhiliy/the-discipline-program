@@ -5,7 +5,8 @@ import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack } from "@mui/material";
 
-import { PageHeader, QueryWrapper } from "@repo/ui";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
+import { PlatformPageHeader, QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlansPageData } from "@app/lib/hooks";
 
@@ -16,11 +17,16 @@ export const PlansView = () => {
   const { data, isLoading, error } = useTrainingPlansPageData();
   const [createOpen, setCreateOpen] = useState(false);
 
+  const activePlanCount = data?.plans.filter(
+    (plan) => plan.status === TrainingPlanStatus.ACTIVE,
+  ).length;
+
   return (
     <>
       <Stack spacing={4}>
-        <PageHeader
-          title="Training Plans"
+        <PlatformPageHeader
+          title="Plans"
+          {...(activePlanCount !== undefined && { eyebrow: `${activePlanCount} active` })}
           actions={
             <Button
               startIcon={<AddIcon />}
@@ -29,7 +35,7 @@ export const PlansView = () => {
               variant="contained"
               onClick={() => setCreateOpen(true)}
             >
-              Create Plan
+              New plan
             </Button>
           }
         />

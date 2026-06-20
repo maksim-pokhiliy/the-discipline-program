@@ -10,11 +10,22 @@ export const MuiIconButton: NonNullable<Components<Theme>["MuiIconButton"]> = {
     color: "inherit",
   },
   styleOverrides: {
-    root: {
+    root: ({ theme }) => ({
+      transition: theme.transitions.create(
+        ["background-color", "color", "box-shadow", "transform"],
+        {
+          duration: theme.transitions.duration.shortest,
+        },
+      ),
+
+      "&:active": {
+        transform: "scale(0.9)",
+      },
+
       "&.Mui-focusVisible": {
         backgroundColor: "transparent",
       },
-    },
+    }),
     sizeSmall: ({ theme }) => ({
       width: ICON_BUTTON_SIZE_SM,
       height: ICON_BUTTON_SIZE_SM,

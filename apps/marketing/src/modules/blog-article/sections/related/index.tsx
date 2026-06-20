@@ -29,8 +29,9 @@ export const BlogArticleRelated = ({
                 coverImage={post.coverImage}
                 readTime={post.readTime}
                 category={post.category}
-                readMoreLabel={labels.readMoreLabel ?? ""}
-                minReadSuffix={labels.minReadSuffix ?? ""}
+                tags={post.tags}
+                readMoreLabel={labels.readMoreLabel || "Read more"}
+                minReadSuffix={labels.minReadSuffix || "min read"}
               />
             </Grid>
           ))}

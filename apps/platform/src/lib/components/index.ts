@@ -7,4 +7,5 @@ export { PlatformBottomNav } from "./platform-bottom-nav";
 export { PlatformFab } from "./platform-fab";
 export { PlatformHeader } from "./platform-header";
 export { PlatformLayout } from "./platform-layout";
+export { PlatformSidebar } from "./platform-sidebar";
 export { ProfileAvatar } from "./profile-avatar";

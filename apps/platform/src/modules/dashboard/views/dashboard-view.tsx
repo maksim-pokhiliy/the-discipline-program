@@ -1,17 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import { Box, Stack } from "@mui/material";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import { IconButton, Stack } from "@mui/material";
 
 import { useSession } from "@repo/auth/client";
 import type { DashboardActionItem } from "@repo/contracts/coaching/coach-dashboard";
-import { QueryWrapper } from "@repo/ui";
+import { formatDate } from "@repo/shared";
+import { PlatformPageHeader, QueryWrapper } from "@repo/ui";
 
 import { useCoachDashboard, useResolveActionItem } from "@app/lib/hooks";
 import { AthleteDetailDrawer } from "@app/modules/athletes";
 
-import { DashboardEmptyState, DashboardHeaderBand, ResolveActionItemModal } from "../components";
+import { DashboardEmptyState, ResolveActionItemModal } from "../components";
 import {
   DashboardFooterLine,
   FallingBehindSection,
@@ -20,20 +22,19 @@ import {
   TodayRosterSection,
 } from "../sections";
 
+const REFRESH_BUTTON_PX = 40;
+
 export const DashboardView = () => {
-  const { data, isLoading, error } = useCoachDashboard();
+  const { data, isLoading, error, refetch } = useCoachDashboard();
   const { data: session } = useSession();
   const resolveMutation = useResolveActionItem();
 
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [todayVisibleIds, setTodayVisibleIds] = useState<string[]>([]);
   const [resolveItem, setResolveItem] = useState<DashboardActionItem | null>(null);
-  const attentionRef = useRef<HTMLDivElement>(null);
 
   const coachName = session?.user?.name ?? null;
-
-  const scrollToAttention = (): void =>
-    attentionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const todayLabel = formatDate(new Date(), "weekday");
 
   return (
     <>
@@ -48,10 +49,18 @@ export const DashboardView = () => {
             <DashboardEmptyState coachName={coachName} />
           ) : (
             <Stack spacing={{ xs: 2, md: 3 }}>
-              <DashboardHeaderBand
-                coachName={coachName}
-                needAttentionCount={data.actionItems.length}
-                onScrollToAttention={scrollToAttention}
+              <PlatformPageHeader
+                eyebrow={todayLabel}
+                title="Dashboard"
+                actions={
+                  <IconButton
+                    onClick={() => refetch()}
+                    aria-label="Refresh dashboard"
+                    sx={{ width: REFRESH_BUTTON_PX, height: REFRESH_BUTTON_PX }}
+                  >
+                    <RefreshRoundedIcon />
+                  </IconButton>
+                }
               />
 
               <PulseBandSection
@@ -60,14 +69,12 @@ export const DashboardView = () => {
                 totalActiveAthletes={data.overview.totalActiveAthletes}
               />
 
-              <Box ref={attentionRef}>
-                <NeedsAttentionSection
-                  items={data.actionItems}
-                  onOpenAthlete={setSelectedAthleteId}
-                  onOpenResolve={setResolveItem}
-                  onQuickResolve={(itemId) => resolveMutation.mutate({ itemId })}
-                />
-              </Box>
+              <NeedsAttentionSection
+                items={data.actionItems}
+                onOpenAthlete={setSelectedAthleteId}
+                onOpenResolve={setResolveItem}
+                onQuickResolve={(itemId) => resolveMutation.mutate({ itemId })}
+              />
 
               <TodayRosterSection
                 athletes={data.athletesSummary}

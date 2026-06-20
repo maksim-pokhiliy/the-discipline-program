@@ -1,5 +1,8 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
+const SELECTED_TINT = 0.06;
+const SELECTED_TINT_HOVER = 0.12;
+
 export const MuiBottomNavigation: NonNullable<Components<Theme>["MuiBottomNavigation"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
@@ -24,16 +27,24 @@ export const MuiBottomNavigationAction: NonNullable<
   styleOverrides: {
     root: ({ theme }) => ({
       borderRadius: theme.shape.borderRadius,
+      transition: theme.transitions.create(["background-color", "color", "transform"], {
+        duration: theme.transitions.duration.shortest,
+      }),
 
       "&:hover": {
         backgroundColor: theme.palette.action.hover,
       },
 
+      "&:active": {
+        transform: "scale(0.92)",
+      },
+
       "&.Mui-selected": {
-        backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.hoverOpacity),
+        color: theme.palette.primary.main,
+        backgroundColor: alpha(theme.palette.primary.main, SELECTED_TINT),
 
         "&:hover": {
-          backgroundColor: alpha(theme.palette.primary.main, 0.12),
+          backgroundColor: alpha(theme.palette.primary.main, SELECTED_TINT_HOVER),
         },
       },
 

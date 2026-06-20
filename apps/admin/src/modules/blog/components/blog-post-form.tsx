@@ -114,16 +114,40 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
         <Stack spacing={3}>
           <FormCard title="Publishing">
             <Stack spacing={1}>
-              <FormControlLabel
-                control={
-                  <Checkbox {...register("isPublished")} size="small" disabled={isLoading} />
-                }
-                label="Published"
+              <Controller
+                name="isPublished"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={!!field.value}
+                        onChange={field.onChange}
+                        size="small"
+                        disabled={isLoading}
+                      />
+                    }
+                    label="Published"
+                  />
+                )}
               />
 
-              <FormControlLabel
-                control={<Checkbox {...register("isFeatured")} size="small" disabled={isLoading} />}
-                label="Featured Post"
+              <Controller
+                name="isFeatured"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={!!field.value}
+                        onChange={field.onChange}
+                        size="small"
+                        disabled={isLoading}
+                      />
+                    }
+                    label="Featured Post"
+                  />
+                )}
               />
             </Stack>
           </FormCard>
@@ -149,24 +173,25 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
 
           <FormCard title="Organization">
             <Stack spacing={3}>
-              <FormControl fullWidth size="small" error={!!errors.category}>
-                <InputLabel>Category</InputLabel>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth size="small" error={!!errors.category}>
+                    <InputLabel>Category</InputLabel>
 
-                <Select
-                  label="Category"
-                  defaultValue={BlogCategory.UNCATEGORIZED}
-                  {...register("category")}
-                  disabled={isLoading}
-                >
-                  {Object.values(BlogCategory).map((cat) => (
-                    <MenuItem key={cat} value={cat}>
-                      {BLOG_CATEGORY_LABELS[cat]}
-                    </MenuItem>
-                  ))}
-                </Select>
+                    <Select label="Category" {...field} disabled={isLoading}>
+                      {Object.values(BlogCategory).map((cat) => (
+                        <MenuItem key={cat} value={cat}>
+                          {BLOG_CATEGORY_LABELS[cat]}
+                        </MenuItem>
+                      ))}
+                    </Select>
 
-                {errors.category && <FormHelperText>{errors.category.message}</FormHelperText>}
-              </FormControl>
+                    {errors.category && <FormHelperText>{errors.category.message}</FormHelperText>}
+                  </FormControl>
+                )}
+              />
 
               <Controller
                 name="tags"

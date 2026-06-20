@@ -21,13 +21,13 @@ const dashboardState = {
   error: null as Error | null,
 };
 const resolveMutate = vi.fn();
-const sessionName = { value: "Denys" as string | null };
 
 vi.mock("@app/lib/hooks", () => ({
   useCoachDashboard: () => ({
     data: dashboardState.data,
     isLoading: dashboardState.isLoading,
     error: dashboardState.error,
+    refetch: vi.fn(),
   }),
   useResolveActionItem: () => ({ mutate: resolveMutate, isPending: false }),
   useCoachAthleteDetail: () => ({ data: undefined, isLoading: false }),
@@ -35,7 +35,7 @@ vi.mock("@app/lib/hooks", () => ({
 }));
 
 vi.mock("@repo/auth/client", () => ({
-  useSession: () => ({ data: { user: { name: sessionName.value } } }),
+  useSession: () => ({ data: { user: { name: "Denys" } } }),
 }));
 
 const { DashboardView } = await import("./dashboard-view");
@@ -100,7 +100,6 @@ beforeEach(() => {
   dashboardState.data = makeDashboard();
   dashboardState.isLoading = false;
   dashboardState.error = null;
-  sessionName.value = "Denys";
   resolveMutate.mockReset();
 });
 
@@ -147,17 +146,10 @@ describe("DashboardView populated roster", () => {
     expect(screen.getByText(/This week/)).toBeInTheDocument();
   });
 
-  it("greets the coach by their session name in the header band", () => {
+  it("renders the dashboard header with a refresh control", () => {
     render(<DashboardView />);
 
-    expect(screen.getByText("Coach Denys")).toBeInTheDocument();
-  });
-
-  it("falls back to a nameless header when the session has no name", () => {
-    sessionName.value = null;
-
-    render(<DashboardView />);
-
-    expect(screen.getByText("Coach")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Refresh dashboard")).toBeInTheDocument();
   });
 });

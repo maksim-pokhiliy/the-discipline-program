@@ -52,6 +52,13 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
       paddingLeft: CHIP_ROOT_PX,
       paddingRight: CHIP_ROOT_PX,
       gap: CHIP_GAP_PX,
+      transition: theme.transitions.create(["background-color", "transform"], {
+        duration: theme.transitions.duration.shortest,
+      }),
+
+      "&.MuiChip-clickable:active": {
+        transform: "scale(0.95)",
+      },
 
       "& .MuiChip-icon": {
         marginLeft: 0,
