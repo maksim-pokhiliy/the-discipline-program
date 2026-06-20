@@ -1,10 +1,11 @@
 "use client";
 
 import { Box, Drawer, List, Stack, Typography } from "@mui/material";
+import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { type PlatformNavigationConfig } from "@repo/shared";
-import { Logo } from "@repo/ui";
 
 import { getActiveNavIndex } from "@app/lib/config";
 
@@ -53,12 +54,26 @@ export const PlatformSidebar = ({
     >
       <Stack component="nav" aria-label="Coach" sx={{ height: "100%" }}>
         <Stack
+          component={Link}
+          href={logoHref}
           direction="row"
           alignItems="center"
           spacing={1.25}
-          sx={{ px: 2.25, py: 2.25, borderBottom: 1, borderColor: "divider" }}
+          sx={{
+            px: 2.25,
+            py: 2.25,
+            borderBottom: 1,
+            borderColor: "divider",
+            textDecoration: "none",
+            color: "inherit",
+          }}
         >
-          <Logo href={logoHref} width={LOGO_PX} height={LOGO_PX} />
+          <Image
+            alt="The Discipline Program"
+            src="/icons/logo.svg"
+            width={LOGO_PX}
+            height={LOGO_PX}
+          />
 
           <Typography
             sx={(theme) => ({
@@ -76,7 +91,7 @@ export const PlatformSidebar = ({
           </Typography>
         </Stack>
 
-        <List sx={{ px: 1.25, py: 1.25 }}>
+        <List sx={{ px: 1.25, py: 1.25, display: "flex", flexDirection: "column", gap: 0.5 }}>
           {navigation.items.map((item, index) => (
             <PlatformSidebarLink key={item.href} item={item} isActive={index === activeIndex} />
           ))}
