@@ -3,10 +3,10 @@
 import { useCallback, useState } from "react";
 
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { PageHeader, QueryWrapper } from "@repo/ui";
+import { PlatformPageHeader, QueryWrapper } from "@repo/ui";
 
 import { useCoachAthletes } from "@app/lib/hooks";
 
@@ -44,21 +44,13 @@ export const AthletesView = () => {
 
   return (
     <Stack spacing={3}>
-      <PageHeader
+      <PlatformPageHeader
         title="Athletes"
         {...(data && {
-          meta: (
-            <>
-              <Typography variant="overline" color="text.secondary">
-                {data.summary.active} active
-              </Typography>
-              {data.summary.needsAttention > 0 && (
-                <Typography variant="overline" color="warning.main">
-                  {data.summary.needsAttention} need attention
-                </Typography>
-              )}
-            </>
-          ),
+          eyebrow:
+            data.summary.needsAttention > 0
+              ? `${data.summary.active} active · ${data.summary.needsAttention} needs attention`
+              : `${data.summary.active} active`,
         })}
         actions={
           <Button
