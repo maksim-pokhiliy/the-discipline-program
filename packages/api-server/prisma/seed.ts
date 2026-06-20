@@ -5,7 +5,6 @@ import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
 import { clearAll } from "./seed/clear-all";
 import { seedProfiles } from "./seed/profiles";
-import { seedTrainingData } from "./seed/training-data";
 import { seedUsers } from "./seed/users";
 
 const prisma = new PrismaClient();
@@ -23,9 +22,7 @@ const main = async (): Promise<void> => {
 
   const users = await seedUsers(prisma, passwordHash);
 
-  const { coachProfile } = await seedProfiles(prisma, users);
-
-  await seedTrainingData(prisma, users, coachProfile);
+  await seedProfiles(prisma, users);
 
   console.log("\nSeed completed!");
 };
