@@ -1,4 +1,8 @@
-import { type PaletteOptions } from "@mui/material/styles";
+import {
+  type PaletteColor,
+  type PaletteColorOptions,
+  type PaletteOptions,
+} from "@mui/material/styles";
 
 type PaletteKind = {
   ex: string;
@@ -25,17 +29,20 @@ declare module "@mui/material/styles" {
   interface Palette {
     kind: PaletteKind;
     dividerStrong: string;
+    neutral: PaletteColor;
   }
 
   interface PaletteOptions {
     kind?: PaletteKind;
     dividerStrong?: string;
+    neutral?: PaletteColorOptions;
   }
 }
 
 const PRIMARY_MAIN = "#E07B35";
 const INFO_MAIN = "#6CB4EE";
 const WARNING_MAIN = "#E8C844";
+const NEUTRAL_MAIN = "#9AA7B4";
 const TEXT_PRIMARY = "rgba(255, 255, 255, 0.87)";
 const TEXT_SECONDARY = "rgba(255, 255, 255, 0.60)";
 
@@ -96,5 +103,9 @@ export const palette: PaletteOptions = {
     url: TEXT_SECONDARY,
     placeholder: TEXT_SECONDARY,
     ladder: TEXT_SECONDARY,
+  },
+  neutral: {
+    main: NEUTRAL_MAIN,
+    contrastText: "#1F1F1F",
   },
 };

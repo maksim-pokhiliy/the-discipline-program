@@ -13,6 +13,8 @@ import { usePathname } from "next/navigation";
 
 import { type PlatformIconName, type PlatformNavigationConfig } from "@repo/shared";
 
+import { getActiveNavIndex } from "@app/lib/config";
+
 const ICON_MAP: Record<PlatformIconName, ReactNode> = {
   home: <HomeRounded />,
   plans: <EventNoteRounded />,
@@ -28,19 +30,7 @@ type PlatformBottomNavProps = {
 export const PlatformBottomNav = ({ navigation }: PlatformBottomNavProps) => {
   const pathname = usePathname();
 
-  const activeIndex = navigation.items.reduce<number>((bestIndex, item, index) => {
-    if (!pathname.startsWith(item.href)) {
-      return bestIndex;
-    }
-
-    if (bestIndex === -1) {
-      return index;
-    }
-
-    const best = navigation.items[bestIndex];
-
-    return best && item.href.length > best.href.length ? index : bestIndex;
-  }, -1);
+  const activeIndex = getActiveNavIndex(navigation.items, pathname);
 
   return (
     <BottomNavigation
