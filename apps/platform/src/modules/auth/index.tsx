@@ -1,8 +1,9 @@
 "use client";
 
-import { Alert, Container, Divider, Stack, Typography } from "@mui/material";
+import { Alert, Container, Divider, Link, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useMutation } from "@tanstack/react-query";
+import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -92,6 +93,16 @@ export const PlatformLoginPage = () => {
               onSubmit={(data) => loginMutation.mutate(data)}
               isLoading={loginMutation.isPending}
             />
+
+            <Link
+              component={NextLink}
+              href="/forgot-password"
+              variant="body2"
+              color="text.secondary"
+              textAlign="center"
+            >
+              Forgot password?
+            </Link>
           </Stack>
         </Stack>
       </Container>

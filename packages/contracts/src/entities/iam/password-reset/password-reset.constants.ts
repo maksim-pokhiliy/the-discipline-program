@@ -1,0 +1,4 @@
+export const PASSWORD_RESET_CONSTANTS = {
+  MIN_TOKEN_LENGTH: 32,
+  MAX_TOKEN_LENGTH: 128,
+} as const;

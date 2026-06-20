@@ -3,9 +3,14 @@ export const AUTH_ROUTES = {
   API_PREFIX: "/api/auth",
 } as const;
 
-export const PUBLIC_ROUTES = [AUTH_ROUTES.LOGIN, "/invite"] as const;
+export const PUBLIC_ROUTES = [
+  AUTH_ROUTES.LOGIN,
+  "/invite",
+  "/forgot-password",
+  "/reset-password",
+] as const;
 
-export const PUBLIC_ROUTE_PREFIXES = ["/invite/"] as const;
+export const PUBLIC_ROUTE_PREFIXES = ["/invite/", "/reset-password/"] as const;
 
 export const SESSION_COOKIES = [
   "next-auth.session-token",
