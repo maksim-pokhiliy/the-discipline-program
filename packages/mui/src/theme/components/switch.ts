@@ -3,9 +3,8 @@ import { alpha, type Components, type Theme } from "@mui/material/styles";
 import { focusRing } from "../focus";
 
 const TRACK_WIDTH = 42;
-const TRACK_HEIGHT = 24;
+const TRACK_HEIGHT = 22;
 const THUMB_SIZE = 16;
-const THUMB_INSET = 3;
 const THUMB_SHIFT = 18;
 const THUMB_PRESS_SIZE = 20;
 const THUMB_SHIFT_PRESS = 14;
@@ -17,16 +16,14 @@ export const MuiSwitch: NonNullable<Components<Theme>["MuiSwitch"]> = {
   styleOverrides: {
     root: {
       width: TRACK_WIDTH,
-      height: TRACK_HEIGHT,
       padding: 0,
       overflow: "visible",
     },
 
     switchBase: ({ theme }) => ({
       padding: 0,
-      top: THUMB_INSET,
-      left: THUMB_INSET,
       color: theme.palette.text.secondary,
+
       transition: theme.transitions.create("transform", {
         duration: SPRING_DURATION,
         easing: SPRING_EASING,
@@ -69,6 +66,7 @@ export const MuiSwitch: NonNullable<Components<Theme>["MuiSwitch"]> = {
       borderRadius: "50%",
       boxShadow: "none",
       backgroundColor: theme.palette.text.secondary,
+
       transition: theme.transitions.create(["width", "background-color"], {
         duration: theme.transitions.duration.shortest,
       }),
@@ -80,6 +78,7 @@ export const MuiSwitch: NonNullable<Components<Theme>["MuiSwitch"]> = {
       backgroundColor: theme.palette.action.selected,
       opacity: 1,
       boxSizing: "border-box",
+
       transition: theme.transitions.create(["background-color", "border-color", "box-shadow"], {
         duration: theme.transitions.duration.shortest,
       }),
