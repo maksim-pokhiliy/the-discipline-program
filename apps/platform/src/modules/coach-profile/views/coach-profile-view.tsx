@@ -2,7 +2,7 @@
 
 import { Stack } from "@mui/material";
 
-import { QueryWrapper } from "@repo/ui";
+import { PlatformPageHeader, QueryWrapper } from "@repo/ui";
 
 import { useCoachProfile } from "@app/lib/hooks";
 
@@ -25,6 +25,7 @@ export const CoachProfileView = () => {
     >
       {(pageData) => (
         <Stack spacing={3}>
+          <PlatformPageHeader eyebrow="Account" title="Profile" />
           <IdentityHeroSection pageData={pageData} />
           <TrackRecordSection trackRecord={pageData.trackRecord} />
           <CredentialsSection credentials={pageData.credentials} />
