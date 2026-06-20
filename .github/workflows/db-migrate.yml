@@ -1,0 +1,45 @@
+name: DB migrate (production)
+
+# Apply pending Prisma migrations to the production database.
+# Manual gate by default: trigger from the Actions tab -> "Run workflow".
+# Deliberately decoupled from Vercel deploys — schema changes apply once,
+# on purpose, never on every build or preview. Promote to on-merge later.
+on:
+  workflow_dispatch:
+
+# Never run two prod migrations at once; never cancel one mid-apply.
+concurrency:
+  group: db-migrate-prod
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  migrate-deploy:
+    name: prisma migrate deploy
+    runs-on: ubuntu-latest
+    # GitHub Environment — add required reviewers here to gate prod applies.
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations to production
+        # migrate deploy is additive, idempotent, non-interactive: it applies
+        # only pending migrations, never resets, never drops on drift.
+        # DATABASE_URL must be the DIRECT (non-pooler) Neon URL — DDL over the
+        # pgbouncer pooler is flaky.
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          SKIP_ENV_VALIDATION: "1"
+        run: pnpm --filter @repo/api-server migrate:deploy

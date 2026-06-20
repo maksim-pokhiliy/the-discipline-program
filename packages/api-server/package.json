@@ -20,12 +20,11 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix --max-warnings 0",
     "db:generate": "prisma generate",
-    "db:push:prisma": "prisma db push",
-    "db:push": "prisma db push && tsx scripts/apply-sql-checks.ts",
-    "db:reset:prisma": "prisma db push --force-reset",
-    "db:reset": "prisma db push --force-reset && tsx scripts/apply-sql-checks.ts",
-    "db:seed": "prisma db seed",
-    "db:apply-checks": "tsx scripts/apply-sql-checks.ts"
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "prisma db seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

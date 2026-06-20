@@ -67,13 +67,23 @@ tasks:
     cmds:
       - pnpm db:generate
 
-  db:push:
-    desc: "Push Prisma schema to the database"
+  db:deploy:
+    desc: "Apply pending migrations (prisma migrate deploy)"
     cmds:
-      - pnpm db:push
+      - pnpm db:deploy
+
+  db:migrate:
+    desc: "Create + apply a dev migration (prisma migrate dev)"
+    cmds:
+      - pnpm db:migrate
+
+  db:status:
+    desc: "Show migration status (prisma migrate status)"
+    cmds:
+      - pnpm db:status
 
   db:reset:
-    desc: "Force-reset the dev database (drops all data, re-applies schema + SQL checks)"
+    desc: "Reset the dev database (drops all data, re-applies migrations, re-seeds)"
     cmds:
       - pnpm db:reset
 
