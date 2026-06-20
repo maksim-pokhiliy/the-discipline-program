@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 
-import { Stack } from "@mui/material";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import { IconButton, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
-import { PageHeader, QueryWrapper, StatusSelectChip, type StatusOption } from "@repo/ui";
+import { PlatformPageHeader, QueryWrapper, StatusSelectChip, type StatusOption } from "@repo/ui";
 
 import { PLAN_STATUS_CHIPS } from "@app/lib/config";
 import { CatalogProvider, CloneHighlightProvider, LabelOptionsProvider } from "@app/lib/contexts";
@@ -24,10 +25,14 @@ import {
   CloneWeekModal,
   EnrollmentsStrip,
   ManageEnrollmentsModal,
+  PlanRenameDialog,
+  type PlanRenameValues,
   WeekGrid,
   WeekNavigator,
   WeekNotes,
 } from "../components";
+
+const RENAME_ERROR_FALLBACK = "Failed to rename plan";
 
 type PlanDetailViewProps = { planId: string };
 
@@ -38,6 +43,9 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
 
   const [isCloneWeekOpen, setIsCloneWeekOpen] = useState(false);
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
   const weekParam = searchParams.get("week");
   const parsed = weekParam ? parseDateParam(weekParam) : null;
@@ -83,6 +91,27 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
     router.push(`${pathname}?${params}`, { scroll: false });
   };
 
+  const handleRenameSave = (values: PlanRenameValues) => {
+    updatePlan.mutate(
+      { id: planId, data: values },
+      {
+        onSuccess: () => {
+          setRenameError(null);
+          setIsRenameOpen(false);
+        },
+        onError: (mutationError) => {
+          setRenameError(mutationError.message || RENAME_ERROR_FALLBACK);
+        },
+      },
+    );
+  };
+
+  const openRename = () => {
+    setMenuAnchor(null);
+    setRenameError(null);
+    setIsRenameOpen(true);
+  };
+
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(plan) => (
@@ -90,19 +119,32 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
           <CatalogProvider>
             <CloneHighlightProvider>
               <Stack spacing={3}>
-                <PageHeader
-                  editable
+                <PlatformPageHeader
+                  eyebrow="Training plan"
+                  backHref="/coach/plans"
                   title={plan.name}
-                  {...(plan.description !== null && { description: plan.description })}
                   actions={
-                    <StatusSelectChip {...PLAN_STATUS_CHIPS[plan.status]} options={statusOptions} />
-                  }
-                  onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
-                  onDescriptionCommit={(next) =>
-                    updatePlan.mutate({
-                      id: planId,
-                      data: { description: next === "" ? null : next },
-                    })
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <StatusSelectChip
+                        {...PLAN_STATUS_CHIPS[plan.status]}
+                        options={statusOptions}
+                      />
+                      <IconButton
+                        aria-label="Plan actions"
+                        onClick={(event) => setMenuAnchor(event.currentTarget)}
+                      >
+                        <MoreHorizRoundedIcon />
+                      </IconButton>
+                      <Menu
+                        anchorEl={menuAnchor}
+                        open={menuAnchor !== null}
+                        onClose={() => setMenuAnchor(null)}
+                      >
+                        <MenuItem onClick={openRename}>
+                          <ListItemText>Rename</ListItemText>
+                        </MenuItem>
+                      </Menu>
+                    </Stack>
                   }
                 />
 
@@ -121,6 +163,16 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
                   notes={weekData?.week?.notes ?? null}
                 />
                 <WeekGrid planId={planId} monday={activeMonday} days={weekData?.days ?? []} />
+
+                <PlanRenameDialog
+                  open={isRenameOpen}
+                  onClose={() => setIsRenameOpen(false)}
+                  name={plan.name}
+                  description={plan.description}
+                  onSave={handleRenameSave}
+                  isSaving={updatePlan.isPending}
+                  error={renameError}
+                />
 
                 <CloneWeekModal
                   open={isCloneWeekOpen}

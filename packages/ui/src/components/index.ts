@@ -27,6 +27,7 @@ export * from "./logo";
 export * from "./modal";
 export * from "./multi-select";
 export * from "./page-header";
+export * from "./platform-page-header";
 export * from "./plus-row-button";
 export * from "./pulse-stat";
 export * from "./pulse-stats-card";

@@ -47,7 +47,10 @@ export const applyCspHeaders = (
   return response;
 };
 
-export const createCspResponse = (_request: NextRequest, options: CspOptions = {}): NextResponse => {
+export const createCspResponse = (
+  _request: NextRequest,
+  options: CspOptions = {},
+): NextResponse => {
   const isDev = process.env.NODE_ENV === "development";
   const cspValue = buildCspHeader(isDev, options);
 

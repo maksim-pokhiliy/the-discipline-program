@@ -10,7 +10,6 @@ import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ChipTab, EmptyState } from "@repo/ui";
 
-import { PlatformFab } from "@app/lib/components";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
@@ -134,8 +133,6 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
           }}
         />
       )}
-
-      <PlatformFab onClick={onCreateClick} />
     </Stack>
   );
 };
