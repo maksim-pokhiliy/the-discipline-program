@@ -54,7 +54,7 @@ The admin app (CMS/blog/exercise images) and the platform app (coach avatar uplo
 
 ```bash
 pnpm db:generate    # generate Prisma client
-pnpm db:push        # apply schema + CHECK constraints
+pnpm db:deploy      # apply migrations (schema + SQL invariants)
 pnpm db:seed        # seed marketing CMS pages + default coach/athlete (skip = empty UI)
 pnpm dev            # all four apps in parallel
 ```
@@ -88,24 +88,26 @@ docs/adr/         Architecture Decision Records
 
 ## Commands
 
-| Task            | Command                                             |
-| --------------- | --------------------------------------------------- |
-| Setup           | `pnpm setup` -- install + db:generate + push + seed |
-| Dev (all apps)  | `pnpm dev`                                          |
-| Dev (admin)     | `pnpm dev:admin`                                    |
-| Dev (platform)  | `pnpm dev:platform`                                 |
-| Dev (marketing) | `pnpm dev:marketing`                                |
-| Dev (storybook) | `pnpm dev:storybook`                                |
-| Build           | `pnpm build`                                        |
-| Type check      | `pnpm check-types`                                  |
-| Lint            | `pnpm lint`                                         |
-| Format          | `pnpm format`                                       |
-| Format check    | `pnpm format:check`                                 |
-| Unit tests      | `pnpm test`                                         |
-| Clean           | `pnpm clean`                                        |
-| DB generate     | `pnpm db:generate`                                  |
-| DB push         | `pnpm db:push`                                      |
-| DB seed         | `pnpm db:seed`                                      |
+| Task            | Command                                         |
+| --------------- | ----------------------------------------------- |
+| Setup           | `pnpm setup` -- install + migrate deploy + seed |
+| Dev (all apps)  | `pnpm dev`                                      |
+| Dev (admin)     | `pnpm dev:admin`                                |
+| Dev (platform)  | `pnpm dev:platform`                             |
+| Dev (marketing) | `pnpm dev:marketing`                            |
+| Dev (storybook) | `pnpm dev:storybook`                            |
+| Build           | `pnpm build`                                    |
+| Type check      | `pnpm check-types`                              |
+| Lint            | `pnpm lint`                                     |
+| Format          | `pnpm format`                                   |
+| Format check    | `pnpm format:check`                             |
+| Unit tests      | `pnpm test`                                     |
+| Clean           | `pnpm clean`                                    |
+| DB generate     | `pnpm db:generate`                              |
+| DB migrate dev  | `pnpm db:migrate`                               |
+| DB deploy       | `pnpm db:deploy`                                |
+| DB reset (dev)  | `pnpm db:reset`                                 |
+| DB seed         | `pnpm db:seed`                                  |
 
 ## App Status
 

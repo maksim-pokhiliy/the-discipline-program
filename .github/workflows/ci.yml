@@ -99,8 +99,9 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
 
-    # Spin up a throwaway Postgres per run. The repo's Prisma schema is
-    # pushed fresh before tests; no shared state, no CI↔local Neon collision.
+    # Spin up a throwaway Postgres per run. Migrations are applied fresh
+    # before tests; no shared state, no CI↔local Neon collision. This also
+    # validates the migration history (0_init + folded SQL invariants) every run.
     services:
       postgres:
         image: postgres:16-alpine
@@ -121,7 +122,7 @@ jobs:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_MARKETING_URL: http://localhost:3001
       # The root `test` script already sets SKIP_ENV_VALIDATION=1, but we
-      # also need it during `prisma db push` to bypass the @repo/env zod
+      # also need it during `prisma migrate deploy` to bypass the @repo/env zod
       # layer in case any import chain touches it.
       SKIP_ENV_VALIDATION: "1"
 
@@ -138,10 +139,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Push Prisma schema to test Postgres
-        # --skip-generate: we already generated via postinstall
-        # --accept-data-loss: empty DB, nothing to lose
-        run: pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss
+      - name: Apply migrations to test Postgres
+        # migrate deploy applies prisma/migrations in order (0_init + folded
+        # SQL invariants). Non-interactive, additive, no client regen needed.
+        run: pnpm --filter @repo/api-server migrate:deploy
 
       - name: Seed test Postgres
         # Archetype + Exercise + Label catalog + Open Prep edge-case week.

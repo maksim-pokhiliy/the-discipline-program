@@ -29,7 +29,7 @@
 - Lint: `pnpm lint` / `task lint`
 - Type-check: `pnpm check-types` / `task check-types`
 - Unit tests (Vitest): `pnpm test` / `pnpm test:coverage` / `task test`
-- Prisma: `pnpm db:generate` | `db:push` | `db:seed`
+- Prisma: `pnpm db:generate` | `db:migrate` (dev) | `db:deploy` (prod) | `db:reset` | `db:seed`
 - Bundle analyze: `pnpm analyze:{admin,marketing,platform}`
 - Dep boundaries: `pnpm dep:check` (dependency-cruiser)
 
