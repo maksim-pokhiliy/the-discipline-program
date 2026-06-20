@@ -1,6 +1,6 @@
 # 0019. Database strategy — deferred decisions
 
-- **Status:** Accepted
+- **Status:** Partially superseded by ADR-0042 (decisions #1 and #5 — migration adoption — superseded 2026-06-21; #2/#3/#4/#6 still in force)
 - **Date:** 2026-04-13
 - **Deciders:** Lead Architect
 - **Tags:** `database`, `prisma`, `migrations`, `soft-delete`
