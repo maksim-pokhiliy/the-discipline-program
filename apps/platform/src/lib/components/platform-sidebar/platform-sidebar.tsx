@@ -13,7 +13,7 @@ import { PlatformSidebarUser } from "./platform-sidebar-user";
 
 const LOGO_PX = 34;
 const WORDMARK_PX = 17;
-const WORDMARK = "The Discipline\nProgram";
+const WORDMARK = "The Discipline Program";
 
 type PlatformSidebarProps = {
   navigation: PlatformNavigationConfig;
@@ -68,7 +68,7 @@ export const PlatformSidebar = ({
               lineHeight: 1,
               letterSpacing: "0.02em",
               textTransform: "uppercase",
-              whiteSpace: "pre-line",
+              whiteSpace: "nowrap",
               color: "text.primary",
             })}
           >
