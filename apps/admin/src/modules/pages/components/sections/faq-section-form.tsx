@@ -29,13 +29,25 @@ export const FaqSectionForm = () => {
   return (
     <FormCard title="FAQ Settings">
       <Stack spacing={4}>
-        <TextField
-          label="Section Title"
-          fullWidth
-          error={!!errors.title}
-          helperText={errors.title?.message}
-          {...register("title")}
-        />
+        <Stack spacing={3}>
+          <TextField
+            label="Section Title"
+            fullWidth
+            error={!!errors.title}
+            helperText={errors.title?.message}
+            {...register("title")}
+          />
+
+          <TextField
+            label="Section Subtitle"
+            fullWidth
+            multiline
+            minRows={2}
+            error={!!errors.subtitle}
+            helperText={errors.subtitle?.message}
+            {...register("subtitle")}
+          />
+        </Stack>
 
         <Divider>
           <Typography variant="overline" color="text.secondary">

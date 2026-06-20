@@ -42,6 +42,14 @@ export const ContactFormSectionForm = () => {
       />
 
       <TextField
+        label="Send Another Button Label"
+        fullWidth
+        error={!!errors.sendAnotherLabel}
+        helperText={errors.sendAnotherLabel?.message}
+        {...register("sendAnotherLabel")}
+      />
+
+      <TextField
         label="Submit Button Label"
         fullWidth
         error={!!errors.submitLabel}

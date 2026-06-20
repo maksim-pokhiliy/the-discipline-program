@@ -34,6 +34,16 @@ export const PersonalSectionForm = () => {
         />
 
         <TextField
+          label="Section Subtitle"
+          fullWidth
+          multiline
+          minRows={2}
+          error={!!errors.subtitle}
+          helperText={errors.subtitle?.message}
+          {...register("subtitle")}
+        />
+
+        <TextField
           label="Description"
           fullWidth
           multiline

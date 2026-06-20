@@ -51,8 +51,8 @@ export const ContactFormSection = ({
   return (
     <ContentSection
       id="contact-form"
-      title={form.title}
-      subtitle={form.subtitle}
+      title={isSuccess ? undefined : form.title}
+      subtitle={isSuccess ? undefined : form.subtitle}
       maxWidth="md"
       surface="raised"
     >
@@ -67,7 +67,7 @@ export const ContactFormSection = ({
           </Typography>
 
           <Button variant="contained" size="large" onClick={() => resetMutation()}>
-            {form.sendAnotherLabel}
+            {form.sendAnotherLabel ?? "Send another"}
           </Button>
         </Stack>
       ) : (
