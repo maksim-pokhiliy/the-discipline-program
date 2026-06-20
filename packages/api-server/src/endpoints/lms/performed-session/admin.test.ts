@@ -4,7 +4,7 @@ import {
   createPerformedSessionRequestSchema,
   PERFORMED_SESSION_CONSTANTS,
 } from "@repo/contracts/lms/performed-session";
-import { ForbiddenError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { cleanup, createTestPlan, createTestUser } from "../../../test/helpers";
 import {
@@ -103,7 +103,7 @@ describe("lmsPerformedSessionApi", () => {
           sessionId: enrolledSessionId,
           performedAt: new Date("2026-02-01T00:00:00.000Z"),
         }),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("rejects logging a session whose plan the athlete has no enrollment in (QA-004)", async () => {
@@ -112,7 +112,7 @@ describe("lmsPerformedSessionApi", () => {
           sessionId: sessionInUnenrolledPlanId,
           performedAt: new Date("2026-02-01T00:00:00.000Z"),
         }),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(NotFoundError);
     });
   });
 

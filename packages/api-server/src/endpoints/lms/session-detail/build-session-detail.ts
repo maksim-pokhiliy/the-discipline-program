@@ -21,6 +21,7 @@ import {
 } from "@repo/contracts/lms/session-detail";
 
 import { mapToBlockWithSchemas } from "../../../mappers/lms";
+import { DEFAULT_WORKOUT_TITLE, sessionAbsoluteDateFromParts, weekMondayOfUtc } from "../_shared";
 import { resolveLoad } from "../athlete-records";
 import { type AthleteLoadContext } from "../athlete-records";
 
@@ -31,9 +32,7 @@ import {
   type SessionDetailRow,
 } from "./session-detail.types";
 
-const DEFAULT_WORKOUT_TITLE = "Workout";
-
-const SUNDAY_DAYS_FROM_MONDAY = 6;
+export { weekMondayOfUtc };
 
 type ExerciseMeta = { movement: string; demoUrl: string | null };
 
@@ -44,27 +43,8 @@ type BuildSessionDetailArgs = {
   latestResults: BenchmarkResultRecord[];
 };
 
-const toUtcMidnight = (date: Date): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-
-const addUtcDays = (date: Date, days: number): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
-
-const mondayOfUtc = (date: Date): Date => {
-  const weekday = date.getUTCDay();
-  const offsetToMonday = weekday === 0 ? SUNDAY_DAYS_FROM_MONDAY : weekday - 1;
-
-  return addUtcDays(date, -offsetToMonday);
-};
-
-export const weekMondayOfUtc = (date: Date): Date => mondayOfUtc(toUtcMidnight(date));
-
-export const sessionAbsoluteDate = (session: SessionDetailRecord): Date => {
-  const monday = weekMondayOfUtc(session.day.week.startDate);
-  const dayOfWeek = dayOfWeekSchema.parse(session.day.dayOfWeek);
-
-  return addUtcDays(monday, dayOfWeekValues.indexOf(dayOfWeek));
-};
+export const sessionAbsoluteDate = (session: SessionDetailRecord): Date =>
+  sessionAbsoluteDateFromParts(session.day.week.startDate, session.day.dayOfWeek);
 
 const referencedExerciseId = (load: Load): string | null =>
   load.kind === "percentage" && load.reference.scope === "other_exercise"

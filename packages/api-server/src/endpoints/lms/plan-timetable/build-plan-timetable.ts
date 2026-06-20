@@ -8,7 +8,13 @@ import {
   type WeekTimetableView,
 } from "@repo/contracts/lms/plan-timetable";
 
-import { DAY_OF_WEEK_TO_PRISMA } from "../_shared";
+import {
+  addUtcDays,
+  DAY_OF_WEEK_TO_PRISMA,
+  DEFAULT_WORKOUT_TITLE,
+  toUtcMidnight,
+  weekMondayOfUtc,
+} from "../_shared";
 
 import {
   type TimetableDay,
@@ -16,13 +22,9 @@ import {
   type TimetableSession,
 } from "./plan-timetable.types";
 
-const DEFAULT_WORKOUT_TITLE = "Workout";
-
 const DEFAULT_LANDING_WEEK_INDEX = 0;
 
 const DAYS_PER_WEEK = dayOfWeekValues.length;
-
-const SUNDAY_DAYS_FROM_MONDAY = 6;
 
 const MAX_TIMETABLE_WEEKS = 520;
 
@@ -42,21 +44,6 @@ type SlotStatusArgs = {
   isToday: boolean;
   sessions: SessionCardView[];
 };
-
-const toUtcMidnight = (date: Date): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-
-const addUtcDays = (date: Date, days: number): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
-
-const mondayOfUtc = (date: Date): Date => {
-  const weekday = date.getUTCDay();
-  const offsetToMonday = weekday === 0 ? SUNDAY_DAYS_FROM_MONDAY : weekday - 1;
-
-  return addUtcDays(date, -offsetToMonday);
-};
-
-const weekMondayOf = (date: Date): Date => mondayOfUtc(toUtcMidnight(date));
 
 const athleteTodayUtc = (now: Date, tz: string): Date => {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -153,11 +140,11 @@ const computeWeekRange = (
 ): { low: number; high: number } => {
   const todayTime = todayMonday.getTime();
   const contentMondays = enrollment.plan.weeks.map((week) =>
-    weekMondayOf(week.startDate).getTime(),
+    weekMondayOfUtc(week.startDate).getTime(),
   );
   const forward = Math.max(todayTime, ...contentMondays);
   const back = enrollment.hidePastBeforeBoarding
-    ? weekMondayOf(enrollment.boardedAt).getTime()
+    ? weekMondayOfUtc(enrollment.boardedAt).getTime()
     : Math.min(todayTime, ...contentMondays);
 
   return { low: Math.min(back, forward), high: forward };
@@ -171,7 +158,7 @@ const buildWeeks = (
 ): { weeks: WeekTimetableView[]; todayWeekIndex: number | null } => {
   const { low, high } = computeWeekRange(enrollment, todayMonday);
   const daysByMonday = new Map(
-    enrollment.plan.weeks.map((week) => [weekMondayOf(week.startDate).getTime(), week.days]),
+    enrollment.plan.weeks.map((week) => [weekMondayOfUtc(week.startDate).getTime(), week.days]),
   );
   const weeks: WeekTimetableView[] = [];
   let todayWeekIndex: number | null = null;
@@ -226,7 +213,7 @@ export const buildPlanTimetable = ({
   now,
 }: BuildPlanTimetableArgs): PlanTimetableResponse => {
   const todayUtc = athleteTodayUtc(now, tz);
-  const todayMonday = mondayOfUtc(todayUtc);
+  const todayMonday = weekMondayOfUtc(todayUtc);
   const plans = enrollments.map((enrollment) =>
     buildPlanForEnrollment(enrollment, performedSessionIds, todayMonday, todayUtc),
   );
