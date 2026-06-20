@@ -18,6 +18,13 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
       flexDirection: "column",
       height: "100%",
       border: `1px solid ${theme.palette.divider}`,
+      transition: theme.transitions.create(["border-color", "background-color", "transform"], {
+        duration: theme.transitions.duration.shortest,
+      }),
+
+      "&:has(.MuiCardActionArea-root:active)": {
+        transform: "translateY(1px)",
+      },
 
       ...(ownerState.variant === "elevation" && {
         backgroundColor: theme.palette.background.default,
@@ -25,6 +32,11 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
 
       ...(ownerState.variant === "outlined" && {
         backgroundColor: theme.palette.background.paper,
+
+        "&:has(.MuiCardActionArea-root:hover)": {
+          borderColor: theme.palette.dividerStrong,
+          backgroundColor: theme.palette.background.recessed,
+        },
       }),
 
       ...(ownerState.variant === "accent-dashed" && {
@@ -32,6 +44,11 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
         borderColor: alpha(theme.palette.primary.main, 0.4),
         backgroundColor: alpha(theme.palette.primary.main, 0.025),
         height: "auto",
+
+        "&:hover": {
+          borderColor: alpha(theme.palette.primary.main, 0.6),
+          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+        },
       }),
     }),
   },

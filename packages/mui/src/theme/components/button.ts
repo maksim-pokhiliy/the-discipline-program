@@ -1,5 +1,7 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
+import { type PaletteColorKey } from "../types";
+
 declare module "@mui/material/Button" {
   interface ButtonPropsSizeOverrides {
     tiny: true;
@@ -58,14 +60,37 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
       fontWeight: 500,
       textTransform: "uppercase",
       letterSpacing: "0.02857em",
-      transition: theme.transitions.create(["background-color", "border-color", "color"], {
-        duration: theme.transitions.duration.shortest,
-      }),
+      transition: theme.transitions.create(
+        ["background-color", "border-color", "color", "box-shadow", "filter", "transform"],
+        { duration: theme.transitions.duration.shortest },
+      ),
+
+      "&:active": {
+        transform: "translateY(1px)",
+      },
 
       "&.Mui-focusVisible": {
         backgroundColor: "transparent",
       },
     }),
+
+    contained: ({ theme, ownerState }) => {
+      const paletteColor =
+        ownerState.color && ownerState.color !== "inherit"
+          ? theme.palette[ownerState.color as PaletteColorKey]
+          : undefined;
+
+      return {
+        "&:hover": {
+          ...(paletteColor && { backgroundColor: paletteColor.main }),
+          filter: "brightness(1.06)",
+        },
+
+        "&:active": {
+          filter: "brightness(0.94)",
+        },
+      };
+    },
 
     sizeSmall: ({ theme }) => ({
       fontSize: theme.typography.pxToRem(11),

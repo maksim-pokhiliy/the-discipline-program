@@ -30,7 +30,7 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
         sx={{ bgcolor: "primary.main", color: "primary.contrastText" }}
       />
 
-      <Typography variant="h1" component="h1" textAlign="center">
+      <Typography variant="hero" component="h1" textAlign="center">
         {post.title}
       </Typography>
 
