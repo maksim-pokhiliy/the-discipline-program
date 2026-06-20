@@ -8,6 +8,7 @@ export { DayRow } from "./day-row";
 export { EnrollmentsStrip } from "./enrollments-strip";
 export { ManageEnrollmentsModal } from "./manage-enrollments-modal";
 export { NumberField } from "./number-field";
+export { PlanRenameDialog, type PlanRenameValues } from "./plan-rename-dialog";
 export { RestSpecFields } from "./rest-spec-fields";
 export { SchemaCard } from "./schema-card";
 export { SchemaRowCard } from "./schema-row-card";
