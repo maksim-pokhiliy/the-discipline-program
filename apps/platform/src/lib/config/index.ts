@@ -1,5 +1,6 @@
 export { getActiveNavIndex } from "./active-nav";
 export { ATHLETE_NAVIGATION, COACH_NAVIGATION } from "./navigation";
+export { PLATFORM_NAV_ICONS } from "./platform-nav-icons";
 export { ENROLLMENT_STATUS_CHIPS } from "./enrollment-status-chips-config";
 export { HEALTH_STATUS_CHIPS, getHealthChipFromMessage } from "./health-chips-config";
 export { PLAN_STATUS_CHIPS } from "./plan-status-chips-config";

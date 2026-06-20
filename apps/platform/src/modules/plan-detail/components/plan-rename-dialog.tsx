@@ -21,6 +21,7 @@ type PlanRenameDialogProps = {
   description: string | null;
   onSave: (values: PlanRenameValues) => void;
   isSaving: boolean;
+  error?: string | null;
 };
 
 export const PlanRenameDialog: React.FC<PlanRenameDialogProps> = ({
@@ -30,6 +31,7 @@ export const PlanRenameDialog: React.FC<PlanRenameDialogProps> = ({
   description,
   onSave,
   isSaving,
+  error,
 }) => {
   const [nameDraft, setNameDraft] = useState(name);
   const [descriptionDraft, setDescriptionDraft] = useState(description ?? "");
@@ -45,7 +47,7 @@ export const PlanRenameDialog: React.FC<PlanRenameDialogProps> = ({
   const isNameValid = trimmedName.length > 0;
 
   const handleSubmit = () => {
-    if (!isNameValid) {
+    if (isSaving || !isNameValid) {
       return;
     }
 
@@ -67,6 +69,7 @@ export const PlanRenameDialog: React.FC<PlanRenameDialogProps> = ({
       isSubmitting={isSaving}
       submitDisabled={!isNameValid}
       submitText="Save"
+      error={error ?? null}
     >
       <TextField
         label={NAME_LABEL}

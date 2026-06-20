@@ -32,6 +32,8 @@ import {
   WeekNotes,
 } from "../components";
 
+const RENAME_ERROR_FALLBACK = "Failed to rename plan";
+
 type PlanDetailViewProps = { planId: string };
 
 export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
@@ -42,6 +44,7 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const [isCloneWeekOpen, setIsCloneWeekOpen] = useState(false);
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
   const weekParam = searchParams.get("week");
@@ -89,11 +92,23 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   };
 
   const handleRenameSave = (values: PlanRenameValues) => {
-    updatePlan.mutate({ id: planId, data: values }, { onSuccess: () => setIsRenameOpen(false) });
+    updatePlan.mutate(
+      { id: planId, data: values },
+      {
+        onSuccess: () => {
+          setRenameError(null);
+          setIsRenameOpen(false);
+        },
+        onError: (mutationError) => {
+          setRenameError(mutationError.message || RENAME_ERROR_FALLBACK);
+        },
+      },
+    );
   };
 
   const openRename = () => {
     setMenuAnchor(null);
+    setRenameError(null);
     setIsRenameOpen(true);
   };
 
@@ -156,6 +171,7 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
                   description={plan.description}
                   onSave={handleRenameSave}
                   isSaving={updatePlan.isPending}
+                  error={renameError}
                 />
 
                 <CloneWeekModal

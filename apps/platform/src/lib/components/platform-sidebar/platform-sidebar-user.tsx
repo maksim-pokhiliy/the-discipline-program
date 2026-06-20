@@ -38,12 +38,16 @@ export const PlatformSidebarUser = ({
       />
 
       <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: NAME_PX, fontWeight: 600, color: "text.primary" }} noWrap>
-          {userName}
-        </Typography>
-        <Typography sx={{ fontSize: EMAIL_PX, color: "text.muted" }} noWrap>
-          {userEmail}
-        </Typography>
+        {userName && (
+          <Typography sx={{ fontSize: NAME_PX, fontWeight: 600, color: "text.primary" }} noWrap>
+            {userName}
+          </Typography>
+        )}
+        {userEmail && (
+          <Typography sx={{ fontSize: EMAIL_PX, color: "text.muted" }} noWrap>
+            {userEmail}
+          </Typography>
+        )}
       </Stack>
     </Stack>
   );
