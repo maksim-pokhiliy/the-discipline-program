@@ -11,7 +11,7 @@ export const LAYOUT = {
   platformBottomNavHeight: 80,
   platformFabBottom: 100,
   platformFabRight: 20,
-  platformContentMaxWidth: 960,
+  platformContentMaxWidth: 1200,
   platformSidebarWidth: 280,
 } as const;
 
