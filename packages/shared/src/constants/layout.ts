@@ -12,7 +12,7 @@ export const LAYOUT = {
   platformFabBottom: 100,
   platformFabRight: 20,
   platformContentMaxWidth: 960,
-  platformSidebarWidth: 240,
+  platformSidebarWidth: 280,
 } as const;
 
 export const MOBILE_BREAKPOINT_PX = 900;
