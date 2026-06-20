@@ -4,6 +4,7 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import SyncIcon from "@mui/icons-material/Sync";
 import { Box, Card, Chip, Stack, Typography, alpha } from "@mui/material";
 
+import { useSession } from "@repo/auth/client";
 import type { CoachProfilePageData } from "@repo/contracts/coaching/coach-profile";
 import { COACH_PROFILE_CONSTANTS } from "@repo/contracts/coaching/coach-profile";
 import { USER_ROLE_LABELS } from "@repo/contracts/iam/user";
@@ -32,13 +33,19 @@ const formatSince = (value: Date | string): string => {
 
 export const IdentityHeroSection: React.FC<IdentityHeroSectionProps> = ({ pageData }) => {
   const { user, profile } = pageData;
+  const { update: updateSession } = useSession();
   const updateProfile = useUpdateCoachProfile();
   const uploadImage = useUploadImage();
 
   const handleFileSelect = (file: File) => {
     uploadImage.mutate(
       { file, context: "avatar" },
-      { onSuccess: ({ url }) => updateProfile.mutate({ image: url }) },
+      {
+        onSuccess: ({ url }) => {
+          updateProfile.mutate({ image: url });
+          void updateSession({ image: url });
+        },
+      },
     );
   };
 

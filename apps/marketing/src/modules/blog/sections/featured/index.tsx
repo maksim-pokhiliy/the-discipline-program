@@ -22,6 +22,7 @@ export const BlogFeaturedSection = ({ hero, grid, featuredPost }: BlogFeaturedSe
           readTime={featuredPost.readTime}
           category={featuredPost.category}
           authorName={featuredPost.authorName}
+          tags={featuredPost.tags}
           readMoreLabel={grid.readMoreLabel ?? "Read more"}
           minReadSuffix={grid.minReadSuffix ?? "min read"}
           variant="featured"
