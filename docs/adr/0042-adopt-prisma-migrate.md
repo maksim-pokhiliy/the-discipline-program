@@ -64,8 +64,13 @@ of `db push`, validating the whole migration history on every run.
 with the `PRODUCTION_DATABASE_URL` secret (the DIRECT, non-pooler Neon URL — DDL
 over the pgbouncer pooler is flaky). It is deliberately decoupled from Vercel:
 the Vercel build stays `generate + next build` and never touches the database, so
-a preview deployment can never mutate a shared schema. On-merge automation is a
-later step, once the manual gate is proven.
+a preview deployment can never mutate a shared schema. The workflow also triggers
+automatically on push to `main` when a migration file changes (added 2026-06-21),
+so a merged migration applies to production without a manual click; the
+`workflow_dispatch` button remains for manual/replay runs. The migrate job (~30s)
+normally finishes before the parallel Vercel build (~2-3 min), so an additive
+table/column exists before the new code goes live; add required reviewers to the
+`production` GitHub Environment to gate the auto-run if needed.
 
 This supersedes ADR-0019 decisions #1 and #5. ADR-0019's other deferred
 decisions (#2 Stripe PK, #3 soft-delete writes, #4 raw test client,
@@ -79,8 +84,10 @@ decisions (#2 Stripe PK, #3 soft-delete writes, #4 raw test client,
   migration history on every run.
 - **Negative:** every schema change now needs a migration file
   (`pnpm db:migrate --name <x>`) — a step `db push` did not require. Authoring new
-  migrations locally needs a shadow database (`migrate dev`); the baseline itself
-  was authored via `migrate diff`, so it needed none.
+  migrations locally with `migrate dev` needs a shadow database, now wired via
+  `shadowDatabaseUrl = env("SHADOW_DATABASE_URL")` (point it at a separate empty
+  Neon branch; see `.env.example`). The baseline + password-reset migrations were
+  authored via `migrate diff`, which needs no shadow.
 - **Neutral / runbook:**
   - One-time, per existing database (production **and** dev): run
     `prisma migrate resolve --applied 0_init` against it (direct URL). Until this

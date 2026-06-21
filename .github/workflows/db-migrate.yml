@@ -1,11 +1,17 @@
 name: DB migrate (production)
 
 # Apply pending Prisma migrations to the production database.
-# Manual gate by default: trigger from the Actions tab -> "Run workflow".
-# Deliberately decoupled from Vercel deploys — schema changes apply once,
-# on purpose, never on every build or preview. Promote to on-merge later.
+# Runs automatically when a migration lands on main (push + paths filter), and
+# can also be triggered manually from the Actions tab -> "Run workflow".
+# Deliberately decoupled from Vercel deploys — schema applies via this job,
+# never on every build or preview. Add required reviewers to the `production`
+# GitHub Environment to gate the auto-run.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "packages/api-server/prisma/migrations/**"
 
 # Never run two prod migrations at once; never cancel one mid-apply.
 concurrency:
