@@ -239,6 +239,22 @@ describe("platform guards", () => {
       });
     });
 
+    it("returns chain ids and status for an ADMIN bypass", async () => {
+      const adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+
+      try {
+        await expect(verifyBlockOwnership(blockId, adminUser.id)).resolves.toEqual({
+          status: TrainingPlanStatus.DRAFT,
+          sessionId,
+          dayId,
+          weekId,
+          planId: plan.id,
+        });
+      } finally {
+        await cleanupRaw.user.delete({ where: { id: adminUser.id } });
+      }
+    });
+
     it("throws NotFoundError when block does not exist", async () => {
       await expect(
         verifyBlockOwnership("clz0000000000000000000000", coach.user.id),

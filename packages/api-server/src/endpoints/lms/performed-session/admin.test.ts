@@ -1,15 +1,18 @@
+import { DayOfWeek, EnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   createPerformedSessionRequestSchema,
   PERFORMED_SESSION_CONSTANTS,
 } from "@repo/contracts/lms/performed-session";
-import { ForbiddenError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
-import { cleanup, createTestPlan, createTestUser } from "../../../test/helpers";
+import { prisma } from "../../../db/client";
+import { cleanup, cleanupRaw, createTestPlan, createTestUser } from "../../../test/helpers";
 import {
   type CleanupEntry,
   createTestBenchmarkSchema,
+  createTestEnrollment,
   createTestScheduleScenario,
 } from "../../../test/schedule-helpers";
 
@@ -103,7 +106,7 @@ describe("lmsPerformedSessionApi", () => {
           sessionId: enrolledSessionId,
           performedAt: new Date("2026-02-01T00:00:00.000Z"),
         }),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("rejects logging a session whose plan the athlete has no enrollment in (QA-004)", async () => {
@@ -112,7 +115,100 @@ describe("lmsPerformedSessionApi", () => {
           sessionId: sessionInUnenrolledPlanId,
           performedAt: new Date("2026-02-01T00:00:00.000Z"),
         }),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it("rejects logging a session before a hidden boarding week, matching the read guard (SMELL-015)", async () => {
+      const boardedAthlete = await createTestUser();
+      const boardedPlan = await createTestPlan(scenario.coach.user.id, { status: "ACTIVE" });
+      const boardedEnrollment = await createTestEnrollment(
+        boardedPlan.id,
+        boardedAthlete.id,
+        scenario.coach.user.id,
+        { status: EnrollmentStatus.ACTIVE, boardedAt: new Date("2026-07-06T00:00:00.000Z") },
+      );
+
+      await prisma.planEnrollment.update({
+        where: { id: boardedEnrollment.enrollment.id },
+        data: { hidePastBeforeBoarding: true },
+      });
+
+      const preBoardingWeek = await cleanupRaw.week.create({
+        data: { planId: boardedPlan.id, startDate: new Date("2026-06-15T00:00:00.000Z") },
+      });
+      const preBoardingDay = await cleanupRaw.day.create({
+        data: { weekId: preBoardingWeek.id, dayOfWeek: DayOfWeek.MONDAY },
+      });
+      const preBoardingSession = await cleanupRaw.session.create({
+        data: { dayId: preBoardingDay.id, order: 0 },
+      });
+
+      try {
+        await expect(
+          lmsPerformedSessionApi.create(boardedAthlete.id, {
+            sessionId: preBoardingSession.id,
+            performedAt: new Date("2026-06-15T00:00:00.000Z"),
+          }),
+        ).rejects.toThrow(NotFoundError);
+      } finally {
+        await cleanup(
+          { table: "session", id: preBoardingSession.id },
+          { table: "day", id: preBoardingDay.id },
+          { table: "week", id: preBoardingWeek.id },
+          ...boardedEnrollment.toCleanup,
+          { table: "trainingPlan", id: boardedPlan.id },
+          { table: "user", id: boardedAthlete.id },
+        );
+      }
+    });
+
+    it("persists a tick for an on-boarding session under a hidden boarding enrollment (SMELL-015)", async () => {
+      const boardedAthlete = await createTestUser();
+      const boardedPlan = await createTestPlan(scenario.coach.user.id, { status: "ACTIVE" });
+      const boardedEnrollment = await createTestEnrollment(
+        boardedPlan.id,
+        boardedAthlete.id,
+        scenario.coach.user.id,
+        { status: EnrollmentStatus.ACTIVE, boardedAt: new Date("2026-06-15T00:00:00.000Z") },
+      );
+
+      await prisma.planEnrollment.update({
+        where: { id: boardedEnrollment.enrollment.id },
+        data: { hidePastBeforeBoarding: true },
+      });
+
+      const boardingWeek = await cleanupRaw.week.create({
+        data: { planId: boardedPlan.id, startDate: new Date("2026-06-15T00:00:00.000Z") },
+      });
+      const boardingDay = await cleanupRaw.day.create({
+        data: { weekId: boardingWeek.id, dayOfWeek: DayOfWeek.MONDAY },
+      });
+      const boardingSession = await cleanupRaw.session.create({
+        data: { dayId: boardingDay.id, order: 0 },
+      });
+
+      let performedId: string | null = null;
+
+      try {
+        const performed = await lmsPerformedSessionApi.create(boardedAthlete.id, {
+          sessionId: boardingSession.id,
+          performedAt: new Date("2026-06-15T00:00:00.000Z"),
+        });
+
+        performedId = performed.id;
+        expect(performed.sessionId).toBe(boardingSession.id);
+        expect(performed.userId).toBe(boardedAthlete.id);
+      } finally {
+        await cleanup(
+          ...(performedId === null ? [] : [{ table: "performedSession", id: performedId }]),
+          { table: "session", id: boardingSession.id },
+          { table: "day", id: boardingDay.id },
+          { table: "week", id: boardingWeek.id },
+          ...boardedEnrollment.toCleanup,
+          { table: "trainingPlan", id: boardedPlan.id },
+          { table: "user", id: boardedAthlete.id },
+        );
+      }
     });
   });
 
