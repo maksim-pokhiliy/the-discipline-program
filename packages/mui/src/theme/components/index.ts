@@ -23,7 +23,6 @@ import { MuiPaper } from "./paper";
 import { MuiDatePicker, MuiPickersOutlinedInput } from "./pickers";
 import { MuiRadio } from "./radio";
 import { MuiSelect } from "./select";
-import { MuiSwitch } from "./switch";
 import { MuiTab, MuiTabs } from "./tab";
 import { MuiTableCell, MuiTableRow } from "./table";
 import { MuiTablePagination } from "./table-pagination";
@@ -74,7 +73,6 @@ export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiPickersOutlinedInput,
   MuiRadio,
   MuiSelect,
-  MuiSwitch,
   MuiTab,
   MuiTableCell,
   MuiTablePagination,
