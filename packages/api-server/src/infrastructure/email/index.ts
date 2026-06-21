@@ -1,1 +1,1 @@
-export type { EmailAddress, EmailPort, SendEmailInput, SendEmailResult } from "./port";
+export type { EmailAddress, EmailPort, SendEmailInput, SendEmailResult } from "@repo/email";
