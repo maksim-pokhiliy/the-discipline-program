@@ -68,10 +68,6 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
       "&:active": {
         transform: "translateY(1px)",
       },
-
-      "&.Mui-focusVisible": {
-        backgroundColor: "transparent",
-      },
     }),
 
     contained: ({ theme, ownerState }) => {

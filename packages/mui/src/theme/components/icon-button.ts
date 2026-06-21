@@ -21,10 +21,6 @@ export const MuiIconButton: NonNullable<Components<Theme>["MuiIconButton"]> = {
       "&:active": {
         transform: "scale(0.9)",
       },
-
-      "&.Mui-focusVisible": {
-        backgroundColor: "transparent",
-      },
     }),
     sizeSmall: ({ theme }) => ({
       width: ICON_BUTTON_SIZE_SM,
