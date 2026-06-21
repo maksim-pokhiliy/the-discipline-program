@@ -15,6 +15,8 @@ import {
   type SessionHeaderView,
 } from "@repo/contracts/lms/session-detail";
 
+import { formatRepNotation, formatSide, formatTempoInput } from "@app/lib/training-format";
+
 import {
   ABSOLUTE_PAIR_PREFIX,
   AXIS_AND_SEPARATOR,
@@ -38,9 +40,6 @@ import {
   WEEKDAY_LONG,
 } from "./athlete-session.constants";
 import { formatIntensity } from "./format-intensity";
-import { formatRepNotation } from "./format-rep-notation";
-import { formatSide } from "./format-side";
-import { formatTempoInput } from "./format-tempo-input";
 
 const MODIFIER_SEPARATOR = ", ";
 const SINGLE_AXIS_COUNT = 1;

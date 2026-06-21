@@ -3,17 +3,17 @@ import { type ExerciseNature } from "@repo/contracts/lms/exercise";
 import { type SchemaRow } from "@repo/contracts/lms/schema-row";
 import { type RowKind } from "@repo/ui";
 
+import { formatRepNotation, formatSide } from "@app/lib/training-format";
+
 import { formatEffectiveIntensityChips } from "./format-block-meta";
 import { formatLoad } from "./format-load";
 import { type ExerciseById } from "./format-percentage-reference";
-import { formatRepNotation } from "./format-rep-notation";
 import { formatRestSpec } from "./format-rest-spec";
 import {
   type FormatRowResult,
   type RowIntensityContext,
   type RowSummary,
 } from "./format-row.types";
-import { formatSide } from "./format-side";
 import { formatTempo } from "./format-tempo";
 import { resolveIntensity } from "./resolve-intensity";
 
