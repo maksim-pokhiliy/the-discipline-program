@@ -64,7 +64,7 @@ export const InlineProfilePicker = ({
         <Stack key={axis.axisId} spacing={0.75}>
           {axis.values.map((value) => (
             <ProfileOptionButton
-              key={value}
+              key={`${axis.axisId}:${value}`}
               label={value}
               isActive={selections[axis.axisId] === value}
               disabled={isSubmitting}

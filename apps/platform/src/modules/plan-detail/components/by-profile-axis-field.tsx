@@ -68,6 +68,7 @@ export const ByProfileAxisField = ({
 
   const handlePick = (next: CreatableOption | null): void => {
     setPendingCreateName(null);
+    setInputValue("");
 
     if (next === null) {
       return;
@@ -136,6 +137,7 @@ export const ByProfileAxisField = ({
 
           {pendingCreateName !== null ? (
             <ByProfileAxisCreateForm
+              key={pendingCreateName}
               initialName={pendingCreateName}
               onCreated={handleCreated}
               onCancel={() => setPendingCreateName(null)}

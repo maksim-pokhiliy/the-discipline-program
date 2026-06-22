@@ -38,7 +38,7 @@ export const profileAxisSchema = z.object({
   id: z.string().cuid(),
   key: z.string().min(1).max(PROFILE_AXIS_CONSTANTS.MAX_KEY_LENGTH),
   label: z.string().min(1).max(PROFILE_AXIS_CONSTANTS.MAX_LABEL_LENGTH),
-  values: z.array(z.string().min(1)),
+  values: z.array(z.string().min(1)).min(1),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

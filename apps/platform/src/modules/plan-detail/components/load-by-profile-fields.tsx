@@ -47,20 +47,27 @@ export const LoadByProfileFields = ({
   const canAddAxis = axes.length < MAX_AXES;
   const canRemoveAxis = axes.length > MIN_AXES;
 
-  const commitAxes = (nextAxes: ByProfileAxis[]): void => {
-    onChange({ kind: "byProfile", axes: nextAxes, cells: regenerateCells(nextAxes, cells) });
+  const commitAxes = (nextAxes: ByProfileAxis[], previousCells: readonly ByProfileCell[]): void => {
+    onChange({
+      kind: "byProfile",
+      axes: nextAxes,
+      cells: regenerateCells(nextAxes, previousCells),
+    });
   };
 
-  const replaceAxis = (axisIndex: number, nextAxis: ByProfileAxis): void => {
-    commitAxes(axes.map((axis, index) => (index === axisIndex ? nextAxis : axis)));
+  const replaceDimension = (axisIndex: number, nextAxis: ByProfileAxis): void => {
+    commitAxes(
+      axes.map((axis, index) => (index === axisIndex ? nextAxis : axis)),
+      [],
+    );
   };
 
   const changeKind = (axisIndex: number, kind: AxisKind): void => {
-    replaceAxis(axisIndex, makeAxisForKind(kind));
+    replaceDimension(axisIndex, makeAxisForKind(kind));
   };
 
   const bindCatalog = (axisIndex: number, source: ProfileAxis): void => {
-    replaceAxis(axisIndex, {
+    replaceDimension(axisIndex, {
       kind: "catalog",
       axisId: source.id,
       label: source.label,
@@ -69,11 +76,14 @@ export const LoadByProfileFields = ({
   };
 
   const addAxis = (): void => {
-    commitAxes([...axes, makeCatalogAxisDraft()]);
+    commitAxes([...axes, makeCatalogAxisDraft()], cells);
   };
 
   const removeAxis = (axisIndex: number): void => {
-    commitAxes(axes.filter((_, index) => index !== axisIndex));
+    commitAxes(
+      axes.filter((_, index) => index !== axisIndex),
+      cells,
+    );
   };
 
   const handleCellChange = (index: number, kg: number): void => {

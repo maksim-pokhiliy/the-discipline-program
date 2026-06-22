@@ -312,9 +312,9 @@ describe("profileAxisSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts empty values on the entity schema", () => {
+  it("rejects empty values on the entity schema", () => {
     const result = profileAxisSchema.safeParse({ ...baseEntity, values: [] });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 });

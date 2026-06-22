@@ -187,6 +187,42 @@ describe("resolveLoad", () => {
     });
   });
 
+  it("steers to the gender attribute when an all-human load resolves but no cell matches", () => {
+    const load: Load = {
+      kind: "byProfile",
+      axes: [{ kind: "human", attribute: "gender" }],
+      cells: [{ coords: ["Male"], kg: 70 }],
+    };
+    const ctx = makeCtx({ gender: "FEMALE" });
+
+    expect(resolveLoad(load, ctx, ROW_EXERCISE_ID)).toEqual({
+      status: "unresolved",
+      reason: "missing_profile_attribute",
+      prompt: "set_profile_attribute",
+      attribute: "gender",
+      axisLabels: ["Gender"],
+    });
+  });
+
+  it("ignores a stale name-keyed catalog selection and asks for a pick (TEST-001)", () => {
+    const load: Load = {
+      kind: "byProfile",
+      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      cells: [
+        { coords: ["rx"], kg: 60 },
+        { coords: ["scaled"], kg: 40 },
+      ],
+    };
+    const ctx = makeCtx({ profileSelections: { level: "rx" } });
+
+    expect(resolveLoad(load, ctx, ROW_EXERCISE_ID)).toEqual({
+      status: "unresolved",
+      reason: "missing_profile_pick",
+      prompt: "pick_profile",
+      axisLabels: ["Level"],
+    });
+  });
+
   it("resolves a human gender axis from the typed gender column with no manual pick", () => {
     const load: Load = {
       kind: "byProfile",

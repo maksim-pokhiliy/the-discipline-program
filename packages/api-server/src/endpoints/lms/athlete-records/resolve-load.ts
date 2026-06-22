@@ -89,14 +89,28 @@ const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): Resolve
   const cell =
     wantedCoords === null ? undefined : load.cells.find((c) => coordsEqual(c.coords, wantedCoords));
 
-  return cell === undefined
-    ? {
-        status: "unresolved",
-        reason: "missing_profile_pick",
-        prompt: "pick_profile",
-        axisLabels: catalogLabels(load),
-      }
-    : { status: "resolved", kg: cell.kg, perHand: false };
+  if (cell !== undefined) {
+    return { status: "resolved", kg: cell.kg, perHand: false };
+  }
+
+  const labels = catalogLabels(load);
+
+  if (labels.length === 0) {
+    return {
+      status: "unresolved",
+      reason: "missing_profile_attribute",
+      prompt: "set_profile_attribute",
+      attribute: "gender",
+      axisLabels: [GENDER_AXIS_LABEL],
+    };
+  }
+
+  return {
+    status: "unresolved",
+    reason: "missing_profile_pick",
+    prompt: "pick_profile",
+    axisLabels: labels,
+  };
 };
 
 export const resolveLoad = (

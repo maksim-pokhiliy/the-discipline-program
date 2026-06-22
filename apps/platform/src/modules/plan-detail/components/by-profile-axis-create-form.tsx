@@ -17,6 +17,8 @@ const VALUES_HELPER = "Press Enter to add a value. At least one required.";
 const CREATE_LABEL = "Create axis";
 const CANCEL_LABEL = "Cancel";
 const NO_VALUES = 0;
+const CREATE_ERROR =
+  "Couldn't create — an axis with this name may already exist; pick it from the list.";
 
 type ByProfileAxisCreateFormProps = {
   initialName: string;
@@ -33,6 +35,7 @@ export const ByProfileAxisCreateForm = ({
 }: ByProfileAxisCreateFormProps): React.ReactElement => {
   const [name, setName] = useState(initialName);
   const [values, setValues] = useState<string[]>([]);
+  const [hasError, setHasError] = useState(false);
   const createAxis = useCreateProfileAxis();
 
   const hasName = name.trim() !== "";
@@ -40,15 +43,22 @@ export const ByProfileAxisCreateForm = ({
   const isPending = createAxis.isPending;
   const canCreate = hasName && hasValues && !isPending && !disabled;
 
-  const handleCreate = (): void => {
+  const handleCreate = async (): Promise<void> => {
     const trimmedName = name.trim();
 
-    createAxis
-      .mutateAsync({ key: trimmedName, label: trimmedName, values })
-      .then((axis) => {
-        onCreated(axis);
-      })
-      .catch(() => undefined);
+    setHasError(false);
+
+    try {
+      const axis = await createAxis.mutateAsync({
+        key: trimmedName,
+        label: trimmedName,
+        values,
+      });
+
+      onCreated(axis);
+    } catch {
+      setHasError(true);
+    }
   };
 
   return (
@@ -61,8 +71,13 @@ export const ByProfileAxisCreateForm = ({
         label={NAME_LABEL}
         size="small"
         value={name}
-        onChange={(event) => setName(event.target.value)}
+        onChange={(event) => {
+          setHasError(false);
+          setName(event.target.value);
+        }}
         disabled={isPending || disabled}
+        error={hasError}
+        {...(hasError && { helperText: CREATE_ERROR })}
         fullWidth
       />
 
