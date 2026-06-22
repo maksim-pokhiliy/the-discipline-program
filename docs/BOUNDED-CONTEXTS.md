@@ -171,13 +171,14 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Aggregates and entities
 
-| Aggregate / entity                | Prisma model      | Role                                                                                                                                                                    |
-| --------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CoachProfile` (root)             | `CoachProfile`    | Extends `User` with coach-specific fields (bio). Soft-deletable.                                                                                                        |
-| `AthleteProfile`                  | `AthleteProfile`  | Extends `User` with athlete-specific fields (height, weight, health status). **Not soft-deletable.**                                                                    |
-| `CoachNote` (root)                | `CoachNote`       | Hard-deletable free-form text note about an athlete, written by a coach.                                                                                                |
-| `CoachActionItem` (root)          | `CoachActionItem` | A coaching-workflow signal: health report flags, plus the `MISSED_WORKOUTS` slot (currently a no-op condition until the workout-log surface returns). Mutable `status`. |
-| `CoachDashboardData` (read model) | _computed_        | Not a Prisma model — computed on each request from assignments + `CoachActionItem` state in `coach-dashboard.ts`.                                                       |
+| Aggregate / entity                | Prisma model      | Role                                                                                                                                                                                      |
+| --------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CoachProfile` (root)             | `CoachProfile`    | Extends `User` with coach-specific fields (bio). Soft-deletable.                                                                                                                          |
+| `AthleteProfile`                  | `AthleteProfile`  | Extends `User` with athlete-specific fields (height, weight, health status). **Not soft-deletable.**                                                                                      |
+| `CoachNote` (root)                | `CoachNote`       | Hard-deletable free-form text note about an athlete, written by a coach.                                                                                                                  |
+| `CoachActionItem` (root)          | `CoachActionItem` | A coaching-workflow signal: health report flags, plus the `MISSED_WORKOUTS` slot (currently a no-op condition until the workout-log surface returns). Mutable `status`.                   |
+| `CoachDashboardData` (read model) | _computed_        | Not a Prisma model — computed on each request from assignments + `CoachActionItem` state in `coach-dashboard.ts`.                                                                         |
+| `ProfileAxis` (root)              | `ProfileAxis`     | Admin-managed GLOBAL training-classification catalog axis (`key` + `label` + ordered `values String[]`). No owner FK; hard-deletable. A catalog, not a coach-athlete relationship entity. |
 
 ### Value objects
 
@@ -196,16 +197,17 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Where it lives today
 
-- **DB:** `CoachProfile`, `AthleteProfile`, `CoachAthleteAssignment`, `CoachNote`, `CoachActionItem`.
+- **DB:** `CoachProfile`, `AthleteProfile`, `CoachAthleteAssignment`, `CoachNote`, `CoachActionItem`, `ProfileAxis`.
 - **Contracts:** `packages/contracts/src/entities/coaching/`.
-- **API — `api-server`:** `endpoints/coaching/` — `coach-profile.ts`, `athlete-profile.ts`, `coach-note.ts`, `coach-action-item.ts`, `coach-dashboard.ts`, `coach-athletes/{index,detail,list}.ts`. The dashboard returns zero counts for the `workouts*` fields and an empty `progressBuckets` because the workout-log surface is not in the live system.
-- **Consumer apps:** `apps/platform`.
+- **API — `api-server`:** `endpoints/coaching/` — `coach-profile.ts`, `athlete-profile.ts`, `coach-note.ts`, `coach-action-item.ts`, `coach-dashboard.ts`, `coach-athletes/{index,detail,list}.ts`, `profile-axis.ts` (admin catalog CRUD via `profileAxisAdminApi`). The dashboard returns zero counts for the `workouts*` fields and an empty `progressBuckets` because the workout-log surface is not in the live system.
+- **Consumer apps:** `apps/platform` (coach surfaces) and `apps/admin` (the "Profile Axes" CRUD module reads/writes `profileAxisAdminApi` via `@repo/api-server/coaching`). The admin profile-axes access is a file-precise exception in the `admin-coaching-only-via-user-detail-route` dep-cruiser rule — the three `app/api/admin/profile-axes/*` route files plus the pre-existing `users/[id]` route — NOT a blanket `apps/admin → Coaching` dependency.
 
 ### Dependencies
 
 - **Coaching → IAM:** every coach/athlete is a `User`.
 - **Coaching → LMS:** reads `TrainingPlan` and `PlanEnrollment` for plan counts on the dashboard.
 - **Coaching ↛ CMS / Billing:** no dependency.
+- **`apps/admin` → Coaching (consumer):** file-precise only — the `users/[id]` admin-user-view route and the three `profile-axes/*` catalog routes, admitted by `admin-coaching-only-via-user-detail-route`. Any other admin file importing coaching is a rule violation, not a silent weakening.
 
 ---
 
