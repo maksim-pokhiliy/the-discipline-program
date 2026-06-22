@@ -24,8 +24,7 @@ src/
   services/<context>/   Cross-entity orchestration helpers
   infrastructure/       Cache, email port, monitoring, payment, queue ports
   db/                   Prisma client + soft-delete extension (client.ts)
-prisma/                 schema.prisma + seed.ts
-scripts/                apply-sql-checks.ts (DB-level CHECK constraints)
+prisma/                 schema.prisma + migrations/ + seed.ts + seed/ (users, profiles)
 ```
 
 ## Key files
@@ -36,8 +35,8 @@ scripts/                apply-sql-checks.ts (DB-level CHECK constraints)
 
 ## Scripts
 
-- `pnpm db:generate` / `db:push` / `db:reset` / `db:seed` (proxied from the root via `pnpm --filter @repo/api-server <script>`).
-- `pnpm db:apply-checks` — applies hand-written SQL CHECK constraints after `db:push`.
+- `pnpm db:generate` / `migrate:dev` / `migrate:deploy` / `migrate:status` / `db:reset` / `db:seed` (proxied from the root via `pnpm --filter @repo/api-server <script>`).
+- The repo is on `prisma migrate` ([ADR 0042](../../docs/adr/0042-adopt-prisma-migrate.md)); `db:reset` = `prisma migrate reset --force` (re-applies migrations + auto-seeds). SQL CHECK invariants live inside the initial migration, not a separate apply step.
 
 ## Related ADRs
 

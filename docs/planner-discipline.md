@@ -1,6 +1,6 @@
 # Planner discipline — read/verify-then-spec checklists
 
-Nine procedural checklists for planning a cross-package change before writing the spec/prompt. Accreted across the training-domain workflow (steps 1–9.2) as "we shipped, then learned"; **generalized here as durable repo discipline** (migrated 2026-06-03 out of the now-superseded `implementation/WORKFLOW.md`). Each maps to a memory slug — those carry the essence cross-session; this is the fuller reference.
+Nine procedural checklists for planning a cross-package change before writing the spec/prompt. Accreted across the training-domain workflow (steps 1–9.2) as "we shipped, then learned"; **generalized here as durable repo discipline** (migrated 2026-06-03 out of the now-removed two-session workflow spec). Each maps to a memory slug — those carry the essence cross-session; this is the fuller reference.
 
 These are not optional and not a substitute for the collaboration stance (`[[global-preferences]]` / co-ownership). They are the "don't instinct-spec" guardrails: **read the source of truth and quote it before you spec against it.**
 
@@ -8,7 +8,7 @@ These are not optional and not a substitute for the collaboration stance (`[[glo
 
 1. **(a) Canonical codebase patterns** — `[[scope-via-existing-patterns]]`. Before specing a cross-package boundary (mapper output, contract schema, API response, client API type, form field, list/filter/search), read 2–3 canonical implementations verbatim and quote them with file:line. No "TS best practice" instincts — existing project patterns are sacred.
 
-2. **(b) Domain semantics** — `[[coach-pov-first]]`. Before specing a domain field or operation, cite the source of truth verbatim (`analysis/artifacts/`, the active initiative's spec, an ADR). No citation → the field is engineer-cargo or genuinely deferred → escalate with a hypothesis, don't invent.
+2. **(b) Domain semantics** — `[[coach-pov-first]]`. Before specing a domain field or operation, cite the source of truth verbatim (the live schema/contracts, the active initiative's spec, an ADR). No citation → the field is engineer-cargo or genuinely deferred → escalate with a hypothesis, don't invent.
 
 3. **(c) Registration-file completeness** — `[[planner-verbatim-registration]]`. For barrels, `package.json` exports, app routers, sidebar config, dep-cruiser arrays, `pnpm-workspace.yaml`, `turbo.json` — `Read` verbatim at prompt-write time. Quote the current state in full; state additive intent explicitly; show the final state in full.
 
@@ -31,4 +31,4 @@ These are not optional and not a substitute for the collaboration stance (`[[glo
 - **Escalation protocol** — surface-with-hypothesis-and-wait; never silently comply with a wrong prompt. The planner answers fast and owns prompt errors.
 - **Postgres SSI write semantics** — `[[postgres-ssi-upsert-unique-key]]`: concurrent `$transaction(..., Serializable)` upserts on the same unique key fail P2034 even with disjoint UPDATE columns (SSI is row-grained). Production: retry-on-P2034 at the HTTP layer.
 
-> History: the verbatim per-step anti-precedents that produced these live in `implementation/log/` (superseded). The lesson, not the training-domain incident, is what carries forward.
+> History: the verbatim per-step anti-precedents that produced these are preserved in git history (the superseded two-session log). The lesson, not the training-domain incident, is what carries forward.

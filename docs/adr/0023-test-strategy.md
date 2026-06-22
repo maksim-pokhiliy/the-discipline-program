@@ -5,6 +5,8 @@
 - **Deciders:** Lead Architect
 - **Tags:** `testing`, `quality`, `ci`
 
+> **Stale-fact note (2026-06-22 doc sweep):** the Playwright/E2E row below is not a live plan — the e2e suite was dropped 2026-04-30 and is not being revived. The compose round-trip property-test paths cited later moved when the compose model was reworked (ADR-0037→0041); treat those concrete paths as historical.
+
 ## Context
 
 This ADR captures the test-strategy assessment of the project. At write time the project had 240 tests across 23 files in 2 packages (api-server: 201 tests in 21 files, contracts: 39 tests in 2 files). All other packages (apps, ui, query, shared, auth, api-client) had zero tests.

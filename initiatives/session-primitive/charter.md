@@ -23,7 +23,7 @@ Session
 
 **Acceptance criteria.**
 
-- Every notation in `analysis/source/` is expressible through the new primitive — the grid in `primitive-spec.md` maps each one — with the corpus as FLOOR, not ceiling (it is one PERSONAL plan: group-programming notations — m/f loads, RX/SC — are systematically underrepresented in it).
+- Every notation in the coach's real-plan corpus (was `analysis/source/`, deleted 2026-06-22; captured in the `primitive-spec.md` grid) is expressible through the new primitive — with the corpus as FLOOR, not ceiling (it is one PERSONAL plan: group-programming notations — m/f loads, RX/SC — are systematically underrepresented in it).
 - No recursion in the stored model; no enum/VO whose only evidence is parsing residue; groups authorable via an explicit gesture (batch flows create visible, one-click-dissolvable boxes — opt-in checkbox in the add-schema modal).
 - Editor round-trips the reshaped contracts; gated api-server suite green on a reseeded DB.
 
@@ -38,7 +38,7 @@ Session
 
 **Sacred.**
 
-- `analysis/source/` as the acceptance fixture (floor, not ceiling).
+- The coach's real-plan corpus as the acceptance fixture (floor, not ceiling) — was `analysis/source/`, deleted 2026-06-22; the `primitive-spec.md` grid captures it.
 - The Plan→Week→Day floors above the primitive + the plan-as-train enrollment model.
 - The `repetition` axis (6 kinds: once · count · ladder · timeCap · cadence · interval) + `rest` — the healthy algebra core.
 - Process (D-7): every implementation step ships via `/feature` (full/small), ≤1 full per session; owner transports prompts to runner sessions; orchestrator reviews via git diff, never via agent self-report.

@@ -145,8 +145,8 @@ jobs:
         run: pnpm --filter @repo/api-server migrate:deploy
 
       - name: Seed test Postgres
-        # Archetype + Exercise + Label catalog + Open Prep edge-case week.
-        # Tests use cleanupRaw.archetype.findUniqueOrThrow against this seed.
+        # Seeds users + profiles only (synthetic training seed retired, PR #269).
+        # Tests self-fixture their own domain data.
         run: pnpm --filter @repo/api-server db:seed
 
       - name: Run tests

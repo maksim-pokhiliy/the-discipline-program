@@ -55,7 +55,7 @@ The admin app (CMS/blog/exercise images) and the platform app (coach avatar uplo
 ```bash
 pnpm db:generate    # generate Prisma client
 pnpm db:deploy      # apply migrations (schema + SQL invariants)
-pnpm db:seed        # seed marketing CMS pages + default coach/athlete (skip = empty UI)
+pnpm db:seed        # seed users + profiles (admin/coach/head-coach + athletes); CMS/plan/exercise data is created in-app
 pnpm dev            # all four apps in parallel
 ```
 
@@ -67,7 +67,7 @@ Apps start on ports 3000 (marketing), 3001 (platform), 3002 (admin), 6006 (story
 apps/
   admin/          Business panel + Marketing CMS (desktop-first)
   marketing/      Public landing pages
-  platform/       Coach + Athlete experience (mobile-first PWA)
+  platform/       Coach + Athlete experience (mobile-first)
   storybook/      Component development
 
 packages/
@@ -77,11 +77,14 @@ packages/
   api-client/     HTTP client for API consumption
   auth/           NextAuth configuration
   errors/         Error hierarchy
+  email/          React Email templates (Resend)
   ui/             Shared React components
   query/          React Query hooks factory
   shared/         Navigation, types, constants
   mui/            MUI theme + providers
   env/            Environment variable validation
+  eslint-config/  Shared ESLint config
+  typescript-config/  Shared tsconfig presets
 
 docs/adr/         Architecture Decision Records
 ```
@@ -111,11 +114,11 @@ docs/adr/         Architecture Decision Records
 
 ## App Status
 
-| App       | Status                                                                    |
-| --------- | ------------------------------------------------------------------------- |
-| Admin     | Production-ready. CMS + platform management.                              |
-| Marketing | Production-ready. Billing flow stubbed.                                   |
-| Platform  | Active development. Auth, routing, coach console, athlete-facing surface. |
+| App       | Status                                                                                                               |
+| --------- | -------------------------------------------------------------------------------------------------------------------- |
+| Admin     | Production-ready. CMS + platform management.                                                                         |
+| Marketing | Production-ready. Billing flow stubbed.                                                                              |
+| Platform  | Active development. Auth, routing, coach console, full athlete experience (timetable / session / records / profile). |
 
 ## Documentation
 
@@ -146,6 +149,7 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 | `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                |
 | `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.            |
 | `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                          |
+| `NEXT_PUBLIC_PLATFORM_URL`  | all apps                              | Base URL for the platform app.                           |
 | `BLOB_READ_WRITE_TOKEN`     | admin + platform (file uploads)       | Vercel Blob read/write token.                            |
 
 ### Optional

@@ -8,7 +8,7 @@ The monorepo deploys **three independent Vercel projects** from a single git rep
 | ---------------- | ---------------------------------------------- | ----------------- | ------------------------ | ---------------------- |
 | `apps/admin`     | Business panel + Marketing CMS (desktop-first) | `/api/admin/*`    | NextAuth (ADMIN role)    | via `@repo/api-server` |
 | `apps/marketing` | Public landing pages                           | `/api/public/*`   | None                     | via `@repo/api-server` |
-| `apps/platform`  | Coach + Athlete experience (mobile-first PWA)  | `/api/platform/*` | NextAuth (COACH/ATHLETE) | via `@repo/api-server` |
+| `apps/platform`  | Coach + Athlete experience (mobile-first)      | `/api/platform/*` | NextAuth (COACH/ATHLETE) | via `@repo/api-server` |
 
 All three apps share a single PostgreSQL database (Neon) and a single Vercel Blob store.
 
@@ -25,7 +25,7 @@ Each app is a separate Vercel deployment with its own URL, build, and runtime. A
 | **Platform deploy broken**      | Athlete/Coach experience down. Admin and Marketing unaffected.                                                                                                            | Platform only                         |
 | **`@repo/api-server` bug**      | Depends on which endpoint is affected. A broken mapper in CMS affects Admin + Marketing but not Platform. A broken LMS mapper affects Platform + Admin but not Marketing. | Context-scoped                        |
 | **NextAuth misconfiguration**   | Admin and Platform lose auth. Marketing is unaffected (no auth).                                                                                                          | Admin + Platform                      |
-| **Prisma schema drift**         | If `prisma db push` runs a breaking migration, all apps are affected.                                                                                                     | All apps                              |
+| **Prisma schema drift**         | If a breaking `prisma migrate` migration is deployed, all apps are affected.                                                                                              | All apps                              |
 
 ### Key insight
 
@@ -49,14 +49,15 @@ All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nex
 
 ### Required variables
 
-| Variable                    | Scope  | Used by         | Description                                                  |
-| --------------------------- | ------ | --------------- | ------------------------------------------------------------ |
-| `DATABASE_URL`              | Server | All apps        | PostgreSQL connection string (Neon pooler URL)               |
-| `NEXTAUTH_SECRET`           | Server | Admin, Platform | JWT signing secret for NextAuth                              |
-| `NEXTAUTH_URL`              | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`) |
-| `NEXT_PUBLIC_APP_URL`       | Client | All apps        | Admin app public URL                                         |
-| `NEXT_PUBLIC_MARKETING_URL` | Client | All apps        | Marketing app public URL                                     |
-| `BLOB_READ_WRITE_TOKEN`     | Server | Admin, Platform | Vercel Blob read/write token for file uploads                |
+| Variable                    | Scope  | Used by         | Description                                                           |
+| --------------------------- | ------ | --------------- | --------------------------------------------------------------------- |
+| `DATABASE_URL`              | Server | All apps        | PostgreSQL connection string (Neon; direct/non-pooler for migrations) |
+| `NEXTAUTH_SECRET`           | Server | Admin, Platform | JWT signing secret for NextAuth                                       |
+| `NEXTAUTH_URL`              | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`)          |
+| `NEXT_PUBLIC_APP_URL`       | Client | All apps        | Admin app public URL                                                  |
+| `NEXT_PUBLIC_MARKETING_URL` | Client | All apps        | Marketing app public URL                                              |
+| `NEXT_PUBLIC_PLATFORM_URL`  | Client | All apps        | Platform app public URL                                               |
+| `BLOB_READ_WRITE_TOKEN`     | Server | Admin, Platform | Vercel Blob read/write token for file uploads                         |
 
 ### Build-time variables
 
@@ -108,7 +109,7 @@ There is **no automated database rollback**. Prisma does not generate down-migra
 
 1. **Forward-fix:** Write and apply a corrective migration.
 2. **Point-in-time recovery:** Neon supports branching and PITR. Restore from a branch taken before the bad migration.
-3. **Prevention:** Always review `prisma db push` changes before applying to production. Consider using `prisma migrate` with explicit migration files for production (not yet adopted — see ADR 0019 for the database-strategy deferral).
+3. **Prevention:** The repo is on `prisma migrate` (ADR-0042, supersedes ADR-0019). Production migrations apply via `.github/workflows/db-migrate.yml` (`migrate deploy` against `PRODUCTION_DATABASE_URL`, gated by the GitHub `production` environment) — review the migration in the PR before it merges.
 
 ### Rollback checklist
 
@@ -146,13 +147,11 @@ All three apps serve identical security headers via `vercel.json` (added in 1.5.
 
 - `Strict-Transport-Security`: 2 years + includeSubDomains + preload
 - `X-Content-Type-Options`: nosniff
-- `X-Frame-Options`: DENY
 - `Referrer-Policy`: strict-origin-when-cross-origin
 - `X-XSS-Protection`: 0 (modern browsers, CSP is the real protection)
 - `Permissions-Policy`: camera, microphone, geolocation, browsing-topics all disabled
-- `Content-Security-Policy`: baseline policy (self + unsafe-inline for Next.js hydration, blob storage for images)
 
-Marketing additionally allows `images.unsplash.com` in `img-src` (seed data).
+`Content-Security-Policy` is **not** in `vercel.json` — it's set per-request in middleware (`apps/*/src/proxy.ts` → `@repo/api-routes/csp`, nonce-per-request) so it can carry a dynamic nonce; its `frame-ancestors` replaces a static `X-Frame-Options`. Marketing additionally allows `images.unsplash.com` in `img-src` (seed data). See `docs/runbooks/vercel-json.md`.
 
 ## Local development
 

@@ -5,6 +5,8 @@
 - **Last revised:** 2026-05-02 (Negative consequences synced with ADR-0009 — soft-delete extension now covers `count` / `aggregate` / `groupBy` / `findFirstOrThrow` / `findUniqueOrThrow`; see Revision history)
 - **Tags:** `database`, `orm`, `typescript`
 
+> **Stale-fact note (2026-06-22 doc sweep):** `prisma db push` is retired in favour of `prisma migrate` (ADR-0042), so the "migrations not yet set up / not yet met" caveats below are resolved. The entity counts are an early snapshot (the schema is now ~37 models) and the soft-delete list no longer includes the removed `Workout` model (ADR-0037). The decision (Prisma as the ORM) stands.
+
 ## Context
 
 The project persists a PostgreSQL database with 23 entities spanning four bounded contexts (IAM, CMS, LMS, Coaching) and a billing layer that exists in the schema but not yet in the API. The data access requirements are:

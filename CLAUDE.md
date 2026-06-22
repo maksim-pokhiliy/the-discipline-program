@@ -41,7 +41,7 @@
 
 - pnpm catalog в `pnpm-workspace.yaml` для единых версий.
 - Turbo pipelines кэшируют `build/check-types/lint`; `dev/test` некэшируемые (см. `turbo.json`).
-- Pre-commit: husky + lint-staged + commitlint.
+- Pre-commit: check-secrets + lint-staged; commit-msg: commitlint; pre-push: dep:check + lint + check-types (cone, `...[origin/main]`).
 - Taskfile (`taskfile.dist.yml`) обёртка над pnpm — `task *`.
 - Sentry (`@sentry/nextjs`) + Vercel Analytics/Speed Insights + Upstash ratelimit/redis.
 
@@ -49,7 +49,7 @@
 
 - Don't read files listed in .claudeignore.
 - Before multi-file / cross-package changes — output a plan first, wait for approval.
-- Big features are run as **initiatives** (`initiatives/<slug>/`); the active slug is in `initiatives/ACTIVE` and a SessionStart hook force-loads its `state.md` board. Files: `charter` (goal/scope) · `plan` (roadmap) · `state` (the board + next action) · `decisions` (D-numbered ratified calls + rationale — the SSOT for "why") · `deferred` (carry-forwards/WARNINGs + disposition) · `journal` (append-only) · design docs. **Resume:** `/initiative-resume` (charter → state → decisions OPEN → deferred OPEN → plan). **Close out:** `/initiative-close` — promote every ratified decision → `decisions.md` and every carry-forward → `deferred.md`, then update board/journal/plan, one docs commit. **Promotion rule (non-negotiable):** nothing load-bearing stays only in gitignored `.feature-dev/` or an external chat — distil it into the initiative at every gate. Cross-initiative architecture calls → `docs/adr/`; planner read/verify-then-spec checklists → `docs/planner-discipline.md`. The `implementation/` dir is superseded history (pre-pivot); don't plan off it. See `initiatives/README.md`.
+- Big features are run as **initiatives** (`initiatives/<slug>/`); the active slug is in `initiatives/ACTIVE` and a SessionStart hook force-loads its `state.md` board. Files: `charter` (goal/scope) · `plan` (roadmap) · `state` (the board + next action) · `decisions` (D-numbered ratified calls + rationale — the SSOT for "why") · `deferred` (carry-forwards/WARNINGs + disposition) · `journal` (append-only) · design docs. **Resume:** `/initiative-resume` (charter → state → decisions OPEN → deferred OPEN → plan). **Close out:** `/initiative-close` — promote every ratified decision → `decisions.md` and every carry-forward → `deferred.md`, then update board/journal/plan, one docs commit. **Promotion rule (non-negotiable):** nothing load-bearing stays only in gitignored `.feature-dev/` or an external chat — distil it into the initiative at every gate. Cross-initiative architecture calls → `docs/adr/`; planner read/verify-then-spec checklists → `docs/planner-discipline.md`. See `initiatives/README.md`.
 - Respect workspace boundaries: don't add deps to the wrong package; use `catalog:` versions.
 - Don't run install/build/test at workspace level without confirmation.
 - Test runs require approval gating. Per-package runs (`pnpm --filter <pkg> test`) are fine without approval. The full root suite (`pnpm test` / `task test` / `turbo test`) and ANY `@repo/api-server` test run (`pnpm --filter @repo/api-server test`, `pnpm test:integration` against it) require explicit user approval — both are long (~10 min serial for api-server) and burn the cache window.
