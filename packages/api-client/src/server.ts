@@ -6,9 +6,14 @@ import { baseEnv } from "@repo/env/base";
 
 import { ApiClient } from "./client";
 
+const resolveSelfBaseUrl = () =>
+  baseEnv.VERCEL_ENV === "preview" && process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : baseEnv.NEXT_PUBLIC_APP_URL;
+
 export const createNextServerClient = () =>
   new ApiClient({
-    baseUrl: baseEnv.NEXT_PUBLIC_APP_URL,
+    baseUrl: resolveSelfBaseUrl(),
     cache: "no-store",
     getHeaders: async () => {
       const cookieStore = await cookies();
