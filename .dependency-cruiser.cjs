@@ -164,7 +164,7 @@ module.exports = {
       name: "api-server-billing-no-cms-coaching",
       severity: "error",
       comment:
-        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM + LMS (Product.trainingPlanId) " +
+        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM + LMS (planned Product→TrainingPlan link, not yet a column) " +
         "only. Billing must not read marketing content or coach state. The single allowed " +
         "cross-context write Billing → LMS (PlanEnrollment on purchase success, see §8 " +
         "'Purchase = Immediate Value') stays inside LMS — it does not require Coaching or " +
@@ -238,7 +238,7 @@ module.exports = {
         "apps/marketing is the public landing site. It must only reach CMS endpoints + " +
         "mappers. No LMS (training data), no coaching (dashboards), no IAM admin endpoints, " +
         "no billing. This rule encodes the 'apps/marketing should only see CMS' invariant " +
-        "mentioned as the first dep-rule to enforce in docs/BIGTECH-AUDIT.md §1.2.",
+        "(see docs/BOUNDED-CONTEXTS.md §9).",
       from: { path: "^apps/marketing/" },
       to: { path: "^packages/api-server/src/(endpoints|mappers)/(lms|coaching|iam|billing)/" },
     },
