@@ -6,6 +6,8 @@ import type { RowFormState, RowRequestMode } from "./row-form-state.types";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const EXERCISE_ID = "clp9z8x7w0000abcd1234ex001";
 const MODIFIER_ID = "clp9z8x7w0000abcd12mod0001";
+const AXIS_ID_LEVEL = "clp9z8x7w0000abcd12axlevel";
+const AXIS_ID_SEX = "clp9z8x7w0000abcd12ax00sex";
 const CREATE: RowRequestMode = { kind: "create", schemaId: SCHEMA_ID };
 const EDIT: RowRequestMode = { kind: "edit" };
 
@@ -137,20 +139,20 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
     });
   });
 
-  it("rejects a byProfile axis with an empty name with the coach message", () => {
+  it("rejects an unbound byProfile catalog axis with the coach message", () => {
     const state: RowFormState = {
       ...emptyState(),
       exerciseId: EXERCISE_ID,
       load: {
         kind: "byProfile",
-        axes: [{ name: "", values: ["RX"] }],
+        axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
         cells: [{ coords: ["RX"], kg: 50 }],
       },
     };
 
     expect(buildRowRequest(state, CREATE)).toStrictEqual({
       ok: false,
-      error: "Name each axis (for example level or sex).",
+      error: "Pick an axis for this dimension (or create one).",
       field: "load",
     });
   });
@@ -162,8 +164,8 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
       load: {
         kind: "byProfile",
         axes: [
-          { name: "level", values: ["RX", "SC"] },
-          { name: "sex", values: ["♂", "♀"] },
+          { kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] },
+          { kind: "catalog", axisId: AXIS_ID_SEX, label: "Sex", values: ["♂", "♀"] },
         ],
         cells: [
           { coords: ["RX", "♂"], kg: 9 },
