@@ -123,6 +123,28 @@ describe("profileAxisAdminApi", () => {
         profileAxisAdminApi.updateProfileAxis("cl000000000000000000000000", { label: "X" }),
       ).rejects.toThrow(NotFoundError);
     });
+
+    it("rejects renaming key onto an existing key with a ConflictError", async () => {
+      const axisA = await profileAxisAdminApi.createProfileAxis(
+        parseInput({ key: uniqueKey("a") }),
+      );
+
+      createdAxisIds.push(axisA.id);
+
+      const axisB = await profileAxisAdminApi.createProfileAxis(
+        parseInput({ key: uniqueKey("b") }),
+      );
+
+      createdAxisIds.push(axisB.id);
+
+      await expect(
+        profileAxisAdminApi.updateProfileAxis(axisB.id, { key: axisA.key }),
+      ).rejects.toThrow(ConflictError);
+
+      await expect(
+        profileAxisAdminApi.updateProfileAxis(axisB.id, { key: axisA.key }),
+      ).rejects.toMatchObject({ details: { field: "key" } });
+    });
   });
 
   describe("deleteProfileAxis", () => {

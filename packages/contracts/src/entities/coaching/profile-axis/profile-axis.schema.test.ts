@@ -24,6 +24,7 @@ const baseEntity = {
 };
 
 const ZERO_WIDTH_SPACE = "​";
+const FULLWIDTH_RX = "ＲＸ";
 
 describe("createProfileAxisSchema", () => {
   it("accepts minimal valid input", () => {
@@ -190,6 +191,68 @@ describe("createProfileAxisSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects a zero-width-separated duplicate value post-normalize", () => {
+    const result = createProfileAxisSchema.safeParse({
+      ...baseInput,
+      values: [`R${ZERO_WIDTH_SPACE}X`, "RX"],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const issue = result.error.issues[0];
+
+      expect(issue?.message).toBe(PROFILE_AXIS_VALUES_UNIQUE_MESSAGE);
+      expect(issue?.path).toContain("values");
+    }
+  });
+
+  it("rejects an NFKC fullwidth duplicate value post-normalize", () => {
+    const result = createProfileAxisSchema.safeParse({
+      ...baseInput,
+      values: [FULLWIDTH_RX, "RX"],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const issue = result.error.issues[0];
+
+      expect(issue?.message).toBe(PROFILE_AXIS_VALUES_UNIQUE_MESSAGE);
+      expect(issue?.path).toContain("values");
+    }
+  });
+
+  it("rejects a whitespace-padding duplicate value after edge-trim", () => {
+    const result = createProfileAxisSchema.safeParse({
+      ...baseInput,
+      values: ["RX", "RX "],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const issue = result.error.issues[0];
+
+      expect(issue?.message).toBe(PROFILE_AXIS_VALUES_UNIQUE_MESSAGE);
+      expect(issue?.path).toContain("values");
+    }
+  });
+
+  it("keeps case-differing values distinct (case-sensitive by design)", () => {
+    const result = createProfileAxisSchema.safeParse({
+      key: "level",
+      label: "Level",
+      values: ["RX", "rx"],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.values).toEqual(["RX", "rx"]);
+    }
+  });
 });
 
 describe("updateProfileAxisSchema", () => {
@@ -213,6 +276,18 @@ describe("updateProfileAxisSchema", () => {
 
   it("rejects duplicate values in a patch", () => {
     const result = updateProfileAxisSchema.safeParse({ values: ["A", "A"] });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an empty values array in a patch", () => {
+    const result = updateProfileAxisSchema.safeParse({ values: [] });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a present-but-empty key in a patch", () => {
+    const result = updateProfileAxisSchema.safeParse({ key: "" });
 
     expect(result.success).toBe(false);
   });
