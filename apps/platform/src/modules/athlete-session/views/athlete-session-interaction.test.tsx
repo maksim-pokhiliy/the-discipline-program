@@ -49,6 +49,8 @@ const EX_ID = "clz0000000000000000000ex01";
 const ONE_RM_SCHEMA_ID = "clz000000000000000000sch1";
 const PROFILE_SCHEMA_ID = "clz000000000000000000sch2";
 const BENCHMARK_SCHEMA_ID = "clz000000000000000000sch3";
+const LEVEL_AXIS_ID = "clz00000000000000000axs01";
+const SCALE_AXIS_ID = "clz00000000000000000axs02";
 
 const oneRmRow: SchemaCardView = {
   schemaId: ONE_RM_SCHEMA_ID,
@@ -107,8 +109,8 @@ const profileRow: SchemaCardView = {
         load: {
           kind: "byProfile",
           axes: [
-            { name: "Level", values: ["RX", "Scaled"] },
-            { name: "Sex", values: ["M", "F"] },
+            { kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["RX", "Scaled"] },
+            { kind: "catalog", axisId: SCALE_AXIS_ID, label: "Scale", values: ["M", "F"] },
           ],
           cells: [
             { coords: ["RX", "M"], kg: 60 },
@@ -121,7 +123,51 @@ const profileRow: SchemaCardView = {
           status: "unresolved",
           reason: "missing_profile_pick",
           prompt: "pick_profile",
-          axisNames: ["Level", "Sex"],
+          axisLabels: ["Level", "Scale"],
+        },
+        intensity: null,
+        tempo: null,
+        side: null,
+        rest: null,
+        modifiers: [],
+        notes: null,
+      },
+    },
+  ],
+};
+
+const humanProfileRow: SchemaCardView = {
+  schemaId: "clz000000000000000000sch5",
+  header: "Wall Ball",
+  composition: { repetition: { kind: "count", count: 3 } },
+  label: { kind: "rounds", family: "ROUNDS" },
+  isBenchmark: false,
+  resultType: null,
+  intensity: null,
+  existingResult: null,
+  items: [
+    {
+      kind: "row",
+      row: {
+        rowId: "clz000000000000000000row9",
+        movement: "Wall Ball",
+        media: null,
+        sets: null,
+        reps: { kind: "count", value: 3 },
+        load: {
+          kind: "byProfile",
+          axes: [{ kind: "human", attribute: "gender" }],
+          cells: [
+            { coords: ["Male"], kg: 9 },
+            { coords: ["Female"], kg: 6 },
+          ],
+        },
+        resolvedLoad: {
+          status: "unresolved",
+          reason: "missing_profile_attribute",
+          prompt: "set_profile_attribute",
+          attribute: "gender",
+          axisLabels: ["Gender"],
         },
         intensity: null,
         tempo: null,
@@ -348,7 +394,7 @@ describe("AthleteSessionView — inline Set 1RM", () => {
 
 describe("AthleteSessionView — inline Pick profile", () => {
   it("merges the new pick with existing selections without clobbering other axes", () => {
-    setProfile({ Sex: "M" });
+    setProfile({ [SCALE_AXIS_ID]: "M" });
     setView(buildResponse([block(profileRow, "clz0000000000000000000blk2", "Power")]));
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
@@ -358,12 +404,12 @@ describe("AthleteSessionView — inline Pick profile", () => {
 
     expect(updateProfileMutate).toHaveBeenCalledTimes(1);
     expect(firstCallArg(updateProfileMutate)).toEqual({
-      profileSelections: { Sex: "M", Level: "Scaled" },
+      profileSelections: { [SCALE_AXIS_ID]: "M", [LEVEL_AXIS_ID]: "Scaled" },
     });
   });
 
   it("pre-selects an axis value already in the athlete profile", () => {
-    setProfile({ Level: "RX" });
+    setProfile({ [LEVEL_AXIS_ID]: "RX" });
     setView(buildResponse([block(profileRow, "clz0000000000000000000blk2", "Power")]));
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
@@ -388,13 +434,13 @@ describe("AthleteSessionView — inline Pick profile", () => {
 
     expect(updateProfileMutate).toHaveBeenCalledTimes(1);
     expect(firstCallArg(updateProfileMutate)).toEqual({
-      profileSelections: { Level: "RX", Sex: "M" },
+      profileSelections: { [LEVEL_AXIS_ID]: "RX", [SCALE_AXIS_ID]: "M" },
     });
   });
 
   it("does not submit the profile twice while its mutation is pending (QA-002)", () => {
     updateProfilePending = true;
-    setProfile({ Sex: "M" });
+    setProfile({ [SCALE_AXIS_ID]: "M" });
     setView(buildResponse([block(profileRow, "clz0000000000000000000blk2", "Power")]));
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
@@ -408,6 +454,19 @@ describe("AthleteSessionView — inline Pick profile", () => {
     fireEvent.click(scaled);
     fireEvent.click(scaled);
 
+    expect(updateProfileMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("AthleteSessionView — human gender steer (no inline pick)", () => {
+  it("shows the set-your-sex steer and never opens an inline pick for a gender-null human axis", () => {
+    setView(buildResponse([block(humanProfileRow, "clz0000000000000000000blk5", "Power")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(screen.getByText("Set your sex in your profile")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /pick your/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Male" })).not.toBeInTheDocument();
     expect(updateProfileMutate).not.toHaveBeenCalled();
   });
 });

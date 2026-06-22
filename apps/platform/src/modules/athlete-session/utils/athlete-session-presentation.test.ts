@@ -125,13 +125,23 @@ describe("resolveLoadCell", () => {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisNames: ["Level", "Sex"],
+      axisLabels: ["Level", "Scale"],
     };
     const load: Load = {
       kind: "byProfile",
       axes: [
-        { name: "Level", values: ["RX", "Scaled"] },
-        { name: "Sex", values: ["M", "F"] },
+        {
+          kind: "catalog",
+          axisId: "clz00000000000000000axs01",
+          label: "Level",
+          values: ["RX", "Scaled"],
+        },
+        {
+          kind: "catalog",
+          axisId: "clz00000000000000000axs02",
+          label: "Scale",
+          values: ["M", "F"],
+        },
       ],
       cells: [
         { coords: ["RX", "M"], kg: 60 },
@@ -144,22 +154,46 @@ describe("resolveLoadCell", () => {
     expect(resolveLoadCell(resolved, load)).toEqual({
       state: "missing_profile_pick",
       spread: "RX M:60 F:42 / Scaled M:45 F:30",
-      axisNames: ["Level", "Sex"],
+      axisLabels: ["Level", "Scale"],
     });
   });
 
-  it("falls back to the server axisNames when the raw load is not byProfile", () => {
+  it("surfaces the spread and a gender steer for a missing_profile_attribute (human, no inline pick)", () => {
+    const resolved: ResolvedLoad = {
+      status: "unresolved",
+      reason: "missing_profile_attribute",
+      prompt: "set_profile_attribute",
+      attribute: "gender",
+      axisLabels: ["Gender"],
+    };
+    const load: Load = {
+      kind: "byProfile",
+      axes: [{ kind: "human", attribute: "gender" }],
+      cells: [
+        { coords: ["Male"], kg: 43 },
+        { coords: ["Female"], kg: 30 },
+      ],
+    };
+
+    expect(resolveLoadCell(resolved, load)).toEqual({
+      state: "missing_profile_attribute",
+      spread: "Male:43 / Female:30",
+      attribute: "gender",
+    });
+  });
+
+  it("falls back to the server axisLabels when the raw load is not byProfile", () => {
     const resolved: ResolvedLoad = {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisNames: ["Level", "Sex"],
+      axisLabels: ["Level", "Scale"],
     };
 
     expect(resolveLoadCell(resolved, null)).toEqual({
       state: "missing_profile_pick",
-      spread: "Level · Sex",
-      axisNames: ["Level", "Sex"],
+      spread: "Level · Scale",
+      axisLabels: ["Level", "Scale"],
     });
   });
 });
@@ -225,21 +259,52 @@ describe("buildLoadLine", () => {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisNames: ["gender"],
+      axisLabels: ["Level"],
     };
     const load: Load = {
       kind: "byProfile",
-      axes: [{ name: "gender", values: ["m", "f"] }],
+      axes: [
+        {
+          kind: "catalog",
+          axisId: "clz00000000000000000axs01",
+          label: "Level",
+          values: ["RX", "Scaled"],
+        },
+      ],
       cells: [
-        { coords: ["m"], kg: 43 },
-        { coords: ["f"], kg: 30 },
+        { coords: ["RX"], kg: 43 },
+        { coords: ["Scaled"], kg: 30 },
       ],
     };
 
     expect(buildLoadLine(resolved, load)).toEqual({
-      loadStr: "m:43 / f:30",
+      loadStr: "RX:43 / Scaled:30",
       showAt: false,
-      prompt: { kind: "profile", label: "Pick your gender" },
+      prompt: { kind: "profile", label: "Pick your Level" },
+    });
+  });
+
+  it("renders the gender spread with a profile steer and no inline pick for missing_profile_attribute", () => {
+    const resolved: ResolvedLoad = {
+      status: "unresolved",
+      reason: "missing_profile_attribute",
+      prompt: "set_profile_attribute",
+      attribute: "gender",
+      axisLabels: ["Gender"],
+    };
+    const load: Load = {
+      kind: "byProfile",
+      axes: [{ kind: "human", attribute: "gender" }],
+      cells: [
+        { coords: ["Male"], kg: 43 },
+        { coords: ["Female"], kg: 30 },
+      ],
+    };
+
+    expect(buildLoadLine(resolved, load)).toEqual({
+      loadStr: "Male:43 / Female:30",
+      showAt: false,
+      prompt: { kind: "profile_attribute", label: "Set your sex in your profile" },
     });
   });
 });

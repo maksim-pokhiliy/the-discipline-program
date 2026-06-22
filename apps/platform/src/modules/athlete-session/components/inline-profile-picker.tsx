@@ -14,11 +14,16 @@ import {
 
 import { ProfileOptionButton } from "./profile-option-button";
 
+type ByProfileAxis = Extract<Load, { kind: "byProfile" }>["axes"][number];
+type CatalogAxis = Extract<ByProfileAxis, { kind: "catalog" }>;
+
+const isCatalogAxis = (axis: ByProfileAxis): axis is CatalogAxis => axis.kind === "catalog";
+
 export type InlineProfilePickerProps = {
   load: Load;
   selections: Record<string, string>;
   isSubmitting: boolean;
-  onPick: (axisNames: string[], axisName: string, value: string) => void;
+  onPick: (catalogAxisIds: string[], axisId: string, value: string) => void;
 };
 
 export const InlineProfilePicker = ({
@@ -31,7 +36,14 @@ export const InlineProfilePicker = ({
     return null;
   }
 
-  const axisNames = load.axes.map((axis) => axis.name);
+  const catalogAxes = load.axes.filter(isCatalogAxis);
+
+  if (catalogAxes.length === 0) {
+    return null;
+  }
+
+  const axisLabels = catalogAxes.map((axis) => axis.label);
+  const catalogAxisIds = catalogAxes.map((axis) => axis.axisId);
 
   return (
     <Stack spacing={1.25}>
@@ -45,18 +57,18 @@ export const InlineProfilePicker = ({
           color: theme.palette.primary.main,
         })}
       >
-        {`${PROFILE_AXIS_PREFIX}${axisNames.join(AXIS_AND_SEPARATOR)}`}
+        {`${PROFILE_AXIS_PREFIX}${axisLabels.join(AXIS_AND_SEPARATOR)}`}
       </Typography>
 
-      {load.axes.map((axis) => (
-        <Stack key={axis.name} spacing={0.75}>
+      {catalogAxes.map((axis) => (
+        <Stack key={axis.axisId} spacing={0.75}>
           {axis.values.map((value) => (
             <ProfileOptionButton
               key={value}
               label={value}
-              isActive={selections[axis.name] === value}
+              isActive={selections[axis.axisId] === value}
               disabled={isSubmitting}
-              onClick={() => onPick(axisNames, axis.name, value)}
+              onClick={() => onPick(catalogAxisIds, axis.axisId, value)}
             />
           ))}
         </Stack>
