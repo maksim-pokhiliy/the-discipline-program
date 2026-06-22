@@ -1,36 +1,51 @@
-import { type Load } from "@repo/contracts/lms/_shared";
+import { Gender } from "@prisma/client";
+
+import { GENDER_AXIS_COORDS, type Load } from "@repo/contracts/lms/_shared";
 
 import { type AthleteLoadContext, type ResolvedLoad } from "./athlete-records.types";
 
 const PER_HAND_COUNT = 2;
 const PERCENT_DIVISOR = 100;
 const ROUND_FACTOR = 10;
+const GENDER_AXIS_LABEL = "Gender";
+
+const GENDER_TO_COORD: Record<Gender, string> = {
+  [Gender.MALE]: GENDER_AXIS_COORDS.MALE,
+  [Gender.FEMALE]: GENDER_AXIS_COORDS.FEMALE,
+};
 
 const round1 = (value: number): number => Math.round(value * ROUND_FACTOR) / ROUND_FACTOR;
 
 type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
 type ByProfileAxis = ByProfileLoad["axes"][number];
 
-const isAxisResolvable = (axis: ByProfileAxis, selections: Record<string, string>): boolean => {
-  const picked = selections[axis.name];
+const resolveAxisCoord = (axis: ByProfileAxis, ctx: AthleteLoadContext): string | null => {
+  if (axis.kind === "human") {
+    return ctx.gender === null ? null : GENDER_TO_COORD[ctx.gender];
+  }
 
-  return picked !== undefined && axis.values.includes(picked);
+  const picked = ctx.profileSelections[axis.axisId];
+
+  return picked !== undefined && axis.values.includes(picked) ? picked : null;
 };
+
+const axisLabel = (axis: ByProfileAxis): string =>
+  axis.kind === "catalog" ? axis.label : GENDER_AXIS_LABEL;
 
 const resolveCoords = (
   axes: readonly ByProfileAxis[],
-  selections: Record<string, string>,
+  ctx: AthleteLoadContext,
 ): string[] | null => {
   const coords: string[] = [];
 
   for (const axis of axes) {
-    const picked = selections[axis.name];
+    const coord = resolveAxisCoord(axis, ctx);
 
-    if (picked === undefined) {
+    if (coord === null) {
       return null;
     }
 
-    coords.push(picked);
+    coords.push(coord);
   }
 
   return coords;
@@ -39,21 +54,38 @@ const resolveCoords = (
 const coordsEqual = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && a.every((value, index) => value === b[index]);
 
-const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): ResolvedLoad => {
-  const missing = load.axes
-    .filter((axis) => !isAxisResolvable(axis, ctx.profileSelections))
-    .map((axis) => axis.name);
+const catalogLabels = (load: ByProfileLoad): string[] =>
+  load.axes.filter((axis) => axis.kind === "catalog").map(axisLabel);
 
-  if (missing.length > 0) {
+const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): ResolvedLoad => {
+  const catalogMissing = load.axes.filter(
+    (axis) => axis.kind === "catalog" && resolveAxisCoord(axis, ctx) === null,
+  );
+
+  if (catalogMissing.length > 0) {
     return {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisNames: missing,
+      axisLabels: catalogMissing.map(axisLabel),
     };
   }
 
-  const wantedCoords = resolveCoords(load.axes, ctx.profileSelections);
+  const humanMissing = load.axes.filter(
+    (axis) => axis.kind === "human" && resolveAxisCoord(axis, ctx) === null,
+  );
+
+  if (humanMissing.length > 0) {
+    return {
+      status: "unresolved",
+      reason: "missing_profile_attribute",
+      prompt: "set_profile_attribute",
+      attribute: "gender",
+      axisLabels: humanMissing.map(axisLabel),
+    };
+  }
+
+  const wantedCoords = resolveCoords(load.axes, ctx);
   const cell =
     wantedCoords === null ? undefined : load.cells.find((c) => coordsEqual(c.coords, wantedCoords));
 
@@ -62,7 +94,7 @@ const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): Resolve
         status: "unresolved",
         reason: "missing_profile_pick",
         prompt: "pick_profile",
-        axisNames: load.axes.map((axis) => axis.name),
+        axisLabels: catalogLabels(load),
       }
     : { status: "resolved", kg: cell.kg, perHand: false };
 };
