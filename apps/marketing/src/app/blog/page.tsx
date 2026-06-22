@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const BlogPage = async () => {
   const data = await serverApi.pages.getBlog();
