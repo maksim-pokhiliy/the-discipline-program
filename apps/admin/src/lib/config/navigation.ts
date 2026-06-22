@@ -22,6 +22,7 @@ export const ADMIN_NAVIGATION: AdminNavigationConfig = {
       links: [
         { text: "Exercises", href: "/exercises", icon: "exercises" },
         { text: "Labels", href: "/labels", icon: "labels" },
+        { text: "Profile Axes", href: "/profile-axes", icon: "profileAxes" },
       ],
     },
   ],

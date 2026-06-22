@@ -10,6 +10,7 @@ export const createApi = (client: ApiClient) => ({
   exercises: endpoints.createExercisesAPI(client),
   labels: endpoints.createLabelsAPI(client),
   pages: endpoints.createPagesAPI(client),
+  profileAxes: endpoints.createProfileAxesAPI(client),
   products: endpoints.createProductsAPI(client),
   reviews: endpoints.createReviewsAPI(client),
   upload: endpoints.createUploadAPI(client),

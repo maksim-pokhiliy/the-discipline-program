@@ -746,6 +746,17 @@ model Modifier {
   @@map("training_modifiers")
 }
 
+model ProfileAxis {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  values    String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_profile_axes")
+}
+
 model RowModifierAssignment {
   id         String @id @default(cuid())
   rowId      String
