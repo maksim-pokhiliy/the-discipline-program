@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Button, Stack } from "@mui/material";
@@ -21,10 +21,16 @@ export const AthletesView = () => {
   const searchParams = useSearchParams();
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  const selectedAthleteId = searchParams.get("athlete");
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedAthleteId(searchParams.get("athlete"));
+  }, [searchParams]);
 
   const handleSelectAthlete = useCallback(
     (userId: string) => {
+      setSelectedAthleteId(userId);
+
       const params = new URLSearchParams(searchParams.toString());
 
       params.set("athlete", userId);
@@ -34,6 +40,8 @@ export const AthletesView = () => {
   );
 
   const handleCloseDrawer = useCallback(() => {
+    setSelectedAthleteId(null);
+
     const params = new URLSearchParams(searchParams.toString());
 
     params.delete("athlete");
