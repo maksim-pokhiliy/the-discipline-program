@@ -1,14 +1,16 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   createProfileAxisSchema,
   type CreateProfileAxisData,
 } from "@repo/contracts/coaching/profile-axis";
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { cleanupRaw } from "../../test/helpers";
+import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
+import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
-import { profileAxisAdminApi } from "./profile-axis";
+import { profileAxisAdminApi, profileAxisPlatformApi } from "./profile-axis";
 
 const uniqueKey = (prefix: string): string => `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 
@@ -175,6 +177,153 @@ describe("profileAxisAdminApi", () => {
 
       expect(Array.isArray(pageData.profileAxes)).toBe(true);
       expect(pageData.profileAxes.some((axis) => axis.id === created.id)).toBe(true);
+    });
+  });
+});
+
+describe("profileAxisPlatformApi", () => {
+  const createdAxisIds: string[] = [];
+
+  let athlete: Awaited<ReturnType<typeof createTestUser>>;
+  let coach: Awaited<ReturnType<typeof createTestUser>>;
+  let headCoach: Awaited<ReturnType<typeof createTestUser>>;
+  let admin: Awaited<ReturnType<typeof createTestUser>>;
+
+  beforeAll(async () => {
+    athlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
+    coach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
+    headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
+    admin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+  });
+
+  afterEach(async () => {
+    for (const id of createdAxisIds.splice(0).reverse()) {
+      await cleanupRaw.profileAxis.delete({ where: { id } }).catch(() => {});
+    }
+  });
+
+  afterAll(async () => {
+    await cleanup(
+      { table: "user", id: athlete.id },
+      { table: "user", id: coach.id },
+      { table: "user", id: headCoach.id },
+      { table: "user", id: admin.id },
+    );
+  });
+
+  describe("list role-gate (Must-Test 1)", () => {
+    it("rejects an athlete caller with a ForbiddenError", async () => {
+      await expect(profileAxisPlatformApi.list(athlete.id)).rejects.toThrow(ForbiddenError);
+    });
+
+    it("allows a coach caller", async () => {
+      await expect(profileAxisPlatformApi.list(coach.id)).resolves.toBeInstanceOf(Array);
+    });
+
+    it("allows a head-coach caller", async () => {
+      await expect(profileAxisPlatformApi.list(headCoach.id)).resolves.toBeInstanceOf(Array);
+    });
+
+    it("allows an admin caller", async () => {
+      await expect(profileAxisPlatformApi.list(admin.id)).resolves.toBeInstanceOf(Array);
+    });
+  });
+
+  describe("create role-gate (Must-Test 1)", () => {
+    it("rejects an athlete caller with a ForbiddenError before writing", async () => {
+      await expect(profileAxisPlatformApi.create(athlete.id, parseInput())).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+
+    it("lets a coach create an axis", async () => {
+      const created = await profileAxisPlatformApi.create(
+        coach.id,
+        parseInput({ label: "Coach Axis", values: ["RX", "SC"] }),
+      );
+
+      createdAxisIds.push(created.id);
+
+      expect(created.id).toBeDefined();
+      expect(created.label).toBe("Coach Axis");
+      expect(created.values).toEqual(["RX", "SC"]);
+    });
+
+    it("lets a head-coach create an axis", async () => {
+      const created = await profileAxisPlatformApi.create(headCoach.id, parseInput());
+
+      createdAxisIds.push(created.id);
+
+      expect(created.id).toBeDefined();
+    });
+
+    it("lets an admin create an axis", async () => {
+      const created = await profileAxisPlatformApi.create(admin.id, parseInput());
+
+      createdAxisIds.push(created.id);
+
+      expect(created.id).toBeDefined();
+    });
+  });
+
+  describe("create duplicate key (Must-Test 2)", () => {
+    it("rejects a duplicate key with a ConflictError scoped to the key field", async () => {
+      const key = uniqueKey("dup-platform");
+      const first = await profileAxisPlatformApi.create(coach.id, parseInput({ key }));
+
+      createdAxisIds.push(first.id);
+
+      await expect(profileAxisPlatformApi.create(coach.id, parseInput({ key }))).rejects.toThrow(
+        ConflictError,
+      );
+
+      await expect(
+        profileAxisPlatformApi.create(coach.id, parseInput({ key })),
+      ).rejects.toMatchObject({ details: { field: "key" } });
+    });
+
+    it("shares one createProfileAxisRow path: an admin-created key conflicts on platform create (DR-2)", async () => {
+      const key = uniqueKey("shared-path");
+      const adminCreated = await profileAxisAdminApi.createProfileAxis(parseInput({ key }));
+
+      createdAxisIds.push(adminCreated.id);
+
+      await expect(profileAxisPlatformApi.create(coach.id, parseInput({ key }))).rejects.toThrow(
+        ConflictError,
+      );
+    });
+
+    it("shares one createProfileAxisRow path: a platform-created key conflicts on admin create (DR-2)", async () => {
+      const key = uniqueKey("shared-path");
+      const platformCreated = await profileAxisPlatformApi.create(coach.id, parseInput({ key }));
+
+      createdAxisIds.push(platformCreated.id);
+
+      await expect(profileAxisAdminApi.createProfileAxis(parseInput({ key }))).rejects.toThrow(
+        ConflictError,
+      );
+    });
+  });
+
+  describe("list ordering (Must-Test 3)", () => {
+    it("returns axes ordered by label asc, unlike the admin createdAt desc order", async () => {
+      const zulu = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Zulu" }));
+
+      createdAxisIds.push(zulu.id);
+
+      const alpha = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Alpha" }));
+
+      createdAxisIds.push(alpha.id);
+
+      const mike = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Mike" }));
+
+      createdAxisIds.push(mike.id);
+
+      const axes = await profileAxisPlatformApi.list(coach.id);
+      const ids = axes.map((row) => row.id);
+
+      expect(ids.indexOf(alpha.id)).toBeLessThan(ids.indexOf(mike.id));
+      expect(ids.indexOf(mike.id)).toBeLessThan(ids.indexOf(zulu.id));
     });
   });
 });

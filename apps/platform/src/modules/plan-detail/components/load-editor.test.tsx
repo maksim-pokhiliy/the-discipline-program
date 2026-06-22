@@ -1,6 +1,6 @@
 import { createElement } from "react";
 
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ProfileAxis } from "@repo/contracts/coaching/profile-axis";
@@ -25,6 +25,8 @@ const LEVEL_AXIS = makeAxis({ id: AXIS_ID_LEVEL, label: "Level", values: ["RX", 
 
 const onChange = vi.fn();
 const axesState: { data: ProfileAxis[] } = { data: [] };
+const createAxisMutate = vi.fn();
+const createAxisState = { isPending: false };
 
 vi.mock("./exercise-picker", () => {
   const renderExercisePickerMock = (props: { value: string | null }) =>
@@ -42,13 +44,18 @@ vi.mock("@app/lib/hooks/use-profile-axes", () => ({
 }));
 
 vi.mock("@app/lib/hooks/use-create-profile-axis", () => ({
-  useCreateProfileAxis: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateProfileAxis: () => ({
+    mutateAsync: createAxisMutate,
+    isPending: createAxisState.isPending,
+  }),
 }));
 
 const { LoadEditor } = await import("./load-editor");
 
 beforeEach(() => {
   axesState.data = [];
+  createAxisState.isPending = false;
+  createAxisMutate.mockReset();
 });
 
 afterEach(() => {
@@ -304,5 +311,133 @@ describe("LoadEditor byProfile kind-first authoring", () => {
 
     expect(screen.getByRole("spinbutton", { name: "Male kg" })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Female kg" })).toBeInTheDocument();
+  });
+});
+
+describe("LoadEditor byProfile inline create round-trip", () => {
+  const NEW_AXIS_ID = "clp9z8x7w0000abcd12axscale";
+
+  const renderUnbound = (): void => {
+    render(
+      <LoadEditor
+        value={{
+          kind: "byProfile",
+          axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
+          cells: [],
+        }}
+        onChange={onChange}
+      />,
+    );
+  };
+
+  const revealCreateForm = (typedName: string): void => {
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Axis" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Axis" }), {
+      target: { value: typedName },
+    });
+    fireEvent.click(screen.getByText(`Create "${typedName}"`));
+  };
+
+  const addValue = (value: string): void => {
+    const valuesField = screen.getByRole("textbox", { name: "Values" });
+
+    fireEvent.change(valuesField, { target: { value } });
+    fireEvent.keyDown(valuesField, { key: "Enter" });
+  };
+
+  it("binds the created axis and regenerates the cells on a resolved create (Must-Test 9)", async () => {
+    createAxisMutate.mockResolvedValue(
+      makeAxis({ id: NEW_AXIS_ID, label: "Scale", values: ["Light", "Heavy"] }),
+    );
+    renderUnbound();
+    revealCreateForm("Scale");
+    addValue("Light");
+    addValue("Heavy");
+
+    fireEvent.click(screen.getByRole("button", { name: "Create axis" }));
+
+    expect(createAxisMutate).toHaveBeenCalledWith({
+      key: "Scale",
+      label: "Scale",
+      values: ["Light", "Heavy"],
+    });
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        kind: "byProfile",
+        axes: [
+          { kind: "catalog", axisId: NEW_AXIS_ID, label: "Scale", values: ["Light", "Heavy"] },
+        ],
+        cells: [
+          { coords: ["Light"], kg: Number.NaN },
+          { coords: ["Heavy"], kg: Number.NaN },
+        ],
+      }),
+    );
+  });
+
+  it("keeps Create axis disabled until both a name and at least one value exist (Must-Test 10)", () => {
+    renderUnbound();
+    revealCreateForm("Scale");
+
+    expect(screen.getByRole("button", { name: "Create axis" })).toBeDisabled();
+
+    addValue("Light");
+
+    expect(screen.getByRole("button", { name: "Create axis" })).toBeEnabled();
+  });
+
+  it("keeps Create axis disabled while the create mutation is pending (Must-Test 10)", () => {
+    createAxisState.isPending = true;
+    renderUnbound();
+    revealCreateForm("Scale");
+    addValue("Light");
+
+    expect(screen.getByRole("button", { name: "Create axis" })).toBeDisabled();
+  });
+
+  it("keeps the form open, surfaces an inline error, and does not bind on a rejected create (Must-Test 11)", async () => {
+    createAxisMutate.mockRejectedValue(new Error("conflict"));
+    renderUnbound();
+    revealCreateForm("Scale");
+    addValue("Light");
+
+    fireEvent.click(screen.getByRole("button", { name: "Create axis" }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/an axis with this name may already exist/i)).toBeInTheDocument(),
+    );
+
+    expect(screen.getByRole("textbox", { name: "Axis name" })).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("renders an orphan bound catalog axis from its snapshot without crashing (Must-Test 13)", () => {
+    axesState.data = [];
+
+    render(
+      <LoadEditor
+        value={{
+          kind: "byProfile",
+          axes: [
+            { kind: "catalog", axisId: NEW_AXIS_ID, label: "Retired Axis", values: ["RX", "SC"] },
+          ],
+          cells: [
+            { coords: ["RX"], kg: 40 },
+            { coords: ["SC"], kg: 28 },
+          ],
+        }}
+        onChange={onChange}
+      />,
+    );
+
+    const chipLabels = Array.from(document.querySelectorAll(".MuiChip-label")).map(
+      (node) => node.textContent,
+    );
+
+    expect(screen.getByRole("combobox", { name: "Axis" })).toHaveValue("Retired Axis");
+    expect(chipLabels).toEqual(["RX", "SC"]);
+    expect(screen.getByRole("spinbutton", { name: "RX kg" })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "SC kg" })).toBeInTheDocument();
   });
 });
