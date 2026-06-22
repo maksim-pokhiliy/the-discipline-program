@@ -4,16 +4,16 @@
 
 ## Board
 
-| #   | Step                      | Status       | Pointer                                                                                                                                                      |
-| --- | ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0   | Found + ontology lock     | ✅ done      | charter · decisions D-1/D-2/D-3 · journal 2026-06-22                                                                                                         |
-| 1   | Catalog + admin           | ✅ shipped\* | W1 on `feat/profile-axis-catalog-w1` (model+contract+endpoints+admin+carve-out+tests+docs); **\*migration file + owner-smoke pending `SHADOW_DATABASE_URL`** |
-| 2   | Coach binding (sacred-VO) | ⬜ pending   | D-3 gate: plan-editor-compose decision + four-projection re-check FIRST                                                                                      |
-| 3   | Athlete two-layer profile | ⬜ pending   | curated picker + write-back by kind + selections migration                                                                                                   |
+| #   | Step                      | Status       | Pointer                                                                                                                                                                                                    |
+| --- | ------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Found + ontology lock     | ✅ done      | charter · decisions D-1/D-2/D-3 · journal 2026-06-22                                                                                                                                                       |
+| 1   | Catalog + admin           | ✅ shipped\* | W1 on `feat/profile-axis-catalog-w1` (model+contract+endpoints+admin+carve-out+tests+docs); **\*migration `20260622113153_add_profile_axes` IN branch; PR #304 CLEAN/green — pending owner-smoke + merge** |
+| 2   | Coach binding (sacred-VO) | ⬜ pending   | D-3 gate: plan-editor-compose decision + four-projection re-check FIRST                                                                                                                                    |
+| 3   | Athlete two-layer profile | ⬜ pending   | curated picker + write-back by kind + selections migration                                                                                                                                                 |
 
 ## Next action
 
-**▶ Land the W1 migration + owner-smoke, then open the W1 PR; W2 is the next executor session.** W1 code is shipped + reviewed + tested on `feat/profile-axis-catalog-w1` (commits: founding · `feat(db)` model · `feat(contracts)` · `feat(api-server)` · `feat(admin)` + carve-out · `test(coaching)` · close-out docs). The ONE remaining mechanical step: provide `SHADOW_DATABASE_URL` (or run `! pnpm db:migrate --name add_profile_axes`) → commit the generated migration → `pnpm db:reset` (re-applies + seeds) → owner-smoke on dev admin (port 3002 → Profile Axes → create `level` with `RX`/`SC`, edit a value, delete) → open the PR. **W2 (coach binding — sacred-VO, decision-first): its FIRST task is the plan-editor-compose ratification + four-projection re-check (D-3), BEFORE any byProfile-VO code.**
+**▶ Owner: local smoke → merge PR #304 (CLEAN/green, migration in branch), then W2 — the next executor session.** W1 code is shipped + reviewed + tested on `feat/profile-axis-catalog-w1` (commits: founding · `feat(db)` model · `feat(contracts)` · `feat(api-server)` · `feat(admin)` + carve-out · `test(coaching)` · close-out docs). Remaining (owner-side): `pnpm db:reset` → owner-smoke on dev admin (port 3002 → Profile Axes → create `level` with `RX`/`SC`, edit, delete; dup-key → 409) → merge #304 (migration auto-applies to prod via `db-migrate.yml`; the PREVIEW DB has no auto-migrate, so Profile Axes 500s there until the schema is pushed) → gated api-server suite (~10 min) on your ok. **W2 (coach binding — sacred-VO, decision-first): its FIRST task is the plan-editor-compose ratification + four-projection re-check (D-3), BEFORE any byProfile-VO code.**
 
 ## Open decisions awaiting ratification
 

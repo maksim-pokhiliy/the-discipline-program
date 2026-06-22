@@ -18,3 +18,9 @@ Append-only. One entry per session/step.
 - **Carry-forwards → deferred.md:** PAC-8 (W2 validation-law reconciliation: catalog NFKC + case-sensitive key vs `load.ts`) · PAC-9 (axis-delete referential policy) · PAC-10 (future `library` bounded context) · PAC-11 (`TagsInput` raw-vs-NFKC dedup mismatch).
 - **OPEN — the one mechanical step:** the Prisma migration file is NOT authored. `prisma migrate dev` needs `SHADOW_DATABASE_URL`, absent in the local `.env`; owner approved pausing at Gate A. The model is in `schema.prisma` + `db:generate`'d (type-checks green), but the migration FILE + owner-smoke are pending the shadow URL — until then the admin module 500s (P2021) on a fresh DB.
 - **Next:** land the migration + owner-smoke → W1 PR → W2 (D-3 gate first).
+
+## 2026-06-22 — W1 migration authored + PR #304 opened (post-Gate-A)
+
+- **SHADOW_DATABASE_URL wired** (gitignored `api-server/.env`, a SEPARATE Neon branch ≠ dev) → migration `20260622113153_add_profile_axes` authored offline via `prisma migrate diff` (memory `offline-prisma-migration-authoring`). **Supersedes the prior entry's "migration file NOT authored / pending SHADOW_DATABASE_URL" Gate-A note.**
+- **PR #304 opened** (`feat/profile-axis-catalog-w1`) — CLEAN / MERGEABLE, all checks green (Build · dep:check · Format · Lint · Tests 6m28s · Type check · Vercel ×3 · claude-review). gh-verified (co-owner check, not on report alone).
+- **Remaining = owner-side:** local smoke (`db:reset` → admin :3002 → Profile Axes CRUD + dup-key 409) → merge (#304 → migration auto-applies to prod via `db-migrate.yml`; the PREVIEW DB has NO auto-migrate — Profile Axes 500s there until the schema is pushed) → gated api-server suite (~10 min, on owner ok). Then W2 (D-3 gate first).
