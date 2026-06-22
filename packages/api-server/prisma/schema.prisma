@@ -660,6 +660,7 @@ model Schema {
   rowGroups        RowGroup[]
   benchmarkResults BenchmarkResult[]
 
+  @@unique([blockId, order], map: "schemas_block_order")
   @@index([blockId, order])
   @@index([groupId])
   @@map("training_schemas")
