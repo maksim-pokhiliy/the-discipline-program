@@ -4,6 +4,8 @@
 - **Date:** 2026-04-12
 - **Context:** The project has a classic anemic domain: Zod schemas define data shapes, mappers convert between layers, and business logic lives directly in endpoint files. There is no service layer — `packages/api-server/src/services/` contained only `auth.ts` (now moved to `iam/auth-service.ts`).
 
+> **Revised (2026-06-22 doc sweep):** a first real service has since been extracted — `services/retention/` — so `services/` is no longer empty and the ADR's own "supersede when the first service appears" trigger has fired for that slice. The anemic-by-default stance still holds for domain CRUD.
+
 ## Decision
 
 Accept the anemic model as the current architecture. Do not introduce a service layer preemptively.

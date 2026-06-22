@@ -5,6 +5,8 @@
 - **Deciders:** Maksim (owner), Claude (co-owner)
 - **Tags:** `lms`, `plan-content`, `domain-model`, `api`, `yagni`
 
+> **Implementation note (2026-06-22 doc sweep):** row "kind" shipped via `enum ExerciseNature { CONCRETE | PLACEHOLDER | REST }` on the linked Exercise, not a row-level `RowKind` discriminator, and there is no `REST_SLOT` value — where this ADR sketches `RowKind → … | REST_SLOT`, the shipped contract differs.
+
 ## Context
 
 ADR-0040 made the "parallel block" a DERIVED concept: a schema was parallel iff it had ≥2 container children and neither `repetition` nor `arrangement` (`isStructurallyParallel(composition, { containerChildCount })`). Sub-schemas nested via `Schema.parentSchemaId` (a recursive Prisma self-relation); the composition carried an `arrangement` axis (`ordered | superset`) plus a top-level `interleaveOrder`; the atomic batch create was `POST …/schemas/parallel` (a parent schema + N ladder children).

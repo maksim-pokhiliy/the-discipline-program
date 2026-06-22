@@ -18,7 +18,7 @@ No app-level `.env.local`. Storybook does not boot the apps' env validators; it 
 .storybook/
   main.ts               Storybook config (framework: @storybook/nextjs-vite)
   preview.tsx           Decorators (theme provider, query client wrapper)
-  preview-head.html     Font preloads (Nunito Sans woff2)
+  preview-head.html     Font setup (Barlow + Barlow Condensed via Google Fonts)
 src/
   story-layout.tsx      Shared <StoryLayout /> wrapper for stories
   data-display/         Stories for data-display primitives

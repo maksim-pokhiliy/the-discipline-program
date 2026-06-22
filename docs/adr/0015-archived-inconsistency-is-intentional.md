@@ -4,6 +4,8 @@
 - **Date:** 2026-04-12
 - **Context:** Audit section 2 flagged that `TrainingPlanStatus.ARCHIVED` (enum) and `Workout.isArchived` (boolean) use different mechanisms for the same word "archived."
 
+> **Superseded by ADR-0037 (2026-06-22 doc sweep):** the `Workout` model and its `isArchived` boolean were removed in the compose pivot. The enum-vs-boolean inconsistency this ADR rationalised no longer exists; kept as history.
+
 ## Decision
 
 Keep the inconsistency. The two mechanisms are intentionally different because the underlying domain semantics differ:

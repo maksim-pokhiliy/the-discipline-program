@@ -41,7 +41,7 @@
 
 - pnpm catalog в `pnpm-workspace.yaml` для единых версий.
 - Turbo pipelines кэшируют `build/check-types/lint`; `dev/test` некэшируемые (см. `turbo.json`).
-- Pre-commit: husky + lint-staged + commitlint.
+- Pre-commit: check-secrets + lint-staged; commit-msg: commitlint; pre-push: dep:check + lint + check-types (cone, `...[origin/main]`).
 - Taskfile (`taskfile.dist.yml`) обёртка над pnpm — `task *`.
 - Sentry (`@sentry/nextjs`) + Vercel Analytics/Speed Insights + Upstash ratelimit/redis.
 

@@ -131,7 +131,7 @@ Subscription model родилась **именно** из этой метафо�
 | Periodization       | week → block (mesocycle) → cycle (macrocycle)                                                      | Wingate-академик мыслит блоками                         |
 | Прогрессия          | Single-axis per block (load OR volume)                                                             | См. [[one-progression-axis]]                            |
 | Readiness           | Sliding scale, не bool, runtime override                                                           | См. [[skip-lights-start]]                               |
-| Archetypes          | First-class entities, не string templates                                                          | §5.4 — direct response to "EMOM × 200" pain             |
+| Authoring primitive | Compose model — free nesting, not a fixed archetype catalog (ADR-0037/0041)                        | §5.4 — direct response to "EMOM × 200" pain             |
 | Authoring           | Constructive editor (assemble), не prose editor (write)                                            | §5.4                                                    |
 | Delivery mode       | Async-first (notes, video cues, athlete log)                                                       | 11K-following бренд + >100 атлетов соло                 |
 | Discipline coverage | Domain shape generic enough для ТА / ББ / ФББ / CF / лёгкая атлетика / реабилитация / Olympic prep | Reality of his portfolio                                |

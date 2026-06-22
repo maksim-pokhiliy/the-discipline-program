@@ -5,6 +5,8 @@
 - **Deciders:** Maksim Pokhiliy
 - **Tags:** `security`, `auth`, `rate-limiting`, `csp`
 
+> **Stale-fact note (2026-06-22 doc sweep):** for the _current_ session/revocation values see ADR-0012 — `SESSION_MAX_AGE` is **7 days** (not 30) and logout bumps a per-user `tokenVersion`, so the JWT is invalidated server-side rather than staying valid until expiry. Treat ADR-0012 as canonical where it and this doc disagree.
+
 ## Context
 
 A security audit identified several architectural decisions that require either infrastructure setup, business stakeholder input, or both. These are not bugs — they are design choices that the current pre-launch, single-admin, zero-traffic state does not yet force. Implementing them now would be speculative infrastructure. This ADR documents what was consciously deferred and the triggers that make each decision urgent.

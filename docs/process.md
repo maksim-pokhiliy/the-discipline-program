@@ -22,7 +22,7 @@ The progressive-refinement pipeline, mapped to our skills (prior art: the `/prd 
 
 ```
 understand → design → plan → build → review → close out
- analysis/    decisions   plan.md   /feature   git-diff   promote to docs
+ research     decisions   plan.md   /feature   git-diff   promote to docs
  + spec       (+ ADR)     + prompt   pipeline   review     + close-out
 ```
 

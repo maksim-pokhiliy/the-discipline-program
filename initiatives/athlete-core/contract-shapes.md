@@ -76,6 +76,8 @@ Best-of per (athlete, benchmark schema) by `RESULT_DIRECTIONS[type]` (min for ti
 
 ## 3. Performed\* redesign — LOCKED (minimal, D-LOGGING-MINIMAL)
 
+> **Superseded by D-BR-OWNED-HISTORY (see `decisions.md`):** the benchmark result was re-homed off `PerformedSession` to an athlete-owned, append-only `BenchmarkResult` (`userId, plannedSchemaId, result, recordedAt`; no `performedSessionId`, no `@@unique`). There is no `PerformedSchemaResult` / `performed-schema-result` entity under that name. The `PerformedSession` reshape (single `performedAt`, no unique) shipped as described below.
+
 - **`PerformedSession`:** DROP `@@unique([sessionId,userId])` (D-LAYERS — unlimited performances = history); replace `startedAt`/`completedAt` with a single `performedAt` (post-workout, no in-workout timing); keep `athleteNotes`/`coachNotes`; add `@@index([sessionId,userId,performedAt])`. The compliance tick (D-STATS, first + sticky) = the earliest performance (derived) or a cached `firstCompletedAt` — confirm in build.
 - **Benchmark result:** a `PerformedSchemaResult { performedSessionId, plannedSchemaId, result }` (result per §1.1) — attaches to the performed SCHEMA (a benchmark is a schema, not the whole session). Created only when the schema's `composition.benchmark` is set.
 - **NO `PerformedExerciseInstance`** in MVP (D-LOGGING-MINIMAL) — drop the per-row actuals path; revisit post-MVP.
