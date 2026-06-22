@@ -13,7 +13,13 @@ import {
   Typography,
 } from "@mui/material";
 
-import { type ByProfileAxis, type ByProfileCell, cellKgAtIndex } from "../lib/by-profile-cells";
+import {
+  axisLabel,
+  axisValues,
+  type ByProfileAxis,
+  type ByProfileCell,
+  cellKgAtIndex,
+} from "../lib/by-profile-cells";
 
 import { NumberField } from "./number-field";
 
@@ -49,7 +55,7 @@ export const ByProfileCellGrid = ({
 
   const renderSingleAxis = (axis: ByProfileAxis): ReactNode => (
     <Stack spacing={1}>
-      {axis.values.map((value, index) => (
+      {axisValues(axis).map((value, index) => (
         <Stack
           key={index}
           direction="row"
@@ -85,10 +91,10 @@ export const ByProfileCellGrid = ({
         <TableHead>
           <TableRow>
             <TableCell sx={{ color: "text.subtle", whiteSpace: "nowrap" }}>
-              {`${rows.name}${CORNER_SEPARATOR}${columns.name}`}
+              {`${axisLabel(rows)}${CORNER_SEPARATOR}${axisLabel(columns)}`}
             </TableCell>
 
-            {columns.values.map((columnValue, columnIndex) => (
+            {axisValues(columns).map((columnValue, columnIndex) => (
               <TableCell key={columnIndex} align="center" sx={{ whiteSpace: "nowrap" }}>
                 {columnValue}
               </TableCell>
@@ -97,14 +103,14 @@ export const ByProfileCellGrid = ({
         </TableHead>
 
         <TableBody>
-          {rows.values.map((rowValue, rowIndex) => (
+          {axisValues(rows).map((rowValue, rowIndex) => (
             <TableRow key={rowIndex}>
               <TableCell component="th" scope="row" sx={{ whiteSpace: "nowrap" }}>
                 {rowValue}
               </TableCell>
 
-              {columns.values.map((columnValue, columnIndex) => {
-                const cellIndex = rowIndex * columns.values.length + columnIndex;
+              {axisValues(columns).map((columnValue, columnIndex) => {
+                const cellIndex = rowIndex * axisValues(columns).length + columnIndex;
 
                 return (
                   <TableCell key={columnIndex} align="center">
@@ -128,7 +134,7 @@ export const ByProfileCellGrid = ({
     </TableContainer>
   );
 
-  if (rowAxis === undefined || rowAxis.values.length === 0) {
+  if (rowAxis === undefined || axisValues(rowAxis).length === 0) {
     return <>{renderEmpty()}</>;
   }
 
