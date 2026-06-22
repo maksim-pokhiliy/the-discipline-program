@@ -10,7 +10,7 @@ D-numbered ratified decisions. The SSOT for "why." Cross-initiative architecture
 | --- | --------------------------------------------------------------------------------- | ------------------ |
 | D-1 | Two-category ontology: human identity vs training classification                  | RATIFIED           |
 | D-2 | Profile axis = first-class catalog entity; freedom via find-or-create             | RATIFIED           |
-| D-3 | byProfile axis = discriminated union (catalog \| human); resolver branches        | OPEN (gated to W2) |
+| D-3 | byProfile axis = discriminated union (catalog \| human); resolver branches        | RATIFIED (W2 gate) |
 | D-4 | W1 `ProfileAxis.key` is case-sensitive `@unique` (no `keyLower` mirror)           | RATIFIED (W1)      |
 | D-5 | W1 placement = `coaching/`; admin admitted via file-precise dep-cruiser carve-out | RATIFIED (W1)      |
 
@@ -36,14 +36,15 @@ D-numbered ratified decisions. The SSOT for "why." Cross-initiative architecture
 
 ### D-3 — byProfile axis = discriminated union (catalog | human); resolver branches by kind
 
-- **Status:** OPEN — owner-APPROVED in concept (2026-06-22); RATIFICATION GATE before any W2 code.
-- **Decision.** A `byProfile` load axis becomes a discriminated union:
-  - `{ kind: "catalog", axisId }` → resolves from `profileSelections[axisId]`.
-  - `{ kind: "human", attribute: "gender" }` → resolves by reading the typed `AthleteProfile.gender` column (mapped to the axis value); `attribute` is a CLOSED enum, `GENDER`-only at start (weight already resolves via bodyweight/percentage loads; height doesn't differentiate).
-    The resolver branches by `kind`. Write-back is symmetric: a human-axis pick writes the `gender` column, a catalog-axis pick writes `profileSelections` by axisId.
-- **Rationale.** This is HOW D-1's two categories meet load resolution WITHOUT merging them: the catalog stays training-only, the human attribute reads the typed column, the athlete never re-states his sex. The discriminated-union is the codebase's native pattern (`loadSchema` is already a `discriminatedUnion` on `kind`).
-- **GATE (why OPEN).** The `byProfile` load VO is SACRED in plan-editor-compose (`D-PERSIST`) with four-projection invariance. This change is ratified ONLY by: (1) a cross-ref decision added to `plan-editor-compose/decisions.md`, (2) a four-projection re-check on the changed VO. Both run as W2's FIRST task, BEFORE the VO code. W1 does not touch the VO.
-- **Links.** plan-editor-compose `D-PERSIST` (sacred VO); contracts `lms/_shared/load.ts`; athlete-core `D-FIELDS-GENDER-INERT` (named this exact fix). Deferred items PAC-1/PAC-7.
+- **Status:** RATIFIED (W2 gate, 2026-06-22) — concept owner-APPROVED 2026-06-22; the ratification gate (four-projection re-check + plan-editor-compose cross-ref) is now DISCHARGED. See `four-projection-recheck.md` for the full written analysis.
+- **Decision.** A `byProfile` load axis becomes a discriminated union (`z.discriminatedUnion("kind", …)` — the codebase-native pattern):
+  - `{ kind:"catalog", axisId, label, values }` → resolves from `profileSelections[axisId]`; `label`+`values` are a **denormalized snapshot** of the catalog row at authoring time (keeps the `superRefine` + every render/picker a pure function of the load; the resolver never reads `ProfileAxis`).
+  - `{ kind:"human", attribute:"gender" }` → resolves by reading the typed `AthleteProfile.gender` column via a LOCAL inline `MALE|FEMALE → coord` map; **NO denormalized values** (the closed `attribute` implies the fixed const `GENDER_AXIS_COORDS = {MALE:"Male", FEMALE:"Female"}`), which structurally locks the human arm to the gender vocabulary. `attribute` is a CLOSED enum, `GENDER`-only (weight resolves via bodyweight/percentage; height doesn't differentiate). `gender = null` → unresolvable, **no pick offered**.
+    The resolver branches by `kind`. Write-back is symmetric: a human-axis pick writes the `gender` column (W3), a catalog-axis pick writes `profileSelections` by `axisId` (W2 inline picker + read; W3 profile-card + bulk migration).
+- **Four-projection verdict (the gate).** PASSED. The **current free-string axis `{name, values}` is a latent NAME-COLLISION** — `name:"gender"` (resolve from the typed column, group by intrinsic identity) vs `name:"level"` (resolve from a manual pick, group by mutable classification) is "depends what was meant" in the EXECUTE and ANALYTICS projections. D-3's union is the lens-MANDATED split on `kind` — the inverse of confirming a primitive, structurally identical to `D-LADDER` (one `steps` field → two primitives because it collided in analytics). Each arm means one thing across all four projections; the `kind` discriminant + disjoint identity-space (cuid `axisId` vs closed `attribute`) clear the cross-arm collision; D-1 holds (gender resolved in exactly one place — the human arm). Full per-arm × per-projection table in `four-projection-recheck.md` §4.
+- **OQ resolutions (gate).** Encoding + denormalization → §5; find-or-create UX = kind-first authoring → §6 OQ-2; profileSelections re-key cut = W2 reads by `axisId` / W3 owns write + bulk migration, intermediate-red stated → §6 OQ-3; human coord values = `Male`/`Female` lms-local → §6 OQ-4. **PAC-8** (normalization/case-fold) + **PAC-9** (axis-delete = tolerate-orphan) resolved as a benefit of denormalize+bind-by-`axisId` → §7.
+- **Supersedes (cross-ref, not a deep-edit).** Revises primitive-v2 `D-V2-PROFILE-NESTING` (#17, `reshape-design.md` §2.5) — free-string axis → discriminated union; cells (coords/kg) + the 1–2 axes cap preserved. primitive-v2 §2.5 scoped #17 to authoring+render with "no live reader (resolver is Phase 3)"; W2 is that Phase-3 wiring. primitive-v2 is CLOSED — forward cross-ref only.
+- **Links.** `four-projection-recheck.md` (the gate analysis); plan-editor-compose `D-PERSIST` + the new cross-ref entry (sacred VO); contracts `lms/_shared/load.ts`; athlete-core `D-FIELDS-GENDER-INERT` (named this exact fix). Discharges PAC-7; sets up PAC-1 (W2 migration probe) / PAC-2 (W3 selections re-key).
 
 ### D-4 — W1 `ProfileAxis.key` is case-sensitive `@unique` (no `keyLower` mirror)
 
