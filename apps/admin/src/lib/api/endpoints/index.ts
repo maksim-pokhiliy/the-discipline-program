@@ -4,6 +4,7 @@ export { createDashboardAPI } from "./dashboard";
 export { createExercisesAPI } from "./exercises";
 export { createLabelsAPI } from "./labels";
 export { createPagesAPI } from "./pages";
+export { createProfileAxesAPI } from "./profile-axes";
 export { createProductsAPI } from "./products";
 export { createReviewsAPI } from "./reviews";
 export { createUploadAPI } from "./upload";

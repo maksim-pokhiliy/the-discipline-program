@@ -12,6 +12,7 @@ export const adminKeys = {
   blog: createEntityKeys(ROOT, "blog"),
   exercises: createEntityKeys(ROOT, "exercises"),
   labels: createEntityKeys(ROOT, "labels"),
+  profileAxes: createEntityKeys(ROOT, "profileAxes"),
   products: createEntityKeys(ROOT, "products"),
   reviews: createEntityKeys(ROOT, "reviews"),
   users: {

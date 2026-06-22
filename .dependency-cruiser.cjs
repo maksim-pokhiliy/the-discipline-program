@@ -278,7 +278,12 @@ module.exports = {
         "silent rule weakening. File-precise carve-out established in 1.2.J + 1.3.A.",
       from: {
         path: "^apps/admin/",
-        pathNot: "^apps/admin/src/app/api/admin/users/\\[id\\]/route\\.ts$",
+        pathNot: [
+          "^apps/admin/src/app/api/admin/users/\\[id\\]/route\\.ts$",
+          "^apps/admin/src/app/api/admin/profile-axes/route\\.ts$",
+          "^apps/admin/src/app/api/admin/profile-axes/\\[id\\]/route\\.ts$",
+          "^apps/admin/src/app/api/admin/profile-axes/page-data/route\\.ts$",
+        ],
       },
       to: { path: "^packages/api-server/src/(endpoints|mappers)/coaching/" },
     },

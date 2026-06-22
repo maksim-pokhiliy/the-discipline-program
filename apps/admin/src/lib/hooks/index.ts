@@ -7,6 +7,7 @@ export * from "./use-dashboard";
 export * from "./use-exercises";
 export * from "./use-labels";
 export * from "./use-pages";
+export * from "./use-profile-axes";
 export * from "./use-products";
 export * from "./use-reviews";
 export * from "./use-upload";
