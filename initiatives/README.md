@@ -4,7 +4,7 @@ A big feature spans many sessions. Without a durable home, each new session re-d
 
 > **Where this sits.** Initiatives are the MIDDLE of the planning stack: **`docs/roadmap.md`** (phases from now to MVP launch — read first, every session) → **an initiative** (this — one epic, usually one phase) → **`docs/adr/`** (cross-cutting architecture). The full team-of-one-plus-AI workflow and the Definition of Done discipline live in **`docs/process.md`**.
 
-This **replaces the two-session planner/executor workflow** (`implementation/`, now superseded history). One session does both halves: plan the step, run the code through `/feature` (or an ultracode workflow), validate, close out. The `/feature` pipeline stays the quality gate — the single-session model drops the _shuttle ceremony_, not the quality bar, and (since 2026-06-03) **not the structured board either**.
+This **replaces the two-session planner/executor workflow** (now superseded history). One session does both halves: plan the step, run the code through `/feature` (or an ultracode workflow), validate, close out. The `/feature` pipeline stays the quality gate — the single-session model drops the _shuttle ceremony_, not the quality bar, and (since 2026-06-03) **not the structured board either**.
 
 ## An initiative
 
@@ -42,18 +42,16 @@ At the end of any session that touched the initiative:
 
 ## Decisions vs working state — doc-map
 
-| Home                                                               | Holds                                                                                   |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `docs/adr/`                                                        | durable cross-initiative architecture decisions (the big WHY)                           |
-| `docs/` (roadmap, runbooks, personas, `planner-discipline.md`)     | curated project docs + the planner read/verify-then-spec checklists                     |
-| `initiatives/<slug>/decisions.md`                                  | step-level ratified decisions (the initiative's WHY)                                    |
-| `initiatives/<slug>/deferred.md`                                   | carry-forwards / WARNINGs with disposition                                              |
-| `initiatives/<slug>/{charter,plan,state,journal}.md` + design docs | WHERE WE ARE                                                                            |
-| `initiatives/ACTIVE`                                               | the active slug (the SessionStart hook reads it)                                        |
-| `analysis/`                                                        | training-domain reference corpus (`source/` sacred) + pre-pivot derivation (history)    |
-| `implementation/`                                                  | pre-pivot execution log — **SUPERSEDED history**; live facts migrated to the initiative |
-| `.feature-dev/<ts>/`                                               | gitignored scratch — promote out of here at every gate                                  |
-| memory                                                             | cross-session pointers (active initiative, durable feedback)                            |
+| Home                                                               | Holds                                                               |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `docs/adr/`                                                        | durable cross-initiative architecture decisions (the big WHY)       |
+| `docs/` (roadmap, runbooks, personas, `planner-discipline.md`)     | curated project docs + the planner read/verify-then-spec checklists |
+| `initiatives/<slug>/decisions.md`                                  | step-level ratified decisions (the initiative's WHY)                |
+| `initiatives/<slug>/deferred.md`                                   | carry-forwards / WARNINGs with disposition                          |
+| `initiatives/<slug>/{charter,plan,state,journal}.md` + design docs | WHERE WE ARE                                                        |
+| `initiatives/ACTIVE`                                               | the active slug (the SessionStart hook reads it)                    |
+| `.feature-dev/<ts>/`                                               | gitignored scratch — promote out of here at every gate              |
+| memory                                                             | cross-session pointers (active initiative, durable feedback)        |
 
 ## Starting a new initiative
 
