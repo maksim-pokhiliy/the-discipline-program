@@ -102,5 +102,5 @@ OPEN (prior): W2-IDEM-REMOUNT (low — by-design; W3 deliberately kept it, red l
 - **The corpus is the floor, not the ceiling** — one PERSONAL plan; m/f (`byProfile`) and RX/SC are real despite corpus cardinality 1/0 (D-5/D-6).
 - **No typed relation kinds; no chips-as-blanket-mechanism** (D-4; F-CHIPS rejected as "костыль") — channel-3 carriers decided per case in follow-ups; a relation gains typed semantics ONLY against a real engine (ADR-0038 re-introduce-fresh).
 - **Owner verbatim bars** in `decisions.md` D-6 (TOTAL dead, footnote=ordering, per-set=row-group) — quote them in runner prompts, don't re-litigate.
-- **`docs/roadmap.md` was removed** (W2 commit `58de8394`, owner-requested) — don't expect it; the Phase-4 score-type debt it carried is re-anchored to the `Performed*`/`OneRMRecord` standing debt in `deferred.md`.
+- **`docs/roadmap.md`** was briefly removed in W2 (commit `58de8394`) but has since been rewritten and exists again (7-phase roadmap, 2026-06-11); the Phase-4 score-type debt it carried is re-anchored to the `Performed*`/`OneRMRecord` standing debt in `deferred.md`.
 - Predecessors (`plan-editor-compose`, `compose-authoring-ux`) are CLOSED; their decisions describe main's current code, not this redesign's constraints — except the charter's Sacred list.

@@ -6,7 +6,7 @@
 
 **Acceptance criteria** — both gates, on the mock prototype, coach-POV:
 
-1. **Expressiveness** — any structure from the coach's real plans composes by free nesting. Canonical test = the "Gauntlet" (`algebra-spec.md` §3); broader = `analysis/source/`. NOT "covers N archetypes."
+1. **Expressiveness** — any structure from the coach's real plans composes by free nesting. Canonical test = the "Gauntlet" (`algebra-spec.md` §3); the broader `analysis/source/` corpus was deleted 2026-06-22, so the Gauntlet is the durable fixture. NOT "covers N archetypes."
 2. **Ergonomics** — he builds it _fast_. The real flee-to-Sheets lever. Requires **duplication** (week/day/block/node) in scope — the real workflow is clone-and-tweak, not build-from-scratch.
 
 **Scope.** Session-and-below plan content: the compose algebra, the constructor UI, the contracts + schema cut, the seed-as-compositions.
