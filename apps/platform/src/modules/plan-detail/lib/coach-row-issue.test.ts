@@ -7,9 +7,6 @@ import { coachRowIssue } from "./coach-row-issue";
 
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const EXERCISE_ID = "clp9z8x7w0000abcd1234ex001";
-const AXIS_ID_LEVEL = "clp9z8x7w0000abcd12axlevel";
-const AXIS_ID_SEX = "clp9z8x7w0000abcd12ax00sex";
-const SYSTEM_GENDER_AXIS_ID = "cgender000000000000000000";
 
 const firstIssue = (payload: Record<string, unknown>): ZodIssue => {
   const result = createSchemaRowSchema.safeParse({
@@ -42,38 +39,35 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     expect(coachRowIssue(issue)).toBe("Enter a weight greater than 0.");
   });
 
-  it("maps an unbound byProfile catalog axis to the pick prompt", () => {
+  it("maps an empty byProfile axis name", () => {
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ axisId: "", label: "", values: [], binding: null }],
+        axes: [{ name: "", values: ["RX"] }],
         cells: [{ coords: ["RX"], kg: 5 }],
       },
     });
 
-    expect(coachRowIssue(issue)).toBe("Pick an axis for this dimension (or create one).");
+    expect(coachRowIssue(issue)).toBe("Name each axis (for example level or sex).");
   });
 
-  it("maps two byProfile axes on the same dimension to the distinct prompt", () => {
+  it("maps an empty byProfile axis value", () => {
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [
-          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX"], binding: null },
-          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["SC"], binding: null },
-        ],
-        cells: [{ coords: ["RX", "SC"], kg: 5 }],
+        axes: [{ name: "level", values: [""] }],
+        cells: [{ coords: [""], kg: 5 }],
       },
     });
 
-    expect(coachRowIssue(issue)).toBe("Each axis must be a different dimension.");
+    expect(coachRowIssue(issue)).toBe("Fill in every axis value, or remove the empty one.");
   });
 
   it("maps a byProfile axis with duplicate values (QA-001)", () => {
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "RX"], binding: null }],
+        axes: [{ name: "level", values: ["RX", "RX"] }],
         cells: [
           { coords: ["RX"], kg: 43 },
           { coords: ["RX"], kg: 30 },
@@ -88,7 +82,7 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX"], binding: null }],
+        axes: [{ name: "level", values: ["RX"] }],
         cells: [{ coords: ["RX"], kg: 0 }],
       },
     });
@@ -101,8 +95,8 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
       load: {
         kind: "byProfile",
         axes: [
-          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null },
-          { axisId: AXIS_ID_SEX, label: "Sex", values: ["♂", "♀"], binding: null },
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
         ],
         cells: [
           { coords: ["RX", "♂"], kg: 9 },
@@ -119,32 +113,10 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null }],
+        axes: [{ name: "level", values: ["RX", "SC"] }],
         cells: [
           { coords: ["RX"], kg: 9 },
           { coords: ["MASTER"], kg: 6 },
-        ],
-      },
-    });
-
-    expect(coachRowIssue(issue)).toBe("Pick axis values that match the axes you defined.");
-  });
-
-  it("maps a bound gender byProfile axis with a coord gap to the coords prompt", () => {
-    const issue = firstIssue({
-      load: {
-        kind: "byProfile",
-        axes: [
-          {
-            axisId: SYSTEM_GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
-        ],
-        cells: [
-          { coords: ["Male"], kg: 24 },
-          { coords: ["Other"], kg: 20 },
         ],
       },
     });

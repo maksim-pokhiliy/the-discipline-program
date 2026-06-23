@@ -185,7 +185,6 @@ export const BENCHMARK_LABEL_BY_RESULT_TYPE = {
 
 export const SET_ONE_RM_LABEL = "Set 1RM";
 export const PICK_PROFILE_LABEL = "Pick profile";
-export const SET_SEX_STEER_LABEL = "Set your sex in your profile";
 export const BODYWEIGHT_LABEL = "Bodyweight";
 export const KG_LABEL = "kg";
 export const LOAD_AT_PREFIX = "@";

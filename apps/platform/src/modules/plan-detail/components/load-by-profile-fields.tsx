@@ -1,29 +1,41 @@
 "use client";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Divider, Stack, Typography } from "@mui/material";
-
-import type { ProfileAxis } from "@repo/contracts/coaching/profile-axis";
+import CloseIcon from "@mui/icons-material/Close";
+import { Button, Divider, IconButton, Stack, TextField, Typography } from "@mui/material";
 
 import {
   type ByProfileAxis,
   type ByProfileCell,
   type ByProfileLoad,
-  makeAxisDraft,
   regenerateCells,
+  renameAxisValue,
   setCellKgByIndex,
 } from "../lib/by-profile-cells";
 
-import { ByProfileAxisField } from "./by-profile-axis-field";
 import { ByProfileCellGrid } from "./by-profile-cell-grid";
 
 const MAX_AXES = 2;
 const MIN_AXES = 1;
+const MIN_VALUES = 1;
+const EMPTY_NAME = "";
+const EMPTY_VALUE = "";
+const AXIS_NAME_WIDTH = 200;
+const VALUE_FIELD_WIDTH = 160;
 const ADD_AXIS_LABEL = "Add axis";
+const ADD_VALUE_LABEL = "Add value";
+const REMOVE_AXIS_ARIA = "Remove axis";
+const REMOVE_VALUE_ARIA = "Remove value";
+const AXIS_NAME_LABEL = "Axis name";
+const AXIS_NAME_PLACEHOLDER = "e.g. level, sex";
+const VALUE_LABEL = "Value";
+const VALUE_PLACEHOLDER = "e.g. RX, SC";
 const GRID_LABEL = "Weights";
 const GRID_LABEL_FONT_SIZE_PX = 11;
 const GRID_LABEL_FONT_WEIGHT = 600;
 const GRID_LABEL_LETTER_SPACING = "0.06em";
+
+const makeAxis = (): ByProfileAxis => ({ name: EMPTY_NAME, values: [EMPTY_VALUE] });
 
 type LoadByProfileFieldsProps = {
   value: ByProfileLoad;
@@ -40,58 +52,133 @@ export const LoadByProfileFields = ({
   const canAddAxis = axes.length < MAX_AXES;
   const canRemoveAxis = axes.length > MIN_AXES;
 
-  const commitAxes = (nextAxes: ByProfileAxis[], previousCells: readonly ByProfileCell[]): void => {
-    onChange({
-      kind: "byProfile",
-      axes: nextAxes,
-      cells: regenerateCells(nextAxes, previousCells),
-    });
+  const commitAxes = (nextAxes: ByProfileAxis[], nextCells: ByProfileCell[]): void => {
+    onChange({ kind: "byProfile", axes: nextAxes, cells: nextCells });
   };
 
-  const replaceDimension = (axisIndex: number, nextAxis: ByProfileAxis): void => {
+  const renameAxis = (axisIndex: number, name: string): void => {
     commitAxes(
-      axes.map((axis, index) => (index === axisIndex ? nextAxis : axis)),
-      [],
+      axes.map((axis, index) => (index === axisIndex ? { ...axis, name } : axis)),
+      [...cells],
     );
   };
 
-  const bindCatalog = (axisIndex: number, source: ProfileAxis): void => {
-    replaceDimension(axisIndex, {
-      axisId: source.id,
-      label: source.label,
-      values: source.values,
-      binding: source.binding,
-    });
+  const editValue = (axisIndex: number, valueIndex: number, nextValue: string): void => {
+    const previousValue = axes[axisIndex]?.values[valueIndex];
+
+    if (previousValue === undefined) {
+      return;
+    }
+
+    const nextAxes = axes.map((axis, index) =>
+      index === axisIndex
+        ? { ...axis, values: axis.values.map((v, i) => (i === valueIndex ? nextValue : v)) }
+        : axis,
+    );
+
+    commitAxes(nextAxes, renameAxisValue(cells, axisIndex, previousValue, nextValue));
+  };
+
+  const addValue = (axisIndex: number): void => {
+    const nextAxes = axes.map((axis, index) =>
+      index === axisIndex ? { ...axis, values: [...axis.values, EMPTY_VALUE] } : axis,
+    );
+
+    commitAxes(nextAxes, regenerateCells(nextAxes, cells));
+  };
+
+  const removeValue = (axisIndex: number, valueIndex: number): void => {
+    const nextAxes = axes.map((axis, index) =>
+      index === axisIndex
+        ? { ...axis, values: axis.values.filter((_, i) => i !== valueIndex) }
+        : axis,
+    );
+
+    commitAxes(nextAxes, regenerateCells(nextAxes, cells));
   };
 
   const addAxis = (): void => {
-    commitAxes([...axes, makeAxisDraft()], cells);
+    const nextAxes = [...axes, makeAxis()];
+
+    commitAxes(nextAxes, regenerateCells(nextAxes, cells));
   };
 
   const removeAxis = (axisIndex: number): void => {
-    commitAxes(
-      axes.filter((_, index) => index !== axisIndex),
-      cells,
-    );
+    const nextAxes = axes.filter((_, index) => index !== axisIndex);
+
+    commitAxes(nextAxes, regenerateCells(nextAxes, cells));
   };
 
   const handleCellChange = (index: number, kg: number): void => {
-    const nextCells: ByProfileCell[] = setCellKgByIndex(cells, index, kg);
-
-    onChange({ kind: "byProfile", axes: [...axes], cells: nextCells });
+    commitAxes([...axes], setCellKgByIndex(cells, index, kg));
   };
 
   return (
     <Stack spacing={2}>
       {axes.map((axis, axisIndex) => (
-        <ByProfileAxisField
-          key={axisIndex}
-          axis={axis}
-          onBindCatalog={(source) => bindCatalog(axisIndex, source)}
-          onRemove={() => removeAxis(axisIndex)}
-          canRemove={canRemoveAxis}
-          disabled={disabled}
-        />
+        <Stack key={axisIndex} spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <TextField
+              label={AXIS_NAME_LABEL}
+              size="small"
+              placeholder={AXIS_NAME_PLACEHOLDER}
+              value={axis.name}
+              onChange={(e) => renameAxis(axisIndex, e.target.value)}
+              disabled={disabled}
+              sx={{ maxWidth: AXIS_NAME_WIDTH }}
+            />
+
+            <IconButton
+              aria-label={REMOVE_AXIS_ARIA}
+              size="small"
+              onClick={() => removeAxis(axisIndex)}
+              disabled={disabled || !canRemoveAxis}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+
+          <Stack spacing={1} sx={{ pl: 1 }}>
+            {axis.values.map((axisValue, valueIndex) => (
+              <Stack
+                key={valueIndex}
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: "center", flexWrap: "wrap" }}
+              >
+                <TextField
+                  label={VALUE_LABEL}
+                  size="small"
+                  placeholder={VALUE_PLACEHOLDER}
+                  value={axisValue}
+                  onChange={(e) => editValue(axisIndex, valueIndex, e.target.value)}
+                  disabled={disabled}
+                  sx={{ maxWidth: VALUE_FIELD_WIDTH }}
+                />
+
+                <IconButton
+                  aria-label={REMOVE_VALUE_ARIA}
+                  size="small"
+                  onClick={() => removeValue(axisIndex, valueIndex)}
+                  disabled={disabled || axis.values.length <= MIN_VALUES}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ))}
+
+            <Button
+              size="tiny"
+              variant="text"
+              startIcon={<AddIcon fontSize="small" />}
+              onClick={() => addValue(axisIndex)}
+              disabled={disabled}
+              sx={{ alignSelf: "flex-start" }}
+            >
+              {ADD_VALUE_LABEL}
+            </Button>
+          </Stack>
+        </Stack>
       ))}
 
       {canAddAxis ? (

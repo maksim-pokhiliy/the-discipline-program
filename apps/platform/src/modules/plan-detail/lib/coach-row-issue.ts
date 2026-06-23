@@ -11,13 +11,12 @@ const PROFILE_COORD_ARITY_PREFIX = "byProfile cell coords must have one value pe
 const PROFILE_COORD_NOT_IN_AXIS_PREFIX = "byProfile coord";
 const PROFILE_COORDS_NOT_UNIQUE = "byProfile cells must have unique coords";
 const PROFILE_AXIS_DUPLICATE_SUFFIX = "has duplicate values; each value must be unique";
-const PROFILE_AXES_DISTINCT = "byProfile axes must be distinct dimensions";
 
 const COACH_MESSAGES = {
   setsPositive: "Enter a number of sets greater than 0.",
   weightPositive: "Enter a weight greater than 0.",
-  profileAxisPick: "Pick an axis for this dimension (or create one).",
-  profileAxisDistinct: "Each axis must be a different dimension.",
+  profileAxisName: "Name each axis (for example level or sex).",
+  profileAxisValue: "Fill in every axis value, or remove the empty one.",
   profileAxisDuplicate: "Give each axis value a unique name; two are the same.",
   profileCellWeight: "Enter a weight greater than 0 for each combination.",
   profileCartesianCover: "Fill in a weight for every combination of axis values.",
@@ -70,15 +69,13 @@ const coachMessageForLoad = (path: ZodIssue["path"], issue: ZodIssue): string | 
   const field = stringAt(path, 1);
 
   if (field === "axes") {
-    if (issue.message === PROFILE_AXES_DISTINCT) {
-      return COACH_MESSAGES.profileAxisDistinct;
-    }
-
     if (issue.message.endsWith(PROFILE_AXIS_DUPLICATE_SUFFIX)) {
       return COACH_MESSAGES.profileAxisDuplicate;
     }
 
-    return COACH_MESSAGES.profileAxisPick;
+    return stringAt(path, 3) === "values"
+      ? COACH_MESSAGES.profileAxisValue
+      : COACH_MESSAGES.profileAxisName;
   }
 
   if (field === "cells") {

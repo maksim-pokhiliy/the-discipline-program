@@ -90,14 +90,7 @@ describe("formatLoad", () => {
     it("renders a single-axis profile as coord:kg cells joined by ' / '", () => {
       const load: Load = {
         kind: "byProfile",
-        axes: [
-          {
-            axisId: "clp9z8x7w0000abcd12ax00sex",
-            label: "Sex",
-            values: ["M", "F"],
-            binding: null,
-          },
-        ],
+        axes: [{ name: "sex", values: ["M", "F"] }],
         cells: [
           { coords: ["M"], kg: 24 },
           { coords: ["F"], kg: 16 },
@@ -111,18 +104,8 @@ describe("formatLoad", () => {
       const load: Load = {
         kind: "byProfile",
         axes: [
-          {
-            axisId: "clp9z8x7w0000abcd12axlevel",
-            label: "Level",
-            values: ["RX", "SC"],
-            binding: null,
-          },
-          {
-            axisId: "clp9z8x7w0000abcd12ax00sex",
-            label: "Sex",
-            values: ["♂", "♀"],
-            binding: null,
-          },
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
         ],
         cells: [
           { coords: ["RX", "♂"], kg: 9 },

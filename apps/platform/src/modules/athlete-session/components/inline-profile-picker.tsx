@@ -18,7 +18,7 @@ export type InlineProfilePickerProps = {
   load: Load;
   selections: Record<string, string>;
   isSubmitting: boolean;
-  onPick: (pickableAxisIds: string[], axisId: string, value: string) => void;
+  onPick: (axisNames: string[], axisName: string, value: string) => void;
 };
 
 export const InlineProfilePicker = ({
@@ -31,14 +31,7 @@ export const InlineProfilePicker = ({
     return null;
   }
 
-  const pickableAxes = load.axes.filter((axis) => axis.binding === null);
-
-  if (pickableAxes.length === 0) {
-    return null;
-  }
-
-  const axisLabels = pickableAxes.map((axis) => axis.label);
-  const pickableAxisIds = pickableAxes.map((axis) => axis.axisId);
+  const axisNames = load.axes.map((axis) => axis.name);
 
   return (
     <Stack spacing={1.25}>
@@ -52,18 +45,18 @@ export const InlineProfilePicker = ({
           color: theme.palette.primary.main,
         })}
       >
-        {`${PROFILE_AXIS_PREFIX}${axisLabels.join(AXIS_AND_SEPARATOR)}`}
+        {`${PROFILE_AXIS_PREFIX}${axisNames.join(AXIS_AND_SEPARATOR)}`}
       </Typography>
 
-      {pickableAxes.map((axis) => (
-        <Stack key={axis.axisId} spacing={0.75}>
+      {load.axes.map((axis) => (
+        <Stack key={axis.name} spacing={0.75}>
           {axis.values.map((value) => (
             <ProfileOptionButton
-              key={`${axis.axisId}:${value}`}
+              key={value}
               label={value}
-              isActive={selections[axis.axisId] === value}
+              isActive={selections[axis.name] === value}
               disabled={isSubmitting}
-              onClick={() => onPick(pickableAxisIds, axis.axisId, value)}
+              onClick={() => onPick(axisNames, axis.name, value)}
             />
           ))}
         </Stack>

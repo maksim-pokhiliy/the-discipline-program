@@ -9,21 +9,6 @@ export const percentageReferenceSchema = z.discriminatedUnion("scope", [
   z.object({ scope: z.literal("other_exercise"), targetExerciseId: z.string().cuid() }),
 ]);
 
-export const GENDER_AXIS_COORDS = { MALE: "Male", FEMALE: "Female" } as const;
-
-export const GENDER_AXIS_VALUES = Object.values(GENDER_AXIS_COORDS);
-
-export const byProfileAxisSchema = z.object({
-  axisId: z.string().cuid(),
-  label: z.string().trim().min(1),
-  values: z.array(z.string().trim().min(1)).min(1),
-  binding: z.literal("GENDER").nullable(),
-});
-
-type ByProfileAxis = z.infer<typeof byProfileAxisSchema>;
-
-const axisValueSet = (axis: ByProfileAxis): readonly string[] => axis.values;
-
 export const loadSchema = z
   .discriminatedUnion("kind", [
     z.object({
@@ -40,7 +25,15 @@ export const loadSchema = z
     z.object({ kind: z.literal("bodyweight") }),
     z.object({
       kind: z.literal("byProfile"),
-      axes: z.array(byProfileAxisSchema).min(1).max(2),
+      axes: z
+        .array(
+          z.object({
+            name: z.string().trim().min(1),
+            values: z.array(z.string().trim().min(1)).min(1),
+          }),
+        )
+        .min(1)
+        .max(2),
       cells: z
         .array(
           z.object({
@@ -68,7 +61,7 @@ export const loadSchema = z
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               path: ["axes", axisIndex, "values"],
-              message: "byProfile axis has duplicate values; each value must be unique",
+              message: `byProfile axis "${axis.name}" has duplicate values; each value must be unique`,
             });
           }
 
@@ -76,10 +69,7 @@ export const loadSchema = z
         });
       });
 
-      const expectedCellCount = l.axes.reduce(
-        (product, axis) => product * axisValueSet(axis).length,
-        1,
-      );
+      const expectedCellCount = l.axes.reduce((product, axis) => product * axis.values.length, 1);
 
       if (l.cells.length !== expectedCellCount) {
         ctx.addIssue({
@@ -105,14 +95,14 @@ export const loadSchema = z
         cell.coords.forEach((coord, axisIndex) => {
           const axis = l.axes[axisIndex];
 
-          if (axis === undefined || axisValueSet(axis).includes(coord)) {
+          if (axis === undefined || axis.values.includes(coord)) {
             return;
           }
 
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["cells", cellIndex, "coords", axisIndex],
-            message: `byProfile coord "${coord}" is not a valid value for this axis`,
+            message: `byProfile coord "${coord}" is not a value of axis "${axis.name}"`,
           });
         });
 
@@ -128,16 +118,6 @@ export const loadSchema = z
 
         seenCoordKeys.add(coordKey);
       });
-
-      const axisKeys = l.axes.map((axis) => axis.axisId);
-
-      if (new Set(axisKeys).size !== axisKeys.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["axes"],
-          message: "byProfile axes must be distinct dimensions",
-        });
-      }
     }
   });
 

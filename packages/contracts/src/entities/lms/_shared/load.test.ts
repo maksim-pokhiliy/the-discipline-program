@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  GENDER_AXIS_COORDS,
-  GENDER_AXIS_VALUES,
-  loadSchema,
-  percentageReferenceSchema,
-} from "./load";
+import { loadSchema, percentageReferenceSchema } from "./load";
 
 const CUID = "ck1234567890123456789012";
-const CUID_TWO = "ck0987654321098765432109";
-const GENDER_AXIS_ID = "cgender000000000000000000";
 
 describe("percentageReferenceSchema", () => {
   it("accepts self scope", () => {
@@ -45,16 +38,6 @@ describe("percentageReferenceSchema", () => {
 
   it("rejects unknown scope", () => {
     expect(percentageReferenceSchema.safeParse({ scope: "global" }).success).toBe(false);
-  });
-});
-
-describe("gender axis coords (pinned to the migration-seeded system row)", () => {
-  it("keeps GENDER_AXIS_VALUES equal to the seeded Male/Female values", () => {
-    expect(GENDER_AXIS_VALUES).toEqual(["Male", "Female"]);
-  });
-
-  it("keeps GENDER_AXIS_COORDS mapping the gender enum to the seeded coords", () => {
-    expect(GENDER_AXIS_COORDS).toEqual({ MALE: "Male", FEMALE: "Female" });
   });
 });
 
@@ -159,11 +142,11 @@ describe("loadSchema", () => {
     expect(loadSchema.safeParse({ kind: "bodyweight" }).success).toBe(true);
   });
 
-  it("accepts a single plain-axis byProfile (level RX/SC) with a cell per value", () => {
+  it("accepts a single-axis byProfile (level RX/SC) with a cell per value", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null }],
+        axes: [{ name: "level", values: ["RX", "SC"] }],
         cells: [
           { coords: ["RX"], kg: 43 },
           { coords: ["SC"], kg: 30 },
@@ -172,62 +155,19 @@ describe("loadSchema", () => {
     ).toBe(true);
   });
 
-  it("accepts a two plain-axis byProfile covering the full cartesian product", () => {
+  it("accepts a two-axis byProfile covering the full cartesian product (Wall Ball level×sex)", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
         axes: [
-          { axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null },
-          { axisId: CUID_TWO, label: "Tier", values: ["A", "B"], binding: null },
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
         ],
         cells: [
-          { coords: ["RX", "A"], kg: 9 },
-          { coords: ["RX", "B"], kg: 6 },
-          { coords: ["SC", "A"], kg: 6 },
-          { coords: ["SC", "B"], kg: 4 },
-        ],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts a single GENDER-bound axis byProfile resolving to Male/Female cells", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
-        ],
-        cells: [
-          { coords: ["Male"], kg: 9 },
-          { coords: ["Female"], kg: 6 },
-        ],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts a GENDER-bound axis paired with a plain axis (Wall Ball level×sex)", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [
-          { axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null },
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
-        ],
-        cells: [
-          { coords: ["RX", "Male"], kg: 9 },
-          { coords: ["RX", "Female"], kg: 6 },
-          { coords: ["SC", "Male"], kg: 6 },
-          { coords: ["SC", "Female"], kg: 4 },
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
+          { coords: ["SC", "♀"], kg: 4 },
         ],
       }).success,
     ).toBe(true);
@@ -238,51 +178,26 @@ describe("loadSchema", () => {
       loadSchema.safeParse({
         kind: "byProfile",
         axes: [
-          { axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null },
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
+          { name: "level", values: ["RX", "SC"] },
+          { name: "sex", values: ["♂", "♀"] },
         ],
         cells: [
-          { coords: ["RX", "Male"], kg: 9 },
-          { coords: ["RX", "Female"], kg: 6 },
-          { coords: ["SC", "Male"], kg: 6 },
+          { coords: ["RX", "♂"], kg: 9 },
+          { coords: ["RX", "♀"], kg: 6 },
+          { coords: ["SC", "♂"], kg: 6 },
         ],
       }).success,
     ).toBe(false);
   });
 
-  it("rejects a coord that is not a value of its plain axis", () => {
+  it("rejects a coord that is not a value of its axis", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null }],
+        axes: [{ name: "level", values: ["RX", "SC"] }],
         cells: [
           { coords: ["RX"], kg: 43 },
           { coords: ["MASTER"], kg: 30 },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects a coord that is not a value of its GENDER-bound axis", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
-        ],
-        cells: [
-          { coords: ["Male"], kg: 9 },
-          { coords: ["Other"], kg: 6 },
         ],
       }).success,
     ).toBe(false);
@@ -293,16 +208,11 @@ describe("loadSchema", () => {
       loadSchema.safeParse({
         kind: "byProfile",
         axes: [
-          { axisId: CUID, label: "Level", values: ["RX"], binding: null },
-          { axisId: CUID_TWO, label: "Tier", values: ["A"], binding: null },
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
+          { name: "level", values: ["RX"] },
+          { name: "sex", values: ["♂"] },
+          { name: "age", values: ["masters"] },
         ],
-        cells: [{ coords: ["RX", "A", "Male"], kg: 9 }],
+        cells: [{ coords: ["RX", "♂", "masters"], kg: 9 }],
       }).success,
     ).toBe(false);
   });
@@ -311,27 +221,17 @@ describe("loadSchema", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: ["RX"], binding: null }],
+        axes: [{ name: "level", values: ["RX"] }],
         cells: [{ coords: ["RX"], kg: 0 }],
       }).success,
     ).toBe(false);
   });
 
-  it("rejects an unbound axis (empty axisId)", () => {
+  it("rejects an empty axis name", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
-        axes: [{ axisId: "", label: "Level", values: ["RX"], binding: null }],
-        cells: [{ coords: ["RX"], kg: 9 }],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects an empty axis label", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [{ axisId: CUID, label: "", values: ["RX"], binding: null }],
+        axes: [{ name: "", values: ["RX"] }],
         cells: [{ coords: ["RX"], kg: 9 }],
       }).success,
     ).toBe(false);
@@ -341,92 +241,20 @@ describe("loadSchema", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: [], binding: null }],
+        axes: [{ name: "level", values: [] }],
         cells: [{ coords: ["RX"], kg: 9 }],
       }).success,
     ).toBe(false);
   });
 
-  it("rejects an axis with duplicate values (QA-001)", () => {
+  it("rejects a byProfile axis with duplicate values (QA-001)", () => {
     expect(
       loadSchema.safeParse({
         kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: ["RX", "RX"], binding: null }],
+        axes: [{ name: "level", values: ["RX", "RX"] }],
         cells: [
           { coords: ["RX"], kg: 43 },
           { coords: ["RX"], kg: 30 },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects two axes sharing the same axisId (not distinct dimensions)", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [
-          { axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null },
-          { axisId: CUID, label: "Level", values: ["RX", "SC"], binding: null },
-        ],
-        cells: [
-          { coords: ["RX", "RX"], kg: 9 },
-          { coords: ["RX", "SC"], kg: 6 },
-          { coords: ["SC", "RX"], kg: 6 },
-          { coords: ["SC", "SC"], kg: 4 },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects two GENDER-bound axes sharing the system axisId (not distinct dimensions)", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
-          {
-            axisId: GENDER_AXIS_ID,
-            label: "Gender",
-            values: ["Male", "Female"],
-            binding: "GENDER",
-          },
-        ],
-        cells: [
-          { coords: ["Male", "Male"], kg: 9 },
-          { coords: ["Male", "Female"], kg: 6 },
-          { coords: ["Female", "Male"], kg: 6 },
-          { coords: ["Female", "Female"], kg: 4 },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects a missing binding field on an axis (binding is required)", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: ["RX", "SC"] }],
-        cells: [
-          { coords: ["RX"], kg: 43 },
-          { coords: ["SC"], kg: 30 },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects an unknown binding value on an axis", () => {
-    expect(
-      loadSchema.safeParse({
-        kind: "byProfile",
-        axes: [{ axisId: CUID, label: "Level", values: ["RX", "SC"], binding: "AGE" }],
-        cells: [
-          { coords: ["RX"], kg: 43 },
-          { coords: ["SC"], kg: 30 },
         ],
       }).success,
     ).toBe(false);

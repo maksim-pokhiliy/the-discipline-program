@@ -15,8 +15,6 @@ import { ConfirmationModal, DataTable, useDataTableUrlState, type Column } from 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteProfileAxis } from "@app/lib/hooks";
 
-const SYSTEM_CHIP_LABEL = "System";
-
 type ProfileAxesListSectionProps = {
   profileAxes: ProfileAxis[];
 };
@@ -36,20 +34,17 @@ export const ProfileAxesListSection = ({ profileAxes }: ProfileAxesListSectionPr
         sortable: true,
         sortValue: (axis) => axis.key,
         searchValue: (axis) => axis.key,
-        render: (axis) =>
-          axis.binding !== null ? (
-            <Typography variant="subtitle2">{axis.key}</Typography>
-          ) : (
-            <Typography
-              component={Link}
-              href={`/profile-axes/${axis.id}`}
-              variant="subtitle2"
-              color="primary"
-              sx={{ textDecoration: "none" }}
-            >
-              {axis.key}
-            </Typography>
-          ),
+        render: (axis) => (
+          <Typography
+            component={Link}
+            href={`/profile-axes/${axis.id}`}
+            variant="subtitle2"
+            color="primary"
+            sx={{ textDecoration: "none" }}
+          >
+            {axis.key}
+          </Typography>
+        ),
       },
       {
         id: "label",
@@ -85,35 +80,26 @@ export const ProfileAxesListSection = ({ profileAxes }: ProfileAxesListSectionPr
         label: "Actions",
         align: "right",
         width: "15%",
-        render: (axis) =>
-          axis.binding !== null ? (
-            <Stack direction="row" justifyContent="flex-end">
-              <Chip label={SYSTEM_CHIP_LABEL} size="small" />
-            </Stack>
-          ) : (
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
-              <Tooltip title="Edit">
-                <IconButton
-                  component={Link}
-                  href={`/profile-axes/${axis.id}`}
-                  color="primary"
-                  aria-label="Edit"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+        render: (axis) => (
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Tooltip title="Edit">
+              <IconButton
+                component={Link}
+                href={`/profile-axes/${axis.id}`}
+                color="primary"
+                aria-label="Edit"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
 
-              <Tooltip title="Delete">
-                <IconButton
-                  onClick={() => requestDelete(axis.id)}
-                  color="error"
-                  aria-label="Delete"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          ),
+            <Tooltip title="Delete">
+              <IconButton onClick={() => requestDelete(axis.id)} color="error" aria-label="Delete">
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
       },
     ],
     [requestDelete],

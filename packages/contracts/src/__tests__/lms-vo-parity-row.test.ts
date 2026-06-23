@@ -21,21 +21,14 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       expect(loadSchema.safeParse({ kind: "absolute", count: 2, kg: 22.5 }).success).toBe(true);
     });
 
-    it("byProfile Male/Female 24/16 (data.js:184 — Mon M/F dumbbell pair, ex-dual_value)", () => {
+    it("byProfile M/F 24/16 (data.js:184 — Mon M/F dumbbell pair, ex-dual_value)", () => {
       expect(
         loadSchema.safeParse({
           kind: "byProfile",
-          axes: [
-            {
-              axisId: "cgender000000000000000000",
-              label: "Gender",
-              values: ["Male", "Female"],
-              binding: "GENDER",
-            },
-          ],
+          axes: [{ name: "sex", values: ["M", "F"] }],
           cells: [
-            { coords: ["Male"], kg: 24 },
-            { coords: ["Female"], kg: 16 },
+            { coords: ["M"], kg: 24 },
+            { coords: ["F"], kg: 16 },
           ],
         }).success,
       ).toBe(true);
