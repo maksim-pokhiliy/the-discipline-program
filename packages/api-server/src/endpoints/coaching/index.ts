@@ -1,3 +1,5 @@
+import "../../instrumentation/ensure-di";
+
 export * from "./admin-user-view";
 export * from "./athlete-profile";
 export * from "./coach-action-item";

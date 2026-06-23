@@ -1,3 +1,5 @@
+import "../../instrumentation/ensure-di";
+
 import { prisma } from "../../db/client";
 import { checkBlobStorage } from "../../infrastructure/storage";
 
