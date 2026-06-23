@@ -32,12 +32,15 @@ Live: **Resend** via `@repo/email/createResendEmailService`. React Email templat
 
 ## Adapter placement
 
-When vendor is chosen:
+The vendor is chosen: **Resend**, isolated to `@repo/email/createResendEmailService` (the ONLY file importing the `resend` SDK is `packages/email/src/client.ts`). api-server never imports `resend` directly.
 
-1. `infrastructure/email/resend-adapter.ts` (or equivalent) — the ONLY file in the repo that imports the vendor SDK.
-2. Register env var in `packages/env/email.ts` if not present.
-3. Update `infrastructure/email/index.ts` to re-export the adapter factory and expose `defaultEmail = createResendAdapter()` as a module-level singleton, following the `storage/index.ts` pattern.
-4. Consumers inject via factory-DI: `createXxxAdminApi({ email })` — mirroring `createStorageUploadAdminApi(storage)` from 1.4.A / 1.4.D.
+The send layer is a function-with-internal-cache, not a `defaultEmail` singleton injected via factory-DI. No endpoint injects an email port, so the simpler function style matches the live call sites:
+
+1. `infrastructure/email/email-sender.ts` — the shared send module. Exposes:
+   - `resolveEmailConfig({ required })` — reads `RESEND_API_KEY` / `EMAIL_FROM` / `EMAIL_REPLY_TO` from `@repo/env/email`. `required: true` throws `InternalServerError` when key/from are missing (loud-fail paths: invite, password reset); `required: false` returns `null` (best-effort paths: lead notification).
+   - one module-level service cache (`createResendEmailService` re-created only when the API key changes).
+   - `sendTransactionalEmail({ template, props, to, required, logKey, logCtx })` — renders via `@repo/email`'s `renderEmail(template, props)` (subject lives on the descriptor), sends through the cached service, and swallows + logs send failures (`${logKey}_send_failed`); never throws on a send failure. `logCtx` is `Record<string, string>` and carries only non-PII ids — recipient email/name flow through `to`/`props`, never into a log line.
+2. The `endpoints/**/send-*.ts` modules are thin wrappers: they build the per-template URL/props/recipient, then call `sendTransactionalEmail`. They keep their public exports (`sendInvitationEmail`, `sendPasswordResetEmail`, `sendLeadNotificationEmail`, plus `resolveInviteEmailConfig` / `resolveLeadEmailConfig` as one-line delegations to `resolveEmailConfig`) so consumers and test spies bind to the same names.
 
 ## Non-goals
 

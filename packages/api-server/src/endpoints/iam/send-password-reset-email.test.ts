@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => {
     sendMock,
     createResendServiceMock: vi.fn(() => ({ send: sendMock })),
     renderEmailMock: vi.fn(async () => ({
-      subject: "You've been invited",
+      subject: "Reset your password",
       html: "<html>rendered</html>",
       text: "rendered",
     })),
@@ -33,7 +33,7 @@ type TypedSendResult = SendEmailResult;
 vi.mock("@repo/email", () => ({
   createResendEmailService: mocks.createResendServiceMock,
   renderEmail: mocks.renderEmailMock,
-  invitationEmail: { __template: "invitation" },
+  passwordResetEmail: { __template: "password-reset" },
 }));
 
 vi.mock("@repo/env/email", () => ({
@@ -50,52 +50,17 @@ vi.mock("@repo/shared", () => ({
   },
 }));
 
-const { sendInvitationEmail, resolveInviteEmailConfig } = await import("./send-invitation-email");
+const { sendPasswordResetEmail } = await import("./send-password-reset-email");
 
 const testInput = {
   userId: "user-id-1",
-  recipientEmail: "invitee@example.com",
-  recipientName: "Invitee",
+  recipientEmail: "user@example.com",
+  recipientName: "User",
   plainToken: "plain-token-long-enough-to-pass-32-byte-minimum-please",
-  expiresInHours: 72,
+  expiresInHours: 1,
 };
 
-describe("resolveInviteEmailConfig", () => {
-  beforeEach(() => {
-    mocks.emailEnvOverride.RESEND_API_KEY = "test-api-key";
-    mocks.emailEnvOverride.EMAIL_FROM = "noreply@example.com";
-    mocks.emailEnvOverride.EMAIL_REPLY_TO = undefined;
-  });
-
-  it("returns the config when both RESEND_API_KEY and EMAIL_FROM are set", () => {
-    const config = resolveInviteEmailConfig();
-
-    expect(config.apiKey).toBe("test-api-key");
-    expect(config.from).toEqual({ email: "noreply@example.com" });
-  });
-
-  it("throws InternalServerError when RESEND_API_KEY is missing", () => {
-    mocks.emailEnvOverride.RESEND_API_KEY = undefined;
-
-    expect(() => resolveInviteEmailConfig()).toThrow(InternalServerError);
-  });
-
-  it("throws InternalServerError when EMAIL_FROM is missing", () => {
-    mocks.emailEnvOverride.EMAIL_FROM = undefined;
-
-    expect(() => resolveInviteEmailConfig()).toThrow(InternalServerError);
-  });
-
-  it("includes replyTo in config when EMAIL_REPLY_TO is set", () => {
-    mocks.emailEnvOverride.EMAIL_REPLY_TO = "reply@example.com";
-
-    const config = resolveInviteEmailConfig();
-
-    expect(config.replyTo).toEqual({ email: "reply@example.com" });
-  });
-});
-
-describe("sendInvitationEmail", () => {
+describe("sendPasswordResetEmail", () => {
   beforeEach(() => {
     mocks.emailEnvOverride.RESEND_API_KEY = "test-api-key";
     mocks.emailEnvOverride.EMAIL_FROM = "noreply@example.com";
@@ -110,8 +75,8 @@ describe("sendInvitationEmail", () => {
     mocks.sendMock.mockImplementation(async () => ({ id: "test-id" }));
   });
 
-  it("sends a rendered invitation email via the Resend email service", async () => {
-    await sendInvitationEmail(testInput);
+  it("sends a rendered password-reset email via the Resend email service", async () => {
+    await sendPasswordResetEmail(testInput);
 
     expect(mocks.renderEmailMock).toHaveBeenCalledTimes(1);
     expect(mocks.sendMock).toHaveBeenCalledTimes(1);
@@ -122,8 +87,8 @@ describe("sendInvitationEmail", () => {
 
     const sendArgs = sendCall ? (sendCall[0] as TypedSendInput) : undefined;
 
-    expect(sendArgs?.to).toEqual({ email: "invitee@example.com" });
-    expect(sendArgs?.subject).toContain("invited");
+    expect(sendArgs?.to).toEqual({ email: "user@example.com" });
+    expect(sendArgs?.subject).toBe("Reset your password");
 
     const sendResult: TypedSendResult = (await mocks.sendMock.mock.results[0]?.value) ?? {
       id: "fallback",
@@ -132,15 +97,15 @@ describe("sendInvitationEmail", () => {
     expect(sendResult.id).toBeDefined();
   });
 
-  it("renders the invitation template with the invite URL built from the plain token", async () => {
-    await sendInvitationEmail(testInput);
+  it("renders the password-reset template with the reset URL built from the plain token", async () => {
+    await sendPasswordResetEmail(testInput);
 
     expect(mocks.renderEmailMock).toHaveBeenCalledWith(
-      { __template: "invitation" },
+      { __template: "password-reset" },
       expect.objectContaining({
-        inviteUrl: expect.stringContaining(`/invite/${testInput.plainToken}`),
-        recipientName: "Invitee",
-        expiresInHours: 72,
+        resetUrl: expect.stringContaining(`/reset-password/${testInput.plainToken}`),
+        recipientName: "User",
+        expiresInHours: 1,
       }),
     );
   });
@@ -149,7 +114,7 @@ describe("sendInvitationEmail", () => {
     mocks.emailEnvOverride.RESEND_API_KEY = undefined;
     mocks.emailEnvOverride.EMAIL_FROM = undefined;
 
-    await expect(sendInvitationEmail(testInput)).rejects.toThrow(InternalServerError);
+    await expect(sendPasswordResetEmail(testInput)).rejects.toThrow(InternalServerError);
 
     expect(mocks.renderEmailMock).not.toHaveBeenCalled();
     expect(mocks.sendMock).not.toHaveBeenCalled();
@@ -160,10 +125,10 @@ describe("sendInvitationEmail", () => {
       throw new Error("Network down");
     });
 
-    await expect(sendInvitationEmail(testInput)).resolves.toBeUndefined();
+    await expect(sendPasswordResetEmail(testInput)).resolves.toBeUndefined();
 
     expect(mocks.loggerErrorMock).toHaveBeenCalledWith(
-      "invite.email_send_failed",
+      "password_reset.email_send_failed",
       expect.objectContaining({ userId: "user-id-1" }),
     );
   });

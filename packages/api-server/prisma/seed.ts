@@ -24,7 +24,10 @@ const main = async (): Promise<void> => {
 
   await seedProfiles(prisma, users);
 
-  console.log("\nSeed completed!");
+  console.log("\nSeed completed! 2 users (1 head coach, 1 admin), 1 coach profile.");
+  console.log(
+    "dev-coach@thedisciplineprogram.com is the HEAD_COACH (lead-notification recipient).",
+  );
 };
 
 main()

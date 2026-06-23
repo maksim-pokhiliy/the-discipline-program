@@ -1,15 +1,9 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+
+import { EmailButton } from "../components/email-button";
+import { LinkFallback } from "../components/link-fallback";
+import { defineEmail } from "../render";
+import { greet, theme } from "../theme";
 
 export type InvitationEmailProps = {
   inviteUrl: string;
@@ -17,57 +11,23 @@ export type InvitationEmailProps = {
   expiresInHours: number;
 };
 
-const bodyStyle = {
-  backgroundColor: "#f6f9fc",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-};
-
-const containerStyle = {
-  backgroundColor: "#ffffff",
-  margin: "40px auto",
-  padding: "32px 24px",
-  maxWidth: "560px",
-  borderRadius: "8px",
-};
-
-const linkStyle = {
-  color: "#2563eb",
-  wordBreak: "break-all" as const,
-};
-
-export const InvitationEmail = ({
-  inviteUrl,
-  recipientName,
-  expiresInHours,
-}: InvitationEmailProps) => {
-  const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
-
-  return (
-    <Html>
-      <Head />
-      <Preview>You&apos;ve been invited — set your password to get started</Preview>
-      <Body style={bodyStyle}>
-        <Container style={containerStyle}>
-          <Heading>You&apos;ve been invited</Heading>
-          <Section>
-            <Text>{greeting}</Text>
-            <Text>
-              You&apos;ve been invited to join The Discipline Program. Click the link below to set
-              your password and activate your account.
-            </Text>
-            <Text>
-              <Link href={inviteUrl} style={linkStyle}>
-                {inviteUrl}
-              </Link>
-            </Text>
-            <Hr />
-            <Text>
-              This invitation link expires in {expiresInHours} hours. If you did not expect this
-              email, you can safely ignore it.
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
-  );
-};
+export const invitationEmail = defineEmail<InvitationEmailProps>({
+  subject: () => "You've been invited",
+  preview: () => "You've been invited — set your password to get started",
+  Body: ({ inviteUrl, recipientName, expiresInHours }) => (
+    <Section>
+      <Heading style={theme.heading}>You&apos;ve been invited</Heading>
+      <Text style={theme.text}>{greet(recipientName)}</Text>
+      <Text style={theme.text}>
+        You&apos;ve been invited to join The Discipline Program. Use the button below to set your
+        password and activate your account.
+      </Text>
+      <EmailButton href={inviteUrl}>Set your password</EmailButton>
+      <LinkFallback url={inviteUrl} />
+      <Text style={theme.mutedText}>
+        This invitation link expires in {expiresInHours} hours. If you did not expect this email,
+        you can safely ignore it.
+      </Text>
+    </Section>
+  ),
+});

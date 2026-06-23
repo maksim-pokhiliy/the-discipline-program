@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => {
   return {
     sendMock,
     createResendServiceMock: vi.fn(() => ({ send: sendMock })),
-    renderLeadNotificationEmailMock: vi.fn(async () => ({
+    renderEmailMock: vi.fn(async () => ({
+      subject: "New program lead",
       html: "<html>rendered</html>",
       text: "rendered",
     })),
@@ -35,7 +36,8 @@ type TypedSendInput = SendEmailInput;
 
 vi.mock("@repo/email", () => ({
   createResendEmailService: mocks.createResendServiceMock,
-  renderLeadNotificationEmail: mocks.renderLeadNotificationEmailMock,
+  renderEmail: mocks.renderEmailMock,
+  leadNotificationEmail: { __template: "lead-notification" },
 }));
 
 vi.mock("@repo/env/email", () => ({
@@ -118,7 +120,7 @@ describe("sendLeadNotificationEmail", () => {
     mocks.sendMock.mockClear();
     mocks.sendMock.mockImplementation(async () => ({ id: "test-id" }));
     mocks.createResendServiceMock.mockClear();
-    mocks.renderLeadNotificationEmailMock.mockClear();
+    mocks.renderEmailMock.mockClear();
     mocks.loggerErrorMock.mockClear();
     mocks.loggerWarnMock.mockClear();
     mocks.loggerInfoMock.mockClear();
@@ -127,7 +129,7 @@ describe("sendLeadNotificationEmail", () => {
   it("renders and sends to the head coach when a coach and email env exist", async () => {
     await sendLeadNotificationEmail(testInput);
 
-    expect(mocks.renderLeadNotificationEmailMock).toHaveBeenCalledTimes(1);
+    expect(mocks.renderEmailMock).toHaveBeenCalledTimes(1);
     expect(mocks.sendMock).toHaveBeenCalledTimes(1);
 
     const sendCall = mocks.sendMock.mock.calls[0];
@@ -140,6 +142,20 @@ describe("sendLeadNotificationEmail", () => {
     expect(sendArgs?.subject.toLowerCase()).toContain("lead");
   });
 
+  it("renders the lead template with the head-coach name and program details", async () => {
+    await sendLeadNotificationEmail(testInput);
+
+    expect(mocks.renderEmailMock).toHaveBeenCalledWith(
+      { __template: "lead-notification" },
+      expect.objectContaining({
+        program: "strength-base",
+        contact: "tg:@athlete",
+        recipientName: "Denys",
+        message: "I want to join",
+      }),
+    );
+  });
+
   it("logs lead.no_head_coach and does not send when there is no head coach", async () => {
     mocks.findFirstMock.mockImplementationOnce(async () => null);
 
@@ -149,6 +165,7 @@ describe("sendLeadNotificationEmail", () => {
       "lead.no_head_coach",
       expect.objectContaining({ program: "strength-base" }),
     );
+    expect(mocks.renderEmailMock).not.toHaveBeenCalled();
     expect(mocks.sendMock).not.toHaveBeenCalled();
   });
 
