@@ -1,4 +1,4 @@
-import { useState, type ReactElement, type ReactNode } from "react";
+import { useState, type ReactElement } from "react";
 
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -32,7 +32,6 @@ type SingleHarnessProps = {
   onCreateOption: (typedName: string) => Promise<CreatableOption | null>;
   onChange?: ((next: CreatableOption | null) => void) | undefined;
   initialValue?: CreatableOption | null;
-  renderOption?: ((option: CreatableOption) => ReactNode) | undefined;
 };
 
 type MultiHarnessProps = {
@@ -86,7 +85,6 @@ const Harness = (props: HarnessProps): ReactElement => {
       onInputChange={setInputValue}
       onCreateOption={props.onCreateOption}
       label="Exercise"
-      {...(props.renderOption !== undefined && { renderOption: props.renderOption })}
     />
   );
 };
@@ -225,24 +223,6 @@ describe("CreatablePicker single mode", () => {
 
     await vi.waitFor(() => expect(onCreateOption).toHaveBeenCalledWith("Tempo Squat"));
     expect(onChange).toHaveBeenCalledWith(minted);
-  });
-
-  it("renders a custom node for existing options while leaving the Create row default", () => {
-    render(
-      <Harness
-        mode="single"
-        options={[SQUAT]}
-        onCreateOption={vi.fn()}
-        renderOption={(option) => <span data-testid="custom-option">{`★ ${option.label}`}</span>}
-      />,
-    );
-
-    openListbox();
-    typeQuery("Back");
-
-    expect(screen.getByTestId("custom-option")).toHaveTextContent("★ Back Squat");
-    expect(screen.getByText('Create "Back"')).toBeInTheDocument();
-    expect(screen.queryByText("Back Squat")).not.toBeInTheDocument();
   });
 });
 

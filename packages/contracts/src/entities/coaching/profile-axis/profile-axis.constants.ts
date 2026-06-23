@@ -4,5 +4,3 @@ export const PROFILE_AXIS_CONSTANTS = {
   MAX_VALUE_LENGTH: 100,
   MAX_VALUES: 50,
 } as const;
-
-export const PROFILE_AXIS_BINDINGS = ["GENDER"] as const;

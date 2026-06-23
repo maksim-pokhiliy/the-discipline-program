@@ -25,7 +25,6 @@ export const createApi = (client: ApiClient) => ({
   performedSessions: endpoints.createPerformedSessionsAPI(client),
   planEnrollments: endpoints.createPlanEnrollmentsAPI(client),
   planTimetable: endpoints.createPlanTimetableAPI(client),
-  profileAxes: endpoints.createProfileAxesAPI(client),
   rowGroups: endpoints.createRowGroupsAPI(client),
   schemaRows: endpoints.createSchemaRowsAPI(client),
   schemas: endpoints.createSchemasAPI(client),

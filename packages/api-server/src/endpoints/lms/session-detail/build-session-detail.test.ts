@@ -225,13 +225,10 @@ const makeSession = (overrides: SessionOverrides = {}): SessionDetailRecord => {
   };
 };
 
-const LEVEL_AXIS_ID = "clz0000000000000000axis01";
-
 const makeCtx = (overrides: Partial<AthleteLoadContext> = {}): AthleteLoadContext => ({
   bodyweightKg: null,
   currentOneRMByExercise: new Map(),
   profileSelections: {},
-  gender: null,
   ...overrides,
 });
 
@@ -389,10 +386,10 @@ describe("buildSessionDetail load resolution", () => {
     });
   });
 
-  it("emits missing_profile_pick labelling the unpicked axes", () => {
+  it("emits missing_profile_pick naming the unpicked axes", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
+      axes: [{ name: "level", values: ["rx", "scaled"] }],
       cells: [
         { coords: ["rx"], kg: 60 },
         { coords: ["scaled"], kg: 40 },
@@ -410,7 +407,7 @@ describe("buildSessionDetail load resolution", () => {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisLabels: ["Level"],
+      axisNames: ["level"],
     });
   });
 

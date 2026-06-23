@@ -38,7 +38,7 @@ export type SessionEditorControls = {
   closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
-  pickProfile: (catalogAxisIds: string[], axisId: string, value: string) => void;
+  pickProfile: (axisNames: string[], axisName: string, value: string) => void;
   draftFor: (schemaId: string) => ResultDraft;
   openLog: (schemaId: string) => void;
   cancelLog: () => void;
@@ -74,7 +74,7 @@ export type SessionLogging = {
   closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
-  pickProfile: (catalogAxisIds: string[], axisId: string, value: string) => void;
+  pickProfile: (axisNames: string[], axisName: string, value: string) => void;
   draftFor: (schemaId: string) => ResultDraft;
   openLog: (schemaId: string) => void;
   cancelLog: () => void;
@@ -162,16 +162,16 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   }, [activeEditor, oneRmValue, createOneRm, invalidateView]);
 
   const pickProfile = useCallback(
-    (catalogAxisIds: string[], axisId: string, value: string): void => {
+    (axisNames: string[], axisName: string, value: string): void => {
       if (updateProfile.isPending) {
         return;
       }
 
-      const merged = { ...savedSelections, ...stagedProfile, [axisId]: value };
-      const isFullPick = catalogAxisIds.every((id) => merged[id] !== undefined);
+      const merged = { ...savedSelections, ...stagedProfile, [axisName]: value };
+      const isFullPick = axisNames.every((name) => merged[name] !== undefined);
 
       if (!isFullPick) {
-        setStagedProfile((prev) => ({ ...prev, [axisId]: value }));
+        setStagedProfile((prev) => ({ ...prev, [axisName]: value }));
 
         return;
       }

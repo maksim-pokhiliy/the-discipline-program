@@ -6,27 +6,13 @@ export type ByProfileCell = ByProfileLoad["cells"][number];
 
 export const EMPTY_KG = Number.NaN;
 
-const AXIS_FALLBACK_LABEL = "Axis";
-
 const COORD_KEY_SEPARATOR = "|";
-
-export const axisValues = (axis: ByProfileAxis): readonly string[] => axis.values;
-
-export const axisLabel = (axis: ByProfileAxis): string =>
-  axis.label === "" ? AXIS_FALLBACK_LABEL : axis.label;
-
-export const makeAxisDraft = (): ByProfileAxis => ({
-  axisId: "",
-  label: "",
-  values: [],
-  binding: null,
-});
 
 const coordKey = (coords: readonly string[]): string => coords.join(COORD_KEY_SEPARATOR);
 
 const cartesianCoords = (axes: readonly ByProfileAxis[]): string[][] =>
   axes.reduce<string[][]>(
-    (tuples, axis) => tuples.flatMap((tuple) => axisValues(axis).map((value) => [...tuple, value])),
+    (tuples, axis) => tuples.flatMap((tuple) => axis.values.map((value) => [...tuple, value])),
     [[]],
   );
 
@@ -41,6 +27,19 @@ export const regenerateCells = (
     kg: kgByCoords.get(coordKey(coords)) ?? EMPTY_KG,
   }));
 };
+
+export const renameAxisValue = (
+  cells: readonly ByProfileCell[],
+  axisIndex: number,
+  previousValue: string,
+  nextValue: string,
+): ByProfileCell[] =>
+  cells.map((cell) => ({
+    ...cell,
+    coords: cell.coords.map((coord, index) =>
+      index === axisIndex && coord === previousValue ? nextValue : coord,
+    ),
+  }));
 
 export const setCellKgByIndex = (
   cells: readonly ByProfileCell[],

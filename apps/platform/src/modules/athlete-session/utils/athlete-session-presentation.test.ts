@@ -125,23 +125,13 @@ describe("resolveLoadCell", () => {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisLabels: ["Level", "Scale"],
+      axisNames: ["Level", "Sex"],
     };
     const load: Load = {
       kind: "byProfile",
       axes: [
-        {
-          axisId: "clz00000000000000000axs01",
-          label: "Level",
-          values: ["RX", "Scaled"],
-          binding: null,
-        },
-        {
-          axisId: "clz00000000000000000axs02",
-          label: "Scale",
-          values: ["M", "F"],
-          binding: null,
-        },
+        { name: "Level", values: ["RX", "Scaled"] },
+        { name: "Sex", values: ["M", "F"] },
       ],
       cells: [
         { coords: ["RX", "M"], kg: 60 },
@@ -154,53 +144,22 @@ describe("resolveLoadCell", () => {
     expect(resolveLoadCell(resolved, load)).toEqual({
       state: "missing_profile_pick",
       spread: "RX M:60 F:42 / Scaled M:45 F:30",
-      axisLabels: ["Level", "Scale"],
+      axisNames: ["Level", "Sex"],
     });
   });
 
-  it("surfaces the spread and a gender steer for a missing_profile_attribute (bound axis, no inline pick)", () => {
-    const resolved: ResolvedLoad = {
-      status: "unresolved",
-      reason: "missing_profile_attribute",
-      prompt: "set_profile_attribute",
-      attribute: "gender",
-      axisLabels: ["Gender"],
-    };
-    const load: Load = {
-      kind: "byProfile",
-      axes: [
-        {
-          axisId: "cgender000000000000000000",
-          label: "Gender",
-          values: ["Male", "Female"],
-          binding: "GENDER",
-        },
-      ],
-      cells: [
-        { coords: ["Male"], kg: 43 },
-        { coords: ["Female"], kg: 30 },
-      ],
-    };
-
-    expect(resolveLoadCell(resolved, load)).toEqual({
-      state: "missing_profile_attribute",
-      spread: "Male:43 / Female:30",
-      attribute: "gender",
-    });
-  });
-
-  it("falls back to the server axisLabels when the raw load is not byProfile", () => {
+  it("falls back to the server axisNames when the raw load is not byProfile", () => {
     const resolved: ResolvedLoad = {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisLabels: ["Level", "Scale"],
+      axisNames: ["Level", "Sex"],
     };
 
     expect(resolveLoadCell(resolved, null)).toEqual({
       state: "missing_profile_pick",
-      spread: "Level · Scale",
-      axisLabels: ["Level", "Scale"],
+      spread: "Level · Sex",
+      axisNames: ["Level", "Sex"],
     });
   });
 });
@@ -266,59 +225,21 @@ describe("buildLoadLine", () => {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisLabels: ["Level"],
+      axisNames: ["gender"],
     };
     const load: Load = {
       kind: "byProfile",
-      axes: [
-        {
-          axisId: "clz00000000000000000axs01",
-          label: "Level",
-          values: ["RX", "Scaled"],
-          binding: null,
-        },
-      ],
+      axes: [{ name: "gender", values: ["m", "f"] }],
       cells: [
-        { coords: ["RX"], kg: 43 },
-        { coords: ["Scaled"], kg: 30 },
+        { coords: ["m"], kg: 43 },
+        { coords: ["f"], kg: 30 },
       ],
     };
 
     expect(buildLoadLine(resolved, load)).toEqual({
-      loadStr: "RX:43 / Scaled:30",
+      loadStr: "m:43 / f:30",
       showAt: false,
-      prompt: { kind: "profile", label: "Pick your Level" },
-    });
-  });
-
-  it("renders the gender spread with a profile steer and no inline pick for missing_profile_attribute", () => {
-    const resolved: ResolvedLoad = {
-      status: "unresolved",
-      reason: "missing_profile_attribute",
-      prompt: "set_profile_attribute",
-      attribute: "gender",
-      axisLabels: ["Gender"],
-    };
-    const load: Load = {
-      kind: "byProfile",
-      axes: [
-        {
-          axisId: "cgender000000000000000000",
-          label: "Gender",
-          values: ["Male", "Female"],
-          binding: "GENDER",
-        },
-      ],
-      cells: [
-        { coords: ["Male"], kg: 43 },
-        { coords: ["Female"], kg: 30 },
-      ],
-    };
-
-    expect(buildLoadLine(resolved, load)).toEqual({
-      loadStr: "Male:43 / Female:30",
-      showAt: false,
-      prompt: { kind: "profile_attribute", label: "Set your sex in your profile" },
+      prompt: { kind: "profile", label: "Pick your gender" },
     });
   });
 });

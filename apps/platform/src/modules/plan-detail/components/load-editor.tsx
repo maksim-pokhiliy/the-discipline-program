@@ -7,8 +7,6 @@ import { Button, Stack, ToggleButton, Typography } from "@mui/material";
 import { type Load, LOAD_KINDS, type LoadKind } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
 
-import { makeAxisDraft } from "../lib/by-profile-cells";
-
 import { LoadAbsoluteFields } from "./load-absolute-fields";
 import { LoadByProfileFields } from "./load-by-profile-fields";
 import { LoadPercentageFields } from "./load-percentage-fields";
@@ -18,6 +16,8 @@ const CLEAR_LABEL = "no load";
 const EMPTY_KG = Number.NaN;
 const EMPTY_PERCENT = Number.NaN;
 const SINGLE_COUNT = 1;
+const EXAMPLE_AXIS_NAME = "level";
+const EXAMPLE_AXIS_VALUES = ["RX", "SC"];
 
 const KIND_LABELS: Record<LoadKind, string> = {
   absolute: "Absolute",
@@ -32,8 +32,8 @@ const KIND_DEFAULTS: Record<LoadKind, Load> = {
   bodyweight: { kind: "bodyweight" },
   byProfile: {
     kind: "byProfile",
-    axes: [makeAxisDraft()],
-    cells: [],
+    axes: [{ name: EXAMPLE_AXIS_NAME, values: [...EXAMPLE_AXIS_VALUES] }],
+    cells: EXAMPLE_AXIS_VALUES.map((value) => ({ coords: [value], kg: EMPTY_KG })),
   },
 };
 

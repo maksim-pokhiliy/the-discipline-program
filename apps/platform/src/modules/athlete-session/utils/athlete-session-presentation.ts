@@ -33,7 +33,6 @@ import {
   REPS_LABEL,
   SCHEMA_BENCHMARK_BORDER_ALPHA,
   SET_ONE_RM_LABEL,
-  SET_SEX_STEER_LABEL,
   SETS_SEPARATOR,
   SUB_LINE_SEPARATOR,
   SUMMARY_SEPARATOR,
@@ -62,12 +61,7 @@ export type OneRmLoadCell = { state: "missing_one_rm"; exerciseId: string; hint:
 export type ProfilePickLoadCell = {
   state: "missing_profile_pick";
   spread: string;
-  axisLabels: string[];
-};
-export type ProfileAttributeLoadCell = {
-  state: "missing_profile_attribute";
-  spread: string;
-  attribute: "gender";
+  axisNames: string[];
 };
 export type EmptyLoadCell = { state: "empty" };
 
@@ -76,7 +70,6 @@ export type LoadCellModel =
   | BodyweightLoadCell
   | OneRmLoadCell
   | ProfilePickLoadCell
-  | ProfileAttributeLoadCell
   | EmptyLoadCell;
 
 type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
@@ -102,9 +95,9 @@ const formatTwoAxisSpread = (cells: readonly ByProfileCell[]): string => {
     .join(PROFILE_GROUP_SEPARATOR);
 };
 
-const formatProfileSpread = (load: Load | null, axisLabels: string[]): string => {
+const formatProfileSpread = (load: Load | null, axisNames: string[]): string => {
   if (load === null || load.kind !== "byProfile") {
-    return axisLabels.join(PROFILE_AXIS_SEPARATOR);
+    return axisNames.join(PROFILE_AXIS_SEPARATOR);
   }
 
   return load.axes.length === SINGLE_AXIS_COUNT
@@ -125,35 +118,6 @@ const oneRmHint = (load: Load | null): string =>
     ? `${load.value}${ONE_RM_HINT_SUFFIX}`
     : ONE_RM_HINT_SUFFIX.trim();
 
-type UnresolvedLoad = Extract<ResolvedLoad, { status: "unresolved" }>;
-
-const resolveUnresolvedCell = (resolvedLoad: UnresolvedLoad, load: Load | null): LoadCellModel => {
-  switch (resolvedLoad.reason) {
-    case "missing_one_rm":
-      return {
-        state: "missing_one_rm",
-        exerciseId: resolvedLoad.exerciseId,
-        hint: oneRmHint(load),
-      };
-    case "missing_profile_pick":
-      return {
-        state: "missing_profile_pick",
-        spread: formatProfileSpread(load, resolvedLoad.axisLabels),
-        axisLabels: resolvedLoad.axisLabels,
-      };
-    case "missing_profile_attribute":
-      return {
-        state: "missing_profile_attribute",
-        spread: formatProfileSpread(load, resolvedLoad.axisLabels),
-        attribute: resolvedLoad.attribute,
-      };
-    default:
-      resolvedLoad satisfies never;
-
-      return { state: "empty" };
-  }
-};
-
 export const resolveLoadCell = (
   resolvedLoad: ResolvedLoad | null,
   load: Load | null,
@@ -170,7 +134,13 @@ export const resolveLoadCell = (
     case "not_applicable":
       return { state: "empty" };
     case "unresolved":
-      return resolveUnresolvedCell(resolvedLoad, load);
+      return resolvedLoad.reason === "missing_one_rm"
+        ? { state: "missing_one_rm", exerciseId: resolvedLoad.exerciseId, hint: oneRmHint(load) }
+        : {
+            state: "missing_profile_pick",
+            spread: formatProfileSpread(load, resolvedLoad.axisNames),
+            axisNames: resolvedLoad.axisNames,
+          };
     default:
       resolvedLoad satisfies never;
 
@@ -180,8 +150,7 @@ export const resolveLoadCell = (
 
 export type LoadPrompt =
   | { kind: "one_rm"; exerciseId: string; label: string }
-  | { kind: "profile"; label: string }
-  | { kind: "profile_attribute"; label: string };
+  | { kind: "profile"; label: string };
 
 export type LoadLine = { loadStr: string; showAt: boolean; prompt: LoadPrompt | null };
 
@@ -207,14 +176,8 @@ export const buildLoadLine = (resolvedLoad: ResolvedLoad | null, load: Load | nu
         showAt: false,
         prompt: {
           kind: "profile",
-          label: `${PICK_YOUR_PREFIX}${cell.axisLabels.join(AXIS_AND_SEPARATOR)}`,
+          label: `${PICK_YOUR_PREFIX}${cell.axisNames.join(AXIS_AND_SEPARATOR)}`,
         },
-      };
-    case "missing_profile_attribute":
-      return {
-        loadStr: cell.spread,
-        showAt: false,
-        prompt: { kind: "profile_attribute", label: SET_SEX_STEER_LABEL },
       };
     default:
       cell satisfies never;
