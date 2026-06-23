@@ -1,15 +1,9 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Heading, Section, Text } from "@react-email/components";
+
+import { EmailButton } from "../components/email-button";
+import { LinkFallback } from "../components/link-fallback";
+import { defineEmail } from "../render";
+import { greet, theme } from "../theme";
 
 export type PasswordResetEmailProps = {
   resetUrl: string;
@@ -17,57 +11,23 @@ export type PasswordResetEmailProps = {
   expiresInHours: number;
 };
 
-const bodyStyle = {
-  backgroundColor: "#f6f9fc",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-};
-
-const containerStyle = {
-  backgroundColor: "#ffffff",
-  margin: "40px auto",
-  padding: "32px 24px",
-  maxWidth: "560px",
-  borderRadius: "8px",
-};
-
-const linkStyle = {
-  color: "#2563eb",
-  wordBreak: "break-all" as const,
-};
-
-export const PasswordResetEmail = ({
-  resetUrl,
-  recipientName,
-  expiresInHours,
-}: PasswordResetEmailProps) => {
-  const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
-
-  return (
-    <Html>
-      <Head />
-      <Preview>Reset your password</Preview>
-      <Body style={bodyStyle}>
-        <Container style={containerStyle}>
-          <Heading>Reset your password</Heading>
-          <Section>
-            <Text>{greeting}</Text>
-            <Text>
-              We received a request to reset the password for your account. Click the link below to
-              choose a new password.
-            </Text>
-            <Text>
-              <Link href={resetUrl} style={linkStyle}>
-                {resetUrl}
-              </Link>
-            </Text>
-            <Hr />
-            <Text>
-              This link expires in {expiresInHours} hour(s). If you didn&apos;t request a password
-              reset, you can safely ignore this email — your password will not change.
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
-  );
-};
+export const passwordResetEmail = defineEmail<PasswordResetEmailProps>({
+  subject: () => "Reset your password",
+  preview: () => "Reset your password",
+  Body: ({ resetUrl, recipientName, expiresInHours }) => (
+    <Section>
+      <Heading style={theme.heading}>Reset your password</Heading>
+      <Text style={theme.text}>{greet(recipientName)}</Text>
+      <Text style={theme.text}>
+        We received a request to reset the password for your account. Use the button below to choose
+        a new password.
+      </Text>
+      <EmailButton href={resetUrl}>Choose a new password</EmailButton>
+      <LinkFallback url={resetUrl} />
+      <Text style={theme.mutedText}>
+        This link expires in {expiresInHours} hour(s). If you didn&apos;t request a password reset,
+        you can safely ignore this email — your password will not change.
+      </Text>
+    </Section>
+  ),
+});

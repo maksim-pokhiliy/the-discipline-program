@@ -9,11 +9,15 @@
   "exports": {
     ".": "./src/index.ts",
     "./port": "./src/port.ts",
+    "./theme": "./src/theme.ts",
+    "./components": "./src/components/index.ts",
     "./templates": "./src/templates/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "lint": "eslint . --fix --max-warnings 0"
+    "lint": "eslint . --fix --max-warnings 0",
+    "preview": "email dev",
+    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run"
   },
   "dependencies": {
     "@react-email/components": "catalog:",
@@ -28,10 +32,14 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "cross-env": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:",
     "react-email": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

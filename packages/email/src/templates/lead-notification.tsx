@@ -1,14 +1,8 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Heading, Hr, Section, Text } from "@react-email/components";
+
+import { InfoRow } from "../components/info-row";
+import { defineEmail } from "../render";
+import { greet, theme } from "../theme";
 
 export type LeadNotificationEmailProps = {
   program: string;
@@ -17,61 +11,24 @@ export type LeadNotificationEmailProps = {
   recipientName?: string | null;
 };
 
-const bodyStyle = {
-  backgroundColor: "#f6f9fc",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-};
-
-const containerStyle = {
-  backgroundColor: "#ffffff",
-  margin: "40px auto",
-  padding: "32px 24px",
-  maxWidth: "560px",
-  borderRadius: "8px",
-};
-
-const labelStyle = {
-  color: "#6b7280",
-  fontWeight: "bold" as const,
-};
-
-export const LeadNotificationEmail = ({
-  program,
-  contact,
-  message,
-  recipientName,
-}: LeadNotificationEmailProps) => {
-  const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
-
-  return (
-    <Html>
-      <Head />
-      <Preview>New program lead — a visitor is interested in {program}</Preview>
-      <Body style={bodyStyle}>
-        <Container style={containerStyle}>
-          <Heading>New program lead</Heading>
-          <Section>
-            <Text>{greeting}</Text>
-            <Text>
-              A visitor submitted interest through the marketing site. Reach out to follow up.
-            </Text>
-            <Text>
-              <span style={labelStyle}>Program:</span> {program}
-            </Text>
-            <Text>
-              <span style={labelStyle}>Contact:</span> {contact}
-            </Text>
-            {message ? (
-              <>
-                <Hr />
-                <Text>
-                  <span style={labelStyle}>Message:</span> {message}
-                </Text>
-              </>
-            ) : null}
-          </Section>
-        </Container>
-      </Body>
-    </Html>
-  );
-};
+export const leadNotificationEmail = defineEmail<LeadNotificationEmailProps>({
+  subject: () => "New program lead",
+  preview: ({ program }) => `New program lead — a visitor is interested in ${program}`,
+  Body: ({ program, contact, message, recipientName }) => (
+    <Section>
+      <Heading style={theme.heading}>New program lead</Heading>
+      <Text style={theme.text}>{greet(recipientName)}</Text>
+      <Text style={theme.text}>
+        A visitor submitted interest through the marketing site. Reach out to follow up.
+      </Text>
+      <InfoRow label="Program" value={program} />
+      <InfoRow label="Contact" value={contact} />
+      {message ? (
+        <>
+          <Hr style={theme.hr} />
+          <InfoRow label="Message" value={message} />
+        </>
+      ) : null}
+    </Section>
+  ),
+});
