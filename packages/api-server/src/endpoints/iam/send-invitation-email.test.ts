@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => {
   return {
     sendMock,
     createResendServiceMock: vi.fn(() => ({ send: sendMock })),
-    renderInvitationEmailMock: vi.fn(async () => ({
+    renderEmailMock: vi.fn(async () => ({
+      subject: "You've been invited",
       html: "<html>rendered</html>",
       text: "rendered",
     })),
@@ -31,7 +32,8 @@ type TypedSendResult = SendEmailResult;
 
 vi.mock("@repo/email", () => ({
   createResendEmailService: mocks.createResendServiceMock,
-  renderInvitationEmail: mocks.renderInvitationEmailMock,
+  renderEmail: mocks.renderEmailMock,
+  invitationEmail: { __template: "invitation" },
 }));
 
 vi.mock("@repo/env/email", () => ({
@@ -100,7 +102,7 @@ describe("sendInvitationEmail", () => {
     mocks.emailEnvOverride.EMAIL_REPLY_TO = undefined;
     mocks.sendMock.mockClear();
     mocks.createResendServiceMock.mockClear();
-    mocks.renderInvitationEmailMock.mockClear();
+    mocks.renderEmailMock.mockClear();
     mocks.loggerErrorMock.mockClear();
   });
 
@@ -111,7 +113,7 @@ describe("sendInvitationEmail", () => {
   it("sends a rendered invitation email via the Resend email service", async () => {
     await sendInvitationEmail(testInput);
 
-    expect(mocks.renderInvitationEmailMock).toHaveBeenCalledTimes(1);
+    expect(mocks.renderEmailMock).toHaveBeenCalledTimes(1);
     expect(mocks.sendMock).toHaveBeenCalledTimes(1);
 
     const sendCall = mocks.sendMock.mock.calls[0];
@@ -130,12 +132,26 @@ describe("sendInvitationEmail", () => {
     expect(sendResult.id).toBeDefined();
   });
 
+  it("renders the invitation template with the invite URL built from the plain token", async () => {
+    await sendInvitationEmail(testInput);
+
+    expect(mocks.renderEmailMock).toHaveBeenCalledWith(
+      { __template: "invitation" },
+      expect.objectContaining({
+        inviteUrl: expect.stringContaining(`/invite/${testInput.plainToken}`),
+        recipientName: "Invitee",
+        expiresInHours: 72,
+      }),
+    );
+  });
+
   it("throws InternalServerError when config is missing (does NOT swallow)", async () => {
     mocks.emailEnvOverride.RESEND_API_KEY = undefined;
     mocks.emailEnvOverride.EMAIL_FROM = undefined;
 
     await expect(sendInvitationEmail(testInput)).rejects.toThrow(InternalServerError);
 
+    expect(mocks.renderEmailMock).not.toHaveBeenCalled();
     expect(mocks.sendMock).not.toHaveBeenCalled();
   });
 
