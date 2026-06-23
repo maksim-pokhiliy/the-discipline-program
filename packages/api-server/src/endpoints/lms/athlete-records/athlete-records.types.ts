@@ -1,7 +1,10 @@
+import { type Gender } from "@prisma/client";
+
 export type AthleteLoadContext = {
   bodyweightKg: number | null;
   currentOneRMByExercise: Map<string, number>;
   profileSelections: Record<string, string>;
+  gender: Gender | null;
 };
 
 export type ResolvedLoad =
@@ -11,7 +14,14 @@ export type ResolvedLoad =
       status: "unresolved";
       reason: "missing_profile_pick";
       prompt: "pick_profile";
-      axisNames: string[];
+      axisLabels: string[];
+    }
+  | {
+      status: "unresolved";
+      reason: "missing_profile_attribute";
+      prompt: "set_profile_attribute";
+      attribute: "gender";
+      axisLabels: string[];
     }
   | { status: "bodyweight" }
   | { status: "not_applicable" };

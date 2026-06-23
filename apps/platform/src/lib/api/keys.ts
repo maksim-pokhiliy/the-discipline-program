@@ -50,6 +50,9 @@ export const platformKeys = {
   planTimetable: {
     data: () => [...ROOT, "plan-timetable"] as const,
   },
+  profileAxes: {
+    all: () => [...ROOT, "profile-axes"] as const,
+  },
   athleteRecords: {
     data: () => [...ROOT, "athlete-records"] as const,
   },

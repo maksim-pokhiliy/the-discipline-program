@@ -1,3 +1,5 @@
+import { type ReactNode } from "react";
+
 export type CreatableOption = {
   id: string;
   label: string;
@@ -16,6 +18,7 @@ type CreatablePickerBaseProps = {
   noOptionsText?: string | undefined;
   size?: "small" | "medium" | undefined;
   open?: boolean | undefined;
+  renderOption?: ((option: CreatableOption) => ReactNode) | undefined;
 };
 
 type CreatablePickerSingleProps = CreatablePickerBaseProps & {
