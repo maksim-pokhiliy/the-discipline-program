@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
-import { Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
 
 import type { ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { CreatablePicker, type CreatableOption } from "@repo/ui";
@@ -95,20 +95,22 @@ export const ByProfileAxisField = ({
   return (
     <Stack spacing={1}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <CreatablePicker
-          label={PICKER_LABEL}
-          placeholder={PICKER_PLACEHOLDER}
-          noOptionsText={PICKER_NO_OPTIONS}
-          options={options}
-          value={selectedOption}
-          onChange={handlePick}
-          inputValue={inputValue}
-          onInputChange={setInputValue}
-          onCreateOption={handleRequestCreate}
-          renderOption={renderAxisOption}
-          loading={profileAxes.isFetching}
-          disabled={disabled}
-        />
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <CreatablePicker
+            label={PICKER_LABEL}
+            placeholder={PICKER_PLACEHOLDER}
+            noOptionsText={PICKER_NO_OPTIONS}
+            options={options}
+            value={selectedOption}
+            onChange={handlePick}
+            inputValue={inputValue}
+            onInputChange={setInputValue}
+            onCreateOption={handleRequestCreate}
+            renderOption={renderAxisOption}
+            loading={profileAxes.isFetching}
+            disabled={disabled}
+          />
+        </Box>
 
         <IconButton
           aria-label={REMOVE_AXIS_ARIA}
