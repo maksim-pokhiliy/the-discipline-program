@@ -111,6 +111,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                 }
                 label="Active (Visible in Store)"
               />
+
               <FormControlLabel
                 control={
                   <Controller

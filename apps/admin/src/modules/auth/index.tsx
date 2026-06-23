@@ -20,6 +20,7 @@ const ADMIN_ALLOWED_ROLES = [UserRole.ADMIN, UserRole.HEAD_COACH] as const;
 export const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const callbackUrl = validateCallbackUrl(searchParams.get("callbackUrl"), {
     allowedRoles: ADMIN_ALLOWED_ROLES,
   });
@@ -40,6 +41,7 @@ export const LoginPage = () => {
 
       return session;
     },
+
     onSuccess: (session) => {
       toast.success("Welcome back");
 

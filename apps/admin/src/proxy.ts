@@ -32,6 +32,7 @@ export const proxy = async (req: NextRequest) => {
       path,
       error: error instanceof Error ? error.message : String(error),
     });
+
     getMonitoring()?.captureException(error, {
       tags: { component: "proxy-auth", app: "admin" },
       level: "warning",

@@ -59,6 +59,7 @@ export const useUpdateUserRole = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserRoleData }) =>
       api.users.updateRole(id, data),
+
     onSuccess: (_, { id }) => {
       toast.success("User updated successfully");
       queryClient.invalidateQueries({ queryKey: adminKeys.users.page() });
@@ -66,6 +67,7 @@ export const useUpdateUserRole = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users.coaches() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
+
     onError: (error: Error) => {
       notifyError(error, "Failed to update user");
     },
@@ -77,6 +79,7 @@ export const useResendInvite = () => {
 
   return useMutation<ResendInviteResponse, Error, string>({
     mutationFn: (id) => api.users.resendInvite(id),
+
     onSuccess: (result, id) => {
       const expiresAt =
         result.expiresAt instanceof Date ? result.expiresAt : new Date(result.expiresAt);
@@ -85,6 +88,7 @@ export const useResendInvite = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users.byId(id) });
       queryClient.invalidateQueries({ queryKey: adminKeys.users.page() });
     },
+
     onError: (error) => {
       notifyError(error, "Failed to resend invite");
     },

@@ -45,11 +45,15 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "createdAt", direction: "desc" },
   });
+
   const { mutate: updateRole, isPending } = useUpdateUserRole();
   const deleteMutation = useDeleteUser();
+
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
+
   const { anchorEl, menuItemId, openMenu, closeMenu } = useChipMenu();
+
   const [pendingChange, setPendingChange] = useState<{
     userId: string;
     currentRole: UserRole;
@@ -150,6 +154,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Delete">
               <IconButton onClick={() => requestDelete(user.id)} color="error" aria-label="Delete">
                 <DeleteIcon fontSize="small" />

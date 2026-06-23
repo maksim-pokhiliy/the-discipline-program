@@ -42,8 +42,10 @@ type ContactsListSectionProps = {
 export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();
   const deleteMutation = useDeleteContact();
+
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
+
   const updateContactMutation = useUpdateContact();
   const { anchorEl, menuItemId, openMenu, closeMenu } = useChipMenu();
 
@@ -73,6 +75,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         render: (item) => (
           <Box>
             <Typography variant="subtitle2">{item.name || "Anonymous"}</Typography>
+
             {item.contact && (
               <Typography variant="caption" color="text.secondary">
                 {item.contact}
@@ -148,6 +151,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Delete">
               <IconButton onClick={() => requestDelete(item.id)} color="error" aria-label="Delete">
                 <DeleteIcon fontSize="small" />

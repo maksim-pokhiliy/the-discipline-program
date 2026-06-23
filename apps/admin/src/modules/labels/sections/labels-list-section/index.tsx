@@ -40,6 +40,7 @@ type LabelsListSectionProps = {
 export const LabelsListSection = ({ labels }: LabelsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();
   const deleteMutation = useDeleteLabel();
+
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 

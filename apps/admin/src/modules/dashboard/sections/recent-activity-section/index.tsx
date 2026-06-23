@@ -78,6 +78,7 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
                   )
                 }
               />
+
               <Typography variant="caption" color="text.secondary">
                 {formatDate(item.date, "compact")}
               </Typography>

@@ -16,6 +16,7 @@ type DashboardLayoutProps = { children: React.ReactNode };
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { expanded, toggle } = useSidebar();
   const { data: session } = useSession();
+
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleMobileToggle = useCallback(() => setMobileOpen((prev) => !prev), []);
@@ -37,6 +38,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
           <AdminHeader onMenuClick={handleMobileToggle} navigation={ADMIN_NAVIGATION} />
+
           <Stack component="main" id="main-content" sx={{ flexGrow: 1, overflow: "auto" }}>
             {children}
           </Stack>

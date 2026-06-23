@@ -44,6 +44,7 @@ export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
                 <Typography component="legend" variant="subtitle2">
                   Rating
                 </Typography>
+
                 <Controller
                   name="rating"
                   control={control}
@@ -58,6 +59,7 @@ export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
                     />
                   )}
                 />
+
                 {errors.rating && (
                   <Typography variant="caption" color="error">
                     {errors.rating.message}
@@ -157,6 +159,7 @@ export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
                   setValue("authorAvatar", null, { shouldDirty: true });
                 }}
               />
+
               <Typography variant="caption" color="text.secondary">
                 Upload a square image for best results.
               </Typography>

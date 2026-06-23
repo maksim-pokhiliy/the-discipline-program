@@ -43,6 +43,7 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();
   const toggleActiveMutation = useToggleReviewActive();
   const deleteMutation = useDeleteReview();
+
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 
@@ -103,8 +104,13 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
               }
               onChange={() => toggleActiveMutation.mutate(review.id)}
               color="success"
-              inputProps={{ "aria-label": "Toggle active status" }}
+              slotProps={{
+                input: {
+                  "aria-label": "Toggle active status",
+                },
+              }}
             />
+
             <Chip
               label={review.isActive ? "Active" : "Hidden"}
               color={review.isActive ? "success" : "default"}
@@ -138,6 +144,7 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Delete">
               <IconButton
                 onClick={() => requestDelete(review.id)}

@@ -39,6 +39,7 @@ type ExercisesListSectionProps = {
 export const ExercisesListSection = ({ exercises }: ExercisesListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();
   const deleteMutation = useDeleteExercise();
+
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 

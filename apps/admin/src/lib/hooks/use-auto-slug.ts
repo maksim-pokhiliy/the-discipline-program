@@ -10,7 +10,9 @@ type SlugFormMethods = {
 
 export const useAutoSlug = ({ disabled, form }: { disabled: boolean; form: SlugFormMethods }) => {
   const { watch, setValue, formState } = form;
+
   const title = watch("title");
+
   const isSlugDirty = formState.dirtyFields.slug;
 
   useEffect(() => {

@@ -22,6 +22,7 @@ export const GET = withAdminAuth(
     RATE_LIMIT_TIER.API,
   ),
 );
+
 export const PUT = withAdminAuth(
   withAuthRateLimit(
     createPutHandler(
@@ -33,6 +34,7 @@ export const PUT = withAdminAuth(
     RATE_LIMIT_TIER.API,
   ),
 );
+
 export const DELETE = withAdminAuth(
   withAuthRateLimit(
     createDeleteHandler(cmsLabelAdminApi.deleteLabel, deleteLabelParamsSchema),

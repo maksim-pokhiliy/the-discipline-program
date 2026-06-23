@@ -21,6 +21,7 @@ export const DashboardPageClient = () => {
       {(data) => (
         <Stack>
           <ContentStatsSection contentStats={data.contentStats} userStats={data.userStats} />
+
           <RecentActivitySection activity={data.recentActivity} />
         </Stack>
       )}

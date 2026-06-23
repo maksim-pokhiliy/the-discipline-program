@@ -27,10 +27,12 @@ const RootLayout = ({ children }: RootLayoutProps) => (
         <QueryProvider>
           <AuthProvider>
             <SkipToContent />
+
             <Box sx={{ minHeight: "100dvh" }}>
               {children}
 
               <Toaster />
+
               {isVercelDeployment && <Analytics />}
               {isVercelDeployment && <SpeedInsights />}
             </Box>

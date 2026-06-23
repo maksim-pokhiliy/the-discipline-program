@@ -53,12 +53,12 @@ export const CoachOwnerAutocomplete = ({
             {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
             {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
             {...(paramsId !== undefined && { id: paramsId })}
-            inputProps={inputProps}
             label={label}
             variant="outlined"
             error={error}
             {...(helperText !== undefined && { helperText })}
             slotProps={{
+              htmlInput: inputProps,
               inputLabel: InputLabelProps,
               input: {
                 ...InputProps,

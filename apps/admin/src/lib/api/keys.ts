@@ -15,6 +15,7 @@ export const adminKeys = {
   profileAxes: createEntityKeys(ROOT, "profileAxes"),
   products: createEntityKeys(ROOT, "products"),
   reviews: createEntityKeys(ROOT, "reviews"),
+
   users: {
     ...createEntityKeys(ROOT, "users"),
     coaches: () => [...ROOT, "users-coaches"] as const,

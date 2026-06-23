@@ -54,6 +54,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
   const toggleStatusMutation = useToggleBlogPost();
   const toggleFeaturedMutation = useToggleBlogFeatured();
   const deleteMutation = useDeleteBlogPost();
+
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 
@@ -92,7 +93,11 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               }
               onChange={() => toggleStatusMutation.mutate(post.id)}
               color="success"
-              inputProps={{ "aria-label": "Toggle published status" }}
+              slotProps={{
+                input: {
+                  "aria-label": "Toggle published status",
+                },
+              }}
             />
 
             <Chip
@@ -118,7 +123,11 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               }
               onChange={() => toggleFeaturedMutation.mutate(post.id)}
               color="warning"
-              inputProps={{ "aria-label": "Toggle featured status" }}
+              slotProps={{
+                input: {
+                  "aria-label": "Toggle featured status",
+                },
+              }}
             />
 
             <Chip

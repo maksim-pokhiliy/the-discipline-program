@@ -6,9 +6,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["jsdom"],
+
   experimental: {
     optimizePackageImports: ["@mui/icons-material", "@mui/material"],
   },
+
   images: {
     remotePatterns: [
       {
@@ -29,6 +31,7 @@ export default withSentryConfig(nextConfig, {
   ...sentryEnvOpts,
   silent: !process.env.CI,
   widenClientFileUpload: true,
+
   webpack: {
     treeshake: { removeDebugLogging: true },
     automaticVercelMonitors: true,

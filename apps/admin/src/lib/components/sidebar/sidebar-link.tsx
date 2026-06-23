@@ -47,9 +47,11 @@ export const SidebarLink = ({ text, href, icon, expanded }: SidebarLinkProps) =>
       {expanded && (
         <ListItemText
           primary={text}
-          primaryTypographyProps={{
-            noWrap: true,
-            color: isActive ? "primary.main" : "text.primary",
+          slotProps={{
+            primary: {
+              noWrap: true,
+              color: isActive ? "primary.main" : "text.primary",
+            },
           }}
         />
       )}

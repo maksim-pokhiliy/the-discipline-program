@@ -30,6 +30,7 @@ export const GET = withAdminAuth(
     RATE_LIMIT_TIER.API,
   ),
 );
+
 export const PUT = withAdminAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
@@ -41,6 +42,7 @@ export const PUT = withAdminAuth(
     RATE_LIMIT_TIER.API,
   ),
 );
+
 export const DELETE = withAdminAuth(
   withAuthRateLimit(
     createAuthDeleteHandler(

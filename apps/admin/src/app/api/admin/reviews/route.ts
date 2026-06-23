@@ -19,6 +19,7 @@ export const GET = withAdminAuth(
     RATE_LIMIT_TIER.API,
   ),
 );
+
 export const POST = withAdminAuth(
   withAuthRateLimit(
     createPostHandler(cmsReviewAdminApi.createReview, createReviewRequestSchema, reviewSchema),

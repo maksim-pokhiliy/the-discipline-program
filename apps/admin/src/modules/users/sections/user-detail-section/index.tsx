@@ -31,6 +31,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
         justifyContent="space-between"
       >
         <UserChip user={user} size="large" />
+
         {canResendInvite && (
           <Button
             type="button"
@@ -58,7 +59,9 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
                     user.emailVerified ? formatDate(user.emailVerified, "long") : "Not verified"
                   }
                 />
+
                 <DetailField label="Registered" value={formatDate(user.createdAt, "long")} />
+
                 <DetailField label="Updated" value={formatDate(user.updatedAt, "long")} />
               </Stack>
             </FormCard>

@@ -28,10 +28,12 @@ export const useUpdatePageSection = () => {
   return useMutation({
     mutationFn: ({ slug, data }: { slug: string; data: Omit<UpdatePageSectionData, "pageSlug"> }) =>
       api.pages.updateSection(slug, data),
+
     onSuccess: (_, { slug }) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.pages.bySlug(slug) });
       toast.success("Section updated successfully");
     },
+
     onError: (error: Error) => {
       notifyError(error, "Failed to update section");
     },

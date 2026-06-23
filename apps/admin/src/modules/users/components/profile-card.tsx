@@ -30,18 +30,22 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
       <FormCard title="Athlete Profile">
         <Stack spacing={2}>
           <DetailField label="Name" value={user.name || "—"} />
+
           <DetailField
             label="Gender"
             value={athleteProfile.gender ? GENDER_LABELS[athleteProfile.gender] : "—"}
           />
+
           <DetailField
             label="Height"
             value={athleteProfile.heightCm ? `${athleteProfile.heightCm} cm` : "—"}
           />
+
           <DetailField
             label="Weight"
             value={athleteProfile.weightKg ? `${athleteProfile.weightKg} kg` : "—"}
           />
+
           <DetailField label="Assigned Coaches" alignItems="flex-start">
             {athleteProfile.assignedCoaches.length > 0 ? (
               <Stack direction="row" spacing={1} flexWrap="wrap">

@@ -70,16 +70,19 @@ export const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact 
                   labelWidth={theme.spacing(10)}
                   value={contact.name || "—"}
                 />
+
                 <DetailField
                   label="Contact"
                   labelWidth={theme.spacing(10)}
                   value={contact.contact || "—"}
                 />
+
                 <DetailField
                   label="Program"
                   labelWidth={theme.spacing(10)}
                   value={contact.program || "—"}
                 />
+
                 <DetailField
                   label="Date"
                   labelWidth={theme.spacing(10)}

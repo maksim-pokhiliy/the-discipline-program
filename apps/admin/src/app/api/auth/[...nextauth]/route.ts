@@ -14,6 +14,7 @@ type NextAuthRouteHandler = (
 ) => Promise<Response>;
 
 export { handler as GET };
+
 export const POST = withAuthCredentialsRateLimit(
   handler as unknown as RouteHandler,
   RATE_LIMIT_TIER.AUTH,

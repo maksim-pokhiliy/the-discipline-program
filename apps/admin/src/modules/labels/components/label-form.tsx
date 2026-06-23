@@ -58,6 +58,7 @@ export const LabelForm = ({ isLoading }: LabelFormProps) => {
         <FormCard title="Applicable levels">
           <Stack spacing={2}>
             <ApplicableLevelsField isLoading={isLoading} />
+
             <RestSwitchField isLoading={isLoading} />
           </Stack>
         </FormCard>
