@@ -392,7 +392,7 @@ describe("buildSessionDetail load resolution", () => {
   it("emits missing_profile_pick labelling the unpicked axes", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
       cells: [
         { coords: ["rx"], kg: 60 },
         { coords: ["scaled"], kg: 40 },

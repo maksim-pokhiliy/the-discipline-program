@@ -7,7 +7,6 @@ import { type AthleteLoadContext, type ResolvedLoad } from "./athlete-records.ty
 const PER_HAND_COUNT = 2;
 const PERCENT_DIVISOR = 100;
 const ROUND_FACTOR = 10;
-const GENDER_AXIS_LABEL = "Gender";
 
 const GENDER_TO_COORD: Record<Gender, string> = {
   [Gender.MALE]: GENDER_AXIS_COORDS.MALE,
@@ -20,7 +19,7 @@ type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
 type ByProfileAxis = ByProfileLoad["axes"][number];
 
 const resolveAxisCoord = (axis: ByProfileAxis, ctx: AthleteLoadContext): string | null => {
-  if (axis.kind === "human") {
+  if (axis.binding === "GENDER") {
     return ctx.gender === null ? null : GENDER_TO_COORD[ctx.gender];
   }
 
@@ -29,8 +28,7 @@ const resolveAxisCoord = (axis: ByProfileAxis, ctx: AthleteLoadContext): string 
   return picked !== undefined && axis.values.includes(picked) ? picked : null;
 };
 
-const axisLabel = (axis: ByProfileAxis): string =>
-  axis.kind === "catalog" ? axis.label : GENDER_AXIS_LABEL;
+const axisLabel = (axis: ByProfileAxis): string => axis.label;
 
 const resolveCoords = (
   axes: readonly ByProfileAxis[],
@@ -54,34 +52,34 @@ const resolveCoords = (
 const coordsEqual = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && a.every((value, index) => value === b[index]);
 
-const catalogLabels = (load: ByProfileLoad): string[] =>
-  load.axes.filter((axis) => axis.kind === "catalog").map(axisLabel);
+const plainAxisLabels = (load: ByProfileLoad): string[] =>
+  load.axes.filter((axis) => axis.binding === null).map(axisLabel);
 
 const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): ResolvedLoad => {
-  const catalogMissing = load.axes.filter(
-    (axis) => axis.kind === "catalog" && resolveAxisCoord(axis, ctx) === null,
+  const pickMissing = load.axes.filter(
+    (axis) => axis.binding === null && resolveAxisCoord(axis, ctx) === null,
   );
 
-  if (catalogMissing.length > 0) {
+  if (pickMissing.length > 0) {
     return {
       status: "unresolved",
       reason: "missing_profile_pick",
       prompt: "pick_profile",
-      axisLabels: catalogMissing.map(axisLabel),
+      axisLabels: pickMissing.map(axisLabel),
     };
   }
 
-  const humanMissing = load.axes.filter(
-    (axis) => axis.kind === "human" && resolveAxisCoord(axis, ctx) === null,
+  const attributeMissing = load.axes.filter(
+    (axis) => axis.binding === "GENDER" && resolveAxisCoord(axis, ctx) === null,
   );
 
-  if (humanMissing.length > 0) {
+  if (attributeMissing.length > 0) {
     return {
       status: "unresolved",
       reason: "missing_profile_attribute",
       prompt: "set_profile_attribute",
       attribute: "gender",
-      axisLabels: humanMissing.map(axisLabel),
+      axisLabels: attributeMissing.map(axisLabel),
     };
   }
 
@@ -93,7 +91,7 @@ const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): Resolve
     return { status: "resolved", kg: cell.kg, perHand: false };
   }
 
-  const labels = catalogLabels(load);
+  const labels = plainAxisLabels(load);
 
   if (labels.length === 0) {
     return {
@@ -101,7 +99,7 @@ const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): Resolve
       reason: "missing_profile_attribute",
       prompt: "set_profile_attribute",
       attribute: "gender",
-      axisLabels: [GENDER_AXIS_LABEL],
+      axisLabels: load.axes.filter((axis) => axis.binding === "GENDER").map(axisLabel),
     };
   }
 

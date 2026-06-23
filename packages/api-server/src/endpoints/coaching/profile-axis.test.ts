@@ -5,12 +5,15 @@ import {
   type CreateProfileAxisData,
 } from "@repo/contracts/coaching/profile-axis";
 import { UserRole } from "@repo/contracts/iam/auth";
+import { GENDER_AXIS_VALUES } from "@repo/contracts/lms/_shared";
 import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { profileAxisAdminApi, profileAxisPlatformApi } from "./profile-axis";
+
+const SYSTEM_GENDER_AXIS_ID = "cgender000000000000000000";
 
 const uniqueKey = (prefix: string): string => `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 
@@ -177,6 +180,45 @@ describe("profileAxisAdminApi", () => {
 
       expect(Array.isArray(pageData.profileAxes)).toBe(true);
       expect(pageData.profileAxes.some((axis) => axis.id === created.id)).toBe(true);
+    });
+  });
+
+  describe("createProfileAxis binding", () => {
+    it("never sets a binding on a created axis", async () => {
+      const created = await profileAxisAdminApi.createProfileAxis(parseInput());
+
+      createdAxisIds.push(created.id);
+
+      expect(created.binding).toBeNull();
+
+      const fetched = await profileAxisAdminApi.getProfileAxisById(created.id);
+
+      expect(fetched.binding).toBeNull();
+    });
+  });
+
+  describe("system Gender axis protection", () => {
+    it("seeds the system Gender row with the GENDER binding and the canonical values", async () => {
+      const system = await profileAxisAdminApi.getProfileAxisById(SYSTEM_GENDER_AXIS_ID);
+
+      expect(system.binding).toBe("GENDER");
+      expect(system.values).toEqual(GENDER_AXIS_VALUES);
+    });
+
+    it("rejects updating the system Gender axis with a ForbiddenError", async () => {
+      await expect(
+        profileAxisAdminApi.updateProfileAxis(SYSTEM_GENDER_AXIS_ID, { label: "Sex" }),
+      ).rejects.toThrow(ForbiddenError);
+
+      await expect(
+        profileAxisAdminApi.updateProfileAxis(SYSTEM_GENDER_AXIS_ID, { label: "Sex" }),
+      ).rejects.toMatchObject({ details: { field: "binding" } });
+    });
+
+    it("rejects deleting the system Gender axis with a ForbiddenError", async () => {
+      await expect(profileAxisAdminApi.deleteProfileAxis(SYSTEM_GENDER_AXIS_ID)).rejects.toThrow(
+        ForbiddenError,
+      );
     });
   });
 });

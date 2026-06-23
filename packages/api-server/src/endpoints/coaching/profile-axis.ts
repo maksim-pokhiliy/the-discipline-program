@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type ProfileAxis as PrismaProfileAxis } from "@prisma/client";
 
 import {
   type AdminProfileAxesPageData,
@@ -6,12 +6,18 @@ import {
   type ProfileAxis,
   type UpdateProfileAxisData,
 } from "@repo/contracts/coaching/profile-axis";
-import { ConflictError } from "@repo/errors";
+import { ConflictError, ForbiddenError } from "@repo/errors";
 
 import { requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToProfileAxis } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError } from "../../utils";
+
+const assertNotProtected = (row: PrismaProfileAxis): void => {
+  if (row.binding !== null) {
+    throw new ForbiddenError("System profile axis cannot be modified", { field: "binding" });
+  }
+};
 
 const buildProfileAxisUpdateData = (
   data: UpdateProfileAxisData,
@@ -55,15 +61,17 @@ export const profileAxisAdminApi = {
   },
 
   updateProfileAxis: async (id: string, data: UpdateProfileAxisData): Promise<ProfileAxis> => {
-    await findOrThrow(prisma.profileAxis.findUnique({ where: { id } }), "Profile axis");
+    const row = await findOrThrow(prisma.profileAxis.findUnique({ where: { id } }), "Profile axis");
+
+    assertNotProtected(row);
 
     try {
-      const row = await prisma.profileAxis.update({
+      const updated = await prisma.profileAxis.update({
         where: { id },
         data: buildProfileAxisUpdateData(data),
       });
 
-      return mapToProfileAxis(row);
+      return mapToProfileAxis(updated);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         throw new ConflictError("Profile axis with this key already exists", { field: "key" });
@@ -74,7 +82,9 @@ export const profileAxisAdminApi = {
   },
 
   deleteProfileAxis: async (id: string): Promise<void> => {
-    await findOrThrow(prisma.profileAxis.findUnique({ where: { id } }), "Profile axis");
+    const row = await findOrThrow(prisma.profileAxis.findUnique({ where: { id } }), "Profile axis");
+
+    assertNotProtected(row);
 
     try {
       await prisma.profileAxis.delete({ where: { id } });

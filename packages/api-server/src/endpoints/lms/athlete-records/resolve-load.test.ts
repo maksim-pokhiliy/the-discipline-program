@@ -9,6 +9,7 @@ const ROW_EXERCISE_ID = "row-exercise-1";
 const OTHER_EXERCISE_ID = "other-exercise-1";
 const LEVEL_AXIS_ID = "clz0000000000000000axis01";
 const SCALE_AXIS_ID = "clz0000000000000000axis02";
+const GENDER_AXIS_ID = "cgender000000000000000000";
 
 const makeCtx = (overrides: Partial<AthleteLoadContext> = {}): AthleteLoadContext => ({
   bodyweightKg: null,
@@ -116,10 +117,10 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("resolves a catalog byProfile load to the cell matching the remembered pick", () => {
+  it("resolves a plain byProfile load to the cell matching the remembered pick", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
       cells: [
         { coords: ["rx"], kg: 60 },
         { coords: ["scaled"], kg: 40 },
@@ -134,10 +135,10 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("returns missing_profile_pick with the axis label when a catalog axis has no pick", () => {
+  it("returns missing_profile_pick with the axis label when a plain axis has no pick", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
       cells: [
         { coords: ["rx"], kg: 60 },
         { coords: ["scaled"], kg: 40 },
@@ -152,10 +153,10 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("returns missing_profile_pick when the remembered catalog pick is not a valid value", () => {
+  it("returns missing_profile_pick when the remembered plain pick is not a valid value", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
       cells: [
         { coords: ["rx"], kg: 60 },
         { coords: ["scaled"], kg: 40 },
@@ -171,10 +172,10 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("returns missing_profile_pick when valid catalog picks match no cell (QA-007)", () => {
+  it("returns missing_profile_pick when valid plain picks match no cell (QA-007)", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
       cells: [{ coords: ["rx"], kg: 60 }],
     };
     const ctx = makeCtx({ profileSelections: { [LEVEL_AXIS_ID]: "scaled" } });
@@ -187,10 +188,17 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("steers to the gender attribute when an all-human load resolves but no cell matches", () => {
+  it("steers to the gender attribute when an all-bound load resolves but no cell matches", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "human", attribute: "gender" }],
+      axes: [
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
       cells: [{ coords: ["Male"], kg: 70 }],
     };
     const ctx = makeCtx({ gender: "FEMALE" });
@@ -204,10 +212,10 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("ignores a stale name-keyed catalog selection and asks for a pick (TEST-001)", () => {
+  it("ignores a stale name-keyed plain selection and asks for a pick (TEST-001)", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] }],
+      axes: [{ axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null }],
       cells: [
         { coords: ["rx"], kg: 60 },
         { coords: ["scaled"], kg: 40 },
@@ -223,10 +231,17 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("resolves a human gender axis from the typed gender column with no manual pick", () => {
+  it("resolves a gender-bound axis from the typed gender column with no manual pick", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "human", attribute: "gender" }],
+      axes: [
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
       cells: [
         { coords: ["Male"], kg: 70 },
         { coords: ["Female"], kg: 50 },
@@ -241,10 +256,42 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("returns missing_profile_attribute when a human gender axis has a null gender column", () => {
+  it("resolves a gender-bound axis for MALE without reading profileSelections", () => {
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "human", attribute: "gender" }],
+      axes: [
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
+      cells: [
+        { coords: ["Male"], kg: 70 },
+        { coords: ["Female"], kg: 50 },
+      ],
+    };
+    const ctx = makeCtx({ gender: "MALE", profileSelections: {} });
+
+    expect(resolveLoad(load, ctx, ROW_EXERCISE_ID)).toEqual({
+      status: "resolved",
+      kg: 70,
+      perHand: false,
+    });
+  });
+
+  it("returns missing_profile_attribute when a gender-bound axis has a null gender column", () => {
+    const load: Load = {
+      kind: "byProfile",
+      axes: [
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
       cells: [
         { coords: ["Male"], kg: 70 },
         { coords: ["Female"], kg: 50 },
@@ -260,12 +307,17 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("resolves a mixed catalog + human load from the pick and the gender column", () => {
+  it("resolves a mixed plain + gender-bound load from the pick and the gender column", () => {
     const load: Load = {
       kind: "byProfile",
       axes: [
-        { kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] },
-        { kind: "human", attribute: "gender" },
+        { axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null },
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
       ],
       cells: [
         { coords: ["rx", "Male"], kg: 70 },
@@ -283,12 +335,17 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("surfaces the catalog pick first when a mixed load has both unpicked catalog and null gender", () => {
+  it("surfaces the pick first when a mixed load has both an unpicked plain axis and null gender", () => {
     const load: Load = {
       kind: "byProfile",
       axes: [
-        { kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] },
-        { kind: "human", attribute: "gender" },
+        { axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null },
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
       ],
       cells: [
         { coords: ["rx", "Male"], kg: 70 },
@@ -306,12 +363,17 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("returns missing_profile_attribute when a mixed load has the catalog picked but null gender", () => {
+  it("returns missing_profile_attribute when a mixed load has the plain axis picked but null gender", () => {
     const load: Load = {
       kind: "byProfile",
       axes: [
-        { kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] },
-        { kind: "human", attribute: "gender" },
+        { axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null },
+        {
+          axisId: GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
       ],
       cells: [
         { coords: ["rx", "Male"], kg: 70 },
@@ -331,12 +393,12 @@ describe("resolveLoad", () => {
     });
   });
 
-  it("resolves a two-axis catalog byProfile load by positional coords", () => {
+  it("resolves a two-axis plain byProfile load by positional coords", () => {
     const load: Load = {
       kind: "byProfile",
       axes: [
-        { kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"] },
-        { kind: "catalog", axisId: SCALE_AXIS_ID, label: "Tier", values: ["a", "b"] },
+        { axisId: LEVEL_AXIS_ID, label: "Level", values: ["rx", "scaled"], binding: null },
+        { axisId: SCALE_AXIS_ID, label: "Tier", values: ["a", "b"], binding: null },
       ],
       cells: [
         { coords: ["rx", "a"], kg: 70 },
