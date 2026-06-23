@@ -15,6 +15,16 @@ export default defineConfig({
       {
         plugins: [reactPlugin()],
         test: {
+          name: "email",
+          root: "packages/email",
+          environment: "node",
+          globals: true,
+          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+        },
+      },
+      {
+        plugins: [reactPlugin()],
+        test: {
           name: "ui",
           root: "packages/ui",
           environment: "jsdom",
@@ -59,6 +69,7 @@ export default defineConfig({
         "packages/api-routes/src/**/*.ts",
         "packages/auth/src/**/*.ts",
         "packages/contracts/src/**/*.ts",
+        "packages/email/src/**/*.{ts,tsx}",
         "packages/shared/src/**/*.ts",
         "packages/ui/src/**/*.{ts,tsx}",
         "packages/query/src/**/*.{ts,tsx}",
