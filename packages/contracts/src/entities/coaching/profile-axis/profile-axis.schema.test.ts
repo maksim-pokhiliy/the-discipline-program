@@ -19,6 +19,7 @@ const baseEntity = {
   key: "level",
   label: "Level",
   values: ["RX", "SC"],
+  binding: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -253,6 +254,16 @@ describe("createProfileAxisSchema", () => {
       expect(result.data.values).toEqual(["RX", "rx"]);
     }
   });
+
+  it("strips a binding key (binding is not API-settable on create)", () => {
+    const result = createProfileAxisSchema.safeParse({ ...baseInput, binding: "GENDER" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("binding");
+    }
+  });
 });
 
 describe("updateProfileAxisSchema", () => {
@@ -297,6 +308,16 @@ describe("updateProfileAxisSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("strips a binding key (binding is not API-settable on update)", () => {
+    const result = updateProfileAxisSchema.safeParse({ label: "Renamed", binding: "GENDER" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("binding");
+    }
+  });
 });
 
 describe("profileAxisSchema", () => {
@@ -314,6 +335,45 @@ describe("profileAxisSchema", () => {
 
   it("rejects empty values on the entity schema", () => {
     const result = profileAxisSchema.safeParse({ ...baseEntity, values: [] });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a GENDER binding", () => {
+    const result = profileAxisSchema.safeParse({ ...baseEntity, binding: "GENDER" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.binding).toBe("GENDER");
+    }
+  });
+
+  it("accepts a null binding", () => {
+    const result = profileAxisSchema.safeParse({ ...baseEntity, binding: null });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.binding).toBeNull();
+    }
+  });
+
+  it("rejects an unknown binding value", () => {
+    const result = profileAxisSchema.safeParse({ ...baseEntity, binding: "X" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing binding field", () => {
+    const result = profileAxisSchema.safeParse({
+      id: baseEntity.id,
+      key: baseEntity.key,
+      label: baseEntity.label,
+      values: baseEntity.values,
+      createdAt: baseEntity.createdAt,
+      updatedAt: baseEntity.updatedAt,
+    });
 
     expect(result.success).toBe(false);
   });

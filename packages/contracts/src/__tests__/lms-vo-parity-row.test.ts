@@ -25,7 +25,14 @@ describe("LMS VO parity — prototype data.js edge cases", () => {
       expect(
         loadSchema.safeParse({
           kind: "byProfile",
-          axes: [{ kind: "human", attribute: "gender" }],
+          axes: [
+            {
+              axisId: "cgender000000000000000000",
+              label: "Gender",
+              values: ["Male", "Female"],
+              binding: "GENDER",
+            },
+          ],
           cells: [
             { coords: ["Male"], kg: 24 },
             { coords: ["Female"], kg: 16 },

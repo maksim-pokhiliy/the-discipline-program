@@ -13,23 +13,16 @@ export const GENDER_AXIS_COORDS = { MALE: "Male", FEMALE: "Female" } as const;
 
 export const GENDER_AXIS_VALUES = Object.values(GENDER_AXIS_COORDS);
 
-export const byProfileAxisSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("catalog"),
-    axisId: z.string().cuid(),
-    label: z.string().trim().min(1),
-    values: z.array(z.string().trim().min(1)).min(1),
-  }),
-  z.object({
-    kind: z.literal("human"),
-    attribute: z.literal("gender"),
-  }),
-]);
+export const byProfileAxisSchema = z.object({
+  axisId: z.string().cuid(),
+  label: z.string().trim().min(1),
+  values: z.array(z.string().trim().min(1)).min(1),
+  binding: z.literal("GENDER").nullable(),
+});
 
 type ByProfileAxis = z.infer<typeof byProfileAxisSchema>;
 
-const axisValueSet = (axis: ByProfileAxis): readonly string[] =>
-  axis.kind === "catalog" ? axis.values : GENDER_AXIS_VALUES;
+const axisValueSet = (axis: ByProfileAxis): readonly string[] => axis.values;
 
 export const loadSchema = z
   .discriminatedUnion("kind", [
@@ -68,10 +61,6 @@ export const loadSchema = z
 
     if (l.kind === "byProfile") {
       l.axes.forEach((axis, axisIndex) => {
-        if (axis.kind !== "catalog") {
-          return;
-        }
-
         const seenValues = new Set<string>();
 
         axis.values.forEach((value) => {
@@ -140,9 +129,7 @@ export const loadSchema = z
         seenCoordKeys.add(coordKey);
       });
 
-      const axisKeys = l.axes.map((axis) =>
-        axis.kind === "catalog" ? `catalog:${axis.axisId}` : `human:${axis.attribute}`,
-      );
+      const axisKeys = l.axes.map((axis) => axis.axisId);
 
       if (new Set(axisKeys).size !== axisKeys.length) {
         ctx.addIssue({
