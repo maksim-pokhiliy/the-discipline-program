@@ -28,9 +28,9 @@ Carry-forwards with disposition + status. `OPEN` (live) · `SCHEDULED` (assigned
   SELECT id, load FROM training_schema_rows WHERE load->>'kind' = 'byProfile';
   ```
   Prisma equivalent: `prisma.schemaRow.findMany({ where: { load: { path: ["kind"], equals: "byProfile" } } })`.
-- **Backfill map (per legacy load's axis `{name, values}`).**
-  - `name` ∈ {gender, sex} (owner judgment) → `{ kind:"human", attribute:"gender" }` (values dropped — implied by the const; verify the legacy values map to Male/Female).
-  - else → find-or-create a `ProfileAxis` by `key`/`label` matching `name` (create from `{ key:name, label:name, values }` if none) → `{ kind:"catalog", axisId, label, values }` (snapshot from the catalog row).
+- **Backfill map (per legacy load's axis `{name, values}`) — REVISED for design A (D-7); the union arms below are superseded by the flat `{axisId,label,values,binding}` snapshot.**
+  - `name` ∈ {gender, sex} (owner judgment) → snapshot the SYSTEM Gender row: `{ axisId:"cgender000000000000000000", label:"Gender", values:["Male","Female"], binding:"GENDER" }` (verify the legacy values map to Male/Female; the athlete then resolves from the typed column, no pick).
+  - else → find-or-create a `ProfileAxis` by `key`/`label` matching `name` (create from `{ key:name, label:name, values }` if none — created rows are `binding=null`) → `{ axisId, label, values, binding:null }` (snapshot from the catalog row).
 - **Properties.** Idempotent (run once); tolerate-orphan (PAC-9 — no FK; the snapshot keeps the load functional). Because the catalog denormalizes label+values+cells, the rewrite is purely additive. The matching W3 step re-keys `profileSelections` (PAC-2).
 
 (PAC-7 — the four-projection gate — is now CLOSED: `four-projection-recheck.md` PASSED + the plan-editor-compose `D-BYPROFILE-AXIS` cross-ref RATIFIED.)
@@ -47,3 +47,13 @@ Carry-forwards with disposition + status. `OPEN` (live) · `SCHEDULED` (assigned
 - **PAC-7** — CLOSED 2026-06-22 (W2 gate). `four-projection-recheck.md` PASSED + plan-editor-compose `D-BYPROFILE-AXIS` cross-ref RATIFIED.
 - **PAC-8** — CLOSED 2026-06-22 (W2). Single NFKC law via the catalog snapshot; bind-by-`axisId` kills the case-fold fork (no `keyLower`).
 - **PAC-9** — CLOSED 2026-06-22 (W2). Tolerate-orphan; denormalization makes delete intrinsically safe.
+
+## 2026-06-23 — design A revision (W2) deltas
+
+The W2 union (D-3) was REVISED to design A (D-7): gender = a `binding`-bound system catalog row; the byProfile axis is a flat `{axisId,label,values,binding}`. Carry-forward changes:
+
+- **PAC-1** — backfill map REVISED above (the union arms → the flat snapshot; `name∈{gender,sex}` → the system Gender `axisId`). Still OPEN, owner-gated prod run.
+- **PAC-13** — CLOSED 2026-06-23. QA confirmed `replaceDimension` passes empty `previousCells`, so no stale kg carries across a dimension rebind; the snapshot+superRefine also prevent an invalid load reaching the athlete. No code change needed.
+- **PAC-14** — the GATED api-server suite (now the resolver-on-binding + CRUD-protection + system-row-`values` invariant cases) must run green before the merge. Owner-batch, ~10 min serial.
+- **PAC-15** — NEW (low). The admin protected-row affordance blocks the LIST (System chip, no edit/delete, no edit-link); a hand-typed `/profile-axes/<id>` still loads an editable form that the server `assertNotProtected` 403s on save. Making the edit VIEW itself read-only is W3-adjacent polish (the server 403 is the hard backstop).
+- **QA-W001 (resolved, not carried).** `GENDER_TO_COORD[gender]` returns `undefined` (not `null`) for an out-of-enum gender — DELIBERATELY not "fixed": the state is unreachable (Postgres enum) and degrades safely (cell-miss → attribute steer); the proposed `?? null` is dead code (lint) or weakens `Record<Gender,string>` exhaustiveness (which catches the real future risk — a 3rd gender added to the enum). TS-exhaustiveness is strictly better.
