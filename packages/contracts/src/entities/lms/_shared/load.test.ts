@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { loadSchema, percentageReferenceSchema } from "./load";
+import {
+  GENDER_AXIS_COORDS,
+  GENDER_AXIS_VALUES,
+  loadSchema,
+  percentageReferenceSchema,
+} from "./load";
 
 const CUID = "ck1234567890123456789012";
 const CUID_TWO = "ck0987654321098765432109";
@@ -40,6 +45,16 @@ describe("percentageReferenceSchema", () => {
 
   it("rejects unknown scope", () => {
     expect(percentageReferenceSchema.safeParse({ scope: "global" }).success).toBe(false);
+  });
+});
+
+describe("gender axis coords (pinned to the migration-seeded system row)", () => {
+  it("keeps GENDER_AXIS_VALUES equal to the seeded Male/Female values", () => {
+    expect(GENDER_AXIS_VALUES).toEqual(["Male", "Female"]);
+  });
+
+  it("keeps GENDER_AXIS_COORDS mapping the gender enum to the seeded coords", () => {
+    expect(GENDER_AXIS_COORDS).toEqual({ MALE: "Male", FEMALE: "Female" });
   });
 });
 
