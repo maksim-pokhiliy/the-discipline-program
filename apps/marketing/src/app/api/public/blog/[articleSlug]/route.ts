@@ -1,7 +1,5 @@
 import {
-  CACHE_POLICY,
   createGetByParamHandler,
-  withCacheControl,
   withPublicRoute,
   withRateLimit,
   RATE_LIMIT_TIER,
@@ -11,13 +9,10 @@ import { blogPostPageDataSchema, getBlogArticleBySlugParamsSchema } from "@repo/
 
 export const GET = withPublicRoute(
   withRateLimit(
-    withCacheControl(
-      createGetByParamHandler(
-        ({ articleSlug }) => cmsBlogPublicApi.getArticle(articleSlug),
-        getBlogArticleBySlugParamsSchema,
-        blogPostPageDataSchema,
-      ),
-      CACHE_POLICY.STATIC,
+    createGetByParamHandler(
+      ({ articleSlug }) => cmsBlogPublicApi.getArticle(articleSlug),
+      getBlogArticleBySlugParamsSchema,
+      blogPostPageDataSchema,
     ),
     RATE_LIMIT_TIER.PUBLIC,
   ),

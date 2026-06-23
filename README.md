@@ -55,7 +55,7 @@ The admin app (CMS/blog/exercise images) and the platform app (coach avatar uplo
 ```bash
 pnpm db:generate    # generate Prisma client
 pnpm db:deploy      # apply migrations (schema + SQL invariants)
-pnpm db:seed        # seed users + profiles (admin/coach/head-coach + athletes); CMS/plan/exercise data is created in-app
+pnpm db:seed        # seed two dev users (dev-coach HEAD_COACH + coach profile, dev-admin ADMIN); CMS/plan/exercise/athlete data is created in-app
 pnpm dev            # all four apps in parallel
 ```
 
