@@ -131,16 +131,16 @@ describe("resolveLoadCell", () => {
       kind: "byProfile",
       axes: [
         {
-          kind: "catalog",
           axisId: "clz00000000000000000axs01",
           label: "Level",
           values: ["RX", "Scaled"],
+          binding: null,
         },
         {
-          kind: "catalog",
           axisId: "clz00000000000000000axs02",
           label: "Scale",
           values: ["M", "F"],
+          binding: null,
         },
       ],
       cells: [
@@ -158,7 +158,7 @@ describe("resolveLoadCell", () => {
     });
   });
 
-  it("surfaces the spread and a gender steer for a missing_profile_attribute (human, no inline pick)", () => {
+  it("surfaces the spread and a gender steer for a missing_profile_attribute (bound axis, no inline pick)", () => {
     const resolved: ResolvedLoad = {
       status: "unresolved",
       reason: "missing_profile_attribute",
@@ -168,7 +168,14 @@ describe("resolveLoadCell", () => {
     };
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "human", attribute: "gender" }],
+      axes: [
+        {
+          axisId: "cgender000000000000000000",
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
       cells: [
         { coords: ["Male"], kg: 43 },
         { coords: ["Female"], kg: 30 },
@@ -265,10 +272,10 @@ describe("buildLoadLine", () => {
       kind: "byProfile",
       axes: [
         {
-          kind: "catalog",
           axisId: "clz00000000000000000axs01",
           label: "Level",
           values: ["RX", "Scaled"],
+          binding: null,
         },
       ],
       cells: [
@@ -294,7 +301,14 @@ describe("buildLoadLine", () => {
     };
     const load: Load = {
       kind: "byProfile",
-      axes: [{ kind: "human", attribute: "gender" }],
+      axes: [
+        {
+          axisId: "cgender000000000000000000",
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
       cells: [
         { coords: ["Male"], kg: 43 },
         { coords: ["Female"], kg: 30 },

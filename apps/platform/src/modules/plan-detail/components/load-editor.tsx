@@ -7,7 +7,7 @@ import { Button, Stack, ToggleButton, Typography } from "@mui/material";
 import { type Load, LOAD_KINDS, type LoadKind } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
 
-import { makeCatalogAxisDraft } from "../lib/by-profile-cells";
+import { makeAxisDraft } from "../lib/by-profile-cells";
 
 import { LoadAbsoluteFields } from "./load-absolute-fields";
 import { LoadByProfileFields } from "./load-by-profile-fields";
@@ -32,7 +32,7 @@ const KIND_DEFAULTS: Record<LoadKind, Load> = {
   bodyweight: { kind: "bodyweight" },
   byProfile: {
     kind: "byProfile",
-    axes: [makeCatalogAxisDraft()],
+    axes: [makeAxisDraft()],
     cells: [],
   },
 };

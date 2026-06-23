@@ -109,8 +109,13 @@ const profileRow: SchemaCardView = {
         load: {
           kind: "byProfile",
           axes: [
-            { kind: "catalog", axisId: LEVEL_AXIS_ID, label: "Level", values: ["RX", "Scaled"] },
-            { kind: "catalog", axisId: SCALE_AXIS_ID, label: "Scale", values: ["M", "F"] },
+            {
+              axisId: LEVEL_AXIS_ID,
+              label: "Level",
+              values: ["RX", "Scaled"],
+              binding: null,
+            },
+            { axisId: SCALE_AXIS_ID, label: "Scale", values: ["M", "F"], binding: null },
           ],
           cells: [
             { coords: ["RX", "M"], kg: 60 },
@@ -156,7 +161,14 @@ const humanProfileRow: SchemaCardView = {
         reps: { kind: "count", value: 3 },
         load: {
           kind: "byProfile",
-          axes: [{ kind: "human", attribute: "gender" }],
+          axes: [
+            {
+              axisId: "cgender000000000000000000",
+              label: "Gender",
+              values: ["Male", "Female"],
+              binding: "GENDER",
+            },
+          ],
           cells: [
             { coords: ["Male"], kg: 9 },
             { coords: ["Female"], kg: 6 },

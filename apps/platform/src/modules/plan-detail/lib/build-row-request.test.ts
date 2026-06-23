@@ -145,7 +145,7 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
       exerciseId: EXERCISE_ID,
       load: {
         kind: "byProfile",
-        axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
+        axes: [{ axisId: "", label: "", values: [], binding: null }],
         cells: [{ coords: ["RX"], kg: 50 }],
       },
     };
@@ -164,8 +164,8 @@ describe("buildRowRequest invalid discriminants surface coach prose (QA-001, QA-
       load: {
         kind: "byProfile",
         axes: [
-          { kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] },
-          { kind: "catalog", axisId: AXIS_ID_SEX, label: "Sex", values: ["♂", "♀"] },
+          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null },
+          { axisId: AXIS_ID_SEX, label: "Sex", values: ["♂", "♀"], binding: null },
         ],
         cells: [
           { coords: ["RX", "♂"], kg: 9 },

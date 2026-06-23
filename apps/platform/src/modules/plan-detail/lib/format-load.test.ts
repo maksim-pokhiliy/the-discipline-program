@@ -92,10 +92,10 @@ describe("formatLoad", () => {
         kind: "byProfile",
         axes: [
           {
-            kind: "catalog",
             axisId: "clp9z8x7w0000abcd12ax00sex",
             label: "Sex",
             values: ["M", "F"],
+            binding: null,
           },
         ],
         cells: [
@@ -112,16 +112,16 @@ describe("formatLoad", () => {
         kind: "byProfile",
         axes: [
           {
-            kind: "catalog",
             axisId: "clp9z8x7w0000abcd12axlevel",
             label: "Level",
             values: ["RX", "SC"],
+            binding: null,
           },
           {
-            kind: "catalog",
             axisId: "clp9z8x7w0000abcd12ax00sex",
             label: "Sex",
             values: ["♂", "♀"],
+            binding: null,
           },
         ],
         cells: [

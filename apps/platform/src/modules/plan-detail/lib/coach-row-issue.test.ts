@@ -9,6 +9,7 @@ const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const EXERCISE_ID = "clp9z8x7w0000abcd1234ex001";
 const AXIS_ID_LEVEL = "clp9z8x7w0000abcd12axlevel";
 const AXIS_ID_SEX = "clp9z8x7w0000abcd12ax00sex";
+const SYSTEM_GENDER_AXIS_ID = "cgender000000000000000000";
 
 const firstIssue = (payload: Record<string, unknown>): ZodIssue => {
   const result = createSchemaRowSchema.safeParse({
@@ -45,7 +46,7 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
+        axes: [{ axisId: "", label: "", values: [], binding: null }],
         cells: [{ coords: ["RX"], kg: 5 }],
       },
     });
@@ -58,8 +59,8 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
       load: {
         kind: "byProfile",
         axes: [
-          { kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX"] },
-          { kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["SC"] },
+          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX"], binding: null },
+          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["SC"], binding: null },
         ],
         cells: [{ coords: ["RX", "SC"], kg: 5 }],
       },
@@ -72,7 +73,7 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "RX"] }],
+        axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "RX"], binding: null }],
         cells: [
           { coords: ["RX"], kg: 43 },
           { coords: ["RX"], kg: 30 },
@@ -87,7 +88,7 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX"] }],
+        axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX"], binding: null }],
         cells: [{ coords: ["RX"], kg: 0 }],
       },
     });
@@ -100,8 +101,8 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
       load: {
         kind: "byProfile",
         axes: [
-          { kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] },
-          { kind: "catalog", axisId: AXIS_ID_SEX, label: "Sex", values: ["♂", "♀"] },
+          { axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null },
+          { axisId: AXIS_ID_SEX, label: "Sex", values: ["♂", "♀"], binding: null },
         ],
         cells: [
           { coords: ["RX", "♂"], kg: 9 },
@@ -118,7 +119,7 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] }],
+        axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null }],
         cells: [
           { coords: ["RX"], kg: 9 },
           { coords: ["MASTER"], kg: 6 },
@@ -129,11 +130,18 @@ describe("coachRowIssue maps contract issues to coach prose (QA-001 regression p
     expect(coachRowIssue(issue)).toBe("Pick axis values that match the axes you defined.");
   });
 
-  it("maps a human byProfile axis with a gender-coord gap to the coords prompt", () => {
+  it("maps a bound gender byProfile axis with a coord gap to the coords prompt", () => {
     const issue = firstIssue({
       load: {
         kind: "byProfile",
-        axes: [{ kind: "human", attribute: "gender" }],
+        axes: [
+          {
+            axisId: SYSTEM_GENDER_AXIS_ID,
+            label: "Gender",
+            values: ["Male", "Female"],
+            binding: "GENDER",
+          },
+        ],
         cells: [
           { coords: ["Male"], kg: 24 },
           { coords: ["Other"], kg: 20 },

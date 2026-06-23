@@ -124,16 +124,16 @@ const powerBlock = (): BlockView => ({
                 kind: "byProfile",
                 axes: [
                   {
-                    kind: "catalog",
                     axisId: "clz00000000000000000axs01",
                     label: "Level",
                     values: ["RX", "Scaled"],
+                    binding: null,
                   },
                   {
-                    kind: "catalog",
                     axisId: "clz00000000000000000axs02",
                     label: "Scale",
                     values: ["M", "F"],
+                    binding: null,
                   },
                 ],
                 cells: [

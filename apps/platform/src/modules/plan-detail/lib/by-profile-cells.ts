@@ -1,4 +1,4 @@
-import { GENDER_AXIS_VALUES, type Load } from "@repo/contracts/lms/_shared";
+import { type Load } from "@repo/contracts/lms/_shared";
 
 export type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
 export type ByProfileAxis = ByProfileLoad["axes"][number];
@@ -6,28 +6,20 @@ export type ByProfileCell = ByProfileLoad["cells"][number];
 
 export const EMPTY_KG = Number.NaN;
 
-export const GENDER_AXIS_LABEL = "Gender";
-
-const CATALOG_AXIS_FALLBACK_LABEL = "Axis";
+const AXIS_FALLBACK_LABEL = "Axis";
 
 const COORD_KEY_SEPARATOR = "|";
 
-export const axisValues = (axis: ByProfileAxis): readonly string[] =>
-  axis.kind === "catalog" ? axis.values : GENDER_AXIS_VALUES;
+export const axisValues = (axis: ByProfileAxis): readonly string[] => axis.values;
 
-export const axisLabel = (axis: ByProfileAxis): string => {
-  if (axis.kind === "human") {
-    return GENDER_AXIS_LABEL;
-  }
+export const axisLabel = (axis: ByProfileAxis): string =>
+  axis.label === "" ? AXIS_FALLBACK_LABEL : axis.label;
 
-  return axis.label === "" ? CATALOG_AXIS_FALLBACK_LABEL : axis.label;
-};
-
-export const makeCatalogAxisDraft = (): ByProfileAxis => ({
-  kind: "catalog",
+export const makeAxisDraft = (): ByProfileAxis => ({
   axisId: "",
   label: "",
   values: [],
+  binding: null,
 });
 
 const coordKey = (coords: readonly string[]): string => coords.join(COORD_KEY_SEPARATOR);

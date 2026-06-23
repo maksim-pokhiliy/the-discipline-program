@@ -1,6 +1,6 @@
 import { createElement } from "react";
 
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ProfileAxis } from "@repo/contracts/coaching/profile-axis";
@@ -10,18 +10,26 @@ import { render } from "@app/test/render";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 
 const AXIS_ID_LEVEL = "clp9z8x7w0000abcd12axlevel";
+const SYSTEM_GENDER_AXIS_ID = "cgender000000000000000000";
 
 const makeAxis = (
   overrides: Partial<ProfileAxis> & Pick<ProfileAxis, "id" | "label">,
 ): ProfileAxis => ({
   key: overrides.label.toLowerCase(),
   values: [],
+  binding: null,
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,
 });
 
 const LEVEL_AXIS = makeAxis({ id: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] });
+const GENDER_AXIS = makeAxis({
+  id: SYSTEM_GENDER_AXIS_ID,
+  label: "Gender",
+  values: ["Male", "Female"],
+  binding: "GENDER",
+});
 
 const onChange = vi.fn();
 const axesState: { data: ProfileAxis[] } = { data: [] };
@@ -91,14 +99,14 @@ describe("LoadEditor kind switching", () => {
     expect(onChange).toHaveBeenCalledWith({ kind: "bodyweight" });
   });
 
-  it("emits an unbound catalog-axis byProfile default when By profile is chosen", () => {
+  it("emits an unbound axis-draft byProfile default when By profile is chosen", () => {
     render(<LoadEditor value={null} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "By profile" }));
 
     expect(onChange).toHaveBeenCalledWith({
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
+      axes: [{ axisId: "", label: "", values: [], binding: null }],
       cells: [],
     });
   });
@@ -190,23 +198,28 @@ describe("LoadEditor percentage sub-fields", () => {
   });
 });
 
-describe("LoadEditor byProfile kind-first authoring", () => {
+describe("LoadEditor byProfile single-picker authoring", () => {
   const boundCatalog = {
     kind: "byProfile" as const,
-    axes: [
-      { kind: "catalog" as const, axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] },
-    ],
+    axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null }],
     cells: [
       { coords: ["RX"], kg: 43 },
       { coords: ["SC"], kg: 30 },
     ],
   };
 
-  it("offers the training-axis and athlete-attribute kind toggle", () => {
+  const unboundDraft = {
+    kind: "byProfile" as const,
+    axes: [{ axisId: "", label: "", values: [], binding: null }],
+    cells: [],
+  };
+
+  it("renders a single axis picker with no kind toggle", () => {
     render(<LoadEditor value={boundCatalog} onChange={onChange} />);
 
-    expect(screen.getByRole("button", { name: "Training axis" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Athlete attribute" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Axis" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Training axis" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Athlete attribute" })).not.toBeInTheDocument();
   });
 
   it("renders the bound catalog values read-only as chips with no value field", () => {
@@ -220,23 +233,14 @@ describe("LoadEditor byProfile kind-first authoring", () => {
   it("binds the picked catalog axis and regenerates the cells", () => {
     axesState.data = [LEVEL_AXIS];
 
-    render(
-      <LoadEditor
-        value={{
-          kind: "byProfile",
-          axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
-          cells: [],
-        }}
-        onChange={onChange}
-      />,
-    );
+    render(<LoadEditor value={unboundDraft} onChange={onChange} />);
 
     fireEvent.mouseDown(screen.getByRole("combobox", { name: "Axis" }));
     fireEvent.click(screen.getByText("Level"));
 
     expect(onChange).toHaveBeenCalledWith({
       kind: "byProfile",
-      axes: [{ kind: "catalog", axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"] }],
+      axes: [{ axisId: AXIS_ID_LEVEL, label: "Level", values: ["RX", "SC"], binding: null }],
       cells: [
         { coords: ["RX"], kg: Number.NaN },
         { coords: ["SC"], kg: Number.NaN },
@@ -244,23 +248,31 @@ describe("LoadEditor byProfile kind-first authoring", () => {
     });
   });
 
-  it("seeds the gender cells when the axis kind switches to athlete attribute", () => {
-    render(
-      <LoadEditor
-        value={{
-          kind: "byProfile",
-          axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
-          cells: [],
-        }}
-        onChange={onChange}
-      />,
-    );
+  it("picks the system Gender axis from the list, binding GENDER and seeding the gender cells", () => {
+    axesState.data = [GENDER_AXIS];
 
-    fireEvent.click(screen.getByRole("button", { name: "Athlete attribute" }));
+    render(<LoadEditor value={unboundDraft} onChange={onChange} />);
+
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Axis" }));
+
+    const option = screen.getByText("Gender");
+
+    expect(
+      within(option.closest("li") as HTMLElement).getByText("Profile attribute"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(option);
 
     expect(onChange).toHaveBeenCalledWith({
       kind: "byProfile",
-      axes: [{ kind: "human", attribute: "gender" }],
+      axes: [
+        {
+          axisId: SYSTEM_GENDER_AXIS_ID,
+          label: "Gender",
+          values: ["Male", "Female"],
+          binding: "GENDER",
+        },
+      ],
       cells: [
         { coords: ["Male"], kg: Number.NaN },
         { coords: ["Female"], kg: Number.NaN },
@@ -268,19 +280,24 @@ describe("LoadEditor byProfile kind-first authoring", () => {
     });
   });
 
+  it("does not badge a plain catalog axis as a profile attribute", () => {
+    axesState.data = [LEVEL_AXIS];
+
+    render(<LoadEditor value={unboundDraft} onChange={onChange} />);
+
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Axis" }));
+
+    const option = screen.getByText("Level");
+
+    expect(
+      within(option.closest("li") as HTMLElement).queryByText("Profile attribute"),
+    ).not.toBeInTheDocument();
+  });
+
   it("reveals the inline create form with the typed name when Create is chosen", () => {
     axesState.data = [];
 
-    render(
-      <LoadEditor
-        value={{
-          kind: "byProfile",
-          axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
-          cells: [],
-        }}
-        onChange={onChange}
-      />,
-    );
+    render(<LoadEditor value={unboundDraft} onChange={onChange} />);
 
     fireEvent.mouseDown(screen.getByRole("combobox", { name: "Axis" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Axis" }), {
@@ -293,25 +310,6 @@ describe("LoadEditor byProfile kind-first authoring", () => {
     expect(nameField).toHaveValue("Scale");
     expect(screen.getByRole("button", { name: "Create axis" })).toBeInTheDocument();
   });
-
-  it("seeds the human gender chips read-only on the attribute arm", () => {
-    render(
-      <LoadEditor
-        value={{
-          kind: "byProfile",
-          axes: [{ kind: "human", attribute: "gender" }],
-          cells: [
-            { coords: ["Male"], kg: 24 },
-            { coords: ["Female"], kg: 16 },
-          ],
-        }}
-        onChange={onChange}
-      />,
-    );
-
-    expect(screen.getByRole("spinbutton", { name: "Male kg" })).toBeInTheDocument();
-    expect(screen.getByRole("spinbutton", { name: "Female kg" })).toBeInTheDocument();
-  });
 });
 
 describe("LoadEditor byProfile inline create round-trip", () => {
@@ -322,7 +320,7 @@ describe("LoadEditor byProfile inline create round-trip", () => {
       <LoadEditor
         value={{
           kind: "byProfile",
-          axes: [{ kind: "catalog", axisId: "", label: "", values: [] }],
+          axes: [{ axisId: "", label: "", values: [], binding: null }],
           cells: [],
         }}
         onChange={onChange}
@@ -365,9 +363,7 @@ describe("LoadEditor byProfile inline create round-trip", () => {
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({
         kind: "byProfile",
-        axes: [
-          { kind: "catalog", axisId: NEW_AXIS_ID, label: "Scale", values: ["Light", "Heavy"] },
-        ],
+        axes: [{ axisId: NEW_AXIS_ID, label: "Scale", values: ["Light", "Heavy"], binding: null }],
         cells: [
           { coords: ["Light"], kg: Number.NaN },
           { coords: ["Heavy"], kg: Number.NaN },
@@ -420,7 +416,7 @@ describe("LoadEditor byProfile inline create round-trip", () => {
         value={{
           kind: "byProfile",
           axes: [
-            { kind: "catalog", axisId: NEW_AXIS_ID, label: "Retired Axis", values: ["RX", "SC"] },
+            { axisId: NEW_AXIS_ID, label: "Retired Axis", values: ["RX", "SC"], binding: null },
           ],
           cells: [
             { coords: ["RX"], kg: 40 },

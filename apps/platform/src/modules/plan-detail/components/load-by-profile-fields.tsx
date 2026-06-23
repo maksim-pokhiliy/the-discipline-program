@@ -9,7 +9,7 @@ import {
   type ByProfileAxis,
   type ByProfileCell,
   type ByProfileLoad,
-  makeCatalogAxisDraft,
+  makeAxisDraft,
   regenerateCells,
   setCellKgByIndex,
 } from "../lib/by-profile-cells";
@@ -24,13 +24,6 @@ const GRID_LABEL = "Weights";
 const GRID_LABEL_FONT_SIZE_PX = 11;
 const GRID_LABEL_FONT_WEIGHT = 600;
 const GRID_LABEL_LETTER_SPACING = "0.06em";
-
-type AxisKind = ByProfileAxis["kind"];
-
-const makeHumanAxis = (): ByProfileAxis => ({ kind: "human", attribute: "gender" });
-
-const makeAxisForKind = (kind: AxisKind): ByProfileAxis =>
-  kind === "human" ? makeHumanAxis() : makeCatalogAxisDraft();
 
 type LoadByProfileFieldsProps = {
   value: ByProfileLoad;
@@ -62,21 +55,17 @@ export const LoadByProfileFields = ({
     );
   };
 
-  const changeKind = (axisIndex: number, kind: AxisKind): void => {
-    replaceDimension(axisIndex, makeAxisForKind(kind));
-  };
-
   const bindCatalog = (axisIndex: number, source: ProfileAxis): void => {
     replaceDimension(axisIndex, {
-      kind: "catalog",
       axisId: source.id,
       label: source.label,
       values: source.values,
+      binding: source.binding,
     });
   };
 
   const addAxis = (): void => {
-    commitAxes([...axes, makeCatalogAxisDraft()], cells);
+    commitAxes([...axes, makeAxisDraft()], cells);
   };
 
   const removeAxis = (axisIndex: number): void => {
@@ -98,7 +87,6 @@ export const LoadByProfileFields = ({
         <ByProfileAxisField
           key={axisIndex}
           axis={axis}
-          onKindChange={(kind) => changeKind(axisIndex, kind)}
           onBindCatalog={(source) => bindCatalog(axisIndex, source)}
           onRemove={() => removeAxis(axisIndex)}
           canRemove={canRemoveAxis}

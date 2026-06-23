@@ -9,15 +9,21 @@ import { InlineProfilePicker } from "./inline-profile-picker";
 
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";
 const SCALE_AXIS_ID = "clz00000000000000000axs02";
+const SYSTEM_GENDER_AXIS_ID = "cgender000000000000000000";
 
-const catalogAxis = (axisId: string, label: string, values: string[]) => ({
-  kind: "catalog" as const,
+const plainAxis = (axisId: string, label: string, values: string[]) => ({
   axisId,
   label,
   values,
+  binding: null,
 });
 
-const humanAxis = { kind: "human" as const, attribute: "gender" as const };
+const genderAxis = {
+  axisId: SYSTEM_GENDER_AXIS_ID,
+  label: "Gender",
+  values: ["Male", "Female"],
+  binding: "GENDER" as const,
+};
 
 const byProfileLoad = (axes: Extract<Load, { kind: "byProfile" }>["axes"]): Load => ({
   kind: "byProfile",
@@ -32,10 +38,10 @@ beforeEach(() => {
 });
 
 describe("InlineProfilePicker", () => {
-  it("renders only the catalog axis value buttons for a mixed catalog+human load (Must-Test 6)", () => {
+  it("renders only the binding-null axis value buttons for a mixed plain+gender load (Must-Test 6)", () => {
     render(
       <InlineProfilePicker
-        load={byProfileLoad([catalogAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]), humanAxis])}
+        load={byProfileLoad([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]), genderAxis])}
         selections={{}}
         isSubmitting={false}
         onPick={onPick}
@@ -48,10 +54,10 @@ describe("InlineProfilePicker", () => {
     expect(screen.queryByRole("button", { name: "Female" })).not.toBeInTheDocument();
   });
 
-  it("titles the picker with the catalog labels only, never the human arm (Must-Test 6)", () => {
+  it("titles the picker with the binding-null labels only, never the bound gender axis (Must-Test 6)", () => {
     render(
       <InlineProfilePicker
-        load={byProfileLoad([catalogAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]), humanAxis])}
+        load={byProfileLoad([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]), genderAxis])}
         selections={{}}
         isSubmitting={false}
         onPick={onPick}
@@ -62,10 +68,10 @@ describe("InlineProfilePicker", () => {
     expect(screen.queryByText(/Gender/)).not.toBeInTheDocument();
   });
 
-  it("renders nothing for an all-human byProfile load (Must-Test 7)", () => {
+  it("renders nothing for an all-gender (bound) byProfile load (Must-Test 7)", () => {
     const { container } = render(
       <InlineProfilePicker
-        load={byProfileLoad([humanAxis])}
+        load={byProfileLoad([genderAxis])}
         selections={{}}
         isSubmitting={false}
         onPick={onPick}
@@ -93,8 +99,8 @@ describe("InlineProfilePicker", () => {
     render(
       <InlineProfilePicker
         load={byProfileLoad([
-          catalogAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
-          catalogAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
+          plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
+          plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
         ])}
         selections={{}}
         isSubmitting={false}
@@ -111,7 +117,7 @@ describe("InlineProfilePicker", () => {
   it("marks the value button active by axisId-keyed selection (Must-Test 8)", () => {
     render(
       <InlineProfilePicker
-        load={byProfileLoad([catalogAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])])}
+        load={byProfileLoad([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])])}
         selections={{ [LEVEL_AXIS_ID]: "SC" }}
         isSubmitting={false}
         onPick={onPick}
