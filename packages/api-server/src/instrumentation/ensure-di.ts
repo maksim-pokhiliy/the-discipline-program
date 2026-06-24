@@ -4,6 +4,7 @@ import {
   setMonitoring,
   setRateLimiter,
 } from "@repo/api-routes";
+import { initSentryServer } from "@repo/shared/sentry";
 
 import { prismaIdempotencyStore } from "../idempotency";
 import { defaultMonitoring } from "../infrastructure/monitoring";
@@ -15,5 +16,6 @@ export const ensureBackendDI = (): void => {
 };
 
 if (process.env.NODE_ENV !== "test") {
+  initSentryServer();
   ensureBackendDI();
 }
