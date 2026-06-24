@@ -291,7 +291,7 @@ describe("buildLoadLine", () => {
     });
   });
 
-  it("renders the gender spread with a profile steer and no inline pick for missing_profile_attribute", () => {
+  it("renders the gender spread with a set-your-sex prompt for missing_profile_attribute", () => {
     const resolved: ResolvedLoad = {
       status: "unresolved",
       reason: "missing_profile_attribute",
@@ -318,7 +318,7 @@ describe("buildLoadLine", () => {
     expect(buildLoadLine(resolved, load)).toEqual({
       loadStr: "Male:43 / Female:30",
       showAt: false,
-      prompt: { kind: "profile_attribute", label: "Set your sex in your profile" },
+      prompt: { kind: "profile_attribute", label: "Set your sex" },
     });
   });
 });

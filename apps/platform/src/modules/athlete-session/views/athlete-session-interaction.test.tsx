@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Gender } from "@repo/contracts/coaching/athlete-profile";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import {
   type BlockView,
@@ -470,16 +471,39 @@ describe("AthleteSessionView — inline Pick profile", () => {
   });
 });
 
-describe("AthleteSessionView — human gender steer (no inline pick)", () => {
-  it("shows the set-your-sex steer and never opens an inline pick for a gender-null human axis", () => {
+describe("AthleteSessionView — inline set gender", () => {
+  it("offers a tappable Set your sex affordance for a gender-null human axis", () => {
     setView(buildResponse([block(humanProfileRow, "clz0000000000000000000blk5", "Power")]));
 
     render(<AthleteSessionView sessionId={SESSION_ID} />);
 
-    expect(screen.getByText("Set your sex in your profile")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /pick your/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Set your sex" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Male" })).not.toBeInTheDocument();
-    expect(updateProfileMutate).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Female" })).not.toBeInTheDocument();
+  });
+
+  it("opens the inline gender pick when the affordance is tapped", () => {
+    setView(buildResponse([block(humanProfileRow, "clz0000000000000000000blk5", "Power")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Set your sex" }));
+
+    expect(screen.getByRole("button", { name: "Male" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Female" })).toBeInTheDocument();
+  });
+
+  it("writes the typed gender column and never profileSelections when a sex is picked", () => {
+    setView(buildResponse([block(humanProfileRow, "clz0000000000000000000blk5", "Power")]));
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Set your sex" }));
+    fireEvent.click(screen.getByRole("button", { name: "Female" }));
+
+    expect(updateProfileMutate).toHaveBeenCalledTimes(1);
+    expect(firstCallArg(updateProfileMutate)).toEqual({ gender: Gender.FEMALE });
+    expect(firstCallArg(updateProfileMutate)).not.toHaveProperty("profileSelections");
   });
 });
 
