@@ -1,3 +1,5 @@
+import "../../instrumentation/ensure-di";
+
 export * from "./_shared";
 export * from "./athlete-records";
 export * from "./benchmark-result";

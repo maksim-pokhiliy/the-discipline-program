@@ -1,3 +1,5 @@
+import "../../instrumentation/ensure-di";
+
 import { defaultStorage } from "../../infrastructure/storage";
 
 import { createStorageUploadAdminApi } from "./upload";

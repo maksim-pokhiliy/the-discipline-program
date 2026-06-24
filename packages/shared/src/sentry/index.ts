@@ -7,3 +7,4 @@ export {
   createSentryRequestErrorHandler,
   type SentryRequestErrorHandler,
 } from "./request-error-handler";
+export { initSentryServer } from "./server-init";

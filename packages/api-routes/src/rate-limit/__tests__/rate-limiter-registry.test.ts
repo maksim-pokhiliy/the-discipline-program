@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resetDiRegistrySlotForTests } from "../../di-global";
 import type { RateLimitResult, RateLimiterPort } from "../rate-limiter-port";
 
 const buildPort = (label: string): RateLimiterPort => ({
@@ -18,9 +19,12 @@ describe("rate-limiter-registry", () => {
 
   beforeEach(() => {
     vi.resetModules();
+    resetDiRegistrySlotForTests();
   });
 
   afterEach(() => {
+    resetDiRegistrySlotForTests();
+
     if (originalUrl === undefined) {
       delete process.env.UPSTASH_REDIS_REST_URL;
     } else {

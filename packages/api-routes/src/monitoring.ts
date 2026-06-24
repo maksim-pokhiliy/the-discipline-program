@@ -1,5 +1,7 @@
 import { logger } from "@repo/shared";
 
+import { getDiRegistrySlot } from "./di-global";
+
 export type SeverityLevel = "fatal" | "error" | "warning" | "info" | "debug";
 
 export type CaptureContext = {
@@ -17,17 +19,18 @@ export type MonitoringPort = {
   flush(timeout?: number): Promise<boolean>;
 };
 
-let monitoring: MonitoringPort | undefined;
 let hasWarnedMissing = false;
 
 export const setMonitoring = (port: MonitoringPort): void => {
-  monitoring = port;
+  getDiRegistrySlot().monitoring = port;
 };
 
 export const getMonitoring = (): MonitoringPort | undefined => {
+  const monitoring = getDiRegistrySlot().monitoring;
+
   if (!monitoring && !hasWarnedMissing && process.env.NODE_ENV === "production") {
     hasWarnedMissing = true;
-    logger.warn("monitoring.unavailable", { reason: "registry_not_bootstrapped" });
+    logger.error("monitoring.unavailable", { reason: "registry_not_bootstrapped" });
   }
 
   return monitoring;
