@@ -19,6 +19,7 @@ export { createOneRMRecordsAPI } from "./one-rm-records";
 export { createPerformedSessionsAPI } from "./performed-sessions";
 export { createPlanEnrollmentsAPI } from "./plan-enrollments";
 export { createPlanTimetableAPI } from "./plan-timetable";
+export { createProfileAxesAPI } from "./profile-axes";
 export { createRowGroupsAPI } from "./row-groups";
 export { createSchemaRowsAPI } from "./schema-rows";
 export { createSchemasAPI } from "./schemas";

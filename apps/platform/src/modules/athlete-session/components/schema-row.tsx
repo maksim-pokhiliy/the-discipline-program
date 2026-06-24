@@ -62,15 +62,22 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
   }, [isEditing]);
 
   const openPrompt = (event: MouseEvent<HTMLElement>, next: LoadPrompt): void => {
-    setAnchorEl(event.currentTarget);
+    switch (next.kind) {
+      case "one_rm":
+        setAnchorEl(event.currentTarget);
+        editor.openOneRmEditor(row.rowId, next.exerciseId);
 
-    if (next.kind === "one_rm") {
-      editor.openOneRmEditor(row.rowId, next.exerciseId);
+        return;
+      case "profile":
+        setAnchorEl(event.currentTarget);
+        editor.openProfileEditor(row.rowId);
 
-      return;
+        return;
+      case "profile_attribute":
+        return;
+      default:
+        next satisfies never;
     }
-
-    editor.openProfileEditor(row.rowId);
   };
 
   const closePrompt = (): void => {
@@ -153,7 +160,18 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
               {loadLine.loadStr}
             </Typography>
           ) : null}
-          {prompt !== null ? (
+          {prompt !== null && prompt.kind === "profile_attribute" ? (
+            <Typography
+              component="span"
+              sx={(theme) => ({
+                fontSize: theme.typography.pxToRem(ROW_SUB_PX),
+                color: theme.palette.text.muted,
+              })}
+            >
+              {prompt.label}
+            </Typography>
+          ) : null}
+          {prompt !== null && prompt.kind !== "profile_attribute" ? (
             <LoadPromptButton label={prompt.label} onClick={(event) => openPrompt(event, prompt)} />
           ) : null}
         </Stack>

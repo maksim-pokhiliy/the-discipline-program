@@ -7,6 +7,7 @@ export const mapToProfileAxis = (row: PrismaProfileAxis): ProfileAxis => ({
   key: row.key,
   label: row.label,
   values: row.values,
+  binding: row.binding,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });

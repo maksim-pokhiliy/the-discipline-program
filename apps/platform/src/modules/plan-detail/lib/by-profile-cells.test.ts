@@ -1,18 +1,68 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  axisLabel,
+  axisValues,
   type ByProfileAxis,
   type ByProfileCell,
   cellKgAtIndex,
   EMPTY_KG,
+  makeAxisDraft,
   regenerateCells,
-  renameAxisValue,
   setCellKgByIndex,
 } from "./by-profile-cells";
 
+const AXIS_ID_LEVEL = "clp9z8x7w0000abcd12axlevel";
+const AXIS_ID_SEX = "clp9z8x7w0000abcd12ax00sex";
+const SYSTEM_GENDER_AXIS_ID = "cgender000000000000000000";
+
+const plainAxis = (axisId: string, label: string, values: string[]): ByProfileAxis => ({
+  axisId,
+  label,
+  values,
+  binding: null,
+});
+
+const genderAxis: ByProfileAxis = {
+  axisId: SYSTEM_GENDER_AXIS_ID,
+  label: "Gender",
+  values: ["Male", "Female"],
+  binding: "GENDER",
+};
+
+describe("axisValues", () => {
+  it("returns the snapshot values for a plain axis", () => {
+    expect(axisValues(plainAxis(AXIS_ID_LEVEL, "Level", ["RX", "SC"]))).toEqual(["RX", "SC"]);
+  });
+
+  it("returns the snapshot values for a bound gender axis", () => {
+    expect(axisValues(genderAxis)).toEqual(["Male", "Female"]);
+  });
+});
+
+describe("axisLabel", () => {
+  it("returns the snapshot label for a bound plain axis", () => {
+    expect(axisLabel(plainAxis(AXIS_ID_LEVEL, "Level", ["RX"]))).toBe("Level");
+  });
+
+  it("falls back to a placeholder for an unbound axis draft", () => {
+    expect(axisLabel(makeAxisDraft())).toBe("Axis");
+  });
+
+  it("returns the snapshot label for a bound gender axis", () => {
+    expect(axisLabel(genderAxis)).toBe("Gender");
+  });
+});
+
+describe("makeAxisDraft", () => {
+  it("produces an unbound axis draft", () => {
+    expect(makeAxisDraft()).toEqual({ axisId: "", label: "", values: [], binding: null });
+  });
+});
+
 describe("regenerateCells", () => {
-  it("builds one cell per single-axis value", () => {
-    const axes: ByProfileAxis[] = [{ name: "level", values: ["RX", "SC"] }];
+  it("builds one cell per single plain-axis value", () => {
+    const axes: ByProfileAxis[] = [plainAxis(AXIS_ID_LEVEL, "Level", ["RX", "SC"])];
 
     expect(regenerateCells(axes, [])).toEqual([
       { coords: ["RX"], kg: EMPTY_KG },
@@ -20,10 +70,10 @@ describe("regenerateCells", () => {
     ]);
   });
 
-  it("builds the cartesian product across two axes", () => {
+  it("builds the cartesian product across two plain axes", () => {
     const axes: ByProfileAxis[] = [
-      { name: "level", values: ["RX", "SC"] },
-      { name: "sex", values: ["♂", "♀"] },
+      plainAxis(AXIS_ID_LEVEL, "Level", ["RX", "SC"]),
+      plainAxis(AXIS_ID_SEX, "Sex", ["♂", "♀"]),
     ];
 
     expect(regenerateCells(axes, []).map((cell) => cell.coords)).toEqual([
@@ -34,8 +84,15 @@ describe("regenerateCells", () => {
     ]);
   });
 
+  it("seeds gender cells from the bound axis snapshot values", () => {
+    expect(regenerateCells([genderAxis], []).map((cell) => cell.coords)).toEqual([
+      ["Male"],
+      ["Female"],
+    ]);
+  });
+
   it("preserves an existing kg by matching coords when an axis value is added", () => {
-    const axes: ByProfileAxis[] = [{ name: "level", values: ["RX", "SC", ""] }];
+    const axes: ByProfileAxis[] = [plainAxis(AXIS_ID_LEVEL, "Level", ["RX", "SC", "MA"])];
     const previous: ByProfileCell[] = [
       { coords: ["RX"], kg: 43 },
       { coords: ["SC"], kg: 30 },
@@ -44,21 +101,7 @@ describe("regenerateCells", () => {
     expect(regenerateCells(axes, previous)).toEqual([
       { coords: ["RX"], kg: 43 },
       { coords: ["SC"], kg: 30 },
-      { coords: [""], kg: EMPTY_KG },
-    ]);
-  });
-});
-
-describe("renameAxisValue", () => {
-  it("rewrites the matching coord in every cell of the renamed axis", () => {
-    const cells: ByProfileCell[] = [
-      { coords: ["RX", "♂"], kg: 9 },
-      { coords: ["SC", "♂"], kg: 6 },
-    ];
-
-    expect(renameAxisValue(cells, 0, "RX", "Rx+")).toEqual([
-      { coords: ["Rx+", "♂"], kg: 9 },
-      { coords: ["SC", "♂"], kg: 6 },
+      { coords: ["MA"], kg: EMPTY_KG },
     ]);
   });
 });

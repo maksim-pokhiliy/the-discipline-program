@@ -27,7 +27,7 @@ export const loadAthleteLoadContext = async (
   const [profile, oneRMRows] = await Promise.all([
     prisma.athleteProfile.findUnique({
       where: { userId },
-      select: { weightKg: true, profileSelections: true },
+      select: { weightKg: true, profileSelections: true, gender: true },
     }),
     exerciseIds.length === 0
       ? Promise.resolve([])
@@ -45,5 +45,6 @@ export const loadAthleteLoadContext = async (
       profile?.profileSelections == null
         ? {}
         : profileSelectionsSchema.parse(profile.profileSelections),
+    gender: profile?.gender ?? null,
   };
 };
