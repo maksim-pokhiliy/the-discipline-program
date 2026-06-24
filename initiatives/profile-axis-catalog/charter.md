@@ -10,7 +10,7 @@
 
 - **D-1 (two-category ontology)** — human identity (gender / height / weight / health — typed columns, exist independently of programming) vs training classification (level / scale — free-form catalog axes). NEVER merged into one bucket; the profile renders two layers. The smell owner caught: gender-as-a-catalog-axis makes "can the athlete state his sex" hostage to the catalog.
 - **D-2 (axis = first-class catalog entity)** — `ProfileAxis` edited via admin like labels/exercises; coach freedom preserved via FIND-OR-CREATE, not a closed enum; identity kills the string-join footgun + unlocks the curated picker that D-PROF-SELECTIONS-HONEST had to cut.
-- **D-3 (byProfile axis = discriminated union, OPEN-gated)** — `{kind:catalog,axisId} | {kind:human,attribute}`; resolver branches by kind; human attribute = `GENDER` only. SACRED-VO touch → ratify in plan-editor-compose + four-projection re-check BEFORE W2.
+- **D-7 (byProfile axis = a `binding`-bound system gender axis — design A; supersedes D-3's union)** — the `byProfile` axis is a flat `{axisId, label, values, binding}`; `binding=GENDER` (one protected system row) reads the typed `gender` column, `binding=null` resolves from a manual pick. SACRED-VO touch — gate DISCHARGED (`four-projection-recheck.md` + the plan-editor-compose cross-ref). _Built + merged (#309) then REVERTED (#311) on a prod incident; design RATIFIED, re-apply pending — see `decisions.md` D-7 / D-8, `state.md`._
 
 **Scope — 3 vertical waves (each a visible slice, not server-then-UI).**
 
