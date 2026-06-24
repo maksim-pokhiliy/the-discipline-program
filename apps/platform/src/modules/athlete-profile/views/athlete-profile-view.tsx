@@ -71,6 +71,10 @@ export const AthleteProfileView = (): ReactElement => {
   };
 
   const handleClearPick = (axis: string): void => {
+    if (isPending) {
+      return;
+    }
+
     const next = Object.fromEntries(Object.entries(selections).filter(([key]) => key !== axis));
 
     mutate({ profileSelections: next });

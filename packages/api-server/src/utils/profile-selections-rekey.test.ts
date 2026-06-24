@@ -70,6 +70,25 @@ describe("reKeyProfileSelections", () => {
     expect(result.drops).toEqual([]);
   });
 
+  it("flags both name keys that collide on one target axis id, keeping neither (no silent loss)", () => {
+    const result = reKeyProfileSelections({ Goal: "a", "Goal ": "b" }, true, {
+      Goal: CREATED_AXIS_ID,
+    });
+
+    expect([...result.flags].sort()).toEqual(["Goal", "Goal "].sort());
+    expect(result.next).toEqual({});
+    expect(result.drops).toEqual([]);
+  });
+
+  it("flags a cuid key and a name that both resolve to the same axis id", () => {
+    const result = reKeyProfileSelections({ [CREATED_AXIS_ID]: "a", Conditioning: "b" }, true, {
+      Conditioning: CREATED_AXIS_ID,
+    });
+
+    expect([...result.flags].sort()).toEqual([CREATED_AXIS_ID, "Conditioning"].sort());
+    expect(result.next).toEqual({});
+  });
+
   it("produces a map that passes the strict profileSelectionsSchema", () => {
     const result = reKeyProfileSelections(
       { [REAL_AXIS_ID]: "RX", Conditioning: "Metcon", gender: "Male" },

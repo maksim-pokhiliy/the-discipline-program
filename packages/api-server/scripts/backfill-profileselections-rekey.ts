@@ -29,20 +29,32 @@ type ProfilePlan = {
 
 const placeholderCuid = (index: number): string => `c${`name${index}`.padEnd(24, "0")}`;
 
-const loadProfiles = async (): Promise<Profile[]> => {
+const loadProfiles = async (): Promise<{ profiles: Profile[]; malformed: string[] }> => {
   const rows = await prisma.athleteProfile.findMany({
     select: { id: true, gender: true, profileSelections: true },
   });
 
-  return rows.flatMap((row) => {
-    const selections = rawSelectionsSchema.parse(row.profileSelections);
+  const profiles: Profile[] = [];
+  const malformed: string[] = [];
 
-    if (selections === null || Object.keys(selections).length === 0) {
-      return [];
+  for (const row of rows) {
+    const parsed = rawSelectionsSchema.safeParse(row.profileSelections);
+
+    if (!parsed.success) {
+      malformed.push(row.id);
+      continue;
     }
 
-    return [{ id: row.id, gender: row.gender, selections }];
-  });
+    const selections = parsed.data;
+
+    if (selections === null || Object.keys(selections).length === 0) {
+      continue;
+    }
+
+    profiles.push({ id: row.id, gender: row.gender, selections });
+  }
+
+  return { profiles, malformed };
 };
 
 const collectNames = (profiles: Profile[]): Set<string> => {
@@ -182,9 +194,15 @@ const main = async (): Promise<void> => {
     `\n=== profileSelections re-key backfill — mode: ${WRITE ? "WRITE" : "DRY-RUN"} ===\n`,
   );
 
-  const profiles = await loadProfiles();
+  const { profiles, malformed } = await loadProfiles();
 
   console.log(`profiles with non-empty selections: ${profiles.length}`);
+
+  if (malformed.length > 0) {
+    console.log(
+      `\n⚠️ ${malformed.length} profile(s) with a malformed profileSelections shape: ${malformed.join(", ")}`,
+    );
+  }
 
   auditProfiles(profiles);
 
@@ -197,12 +215,13 @@ const main = async (): Promise<void> => {
   const invalid = plans.filter((plan) => !plan.isValid);
 
   console.log(
-    `\nsummary: ${plans.length} planned / ${flagged.length} flagged / ${invalid.length} invalid`,
+    `\nsummary: ${plans.length} planned / ${malformed.length} malformed / ` +
+      `${flagged.length} flagged / ${invalid.length} invalid`,
   );
 
-  if (flagged.length > 0 || invalid.length > 0) {
+  if (malformed.length > 0 || flagged.length > 0 || invalid.length > 0) {
     console.log(
-      `\n❌ ${flagged.length} flagged + ${invalid.length} invalid — NO writes performed.`,
+      `\n❌ ${malformed.length} malformed + ${flagged.length} flagged + ${invalid.length} invalid — NO writes performed.`,
     );
     process.exitCode = 1;
 
