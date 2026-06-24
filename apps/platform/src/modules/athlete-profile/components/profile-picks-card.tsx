@@ -1,6 +1,6 @@
 import { type ReactElement } from "react";
 
-import { Stack, Typography } from "@mui/material";
+import { Grid, Stack, Typography } from "@mui/material";
 
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
@@ -95,18 +95,19 @@ export const ProfilePicksCard = ({
       </Typography>
 
       {pickableAxes.length > 0 ? (
-        <Stack spacing={1.5}>
+        <Grid container spacing={1.5}>
           {pickableAxes.map((axis) => (
-            <ProfilePickGroup
-              key={axis.id}
-              axis={axis}
-              activeValue={selections[axis.id]}
-              isSaving={isSaving}
-              onPick={(value) => onPick(axis.id, value)}
-              onClear={() => onClearPick(axis.id)}
-            />
+            <Grid key={axis.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <ProfilePickGroup
+                axis={axis}
+                activeValue={selections[axis.id]}
+                isSaving={isSaving}
+                onPick={(value) => onPick(axis.id, value)}
+                onClear={() => onClearPick(axis.id)}
+              />
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       ) : (
         <Typography
           component="div"

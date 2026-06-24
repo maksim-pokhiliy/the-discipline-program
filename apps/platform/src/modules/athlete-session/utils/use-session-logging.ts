@@ -18,11 +18,13 @@ import {
 } from "@app/lib/hooks";
 
 import { type BenchmarkSchema, collectBenchmarkSchemas } from "./athlete-session-presentation";
+import { GENDER_BY_COORD } from "./gender-coord-map";
 import { buildResult, type ResultDraft, resultToDraft } from "./result-form-config";
 
 export type ActiveEditor =
   | { rowId: string; kind: "one_rm"; exerciseId: string }
-  | { rowId: string; kind: "profile" };
+  | { rowId: string; kind: "profile" }
+  | { rowId: string; kind: "profile_attribute" };
 
 export type SessionEditorControls = {
   activeEditor: ActiveEditor | null;
@@ -35,10 +37,12 @@ export type SessionEditorControls = {
   isLoggingBenchmark: boolean;
   openOneRmEditor: (rowId: string, exerciseId: string) => void;
   openProfileEditor: (rowId: string) => void;
+  openProfileAttributeEditor: (rowId: string) => void;
   closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
   pickProfile: (catalogAxisIds: string[], axisId: string, value: string) => void;
+  pickGender: (value: string) => void;
   draftFor: (schemaId: string) => ResultDraft;
   openLog: (schemaId: string) => void;
   cancelLog: () => void;
@@ -71,10 +75,12 @@ export type SessionLogging = {
   isLoggingState: boolean;
   openOneRmEditor: (rowId: string, exerciseId: string) => void;
   openProfileEditor: (rowId: string) => void;
+  openProfileAttributeEditor: (rowId: string) => void;
   closeEditor: () => void;
   setOneRmValue: (value: string) => void;
   commitOneRm: () => void;
   pickProfile: (catalogAxisIds: string[], axisId: string, value: string) => void;
+  pickGender: (value: string) => void;
   draftFor: (schemaId: string) => ResultDraft;
   openLog: (schemaId: string) => void;
   cancelLog: () => void;
@@ -127,6 +133,10 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   const openProfileEditor = useCallback((rowId: string): void => {
     setStagedProfile(EMPTY_SELECTIONS);
     setActiveEditor({ rowId, kind: "profile" });
+  }, []);
+
+  const openProfileAttributeEditor = useCallback((rowId: string): void => {
+    setActiveEditor({ rowId, kind: "profile_attribute" });
   }, []);
 
   const closeEditor = useCallback((): void => {
@@ -187,6 +197,31 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
       );
     },
     [savedSelections, stagedProfile, updateProfile, invalidateView],
+  );
+
+  const pickGender = useCallback(
+    (value: string): void => {
+      if (updateProfile.isPending) {
+        return;
+      }
+
+      const gender = GENDER_BY_COORD[value];
+
+      if (gender === undefined) {
+        return;
+      }
+
+      updateProfile.mutate(
+        { gender },
+        {
+          onSuccess: () => {
+            invalidateView();
+            setActiveEditor(null);
+          },
+        },
+      );
+    },
+    [updateProfile, invalidateView],
   );
 
   const setDraftField = useCallback((schemaId: string, key: string, value: string): void => {
@@ -297,10 +332,12 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
     isLoggingState,
     openOneRmEditor,
     openProfileEditor,
+    openProfileAttributeEditor,
     closeEditor,
     setOneRmValue: setOneRmValueState,
     commitOneRm,
     pickProfile,
+    pickGender,
     draftFor,
     openLog,
     cancelLog,

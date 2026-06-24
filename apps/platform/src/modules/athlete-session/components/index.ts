@@ -7,6 +7,7 @@ export * from "./completion-rail";
 export * from "./completion-ready-card";
 export * from "./completion-sheet";
 export * from "./demo-link";
+export * from "./inline-gender-picker";
 export * from "./inline-one-rm-editor";
 export * from "./inline-profile-picker";
 export * from "./load-prompt-button";
