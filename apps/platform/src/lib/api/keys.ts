@@ -52,6 +52,7 @@ export const platformKeys = {
   },
   profileAxes: {
     all: () => [...ROOT, "profile-axes"] as const,
+    forAthlete: () => [...ROOT, "profile-axes", "athlete"] as const,
   },
   athleteRecords: {
     data: () => [...ROOT, "athlete-records"] as const,

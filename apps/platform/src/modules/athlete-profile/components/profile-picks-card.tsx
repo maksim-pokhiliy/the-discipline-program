@@ -2,6 +2,8 @@ import { type ReactElement } from "react";
 
 import { Stack, Typography } from "@mui/material";
 
+import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
+
 import {
   CAPTION_LINE_HEIGHT,
   CAPTION_PX,
@@ -14,15 +16,17 @@ import {
   PROFILE_PICKS_COUNT_PLURAL,
   PROFILE_PICKS_COUNT_SEPARATOR,
   PROFILE_PICKS_COUNT_SINGULAR,
-  PROFILE_PICKS_EMPTY,
   PROFILE_PICKS_EYEBROW,
+  PROFILE_PICKS_NO_AXES,
 } from "../utils/athlete-profile.constants";
 
-import { ProfilePickRow } from "./profile-pick-row";
+import { ProfilePickGroup } from "./profile-pick-group";
 
 export type ProfilePicksCardProps = {
+  axes: ProfileAxis[];
   selections: Record<string, string>;
   isSaving: boolean;
+  onPick: (axisId: string, value: string) => void;
   onClearPick: (axis: string) => void;
 };
 
@@ -33,11 +37,14 @@ const formatCount = (count: number): string => {
 };
 
 export const ProfilePicksCard = ({
+  axes,
   selections,
   isSaving,
+  onPick,
   onClearPick,
 }: ProfilePicksCardProps): ReactElement => {
-  const entries = Object.entries(selections);
+  const pickableAxes = axes.filter((axis) => axis.binding === null);
+  const pickedCount = pickableAxes.filter((axis) => selections[axis.id] !== undefined).length;
 
   return (
     <Stack
@@ -63,7 +70,7 @@ export const ProfilePicksCard = ({
           {PROFILE_PICKS_EYEBROW}
         </Typography>
 
-        {entries.length > 0 && (
+        {pickedCount > 0 && (
           <Typography
             component="span"
             sx={(theme) => ({
@@ -71,7 +78,7 @@ export const ProfilePicksCard = ({
               color: theme.palette.text.muted,
             })}
           >
-            {formatCount(entries.length)}
+            {formatCount(pickedCount)}
           </Typography>
         )}
       </Stack>
@@ -87,15 +94,16 @@ export const ProfilePicksCard = ({
         {PROFILE_PICKS_CAPTION}
       </Typography>
 
-      {entries.length > 0 ? (
+      {pickableAxes.length > 0 ? (
         <Stack spacing={1.5}>
-          {entries.map(([axis, value]) => (
-            <ProfilePickRow
-              key={axis}
+          {pickableAxes.map((axis) => (
+            <ProfilePickGroup
+              key={axis.id}
               axis={axis}
-              value={value}
+              activeValue={selections[axis.id]}
               isSaving={isSaving}
-              onClear={() => onClearPick(axis)}
+              onPick={(value) => onPick(axis.id, value)}
+              onClear={() => onClearPick(axis.id)}
             />
           ))}
         </Stack>
@@ -108,7 +116,7 @@ export const ProfilePicksCard = ({
             color: theme.palette.text.muted,
           })}
         >
-          {PROFILE_PICKS_EMPTY}
+          {PROFILE_PICKS_NO_AXES}
         </Typography>
       )}
     </Stack>

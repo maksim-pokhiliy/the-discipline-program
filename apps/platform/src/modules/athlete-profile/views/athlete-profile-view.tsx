@@ -9,7 +9,12 @@ import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { NotFoundError } from "@repo/errors";
 import { LoadingState } from "@repo/ui";
 
-import { useAthleteProfile, useUpdateAthleteProfile, useUploadImage } from "@app/lib/hooks";
+import {
+  useAthleteProfile,
+  useAthleteProfileAxes,
+  useUpdateAthleteProfile,
+  useUploadImage,
+} from "@app/lib/hooks";
 
 import {
   AthleteDetailsCard,
@@ -30,6 +35,7 @@ import {
 
 export const AthleteProfileView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteProfile();
+  const { data: axes } = useAthleteProfileAxes();
   const { update: updateSession } = useSession();
   const { mutate, isPending } = useUpdateAthleteProfile();
   const upload = useUploadImage();
@@ -56,7 +62,19 @@ export const AthleteProfileView = (): ReactElement => {
     mutate({ heightCm: cm });
   };
 
+  const handlePick = (axisId: string, value: string): void => {
+    if (isPending) {
+      return;
+    }
+
+    mutate({ profileSelections: { ...selections, [axisId]: value } });
+  };
+
   const handleClearPick = (axis: string): void => {
+    if (isPending) {
+      return;
+    }
+
     const next = Object.fromEntries(Object.entries(selections).filter(([key]) => key !== axis));
 
     mutate({ profileSelections: next });
@@ -100,8 +118,10 @@ export const AthleteProfileView = (): ReactElement => {
       </Stack>
 
       <ProfilePicksCard
+        axes={axes ?? []}
         selections={selections}
         isSaving={isPending}
+        onPick={handlePick}
         onClearPick={handleClearPick}
       />
 

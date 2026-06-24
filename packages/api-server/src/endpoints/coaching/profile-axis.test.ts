@@ -368,4 +368,45 @@ describe("profileAxisPlatformApi", () => {
       expect(ids.indexOf(mike.id)).toBeLessThan(ids.indexOf(zulu.id));
     });
   });
+
+  describe("listForAthlete (Must-Test 12)", () => {
+    it("allows an athlete caller without a ForbiddenError, unlike list", async () => {
+      await expect(profileAxisPlatformApi.list(athlete.id)).rejects.toThrow(ForbiddenError);
+      await expect(profileAxisPlatformApi.listForAthlete(athlete.id)).resolves.toBeInstanceOf(
+        Array,
+      );
+    });
+
+    it("excludes the seeded system Gender axis and any binding != null row", async () => {
+      const plain = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Level" }));
+
+      createdAxisIds.push(plain.id);
+
+      const axes = await profileAxisPlatformApi.listForAthlete(athlete.id);
+
+      expect(axes.some((row) => row.id === plain.id)).toBe(true);
+      expect(axes.some((row) => row.id === SYSTEM_GENDER_AXIS_ID)).toBe(false);
+      expect(axes.every((row) => row.binding === null)).toBe(true);
+    });
+
+    it("returns axes ordered by label asc", async () => {
+      const zulu = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Zulu" }));
+
+      createdAxisIds.push(zulu.id);
+
+      const alpha = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Alpha" }));
+
+      createdAxisIds.push(alpha.id);
+
+      const mike = await profileAxisPlatformApi.create(coach.id, parseInput({ label: "Mike" }));
+
+      createdAxisIds.push(mike.id);
+
+      const axes = await profileAxisPlatformApi.listForAthlete(athlete.id);
+      const ids = axes.map((row) => row.id);
+
+      expect(ids.indexOf(alpha.id)).toBeLessThan(ids.indexOf(mike.id));
+      expect(ids.indexOf(mike.id)).toBeLessThan(ids.indexOf(zulu.id));
+    });
+  });
 });

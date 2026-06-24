@@ -37,14 +37,6 @@ export const ACTION_ICON_PX = 14;
 export const ACTION_LETTER_SPACING = "0.04em";
 
 export const PICK_ROW_TITLE_PX = 14;
-export const RESOLVED_BADGE_PX = 11;
-export const RESOLVED_BADGE_ICON_PX = 14;
-export const RESOLVED_BADGE_LETTER_SPACING = "0.04em";
-
-export const PICK_CELL_HEIGHT_PX = 42;
-export const PICK_VALUE_PX = 13;
-export const PICK_VALUE_LETTER_SPACING = "0.02em";
-export const PICK_ACTIVE_BG_ALPHA = 0.08;
 export const PICK_CLEAR_ICON_PX = 18;
 
 export const WEIGHT_ROUNDING_FACTOR = 10;
@@ -97,12 +89,10 @@ export const HEIGHT_INPUT_MIN = 0;
 
 export const PROFILE_PICKS_EYEBROW = "Profile picks";
 export const PROFILE_PICKS_CAPTION =
-  "For by-profile loads, this is the grid cell that's yours — the system resolves your kg from it.";
-export const PROFILE_PICKS_EMPTY =
-  "No profile picks yet — you'll pick these from a workout when a by-profile load needs them.";
+  "Set your training classification ahead of any workout — the system resolves your working weight from each pick.";
+export const PROFILE_PICKS_NO_AXES = "No training classifications yet — your coach defines these.";
 export const PROFILE_PICKS_COUNT_SINGULAR = "pick";
 export const PROFILE_PICKS_COUNT_PLURAL = "picks";
 export const PROFILE_PICKS_COUNT_SEPARATOR = " ";
-export const RESOLVED_BADGE_LABEL = "Resolved";
 export const CLEAR_PICK_ARIA_PREFIX = "Clear the ";
 export const CLEAR_PICK_ARIA_SUFFIX = " pick";

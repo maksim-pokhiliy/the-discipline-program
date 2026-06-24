@@ -5,6 +5,7 @@ import {
   type GetAthleteProfileResponse,
   HealthStatus,
 } from "@repo/contracts/coaching/athlete-profile";
+import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { NotFoundError } from "@repo/errors";
 
 import { render } from "@app/test/render";
@@ -26,21 +27,38 @@ import {
   HEALTH_STATUS_FIELD_LABEL,
   HEIGHT_UNIT_LABEL,
   KG_LABEL,
-  PROFILE_PICKS_EMPTY,
-  RESOLVED_BADGE_LABEL,
+  PROFILE_PICKS_NO_AXES,
   ROLE_BADGE_LABEL,
   TITLE_LABEL,
 } from "../utils/athlete-profile.constants";
 
 const VALID_CUID = "clz00000000000000000fake1";
 const VALID_USER_CUID = "clz00000000000000000user1";
+const LEVEL_AXIS_ID = "clz00000000000000000axs01";
+const SCALE_AXIS_ID = "clz00000000000000000axs02";
 const NOW = new Date("2026-06-16T09:00:00.000Z");
+
+const plainAxis = (id: string, label: string, values: string[]): ProfileAxis => ({
+  id,
+  key: label.toLowerCase(),
+  label,
+  values,
+  binding: null,
+  createdAt: NOW,
+  updatedAt: NOW,
+});
+
+const MOCK_AXES: ProfileAxis[] = [
+  plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
+  plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
+];
 
 const profileState = {
   data: undefined as GetAthleteProfileResponse | undefined,
   isLoading: false,
   error: null as Error | null,
 };
+const axesState = { data: MOCK_AXES as ProfileAxis[] | undefined };
 const updateMutate = vi.fn();
 const uploadMutate = vi.fn();
 const updateSession = vi.fn().mockResolvedValue(null);
@@ -56,6 +74,7 @@ vi.mock("@app/lib/hooks", () => ({
     isLoading: profileState.isLoading,
     error: profileState.error,
   }),
+  useAthleteProfileAxes: () => ({ data: axesState.data }),
   useUpdateAthleteProfile: () => ({ mutate: updateMutate, isPending: false }),
   useUploadImage: () => ({ mutate: uploadMutate, isPending: false }),
 }));
@@ -114,6 +133,7 @@ beforeEach(() => {
   profileState.data = makeProfile();
   profileState.isLoading = false;
   profileState.error = null;
+  axesState.data = MOCK_AXES;
   sessionUser.name = "Aria Stone";
   sessionUser.email = "aria@example.com";
   sessionUser.image = null;
@@ -340,45 +360,66 @@ describe("AthleteProfileView body weight edit", () => {
 });
 
 describe("AthleteProfileView profile picks", () => {
-  it("renders each axis, its picked value, and a Resolved badge from the real map", () => {
-    profileState.data = makeProfile({
-      profileSelections: { "RX / SC": "RX", Masters: "Open" },
-    });
+  it("renders a pick-group per catalog axis with its label and value buttons", () => {
+    profileState.data = makeProfile({ profileSelections: null });
 
     render(<AthleteProfileView />);
 
-    expect(screen.getByText("RX / SC")).toBeInTheDocument();
-    expect(screen.getByText("Masters")).toBeInTheDocument();
-    expect(screen.getByText("RX")).toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
-    expect(screen.getAllByText(RESOLVED_BADGE_LABEL)).toHaveLength(2);
+    expect(screen.getByText("Level")).toBeInTheDocument();
+    expect(screen.getByText("Scale")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "RX" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "SC" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "M" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "F" })).toBeInTheDocument();
   });
 
-  it("clears a pick via mutate with the map minus that key", () => {
+  it("highlights the saved pick by axisId-keyed selection", () => {
+    profileState.data = makeProfile({ profileSelections: { [LEVEL_AXIS_ID]: "SC" } });
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByRole("button", { name: "SC" })).toHaveClass("MuiButton-contained");
+    expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-outlined");
+  });
+
+  it("picks a value via mutate, merging one key and preserving the others", () => {
+    profileState.data = makeProfile({ profileSelections: { [SCALE_AXIS_ID]: "M" } });
+
+    render(<AthleteProfileView />);
+
+    fireEvent.click(screen.getByRole("button", { name: "RX" }));
+
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    expect(updateMutate).toHaveBeenCalledWith({
+      profileSelections: { [SCALE_AXIS_ID]: "M", [LEVEL_AXIS_ID]: "RX" },
+    });
+  });
+
+  it("clears a pick via mutate with the map minus that axisId key", () => {
     profileState.data = makeProfile({
-      profileSelections: { "RX / SC": "RX", Masters: "Open" },
+      profileSelections: { [LEVEL_AXIS_ID]: "RX", [SCALE_AXIS_ID]: "M" },
     });
 
     render(<AthleteProfileView />);
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: `${CLEAR_PICK_ARIA_PREFIX}RX / SC${CLEAR_PICK_ARIA_SUFFIX}`,
+        name: `${CLEAR_PICK_ARIA_PREFIX}Level${CLEAR_PICK_ARIA_SUFFIX}`,
       }),
     );
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith({ profileSelections: { Masters: "Open" } });
+    expect(updateMutate).toHaveBeenCalledWith({ profileSelections: { [SCALE_AXIS_ID]: "M" } });
   });
 
   it("clears the sole pick via mutate with an empty object, never null", () => {
-    profileState.data = makeProfile({ profileSelections: { Masters: "Open" } });
+    profileState.data = makeProfile({ profileSelections: { [LEVEL_AXIS_ID]: "RX" } });
 
     render(<AthleteProfileView />);
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: `${CLEAR_PICK_ARIA_PREFIX}Masters${CLEAR_PICK_ARIA_SUFFIX}`,
+        name: `${CLEAR_PICK_ARIA_PREFIX}Level${CLEAR_PICK_ARIA_SUFFIX}`,
       }),
     );
 
@@ -386,13 +427,25 @@ describe("AthleteProfileView profile picks", () => {
     expect(updateMutate).toHaveBeenCalledWith({ profileSelections: {} });
   });
 
-  it("renders the honest empty state when there are no picks", () => {
+  it("renders the no-axes state when the catalog has no axes", () => {
     profileState.data = makeProfile({ profileSelections: null });
+    axesState.data = [];
 
     render(<AthleteProfileView />);
 
-    expect(screen.getByText(PROFILE_PICKS_EMPTY)).toBeInTheDocument();
-    expect(screen.queryByText(RESOLVED_BADGE_LABEL)).toBeNull();
+    expect(screen.getByText(PROFILE_PICKS_NO_AXES)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "RX" })).toBeNull();
+  });
+
+  it("skips an orphan saved pick whose axis is absent from the catalog without crashing", () => {
+    profileState.data = makeProfile({
+      profileSelections: { clz00000000000000000orph1: "Deleted" },
+    });
+
+    render(<AthleteProfileView />);
+
+    expect(screen.getByText("Level")).toBeInTheDocument();
+    expect(screen.queryByText("Deleted")).toBeNull();
   });
 });
 
