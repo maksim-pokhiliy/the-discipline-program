@@ -7,7 +7,6 @@ import { profileSelectionsSchema } from "@repo/contracts/coaching/athlete-profil
 
 import {
   classifyKey,
-  normalizeAxisName,
   reKeyProfileSelections,
   type RekeyResult,
 } from "../src/utils/profile-selections-rekey";
@@ -46,13 +45,13 @@ const loadProfiles = async (): Promise<Profile[]> => {
   });
 };
 
-const collectNames = (profiles: Profile[]): Map<string, string> => {
-  const names = new Map<string, string>();
+const collectNames = (profiles: Profile[]): Set<string> => {
+  const names = new Set<string>();
 
   for (const profile of profiles) {
     for (const key of Object.keys(profile.selections)) {
       if (classifyKey(key) === "name") {
-        names.set(normalizeAxisName(key), key.trim());
+        names.add(key.trim());
       }
     }
   }
@@ -60,30 +59,28 @@ const collectNames = (profiles: Profile[]): Map<string, string> => {
   return names;
 };
 
-const resolveAxisIdByName = async (names: Map<string, string>): Promise<Record<string, string>> => {
+const resolveAxisIdByName = async (names: Set<string>): Promise<Record<string, string>> => {
   const axisIdByName: Record<string, string> = {};
   let placeholderIndex = 0;
 
-  for (const [normalized, original] of names) {
-    const existing = await prisma.profileAxis.findUnique({ where: { key: original } });
+  for (const name of names) {
+    const existing = await prisma.profileAxis.findUnique({ where: { key: name } });
 
     if (existing !== null) {
-      axisIdByName[normalized] = existing.id;
-      console.log(`name "${original}" resolves to existing axis ${existing.id}`);
+      axisIdByName[name] = existing.id;
+      console.log(`name "${name}" resolves to existing axis ${existing.id}`);
     } else if (WRITE) {
       const created = await prisma.profileAxis.create({
-        data: { key: original, label: original, values: [original] },
+        data: { key: name, label: name, values: [name] },
       });
 
-      axisIdByName[normalized] = created.id;
-      console.log(`name "${original}" CREATED axis ${created.id} (binding=null)`);
+      axisIdByName[name] = created.id;
+      console.log(`name "${name}" CREATED axis ${created.id} (binding=null)`);
     } else {
       const placeholder = placeholderCuid(placeholderIndex);
 
-      axisIdByName[normalized] = placeholder;
-      console.log(
-        `name "${original}" MISSING — WRITE creates it; dry-run placeholder ${placeholder}`,
-      );
+      axisIdByName[name] = placeholder;
+      console.log(`name "${name}" MISSING — WRITE creates it; dry-run placeholder ${placeholder}`);
     }
 
     placeholderIndex += 1;

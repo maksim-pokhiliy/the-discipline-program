@@ -1,15 +1,13 @@
-import { z } from "zod";
-
 export type RekeyResult = { next: Record<string, string>; drops: string[]; flags: string[] };
 
 export const GENDER_KEY_TOKENS: ReadonlySet<string> = new Set(["gender", "sex"]);
 
-const cuidSchema = z.string().cuid();
+const CUID_PATTERN = /^c[a-z0-9]{24}$/;
 
 export const normalizeAxisName = (key: string): string => key.trim().toLowerCase();
 
 export const classifyKey = (key: string): "cuid" | "gender" | "name" => {
-  if (cuidSchema.safeParse(key).success) {
+  if (CUID_PATTERN.test(key)) {
     return "cuid";
   }
 
@@ -47,7 +45,7 @@ export const reKeyProfileSelections = (
       continue;
     }
 
-    const axisId = axisIdByName[normalizeAxisName(key)];
+    const axisId = axisIdByName[key.trim()];
 
     if (axisId === undefined) {
       flags.push(key);
