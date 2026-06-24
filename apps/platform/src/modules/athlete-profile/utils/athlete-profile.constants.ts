@@ -91,11 +91,8 @@ export const PROFILE_PICKS_EYEBROW = "Profile picks";
 export const PROFILE_PICKS_CAPTION =
   "Set your training classification ahead of any workout — the system resolves your working weight from each pick.";
 export const PROFILE_PICKS_NO_AXES = "No training classifications yet — your coach defines these.";
-export const PROFILE_PICKS_EMPTY =
-  "No profile picks yet — you'll pick these from a workout when a by-profile load needs them.";
 export const PROFILE_PICKS_COUNT_SINGULAR = "pick";
 export const PROFILE_PICKS_COUNT_PLURAL = "picks";
 export const PROFILE_PICKS_COUNT_SEPARATOR = " ";
-export const RESOLVED_BADGE_LABEL = "Resolved";
 export const CLEAR_PICK_ARIA_PREFIX = "Clear the ";
 export const CLEAR_PICK_ARIA_SUFFIX = " pick";
