@@ -18,10 +18,11 @@ const buildCspHeader = (isDev: boolean, options: CspOptions = {}): string => {
   const directives = [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
+    "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline'",
     `img-src ${imgSources.join(" ")}`,
     "font-src 'self'",
-    "connect-src 'self'",
+    "connect-src 'self' https://*.sentry.io",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
