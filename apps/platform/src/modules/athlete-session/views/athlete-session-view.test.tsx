@@ -123,8 +123,18 @@ const powerBlock = (): BlockView => ({
               load: {
                 kind: "byProfile",
                 axes: [
-                  { name: "Level", values: ["RX", "Scaled"] },
-                  { name: "Sex", values: ["M", "F"] },
+                  {
+                    axisId: "clz00000000000000000axs01",
+                    label: "Level",
+                    values: ["RX", "Scaled"],
+                    binding: null,
+                  },
+                  {
+                    axisId: "clz00000000000000000axs02",
+                    label: "Scale",
+                    values: ["M", "F"],
+                    binding: null,
+                  },
                 ],
                 cells: [
                   { coords: ["RX", "M"], kg: 60 },
@@ -137,7 +147,7 @@ const powerBlock = (): BlockView => ({
                 status: "unresolved",
                 reason: "missing_profile_pick",
                 prompt: "pick_profile",
-                axisNames: ["Level", "Sex"],
+                axisLabels: ["Level", "Scale"],
               },
               intensity: null,
               tempo: null,

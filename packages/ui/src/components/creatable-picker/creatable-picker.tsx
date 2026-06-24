@@ -99,6 +99,7 @@ export const CreatablePicker = (props: CreatablePickerProps) => {
     noOptionsText = DEFAULT_NO_OPTIONS_TEXT,
     size = "small",
     open,
+    renderOption,
   } = props;
 
   const isMultiple = props.multiple === true;
@@ -206,6 +207,15 @@ export const CreatablePicker = (props: CreatablePickerProps) => {
       noOptionsText={noOptionsText}
       renderOption={(optionProps, option) => {
         const { key, ...rest } = optionProps;
+
+        if (isExistingEntry(option) && renderOption !== undefined) {
+          return (
+            <Box component="li" key={key} {...rest}>
+              {renderOption(option.option)}
+            </Box>
+          );
+        }
+
         const optionLabel = isExistingEntry(option)
           ? getEntryLabel(option)
           : `${CREATE_OPTION_PREFIX}${option.query}${CREATE_OPTION_SUFFIX}`;
