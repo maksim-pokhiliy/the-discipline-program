@@ -6,6 +6,7 @@ import { Alert, Stack, Typography } from "@mui/material";
 
 import { useSession } from "@repo/auth/client";
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { NotFoundError } from "@repo/errors";
 import { LoadingState } from "@repo/ui";
 
@@ -27,6 +28,27 @@ import {
   TITLE_LABEL,
   TITLE_PX,
 } from "../utils/athlete-profile.constants";
+
+const MOCK_PROFILE_AXES: ProfileAxis[] = [
+  {
+    id: "cmqrlevel00000000000000a1",
+    key: "level",
+    label: "Level",
+    values: ["RX", "Scaled"],
+    binding: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "cmqrtrack00000000000000b2",
+    key: "track",
+    label: "Track",
+    values: ["Competitor", "General"],
+    binding: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 
 export const AthleteProfileView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteProfile();
@@ -54,6 +76,14 @@ export const AthleteProfileView = (): ReactElement => {
 
   const handleSaveHeight = (cm: number): void => {
     mutate({ heightCm: cm });
+  };
+
+  const handlePick = (axisId: string, value: string): void => {
+    if (isPending) {
+      return;
+    }
+
+    mutate({ profileSelections: { ...selections, [axisId]: value } });
   };
 
   const handleClearPick = (axis: string): void => {
@@ -100,8 +130,10 @@ export const AthleteProfileView = (): ReactElement => {
       </Stack>
 
       <ProfilePicksCard
+        axes={MOCK_PROFILE_AXES}
         selections={selections}
         isSaving={isPending}
+        onPick={handlePick}
         onClearPick={handleClearPick}
       />
 
