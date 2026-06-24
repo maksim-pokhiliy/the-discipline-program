@@ -12,3 +12,9 @@ export const useProfileAxes = () =>
     queryKey: platformKeys.profileAxes.all(),
     queryFn: () => api.profileAxes.list(),
   });
+
+export const useAthleteProfileAxes = () =>
+  useQuery<ProfileAxis[]>({
+    queryKey: platformKeys.profileAxes.forAthlete(),
+    queryFn: () => api.profileAxes.listForAthlete(),
+  });

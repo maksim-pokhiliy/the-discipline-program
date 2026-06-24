@@ -114,4 +114,13 @@ export const profileAxisPlatformApi = {
 
     return createProfileAxisRow(data);
   },
+
+  listForAthlete: async (_userId: string): Promise<ProfileAxis[]> => {
+    const rows = await prisma.profileAxis.findMany({
+      where: { binding: null },
+      orderBy: { label: "asc" },
+    });
+
+    return rows.map(mapToProfileAxis);
+  },
 };
