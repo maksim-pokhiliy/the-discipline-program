@@ -33,7 +33,7 @@ import {
   REPS_LABEL,
   SCHEMA_BENCHMARK_BORDER_ALPHA,
   SET_ONE_RM_LABEL,
-  SET_SEX_STEER_LABEL,
+  SET_SEX_PROMPT_LABEL,
   SETS_SEPARATOR,
   SUB_LINE_SEPARATOR,
   SUMMARY_SEPARATOR,
@@ -214,7 +214,7 @@ export const buildLoadLine = (resolvedLoad: ResolvedLoad | null, load: Load | nu
       return {
         loadStr: cell.spread,
         showAt: false,
-        prompt: { kind: "profile_attribute", label: SET_SEX_STEER_LABEL },
+        prompt: { kind: "profile_attribute", label: SET_SEX_PROMPT_LABEL },
       };
     default:
       cell satisfies never;

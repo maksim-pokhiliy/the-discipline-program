@@ -33,6 +33,7 @@ import {
 import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { DemoLink } from "./demo-link";
+import { InlineGenderPicker } from "./inline-gender-picker";
 import { InlineOneRmEditor } from "./inline-one-rm-editor";
 import { InlineProfilePicker } from "./inline-profile-picker";
 import { LoadPromptButton } from "./load-prompt-button";
@@ -74,6 +75,9 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
 
         return;
       case "profile_attribute":
+        setAnchorEl(event.currentTarget);
+        editor.openProfileAttributeEditor(row.rowId);
+
         return;
       default:
         next satisfies never;
@@ -160,18 +164,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
               {loadLine.loadStr}
             </Typography>
           ) : null}
-          {prompt !== null && prompt.kind === "profile_attribute" ? (
-            <Typography
-              component="span"
-              sx={(theme) => ({
-                fontSize: theme.typography.pxToRem(ROW_SUB_PX),
-                color: theme.palette.text.muted,
-              })}
-            >
-              {prompt.label}
-            </Typography>
-          ) : null}
-          {prompt !== null && prompt.kind !== "profile_attribute" ? (
+          {prompt !== null ? (
             <LoadPromptButton label={prompt.label} onClick={(event) => openPrompt(event, prompt)} />
           ) : null}
         </Stack>
@@ -231,6 +224,13 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
             selections={editor.profileSelections}
             isSubmitting={editor.profilePending}
             onPick={editor.pickProfile}
+          />
+        ) : null}
+        {editorKind === "profile_attribute" && row.load !== null ? (
+          <InlineGenderPicker
+            load={row.load}
+            isSubmitting={editor.profilePending}
+            onPick={editor.pickGender}
           />
         ) : null}
       </Popover>
