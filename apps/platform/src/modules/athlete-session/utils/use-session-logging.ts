@@ -18,7 +18,7 @@ import {
 } from "@app/lib/hooks";
 
 import { type BenchmarkSchema, collectBenchmarkSchemas } from "./athlete-session-presentation";
-import { PROFILE_BINDING_REGISTRY } from "./profile-binding-registry";
+import { GENDER_BY_COORD } from "./gender-coord-map";
 import { buildResult, type ResultDraft, resultToDraft } from "./result-form-config";
 
 export type ActiveEditor =
@@ -205,18 +205,21 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
         return;
       }
 
-      const update = PROFILE_BINDING_REGISTRY.GENDER.toUpdate(value);
+      const gender = GENDER_BY_COORD[value];
 
-      if (update === null) {
+      if (gender === undefined) {
         return;
       }
 
-      updateProfile.mutate(update, {
-        onSuccess: () => {
-          invalidateView();
-          setActiveEditor(null);
+      updateProfile.mutate(
+        { gender },
+        {
+          onSuccess: () => {
+            invalidateView();
+            setActiveEditor(null);
+          },
         },
-      });
+      );
     },
     [updateProfile, invalidateView],
   );
