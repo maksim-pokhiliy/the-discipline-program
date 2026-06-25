@@ -19,7 +19,9 @@ const daysUntil = (expiresAt: Date | string, now: Date): number =>
   Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / MS_PER_DAY);
 
 const expiryNudgeLabel = (daysRemaining: number): string =>
-  daysRemaining <= 0 ? "Expired" : `Reconnects in ${daysRemaining} days`;
+  daysRemaining <= 0
+    ? "Expired"
+    : `Reconnects in ${daysRemaining} ${daysRemaining === 1 ? "day" : "days"}`;
 
 export const MobileAppSection: React.FC = () => {
   const { data: connections, isLoading, error } = useMobileConnections();

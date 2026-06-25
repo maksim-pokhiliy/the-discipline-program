@@ -215,7 +215,6 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
         confirmText="Overwrite & publish"
         message={`${conflictCount} ${conflictCount === 1 ? "day" : "days"} already have content you didn't publish from here. Overwrite & publish?`}
         details={conflictDays.join(", ")}
-        isConfirming={isPublishing}
         onConfirm={handleConfirmOverwrite}
       />
 

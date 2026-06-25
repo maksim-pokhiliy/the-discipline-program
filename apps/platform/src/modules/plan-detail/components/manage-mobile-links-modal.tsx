@@ -43,6 +43,7 @@ const NOT_CONNECTED_MESSAGE = "Connect your mobile app to publish plans to a tra
 const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training levels.";
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
+const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
 const RECONNECT_TITLE = "Reconnect mobile app";
 const NO_LEVEL_SELECTED = "";
 
@@ -80,6 +81,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   );
 
   const isReconnect = levelsQuery.error !== null && isReconnectRequired(levelsQuery.error);
+  const hasLevelsError = levelsQuery.isError && !isReconnect;
   const isLoading = connectionsQuery.isPending || (isConnected && levelsQuery.isPending);
 
   const handleAdd = () => {
@@ -173,37 +175,43 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
           </Stack>
         )}
 
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <FormControl fullWidth size="small" disabled={unlinkedLevels.length === 0}>
-            <InputLabel id="add-training-level-label">Training level</InputLabel>
+        {hasLevelsError ? (
+          <Alert severity="error">{LEVELS_ERROR_MESSAGE}</Alert>
+        ) : (
+          <>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <FormControl fullWidth size="small" disabled={unlinkedLevels.length === 0}>
+                <InputLabel id="add-training-level-label">Training level</InputLabel>
 
-            <Select
-              labelId="add-training-level-label"
-              label="Training level"
-              value={selectedLevelId}
-              onChange={(event) => setSelectedLevelId(event.target.value)}
-            >
-              {unlinkedLevels.map((level) => (
-                <MenuItem key={level.id} value={String(level.id)}>
-                  {level.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                <Select
+                  labelId="add-training-level-label"
+                  label="Training level"
+                  value={selectedLevelId}
+                  onChange={(event) => setSelectedLevelId(event.target.value)}
+                >
+                  {unlinkedLevels.map((level) => (
+                    <MenuItem key={level.id} value={String(level.id)}>
+                      {level.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-          <Button
-            variant="contained"
-            onClick={handleAdd}
-            disabled={selectedLevelId === NO_LEVEL_SELECTED || createLink.isPending}
-          >
-            Add
-          </Button>
-        </Stack>
+              <Button
+                variant="contained"
+                onClick={handleAdd}
+                disabled={selectedLevelId === NO_LEVEL_SELECTED || createLink.isPending}
+              >
+                Add
+              </Button>
+            </Stack>
 
-        {unlinkedLevels.length === 0 && links.length > 0 && (
-          <Typography variant="caption" color="text.secondary">
-            {ALL_LINKED_MESSAGE}
-          </Typography>
+            {unlinkedLevels.length === 0 && links.length > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                {ALL_LINKED_MESSAGE}
+              </Typography>
+            )}
+          </>
         )}
       </Stack>
     );
