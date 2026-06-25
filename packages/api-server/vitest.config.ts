@@ -17,7 +17,7 @@ export default defineConfig({
       NEXT_PUBLIC_PLATFORM_URL: "http://localhost:3002",
       INVITE_TOKEN_TTL_HOURS: "72",
       MOBILE_PUBLISH_ENCRYPTION_KEY: "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
-      LEGACY_MOBILE_API_BASE_URL: "http://localhost:8080",
+      LEGACY_MOBILE_API_BASE_URL: "http://localhost:8080/api/v1",
     },
     coverage: {
       provider: "v8",

@@ -103,7 +103,7 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
       SIGNIN_PATH,
       "POST",
       legacySigninResponseSchema,
-      { email, password },
+      { username: email, password },
     );
 
     return toSigninResult(payload);
@@ -155,7 +155,7 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
       "POST",
       legacyGeneralProgramSchema,
       {
-        trainingLevelId: input.levelId,
+        trainingLevel: { id: input.levelId },
         scheduledDate: input.scheduledDate,
         isRestDay: input.isRestDay,
         dailyProgram: input.dailyProgram,
@@ -176,7 +176,7 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
       legacyGeneralProgramSchema,
       {
         id: input.id,
-        trainingLevelId: input.levelId,
+        trainingLevel: { id: input.levelId },
         scheduledDate: input.scheduledDate,
         isRestDay: input.isRestDay,
         dailyProgram: input.dailyProgram,

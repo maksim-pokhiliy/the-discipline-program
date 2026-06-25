@@ -23,7 +23,7 @@ export const legacyDailyProgramSchema = z.object({
 export const legacyGeneralProgramSchema = z.object({
   id: z.number().int(),
   scheduledDate: z.string(),
-  trainingLevel: legacyTrainingLevelSchema,
+  trainingLevel: z.object({ id: z.number().int(), name: z.string().nullish() }),
   isRestDay: z.boolean(),
   dailyProgram: legacyDailyProgramSchema.nullable(),
 });

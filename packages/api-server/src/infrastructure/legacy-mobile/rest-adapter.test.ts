@@ -90,7 +90,7 @@ describe("createLegacyMobileRestAdapter", () => {
 
       expect(init.method).toBe("POST");
       expect(headers.Authorization).toBeUndefined();
-      expect(init.body).toBe(JSON.stringify({ email: "coach@example.com", password: "secret" }));
+      expect(init.body).toBe(JSON.stringify({ username: "coach@example.com", password: "secret" }));
     });
 
     it("coerces a numeric userId to a string", async () => {
@@ -132,6 +132,11 @@ describe("createLegacyMobileRestAdapter", () => {
       const headers = headersOf(lastRequestInit(fetchSpy));
 
       expect(headers["Idempotency-Key"]).toBeTruthy();
+
+      const sentBody = String(lastRequestInit(fetchSpy).body);
+
+      expect(JSON.parse(sentBody)).toMatchObject({ trainingLevel: { id: 7 } });
+      expect(sentBody).not.toContain("trainingLevelId");
       expect(program.id).toBe(100);
       expect(program.trainingLevelId).toBe(7);
     });
