@@ -16,7 +16,6 @@ const VOLUME_SEPARATOR = " ";
 const REPS_LABEL = "reps";
 const ROW_INTENSITY_LEVEL = "row";
 const LINE_SEPARATOR = " ";
-const NOTES_SEPARATOR = " · ";
 const COUNTED_REP_KINDS = new Set<RepNotation["kind"]>(["count", "range"]);
 
 export type RowIntensityContext = {
@@ -112,10 +111,6 @@ export const renderRowLine = (
 
   for (const modifier of summary.modifiers) {
     parts.push(modifier);
-  }
-
-  if (summary.notes.length > 0) {
-    parts.push(summary.notes.join(NOTES_SEPARATOR));
   }
 
   return parts.join(LINE_SEPARATOR);

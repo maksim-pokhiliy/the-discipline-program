@@ -18,6 +18,7 @@ import {
 } from "@repo/errors";
 
 import type {
+  LegacyDailyProgram,
   LegacyGeneralProgram,
   LegacyGeneralProgramWriteInput,
   LegacyMobileClientPort,
@@ -27,6 +28,7 @@ import type {
 
 const LEGACY_TIMEOUT_MS = 10_000;
 const LEGACY_MAX_RETRIES = 2;
+const LEGACY_WRITE_MAX_RETRIES = 0;
 
 const SIGNIN_PATH = "/auth/signin";
 const TRAINING_LEVELS_PATH = "/trainingLevel/all";
@@ -41,13 +43,27 @@ const buildNoAuthClient = (): ApiClient =>
     maxRetries: LEGACY_MAX_RETRIES,
   });
 
-const buildAuthedClient = (token: string): ApiClient =>
+const buildAuthedClient = (token: string, maxRetries: number = LEGACY_MAX_RETRIES): ApiClient =>
   new ApiClient({
     baseUrl: mobilePublishEnv.LEGACY_MOBILE_API_BASE_URL,
     timeoutMs: LEGACY_TIMEOUT_MS,
-    maxRetries: LEGACY_MAX_RETRIES,
+    maxRetries,
     getHeaders: () => ({ Authorization: token }),
   });
+
+type LegacyWriteBody = {
+  trainingLevel: { id: number };
+  scheduledDate: string;
+  isRestDay: boolean;
+  dailyProgram: LegacyDailyProgram | null;
+};
+
+const toWriteBody = (input: LegacyGeneralProgramWriteInput): LegacyWriteBody => ({
+  trainingLevel: { id: input.levelId },
+  scheduledDate: input.scheduledDate,
+  isRestDay: input.isRestDay,
+  dailyProgram: input.dailyProgram,
+});
 
 const isUpstreamFailure = (error: AppError): boolean =>
   UPSTREAM_FAILURE_ERRORS.some((errorClass) => error instanceof errorClass);
@@ -150,16 +166,11 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
     input: LegacyGeneralProgramWriteInput,
   ): Promise<LegacyGeneralProgram> => {
     const payload = await requestLegacy(
-      buildAuthedClient(token),
+      buildAuthedClient(token, LEGACY_WRITE_MAX_RETRIES),
       GENERAL_PROGRAM_PATH,
       "POST",
       legacyGeneralProgramSchema,
-      {
-        trainingLevel: { id: input.levelId },
-        scheduledDate: input.scheduledDate,
-        isRestDay: input.isRestDay,
-        dailyProgram: input.dailyProgram,
-      },
+      toWriteBody(input),
     );
 
     return toGeneralProgram(payload);
@@ -170,17 +181,11 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
     input: LegacyGeneralProgramWriteInput & { id: number },
   ): Promise<LegacyGeneralProgram> => {
     const payload = await requestLegacy(
-      buildAuthedClient(token),
+      buildAuthedClient(token, LEGACY_WRITE_MAX_RETRIES),
       GENERAL_PROGRAM_PATH,
       "PUT",
       legacyGeneralProgramSchema,
-      {
-        id: input.id,
-        trainingLevel: { id: input.levelId },
-        scheduledDate: input.scheduledDate,
-        isRestDay: input.isRestDay,
-        dailyProgram: input.dailyProgram,
-      },
+      { id: input.id, ...toWriteBody(input) },
     );
 
     return toGeneralProgram(payload);

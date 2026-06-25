@@ -537,7 +537,7 @@ describe("mobile-publish projection parity (D-5 / D-8 SSOT)", () => {
       const dailyProgram = projectedWorkingDay();
 
       expect(dailyProgram.dayTrainings[0]?.blocks[0]?.exercises).toEqual([
-        "back squat 5 × 3 reps @80% of 1RM each leg 3-1-1-0 EFFORT 70–80% RPE 8 rest 120s between sets from sofa keep the chest up",
+        "back squat 5 × 3 reps @80% of 1RM each leg 3-1-1-0 EFFORT 70–80% RPE 8 rest 120s between sets from sofa",
         "deadlift @100kg EFFORT 70–80%",
         "press Male:60 / Female:40 EFFORT 70–80%",
         "pull up BW EFFORT 70–80%",

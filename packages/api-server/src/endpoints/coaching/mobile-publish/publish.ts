@@ -4,7 +4,7 @@ import {
   type PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
-import { AppError, NotFoundError } from "@repo/errors";
+import { AppError, NotFoundError, UnauthorizedError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { verifyMobileLinkOwnership } from "../../../authz/guards";
@@ -110,6 +110,10 @@ export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishA
           }),
         );
       } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          throw reconnectRequiredError("Mobile session rejected — please reconnect");
+        }
+
         const code = error instanceof AppError ? error.code : "unknown";
 
         logger.warn("mobile.publish.day_failed", { linkId: data.linkId, scheduledDate, code });

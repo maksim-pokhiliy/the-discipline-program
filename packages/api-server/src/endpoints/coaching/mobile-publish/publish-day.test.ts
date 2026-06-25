@@ -180,4 +180,18 @@ describe("publishDay", () => {
     expect(result.legacyRowId).toBe(RACED_ROW_ID);
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
+
+  it("claims the ledger when a content-identical legacy row is unowned (skip, not conflict)", async () => {
+    const legacyClient = makeFakeClient();
+
+    mocks.findUniqueMock.mockResolvedValue(null);
+    vi.mocked(legacyClient.getGeneralProgram).mockResolvedValue(restLegacyRow());
+
+    const result = await publishDay(baseArgs(legacyClient, { overwriteUnowned: false }));
+
+    expect(result.action).toBe("skipped");
+    expect(legacyClient.createGeneralProgram).not.toHaveBeenCalled();
+    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+  });
 });

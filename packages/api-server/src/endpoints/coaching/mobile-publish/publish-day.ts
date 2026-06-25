@@ -92,6 +92,10 @@ const resolveRace = async (
     return putLegacyRow(args, input, raced.id);
   }
 
+  if (decision.action === "skipped" && !isOwned) {
+    await recordPublishedDay(args, raced.id, hash);
+  }
+
   if (decision.action === "conflict") {
     logger.warn("mobile.publish.conflict", {
       linkId: args.linkId,
@@ -193,6 +197,10 @@ export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult
   });
 
   if (decision.write === "none") {
+    if (decision.action === "skipped" && !isOwned && legacyRow !== null) {
+      await recordPublishedDay(args, legacyRow.id, hash);
+    }
+
     return noWriteResult(args, decision, legacyRow?.id ?? null);
   }
 

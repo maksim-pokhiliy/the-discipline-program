@@ -86,7 +86,7 @@ describe("renderRowLine", () => {
     });
 
     expect(renderRowLine(row, exerciseById, EMPTY_CONTEXT)).toBe(
-      "Back Squat 4 × 5 reps @75% of 1RM each leg 3-1-1-0 RPE 8 rest 120s between sets from sofa keep the chest up",
+      "Back Squat 4 × 5 reps @75% of 1RM each leg 3-1-1-0 RPE 8 rest 120s between sets from sofa",
     );
   });
 
@@ -106,12 +106,10 @@ describe("renderRowLine", () => {
     expect(renderRowLine(row, exerciseById, EMPTY_CONTEXT)).toBe("Back Squat BW");
   });
 
-  it("joins multiple notes with the display dot separator", () => {
+  it("excludes row notes from the published line (notes are not shown on the platform card either)", () => {
     const row = makeRow({ notes: ["tempo strict", "belt optional"] });
 
-    expect(renderRowLine(row, exerciseById, EMPTY_CONTEXT)).toBe(
-      "Back Squat tempo strict · belt optional",
-    );
+    expect(renderRowLine(row, exerciseById, EMPTY_CONTEXT)).toBe("Back Squat");
   });
 });
 

@@ -47,6 +47,17 @@ describe("decidePublishAction", () => {
     expect(decision).toEqual({ action: "skipped", write: "none" });
   });
 
+  it("skips a content-identical unowned legacy row even when overwrite is off (a row we authored after a timed-out write)", () => {
+    const decision = decidePublishAction({
+      isOwned: false,
+      hasLegacyRow: true,
+      contentMatches: true,
+      overwriteUnowned: false,
+    });
+
+    expect(decision).toEqual({ action: "skipped", write: "none" });
+  });
+
   it("skips with no write when an owned legacy row matches the projected content", () => {
     const decision = decidePublishAction({
       isOwned: true,

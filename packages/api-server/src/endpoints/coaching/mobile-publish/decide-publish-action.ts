@@ -21,12 +21,12 @@ export const decidePublishAction = (input: DecidePublishActionInput): PublishDec
     return { action: "created", write: "POST" };
   }
 
-  if (!isOwned && !overwriteUnowned) {
-    return { action: "conflict", write: "none" };
-  }
-
   if (contentMatches) {
     return { action: "skipped", write: "none" };
+  }
+
+  if (!isOwned && !overwriteUnowned) {
+    return { action: "conflict", write: "none" };
   }
 
   return { action: "updated", write: "PUT" };
