@@ -1,5 +1,3 @@
-import crypto from "node:crypto";
-
 import { Prisma } from "@prisma/client";
 
 import type {
@@ -12,11 +10,11 @@ import { ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { prisma, type ExtendedPrismaClient } from "../db/client";
+import { sha256Hex } from "../utils";
 
 const KEY_HASH_LENGTH = 12;
 
-const hashKey = (key: string): string =>
-  crypto.createHash("sha256").update(key).digest("hex").slice(0, KEY_HASH_LENGTH);
+const hashKey = (key: string): string => sha256Hex(key).slice(0, KEY_HASH_LENGTH);
 
 const isP2002 = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";

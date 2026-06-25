@@ -11,6 +11,7 @@ import { logger } from "@repo/shared";
 import { prisma } from "../../db/client";
 import { type TxClient } from "../../db/tx";
 import { mapToInviteToken, ROLE_MAP } from "../../mappers/iam";
+import { sha256Hex } from "../../utils";
 
 import { iamAuthService } from "./auth-service";
 
@@ -36,8 +37,7 @@ type ConsumeInviteInput = {
   timezone?: string;
 };
 
-const hashToken = (plainToken: string): string =>
-  crypto.createHash("sha256").update(plainToken).digest("hex");
+const hashToken = (plainToken: string): string => sha256Hex(plainToken);
 
 const generatePlainToken = (): string => crypto.randomBytes(TOKEN_BYTES).toString("base64url");
 

@@ -11,6 +11,7 @@ import { logger } from "@repo/shared";
 
 import { prisma } from "../../db/client";
 import { type TxClient } from "../../db/tx";
+import { sha256Hex } from "../../utils";
 
 import { iamAuthService } from "./auth-service";
 import { sendPasswordResetEmail } from "./send-password-reset-email";
@@ -22,8 +23,7 @@ const GENERIC_GONE_MESSAGE = "This password reset link is no longer valid";
 
 type InvalidationReason = "NOT_FOUND" | "CONSUMED" | "EXPIRED" | "DELETED_USER";
 
-const hashToken = (plainToken: string): string =>
-  crypto.createHash("sha256").update(plainToken).digest("hex");
+const hashToken = (plainToken: string): string => sha256Hex(plainToken);
 
 const generatePlainToken = (): string =>
   crypto.randomBytes(RESET_TOKEN_BYTES).toString("base64url");
