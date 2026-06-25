@@ -7,11 +7,11 @@ const TAG_BYTES = 16;
 const KEY_BYTES = 32;
 const ALGORITHM = "aes-256-gcm";
 
-const KEY = Buffer.from(mobilePublishEnv.ENCRYPTION_KEY, "base64");
+const KEY = Buffer.from(mobilePublishEnv.MOBILE_PUBLISH_ENCRYPTION_KEY, "base64");
 
 if (KEY.length !== KEY_BYTES) {
   throw new Error(
-    `ENCRYPTION_KEY must decode to ${KEY_BYTES} bytes (got ${KEY.length}); expected base64 of 32 random bytes`,
+    `MOBILE_PUBLISH_ENCRYPTION_KEY must decode to ${KEY_BYTES} bytes (got ${KEY.length}); expected base64 of 32 random bytes`,
   );
 }
 

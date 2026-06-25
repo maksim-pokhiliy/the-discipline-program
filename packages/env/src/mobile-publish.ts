@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const mobilePublishEnv = createEnv({
   server: {
-    ENCRYPTION_KEY: z.string().length(44),
+    MOBILE_PUBLISH_ENCRYPTION_KEY: z.string().length(44),
     LEGACY_MOBILE_API_BASE_URL: z.string().url(),
   },
   client: {},
