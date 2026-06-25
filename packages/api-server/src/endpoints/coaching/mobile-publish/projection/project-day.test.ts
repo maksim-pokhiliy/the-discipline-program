@@ -196,6 +196,12 @@ describe("projectDay", () => {
     expect(result).not.toHaveProperty("dailyProgram");
   });
 
+  it("projects a non-rest day with zero sessions to an empty dayTrainings (QA-#9)", () => {
+    const result = projectDay(makeDay({ sessions: [] }), EMPTY_EXERCISES);
+
+    expect(result).toEqual({ isRestDay: false, dailyProgram: { dayTrainings: [] } });
+  });
+
   it("numbers trainings 1-based by session order, not by session.order (steps of 10)", () => {
     const dayId = cuid("day");
     const day = makeDay({

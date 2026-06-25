@@ -84,4 +84,18 @@ describe("createConnectionsApi.connect", () => {
     expect(result).not.toHaveProperty("token");
     expect(result.legacyUserRole).toBe("ADMIN");
   });
+
+  it("stores no connection when the legacy credentials are rejected (QA-#16)", async () => {
+    const { UnauthorizedError } = await import("@repo/errors");
+    const legacyClient = makeFakeLegacyClient();
+
+    vi.mocked(legacyClient.signin).mockRejectedValue(new UnauthorizedError("bad credentials"));
+    const api = createConnectionsApi(legacyClient);
+
+    await expect(
+      api.connect(USER_ID, { email: "coach@example.com", password: "wrong" }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
 });

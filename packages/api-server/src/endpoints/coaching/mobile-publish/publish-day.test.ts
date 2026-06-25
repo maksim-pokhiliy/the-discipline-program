@@ -148,6 +148,24 @@ describe("publishDay", () => {
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
 
+  it("throws ConflictError without re-posting when the 409 re-GET returns null (QA-#22)", async () => {
+    const { ConflictError } = await import("@repo/errors");
+    const legacyClient = makeFakeClient();
+
+    vi.mocked(legacyClient.getGeneralProgram)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    vi.mocked(legacyClient.createGeneralProgram).mockRejectedValue(
+      new ConflictError("already exists"),
+    );
+
+    await expect(publishDay(baseArgs(legacyClient))).rejects.toBeInstanceOf(ConflictError);
+
+    expect(legacyClient.createGeneralProgram).toHaveBeenCalledTimes(1);
+    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
   it("skips without writing when the live legacy content matches the projection", async () => {
     const legacyClient = makeFakeClient();
 
