@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { PerLimbDistribution } from "@repo/contracts/lms/_shared";
+import { type PerLimbDistribution } from "../_shared";
 
 import { formatSide } from "./format-side";
 

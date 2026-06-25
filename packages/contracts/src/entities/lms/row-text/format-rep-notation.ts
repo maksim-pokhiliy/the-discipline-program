@@ -1,4 +1,4 @@
-import { type RepNotation } from "@repo/contracts/lms/_shared";
+import { type RepNotation } from "../_shared";
 
 const RANGE_SEPARATOR = "–";
 const SPACE = " ";

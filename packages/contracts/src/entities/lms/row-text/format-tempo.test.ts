@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { TempoModifier } from "@repo/contracts/lms/_shared";
+import { type TempoModifier } from "../_shared";
 
 import { formatTempo } from "./format-tempo";
 

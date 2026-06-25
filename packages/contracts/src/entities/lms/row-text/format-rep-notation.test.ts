@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { RepNotation } from "@repo/contracts/lms/_shared";
+import { type RepNotation } from "../_shared";
 
 import { formatRepNotation } from "./format-rep-notation";
 

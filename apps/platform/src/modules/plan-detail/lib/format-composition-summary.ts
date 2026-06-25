@@ -3,9 +3,8 @@ import {
   type Composition,
   type RepetitionAxis,
   type RestAxis,
+  formatRestSpec,
 } from "@repo/contracts/lms/composition";
-
-import { formatRestSpec } from "./format-rest-spec";
 
 const MINUTE_MARK = "’";
 const SECOND_MARK = "s";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Intensity } from "@repo/contracts/lms/_shared";
+import { type Intensity } from "../_shared";
 
 import { resolveIntensity } from "./resolve-intensity";
 

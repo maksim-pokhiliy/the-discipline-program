@@ -1,4 +1,4 @@
-import { type PerLimbDistribution } from "@repo/contracts/lms/_shared";
+import { type PerLimbDistribution } from "../_shared";
 
 const EACH_LEG_LABEL = "each leg";
 const EACH_ARM_LABEL = "each arm";

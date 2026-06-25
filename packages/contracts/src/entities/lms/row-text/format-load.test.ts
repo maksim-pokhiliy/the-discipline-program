@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Load } from "@repo/contracts/lms/_shared";
-import type { Exercise } from "@repo/contracts/lms/exercise";
+import { type Load } from "../_shared";
+import { type Exercise } from "../exercise";
 
 import { formatLoad } from "./format-load";
 import { type ExerciseById } from "./format-percentage-reference";

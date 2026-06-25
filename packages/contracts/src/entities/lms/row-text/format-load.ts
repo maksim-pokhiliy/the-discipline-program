@@ -1,4 +1,4 @@
-import { type Load } from "@repo/contracts/lms/_shared";
+import { type Load } from "../_shared";
 
 import { type ExerciseById, formatPercentageReference } from "./format-percentage-reference";
 

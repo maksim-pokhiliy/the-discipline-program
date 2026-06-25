@@ -1,5 +1,5 @@
-import { type PercentageReference } from "@repo/contracts/lms/_shared";
-import { type Exercise } from "@repo/contracts/lms/exercise";
+import { type PercentageReference } from "../_shared";
+import { type Exercise } from "../exercise";
 
 export type ExerciseById = ReadonlyMap<string, Exercise>;
 

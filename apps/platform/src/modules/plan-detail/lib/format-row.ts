@@ -1,15 +1,11 @@
+import { type ExerciseById, type RowIntensityContext } from "@repo/contracts/lms/row-text";
 import { type SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import { type ExerciseById } from "./format-percentage-reference";
 import { buildRow } from "./format-row-builders";
-import { type FormatRowResult, type RowIntensityContext } from "./format-row.types";
+import { type FormatRowResult } from "./format-row.types";
 
-export { type ExerciseById } from "./format-percentage-reference";
-export {
-  type FormatRowResult,
-  type RowIntensityContext,
-  type RowSummary,
-} from "./format-row.types";
+export { type ExerciseById, type RowIntensityContext } from "@repo/contracts/lms/row-text";
+export { type FormatRowResult, type RowSummary } from "./format-row.types";
 
 const EMPTY_INTENSITY_CONTEXT: RowIntensityContext = {
   blockIntensity: null,

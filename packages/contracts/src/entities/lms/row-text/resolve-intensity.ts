@@ -1,4 +1,4 @@
-import { type Intensity } from "@repo/contracts/lms/_shared";
+import { type Intensity } from "../_shared";
 
 export type IntensityLevel = "row" | "schema" | "block";
 

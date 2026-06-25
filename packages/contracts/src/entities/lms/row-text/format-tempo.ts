@@ -1,4 +1,4 @@
-import { type TempoModifier } from "@repo/contracts/lms/_shared";
+import { type TempoModifier } from "../_shared";
 
 const TEMPO_SEPARATOR = "-";
 

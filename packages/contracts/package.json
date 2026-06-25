@@ -29,6 +29,7 @@
     "./lms/plan-timetable": "./src/entities/lms/plan-timetable/index.ts",
     "./lms/records-view": "./src/entities/lms/records-view/index.ts",
     "./lms/row-group": "./src/entities/lms/row-group/index.ts",
+    "./lms/row-text": "./src/entities/lms/row-text/index.ts",
     "./lms/schema": "./src/entities/lms/schema/index.ts",
     "./lms/schema-group": "./src/entities/lms/schema-group/index.ts",
     "./lms/schema-row": "./src/entities/lms/schema-row/index.ts",

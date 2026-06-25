@@ -1,27 +1,16 @@
-import { type RepNotation } from "@repo/contracts/lms/_shared";
 import { type ExerciseNature } from "@repo/contracts/lms/exercise";
+import {
+  type ExerciseById,
+  type RowIntensityContext,
+  buildRowSummaryTexts,
+} from "@repo/contracts/lms/row-text";
 import { type SchemaRow } from "@repo/contracts/lms/schema-row";
 import { type RowKind } from "@repo/ui";
 
-import { formatRepNotation, formatSide } from "@app/lib/training-format";
-
-import { formatEffectiveIntensityChips } from "./format-block-meta";
-import { formatLoad } from "./format-load";
-import { type ExerciseById } from "./format-percentage-reference";
-import { formatRestSpec } from "./format-rest-spec";
-import {
-  type FormatRowResult,
-  type RowIntensityContext,
-  type RowSummary,
-} from "./format-row.types";
-import { formatTempo } from "./format-tempo";
-import { resolveIntensity } from "./resolve-intensity";
+import { toEmphasizedIntensityChips } from "./format-block-meta";
+import { type FormatRowResult, type RowSummary } from "./format-row.types";
 
 const EXERCISE_FALLBACK = "exercise";
-const SETS_SUFFIX = "×";
-const VOLUME_SEPARATOR = " ";
-const REPS_LABEL = "reps";
-const COUNTED_REP_KINDS = new Set<RepNotation["kind"]>(["count", "range"]);
 
 type RenderKind = { kindBadge: string; kindCls: RowKind; dashed: boolean };
 
@@ -52,39 +41,21 @@ const resolveDemoUrl = (exerciseId: string, exerciseById: ExerciseById): string 
   return exercise.defaultDemoUrls[0] ?? null;
 };
 
-const buildReps = (reps: RepNotation): string => {
-  const notation = formatRepNotation(reps);
-
-  return COUNTED_REP_KINDS.has(reps.kind) ? `${notation} ${REPS_LABEL}` : notation;
-};
-
-const buildVolume = (row: SchemaRow): string | null => {
-  const setsPart = row.sets !== null ? `${row.sets} ${SETS_SUFFIX}` : null;
-  const repsPart = row.reps !== null ? buildReps(row.reps) : null;
-
-  return [setsPart, repsPart].filter(Boolean).join(VOLUME_SEPARATOR) || null;
-};
-
 const buildSummary = (
   row: SchemaRow,
   exerciseById: ExerciseById,
   context: RowIntensityContext,
 ): RowSummary => {
-  const resolved = resolveIntensity(context.blockIntensity, context.schemaIntensity, row.intensity);
+  const texts = buildRowSummaryTexts(row, exerciseById, context);
 
   return {
-    volume: buildVolume(row),
-    load: row.load !== null ? formatLoad(row.load, exerciseById) : null,
-    side: row.side !== null ? formatSide(row.side) : null,
-    tempo:
-      row.tempo !== null
-        ? typeof row.tempo === "string"
-          ? row.tempo
-          : formatTempo(row.tempo)
-        : null,
-    intensityChips: formatEffectiveIntensityChips(resolved, "row"),
-    rest: row.rest !== null ? formatRestSpec(row.rest) : null,
-    modifiers: row.modifiers.map((modifier) => modifier.name),
+    volume: texts.volume,
+    load: texts.load,
+    side: texts.side,
+    tempo: texts.tempo,
+    intensityChips: toEmphasizedIntensityChips(texts.intensityTexts),
+    rest: texts.rest,
+    modifiers: texts.modifiers,
     notes: [],
   };
 };
