@@ -804,6 +804,9 @@ importers:
       '@prisma/client':
         specifier: 'catalog:'
         version: 6.1.0(prisma@6.1.0)
+      '@repo/api-client':
+        specifier: workspace:*
+        version: link:../api-client
       '@repo/api-routes':
         specifier: workspace:*
         version: link:../api-routes

@@ -1,3 +1,5 @@
+import { createLegacyMobileRestAdapter } from "./rest-adapter";
+
 export type {
   LegacyDailyProgram,
   LegacyGeneralProgram,
@@ -6,3 +8,6 @@ export type {
   LegacySigninResult,
   LegacyTrainingLevel,
 } from "./port";
+export { createLegacyMobileRestAdapter } from "./rest-adapter";
+
+export const defaultLegacyMobileClient = createLegacyMobileRestAdapter();

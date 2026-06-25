@@ -32,6 +32,7 @@
   "dependencies": {
     "@prisma/client": "catalog:",
     "@sentry/nextjs": "catalog:",
+    "@repo/api-client": "workspace:*",
     "@repo/api-routes": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/email": "workspace:*",
