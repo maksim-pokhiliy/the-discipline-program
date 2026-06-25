@@ -12,25 +12,30 @@ export const PUBLISH_RESULT_CHIPS: Record<MobilePublishAction, StatusChipConfig>
     label: "Created",
     color: "success",
     icon: <CheckCircleIcon fontSize="small" />,
+    tooltip: "Published a new day to the app.",
   },
   updated: {
     label: "Updated",
     color: "info",
     icon: <SyncIcon fontSize="small" />,
+    tooltip: "Replaced the day you previously published here.",
   },
   skipped: {
     label: "Skipped",
     color: "default",
     icon: <RemoveCircleOutlineIcon fontSize="small" />,
+    tooltip: "Already up to date — nothing to publish.",
   },
   conflict: {
     label: "Conflict",
     color: "warning",
     icon: <WarningAmberIcon fontSize="small" />,
+    tooltip: "A program already exists for this day that wasn't published from here.",
   },
   failed: {
     label: "Failed",
     color: "error",
     icon: <ErrorOutlineIcon fontSize="small" />,
+    tooltip: "Couldn't publish this day — try again.",
   },
 };
