@@ -11,6 +11,7 @@ import "@repo/env/blob"; // BLOB_READ_WRITE_TOKEN
 import "@repo/env/email"; // Resend / email-provider keys
 import "@repo/env/rate-limit"; // UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
 import "@repo/env/sentry"; // NEXT_PUBLIC_SENTRY_DSN, SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
+import "@repo/env/mobile-publish"; // MOBILE_PUBLISH_ENCRYPTION_KEY, LEGACY_MOBILE_API_BASE_URL
 ```
 
 Side-effect imports validate at module load. The `base` validator additionally re-exports `baseEnv` for code that needs typed access (`import { baseEnv } from "@repo/env/base"`).
@@ -25,6 +26,7 @@ src/
   email.ts       Email provider — admin (transactional only, currently)
   rate-limit.ts  Upstash Redis — apps that gate writes
   sentry.ts      Sentry DSN + build-time tokens
+  mobile-publish.ts  Legacy mobile connector — encryption key + legacy API base URL (platform)
 ```
 
 ## Conventions

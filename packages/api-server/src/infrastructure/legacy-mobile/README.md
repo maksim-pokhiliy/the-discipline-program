@@ -22,18 +22,19 @@ Every method maps one legacy endpoint:
 
 **The token is a per-call argument, not client state** — every authed method takes the bare `accessToken` as its first parameter, so the default singleton stays a stateless no-arg instance and the per-coach token is decrypted and threaded in by the caller. The adapter sets `Authorization: <accessToken>` with **NO `Bearer ` prefix**: the iOS app sends the bare token and the legacy auth filter strips a literal `"Bearer"` substring, so a `Bearer ` prefix would corrupt the token and fail the request. This is a hard requirement of the frozen upstream, documented here because it is the single most surprising thing about this port.
 
-### Absent-row and conflict mapping
+### Absent-row, conflict, and upstream-failure mapping
 
 - `getGeneralProgram` maps the legacy **404 / empty** absent-row response to `null`; any other error propagates. The publish orchestrator reads `null` as "create", a value as "update".
 - `createGeneralProgram` lets the legacy **409** propagate (the platform maps it to a `ConflictError`). The legacy side has no DB unique on `(level, date)`, so a concurrent insert can race; the orchestrator catches the 409 and falls back to a PUT (re-GET → update). The adapter does NOT swallow or re-wrap the 409 — the typed error carries the status the orchestrator branches on.
+- Any other upstream failure (a thrown `InternalServerError`/`ServiceUnavailableError`, a transport error, or a non-`AppError`) is normalized to a `BadGatewayError` (502) via `mapLegacyError`, so a legacy outage surfaces as "bad upstream response" rather than "this service is down". `TimeoutError` (504, from the `ApiClient` abort path) and `NotFoundError`/`ConflictError` pass through untouched — the orchestrator branches on them.
 
 ## Adapter placement
 
-The vendor is fixed; the adapter lands in T10:
+The vendor is fixed; the adapter is wired as follows:
 
-1. `infrastructure/legacy-mobile/rest-adapter.ts` — the ONLY file that builds the legacy `ApiClient` (a second `@repo/api-client` instance: legacy base URL, timeout, retries, a `getHeaders` returning the raw `Authorization`). Authed methods construct a per-token client; `signin` uses a no-auth one.
+1. `infrastructure/legacy-mobile/rest-adapter.ts` — the ONLY file that builds the legacy `ApiClient` (a second `@repo/api-client` instance: legacy base URL, 10s timeout, 2 retries, a `getHeaders` returning the raw `Authorization`). Authed methods construct a per-token client (`buildAuthedClient`); `signin` uses a no-auth one (`buildNoAuthClient`).
 2. Env vars live in `packages/env/src/mobile-publish.ts` (`LEGACY_MOBILE_API_BASE_URL`).
-3. Update `infrastructure/legacy-mobile/index.ts` to re-export the adapter factory and expose `defaultLegacyMobileClient = createLegacyMobileRestAdapter()`.
+3. `infrastructure/legacy-mobile/index.ts` re-exports the adapter factory and exposes `defaultLegacyMobileClient = createLegacyMobileRestAdapter()`.
 4. The coaching publish service injects the default via the storage factory-DI pattern: `createMobilePublishApi(defaultLegacyMobileClient)`.
 
 ## Non-goals

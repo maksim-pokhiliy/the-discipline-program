@@ -142,15 +142,17 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 
 ### Required
 
-| Variable                    | Where                                 | Purpose                                                  |
-| --------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `DATABASE_URL`              | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).            |
-| `NEXTAUTH_SECRET`           | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`. |
-| `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                |
-| `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.            |
-| `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                          |
-| `NEXT_PUBLIC_PLATFORM_URL`  | all apps                              | Base URL for the platform app.                           |
-| `BLOB_READ_WRITE_TOKEN`     | admin + platform (file uploads)       | Vercel Blob read/write token.                            |
+| Variable                        | Where                                 | Purpose                                                                                                                            |
+| ------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                  | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).                                                                                      |
+| `NEXTAUTH_SECRET`               | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`.                                                                           |
+| `NEXTAUTH_URL`                  | admin + platform                      | Canonical app URL for NextAuth callbacks.                                                                                          |
+| `NEXT_PUBLIC_APP_URL`           | all apps                              | Base URL for HTTP loopback + cross-app links.                                                                                      |
+| `NEXT_PUBLIC_MARKETING_URL`     | all apps                              | Base URL for the marketing app.                                                                                                    |
+| `NEXT_PUBLIC_PLATFORM_URL`      | all apps                              | Base URL for the platform app.                                                                                                     |
+| `BLOB_READ_WRITE_TOKEN`         | admin + platform (file uploads)       | Vercel Blob read/write token.                                                                                                      |
+| `MOBILE_PUBLISH_ENCRYPTION_KEY` | platform                              | AES-256-GCM key for the legacy mobile connector token-at-rest. Base64 of 32 bytes (44 chars). Generate: `openssl rand -base64 32`. |
+| `LEGACY_MOBILE_API_BASE_URL`    | platform                              | Base URL of the legacy mobile (Spring) backend the connector publishes plans into.                                                 |
 
 ### Optional
 

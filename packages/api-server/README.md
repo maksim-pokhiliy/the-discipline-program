@@ -22,7 +22,7 @@ import {} from /* monitoring */ "@repo/api-server/infrastructure/monitoring";
 src/
   endpoints/<context>/  Per-context endpoint modules; barrel re-exports each entity API
   services/<context>/   Cross-entity orchestration helpers
-  infrastructure/       Cache, email port, monitoring, payment, queue ports
+  infrastructure/       Cache, email, monitoring, payment, queue, legacy-mobile ports
   db/                   Prisma client + soft-delete extension (client.ts)
 prisma/                 schema.prisma + migrations/ + seed.ts + seed/ (users, profiles)
 ```
