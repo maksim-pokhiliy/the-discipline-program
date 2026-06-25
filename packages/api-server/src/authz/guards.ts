@@ -1,5 +1,6 @@
 export * from "./role-guards";
 export * from "./coaching-guards";
+export * from "./mobile-publish-guards";
 export * from "./lms-guards";
 export * from "./lms-group-guards";
 export * from "./lms-row-group-guards";

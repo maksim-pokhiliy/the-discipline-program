@@ -91,6 +91,16 @@ export class TimeoutError extends AppError {
   }
 }
 
+export class BadGatewayError extends AppError {
+  constructor(message = "Bad gateway", details?: Record<string, unknown>) {
+    super(message, {
+      code: ERROR_CODES.BAD_GATEWAY,
+      statusCode: 502,
+      details,
+    });
+  }
+}
+
 export class ServiceUnavailableError extends AppError {
   constructor(message = "Service unavailable", details?: Record<string, unknown>) {
     super(message, {

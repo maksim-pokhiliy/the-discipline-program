@@ -5,12 +5,12 @@ import { type ReactElement, useMemo } from "react";
 import { Stack } from "@mui/material";
 
 import { type Intensity } from "@repo/contracts/lms/_shared";
+import { resolveIntensity } from "@repo/contracts/lms/row-text";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { IndicatorChip } from "@repo/ui";
 
 import { formatEffectiveIntensityChips } from "../lib/format-block-meta";
 import { formatRestSummary } from "../lib/format-composition-summary";
-import { resolveIntensity } from "../lib/resolve-intensity";
 
 import { EmphasizedIntensityChip } from "./emphasized-intensity-chip";
 

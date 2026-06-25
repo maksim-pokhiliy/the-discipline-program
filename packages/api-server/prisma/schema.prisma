@@ -76,6 +76,7 @@ model CoachProfile {
   actionItems             CoachActionItem[]
   coachAthleteAssignments CoachAthleteAssignment[]
   credentials             CoachCredential[]
+  mobileConnections       MobileConnection[]
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   deletedAt               DateTime?
@@ -113,6 +114,71 @@ model CoachAthleteAssignment {
   @@index([coachId])
   @@index([athleteId])
   @@map("app_coach_athlete_assignments")
+}
+
+enum MobilePublishChannel {
+  GENERAL
+}
+
+enum MobilePublishAction {
+  CREATED
+  UPDATED
+  SKIPPED
+  CONFLICT
+}
+
+model MobileConnection {
+  id             String       @id @default(cuid())
+  coachProfileId String
+  coachProfile   CoachProfile @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  encryptedToken String       @db.Text
+  legacyUserId   String
+  legacyUserName String
+  legacyUserRole String
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  links MobilePublishLink[]
+
+  @@unique([coachProfileId])
+  @@index([expiresAt])
+  @@map("app_mobile_connections")
+}
+
+model MobilePublishLink {
+  id            String               @id @default(cuid())
+  connectionId  String
+  connection    MobileConnection     @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          TrainingPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  channel       MobilePublishChannel @default(GENERAL)
+  legacyLevelId Int
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  publishedDays MobilePublishedDay[]
+
+  @@unique([planId, channel, legacyLevelId])
+  @@index([connectionId])
+  @@index([planId])
+  @@map("app_mobile_publish_links")
+}
+
+model MobilePublishedDay {
+  id            String            @id @default(cuid())
+  linkId        String
+  link          MobilePublishLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  scheduledDate DateTime          @db.Date
+  legacyRowId   Int
+  contentHash   String
+  publishedAt   DateTime          @default(now())
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([linkId, scheduledDate])
+  @@index([linkId])
+  @@map("app_mobile_published_days")
 }
 
 enum Role {
@@ -264,17 +330,18 @@ enum EnrollmentStatus {
 }
 
 model TrainingPlan {
-  id          String             @id @default(cuid())
-  creatorId   String
-  creator     User               @relation("PlanCreator", fields: [creatorId], references: [id], onDelete: Restrict)
-  status      TrainingPlanStatus @default(DRAFT)
-  name        String
-  description String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  deletedAt   DateTime?
-  enrollments PlanEnrollment[]
-  weeks       Week[]
+  id                 String              @id @default(cuid())
+  creatorId          String
+  creator            User                @relation("PlanCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  status             TrainingPlanStatus  @default(DRAFT)
+  name               String
+  description        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  deletedAt          DateTime?
+  enrollments        PlanEnrollment[]
+  weeks              Week[]
+  mobilePublishLinks MobilePublishLink[]
 
   @@index([creatorId])
   @@index([status])

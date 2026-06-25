@@ -9,6 +9,7 @@
     "./auth": "./src/auth.ts",
     "./blob": "./src/blob.ts",
     "./email": "./src/email.ts",
+    "./mobile-publish": "./src/mobile-publish.ts",
     "./rate-limit": "./src/rate-limit.ts",
     "./sentry": "./src/sentry.ts"
   },

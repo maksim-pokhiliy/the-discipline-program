@@ -1,5 +1,6 @@
 import {
   type AppError,
+  BadGatewayError,
   BadRequestError,
   ConflictError,
   ERROR_CODES,
@@ -23,7 +24,7 @@ const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
   409: ConflictError,
   422: ValidationError,
   429: TooManyRequestsError,
-  502: ServiceUnavailableError,
+  502: BadGatewayError,
   503: ServiceUnavailableError,
   504: ServiceUnavailableError,
 };

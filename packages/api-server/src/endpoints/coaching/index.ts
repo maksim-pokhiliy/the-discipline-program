@@ -9,4 +9,5 @@ export * from "./coach-dashboard";
 export * from "./coach-invite";
 export * from "./coach-note";
 export * from "./coach-profile";
+export * from "./mobile-publish";
 export * from "./profile-axis";

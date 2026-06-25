@@ -11,7 +11,7 @@ Coach + athlete experience for The Discipline Program. Mobile-first PWA serving 
 
 ## Environment
 
-`apps/platform/.env.local`. Validators imported at module entry: `@repo/env/base`, `@repo/env/auth`, `@repo/env/sentry`. See the root [README — Environment Variables](../../README.md#environment-variables) and [`docs/DEPLOY.md`](../../docs/DEPLOY.md).
+`apps/platform/.env.local`. Validators imported at module entry: `@repo/env/base`, `@repo/env/auth`, `@repo/env/sentry`, `@repo/env/mobile-publish`. See the root [README — Environment Variables](../../README.md#environment-variables) and [`docs/DEPLOY.md`](../../docs/DEPLOY.md).
 
 Required in this app:
 
@@ -19,6 +19,7 @@ Required in this app:
 - `NEXTAUTH_SECRET`, `NEXTAUTH_URL` — platform runs its own NextAuth instance ([ADR 0011](../../docs/adr/0011-two-independent-nextauth-instances.md)).
 - `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_MARKETING_URL` — HTTP loopback + cross-app links.
 - `BLOB_READ_WRITE_TOKEN` — Vercel Blob token for coach avatar uploads ([ADR 0013](../../docs/adr/0013-vercel-blob-for-image-storage.md)).
+- `MOBILE_PUBLISH_ENCRYPTION_KEY`, `LEGACY_MOBILE_API_BASE_URL` — legacy mobile connector (publish platform plans to the legacy Spring backend); validated at boot via `next.config.ts`, consumed server-side in `@repo/api-server`.
 
 Optional: `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (rate limiting on writes), Sentry tokens.
 

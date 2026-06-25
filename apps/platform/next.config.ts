@@ -1,6 +1,7 @@
 import "@repo/env/base";
 import "@repo/env/auth";
 import "@repo/env/sentry";
+import "@repo/env/mobile-publish";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 

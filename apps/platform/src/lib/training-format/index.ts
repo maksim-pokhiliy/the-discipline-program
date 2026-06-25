@@ -1,3 +1,3 @@
-export { formatRepNotation } from "./format-rep-notation";
-export { formatSide } from "./format-side";
+export { formatRepNotation, formatSide } from "@repo/contracts/lms/row-text";
+
 export { formatTempoInput } from "./format-tempo-input";
