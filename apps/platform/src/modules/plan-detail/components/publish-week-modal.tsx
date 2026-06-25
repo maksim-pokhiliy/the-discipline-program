@@ -67,11 +67,12 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
   const [groups, setGroups] = useState<PublishLevelGroup[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [overwriteUnowned, setOverwriteUnowned] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isReconnectOpen, setIsReconnectOpen] = useState(false);
 
   const hasStartedRef = useRef(false);
+  const runIdRef = useRef(0);
+  const isRunningRef = useRef(false);
 
   const resolveLevelName = useCallback(
     (link: MobileLink): string =>
@@ -81,43 +82,67 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
   const runPublish = useCallback(
     async (overwrite: boolean): Promise<void> => {
-      const startDate = formatDateParam(monday);
+      if (isRunningRef.current) {
+        return;
+      }
 
-      setIsPublishing(true);
-      setIsConfirmOpen(false);
+      isRunningRef.current = true;
+      const myRunId = runIdRef.current;
 
-      const settled = await Promise.allSettled(
-        links.map(async (link) => ({
-          link,
-          result: await publishMobile.mutateAsync({
-            linkId: link.id,
-            startDate,
-            scope: "week",
-            overwriteUnowned: overwrite,
-          }),
-        })),
-      );
+      try {
+        const startDate = formatDateParam(monday);
 
-      const nextGroups = settled.map((outcome, index): PublishLevelGroup => {
-        const link = links[index];
-        const levelName = link === undefined ? "" : resolveLevelName(link);
+        setIsPublishing(true);
+        setIsConfirmOpen(false);
 
-        if (outcome.status === "fulfilled") {
-          return { levelName, outcome: { kind: "results", results: outcome.value.result.results } };
+        const settled = await Promise.allSettled(
+          links.map(async (link) => ({
+            link,
+            result: await publishMobile.mutateAsync({
+              linkId: link.id,
+              startDate,
+              scope: "week",
+              overwriteUnowned: overwrite,
+            }),
+          })),
+        );
+
+        if (myRunId !== runIdRef.current) {
+          return;
         }
 
-        if (isReconnectRequired(outcome.reason)) {
-          return { levelName, outcome: { kind: "reconnect" } };
+        const nextGroups = settled.map((outcome, index): PublishLevelGroup => {
+          const link = links[index];
+          const linkId = link === undefined ? String(index) : link.id;
+          const levelName = link === undefined ? "" : resolveLevelName(link);
+
+          if (outcome.status === "fulfilled") {
+            return {
+              linkId,
+              levelName,
+              outcome: { kind: "results", results: outcome.value.result.results },
+            };
+          }
+
+          if (isReconnectRequired(outcome.reason)) {
+            return { linkId, levelName, outcome: { kind: "reconnect" } };
+          }
+
+          return {
+            linkId,
+            levelName,
+            outcome: { kind: "error", message: errorMessage(outcome.reason) },
+          };
+        });
+
+        setGroups(nextGroups);
+        setIsPublishing(false);
+
+        if (!overwrite && collectConflictDays(nextGroups).length > 0) {
+          setIsConfirmOpen(true);
         }
-
-        return { levelName, outcome: { kind: "error", message: errorMessage(outcome.reason) } };
-      });
-
-      setGroups(nextGroups);
-      setIsPublishing(false);
-
-      if (!overwrite && collectConflictDays(nextGroups).length > 0) {
-        setIsConfirmOpen(true);
+      } finally {
+        isRunningRef.current = false;
       }
     },
     [links, monday, publishMobile, resolveLevelName],
@@ -125,10 +150,11 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
   useEffect(() => {
     if (!open) {
+      runIdRef.current += 1;
+      isRunningRef.current = false;
       hasStartedRef.current = false;
       setGroups([]);
       setIsPublishing(false);
-      setOverwriteUnowned(false);
       setIsConfirmOpen(false);
       setIsReconnectOpen(false);
 
@@ -144,13 +170,12 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   }, [open, runPublish]);
 
   const handleConfirmOverwrite = () => {
-    setOverwriteUnowned(true);
     void runPublish(true);
   };
 
   const handleReconnected = () => {
     setIsReconnectOpen(false);
-    void runPublish(overwriteUnowned);
+    void runPublish(false);
   };
 
   const conflictDays = collectConflictDays(groups);
@@ -159,7 +184,13 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
   return (
     <>
-      <BaseModal open={open} onClose={onClose} title="Publish week">
+      <BaseModal
+        open={open}
+        onClose={onClose}
+        title="Publish week"
+        disableBackdropClick={isPublishing}
+        disableEscapeKeyDown={isPublishing}
+      >
         {isPublishing ? (
           <Stack direction="row" spacing={1.5} alignItems="center">
             <CircularProgress size={20} />

@@ -83,9 +83,13 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   const isLoading = connectionsQuery.isPending || (isConnected && levelsQuery.isPending);
 
   const handleAdd = () => {
+    if (selectedLevelId === NO_LEVEL_SELECTED) {
+      return;
+    }
+
     const legacyLevelId = Number(selectedLevelId);
 
-    if (!Number.isInteger(legacyLevelId) || legacyLevelId === 0) {
+    if (!Number.isInteger(legacyLevelId)) {
       return;
     }
 

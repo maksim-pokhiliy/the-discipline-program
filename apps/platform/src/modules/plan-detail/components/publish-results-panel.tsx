@@ -9,6 +9,7 @@ import { StatusChip } from "@repo/ui";
 import { PUBLISH_RESULT_CHIPS } from "@app/lib/config";
 
 export type PublishLevelGroup = {
+  linkId: string;
   levelName: string;
   outcome:
     | { kind: "results"; results: PublishDayResult[] }
@@ -35,7 +36,7 @@ export const PublishResultsPanel: React.FC<PublishResultsPanelProps> = ({
 }) => (
   <Stack spacing={2.5}>
     {groups.map((group) => (
-      <Stack key={group.levelName} spacing={1}>
+      <Stack key={group.linkId} spacing={1}>
         <Typography variant="overline" color="text.secondary">
           {group.levelName}
         </Typography>

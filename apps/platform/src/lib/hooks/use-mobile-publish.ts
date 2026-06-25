@@ -8,6 +8,8 @@ import { notifyError } from "@repo/query";
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
+const TRAINING_LEVELS_STALE_TIME_MS = 5 * 60_000;
+
 export const useMobileConnections = () =>
   useQuery({
     queryKey: platformKeys.mobile.connections(),
@@ -19,6 +21,7 @@ export const useTrainingLevels = (enabled: boolean) =>
     queryKey: platformKeys.mobile.trainingLevels(),
     queryFn: () => api.mobile.listTrainingLevels(),
     enabled,
+    staleTime: TRAINING_LEVELS_STALE_TIME_MS,
   });
 
 export const useMobileLinks = (planId: string) =>
@@ -77,7 +80,4 @@ export const useDeleteMobileLink = (planId: string) => {
 export const usePublishMobile = () =>
   useMutation({
     mutationFn: api.mobile.publish,
-    onError: (error: Error) => {
-      notifyError(error, "Failed to publish");
-    },
   });
