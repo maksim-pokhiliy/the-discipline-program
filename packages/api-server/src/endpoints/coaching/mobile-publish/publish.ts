@@ -4,7 +4,7 @@ import {
   type PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
-import { NotFoundError } from "@repo/errors";
+import { AppError, NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { verifyMobileLinkOwnership } from "../../../authz/guards";
@@ -109,8 +109,10 @@ export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishA
             overwriteUnowned: data.overwriteUnowned,
           }),
         );
-      } catch {
-        logger.warn("mobile.publish.day_failed", { linkId: data.linkId, scheduledDate });
+      } catch (error) {
+        const code = error instanceof AppError ? error.code : "unknown";
+
+        logger.warn("mobile.publish.day_failed", { linkId: data.linkId, scheduledDate, code });
         results.push({ scheduledDate, action: "failed", legacyRowId: null });
       }
     }
