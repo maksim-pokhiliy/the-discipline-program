@@ -1,4 +1,5 @@
 export * from "./add-credential-modal";
+export * from "./connect-mobile-modal";
 export * from "./credential-row";
 export * from "./profile-section";
 export * from "./setting-row";

@@ -25,6 +25,7 @@ import {
   CloneWeekModal,
   EnrollmentsStrip,
   ManageEnrollmentsModal,
+  MobilePublishingStrip,
   PlanRenameDialog,
   type PlanRenameValues,
   WeekGrid,
@@ -149,6 +150,8 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
                 />
 
                 <EnrollmentsStrip planId={planId} onManage={() => setIsManageOpen(true)} />
+
+                <MobilePublishingStrip planId={planId} monday={activeMonday} />
 
                 <WeekNavigator
                   monday={activeMonday}

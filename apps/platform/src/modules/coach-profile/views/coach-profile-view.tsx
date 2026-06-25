@@ -9,6 +9,7 @@ import { useCoachProfile } from "@app/lib/hooks";
 import {
   CredentialsSection,
   IdentityHeroSection,
+  MobileAppSection,
   TrackRecordSection,
   WorkspaceSection,
 } from "../sections";
@@ -30,6 +31,7 @@ export const CoachProfileView = () => {
           <TrackRecordSection trackRecord={pageData.trackRecord} />
           <CredentialsSection credentials={pageData.credentials} />
           <WorkspaceSection user={pageData.user} />
+          <MobileAppSection />
         </Stack>
       )}
     </QueryWrapper>

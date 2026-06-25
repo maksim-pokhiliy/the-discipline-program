@@ -4,17 +4,20 @@ D-numbered ratified decisions. The SSOT for "why." Status: `RATIFIED` / `OPEN` /
 
 ## Index
 
-| ID  | Topic                                                                                 | Status   |
-| --- | ------------------------------------------------------------------------------------- | -------- |
-| D-1 | Push-projection, not a rewrite; legacy backend + iOS app untouched                    | RATIFIED |
-| D-2 | Connector model: per-coach legacy auth; store the token, never the password           | RATIFIED |
-| D-3 | Link = channel + key (Level \| Athlete), persistent on the plan; General first        | RATIFIED |
-| D-4 | Publish = idempotent upsert-emulation + overwrite-guard                               | RATIFIED |
-| D-5 | Projection renders structured rows → legacy free text via `build-session-detail`      | RATIFIED |
-| D-6 | Placement: connector in `coaching/mobile-publish/` + `infrastructure/legacy-mobile/`  | RATIFIED |
-| D-7 | Token at rest: AES-256-GCM in api-server, env key, fail-closed                        | RATIFIED |
-| D-8 | Projection seam: shared UI-free `renderRowLine` (true SSOT), NOT build-session-detail | RATIFIED |
-| D-9 | `MobilePublishedDay` ledger + upsert-emulation decision logic + live-content skip     | RATIFIED |
+| ID   | Topic                                                                                 | Status   |
+| ---- | ------------------------------------------------------------------------------------- | -------- |
+| D-1  | Push-projection, not a rewrite; legacy backend + iOS app untouched                    | RATIFIED |
+| D-2  | Connector model: per-coach legacy auth; store the token, never the password           | RATIFIED |
+| D-3  | Link = channel + key (Level \| Athlete), persistent on the plan; General first        | RATIFIED |
+| D-4  | Publish = idempotent upsert-emulation + overwrite-guard                               | RATIFIED |
+| D-5  | Projection renders structured rows → legacy free text via `build-session-detail`      | RATIFIED |
+| D-6  | Placement: connector in `coaching/mobile-publish/` + `infrastructure/legacy-mobile/`  | RATIFIED |
+| D-7  | Token at rest: AES-256-GCM in api-server, env key, fail-closed                        | RATIFIED |
+| D-8  | Projection seam: shared UI-free `renderRowLine` (true SSOT), NOT build-session-detail | RATIFIED |
+| D-9  | `MobilePublishedDay` ledger + upsert-emulation decision logic + live-content skip     | RATIFIED |
+| D-10 | Surface placement: inline LINK strip + PUBLISH-results modal + publish-all-linked     | RATIFIED |
+| D-11 | Unlink IN scope; disconnect DEFERRED to P3 (cascade-blast-radius unresolved)          | RATIFIED |
+| D-12 | Promote `MOBILE_RECONNECT_REQUIRED` to `@repo/contracts`; one wire-contract SSOT      | RATIFIED |
 
 ---
 
@@ -89,3 +92,24 @@ D-numbered ratified decisions. The SSOT for "why." Status: `RATIFIED` / `OPEN` /
 - **Rationale.** The legacy POST is insert-only (409) with no DB unique on (level, date) (MP-8); the legacy prod DB is inviolable. `upsert` on `(linkId, scheduledDate)` makes OUR table race-free; the 409→PUT fallback + the guard converge concurrent publishes without clobbering coach-authored days. Multi-coach publishing to a shared global Level is intrinsic to the single-tenant legacy; the per-link record makes a cross-coach publish surface as `conflict`.
 - **Refinement (PR #317 review).** `decidePublishAction` checks `contentMatches` BEFORE the unowned-guard, and a content-match skip on an unowned row CLAIMS the ledger (upsert) — so a row we authored after a timed-out write (→ retry → 409) is recognized as ours and skipped, never reported as a permanent `conflict`. Legacy writes (POST/PUT) are no-retry (a timed-out write may have committed); a legacy 401 mid-publish surfaces as `MOBILE_RECONNECT_REQUIRED`, not an opaque `failed` day.
 - **Links.** `decide-publish-action.ts`, `publish.ts`, `publish-day.ts`; `deferred.md` MP-8 (residual legacy TOCTOU), MP-10 (week-publish resilience), MP-11 (row notes).
+
+### D-10 — SURFACE PLACEMENT: inline LINK strip, PUBLISH-results modal, publish-all-linked
+
+- **Status:** RATIFIED (owner, Gate-A, 2026-06-25).
+- **Decision.** Surface D (LINK) = an inline "Mobile publishing" strip (the `EnrollmentsStrip` template) mounted between the enrollments strip and the `WeekNavigator` on `/coach/plans/[planId]`. Surface E (PUBLISH) = a primary "Publish this week" Button on the same strip — disabled when the plan has no link (tooltip "Link a training level first") — opening a `PublishWeekModal`. Multi-link publish targets **every** linked level (one `publish` mutation per link, `Promise.allSettled`); results render in the modal grouped by level name as `StatusChip`s; any `conflict` → a nested warning `ConfirmationModal` → confirm re-runs with `overwriteUnowned=true` (D-4, never auto).
+- **Rationale.** Link state is glanceable plan-level daily status — coach-daily-UX is priority #1 (memory `coach-daily-ux-priority`); a kebab `MenuItem` hides it behind a click and gives no room for the Publish CTA + its disabled/tooltip state. Publish results are a transient action-confirmation, not page state (inline chips cause grid jank + a "when do they clear?" question); a persistent history is a P3 concern (the D-9 ledger already stores it server-side). The link IS the persistent declaration of intent (D-3), so publish honors all declared targets rather than re-picking per publish (which invites "published to Pro, forgot RX" mistakes).
+- **Links.** `design.md` §6 A1/A2/A3, §7; `modules/plan-detail/components/{mobile-publishing-strip,publish-week-modal,publish-results-panel}.tsx`; `EnrollmentsStrip` template.
+
+### D-11 — UNLINK IN SCOPE; DISCONNECT DEFERRED (cascade-blast-radius unresolved)
+
+- **Status:** RATIFIED (owner, Gate-A, 2026-06-25).
+- **Decision.** `DELETE /links/[id]` (+ `deleteLink` service, route, contract params, `useDeleteMobileLink` hook, a per-row delete affordance guarded by `ConfirmationModal type="danger"`) is IN P1b scope. `DELETE /connections` (disconnect) is DEFERRED to P3 (carry-forward, not built); the connect section shows "Reconnect", never "Disconnect", in P1b.
+- **Rationale.** Unlink is bounded (one plan↔level) and required to change targets. Disconnect carries an unresolved data-model question: `MobilePublishLink.connection` AND `MobilePublishedDay.link` are both `onDelete: Cascade` (`schema.prisma:152,171`) → deleting a connection silently cascade-wipes **every plan's link AND the entire publish ledger for that coach** — an unbounded blast radius. P3 disconnect must first resolve warn-and-cascade vs restrict-if-linked before building. Reconnect-via-POST (the `connect` upsert replaces the token) covers the only real need — the monthly token expiry.
+- **Links.** `design.md` §5.2 (cascade finding), §6 A5, §7, §9 OQ-1; `deferred.md` MP-4 (disconnect/token lifecycle); `schema.prisma:152,171`.
+
+### D-12 — PROMOTE `MOBILE_RECONNECT_REQUIRED` TO CONTRACTS; one wire-contract SSOT
+
+- **Status:** RATIFIED (owner, Gate-A, 2026-06-25).
+- **Decision.** `MOBILE_RECONNECT_REQUIRED` (a wire-contract value carried in `error.details.reason` across the HTTP boundary) is promoted from api-server-only `reconnect-signal.ts` to `@repo/contracts/coaching/mobile-publish` (shipped as `mobile-publish.constants.ts`, flowing through the entity `index.ts`). api-server `reconnect-signal.ts` now imports + re-exports it (behavior-preserving, byte-identical literal — its existing importers `training-levels.ts`/`publish.ts`/`reconnect-signal.test.ts` keep resolving it unchanged). The client detects it via a shared `isReconnectRequired(error)` helper (`lib/api/is-reconnect-required.ts`, a narrowing `as` read of `details.reason` after `instanceof Error`). The reconnect CTA opens a reusable `ConnectMobileModal` from three surfaces: the connect section (primary + a proactive amber expiry nudge), the `ManageMobileLinksModal` (when `useTrainingLevels` errors reconnect-required), and the `PublishWeekModal` (when a publish errors reconnect-required).
+- **Rationale.** It's a wire-contract value, so two copies (a duplicated client const) would drift silently if anyone renamed it, with no test binding them — `@repo/contracts` is the shared boundary package both sides already depend on. Low-risk additive change. Reconnect inline everywhere = no navigation/context-switch (coach-daily-UX).
+- **Links.** `design.md` §5.4(6), §5.6, §6 A4, §7; `mobile-publish/mobile-publish.constants.ts`; `reconnect-signal.ts`; `lib/api/is-reconnect-required.ts`.

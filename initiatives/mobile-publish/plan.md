@@ -22,11 +22,12 @@ Status: ✅ done · 🔄 in progress · ⏳ pending · ⛔ blocked
 - 1.6 Idempotent publish service (GET→POST/409→PUT/skip; live-content skip; overwrite-guard re-decide; per-day `failed` isolation) + 5 coach-gated endpoints ✅ (D-9)
 - 1.7 Verify: 61 api-server units + 1002 contracts + a gated E2E (`mobile-publish.integration.test.ts`, `RUN_LEGACY_INTEGRATION=1`, against localhost:8080) — owner runs after applying the migration to dev
 
-### P1b — coach UI ⏳ next (UI-first on mocks)
+### P1b — coach UI ✅ done (PR `feat/mobile-publish-p1b`; D-10/11/12)
 
-- 1.3 Connector UI: coach profile → "Connect mobile app" (legacy login → `POST /connections`) → show connected identity + expiry
-- 1.4 Link UI: plan → pick a Level (`GET /training-levels` + `POST /links`); persist the link on the plan
-- 1.6b Publish button (day/week → `POST /publish`); render the per-day `{created,updated,skipped,conflict,failed}` results; surface `conflict` for the D-4 overwrite confirm
+- 1.3 Connector UI: coach profile → "Connect mobile app" (legacy login → `POST /connections`) → show connected identity + expiry + a proactive reconnect nudge ✅ (`MobileAppSection` + `ConnectMobileModal`)
+- 1.4 Link UI: plan → pick a Level (`GET /training-levels` + `POST /links`); persist the link on the plan ✅ (inline "Mobile publishing" strip + `ManageMobileLinksModal`, D-10)
+- 1.6b Publish button (week → `POST /publish`); render the per-day `{created,updated,skipped,conflict,failed}` results; surface `conflict` for the D-4 overwrite confirm ✅ (`PublishWeekModal` per-link `allSettled` loop, results grouped by level, conflict → nested overwrite confirm). Day-scope UI not built (P3); week scope only.
+- 1.8 Additive server addendum (shipped under P1b): `listLinks`/`deleteLink` services + `GET /links?planId=` + `DELETE /links/[id]` routes + contract query/params schemas; `MOBILE_RECONNECT_REQUIRED` promoted to `@repo/contracts` (D-12). Unlink IN scope; disconnect (`DELETE /connections`) DEFERRED to P3 (D-11, MP-12). ✅
 
 ## P2 — Individual publish ⏳
 

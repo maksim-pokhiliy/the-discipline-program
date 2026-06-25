@@ -25,6 +25,7 @@ export * from "./use-exercises";
 export * from "./use-groups";
 export * from "./use-label-options";
 export * from "./use-label-search";
+export * from "./use-mobile-publish";
 export * from "./use-modifier-search";
 export * from "./use-benchmark-results";
 export * from "./use-one-rm-records";

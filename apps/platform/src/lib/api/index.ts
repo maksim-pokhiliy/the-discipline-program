@@ -19,6 +19,7 @@ export const createApi = (client: ApiClient) => ({
   exercises: endpoints.createExercisesAPI(client),
   groups: endpoints.createGroupsAPI(client),
   labels: endpoints.createLabelsAPI(client),
+  mobile: endpoints.createMobileAPI(client),
   modifiers: endpoints.createModifiersAPI(client),
   benchmarkResults: endpoints.createBenchmarkResultsAPI(client),
   oneRMRecords: endpoints.createOneRMRecordsAPI(client),

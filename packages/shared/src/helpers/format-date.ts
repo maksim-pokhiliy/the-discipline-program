@@ -30,3 +30,13 @@ export const formatCalendarDate = (
 
   return new Intl.DateTimeFormat(locale, { ...STYLE_OPTIONS[style], timeZone: "UTC" }).format(d);
 };
+
+export const formatCalendarWeekday = (
+  date: Date | string,
+  width: NonNullable<Intl.DateTimeFormatOptions["weekday"]> = "short",
+  locale: string = DEFAULT_LOCALE,
+): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+
+  return new Intl.DateTimeFormat(locale, { weekday: width, timeZone: "UTC" }).format(d);
+};
