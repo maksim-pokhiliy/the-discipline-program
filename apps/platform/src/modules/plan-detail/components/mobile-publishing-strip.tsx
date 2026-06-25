@@ -25,13 +25,11 @@ const describeLinks = (links: MobileLink[], levelNameById: Map<number, string>):
     return NOT_LINKED_LABEL;
   }
 
-  const hasAllNames = links.every((link) => levelNameById.has(link.legacyLevelId));
+  const names = links.map((link) => levelNameById.get(link.legacyLevelId));
 
-  if (!hasAllNames) {
+  if (names.some((name) => name === undefined)) {
     return `${links.length} ${links.length === 1 ? "level" : "levels"}`;
   }
-
-  const names = links.map((link) => levelNameById.get(link.legacyLevelId) ?? "").filter(Boolean);
 
   return `Publishes to: ${names.join(", ")}`;
 };

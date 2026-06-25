@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCalendarDate } from "./format-date";
+import { formatCalendarDate, formatCalendarWeekday } from "./format-date";
 
 const MARCH_NINTH_UTC = new Date("2026-03-09T00:00:00.000Z");
 const NEW_YEAR_UTC = new Date("2026-01-01T00:00:00.000Z");
@@ -27,5 +27,25 @@ describe("formatCalendarDate", () => {
 
   it("parses a string input as UTC before formatting (QA-02)", () => {
     expect(formatCalendarDate("2026-03-09T00:00:00.000Z", "day")).toBe("Mar 9");
+  });
+});
+
+describe("formatCalendarWeekday", () => {
+  it("renders the short weekday by default", () => {
+    expect(formatCalendarWeekday("2026-01-05")).toBe("Mon");
+  });
+
+  it("renders the long weekday when requested", () => {
+    expect(formatCalendarWeekday("2026-01-06", "long")).toBe("Tuesday");
+  });
+
+  it("parses a bare date string as UTC so the weekday never shifts by tz", () => {
+    const losAngelesLocal = new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      timeZone: "America/Los_Angeles",
+    }).format(new Date("2026-01-05T00:00:00.000Z"));
+
+    expect(losAngelesLocal).toBe("Sunday");
+    expect(formatCalendarWeekday("2026-01-05", "long")).toBe("Monday");
   });
 });

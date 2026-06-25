@@ -3,7 +3,7 @@
 import { Alert, Button, Stack, Typography } from "@mui/material";
 
 import type { PublishDayResult } from "@repo/contracts/coaching/mobile-publish";
-import { DEFAULT_LOCALE } from "@repo/shared";
+import { formatCalendarWeekday } from "@repo/shared";
 import { StatusChip } from "@repo/ui";
 
 import { PUBLISH_RESULT_CHIPS } from "@app/lib/config";
@@ -24,12 +24,6 @@ type PublishResultsPanelProps = {
 
 const RECONNECT_MESSAGE = "Connection expired — reconnect to publish.";
 
-const formatResultDayLabel = (scheduledDate: string): string =>
-  new Date(`${scheduledDate}T00:00:00Z`).toLocaleDateString(DEFAULT_LOCALE, {
-    weekday: "short",
-    timeZone: "UTC",
-  });
-
 export const PublishResultsPanel: React.FC<PublishResultsPanelProps> = ({
   groups,
   onReconnect,
@@ -46,7 +40,7 @@ export const PublishResultsPanel: React.FC<PublishResultsPanelProps> = ({
             {group.outcome.results.map((result) => (
               <Stack key={result.scheduledDate} direction="row" spacing={0.75} alignItems="center">
                 <Typography variant="body2" color="text.secondary">
-                  {formatResultDayLabel(result.scheduledDate)}
+                  {formatCalendarWeekday(result.scheduledDate)}
                 </Typography>
 
                 <StatusChip {...PUBLISH_RESULT_CHIPS[result.action]} />

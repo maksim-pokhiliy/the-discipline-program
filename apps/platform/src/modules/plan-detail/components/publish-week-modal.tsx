@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
 import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
-import { DEFAULT_LOCALE, formatDateParam } from "@repo/shared";
+import { formatCalendarWeekday, formatDateParam } from "@repo/shared";
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
 import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
@@ -29,12 +29,6 @@ const RECONNECT_TITLE = "Reconnect mobile app";
 const errorMessage = (reason: unknown): string =>
   reason instanceof Error ? reason.message : "Publish failed";
 
-const formatConflictDayLabel = (scheduledDate: string): string =>
-  new Date(`${scheduledDate}T00:00:00Z`).toLocaleDateString(DEFAULT_LOCALE, {
-    weekday: "long",
-    timeZone: "UTC",
-  });
-
 const collectConflictDays = (groups: PublishLevelGroup[]): string[] => {
   const labels = new Set<string>();
 
@@ -45,7 +39,7 @@ const collectConflictDays = (groups: PublishLevelGroup[]): string[] => {
 
     for (const result of group.outcome.results) {
       if (result.action === "conflict") {
-        labels.add(formatConflictDayLabel(result.scheduledDate));
+        labels.add(formatCalendarWeekday(result.scheduledDate, "long"));
       }
     }
   }
