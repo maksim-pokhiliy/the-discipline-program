@@ -13,6 +13,7 @@ export { createDayMetadataAPI } from "./day-metadata";
 export { createExercisesAPI } from "./exercises";
 export { createGroupsAPI } from "./groups";
 export { createLabelsAPI } from "./labels";
+export { createMobileAPI } from "./mobile";
 export { createModifiersAPI } from "./modifiers";
 export { createBenchmarkResultsAPI } from "./benchmark-results";
 export { createOneRMRecordsAPI } from "./one-rm-records";

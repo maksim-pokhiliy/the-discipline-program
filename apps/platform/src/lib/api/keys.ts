@@ -63,4 +63,9 @@ export const platformKeys = {
   rowGroups: {
     all: () => [...ROOT, "row-groups"] as const,
   },
+  mobile: {
+    connections: () => [...ROOT, "mobile", "connections"] as const,
+    trainingLevels: () => [...ROOT, "mobile", "training-levels"] as const,
+    links: (planId: string) => [...ROOT, "mobile", "links", planId] as const,
+  },
 } as const;
