@@ -58,6 +58,12 @@ describe("publishMobileSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects a startDate that is not YYYY-MM-DD", () => {
+    const result = publishMobileSchema.safeParse({ ...baseWeekInput, startDate: "06/22/2026" });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("publishDayResultSchema", () => {

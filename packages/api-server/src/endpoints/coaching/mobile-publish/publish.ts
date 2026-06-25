@@ -5,10 +5,12 @@ import {
 } from "@repo/contracts/coaching/mobile-publish";
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
 import { NotFoundError } from "@repo/errors";
+import { logger } from "@repo/shared";
 
 import { verifyMobileLinkOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
+import { toUtcDateParam } from "../../../utils";
 import { decrypt } from "../../../utils/token-cipher";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
@@ -90,18 +92,27 @@ export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishA
     const results: PublishDayResult[] = [];
 
     for (const day of days) {
-      results.push(
-        await publishDay({
-          legacyClient,
-          token,
-          linkId: data.linkId,
-          legacyLevelId: link.legacyLevelId,
-          weekStartDate,
-          day,
-          exerciseById,
-          overwriteUnowned: data.overwriteUnowned,
-        }),
-      );
+      const absoluteDate = sessionAbsoluteDateFromParts(weekStartDate, day.dayOfWeek);
+      const scheduledDate = toUtcDateParam(absoluteDate);
+
+      try {
+        results.push(
+          await publishDay({
+            legacyClient,
+            token,
+            linkId: data.linkId,
+            legacyLevelId: link.legacyLevelId,
+            scheduledDate,
+            absoluteDate,
+            day,
+            exerciseById,
+            overwriteUnowned: data.overwriteUnowned,
+          }),
+        );
+      } catch {
+        logger.warn("mobile.publish.day_failed", { linkId: data.linkId, scheduledDate });
+        results.push({ scheduledDate, action: "failed", legacyRowId: null });
+      }
     }
 
     return { results };

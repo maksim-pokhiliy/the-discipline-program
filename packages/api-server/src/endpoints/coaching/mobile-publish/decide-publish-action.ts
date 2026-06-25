@@ -1,15 +1,11 @@
-import { type MobilePublishedDay } from "@prisma/client";
-
-import { type LegacyGeneralProgram } from "../../../infrastructure/legacy-mobile";
-
 export type PublishAction = "created" | "updated" | "skipped" | "conflict";
 
 export type PublishWrite = "POST" | "PUT" | "none";
 
 export type DecidePublishActionInput = {
-  existingRecord: Pick<MobilePublishedDay, "contentHash"> | null;
-  legacyRow: LegacyGeneralProgram | null;
-  hash: string;
+  isOwned: boolean;
+  hasLegacyRow: boolean;
+  contentMatches: boolean;
   overwriteUnowned: boolean;
 };
 
@@ -19,25 +15,17 @@ export type PublishDecision = {
 };
 
 export const decidePublishAction = (input: DecidePublishActionInput): PublishDecision => {
-  const { existingRecord, legacyRow, hash, overwriteUnowned } = input;
+  const { isOwned, hasLegacyRow, contentMatches, overwriteUnowned } = input;
 
-  if (existingRecord === null) {
-    if (legacyRow === null) {
-      return { action: "created", write: "POST" };
-    }
-
-    if (!overwriteUnowned) {
-      return { action: "conflict", write: "none" };
-    }
-
-    return { action: "updated", write: "PUT" };
-  }
-
-  if (legacyRow === null) {
+  if (!hasLegacyRow) {
     return { action: "created", write: "POST" };
   }
 
-  if (hash === existingRecord.contentHash) {
+  if (!isOwned && !overwriteUnowned) {
+    return { action: "conflict", write: "none" };
+  }
+
+  if (contentMatches) {
     return { action: "skipped", write: "none" };
   }
 

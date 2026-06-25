@@ -1,25 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { type LegacyGeneralProgram } from "../../../infrastructure/legacy-mobile";
-
 import { decidePublishAction } from "./decide-publish-action";
 
-const HASH = "hash-a";
-
-const legacyRow = (): LegacyGeneralProgram => ({
-  id: 42,
-  scheduledDate: "2026-06-22",
-  trainingLevelId: 7,
-  isRestDay: false,
-  dailyProgram: null,
-});
-
 describe("decidePublishAction", () => {
-  it("creates via POST when there is no record and no legacy row", () => {
+  it("creates via POST when there is no legacy row", () => {
     const decision = decidePublishAction({
-      existingRecord: null,
-      legacyRow: null,
-      hash: HASH,
+      isOwned: false,
+      hasLegacyRow: false,
+      contentMatches: false,
       overwriteUnowned: false,
     });
 
@@ -28,56 +16,56 @@ describe("decidePublishAction", () => {
 
   it("conflicts with no write when an unowned legacy row exists and overwrite is off", () => {
     const decision = decidePublishAction({
-      existingRecord: null,
-      legacyRow: legacyRow(),
-      hash: HASH,
+      isOwned: false,
+      hasLegacyRow: true,
+      contentMatches: false,
       overwriteUnowned: false,
     });
 
     expect(decision).toEqual({ action: "conflict", write: "none" });
   });
 
-  it("updates via PUT when an unowned legacy row exists and overwrite is on", () => {
+  it("updates via PUT when an unowned legacy row exists, overwrite is on, and content differs", () => {
     const decision = decidePublishAction({
-      existingRecord: null,
-      legacyRow: legacyRow(),
-      hash: HASH,
+      isOwned: false,
+      hasLegacyRow: true,
+      contentMatches: false,
       overwriteUnowned: true,
     });
 
     expect(decision).toEqual({ action: "updated", write: "PUT" });
   });
 
-  it("skips with no write when the record hash matches the projected hash", () => {
+  it("skips with no write when an unowned legacy row exists, overwrite is on, and content matches", () => {
     const decision = decidePublishAction({
-      existingRecord: { contentHash: HASH },
-      legacyRow: legacyRow(),
-      hash: HASH,
+      isOwned: false,
+      hasLegacyRow: true,
+      contentMatches: true,
+      overwriteUnowned: true,
+    });
+
+    expect(decision).toEqual({ action: "skipped", write: "none" });
+  });
+
+  it("skips with no write when an owned legacy row matches the projected content", () => {
+    const decision = decidePublishAction({
+      isOwned: true,
+      hasLegacyRow: true,
+      contentMatches: true,
       overwriteUnowned: false,
     });
 
     expect(decision).toEqual({ action: "skipped", write: "none" });
   });
 
-  it("updates via PUT when the record hash differs from the projected hash", () => {
+  it("updates via PUT when an owned legacy row differs from the projected content", () => {
     const decision = decidePublishAction({
-      existingRecord: { contentHash: "hash-b" },
-      legacyRow: legacyRow(),
-      hash: HASH,
+      isOwned: true,
+      hasLegacyRow: true,
+      contentMatches: false,
       overwriteUnowned: false,
     });
 
     expect(decision).toEqual({ action: "updated", write: "PUT" });
-  });
-
-  it("recreates via POST when a record exists but the legacy row is gone", () => {
-    const decision = decidePublishAction({
-      existingRecord: { contentHash: HASH },
-      legacyRow: null,
-      hash: HASH,
-      overwriteUnowned: false,
-    });
-
-    expect(decision).toEqual({ action: "created", write: "POST" });
   });
 });

@@ -5,34 +5,44 @@ import { logger } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
 import {
+  type LegacyDailyProgram,
   type LegacyGeneralProgram,
   type LegacyGeneralProgramWriteInput,
   type LegacyMobileClientPort,
 } from "../../../infrastructure/legacy-mobile";
-import { contentHash, toUtcDateParam } from "../../../utils";
-import { sessionAbsoluteDateFromParts } from "../../lms/_shared";
+import { contentHash } from "../../../utils";
 
 import { type MobilePublishDayPayload } from "./day-include";
-import { decidePublishAction, type PublishAction } from "./decide-publish-action";
-import { projectDay } from "./projection/project-day";
+import {
+  decidePublishAction,
+  type PublishAction,
+  type PublishDecision,
+} from "./decide-publish-action";
+import { type LegacyDailyProgramResult, projectDay } from "./projection/project-day";
 
 type WriteOutcome = { row: LegacyGeneralProgram; action: PublishAction };
+
+type Hashable = { isRestDay: true } | { isRestDay: false; dailyProgram: LegacyDailyProgram | null };
 
 export type PublishDayArgs = {
   legacyClient: LegacyMobileClientPort;
   token: string;
   linkId: string;
   legacyLevelId: number;
-  weekStartDate: Date;
+  scheduledDate: string;
+  absoluteDate: Date;
   day: MobilePublishDayPayload;
   exerciseById: ExerciseById;
   overwriteUnowned: boolean;
 };
 
+const toHashable = (isRestDay: boolean, dailyProgram: LegacyDailyProgram | null): Hashable =>
+  isRestDay ? { isRestDay: true } : { isRestDay: false, dailyProgram };
+
 const toWriteInput = (
   legacyLevelId: number,
   scheduledDate: string,
-  projected: ReturnType<typeof projectDay>,
+  projected: LegacyDailyProgramResult,
 ): LegacyGeneralProgramWriteInput => ({
   levelId: legacyLevelId,
   scheduledDate,
@@ -53,11 +63,51 @@ const putLegacyRow = async (
   return { row, action: "updated" };
 };
 
+const resolveRace = async (
+  args: PublishDayArgs,
+  input: LegacyGeneralProgramWriteInput,
+  hash: string,
+  isOwned: boolean,
+): Promise<WriteOutcome | PublishDayResult> => {
+  const raced = await args.legacyClient.getGeneralProgram(
+    args.token,
+    args.legacyLevelId,
+    args.scheduledDate,
+  );
+
+  if (raced === null) {
+    throw new ConflictError("Legacy program conflict could not be resolved", {
+      scheduledDate: args.scheduledDate,
+    });
+  }
+
+  const decision = decidePublishAction({
+    isOwned,
+    hasLegacyRow: true,
+    contentMatches: hash === contentHash(toHashable(raced.isRestDay, raced.dailyProgram)),
+    overwriteUnowned: args.overwriteUnowned,
+  });
+
+  if (decision.write === "PUT") {
+    return putLegacyRow(args, input, raced.id);
+  }
+
+  if (decision.action === "conflict") {
+    logger.warn("mobile.publish.conflict", {
+      linkId: args.linkId,
+      scheduledDate: args.scheduledDate,
+    });
+  }
+
+  return { scheduledDate: args.scheduledDate, action: decision.action, legacyRowId: raced.id };
+};
+
 const postLegacyRow = async (
   args: PublishDayArgs,
-  scheduledDate: string,
   input: LegacyGeneralProgramWriteInput,
-): Promise<WriteOutcome> => {
+  hash: string,
+  isOwned: boolean,
+): Promise<WriteOutcome | PublishDayResult> => {
   try {
     const row = await args.legacyClient.createGeneralProgram(args.token, input);
 
@@ -67,82 +117,100 @@ const postLegacyRow = async (
       throw error;
     }
 
-    const raced = await args.legacyClient.getGeneralProgram(
-      args.token,
-      args.legacyLevelId,
-      scheduledDate,
-    );
-
-    if (raced === null) {
-      throw new ConflictError("Legacy program conflict could not be resolved", { scheduledDate });
-    }
-
-    return putLegacyRow(args, input, raced.id);
+    return resolveRace(args, input, hash, isOwned);
   }
+};
+
+const recordPublishedDay = async (
+  args: PublishDayArgs,
+  legacyRowId: number,
+  hash: string,
+): Promise<void> => {
+  await prisma.mobilePublishedDay.upsert({
+    where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: args.absoluteDate } },
+    create: {
+      linkId: args.linkId,
+      scheduledDate: args.absoluteDate,
+      legacyRowId,
+      contentHash: hash,
+    },
+    update: { legacyRowId, contentHash: hash, publishedAt: new Date() },
+  });
+};
+
+const isWriteOutcome = (value: WriteOutcome | PublishDayResult): value is WriteOutcome =>
+  "row" in value;
+
+const noWriteResult = (
+  args: PublishDayArgs,
+  decision: PublishDecision,
+  legacyRowId: number | null,
+): PublishDayResult => {
+  if (decision.action === "conflict") {
+    logger.warn("mobile.publish.conflict", {
+      linkId: args.linkId,
+      scheduledDate: args.scheduledDate,
+    });
+  }
+
+  return { scheduledDate: args.scheduledDate, action: decision.action, legacyRowId };
 };
 
 const executeWrite = (
   args: PublishDayArgs,
   write: "POST" | "PUT",
-  scheduledDate: string,
   input: LegacyGeneralProgramWriteInput,
+  hash: string,
   legacyRow: LegacyGeneralProgram | null,
-): Promise<WriteOutcome> =>
+  isOwned: boolean,
+): Promise<WriteOutcome | PublishDayResult> =>
   write === "PUT" && legacyRow !== null
     ? putLegacyRow(args, input, legacyRow.id)
-    : postLegacyRow(args, scheduledDate, input);
+    : postLegacyRow(args, input, hash, isOwned);
 
 export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult> => {
-  const absoluteDate = sessionAbsoluteDateFromParts(args.weekStartDate, args.day.dayOfWeek);
-  const scheduledDate = toUtcDateParam(absoluteDate);
   const projected = projectDay(args.day, args.exerciseById);
   const hash = contentHash(projected);
 
   const existingRecord = await prisma.mobilePublishedDay.findUnique({
-    where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: absoluteDate } },
-    select: { contentHash: true },
+    where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: args.absoluteDate } },
+    select: { id: true },
   });
   const legacyRow = await args.legacyClient.getGeneralProgram(
     args.token,
     args.legacyLevelId,
-    scheduledDate,
+    args.scheduledDate,
   );
 
+  const isOwned = existingRecord !== null;
   const decision = decidePublishAction({
-    existingRecord,
-    legacyRow,
-    hash,
+    isOwned,
+    hasLegacyRow: legacyRow !== null,
+    contentMatches:
+      legacyRow !== null &&
+      hash === contentHash(toHashable(legacyRow.isRestDay, legacyRow.dailyProgram)),
     overwriteUnowned: args.overwriteUnowned,
   });
 
   if (decision.write === "none") {
-    if (decision.action === "conflict") {
-      logger.warn("mobile.publish.conflict", { linkId: args.linkId, scheduledDate });
-    }
-
-    return { scheduledDate, action: decision.action, legacyRowId: legacyRow?.id ?? null };
+    return noWriteResult(args, decision, legacyRow?.id ?? null);
   }
 
-  const input = toWriteInput(args.legacyLevelId, scheduledDate, projected);
-  const outcome = await executeWrite(args, decision.write, scheduledDate, input, legacyRow);
+  const input = toWriteInput(args.legacyLevelId, args.scheduledDate, projected);
+  const outcome = await executeWrite(args, decision.write, input, hash, legacyRow, isOwned);
 
-  await prisma.mobilePublishedDay.upsert({
-    where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: absoluteDate } },
-    create: {
-      linkId: args.linkId,
-      scheduledDate: absoluteDate,
-      legacyRowId: outcome.row.id,
-      contentHash: hash,
-    },
-    update: { legacyRowId: outcome.row.id, contentHash: hash, publishedAt: new Date() },
-  });
+  if (!isWriteOutcome(outcome)) {
+    return outcome;
+  }
+
+  await recordPublishedDay(args, outcome.row.id, hash);
 
   logger.info("mobile.publish.day", {
     linkId: args.linkId,
-    scheduledDate,
+    scheduledDate: args.scheduledDate,
     action: outcome.action,
     legacyRowId: outcome.row.id,
   });
 
-  return { scheduledDate, action: outcome.action, legacyRowId: outcome.row.id };
+  return { scheduledDate: args.scheduledDate, action: outcome.action, legacyRowId: outcome.row.id };
 };

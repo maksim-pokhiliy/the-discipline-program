@@ -6,12 +6,14 @@ import {
 } from "../../../infrastructure/legacy-mobile";
 
 import { type MobilePublishDayPayload } from "./day-include";
-import { publishDay } from "./publish-day";
+import { type PublishDayArgs, publishDay } from "./publish-day";
 
 const NOW = new Date("2026-06-08T00:00:00Z");
+const SCHEDULED_DATE = "2026-06-08";
 const LINK_ID = "cllink0000000000000000000";
 const LEGACY_LEVEL_ID = 7;
 const RACED_ROW_ID = 555;
+const OWNED_RECORD_ID = "clrec0000000000000000000";
 
 const cuid = (suffix: string): string => `clz${suffix}`.padEnd(25, "0").slice(0, 25);
 
@@ -53,12 +55,20 @@ const restDay = (): MobilePublishDayPayload => ({
   sessions: [],
 });
 
-const racedRow = (): LegacyGeneralProgram => ({
+const restLegacyRow = (): LegacyGeneralProgram => ({
   id: RACED_ROW_ID,
-  scheduledDate: "2026-06-08",
+  scheduledDate: SCHEDULED_DATE,
   trainingLevelId: LEGACY_LEVEL_ID,
   isRestDay: true,
   dailyProgram: null,
+});
+
+const nonRestLegacyRow = (): LegacyGeneralProgram => ({
+  id: RACED_ROW_ID,
+  scheduledDate: SCHEDULED_DATE,
+  trainingLevelId: LEGACY_LEVEL_ID,
+  isRestDay: false,
+  dailyProgram: { dayTrainings: [] },
 });
 
 const makeFakeClient = (): LegacyMobileClientPort => ({
@@ -69,7 +79,23 @@ const makeFakeClient = (): LegacyMobileClientPort => ({
   updateGeneralProgram: vi.fn(),
 });
 
-describe("publishDay 409-race path", () => {
+const baseArgs = (
+  legacyClient: LegacyMobileClientPort,
+  overrides: Partial<PublishDayArgs> = {},
+): PublishDayArgs => ({
+  legacyClient,
+  token: "decrypted-token",
+  linkId: LINK_ID,
+  legacyLevelId: LEGACY_LEVEL_ID,
+  scheduledDate: SCHEDULED_DATE,
+  absoluteDate: NOW,
+  day: restDay(),
+  exerciseById: new Map(),
+  overwriteUnowned: false,
+  ...overrides,
+});
+
+describe("publishDay", () => {
   beforeEach(() => {
     mocks.findUniqueMock.mockReset();
     mocks.upsertMock.mockReset();
@@ -77,28 +103,20 @@ describe("publishDay 409-race path", () => {
     mocks.upsertMock.mockResolvedValue({ id: cuid("rec") });
   });
 
-  it("falls back to PUT and reports updated when the POST races a 409", async () => {
+  it("falls back to PUT and reports updated when an owned day races a 409", async () => {
     const { ConflictError } = await import("@repo/errors");
     const legacyClient = makeFakeClient();
 
+    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
     vi.mocked(legacyClient.getGeneralProgram)
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(racedRow());
+      .mockResolvedValueOnce(nonRestLegacyRow());
     vi.mocked(legacyClient.createGeneralProgram).mockRejectedValue(
       new ConflictError("already exists"),
     );
-    vi.mocked(legacyClient.updateGeneralProgram).mockResolvedValue(racedRow());
+    vi.mocked(legacyClient.updateGeneralProgram).mockResolvedValue(nonRestLegacyRow());
 
-    const result = await publishDay({
-      legacyClient,
-      token: "decrypted-token",
-      linkId: LINK_ID,
-      legacyLevelId: LEGACY_LEVEL_ID,
-      weekStartDate: NOW,
-      day: restDay(),
-      exerciseById: new Map(),
-      overwriteUnowned: false,
-    });
+    const result = await publishDay(baseArgs(legacyClient));
 
     expect(legacyClient.createGeneralProgram).toHaveBeenCalledTimes(1);
     expect(legacyClient.updateGeneralProgram).toHaveBeenCalledTimes(1);
@@ -108,5 +126,40 @@ describe("publishDay 409-race path", () => {
     expect(result.action).toBe("updated");
     expect(result.legacyRowId).toBe(RACED_ROW_ID);
     expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("conflicts without writing when an unowned day races a 409 and overwrite is off", async () => {
+    const { ConflictError } = await import("@repo/errors");
+    const legacyClient = makeFakeClient();
+
+    vi.mocked(legacyClient.getGeneralProgram)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(nonRestLegacyRow());
+    vi.mocked(legacyClient.createGeneralProgram).mockRejectedValue(
+      new ConflictError("already exists"),
+    );
+
+    const result = await publishDay(baseArgs(legacyClient, { overwriteUnowned: false }));
+
+    expect(legacyClient.createGeneralProgram).toHaveBeenCalledTimes(1);
+    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(result.action).toBe("conflict");
+    expect(result.legacyRowId).toBe(RACED_ROW_ID);
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("skips without writing when the live legacy content matches the projection", async () => {
+    const legacyClient = makeFakeClient();
+
+    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
+    vi.mocked(legacyClient.getGeneralProgram).mockResolvedValue(restLegacyRow());
+
+    const result = await publishDay(baseArgs(legacyClient));
+
+    expect(legacyClient.createGeneralProgram).not.toHaveBeenCalled();
+    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(result.action).toBe("skipped");
+    expect(result.legacyRowId).toBe(RACED_ROW_ID);
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
 });
