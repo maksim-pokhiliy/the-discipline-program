@@ -148,6 +148,10 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
     [links, monday, publishMobile, resolveLevelName],
   );
 
+  const latestRunPublish = useRef(runPublish);
+
+  latestRunPublish.current = runPublish;
+
   useEffect(() => {
     if (!open) {
       runIdRef.current += 1;
@@ -166,8 +170,8 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
     }
 
     hasStartedRef.current = true;
-    void runPublish(false);
-  }, [open, runPublish]);
+    void latestRunPublish.current(false);
+  }, [open]);
 
   const handleConfirmOverwrite = () => {
     void runPublish(true);

@@ -357,3 +357,23 @@ describe("PublishWeekModal multi-link partial failure (MT-7)", () => {
     expect(mutateAsyncMock).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("PublishWeekModal mounted-closed stability (regression: max update depth)", () => {
+  it("does not loop or publish when closed while the parent re-renders with fresh prop references", () => {
+    const freshProps = () => ({
+      open: false,
+      onClose: onCloseMock,
+      monday: new Date("2026-01-05T00:00:00.000Z"),
+      links: [makeMobileLink({ id: LINK_A.id, legacyLevelId: 2 })],
+      levelNameById: new Map<number, string>([[2, "Pro"]]),
+    });
+
+    const { rerender } = render(<PublishWeekModal {...freshProps()} />);
+
+    for (let index = 0; index < 6; index += 1) {
+      rerender(<PublishWeekModal {...freshProps()} />);
+    }
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+});
