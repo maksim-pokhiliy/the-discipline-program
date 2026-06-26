@@ -70,7 +70,9 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
   const resolveLevelName = useCallback(
     (link: MobileLink): string =>
-      levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`,
+      link.legacyLevelId === null
+        ? ""
+        : (levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`),
     [levelNameById],
   );
 

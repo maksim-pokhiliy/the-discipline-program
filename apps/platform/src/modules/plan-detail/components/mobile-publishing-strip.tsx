@@ -25,7 +25,9 @@ const describeLinks = (links: MobileLink[], levelNameById: Map<number, string>):
     return NOT_LINKED_LABEL;
   }
 
-  const names = links.map((link) => levelNameById.get(link.legacyLevelId));
+  const names = links.map((link) =>
+    link.legacyLevelId === null ? undefined : levelNameById.get(link.legacyLevelId),
+  );
 
   if (names.some((name) => name === undefined)) {
     return `${links.length} ${links.length === 1 ? "level" : "levels"}`;
@@ -44,7 +46,10 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
 
-  const links = useMemo<MobileLink[]>(() => linksQuery.data ?? [], [linksQuery.data]);
+  const links = useMemo<MobileLink[]>(
+    () => (linksQuery.data ?? []).filter((link) => link.channel === "GENERAL"),
+    [linksQuery.data],
+  );
 
   const levelNameById = useMemo(
     () => new Map((levelsQuery.data ?? []).map((level) => [level.id, level.name])),

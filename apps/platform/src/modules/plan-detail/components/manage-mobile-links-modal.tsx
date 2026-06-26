@@ -66,12 +66,20 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   const [pendingDelete, setPendingDelete] = useState<MobileLink | null>(null);
 
   const levels = useMemo<LegacyTrainingLevel[]>(() => levelsQuery.data ?? [], [levelsQuery.data]);
-  const links = useMemo<MobileLink[]>(() => linksQuery.data ?? [], [linksQuery.data]);
+  const links = useMemo<MobileLink[]>(
+    () => (linksQuery.data ?? []).filter((link) => link.channel === "GENERAL"),
+    [linksQuery.data],
+  );
 
   const levelNameById = useMemo(
     () => new Map(levels.map((level) => [level.id, level.name])),
     [levels],
   );
+
+  const levelLabelFor = (link: MobileLink): string =>
+    link.legacyLevelId === null
+      ? ""
+      : (levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`);
 
   const linkedLevelIds = useMemo(() => new Set(links.map((link) => link.legacyLevelId)), [links]);
 
@@ -159,9 +167,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
                 spacing={1.5}
                 sx={{ px: 1.5, py: 1 }}
               >
-                <Typography variant="body2">
-                  {levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`}
-                </Typography>
+                <Typography variant="body2">{levelLabelFor(link)}</Typography>
 
                 <IconButton
                   aria-label="Unlink training level"
@@ -248,10 +254,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
         message={
           pendingDelete === null
             ? ""
-            : `Stop publishing this plan to ${
-                levelNameById.get(pendingDelete.legacyLevelId) ??
-                `Level ${pendingDelete.legacyLevelId}`
-              }?`
+            : `Stop publishing this plan to ${levelLabelFor(pendingDelete)}?`
         }
         isConfirming={deleteLink.isPending}
         onConfirm={handleConfirmDelete}

@@ -44,6 +44,8 @@ export const makeMobileLink = (overrides: Partial<MobileLink> = {}): MobileLink 
   planId: PLAN_ID,
   channel: "GENERAL",
   legacyLevelId: 2,
+  legacyUserId: null,
+  athleteId: null,
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,
