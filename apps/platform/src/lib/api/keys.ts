@@ -66,6 +66,7 @@ export const platformKeys = {
   mobile: {
     connections: () => [...ROOT, "mobile", "connections"] as const,
     trainingLevels: () => [...ROOT, "mobile", "training-levels"] as const,
+    athletes: () => [...ROOT, "mobile", "athletes"] as const,
     links: (planId: string) => [...ROOT, "mobile", "links", planId] as const,
   },
 } as const;

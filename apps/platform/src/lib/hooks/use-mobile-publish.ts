@@ -9,6 +9,7 @@ import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 const TRAINING_LEVELS_STALE_TIME_MS = 5 * 60_000;
+const MOBILE_ATHLETES_STALE_TIME_MS = 5 * 60_000;
 
 export const useMobileConnections = () =>
   useQuery({
@@ -22,6 +23,14 @@ export const useTrainingLevels = (enabled: boolean) =>
     queryFn: () => api.mobile.listTrainingLevels(),
     enabled,
     staleTime: TRAINING_LEVELS_STALE_TIME_MS,
+  });
+
+export const useMobileAthletes = (enabled: boolean) =>
+  useQuery({
+    queryKey: platformKeys.mobile.athletes(),
+    queryFn: () => api.mobile.listAthletes(),
+    enabled,
+    staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
   });
 
 export const useMobileLinks = (planId: string) =>
@@ -39,6 +48,7 @@ export const useConnectMobile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.connections() });
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.trainingLevels() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.athletes() });
       toast.success("Mobile app connected");
     },
     onError: (error: Error) => {

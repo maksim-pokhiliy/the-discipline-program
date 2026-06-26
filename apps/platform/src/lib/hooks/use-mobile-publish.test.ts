@@ -4,12 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
+import type { LegacyTrainingLevel, MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
 import type {
   ConnectMobileData,
   MobileConnection,
 } from "@repo/contracts/coaching/mobile-connection";
-import type { CreateMobileLinkData, MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { CreateMobileLinkRequest, MobileLink } from "@repo/contracts/coaching/mobile-link";
 import type {
   PublishMobileData,
   PublishMobileResult,
@@ -21,13 +21,15 @@ import {
   makeMobileConnection,
   makeMobileLink,
   makePublishDayResult,
+  mobileAthletesFixture,
   trainingLevelsFixture,
 } from "../mobile.fixtures";
 
 const connectMock = vi.fn<(data: ConnectMobileData) => Promise<MobileConnection>>();
 const listConnectionsMock = vi.fn<() => Promise<MobileConnection[]>>();
 const listTrainingLevelsMock = vi.fn<() => Promise<LegacyTrainingLevel[]>>();
-const createLinkMock = vi.fn<(data: CreateMobileLinkData) => Promise<MobileLink>>();
+const listAthletesMock = vi.fn<() => Promise<MobileAthlete[]>>();
+const createLinkMock = vi.fn<(data: CreateMobileLinkRequest) => Promise<MobileLink>>();
 const listLinksMock = vi.fn<(planId: string) => Promise<MobileLink[]>>();
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
 const publishMock = vi.fn<(data: PublishMobileData) => Promise<PublishMobileResult>>();
@@ -39,7 +41,8 @@ vi.mock("../api", () => ({
       connect: (data: ConnectMobileData) => connectMock(data),
       listConnections: () => listConnectionsMock(),
       listTrainingLevels: () => listTrainingLevelsMock(),
-      createLink: (data: CreateMobileLinkData) => createLinkMock(data),
+      listAthletes: () => listAthletesMock(),
+      createLink: (data: CreateMobileLinkRequest) => createLinkMock(data),
       listLinks: (planId: string) => listLinksMock(planId),
       deleteLink: (linkId: string) => deleteLinkMock(linkId),
       publish: (data: PublishMobileData) => publishMock(data),
@@ -67,6 +70,7 @@ const {
   usePublishMobile,
   useMobileConnections,
   useMobileLinks,
+  useMobileAthletes,
   useTrainingLevels,
 } = await import("./use-mobile-publish");
 
@@ -87,6 +91,7 @@ beforeEach(() => {
   connectMock.mockReset();
   listConnectionsMock.mockReset();
   listTrainingLevelsMock.mockReset();
+  listAthletesMock.mockReset();
   createLinkMock.mockReset();
   listLinksMock.mockReset();
   deleteLinkMock.mockReset();
@@ -132,6 +137,25 @@ describe("useTrainingLevels", () => {
   });
 });
 
+describe("useMobileAthletes", () => {
+  it("does not fetch when disabled", () => {
+    renderRunner(() => useMobileAthletes(false));
+
+    expect(listAthletesMock).not.toHaveBeenCalled();
+  });
+
+  it("fetches api.mobile.listAthletes when enabled", async () => {
+    listAthletesMock.mockResolvedValueOnce(mobileAthletesFixture);
+
+    const { view } = renderRunner(() => useMobileAthletes(true));
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    expect(listAthletesMock).toHaveBeenCalledTimes(1);
+    expect(view.result.current.data).toEqual(mobileAthletesFixture);
+  });
+});
+
 describe("useMobileLinks", () => {
   it("queries api.mobile.listLinks with the planId", async () => {
     const links = [makeMobileLink()];
@@ -150,7 +174,7 @@ describe("useMobileLinks", () => {
 describe("useConnectMobile", () => {
   const payload: ConnectMobileData = { email: "coach@example.com", password: "secret" };
 
-  it("calls api.mobile.connect and invalidates the connections and trainingLevels keys", async () => {
+  it("calls api.mobile.connect and invalidates the connections, trainingLevels, and athletes keys", async () => {
     connectMock.mockResolvedValueOnce(makeMobileConnection());
 
     const { view, invalidateSpy } = renderRunner(() => useConnectMobile());
@@ -164,6 +188,7 @@ describe("useConnectMobile", () => {
     expect(connectMock).toHaveBeenCalledWith(payload);
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.connections() });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.trainingLevels() });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.athletes() });
   });
 
   it("notifies with the fallback message when the connect fails", async () => {
@@ -184,7 +209,7 @@ describe("useConnectMobile", () => {
 });
 
 describe("useCreateMobileLink", () => {
-  const payload: CreateMobileLinkData = { planId: PLAN_ID, legacyLevelId: 2 };
+  const payload: CreateMobileLinkRequest = { planId: PLAN_ID, legacyLevelId: 2 };
 
   it("calls api.mobile.createLink and invalidates the links key for the plan", async () => {
     createLinkMock.mockResolvedValueOnce(makeMobileLink());
