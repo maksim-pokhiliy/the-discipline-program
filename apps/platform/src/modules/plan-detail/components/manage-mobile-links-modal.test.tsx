@@ -55,6 +55,8 @@ vi.mock("../../coach-profile/components", () => ({
     open ? <div>connect-modal-open</div> : null,
 }));
 
+vi.mock("./individual-links-section", () => ({ IndividualLinksSection: () => null }));
+
 const { ManageMobileLinksModal } = await import("./manage-mobile-links-modal");
 
 const PLAN_ID = "ckplan1234567890abcdef0123";
