@@ -370,4 +370,54 @@ describe("IndividualLinksSection (T6)", () => {
     expect(screen.queryByText("Unknown athlete")).toBeNull();
     expect(screen.queryByText("No enrolled athletes to link yet.")).toBeNull();
   });
+
+  it("fires a second create for the same legacy id on a different row while the links prop has not yet refreshed (QA-06, MT-9)", () => {
+    const RACE_ROW_A_ID = "ckathlrace0000000000000aaa";
+    const RACE_ROW_B_ID = "ckathlrace0000000000000bbb";
+
+    athletesState.data = {
+      athletes: [
+        makeAthlete({ userId: RACE_ROW_A_ID, name: "Aaron Race" }),
+        makeAthlete({ userId: RACE_ROW_B_ID, name: "Zoe Race" }),
+      ],
+    };
+    enrollmentsState.data = [
+      makeEnrollment({ athleteId: RACE_ROW_A_ID, status: EnrollmentStatus.ACTIVE }),
+      makeEnrollment({
+        id: "ckenrl0000000000000race00",
+        athleteId: RACE_ROW_B_ID,
+        status: EnrollmentStatus.ACTIVE,
+      }),
+    ];
+
+    renderSection([]);
+
+    const [firstSelect, secondSelect] = screen.getAllByRole("combobox", {
+      name: "Link mobile athlete",
+    });
+
+    if (firstSelect === undefined || secondSelect === undefined) {
+      throw new Error("expected two unlinked athlete rows");
+    }
+
+    fireEvent.mouseDown(firstSelect);
+    fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: /@alice/ }));
+
+    fireEvent.mouseDown(secondSelect);
+    fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: /@alice/ }));
+
+    expect(createLinkMutate).toHaveBeenCalledTimes(2);
+    expect(createLinkMutate).toHaveBeenNthCalledWith(1, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: RACE_ROW_A_ID,
+      legacyUserId: 101,
+    });
+    expect(createLinkMutate).toHaveBeenNthCalledWith(2, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: RACE_ROW_B_ID,
+      legacyUserId: 101,
+    });
+  });
 });

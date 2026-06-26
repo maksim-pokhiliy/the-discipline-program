@@ -1,7 +1,11 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
+import type {
+  GeneralMobileLink,
+  IndividualMobileLink,
+  MobileLink,
+} from "@repo/contracts/coaching/mobile-link";
 import { MOBILE_RECONNECT_REQUIRED } from "@repo/contracts/coaching/mobile-publish";
 import type {
   PublishMobileData,
@@ -9,6 +13,7 @@ import type {
 } from "@repo/contracts/coaching/mobile-publish";
 
 import {
+  makeIndividualLink,
   makeMobileLink,
   makePublishDayResult,
   publishResultsAllActions,
@@ -72,6 +77,11 @@ const LEVEL_NAMES = new Map<number, string>([
   [3, "RX"],
 ]);
 const EMPTY_ATHLETE_NAMES = new Map<string, string>();
+const INDIVIDUAL_LINK: IndividualMobileLink = makeIndividualLink({
+  id: "cklinkindiv0000000000000a1",
+  legacyUserId: 101,
+});
+const ATHLETE_NAMES = new Map<string, string>([[INDIVIDUAL_LINK.athleteId, "Alice Stone"]]);
 const CONFIRM_LABEL = "Overwrite & publish";
 
 const createDeferred = (): Deferred => {
@@ -385,5 +395,52 @@ describe("PublishWeekModal mounted-closed stability (regression: max update dept
     }
 
     expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("PublishWeekModal individual + mixed publish headings (QA-14, MT-6)", () => {
+  const publishedWeek = (): PublishMobileResult => ({
+    results: [makePublishDayResult({ scheduledDate: START_DATE, action: "created" })],
+  });
+
+  const renderPublish = (links: MobileLink[], athleteNameById: Map<string, string>) =>
+    render(
+      <PublishWeekModal
+        open
+        onClose={onCloseMock}
+        monday={MONDAY}
+        links={links}
+        levelNameById={LEVEL_NAMES}
+        athleteNameById={athleteNameById}
+      />,
+    );
+
+  it("renders the resolved athlete name as the publish group heading for an individual link (QA-14, MT-6)", async () => {
+    mutateAsyncMock.mockResolvedValue(publishedWeek());
+
+    renderPublish([INDIVIDUAL_LINK], ATHLETE_NAMES);
+
+    expect(await screen.findByText("Alice Stone")).toBeInTheDocument();
+    expect(screen.queryByText("Level null")).toBeNull();
+  });
+
+  it("falls back to the Athlete # heading and never renders Level null/undefined when the athlete name is unresolved (QA-14, MT-6)", async () => {
+    mutateAsyncMock.mockResolvedValue(publishedWeek());
+
+    renderPublish([INDIVIDUAL_LINK], EMPTY_ATHLETE_NAMES);
+
+    expect(await screen.findByText("Athlete #101")).toBeInTheDocument();
+    expect(screen.queryByText("Level null")).toBeNull();
+    expect(screen.queryByText("Level undefined")).toBeNull();
+  });
+
+  it("renders a level heading and an athlete heading side by side, each keyed on its linkId, for a mixed run (QA-14, MT-6, QA-032)", async () => {
+    mutateAsyncMock.mockResolvedValue(publishedWeek());
+
+    renderPublish([LINK_A, INDIVIDUAL_LINK], ATHLETE_NAMES);
+
+    expect(await screen.findByText("Pro")).toBeInTheDocument();
+    expect(screen.getByText("Alice Stone")).toBeInTheDocument();
+    expect(screen.getAllByText("Created")).toHaveLength(2);
   });
 });

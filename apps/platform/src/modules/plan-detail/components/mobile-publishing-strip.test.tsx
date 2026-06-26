@@ -153,4 +153,50 @@ describe("MobilePublishingStrip individual + mixed channels", () => {
 
     expect(screen.getByText("Levels: Pro · Athletes: 1 athlete")).toBeInTheDocument();
   });
+
+  it("shows an athlete count without the 'Publishes to:' prefix when an individual-only link is unresolved (MT-2)", () => {
+    coachAthletesState.data = { athletes: [] };
+    linksState.data = [makeIndividualLink()];
+
+    renderStrip();
+
+    expect(screen.getByText("1 athlete")).toBeInTheDocument();
+    expect(screen.queryByText(/Publishes to:/)).toBeNull();
+  });
+
+  it("labels both channels by count when neither level names nor roster names resolve (MT-2)", () => {
+    levelsState.data = undefined;
+    coachAthletesState.data = { athletes: [] };
+    linksState.data = [
+      makeMobileLink({ id: "cklink2000000000000000000a", legacyLevelId: 2 }),
+      makeMobileLink({ id: "cklink3000000000000000000a", legacyLevelId: 3 }),
+      makeIndividualLink({
+        id: "cklink9000000000000000000a",
+        athleteId: "ckathl9000000000000000000a",
+        legacyUserId: 101,
+      }),
+      makeIndividualLink({
+        id: "cklink8000000000000000000a",
+        athleteId: "ckathl8000000000000000000a",
+        legacyUserId: 102,
+      }),
+    ];
+
+    renderStrip();
+
+    expect(screen.getByText("Levels: 2 levels · Athletes: 2 athletes")).toBeInTheDocument();
+  });
+
+  it("uses the athlete email in the status line when the roster name is null (MT-2)", () => {
+    const emailOnlyUserId = "ckathlemail00000000000000a";
+
+    coachAthletesState.data = {
+      athletes: [{ userId: emailOnlyUserId, name: null, email: "ghost@example.com" }],
+    };
+    linksState.data = [makeIndividualLink({ athleteId: emailOnlyUserId })];
+
+    renderStrip();
+
+    expect(screen.getByText("Publishes to: ghost@example.com")).toBeInTheDocument();
+  });
 });
