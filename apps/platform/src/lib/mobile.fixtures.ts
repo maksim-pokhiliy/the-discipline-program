@@ -1,6 +1,6 @@
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
 import type { MobileConnection } from "@repo/contracts/coaching/mobile-connection";
-import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 import {
   MOBILE_PUBLISH_ACTIONS,
   type MobilePublishAction,
@@ -39,7 +39,7 @@ export const makeMobileConnection = (
   ...overrides,
 });
 
-export const makeMobileLink = (overrides: Partial<MobileLink> = {}): MobileLink => ({
+export const makeMobileLink = (overrides: Partial<GeneralMobileLink> = {}): GeneralMobileLink => ({
   id: LINK_ID,
   planId: PLAN_ID,
   channel: "GENERAL",

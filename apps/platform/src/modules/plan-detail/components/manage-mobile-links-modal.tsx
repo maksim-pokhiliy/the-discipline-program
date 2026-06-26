@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
-import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { BaseModal, ConfirmationModal, EmptyState } from "@repo/ui";
 
 import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
@@ -63,11 +63,14 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
 
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [selectedLevelId, setSelectedLevelId] = useState<string>(NO_LEVEL_SELECTED);
-  const [pendingDelete, setPendingDelete] = useState<MobileLink | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<GeneralMobileLink | null>(null);
 
   const levels = useMemo<LegacyTrainingLevel[]>(() => levelsQuery.data ?? [], [levelsQuery.data]);
-  const links = useMemo<MobileLink[]>(
-    () => (linksQuery.data ?? []).filter((link) => link.channel === "GENERAL"),
+  const links = useMemo<GeneralMobileLink[]>(
+    () =>
+      (linksQuery.data ?? []).filter(
+        (link): link is GeneralMobileLink => link.channel === "GENERAL",
+      ),
     [linksQuery.data],
   );
 
@@ -76,10 +79,8 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
     [levels],
   );
 
-  const levelLabelFor = (link: MobileLink): string =>
-    link.legacyLevelId === null
-      ? ""
-      : (levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`);
+  const levelLabelFor = (link: GeneralMobileLink): string =>
+    levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`;
 
   const linkedLevelIds = useMemo(() => new Set(links.map((link) => link.legacyLevelId)), [links]);
 

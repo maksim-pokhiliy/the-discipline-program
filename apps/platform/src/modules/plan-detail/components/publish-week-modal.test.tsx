@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { MOBILE_RECONNECT_REQUIRED } from "@repo/contracts/coaching/mobile-publish";
 import type {
   PublishMobileData,
@@ -59,8 +59,14 @@ const { PublishWeekModal } = await import("./publish-week-modal");
 const MONDAY = new Date("2026-01-05T00:00:00.000Z");
 const START_DATE = "2026-01-05";
 const CONFLICT_DATE = "2026-01-06";
-const LINK_A: MobileLink = makeMobileLink({ id: "cklinkaaaaaaaaaaaaaaaaaaaa", legacyLevelId: 2 });
-const LINK_B: MobileLink = makeMobileLink({ id: "cklinkbbbbbbbbbbbbbbbbbbbb", legacyLevelId: 3 });
+const LINK_A: GeneralMobileLink = makeMobileLink({
+  id: "cklinkaaaaaaaaaaaaaaaaaaaa",
+  legacyLevelId: 2,
+});
+const LINK_B: GeneralMobileLink = makeMobileLink({
+  id: "cklinkbbbbbbbbbbbbbbbbbbbb",
+  legacyLevelId: 3,
+});
 const LEVEL_NAMES = new Map<number, string>([
   [2, "Pro"],
   [3, "RX"],
@@ -91,7 +97,7 @@ const reconnectError = (): Error => {
   return error;
 };
 
-const renderModal = (links: MobileLink[] = [LINK_A]) =>
+const renderModal = (links: GeneralMobileLink[] = [LINK_A]) =>
   render(
     <PublishWeekModal
       open

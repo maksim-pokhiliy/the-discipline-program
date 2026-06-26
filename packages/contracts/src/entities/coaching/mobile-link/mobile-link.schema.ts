@@ -1,15 +1,30 @@
 import { z } from "zod";
 
-export const mobileLinkSchema = z.object({
+const baseMobileLinkSchema = z.object({
   id: z.string().cuid(),
   planId: z.string().cuid(),
-  channel: z.enum(["GENERAL", "INDIVIDUAL"]),
-  legacyLevelId: z.number().int().nullable(),
-  legacyUserId: z.number().int().nullable(),
-  athleteId: z.string().cuid().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
+
+export const generalMobileLinkSchema = baseMobileLinkSchema.extend({
+  channel: z.literal("GENERAL"),
+  legacyLevelId: z.number().int(),
+  legacyUserId: z.null(),
+  athleteId: z.null(),
+});
+
+export const individualMobileLinkSchema = baseMobileLinkSchema.extend({
+  channel: z.literal("INDIVIDUAL"),
+  legacyLevelId: z.null(),
+  legacyUserId: z.number().int(),
+  athleteId: z.string().cuid(),
+});
+
+export const mobileLinkSchema = z.discriminatedUnion("channel", [
+  generalMobileLinkSchema,
+  individualMobileLinkSchema,
+]);
 
 export const createMobileLinkSchema = z.object({
   planId: z.string().cuid(),

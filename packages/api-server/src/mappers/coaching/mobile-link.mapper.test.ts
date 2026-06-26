@@ -71,4 +71,10 @@ describe("mapToMobileLink", () => {
       updatedAt: LATER,
     });
   });
+
+  it("throws when an individual row is missing its identity keys (fail closed)", () => {
+    expect(() =>
+      mapToMobileLink(makeRow({ channel: MobilePublishChannel.INDIVIDUAL, legacyLevelId: null })),
+    ).toThrow("missing its identity keys");
+  });
 });

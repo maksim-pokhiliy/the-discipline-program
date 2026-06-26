@@ -46,3 +46,12 @@ export const legacyAthleteSchema = z.object({
 });
 
 export const legacyAthletesSchema = z.array(legacyAthleteSchema);
+
+export const mobileAthleteSchema = z.object({
+  id: z.number().int(),
+  username: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+});
+
+export const mobileAthletesSchema = z.array(mobileAthleteSchema);

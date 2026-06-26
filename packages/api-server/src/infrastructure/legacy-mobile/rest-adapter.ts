@@ -73,22 +73,6 @@ const toWriteBody = (input: LegacyGeneralProgramWriteInput): LegacyWriteBody => 
   dailyProgram: input.dailyProgram,
 });
 
-type LegacyIndividualWriteBody = {
-  userId: number;
-  scheduledDate: string;
-  isRestDay: boolean;
-  dailyProgram: LegacyDailyProgram | null;
-};
-
-const toIndividualWriteBody = (
-  input: LegacyIndividualProgramWriteInput,
-): LegacyIndividualWriteBody => ({
-  userId: input.userId,
-  scheduledDate: input.scheduledDate,
-  isRestDay: input.isRestDay,
-  dailyProgram: input.dailyProgram,
-});
-
 const isUpstreamFailure = (error: AppError): boolean =>
   UPSTREAM_FAILURE_ERRORS.some((errorClass) => error instanceof errorClass);
 
@@ -257,7 +241,7 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
       INDIVIDUAL_PROGRAM_PATH,
       "POST",
       legacyIndividualProgramSchema,
-      toIndividualWriteBody(input),
+      input,
     );
 
     return toIndividualProgram(payload);

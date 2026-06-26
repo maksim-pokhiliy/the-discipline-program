@@ -214,19 +214,22 @@ describe("linksApi.createLink", () => {
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
 
-  it("maps a P2002 unique violation to a ConflictError (athlete already linked)", async () => {
+  it("maps a P2002 on legacyUserId to a clear ConflictError (the legacy athlete is already linked)", async () => {
     const { ConflictError } = await import("@repo/errors");
 
-    mocks.upsertMock.mockRejectedValue(makePrismaError("P2002", { target: ["athleteId"] }));
+    mocks.upsertMock.mockRejectedValue(
+      makePrismaError("P2002", { target: ["planId", "channel", "legacyUserId"] }),
+    );
 
-    await expect(
-      linksApi.createLink(USER_ID, {
-        planId: PLAN_ID,
-        channel: "INDIVIDUAL",
-        athleteId: ATHLETE_ID,
-        legacyUserId: LEGACY_USER_ID,
-      }),
-    ).rejects.toBeInstanceOf(ConflictError);
+    const attempt = linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+      legacyUserId: LEGACY_USER_ID,
+    });
+
+    await expect(attempt).rejects.toBeInstanceOf(ConflictError);
+    await expect(attempt).rejects.toThrow("already linked to another plan member");
   });
 
   it("maps a P2003 FK violation on a bad athleteId to a BadRequestError", async () => {

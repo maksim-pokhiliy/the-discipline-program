@@ -1,8 +1,10 @@
+import { Prisma } from "@prisma/client";
+
 import {
   type CreateMobileLinkRequest,
   type MobileLink,
 } from "@repo/contracts/coaching/mobile-link";
-import { BadRequestError } from "@repo/errors";
+import { BadRequestError, ConflictError } from "@repo/errors";
 
 import {
   resolveCoachId,
@@ -83,6 +85,19 @@ const createIndividualLink = (
     })
     .then(mapToMobileLink);
 
+const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+    return false;
+  }
+
+  const target = error.meta?.target;
+
+  return (
+    (Array.isArray(target) && target.includes("legacyUserId")) ||
+    (typeof target === "string" && target.includes("legacyUserId"))
+  );
+};
+
 export const linksApi: LinksApi = {
   createLink: async (userId, data) => {
     const connectionId = await loadCoachConnectionId(userId, data.planId);
@@ -92,6 +107,12 @@ export const linksApi: LinksApi = {
         ? await createIndividualLink(connectionId, data)
         : await createGeneralLink(connectionId, data);
     } catch (error) {
+      if (isLegacyUserAlreadyLinked(error)) {
+        throw new ConflictError("This mobile athlete is already linked to another plan member", {
+          field: "legacyUserId",
+        });
+      }
+
       return handlePrismaError(error, { entity: "Mobile publish link" });
     }
   },
