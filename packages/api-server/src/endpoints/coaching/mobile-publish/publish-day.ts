@@ -4,14 +4,14 @@ import { ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
-import {
-  type LegacyDailyProgram,
-  type LegacyGeneralProgram,
-  type LegacyGeneralProgramWriteInput,
-  type LegacyMobileClientPort,
-} from "../../../infrastructure/legacy-mobile";
+import { type LegacyDailyProgram } from "../../../infrastructure/legacy-mobile";
 import { contentHash } from "../../../utils";
 
+import {
+  type ChannelProgramOps,
+  type LegacyProgramRow,
+  type LegacyProgramWriteBody,
+} from "./channel-program-ops";
 import { type MobilePublishDayPayload } from "./day-include";
 import {
   decidePublishAction,
@@ -20,15 +20,13 @@ import {
 } from "./decide-publish-action";
 import { type LegacyDailyProgramResult, projectDay } from "./projection/project-day";
 
-type WriteOutcome = { row: LegacyGeneralProgram; action: PublishAction };
+type WriteOutcome = { row: LegacyProgramRow; action: PublishAction };
 
 type Hashable = { isRestDay: true } | { isRestDay: false; dailyProgram: LegacyDailyProgram | null };
 
 export type PublishDayArgs = {
-  legacyClient: LegacyMobileClientPort;
-  token: string;
+  ops: ChannelProgramOps;
   linkId: string;
-  legacyLevelId: number;
   scheduledDate: string;
   absoluteDate: Date;
   day: MobilePublishDayPayload;
@@ -39,12 +37,10 @@ export type PublishDayArgs = {
 const toHashable = (isRestDay: boolean, dailyProgram: LegacyDailyProgram | null): Hashable =>
   isRestDay ? { isRestDay: true } : { isRestDay: false, dailyProgram };
 
-const toWriteInput = (
-  legacyLevelId: number,
+const toWriteBody = (
   scheduledDate: string,
   projected: LegacyDailyProgramResult,
-): LegacyGeneralProgramWriteInput => ({
-  levelId: legacyLevelId,
+): LegacyProgramWriteBody => ({
   scheduledDate,
   isRestDay: projected.isRestDay,
   dailyProgram: projected.isRestDay ? null : projected.dailyProgram,
@@ -52,28 +48,21 @@ const toWriteInput = (
 
 const putLegacyRow = async (
   args: PublishDayArgs,
-  input: LegacyGeneralProgramWriteInput,
+  input: LegacyProgramWriteBody,
   legacyRowId: number,
 ): Promise<WriteOutcome> => {
-  const row = await args.legacyClient.updateGeneralProgram(args.token, {
-    ...input,
-    id: legacyRowId,
-  });
+  const row = await args.ops.replaceProgram(input, legacyRowId);
 
   return { row, action: "updated" };
 };
 
 const resolveRace = async (
   args: PublishDayArgs,
-  input: LegacyGeneralProgramWriteInput,
+  input: LegacyProgramWriteBody,
   hash: string,
   isOwned: boolean,
 ): Promise<WriteOutcome | PublishDayResult> => {
-  const raced = await args.legacyClient.getGeneralProgram(
-    args.token,
-    args.legacyLevelId,
-    args.scheduledDate,
-  );
+  const raced = await args.ops.getProgram(args.scheduledDate);
 
   if (raced === null) {
     throw new ConflictError("Legacy program conflict could not be resolved", {
@@ -108,12 +97,12 @@ const resolveRace = async (
 
 const postLegacyRow = async (
   args: PublishDayArgs,
-  input: LegacyGeneralProgramWriteInput,
+  input: LegacyProgramWriteBody,
   hash: string,
   isOwned: boolean,
 ): Promise<WriteOutcome | PublishDayResult> => {
   try {
-    const row = await args.legacyClient.createGeneralProgram(args.token, input);
+    const row = await args.ops.createProgram(input);
 
     return { row, action: "created" };
   } catch (error) {
@@ -163,9 +152,9 @@ const noWriteResult = (
 const executeWrite = (
   args: PublishDayArgs,
   write: "POST" | "PUT",
-  input: LegacyGeneralProgramWriteInput,
+  input: LegacyProgramWriteBody,
   hash: string,
-  legacyRow: LegacyGeneralProgram | null,
+  legacyRow: LegacyProgramRow | null,
   isOwned: boolean,
 ): Promise<WriteOutcome | PublishDayResult> =>
   write === "PUT" && legacyRow !== null
@@ -180,11 +169,7 @@ export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult
     where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: args.absoluteDate } },
     select: { id: true },
   });
-  const legacyRow = await args.legacyClient.getGeneralProgram(
-    args.token,
-    args.legacyLevelId,
-    args.scheduledDate,
-  );
+  const legacyRow = await args.ops.getProgram(args.scheduledDate);
 
   const isOwned = existingRecord !== null;
   const decision = decidePublishAction({
@@ -204,7 +189,7 @@ export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult
     return noWriteResult(args, decision, legacyRow?.id ?? null);
   }
 
-  const input = toWriteInput(args.legacyLevelId, args.scheduledDate, projected);
+  const input = toWriteBody(args.scheduledDate, projected);
   const outcome = await executeWrite(args, decision.write, input, hash, legacyRow, isOwned);
 
   if (!isWriteOutcome(outcome)) {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
-import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { formatCalendarWeekday, formatDateParam } from "@repo/shared";
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
@@ -19,7 +19,7 @@ type PublishWeekModalProps = {
   open: boolean;
   onClose: () => void;
   monday: Date;
-  links: MobileLink[];
+  links: GeneralMobileLink[];
   levelNameById: Map<number, string>;
 };
 
@@ -69,7 +69,7 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   const isRunningRef = useRef(false);
 
   const resolveLevelName = useCallback(
-    (link: MobileLink): string =>
+    (link: GeneralMobileLink): string =>
       levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`,
     [levelNameById],
   );

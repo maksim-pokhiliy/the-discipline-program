@@ -27,3 +27,31 @@ export const legacyGeneralProgramSchema = z.object({
   isRestDay: z.boolean(),
   dailyProgram: legacyDailyProgramSchema.nullable(),
 });
+
+export const legacyIndividualProgramSchema = z.object({
+  id: z.number().int(),
+  userId: z.number().int(),
+  scheduledDate: z.string(),
+  isRestDay: z.boolean(),
+  dailyProgram: legacyDailyProgramSchema.nullable(),
+});
+
+export const legacyAthleteSchema = z.object({
+  id: z.number().int(),
+  username: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  trainingLevel: z.object({ id: z.number().int(), name: z.string().nullish() }).nullish(),
+  userPlan: z.object({ id: z.number().int(), name: z.string().nullish() }).nullish(),
+});
+
+export const legacyAthletesSchema = z.array(legacyAthleteSchema);
+
+export const mobileAthleteSchema = z.object({
+  id: z.number().int(),
+  username: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+});
+
+export const mobileAthletesSchema = z.array(mobileAthleteSchema);

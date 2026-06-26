@@ -4,21 +4,23 @@ D-numbered ratified decisions. The SSOT for "why." Status: `RATIFIED` / `OPEN` /
 
 ## Index
 
-| ID   | Topic                                                                                 | Status   |
-| ---- | ------------------------------------------------------------------------------------- | -------- |
-| D-1  | Push-projection, not a rewrite; legacy backend + iOS app untouched                    | RATIFIED |
-| D-2  | Connector model: per-coach legacy auth; store the token, never the password           | RATIFIED |
-| D-3  | Link = channel + key (Level \| Athlete), persistent on the plan; General first        | RATIFIED |
-| D-4  | Publish = idempotent upsert-emulation + overwrite-guard                               | RATIFIED |
-| D-5  | Projection renders structured rows → legacy free text via `build-session-detail`      | RATIFIED |
-| D-6  | Placement: connector in `coaching/mobile-publish/` + `infrastructure/legacy-mobile/`  | RATIFIED |
-| D-7  | Token at rest: AES-256-GCM in api-server, env key, fail-closed                        | RATIFIED |
-| D-8  | Projection seam: shared UI-free `renderRowLine` (true SSOT), NOT build-session-detail | RATIFIED |
-| D-9  | `MobilePublishedDay` ledger + upsert-emulation decision logic + live-content skip     | RATIFIED |
-| D-10 | Surface placement: inline LINK strip + PUBLISH-results modal + publish-all-linked     | RATIFIED |
-| D-11 | Unlink IN scope; disconnect DEFERRED to P3 (cascade-blast-radius unresolved)          | RATIFIED |
-| D-12 | Promote `MOBILE_RECONNECT_REQUIRED` to `@repo/contracts`; one wire-contract SSOT      | RATIFIED |
-| D-13 | Projection syntax: schema-aware legacy assembler; reframe the D-8 SSOT altitude       | RATIFIED |
+| ID   | Topic                                                                                       | Status   |
+| ---- | ------------------------------------------------------------------------------------------- | -------- |
+| D-1  | Push-projection, not a rewrite; legacy backend + iOS app untouched                          | RATIFIED |
+| D-2  | Connector model: per-coach legacy auth; store the token, never the password                 | RATIFIED |
+| D-3  | Link = channel + key (Level \| Athlete), persistent on the plan; General first              | RATIFIED |
+| D-4  | Publish = idempotent upsert-emulation + overwrite-guard                                     | RATIFIED |
+| D-5  | Projection renders structured rows → legacy free text via `build-session-detail`            | RATIFIED |
+| D-6  | Placement: connector in `coaching/mobile-publish/` + `infrastructure/legacy-mobile/`        | RATIFIED |
+| D-7  | Token at rest: AES-256-GCM in api-server, env key, fail-closed                              | RATIFIED |
+| D-8  | Projection seam: shared UI-free `renderRowLine` (true SSOT), NOT build-session-detail       | RATIFIED |
+| D-9  | `MobilePublishedDay` ledger + upsert-emulation decision logic + live-content skip           | RATIFIED |
+| D-10 | Surface placement: inline LINK strip + PUBLISH-results modal + publish-all-linked           | RATIFIED |
+| D-11 | Unlink IN scope; disconnect DEFERRED to P3 (cascade-blast-radius unresolved)                | RATIFIED |
+| D-12 | Promote `MOBILE_RECONNECT_REQUIRED` to `@repo/contracts`; one wire-contract SSOT            | RATIFIED |
+| D-13 | Projection syntax: schema-aware legacy assembler; reframe the D-8 SSOT altitude             | RATIFIED |
+| D-14 | Individual identity model: link carries athleteId + legacyUserId; upsert keyed by athleteId | RATIFIED |
+| D-15 | Individual "update" = DELETE+POST (the legacy PUT drops the body id — broken)               | RATIFIED |
 
 ---
 
@@ -122,3 +124,24 @@ D-numbered ratified decisions. The SSOT for "why." Status: `RATIFIED` / `OPEN` /
 - **Rationale.** The platform "display" is chips/cards, not a string (D-8 admitted this); the legacy needs the structure flattened into scannable text with separators. Forcing one assembler for both was elegant-by-construction but failed the actual reader — we passed parity tests yet shipped text the coach couldn't scan. Element formatters stay shared (no drift on _how_ a value renders); only the _assembly_ forks. Projection-only — NO Prisma schema / migration / wire-contract / legacy change; the lone ripple is the D-9 content-hash delta that drives the intended PUT/`updated` on a re-publish of our own owned days (D-4 conflict-guard still protects coach-authored days).
 - **AMRAP correction (owner, 2026-06-26).** `repetition.kind = "timeCap"` IS an AMRAP (the schema TYPE), so the projection labels it `AMRAP 20’`, not `cap 20’` — "cap" is a time limit on non-AMRAP work (the cross-cutting `composition.cap` field keeps "cap"). The SAME correction is owed to the shared formatter for the athlete-facing surfaces — deferred as MP-14 (it changes athlete UI, wants its own ratification).
 - **Links.** `design-publish-syntax.md` (full spec §4/§5 format, §6 decision, §7 constraints, §9 AMRAP rule); `projection/format-legacy-schema.ts`, `projection/{project-day,parity}.test.ts`; supersedes the _mechanism_ of D-8 (the single flat `renderRowLine` for both surfaces); `deferred.md` MP-14.
+
+### D-14 — Individual identity model: full identity bridge, upsert keyed by athleteId
+
+- **Status:** RATIFIED (P2a, 2026-06-26; `/feature` full, PR `feat/mobile-publish-p2a`).
+- **Decision.** An Individual `MobilePublishLink` is a full identity bridge **(plan, platform athleteId) → legacy userId**. The row carries BOTH `athleteId String?` (FK → platform `User.id`, the picker-stable person, `onDelete: Cascade` — sibling-consistent) AND `legacyUserId Int?` (the legacy athlete's id — a `Long` on the wire). `legacyLevelId` relaxed to nullable; `channel` widened to `GENERAL | INDIVIDUAL`. Three uniques coexist via Postgres NULLS-DISTINCT: `([planId,channel,legacyLevelId])` (GENERAL), plus `([planId,channel,athleteId])` + `([planId,channel,legacyUserId])` (the INDIVIDUAL per-plan bijection). A raw-SQL CHECK `mobile_link_channel_key_xor` enforces the per-channel shape (GENERAL ⇒ level set, user/athlete NULL; INDIVIDUAL ⇒ user+athlete set, level NULL).
+- **The create-link upsert keys on `athleteId`** (the stable platform person, OQ-1); `update` re-points `legacyUserId`. So re-picking an athlete's legacy target updates in place, and linking a second athlete to an already-taken legacy user hits the `legacyUserId` unique with a clean error — NOT a silent steal. **This supersedes design §8.2's legacyUserId-key** (a Review/QA refinement, commit `cb4a5061`: the legacyUserId-key silently re-pointed the existing athlete; QA-04/05).
+- **Name-collision note.** `MobilePublishLink.legacyUserId` (Int, the _athlete's_ legacy id) ≠ `MobileConnection.legacyUserId` (String, the _coach's_ legacy id). Same name, different model/type/meaning — do not conflate.
+- **Rationale.** plan.md 2.1, D-2/D-3 (manual coach-driven bridge). Storing athleteId now (not just legacyUserId) makes MP-2 weight-baking a pure follow-up (we know whose 1RMs) and avoids a re-migration/re-link. The platform enrollment is only the P2b picker SOURCE, not the key.
+- **OQ resolutions (Gate A).** OQ-1 key by athleteId = YES. OQ-2 contract = `z.union` create-input + DB CHECK + a discriminated RESPONSE entity (see below). OQ-3 MP-2 weight-baking = DEFER. OQ-4 `GET /user?userPlanId=2` IS the Individual filter (the legacy POST itself enforces `userPlan==2`), fields suffice (name = firstName+lastName, fallback username).
+- **Contract shape (Gate-A flat → review-refined discriminated).** Gate A chose a flat all-nullable `mobileLinkSchema`; the post-PR review (PR #320) showed the "not a discriminated union" rationale applies only to the **create-request** (the GENERAL create wire carries no `channel` discriminator → **FLAG-1**: `z.union([individualArm, generalArm])`, individual-first), NOT the **response** — which ALWAYS carries `channel`. So the response `mobileLinkSchema` is now `z.discriminatedUnion("channel", [general, individual])` (GENERAL ⇒ legacyLevelId set, user/athlete null; INDIVIDUAL ⇒ user+athlete set, level null), backing the DB CHECK with the type. The mapper narrows by channel + fails closed (`InternalServerError` on a malformed row); the live-General consumers use a typed `(l): l is GeneralMobileLink` filter, so the earlier runtime-dead `legacyLevelId === null` guards are gone. The athletes response was likewise narrowed to the real 4-field `mobileAthleteSchema` (was over-promising `legacyAthletesSchema`'s `trainingLevel`/`userPlan`).
+- **Migration (FLAG-2).** Two additive folders, authored offline (`migrate diff`): `20260626120000` = `ALTER TYPE ADD VALUE 'INDIVIDUAL'` ALONE; `20260626120100` = columns + uniques + FK + the CHECK (split because a CHECK referencing the new enum value can't run in the same transaction as the ADD VALUE). Applied to dev; existing GENERAL rows satisfy the CHECK. Prod-snapshot dry-run = a pre-merge owner step.
+- **Links.** `schema.prisma`; `channel-program-ops.ts`; `links.ts` (createIndividualLink); `mobile-link.schema.ts` + `-api.schema.ts`; `athletes.ts`; `legacy-contract.md` (individual wire); `deferred.md` MP-1/MP-2/MP-15.
+
+### D-15 — Individual "update" = DELETE+POST (the legacy PUT is broken)
+
+- **Status:** RATIFIED (P2a, 2026-06-26 — source-confirmed + live-proven).
+- **Decision.** The legacy `IndividualProgramDTO` carries `@JsonIgnoreProperties(value="id", allowGetters=true)` (GENERAL's DTO does NOT) → on `PUT /individualProgram` the body `id` is dropped on deserialization → the controller calls `updateIndividualProgram(null, dto)` → `findById(null)` throws (and even past that, `save(toEntity(dto))` with a null id would INSERT a duplicate — no DB unique, MP-8). **The legacy Individual PUT cannot update in place.** Legacy is sacred (D-1) — we cannot fix it. So the Individual channel's "replace" = `DELETE /individualProgram/{oldId}` then `POST` (insert-only → a new row), capturing the NEW legacyRowId. GENERAL keeps its working PUT.
+- **Seam.** `decidePublishAction` stays channel-agnostic (still emits `write:"PUT"` = "replace the existing row"); the per-channel `ChannelProgramOps.replaceProgram` decides HOW (GENERAL → PUT; INDIVIDUAL → DELETE-then-POST returning the new row). The `MobilePublishedDay` ledger upsert already stores the returned id, so the new legacyRowId is recorded with no ledger change.
+- **Proof.** Source-traced in `~/projects/contrib/tdp/mobile-backend` (IndividualProgramController/ServiceImpl/DTO). Live-proven by the gated integration: publish → edit → republish → `action:"updated"` + a NEW legacyRowId (≠ the create id), edit reflected in `getIndividualProgram`.
+- **Consequence → MP-15 (non-atomic).** DELETE+POST is not atomic: a crash/timeout after the DELETE before the POST leaves the athlete's day blank until an idempotent re-publish recovers. **DELETE-first is mandatory** (POST-first would 409 on the still-live row). The overwrite-guard (D-4) still gates: DELETE+POST on an UNOWNED row only after explicit `overwriteUnowned=true`. Acceptable for a low-frequency single-coach action (Individual UI isn't live yet); documented, not locked.
+- **Links.** `channel-program-ops.ts` (createIndividualProgramOps.replaceProgram); `rest-adapter.ts` (deleteIndividualProgram; NO updateIndividualProgram on the port); `legacy-contract.md`; `deferred.md` MP-15.

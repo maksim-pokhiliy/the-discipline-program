@@ -40,6 +40,10 @@ const makeFakeLegacyClient = (): LegacyMobileClientPort => ({
   getGeneralProgram: vi.fn(async () => null),
   createGeneralProgram: vi.fn(),
   updateGeneralProgram: vi.fn(),
+  getIndividualProgram: vi.fn(async () => null),
+  createIndividualProgram: vi.fn(),
+  deleteIndividualProgram: vi.fn(),
+  getIndividualAthletes: vi.fn(async () => []),
 });
 
 describe("createConnectionsApi.connect", () => {

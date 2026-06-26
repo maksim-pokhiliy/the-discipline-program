@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import SmartphoneIcon from "@mui/icons-material/Smartphone";
 import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 
-import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 
 import { useMobileConnections, useMobileLinks, useTrainingLevels } from "@app/lib/hooks";
 
@@ -20,7 +20,7 @@ type MobilePublishingStripProps = {
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level first";
 const NOT_LINKED_LABEL = "Not linked";
 
-const describeLinks = (links: MobileLink[], levelNameById: Map<number, string>): string => {
+const describeLinks = (links: GeneralMobileLink[], levelNameById: Map<number, string>): string => {
   if (links.length === 0) {
     return NOT_LINKED_LABEL;
   }
@@ -44,7 +44,13 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
 
-  const links = useMemo<MobileLink[]>(() => linksQuery.data ?? [], [linksQuery.data]);
+  const links = useMemo<GeneralMobileLink[]>(
+    () =>
+      (linksQuery.data ?? []).filter(
+        (link): link is GeneralMobileLink => link.channel === "GENERAL",
+      ),
+    [linksQuery.data],
+  );
 
   const levelNameById = useMemo(
     () => new Map((levelsQuery.data ?? []).map((level) => [level.id, level.name])),

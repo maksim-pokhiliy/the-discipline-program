@@ -2,8 +2,11 @@ import { type z } from "zod";
 
 import { ApiClient, type HttpMethod } from "@repo/api-client";
 import {
+  legacyAthletesSchema,
   type LegacyGeneralProgram as LegacyGeneralProgramWire,
   legacyGeneralProgramSchema,
+  type LegacyIndividualProgram as LegacyIndividualProgramWire,
+  legacyIndividualProgramSchema,
   type LegacySigninResponse as LegacySigninWire,
   legacySigninResponseSchema,
   legacyTrainingLevelsSchema,
@@ -18,9 +21,12 @@ import {
 } from "@repo/errors";
 
 import type {
+  LegacyAthlete,
   LegacyDailyProgram,
   LegacyGeneralProgram,
   LegacyGeneralProgramWriteInput,
+  LegacyIndividualProgram,
+  LegacyIndividualProgramWriteInput,
   LegacyMobileClientPort,
   LegacySigninResult,
   LegacyTrainingLevel,
@@ -33,6 +39,8 @@ const LEGACY_WRITE_MAX_RETRIES = 0;
 const SIGNIN_PATH = "/auth/signin";
 const TRAINING_LEVELS_PATH = "/trainingLevel/all";
 const GENERAL_PROGRAM_PATH = "/generalProgram";
+const INDIVIDUAL_PROGRAM_PATH = "/individualProgram";
+const USERS_PATH = "/user";
 
 const UPSTREAM_FAILURE_ERRORS = [InternalServerError, ServiceUnavailableError] as const;
 
@@ -108,6 +116,14 @@ const toGeneralProgram = (payload: LegacyGeneralProgramWire): LegacyGeneralProgr
   id: payload.id,
   scheduledDate: payload.scheduledDate,
   trainingLevelId: payload.trainingLevel.id,
+  isRestDay: payload.isRestDay,
+  dailyProgram: payload.dailyProgram,
+});
+
+const toIndividualProgram = (payload: LegacyIndividualProgramWire): LegacyIndividualProgram => ({
+  id: payload.id,
+  userId: payload.userId,
+  scheduledDate: payload.scheduledDate,
   isRestDay: payload.isRestDay,
   dailyProgram: payload.dailyProgram,
 });
@@ -191,11 +207,90 @@ export const createLegacyMobileRestAdapter = (): LegacyMobileClientPort => {
     return toGeneralProgram(payload);
   };
 
+  const getIndividualProgram = async (
+    token: string,
+    userId: number,
+    scheduledDate: string,
+  ): Promise<LegacyIndividualProgram | null> => {
+    try {
+      const payload = await requestLegacy(
+        buildAuthedClient(token),
+        INDIVIDUAL_PROGRAM_PATH,
+        "GET",
+        legacyIndividualProgramSchema,
+        undefined,
+        { userId: String(userId), scheduledDate },
+      );
+
+      return toIndividualProgram(payload);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return null;
+      }
+
+      throw error;
+    }
+  };
+
+  const createIndividualProgram = async (
+    token: string,
+    input: LegacyIndividualProgramWriteInput,
+  ): Promise<LegacyIndividualProgram> => {
+    const payload = await requestLegacy(
+      buildAuthedClient(token, LEGACY_WRITE_MAX_RETRIES),
+      INDIVIDUAL_PROGRAM_PATH,
+      "POST",
+      legacyIndividualProgramSchema,
+      input,
+    );
+
+    return toIndividualProgram(payload);
+  };
+
+  const deleteIndividualProgram = async (token: string, id: number): Promise<void> => {
+    try {
+      await buildAuthedClient(token, LEGACY_WRITE_MAX_RETRIES).requestNoContent(
+        `${INDIVIDUAL_PROGRAM_PATH}/${id}`,
+        "DELETE",
+      );
+    } catch (error) {
+      const mapped = mapLegacyError(error);
+
+      if (mapped instanceof NotFoundError) {
+        return;
+      }
+
+      throw mapped;
+    }
+  };
+
+  const getIndividualAthletes = async (token: string): Promise<LegacyAthlete[]> => {
+    const payload = await requestLegacy(
+      buildAuthedClient(token),
+      USERS_PATH,
+      "GET",
+      legacyAthletesSchema,
+      undefined,
+      { userPlanId: "2" },
+    );
+
+    return payload.map((athlete) => ({
+      id: athlete.id,
+      username: athlete.username,
+      firstName: athlete.firstName,
+      lastName: athlete.lastName,
+    }));
+  };
+
   return {
     signin,
     getTrainingLevels,
     getGeneralProgram,
     createGeneralProgram,
     updateGeneralProgram,
+    getIndividualProgram,
+    createIndividualProgram,
+    deleteIndividualProgram,
+    getIndividualAthletes,
   };
 };
