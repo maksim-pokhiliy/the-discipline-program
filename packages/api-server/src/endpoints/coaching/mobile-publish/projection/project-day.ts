@@ -1,10 +1,11 @@
 import { type Block } from "@repo/contracts/lms/block";
-import { type ExerciseById, renderRowLine } from "@repo/contracts/lms/row-text";
-import { type SchemaWithBody } from "@repo/contracts/lms/schema";
+import { type ExerciseById } from "@repo/contracts/lms/row-text";
 
 import { type LegacyDailyProgram } from "../../../../infrastructure/legacy-mobile";
 import { mapToBlockWithSchemas } from "../../../../mappers/lms";
 import { type MobilePublishDayPayload } from "../day-include";
+
+import { buildSchemaEntry } from "./format-legacy-schema";
 
 const TRAINING_NUMBER_OFFSET = 1;
 const BLOCK_NAME_FALLBACK = "";
@@ -18,21 +19,11 @@ export type LegacyDailyProgramResult =
 
 const isRestDay = (day: MobilePublishDayPayload): boolean => day.label?.rest === true;
 
-const projectSchemaRows = (
-  schema: SchemaWithBody,
-  block: Block,
-  exerciseById: ExerciseById,
-): string[] =>
-  schema.rows.map((row) =>
-    renderRowLine(row, exerciseById, {
-      blockIntensity: block.intensity,
-      schemaIntensity: schema.schema.intensity,
-    }),
-  );
-
 const projectBlock = (block: Block, exerciseById: ExerciseById): LegacyBlock => ({
   name: block.labels[0]?.name ?? BLOCK_NAME_FALLBACK,
-  exercises: block.schemas.flatMap((schema) => projectSchemaRows(schema, block, exerciseById)),
+  exercises: block.schemas
+    .map((schema) => buildSchemaEntry(schema, block, exerciseById))
+    .filter((entry) => entry !== ""),
 });
 
 const projectSession = (
