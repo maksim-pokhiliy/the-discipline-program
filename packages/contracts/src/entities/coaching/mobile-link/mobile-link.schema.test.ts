@@ -7,6 +7,8 @@ const baseEntity = {
   planId: "clp9z8x7w0001abcd1234efgh",
   channel: "GENERAL" as const,
   legacyLevelId: 7,
+  legacyUserId: null,
+  athleteId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

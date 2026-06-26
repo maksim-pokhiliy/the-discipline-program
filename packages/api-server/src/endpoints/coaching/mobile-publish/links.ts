@@ -66,10 +66,10 @@ const createIndividualLink = (
   prisma.mobilePublishLink
     .upsert({
       where: {
-        planId_channel_legacyUserId: {
+        planId_channel_athleteId: {
           planId: data.planId,
           channel: "INDIVIDUAL",
-          legacyUserId: data.legacyUserId,
+          athleteId: data.athleteId,
         },
       },
       create: {
@@ -79,7 +79,7 @@ const createIndividualLink = (
         legacyUserId: data.legacyUserId,
         athleteId: data.athleteId,
       },
-      update: { connectionId, athleteId: data.athleteId },
+      update: { connectionId, legacyUserId: data.legacyUserId },
     })
     .then(mapToMobileLink);
 

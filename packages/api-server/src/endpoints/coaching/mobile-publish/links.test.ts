@@ -35,6 +35,8 @@ const makePrismaLink = () => ({
   planId: PLAN_ID,
   channel: "GENERAL" as const,
   legacyLevelId: 2,
+  legacyUserId: null,
+  athleteId: null,
   createdAt: NOW,
   updatedAt: NOW,
 });
@@ -64,6 +66,8 @@ describe("linksApi.listLinks", () => {
         planId: PLAN_ID,
         channel: "GENERAL",
         legacyLevelId: 2,
+        legacyUserId: null,
+        athleteId: null,
         createdAt: NOW,
         updatedAt: NOW,
       },
