@@ -9,3 +9,10 @@ export const isGeneralMobileLink = (link: MobileLink): link is GeneralMobileLink
 
 export const isIndividualMobileLink = (link: MobileLink): link is IndividualMobileLink =>
   link.channel === "INDIVIDUAL";
+
+export const partitionMobileLinks = (
+  links: MobileLink[],
+): { general: GeneralMobileLink[]; individual: IndividualMobileLink[] } => ({
+  general: links.filter(isGeneralMobileLink),
+  individual: links.filter(isIndividualMobileLink),
+});

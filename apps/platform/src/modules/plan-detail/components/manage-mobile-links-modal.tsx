@@ -18,11 +18,7 @@ import {
 } from "@mui/material";
 
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
-import {
-  type GeneralMobileLink,
-  isGeneralMobileLink,
-  isIndividualMobileLink,
-} from "@repo/contracts/coaching/mobile-link";
+import { type GeneralMobileLink, partitionMobileLinks } from "@repo/contracts/coaching/mobile-link";
 import { BaseModal, ConfirmationModal, EmptyState } from "@repo/ui";
 
 import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
@@ -74,12 +70,8 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   const [pendingDelete, setPendingDelete] = useState<GeneralMobileLink | null>(null);
 
   const levels = useMemo<LegacyTrainingLevel[]>(() => levelsQuery.data ?? [], [levelsQuery.data]);
-  const links = useMemo<GeneralMobileLink[]>(
-    () => (linksQuery.data ?? []).filter(isGeneralMobileLink),
-    [linksQuery.data],
-  );
-  const individualLinks = useMemo(
-    () => (linksQuery.data ?? []).filter(isIndividualMobileLink),
+  const { general: links, individual: individualLinks } = useMemo(
+    () => partitionMobileLinks(linksQuery.data ?? []),
     [linksQuery.data],
   );
 

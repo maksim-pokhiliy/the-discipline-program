@@ -10,6 +10,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -27,6 +28,7 @@ const UNLINK_CONFIRM_TEXT = "Unlink";
 const MOBILE_PREFIX = "Mobile: ";
 const USERNAME_PREFIX = " · @";
 const NO_SELECTION = "";
+const SECONDARY_SKELETON_WIDTH = 140;
 
 type IndividualLinkRowProps = {
   displayName: string;
@@ -35,6 +37,7 @@ type IndividualLinkRowProps = {
   existingLink?: IndividualMobileLink;
   legacyOptions: MobileAthlete[];
   legacyAthleteById: Map<number, MobileAthlete>;
+  isLegacyLoading: boolean;
   onLink: (legacyUserId: number) => void;
   onUnlink: () => void;
   isMutating: boolean;
@@ -50,6 +53,7 @@ export const IndividualLinkRow: React.FC<IndividualLinkRowProps> = ({
   existingLink,
   legacyOptions,
   legacyAthleteById,
+  isLegacyLoading,
   onLink,
   onUnlink,
   isMutating,
@@ -111,12 +115,15 @@ export const IndividualLinkRow: React.FC<IndividualLinkRowProps> = ({
     ? describeLegacyAthlete(linkedLegacy)
     : `#${existingLink.legacyUserId}`;
 
-  const secondary = (
-    <Typography variant="caption" color="text.secondary">
-      {MOBILE_PREFIX}
-      {linkedLabel}
-    </Typography>
-  );
+  const secondary =
+    linkedLegacy === undefined && isLegacyLoading ? (
+      <Skeleton variant="text" width={SECONDARY_SKELETON_WIDTH} />
+    ) : (
+      <Typography variant="caption" color="text.secondary">
+        {MOBILE_PREFIX}
+        {linkedLabel}
+      </Typography>
+    );
 
   return (
     <Stack

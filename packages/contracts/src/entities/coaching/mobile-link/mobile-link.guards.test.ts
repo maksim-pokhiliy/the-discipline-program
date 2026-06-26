@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isGeneralMobileLink, isIndividualMobileLink } from "./mobile-link.guards";
+import {
+  isGeneralMobileLink,
+  isIndividualMobileLink,
+  partitionMobileLinks,
+} from "./mobile-link.guards";
 import { type GeneralMobileLink, type IndividualMobileLink } from "./mobile-link.types";
 
 const LINK_ID = "clp9z8x7w0000abcd1234efgh";
@@ -46,5 +50,18 @@ describe("isIndividualMobileLink", () => {
 
   it("returns false for a GENERAL link", () => {
     expect(isIndividualMobileLink(general)).toBe(false);
+  });
+});
+
+describe("partitionMobileLinks", () => {
+  it("splits a mixed list into general and individual buckets, preserving order", () => {
+    expect(partitionMobileLinks([general, individual, general])).toEqual({
+      general: [general, general],
+      individual: [individual],
+    });
+  });
+
+  it("returns empty buckets for an empty list", () => {
+    expect(partitionMobileLinks([])).toEqual({ general: [], individual: [] });
   });
 });

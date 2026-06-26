@@ -420,4 +420,23 @@ describe("IndividualLinksSection (T6)", () => {
       legacyUserId: 101,
     });
   });
+
+  it("shows a skeleton for the linked legacy identity instead of the raw #id while the live list is still loading (flash fix)", () => {
+    athletesState.data = {
+      athletes: [makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" })],
+    };
+    enrollmentsState.data = [
+      makeEnrollment({ athleteId: LINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
+    ];
+    mobileAthletesState.data = undefined;
+    mobileAthletesState.isPending = true;
+
+    const { container } = renderSection([
+      makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID, legacyUserId: 101 }),
+    ]);
+
+    expect(screen.getByText("Pat Platform")).toBeInTheDocument();
+    expect(screen.queryByText(/Mobile: #101/)).toBeNull();
+    expect(container.querySelectorAll(".MuiSkeleton-root").length).toBeGreaterThan(0);
+  });
 });

@@ -155,6 +155,7 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
       {...(row.existingLink !== undefined && { existingLink: row.existingLink })}
       legacyOptions={legacyOptions}
       legacyAthleteById={legacyAthleteById}
+      isLegacyLoading={isAthletesLoading}
       onLink={(legacyUserId) =>
         createLink.mutate({
           planId,

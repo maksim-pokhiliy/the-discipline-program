@@ -8,8 +8,7 @@ import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 import {
   type GeneralMobileLink,
   type IndividualMobileLink,
-  isGeneralMobileLink,
-  isIndividualMobileLink,
+  partitionMobileLinks,
 } from "@repo/contracts/coaching/mobile-link";
 
 import {
@@ -95,13 +94,8 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
 
-  const generalLinks = useMemo(
-    () => (linksQuery.data ?? []).filter(isGeneralMobileLink),
-    [linksQuery.data],
-  );
-
-  const individualLinks = useMemo(
-    () => (linksQuery.data ?? []).filter(isIndividualMobileLink),
+  const { general: generalLinks, individual: individualLinks } = useMemo(
+    () => partitionMobileLinks(linksQuery.data ?? []),
     [linksQuery.data],
   );
 
