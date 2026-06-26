@@ -43,6 +43,7 @@ const makeRow = (over: {
   intensity?: Prisma.JsonValue;
   tempo?: Prisma.JsonValue;
   side?: Prisma.JsonValue;
+  rest?: Prisma.JsonValue;
   modifiers?: string[];
   notes?: string[] | null;
 }): PrismaRow => ({
@@ -58,7 +59,7 @@ const makeRow = (over: {
   tempo: over.tempo ?? null,
   media: null,
   intensity: over.intensity ?? null,
-  rest: null,
+  rest: over.rest ?? null,
   notes: over.notes ?? null,
   createdAt: NOW,
   updatedAt: NOW,
@@ -606,5 +607,156 @@ describe("projectDay — schema-aware text (publish-syntax v2, D-13)", () => {
         { trainingNumber: 2, blocks: [{ name: "accessory", exercises: [] }] },
       ]);
     }
+  });
+});
+
+describe("projectDay — review follow-ups (PR #319)", () => {
+  it("appends the structure label to a name header that holds an unrelated digit (REVIEW-1)", () => {
+    const bike = cuid("exbikep2");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({
+          order: 1,
+          header: "Part 2",
+          composition: { repetition: { kind: "cadence", everyMin: 12, rounds: 10 } },
+          rows: [makeRow({ exerciseId: bike, name: "Echo Bike", order: 1 })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(block, makeExerciseById([[bike, "Echo Bike"]]));
+
+    expect(entry.split("\n")[0]).toBe("Part 2 · EMOM 12’×10:");
+  });
+
+  it("keeps cap and benchmark in the header even with a coach header present (REVIEW-3)", () => {
+    const thruster = cuid("exthrfran");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({
+          order: 1,
+          header: "fran",
+          composition: {
+            repetition: { kind: "ladder", steps: [21, 15, 9] },
+            cap: { min: 5, unit: "min" },
+            benchmark: { resultType: "time" },
+          },
+          rows: [makeRow({ exerciseId: thruster, name: "thruster", order: 1 })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(block, makeExerciseById([[thruster, "thruster"]]));
+
+    expect(entry.split("\n")[0]).toBe("fran · ladder 21-15-9 | cap 5’ | benchmark time:");
+  });
+
+  it("keeps a cross-cutting cap on a counted, headered for-time schema (REVIEW-3)", () => {
+    const burpee = cuid("exburpft");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({
+          order: 1,
+          header: "5 rounds for time",
+          composition: { repetition: { kind: "count", count: 5 }, cap: { min: 15, unit: "min" } },
+          rows: [
+            makeRow({
+              exerciseId: burpee,
+              name: "burpee",
+              order: 1,
+              reps: { kind: "count", value: 10 },
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(block, makeExerciseById([[burpee, "burpee"]]));
+
+    expect(entry.split("\n")[0]).toBe("5 rounds for time | cap 15’:");
+  });
+
+  it("wires range reps, alternating side, row rest, own intensities and varied loads (REVIEW-4)", () => {
+    const thr = cuid("exthrw");
+    const rower = cuid("exroww");
+    const dl = cuid("exdlw");
+    const bike = cuid("exbikew");
+    const ski = cuid("exskiw");
+    const block = makeBlock({
+      labelName: "main",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({
+              exerciseId: thr,
+              name: "thruster",
+              order: 1,
+              reps: { kind: "range", min: 8, max: 12 },
+              side: { kind: "alternating" },
+              intensity: { rpe: { value: 8 } },
+              rest: { scope: "between_sets", duration: { unit: "sec", value: 90 } },
+            }),
+            makeRow({
+              exerciseId: rower,
+              name: "row",
+              order: 2,
+              load: {
+                kind: "byProfile",
+                axes: [
+                  { axisId: cuid("axlvl"), label: "level", values: ["RX", "SC"], binding: null },
+                ],
+                cells: [
+                  { coords: ["RX"], kg: 60 },
+                  { coords: ["SC"], kg: 50 },
+                ],
+              },
+            }),
+            makeRow({
+              exerciseId: dl,
+              name: "deadlift",
+              order: 3,
+              load: { kind: "absolute", count: 1, kg: 100 },
+            }),
+            makeRow({
+              exerciseId: bike,
+              name: "bike",
+              order: 4,
+              intensity: { hrZone: { zone: "Z3" } },
+            }),
+            makeRow({
+              exerciseId: ski,
+              name: "ski erg",
+              order: 5,
+              intensity: {
+                numericPace: { value: "5:00", distanceUnit: "km", paceType: "min_per_distance" },
+              },
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [thr, "thruster"],
+        [rower, "row"],
+        [dl, "deadlift"],
+        [bike, "bike"],
+        [ski, "ski erg"],
+      ]),
+    );
+
+    expect(entry.split("\n")).toEqual([
+      "8–12 reps thruster alternating RPE 8 rest 90s between sets",
+      "row [ RX:60 / SC:50 ]",
+      "deadlift [ @100kg ]",
+      "bike HR Z3",
+      "ski erg 5:00 / km",
+    ]);
   });
 });

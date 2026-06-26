@@ -35,7 +35,6 @@ const STRUCTURE_APPEND_KINDS = new Set<RepetitionKind>([
   "interval",
   "ladder",
 ]);
-const HAS_DIGIT = /\d/;
 const TRAILING_HEADER_PUNCTUATION = /[\s:]+$/u;
 
 const bracket = (text: string): string => `${BRACKET_OPEN}${text}${BRACKET_CLOSE}`;
@@ -61,31 +60,45 @@ const structureLabel = (composition: Composition): string | null => {
   return label;
 };
 
+const labelLeadToken = (label: string): string => label.split(PART_SEPARATOR)[0] ?? label;
+
+const headerConveysLabel = (header: string, label: string): boolean =>
+  header.toLowerCase().includes(labelLeadToken(label).toLowerCase());
+
+const resolveHeaderBase = (
+  header: string,
+  label: string | null,
+  repetitionKind: RepetitionKind | undefined,
+): string => {
+  if (label === null) {
+    return header;
+  }
+
+  if (label.toLowerCase().startsWith(header.toLowerCase())) {
+    return label;
+  }
+
+  const shouldAppend =
+    repetitionKind !== undefined &&
+    STRUCTURE_APPEND_KINDS.has(repetitionKind) &&
+    !headerConveysLabel(header, label);
+
+  return shouldAppend ? `${header}${NAME_LABEL_SEPARATOR}${label}` : header;
+};
+
 const buildStructureText = (composition: Composition | null, header: string): string => {
   if (composition === null) {
     return header;
   }
 
   const label = structureLabel(composition);
+  const extras = [formatCapSummary(composition), formatBenchmarkSummary(composition)].filter(
+    (part): part is string => part !== null,
+  );
+  const base =
+    header === "" ? label : resolveHeaderBase(header, label, composition.repetition?.kind);
 
-  if (header === "") {
-    return [label, formatCapSummary(composition), formatBenchmarkSummary(composition)]
-      .filter((part): part is string => part !== null)
-      .join(LABEL_SEPARATOR);
-  }
-
-  if (label !== null && label.toLowerCase().startsWith(header.toLowerCase())) {
-    return label;
-  }
-
-  const repetitionKind = composition.repetition?.kind;
-  const shouldAppend =
-    label !== null &&
-    repetitionKind !== undefined &&
-    STRUCTURE_APPEND_KINDS.has(repetitionKind) &&
-    !HAS_DIGIT.test(header);
-
-  return shouldAppend ? `${header}${NAME_LABEL_SEPARATOR}${label}` : header;
+  return [base, ...extras].filter((part): part is string => part !== null).join(LABEL_SEPARATOR);
 };
 
 const buildHeaderLine = (schema: SchemaWithBody, block: Block): string => {
