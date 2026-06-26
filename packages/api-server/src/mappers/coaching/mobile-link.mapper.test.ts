@@ -15,6 +15,8 @@ const makeRow = (overrides: Partial<PrismaMobilePublishLink> = {}): PrismaMobile
   planId: "cls_plan_1",
   channel: MobilePublishChannel.GENERAL,
   legacyLevelId: 2,
+  legacyUserId: null,
+  athleteId: null,
   createdAt: NOW,
   updatedAt: LATER,
   ...overrides,
@@ -29,6 +31,8 @@ describe("mapToMobileLink", () => {
       planId: "cls_plan_1",
       channel: "GENERAL",
       legacyLevelId: 2,
+      legacyUserId: null,
+      athleteId: null,
       createdAt: NOW,
       updatedAt: LATER,
     });

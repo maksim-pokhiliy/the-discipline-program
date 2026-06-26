@@ -1,4 +1,7 @@
-import { type CreateMobileLinkData, type MobileLink } from "@repo/contracts/coaching/mobile-link";
+import {
+  type CreateMobileLinkRequest,
+  type MobileLink,
+} from "@repo/contracts/coaching/mobile-link";
 import { BadRequestError } from "@repo/errors";
 
 import {
@@ -10,48 +13,84 @@ import { prisma } from "../../../db/client";
 import { mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
 
-const LINK_CHANNEL = "GENERAL" as const;
-
 export type LinksApi = {
-  createLink(userId: string, data: CreateMobileLinkData): Promise<MobileLink>;
+  createLink(userId: string, data: CreateMobileLinkRequest): Promise<MobileLink>;
   listLinks(userId: string, planId: string): Promise<MobileLink[]>;
   deleteLink(userId: string, linkId: string): Promise<void>;
 };
 
-export const linksApi: LinksApi = {
-  createLink: async (userId, data) => {
-    const coachProfileId = await resolveCoachId(userId);
+const loadCoachConnectionId = async (userId: string, planId: string): Promise<string> => {
+  const coachProfileId = await resolveCoachId(userId);
 
-    await verifyPlanOwnership(data.planId, userId);
+  await verifyPlanOwnership(planId, userId);
 
-    const connection = await prisma.mobileConnection.findUnique({
-      where: { coachProfileId },
-      select: { id: true },
-    });
+  const connection = await prisma.mobileConnection.findUnique({
+    where: { coachProfileId },
+    select: { id: true },
+  });
 
-    if (connection === null) {
-      throw new BadRequestError("Connect the mobile app first");
-    }
+  if (connection === null) {
+    throw new BadRequestError("Connect the mobile app first");
+  }
 
-    try {
-      const link = await prisma.mobilePublishLink.upsert({
-        where: {
-          planId_channel_legacyLevelId: {
-            planId: data.planId,
-            channel: LINK_CHANNEL,
-            legacyLevelId: data.legacyLevelId,
-          },
-        },
-        create: {
-          connectionId: connection.id,
+  return connection.id;
+};
+
+const createGeneralLink = (
+  connectionId: string,
+  data: { planId: string; legacyLevelId: number },
+): Promise<MobileLink> =>
+  prisma.mobilePublishLink
+    .upsert({
+      where: {
+        planId_channel_legacyLevelId: {
           planId: data.planId,
-          channel: LINK_CHANNEL,
+          channel: "GENERAL",
           legacyLevelId: data.legacyLevelId,
         },
-        update: { connectionId: connection.id },
-      });
+      },
+      create: {
+        connectionId,
+        planId: data.planId,
+        channel: "GENERAL",
+        legacyLevelId: data.legacyLevelId,
+      },
+      update: { connectionId },
+    })
+    .then(mapToMobileLink);
 
-      return mapToMobileLink(link);
+const createIndividualLink = (
+  connectionId: string,
+  data: { planId: string; athleteId: string; legacyUserId: number },
+): Promise<MobileLink> =>
+  prisma.mobilePublishLink
+    .upsert({
+      where: {
+        planId_channel_legacyUserId: {
+          planId: data.planId,
+          channel: "INDIVIDUAL",
+          legacyUserId: data.legacyUserId,
+        },
+      },
+      create: {
+        connectionId,
+        planId: data.planId,
+        channel: "INDIVIDUAL",
+        legacyUserId: data.legacyUserId,
+        athleteId: data.athleteId,
+      },
+      update: { connectionId, athleteId: data.athleteId },
+    })
+    .then(mapToMobileLink);
+
+export const linksApi: LinksApi = {
+  createLink: async (userId, data) => {
+    const connectionId = await loadCoachConnectionId(userId, data.planId);
+
+    try {
+      return "channel" in data
+        ? await createIndividualLink(connectionId, data)
+        : await createGeneralLink(connectionId, data);
     } catch (error) {
       return handlePrismaError(error, { entity: "Mobile publish link" });
     }

@@ -32,6 +32,28 @@ export type LegacyGeneralProgramWriteInput = {
   dailyProgram: LegacyDailyProgram | null;
 };
 
+export type LegacyIndividualProgram = {
+  id: number;
+  userId: number;
+  scheduledDate: string;
+  isRestDay: boolean;
+  dailyProgram: LegacyDailyProgram | null;
+};
+
+export type LegacyIndividualProgramWriteInput = {
+  userId: number;
+  scheduledDate: string;
+  isRestDay: boolean;
+  dailyProgram: LegacyDailyProgram | null;
+};
+
+export type LegacyAthlete = {
+  id: number;
+  username: string;
+  firstName: string | null;
+  lastName: string | null;
+};
+
 export type LegacyMobileClientPort = {
   signin(email: string, password: string): Promise<LegacySigninResult>;
   getTrainingLevels(token: string): Promise<LegacyTrainingLevel[]>;
@@ -48,4 +70,15 @@ export type LegacyMobileClientPort = {
     token: string,
     input: LegacyGeneralProgramWriteInput & { id: number },
   ): Promise<LegacyGeneralProgram>;
+  getIndividualProgram(
+    token: string,
+    userId: number,
+    scheduledDate: string,
+  ): Promise<LegacyIndividualProgram | null>;
+  createIndividualProgram(
+    token: string,
+    input: LegacyIndividualProgramWriteInput,
+  ): Promise<LegacyIndividualProgram>;
+  deleteIndividualProgram(token: string, id: number): Promise<void>;
+  getIndividualAthletes(token: string): Promise<LegacyAthlete[]>;
 };

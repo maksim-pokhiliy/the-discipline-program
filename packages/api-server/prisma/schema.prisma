@@ -39,6 +39,7 @@ model User {
   oneRMRecords             OneRMRecord[]
   performedSessions        PerformedSession[]
   benchmarkResults         BenchmarkResult[]
+  mobilePublishLinks       MobilePublishLink[]      @relation("MobileLinkAthlete")
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -118,6 +119,7 @@ model CoachAthleteAssignment {
 
 enum MobilePublishChannel {
   GENERAL
+  INDIVIDUAL
 }
 
 enum MobilePublishAction {
@@ -153,15 +155,21 @@ model MobilePublishLink {
   planId        String
   plan          TrainingPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
   channel       MobilePublishChannel @default(GENERAL)
-  legacyLevelId Int
+  legacyLevelId Int?
+  legacyUserId  Int?
+  athleteId     String?
+  athlete       User?                @relation("MobileLinkAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
   publishedDays MobilePublishedDay[]
 
   @@unique([planId, channel, legacyLevelId])
+  @@unique([planId, channel, athleteId])
+  @@unique([planId, channel, legacyUserId])
   @@index([connectionId])
   @@index([planId])
+  @@index([athleteId])
   @@map("app_mobile_publish_links")
 }
 

@@ -1,17 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type LegacyGeneralProgram,
-  type LegacyMobileClientPort,
-} from "../../../infrastructure/legacy-mobile";
-
+import { type ChannelProgramOps, type LegacyProgramRow } from "./channel-program-ops";
 import { type MobilePublishDayPayload } from "./day-include";
 import { type PublishDayArgs, publishDay } from "./publish-day";
 
 const NOW = new Date("2026-06-08T00:00:00Z");
 const SCHEDULED_DATE = "2026-06-08";
 const LINK_ID = "cllink0000000000000000000";
-const LEGACY_LEVEL_ID = 7;
 const RACED_ROW_ID = 555;
 const OWNED_RECORD_ID = "clrec0000000000000000000";
 
@@ -55,38 +50,30 @@ const restDay = (): MobilePublishDayPayload => ({
   sessions: [],
 });
 
-const restLegacyRow = (): LegacyGeneralProgram => ({
+const restLegacyRow = (): LegacyProgramRow => ({
   id: RACED_ROW_ID,
-  scheduledDate: SCHEDULED_DATE,
-  trainingLevelId: LEGACY_LEVEL_ID,
   isRestDay: true,
   dailyProgram: null,
 });
 
-const nonRestLegacyRow = (): LegacyGeneralProgram => ({
+const nonRestLegacyRow = (): LegacyProgramRow => ({
   id: RACED_ROW_ID,
-  scheduledDate: SCHEDULED_DATE,
-  trainingLevelId: LEGACY_LEVEL_ID,
   isRestDay: false,
   dailyProgram: { dayTrainings: [] },
 });
 
-const makeFakeClient = (): LegacyMobileClientPort => ({
-  signin: vi.fn(),
-  getTrainingLevels: vi.fn(),
-  getGeneralProgram: vi.fn<LegacyMobileClientPort["getGeneralProgram"]>(),
-  createGeneralProgram: vi.fn(),
-  updateGeneralProgram: vi.fn(),
+const makeFakeOps = (): ChannelProgramOps => ({
+  getProgram: vi.fn<ChannelProgramOps["getProgram"]>(),
+  createProgram: vi.fn(),
+  replaceProgram: vi.fn(),
 });
 
 const baseArgs = (
-  legacyClient: LegacyMobileClientPort,
+  ops: ChannelProgramOps,
   overrides: Partial<PublishDayArgs> = {},
 ): PublishDayArgs => ({
-  legacyClient,
-  token: "decrypted-token",
+  ops,
   linkId: LINK_ID,
-  legacyLevelId: LEGACY_LEVEL_ID,
   scheduledDate: SCHEDULED_DATE,
   absoluteDate: NOW,
   day: restDay(),
@@ -105,24 +92,18 @@ describe("publishDay", () => {
 
   it("falls back to PUT and reports updated when an owned day races a 409", async () => {
     const { ConflictError } = await import("@repo/errors");
-    const legacyClient = makeFakeClient();
+    const ops = makeFakeOps();
 
     mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(legacyClient.getGeneralProgram)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(nonRestLegacyRow());
-    vi.mocked(legacyClient.createGeneralProgram).mockRejectedValue(
-      new ConflictError("already exists"),
-    );
-    vi.mocked(legacyClient.updateGeneralProgram).mockResolvedValue(nonRestLegacyRow());
+    vi.mocked(ops.getProgram).mockResolvedValueOnce(null).mockResolvedValueOnce(nonRestLegacyRow());
+    vi.mocked(ops.createProgram).mockRejectedValue(new ConflictError("already exists"));
+    vi.mocked(ops.replaceProgram).mockResolvedValue(nonRestLegacyRow());
 
-    const result = await publishDay(baseArgs(legacyClient));
+    const result = await publishDay(baseArgs(ops));
 
-    expect(legacyClient.createGeneralProgram).toHaveBeenCalledTimes(1);
-    expect(legacyClient.updateGeneralProgram).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(legacyClient.updateGeneralProgram).mock.calls[0]?.[1]).toMatchObject({
-      id: RACED_ROW_ID,
-    });
+    expect(ops.createProgram).toHaveBeenCalledTimes(1);
+    expect(ops.replaceProgram).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(ops.replaceProgram).mock.calls[0]?.[1]).toBe(RACED_ROW_ID);
     expect(result.action).toBe("updated");
     expect(result.legacyRowId).toBe(RACED_ROW_ID);
     expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
@@ -130,19 +111,15 @@ describe("publishDay", () => {
 
   it("conflicts without writing when an unowned day races a 409 and overwrite is off", async () => {
     const { ConflictError } = await import("@repo/errors");
-    const legacyClient = makeFakeClient();
+    const ops = makeFakeOps();
 
-    vi.mocked(legacyClient.getGeneralProgram)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(nonRestLegacyRow());
-    vi.mocked(legacyClient.createGeneralProgram).mockRejectedValue(
-      new ConflictError("already exists"),
-    );
+    vi.mocked(ops.getProgram).mockResolvedValueOnce(null).mockResolvedValueOnce(nonRestLegacyRow());
+    vi.mocked(ops.createProgram).mockRejectedValue(new ConflictError("already exists"));
 
-    const result = await publishDay(baseArgs(legacyClient, { overwriteUnowned: false }));
+    const result = await publishDay(baseArgs(ops, { overwriteUnowned: false }));
 
-    expect(legacyClient.createGeneralProgram).toHaveBeenCalledTimes(1);
-    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(ops.createProgram).toHaveBeenCalledTimes(1);
+    expect(ops.replaceProgram).not.toHaveBeenCalled();
     expect(result.action).toBe("conflict");
     expect(result.legacyRowId).toBe(RACED_ROW_ID);
     expect(mocks.upsertMock).not.toHaveBeenCalled();
@@ -150,48 +127,44 @@ describe("publishDay", () => {
 
   it("throws ConflictError without re-posting when the 409 re-GET returns null (QA-#22)", async () => {
     const { ConflictError } = await import("@repo/errors");
-    const legacyClient = makeFakeClient();
+    const ops = makeFakeOps();
 
-    vi.mocked(legacyClient.getGeneralProgram)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
-    vi.mocked(legacyClient.createGeneralProgram).mockRejectedValue(
-      new ConflictError("already exists"),
-    );
+    vi.mocked(ops.getProgram).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    vi.mocked(ops.createProgram).mockRejectedValue(new ConflictError("already exists"));
 
-    await expect(publishDay(baseArgs(legacyClient))).rejects.toBeInstanceOf(ConflictError);
+    await expect(publishDay(baseArgs(ops))).rejects.toBeInstanceOf(ConflictError);
 
-    expect(legacyClient.createGeneralProgram).toHaveBeenCalledTimes(1);
-    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(ops.createProgram).toHaveBeenCalledTimes(1);
+    expect(ops.replaceProgram).not.toHaveBeenCalled();
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
 
   it("skips without writing when the live legacy content matches the projection", async () => {
-    const legacyClient = makeFakeClient();
+    const ops = makeFakeOps();
 
     mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(legacyClient.getGeneralProgram).mockResolvedValue(restLegacyRow());
+    vi.mocked(ops.getProgram).mockResolvedValue(restLegacyRow());
 
-    const result = await publishDay(baseArgs(legacyClient));
+    const result = await publishDay(baseArgs(ops));
 
-    expect(legacyClient.createGeneralProgram).not.toHaveBeenCalled();
-    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(ops.createProgram).not.toHaveBeenCalled();
+    expect(ops.replaceProgram).not.toHaveBeenCalled();
     expect(result.action).toBe("skipped");
     expect(result.legacyRowId).toBe(RACED_ROW_ID);
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
 
   it("claims the ledger when a content-identical legacy row is unowned (skip, not conflict)", async () => {
-    const legacyClient = makeFakeClient();
+    const ops = makeFakeOps();
 
     mocks.findUniqueMock.mockResolvedValue(null);
-    vi.mocked(legacyClient.getGeneralProgram).mockResolvedValue(restLegacyRow());
+    vi.mocked(ops.getProgram).mockResolvedValue(restLegacyRow());
 
-    const result = await publishDay(baseArgs(legacyClient, { overwriteUnowned: false }));
+    const result = await publishDay(baseArgs(ops, { overwriteUnowned: false }));
 
     expect(result.action).toBe("skipped");
-    expect(legacyClient.createGeneralProgram).not.toHaveBeenCalled();
-    expect(legacyClient.updateGeneralProgram).not.toHaveBeenCalled();
+    expect(ops.createProgram).not.toHaveBeenCalled();
+    expect(ops.replaceProgram).not.toHaveBeenCalled();
     expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
   });
 });

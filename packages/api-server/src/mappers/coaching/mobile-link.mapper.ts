@@ -7,6 +7,8 @@ export const mapToMobileLink = (l: PrismaMobilePublishLink): MobileLink => ({
   planId: l.planId,
   channel: l.channel,
   legacyLevelId: l.legacyLevelId,
+  legacyUserId: l.legacyUserId,
+  athleteId: l.athleteId,
   createdAt: l.createdAt,
   updatedAt: l.updatedAt,
 });

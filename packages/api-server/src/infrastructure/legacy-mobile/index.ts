@@ -1,9 +1,12 @@
 import { createLegacyMobileRestAdapter } from "./rest-adapter";
 
 export type {
+  LegacyAthlete,
   LegacyDailyProgram,
   LegacyGeneralProgram,
   LegacyGeneralProgramWriteInput,
+  LegacyIndividualProgram,
+  LegacyIndividualProgramWriteInput,
   LegacyMobileClientPort,
   LegacySigninResult,
   LegacyTrainingLevel,

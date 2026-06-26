@@ -1,3 +1,5 @@
+import { type MobilePublishChannel } from "@prisma/client";
+
 import {
   type PublishDayResult,
   type PublishMobileData,
@@ -14,6 +16,7 @@ import { toUtcDateParam } from "../../../utils";
 import { decrypt } from "../../../utils/token-cipher";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
+import { buildChannelOps } from "./channel-program-ops";
 import { type MobilePublishDayPayload } from "./day-include";
 import { publishDay } from "./publish-day";
 import { loadExerciseById, loadTargetDays } from "./publish-loaders";
@@ -27,7 +30,9 @@ const loadLink = async (
   linkId: string,
 ): Promise<{
   planId: string;
-  legacyLevelId: number;
+  channel: MobilePublishChannel;
+  legacyLevelId: number | null;
+  legacyUserId: number | null;
   encryptedToken: string;
   expiresAt: Date;
 }> => {
@@ -35,7 +40,9 @@ const loadLink = async (
     where: { id: linkId },
     select: {
       planId: true,
+      channel: true,
       legacyLevelId: true,
+      legacyUserId: true,
       connection: { select: { encryptedToken: true, expiresAt: true } },
     },
   });
@@ -46,7 +53,9 @@ const loadLink = async (
 
   return {
     planId: link.planId,
+    channel: link.channel,
     legacyLevelId: link.legacyLevelId,
+    legacyUserId: link.legacyUserId,
     encryptedToken: link.connection.encryptedToken,
     expiresAt: link.connection.expiresAt,
   };
@@ -81,6 +90,8 @@ export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishA
       throw reconnectRequiredError("Mobile session expired — please reconnect");
     }
 
+    const ops = buildChannelOps(legacyClient, token, link);
+
     const weekStartDate = resolveWeekStartDate(data.startDate);
     const dayOfWeek: DayOfWeek | undefined = data.scope === "day" ? data.dayOfWeek : undefined;
     const days = sortDaysByDate(
@@ -98,10 +109,8 @@ export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishA
       try {
         results.push(
           await publishDay({
-            legacyClient,
-            token,
+            ops,
             linkId: data.linkId,
-            legacyLevelId: link.legacyLevelId,
             scheduledDate,
             absoluteDate,
             day,
