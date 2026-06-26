@@ -570,7 +570,7 @@ describe.skipIf(!SHOULD_RUN)(
       }
     });
 
-    it("replaces the edited day via DELETE+POST, yielding a NEW legacyRowId (D-14 live proof)", async () => {
+    it("replaces the edited day via DELETE+POST, yielding a NEW legacyRowId (D-15 live proof)", async () => {
       await cleanupRaw.schemaRow.updateMany({
         where: { schemaId: fixture.schemaId, order: FIRST_ROW_ORDER },
         data: {

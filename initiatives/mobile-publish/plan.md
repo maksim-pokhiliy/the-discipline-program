@@ -31,12 +31,12 @@ Status: ✅ done · 🔄 in progress · ⏳ pending · ⛔ blocked
 
 ## P2 — Individual publish 🔄
 
-### P2a — server/integration foundation ✅ done (PR `feat/mobile-publish-p2a`; D-13/D-14)
+### P2a — server/integration foundation ✅ done (PR `feat/mobile-publish-p2a`; D-14/D-15)
 
 - 2.1 Schema (additive, prod-safe): `legacyUserId Int?` + `athleteId String?` (FK→User, Cascade) + nullable `legacyLevelId` + per-plan bijection uniques + `mobile_link_channel_key_xor` CHECK; 2 migrations (enum-value split, FLAG-2) ✅
-- 2.2 Legacy individual REST methods (flat `userId`; **DELETE+POST replace** — the legacy PUT is broken, D-14) + the `z.union` create-link individual variant (upsert keyed on athleteId, D-13) + the live athletes proxy (`GET /user?userPlanId=2`, MP-6) ✅
+- 2.2 Legacy individual REST methods (flat `userId`; **DELETE+POST replace** — the legacy PUT is broken, D-15) + the `z.union` create-link individual variant (upsert keyed on athleteId, D-14) + the live athletes proxy (`GET /user?userPlanId=2`, MP-6) ✅
 - 2.3 Channel-aware publish seam (`ChannelProgramOps` injected into `publish-day` — GENERAL byte-identical, D-9 inherited verbatim) + flat-additive contract widening + minimal General-UI null-guards ✅
-- 2.4 Verify: api-server mobile units 92✓ (incl. the 5 GENERAL D-9 regression cases) + the gated integration (general + individual, 14✓ — D-14 DELETE+POST live proof: republish edit → `updated` + new legacyRowId) ✅
+- 2.4 Verify: api-server mobile units 92✓ (incl. the 5 GENERAL D-9 regression cases) + the gated integration (general + individual, 14✓ — D-15 DELETE+POST live proof: republish edit → `updated` + new legacyRowId) ✅
 
 ### P2b — Individual coach UI ⏳
 

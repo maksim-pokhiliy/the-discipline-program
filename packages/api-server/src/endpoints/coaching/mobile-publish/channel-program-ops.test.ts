@@ -80,7 +80,7 @@ describe("buildChannelOps — INDIVIDUAL ops", () => {
     });
   });
 
-  it("replaces by DELETE-then-POST and returns the new legacy row (D-14)", async () => {
+  it("replaces by DELETE-then-POST and returns the new legacy row (D-15)", async () => {
     const client = makeFakeLegacyClient();
 
     vi.mocked(client.deleteIndividualProgram).mockResolvedValue(undefined);
@@ -103,7 +103,7 @@ describe("buildChannelOps — INDIVIDUAL ops", () => {
     expect(deleteOrder).toBeLessThan(createOrder);
   });
 
-  it("has already DELETEd the row when the follow-up POST fails (D-14 data-loss window)", async () => {
+  it("has already DELETEd the row when the follow-up POST fails (D-15 data-loss window)", async () => {
     const client = makeFakeLegacyClient();
 
     vi.mocked(client.deleteIndividualProgram).mockResolvedValue(undefined);
