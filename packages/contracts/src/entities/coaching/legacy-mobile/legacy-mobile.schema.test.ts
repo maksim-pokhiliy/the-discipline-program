@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  legacyAthleteSchema,
   legacyGeneralProgramSchema,
+  legacyIndividualProgramSchema,
   legacySigninResponseSchema,
   legacyTrainingLevelsSchema,
 } from "./legacy-mobile.schema";
@@ -96,6 +98,105 @@ describe("legacyGeneralProgramSchema", () => {
       scheduledDate: "2026-06-24",
       trainingLevel: { id: 1, name: "RX" },
       dailyProgram: null,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("legacyIndividualProgramSchema", () => {
+  it("accepts a training-day program keyed by a flat userId", () => {
+    const result = legacyIndividualProgramSchema.safeParse({
+      id: 31,
+      userId: 5,
+      scheduledDate: "2026-06-22",
+      isRestDay: false,
+      dailyProgram: {
+        dayTrainings: [
+          {
+            trainingNumber: 1,
+            blocks: [{ name: "Strength", exercises: ["Back Squat 5x5"] }],
+          },
+        ],
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a rest-day program with a null dailyProgram", () => {
+    const result = legacyIndividualProgramSchema.safeParse({
+      id: 32,
+      userId: 5,
+      scheduledDate: "2026-06-23",
+      isRestDay: true,
+      dailyProgram: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a program missing isRestDay", () => {
+    const result = legacyIndividualProgramSchema.safeParse({
+      id: 33,
+      userId: 5,
+      scheduledDate: "2026-06-24",
+      dailyProgram: null,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("legacyAthleteSchema", () => {
+  it("accepts an athlete with present names", () => {
+    const result = legacyAthleteSchema.safeParse({
+      id: 5,
+      username: "athlete@tdp.local",
+      firstName: "Test",
+      lastName: "Athlete",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an athlete with null firstName and lastName", () => {
+    const result = legacyAthleteSchema.safeParse({
+      id: 6,
+      username: "athlete2@tdp.local",
+      firstName: null,
+      lastName: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("tolerates extra UserRequestDTO fields and strips them", () => {
+    const result = legacyAthleteSchema.safeParse({
+      id: 7,
+      username: "athlete3@tdp.local",
+      firstName: "Pat",
+      lastName: "Lee",
+      isEnabled: true,
+      userRole: { id: 1, name: "USER" },
+      userPlan: { id: 2, name: "Individual" },
+      phoneNumber: "555-0100",
+      dateOfBirth: "1990-01-01",
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("isEnabled");
+      expect(result.data).not.toHaveProperty("phoneNumber");
+    }
+  });
+
+  it("rejects an athlete missing the username", () => {
+    const result = legacyAthleteSchema.safeParse({
+      id: 8,
+      firstName: "Pat",
+      lastName: "Lee",
     });
 
     expect(result.success).toBe(false);

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { linksApi } from "./links";
@@ -6,11 +7,17 @@ const COACH_PROFILE_ID = "clcoach000000000000000000";
 const USER_ID = "cluser0000000000000000000";
 const PLAN_ID = "clplan0000000000000000000";
 const LINK_ID = "cllink0000000000000000000";
+const CONNECTION_ID = "clconn0000000000000000000";
+const ATHLETE_ID = "clathlete00000000000000000";
+const LEGACY_LEVEL_ID = 2;
+const LEGACY_USER_ID = 5;
 const NOW = new Date("2026-01-05T00:00:00.000Z");
 
 const mocks = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   deleteMock: vi.fn(),
+  upsertMock: vi.fn(),
+  connectionFindUniqueMock: vi.fn(),
   resolveCoachIdMock: vi.fn(),
   verifyPlanOwnershipMock: vi.fn(),
   verifyMobileLinkOwnershipMock: vi.fn(),
@@ -18,7 +25,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("../../../db/client", () => ({
   prisma: {
-    mobilePublishLink: { findMany: mocks.findManyMock, delete: mocks.deleteMock },
+    mobilePublishLink: {
+      findMany: mocks.findManyMock,
+      delete: mocks.deleteMock,
+      upsert: mocks.upsertMock,
+    },
+    mobileConnection: { findUnique: mocks.connectionFindUniqueMock },
     $disconnect: vi.fn(),
   },
 }));
@@ -31,15 +43,37 @@ vi.mock("../../../authz/guards", () => ({
 
 const makePrismaLink = () => ({
   id: LINK_ID,
-  connectionId: "clconn0000000000000000000",
+  connectionId: CONNECTION_ID,
   planId: PLAN_ID,
   channel: "GENERAL" as const,
-  legacyLevelId: 2,
+  legacyLevelId: LEGACY_LEVEL_ID,
   legacyUserId: null,
   athleteId: null,
   createdAt: NOW,
   updatedAt: NOW,
 });
+
+const makeIndividualPrismaLink = () => ({
+  id: LINK_ID,
+  connectionId: CONNECTION_ID,
+  planId: PLAN_ID,
+  channel: "INDIVIDUAL" as const,
+  legacyLevelId: null,
+  legacyUserId: LEGACY_USER_ID,
+  athleteId: ATHLETE_ID,
+  createdAt: NOW,
+  updatedAt: NOW,
+});
+
+const makePrismaError = (
+  code: string,
+  meta?: Record<string, unknown>,
+): Prisma.PrismaClientKnownRequestError =>
+  new Prisma.PrismaClientKnownRequestError("Prisma error", {
+    code,
+    clientVersion: "5.0.0",
+    ...(meta && { meta }),
+  });
 
 describe("linksApi.listLinks", () => {
   beforeEach(() => {
@@ -65,7 +99,7 @@ describe("linksApi.listLinks", () => {
         id: LINK_ID,
         planId: PLAN_ID,
         channel: "GENERAL",
-        legacyLevelId: 2,
+        legacyLevelId: LEGACY_LEVEL_ID,
         legacyUserId: null,
         athleteId: null,
         createdAt: NOW,
@@ -82,6 +116,132 @@ describe("linksApi.listLinks", () => {
     await expect(linksApi.listLinks(USER_ID, PLAN_ID)).rejects.toBeInstanceOf(ForbiddenError);
 
     expect(mocks.findManyMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("linksApi.createLink", () => {
+  beforeEach(() => {
+    mocks.upsertMock.mockReset();
+    mocks.connectionFindUniqueMock.mockReset();
+    mocks.resolveCoachIdMock.mockReset();
+    mocks.verifyPlanOwnershipMock.mockReset();
+    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
+    mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
+    mocks.connectionFindUniqueMock.mockResolvedValue({ id: CONNECTION_ID });
+    mocks.upsertMock.mockResolvedValue(makePrismaLink());
+  });
+
+  it("upserts a GENERAL link on the (plan, channel, legacyLevelId) key", async () => {
+    const result = await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      legacyLevelId: LEGACY_LEVEL_ID,
+    });
+
+    expect(mocks.resolveCoachIdMock).toHaveBeenCalledWith(USER_ID);
+    expect(mocks.verifyPlanOwnershipMock).toHaveBeenCalledWith(PLAN_ID, USER_ID);
+    expect(mocks.connectionFindUniqueMock).toHaveBeenCalledWith({
+      where: { coachProfileId: COACH_PROFILE_ID },
+      select: { id: true },
+    });
+    expect(mocks.upsertMock).toHaveBeenCalledWith({
+      where: {
+        planId_channel_legacyLevelId: {
+          planId: PLAN_ID,
+          channel: "GENERAL",
+          legacyLevelId: LEGACY_LEVEL_ID,
+        },
+      },
+      create: {
+        connectionId: CONNECTION_ID,
+        planId: PLAN_ID,
+        channel: "GENERAL",
+        legacyLevelId: LEGACY_LEVEL_ID,
+      },
+      update: { connectionId: CONNECTION_ID },
+    });
+    expect(result.channel).toBe("GENERAL");
+    expect(result.legacyLevelId).toBe(LEGACY_LEVEL_ID);
+  });
+
+  it("upserts an INDIVIDUAL link keyed on athleteId, re-pointing legacyUserId on update", async () => {
+    mocks.upsertMock.mockResolvedValue(makeIndividualPrismaLink());
+
+    const result = await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+      legacyUserId: LEGACY_USER_ID,
+    });
+
+    expect(mocks.upsertMock).toHaveBeenCalledWith({
+      where: {
+        planId_channel_athleteId: {
+          planId: PLAN_ID,
+          channel: "INDIVIDUAL",
+          athleteId: ATHLETE_ID,
+        },
+      },
+      create: {
+        connectionId: CONNECTION_ID,
+        planId: PLAN_ID,
+        channel: "INDIVIDUAL",
+        legacyUserId: LEGACY_USER_ID,
+        athleteId: ATHLETE_ID,
+      },
+      update: { connectionId: CONNECTION_ID, legacyUserId: LEGACY_USER_ID },
+    });
+    expect(result).toEqual({
+      id: LINK_ID,
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      legacyLevelId: null,
+      legacyUserId: LEGACY_USER_ID,
+      athleteId: ATHLETE_ID,
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+  });
+
+  it("rejects with BadRequestError when the coach has no mobile connection", async () => {
+    const { BadRequestError } = await import("@repo/errors");
+
+    mocks.connectionFindUniqueMock.mockResolvedValue(null);
+
+    await expect(
+      linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID }),
+    ).rejects.toBeInstanceOf(BadRequestError);
+
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("maps a P2002 unique violation to a ConflictError (athlete already linked)", async () => {
+    const { ConflictError } = await import("@repo/errors");
+
+    mocks.upsertMock.mockRejectedValue(makePrismaError("P2002", { target: ["athleteId"] }));
+
+    await expect(
+      linksApi.createLink(USER_ID, {
+        planId: PLAN_ID,
+        channel: "INDIVIDUAL",
+        athleteId: ATHLETE_ID,
+        legacyUserId: LEGACY_USER_ID,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("maps a P2003 FK violation on a bad athleteId to a BadRequestError", async () => {
+    const { BadRequestError } = await import("@repo/errors");
+
+    mocks.upsertMock.mockRejectedValue(makePrismaError("P2003", { field_name: "athleteId" }));
+
+    await expect(
+      linksApi.createLink(USER_ID, {
+        planId: PLAN_ID,
+        channel: "INDIVIDUAL",
+        athleteId: ATHLETE_ID,
+        legacyUserId: LEGACY_USER_ID,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestError);
   });
 });
 

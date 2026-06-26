@@ -49,4 +49,26 @@ describe("mapToMobileLink", () => {
 
     expect(result.legacyLevelId).toBe(7);
   });
+
+  it("maps an individual link carrying its full identity bridge", () => {
+    const result = mapToMobileLink(
+      makeRow({
+        channel: MobilePublishChannel.INDIVIDUAL,
+        legacyLevelId: null,
+        legacyUserId: 5,
+        athleteId: "cls_athlete_1",
+      }),
+    );
+
+    expect(result).toEqual({
+      id: "cls_ml_1",
+      planId: "cls_plan_1",
+      channel: "INDIVIDUAL",
+      legacyLevelId: null,
+      legacyUserId: 5,
+      athleteId: "cls_athlete_1",
+      createdAt: NOW,
+      updatedAt: LATER,
+    });
+  });
 });

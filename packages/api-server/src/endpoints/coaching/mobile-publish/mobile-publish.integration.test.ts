@@ -13,6 +13,7 @@ import {
   createTestCoach,
   createTestExercise,
   createTestPlan,
+  createTestUser,
 } from "../../../test/helpers";
 import {
   createTestDay,
@@ -33,6 +34,7 @@ const SHOULD_RUN = process.env.RUN_LEGACY_INTEGRATION === "1";
 
 const ADMIN_EMAIL = "admin@tdp.local";
 const ADMIN_PASSWORD = "Admin123!";
+const ATHLETE_EMAIL = "athlete@tdp.local";
 const PRO_LEVEL_ID = 2;
 const PRO_LEVEL_NAME_FALLBACK = "Pro";
 
@@ -391,6 +393,213 @@ describe.skipIf(!SHOULD_RUN)(
       const legacyWorking = await adapter.getGeneralProgram(
         rawToken,
         PRO_LEVEL_ID,
+        fixture.workingDate,
+      );
+      const expectedLines = await expectedExercisesFor(fixture.planId, fixture.weekStartParam);
+      const legacyLines =
+        legacyWorking?.dailyProgram?.dayTrainings.flatMap((training) =>
+          training.blocks.flatMap((block) => block.exercises),
+        ) ?? [];
+
+      expect(legacyLines).toEqual(expectedLines);
+      expect(legacyLines.some((line) => line.includes(String(EDITED_ROW_PERCENTAGE)))).toBe(true);
+    });
+  },
+);
+
+describe.skipIf(!SHOULD_RUN)(
+  "mobile-publish individual channel against the live legacy harness (requires the gated migration applied + localhost:8080 up + a seeded user_plan_id=2 athlete)",
+  () => {
+    const adapter: LegacyMobileClientPort = createLegacyMobileRestAdapter();
+
+    let fixture: PublishFixture;
+    let athleteUserId: string;
+    let legacyUserId: number;
+    let linkId: string;
+    let rawToken: string;
+    let createdWorkingRowId: number;
+    const legacyRowIds = new Set<number>();
+
+    beforeAll(async () => {
+      fixture = await buildPlanFixture();
+      const athlete = await createTestUser();
+
+      athleteUserId = athlete.id;
+      const signin = await adapter.signin(ADMIN_EMAIL, ADMIN_PASSWORD);
+
+      rawToken = signin.accessToken;
+    });
+
+    afterAll(async () => {
+      for (const id of legacyRowIds) {
+        await adapter.deleteIndividualProgram(rawToken, id).catch(() => undefined);
+      }
+
+      await cleanupRaw.mobilePublishedDay.deleteMany({
+        where: { link: { planId: fixture.planId } },
+      });
+      await cleanupRaw.mobilePublishLink.deleteMany({ where: { planId: fixture.planId } });
+      await cleanupRaw.mobileConnection.deleteMany({
+        where: { coachProfile: { userId: fixture.userId } },
+      });
+      await cleanupRaw.user.delete({ where: { id: athleteUserId } }).catch(() => undefined);
+
+      for (const { table, id } of [...fixture.toCleanup].reverse()) {
+        const delegate = (
+          cleanupRaw as unknown as Record<
+            string,
+            { delete: (args: { where: { id: string } }) => Promise<unknown> }
+          >
+        )[table];
+
+        await delegate?.delete({ where: { id } }).catch(() => undefined);
+      }
+
+      await prisma.$disconnect();
+    });
+
+    it("stores a connection for the individual-channel coach", async () => {
+      const connection = await mobilePublishApi.connect(fixture.userId, {
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+      });
+
+      expect(connection).not.toHaveProperty("encryptedToken");
+      expect(connection.legacyUserRole).toBe("ADMIN");
+    });
+
+    it("lists the seeded individual athlete and resolves its legacy user id", async () => {
+      const athletes = await mobilePublishApi.listIndividualAthletes(fixture.userId);
+      const seeded = athletes.find((athlete) => athlete.username === ATHLETE_EMAIL);
+
+      expect(seeded).toBeDefined();
+
+      if (seeded === undefined) {
+        throw new Error(`expected the seeded individual athlete ${ATHLETE_EMAIL} to be present`);
+      }
+
+      legacyUserId = seeded.id;
+      expect(legacyUserId).toBeGreaterThan(0);
+    });
+
+    it("returns null from getIndividualProgram for an absent (user, date)", async () => {
+      const absent = await adapter.getIndividualProgram(rawToken, legacyUserId, "1999-01-04");
+
+      expect(absent).toBeNull();
+    });
+
+    it("creates an INDIVIDUAL link bridging the platform athlete to the legacy user", async () => {
+      const link = await mobilePublishApi.createLink(fixture.userId, {
+        planId: fixture.planId,
+        channel: "INDIVIDUAL",
+        athleteId: athleteUserId,
+        legacyUserId,
+      });
+
+      expect(link.channel).toBe("INDIVIDUAL");
+      expect(link.legacyUserId).toBe(legacyUserId);
+      expect(link.athleteId).toBe(athleteUserId);
+      expect(link.legacyLevelId).toBeNull();
+
+      linkId = link.id;
+    });
+
+    it("publishes the week to the athlete — working created, rest created — matching the projection", async () => {
+      const result = await mobilePublishApi.publish(fixture.userId, {
+        linkId,
+        startDate: fixture.weekStartParam,
+        scope: "week",
+        overwriteUnowned: false,
+      });
+
+      const byDate = new Map(result.results.map((entry) => [entry.scheduledDate, entry]));
+      const working = byDate.get(fixture.workingDate);
+      const rest = byDate.get(fixture.restDate);
+
+      expect(working?.action).toBe("created");
+      expect(rest?.action).toBe("created");
+
+      for (const entry of result.results) {
+        if (entry.legacyRowId !== null) {
+          legacyRowIds.add(entry.legacyRowId);
+        }
+      }
+
+      if (working === undefined || working.legacyRowId === null) {
+        throw new Error("expected the working day to have a legacy row id after create");
+      }
+
+      createdWorkingRowId = working.legacyRowId;
+
+      const legacyWorking = await adapter.getIndividualProgram(
+        rawToken,
+        legacyUserId,
+        fixture.workingDate,
+      );
+      const legacyRest = await adapter.getIndividualProgram(
+        rawToken,
+        legacyUserId,
+        fixture.restDate,
+      );
+
+      expect(legacyWorking).not.toBeNull();
+      expect(legacyWorking?.isRestDay).toBe(false);
+
+      const expectedLines = await expectedExercisesFor(fixture.planId, fixture.weekStartParam);
+      const legacyLines =
+        legacyWorking?.dailyProgram?.dayTrainings.flatMap((training) =>
+          training.blocks.flatMap((block) => block.exercises),
+        ) ?? [];
+
+      expect(legacyLines).toEqual(expectedLines);
+
+      expect(legacyRest?.isRestDay).toBe(true);
+      expect(legacyRest?.dailyProgram).toBeNull();
+    });
+
+    it("skips every day on an identical republish (no legacy write)", async () => {
+      const result = await mobilePublishApi.publish(fixture.userId, {
+        linkId,
+        startDate: fixture.weekStartParam,
+        scope: "week",
+        overwriteUnowned: false,
+      });
+
+      for (const entry of result.results) {
+        expect(entry.action).toBe("skipped");
+      }
+    });
+
+    it("replaces the edited day via DELETE+POST, yielding a NEW legacyRowId (D-14 live proof)", async () => {
+      await cleanupRaw.schemaRow.updateMany({
+        where: { schemaId: fixture.schemaId, order: FIRST_ROW_ORDER },
+        data: {
+          sets: EDITED_ROW_SETS,
+          load: toInputJson(percentageLoad(EDITED_ROW_PERCENTAGE)),
+        },
+      });
+
+      const result = await mobilePublishApi.publish(fixture.userId, {
+        linkId,
+        startDate: fixture.weekStartParam,
+        scope: "day",
+        dayOfWeek: WORKING_DAY_OF_WEEK,
+        overwriteUnowned: false,
+      });
+
+      const working = result.results.find((entry) => entry.scheduledDate === fixture.workingDate);
+
+      expect(working?.action).toBe("updated");
+      expect(working?.legacyRowId).not.toBeNull();
+      expect(working?.legacyRowId).not.toBe(createdWorkingRowId);
+
+      if (working !== undefined && working.legacyRowId !== null) {
+        legacyRowIds.add(working.legacyRowId);
+      }
+
+      const legacyWorking = await adapter.getIndividualProgram(
+        rawToken,
+        legacyUserId,
         fixture.workingDate,
       );
       const expectedLines = await expectedExercisesFor(fixture.planId, fixture.weekStartParam);

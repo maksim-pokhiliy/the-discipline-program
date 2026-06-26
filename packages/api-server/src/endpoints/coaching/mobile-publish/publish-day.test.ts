@@ -167,4 +167,36 @@ describe("publishDay", () => {
     expect(ops.replaceProgram).not.toHaveBeenCalled();
     expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
   });
+
+  it("leaves the ledger untouched when an owned replace fails (individual DELETE+POST crash window)", async () => {
+    const ops = makeFakeOps();
+
+    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
+    vi.mocked(ops.getProgram).mockResolvedValue(nonRestLegacyRow());
+    vi.mocked(ops.replaceProgram).mockRejectedValue(new Error("legacy POST failed after DELETE"));
+
+    await expect(publishDay(baseArgs(ops))).rejects.toThrow();
+
+    expect(ops.replaceProgram).toHaveBeenCalledTimes(1);
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("self-heals on the next publish by creating a fresh row when the legacy row has vanished", async () => {
+    const ops = makeFakeOps();
+
+    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
+    vi.mocked(ops.getProgram).mockResolvedValue(null);
+    vi.mocked(ops.createProgram).mockResolvedValue({
+      id: 999,
+      isRestDay: true,
+      dailyProgram: null,
+    });
+
+    const result = await publishDay(baseArgs(ops));
+
+    expect(ops.createProgram).toHaveBeenCalledTimes(1);
+    expect(result.action).toBe("created");
+    expect(result.legacyRowId).toBe(999);
+    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+  });
 });

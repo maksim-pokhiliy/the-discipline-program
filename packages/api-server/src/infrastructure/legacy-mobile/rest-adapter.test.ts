@@ -12,6 +12,8 @@ const jsonResponse = (status: number, body: unknown): Response =>
     headers: { "content-type": "application/json" },
   });
 
+const noContentResponse = (): Response => new Response(null, { status: 204 });
+
 const errorResponse = (status: number): Response =>
   jsonResponse(status, { error: { message: `failed: ${status}` } });
 
@@ -34,6 +36,38 @@ const trainingDayProgram = {
   },
 };
 
+const individualDayProgram = {
+  id: 200,
+  userId: 5,
+  scheduledDate: "2026-06-22",
+  isRestDay: false,
+  dailyProgram: {
+    dayTrainings: [
+      { trainingNumber: 1, blocks: [{ name: "Strength", exercises: ["Back Squat 5x5"] }] },
+    ],
+  },
+};
+
+const athletesPayload = [
+  {
+    id: 5,
+    username: "athlete@tdp.local",
+    firstName: "Test",
+    lastName: "Athlete",
+    isEnabled: true,
+    userRole: { id: 1, name: "USER" },
+    userPlan: { id: 2, name: "Individual" },
+    phoneNumber: "555-0100",
+  },
+  {
+    id: 6,
+    username: "athlete2@tdp.local",
+    firstName: null,
+    lastName: null,
+    userPlan: { id: 2, name: "Individual" },
+  },
+];
+
 const lastRequestInit = (fetchSpy: ReturnType<typeof vi.spyOn>): RequestInit => {
   const call = fetchSpy.mock.calls.at(-1);
 
@@ -48,6 +82,16 @@ const lastRequestInit = (fetchSpy: ReturnType<typeof vi.spyOn>): RequestInit => 
   }
 
   return init;
+};
+
+const lastRequestUrl = (fetchSpy: ReturnType<typeof vi.spyOn>): string => {
+  const call = fetchSpy.mock.calls.at(-1);
+
+  if (!call) {
+    throw new Error("fetch was not called");
+  }
+
+  return String(call[0]);
 };
 
 const headersOf = (init: RequestInit): Record<string, string> => {
@@ -181,6 +225,153 @@ describe("createLegacyMobileRestAdapter", () => {
           dailyProgram: null,
         }),
       ).rejects.toBeInstanceOf(ConflictError);
+    });
+  });
+
+  describe("getIndividualProgram", () => {
+    it("returns the parsed program on 200 mapped to LegacyIndividualProgram", async () => {
+      fetchSpy.mockResolvedValueOnce(jsonResponse(200, individualDayProgram));
+      const adapter = createLegacyMobileRestAdapter();
+
+      const program = await adapter.getIndividualProgram(RAW_TOKEN, 5, "2026-06-22");
+
+      expect(program).toEqual({
+        id: 200,
+        userId: 5,
+        scheduledDate: "2026-06-22",
+        isRestDay: false,
+        dailyProgram: individualDayProgram.dailyProgram,
+      });
+
+      const url = lastRequestUrl(fetchSpy);
+
+      expect(url).toContain("/individualProgram");
+      expect(url).toContain("userId=5");
+      expect(url).toContain("scheduledDate=2026-06-22");
+    });
+
+    it("returns null when the individual row is absent (404)", async () => {
+      fetchSpy.mockResolvedValueOnce(errorResponse(404));
+      const adapter = createLegacyMobileRestAdapter();
+
+      const program = await adapter.getIndividualProgram(RAW_TOKEN, 5, "2026-06-22");
+
+      expect(program).toBeNull();
+    });
+  });
+
+  describe("createIndividualProgram", () => {
+    it("POSTs a flat userId body (not the nested general shape) to /individualProgram", async () => {
+      fetchSpy.mockResolvedValueOnce(jsonResponse(200, individualDayProgram));
+      const adapter = createLegacyMobileRestAdapter();
+
+      const program = await adapter.createIndividualProgram(RAW_TOKEN, {
+        userId: 5,
+        scheduledDate: "2026-06-22",
+        isRestDay: false,
+        dailyProgram: individualDayProgram.dailyProgram,
+      });
+
+      const init = lastRequestInit(fetchSpy);
+      const sentBody = String(init.body);
+
+      expect(init.method).toBe("POST");
+      expect(lastRequestUrl(fetchSpy)).toContain("/individualProgram");
+      expect(JSON.parse(sentBody)).toMatchObject({ userId: 5 });
+      expect(sentBody).not.toContain('"user"');
+      expect(sentBody).not.toContain("trainingLevel");
+      expect(program.id).toBe(200);
+      expect(program.userId).toBe(5);
+    });
+
+    it("propagates a ConflictError on a legacy 409", async () => {
+      fetchSpy.mockResolvedValueOnce(errorResponse(409));
+      const adapter = createLegacyMobileRestAdapter();
+
+      await expect(
+        adapter.createIndividualProgram(RAW_TOKEN, {
+          userId: 5,
+          scheduledDate: "2026-06-22",
+          isRestDay: false,
+          dailyProgram: null,
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it("does not retry the POST and surfaces a BadGatewayError on a 5xx", async () => {
+      fetchSpy.mockResolvedValue(errorResponse(500));
+      const adapter = createLegacyMobileRestAdapter();
+
+      await expect(
+        adapter.createIndividualProgram(RAW_TOKEN, {
+          userId: 5,
+          scheduledDate: "2026-06-22",
+          isRestDay: false,
+          dailyProgram: null,
+        }),
+      ).rejects.toBeInstanceOf(BadGatewayError);
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("deleteIndividualProgram", () => {
+    it("DELETEs /individualProgram/{id} and resolves to void", async () => {
+      fetchSpy.mockResolvedValueOnce(noContentResponse());
+      const adapter = createLegacyMobileRestAdapter();
+
+      await expect(adapter.deleteIndividualProgram(RAW_TOKEN, 777)).resolves.toBeUndefined();
+
+      const init = lastRequestInit(fetchSpy);
+
+      expect(init.method).toBe("DELETE");
+      expect(lastRequestUrl(fetchSpy)).toContain("/individualProgram/777");
+    });
+
+    it("treats a 404 as idempotent and resolves to void", async () => {
+      fetchSpy.mockResolvedValueOnce(errorResponse(404));
+      const adapter = createLegacyMobileRestAdapter();
+
+      await expect(adapter.deleteIndividualProgram(RAW_TOKEN, 777)).resolves.toBeUndefined();
+    });
+
+    it("does not retry the DELETE and surfaces a BadGatewayError on a 5xx", async () => {
+      fetchSpy.mockResolvedValue(errorResponse(500));
+      const adapter = createLegacyMobileRestAdapter();
+
+      await expect(adapter.deleteIndividualProgram(RAW_TOKEN, 777)).rejects.toBeInstanceOf(
+        BadGatewayError,
+      );
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("getIndividualAthletes", () => {
+    it("GETs /user with userPlanId=2 and maps id/username/firstName/lastName, tolerating extra and null fields", async () => {
+      fetchSpy.mockResolvedValueOnce(jsonResponse(200, athletesPayload));
+      const adapter = createLegacyMobileRestAdapter();
+
+      const athletes = await adapter.getIndividualAthletes(RAW_TOKEN);
+
+      expect(athletes).toEqual([
+        { id: 5, username: "athlete@tdp.local", firstName: "Test", lastName: "Athlete" },
+        { id: 6, username: "athlete2@tdp.local", firstName: null, lastName: null },
+      ]);
+
+      const url = lastRequestUrl(fetchSpy);
+
+      expect(url).toContain("/user");
+      expect(url).toContain("userPlanId=2");
+    });
+
+    it("surfaces a BadGatewayError when an athlete id is not a number (no coercion)", async () => {
+      fetchSpy.mockResolvedValueOnce(jsonResponse(200, [{ id: "not-a-number", username: "x" }]));
+      const adapter = createLegacyMobileRestAdapter();
+
+      await expect(adapter.getIndividualAthletes(RAW_TOKEN)).rejects.toBeInstanceOf(
+        BadGatewayError,
+      );
     });
   });
 
