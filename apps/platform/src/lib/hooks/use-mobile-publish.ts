@@ -66,8 +66,11 @@ export const useCreateMobileLink = (planId: string) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
       toast.success("Linked");
     },
-    onError: (error: Error) => {
-      notifyError(error, "Failed to link training level");
+    onError: (error: Error, variables) => {
+      notifyError(
+        error,
+        "channel" in variables ? "Failed to link athlete" : "Failed to link training level",
+      );
     },
   });
 };

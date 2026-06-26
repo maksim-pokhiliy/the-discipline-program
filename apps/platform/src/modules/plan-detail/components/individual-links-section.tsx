@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { Alert, Box, Button, CircularProgress, Stack } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 import type { MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
@@ -29,6 +29,8 @@ const ATHLETES_ERROR_MESSAGE = "Couldn't load athletes. Try again.";
 const RECONNECT_TITLE = "Reconnect mobile app";
 const EMPTY_MESSAGE = "No enrolled athletes to link yet.";
 const UNKNOWN_ATHLETE_LABEL = "Unknown athlete";
+const ALL_LEGACY_LINKED_MESSAGE = "Every mobile athlete is already linked.";
+const NO_LEGACY_ATHLETES_MESSAGE = "No mobile athletes found.";
 
 type IndividualRowModel = {
   athleteId: string;
@@ -134,15 +136,49 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
     [enrolledAthleteIds, individualLinks, rosterById, linkByAthleteId],
   );
 
+  const linkedRows = useMemo(() => rows.filter((row) => row.existingLink !== undefined), [rows]);
+  const unlinkedRows = useMemo(() => rows.filter((row) => row.existingLink === undefined), [rows]);
+
   const isReconnect =
     mobileAthletesQuery.error !== null && isReconnectRequired(mobileAthletesQuery.error);
   const hasAthletesError = mobileAthletesQuery.isError && !isReconnect;
-  const isLoading = isConnected && mobileAthletesQuery.isPending;
+  const isAthletesLoading = isConnected && mobileAthletesQuery.isPending;
+  const isRosterPending = enrollmentsQuery.isPending || athletesQuery.isPending;
   const isMutating = createLink.isPending || deleteLink.isPending;
 
-  if (isReconnect) {
-    return (
-      <>
+  const renderRow = (row: IndividualRowModel): React.ReactNode => (
+    <IndividualLinkRow
+      key={row.athleteId}
+      displayName={row.displayName}
+      image={row.image}
+      athleteId={row.athleteId}
+      {...(row.existingLink !== undefined && { existingLink: row.existingLink })}
+      legacyOptions={legacyOptions}
+      legacyAthleteById={legacyAthleteById}
+      onLink={(legacyUserId) =>
+        createLink.mutate({
+          planId,
+          channel: "INDIVIDUAL",
+          athleteId: row.athleteId,
+          legacyUserId,
+        })
+      }
+      onUnlink={() => {
+        if (row.existingLink !== undefined) {
+          deleteLink.mutate(row.existingLink.id);
+        }
+      }}
+      isMutating={isMutating}
+    />
+  );
+
+  const renderAddAffordance = (): React.ReactNode => {
+    if (unlinkedRows.length === 0) {
+      return null;
+    }
+
+    if (isReconnect) {
+      return (
         <Stack spacing={2}>
           <Alert severity="warning">{RECONNECT_MESSAGE}</Alert>
 
@@ -150,22 +186,33 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
             Reconnect
           </Button>
         </Stack>
+      );
+    }
 
-        <ConnectMobileModal
-          open={isConnectOpen}
-          onClose={() => setIsConnectOpen(false)}
-          onConnected={() => setIsConnectOpen(false)}
-          title={RECONNECT_TITLE}
-        />
-      </>
-    );
-  }
+    if (hasAthletesError) {
+      return <Alert severity="error">{ATHLETES_ERROR_MESSAGE}</Alert>;
+    }
 
-  if (hasAthletesError) {
-    return <Alert severity="error">{ATHLETES_ERROR_MESSAGE}</Alert>;
-  }
+    if (isAthletesLoading) {
+      return (
+        <Stack alignItems="center" sx={{ py: 2 }}>
+          <CircularProgress size={20} />
+        </Stack>
+      );
+    }
 
-  if (isLoading) {
+    if (legacyOptions.length === 0) {
+      return (
+        <Typography variant="caption" color="text.secondary">
+          {legacyAthletes.length > 0 ? ALL_LEGACY_LINKED_MESSAGE : NO_LEGACY_ATHLETES_MESSAGE}
+        </Typography>
+      );
+    }
+
+    return unlinkedRows.map(renderRow);
+  };
+
+  if (isRosterPending) {
     return (
       <Stack alignItems="center" sx={{ py: 3 }}>
         <CircularProgress size={24} />
@@ -178,34 +225,21 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
   }
 
   return (
-    <Box sx={{ maxHeight: PICKLIST_MAX_HEIGHT, overflowY: "auto" }}>
-      <Stack spacing={1.5}>
-        {rows.map((row) => (
-          <IndividualLinkRow
-            key={row.athleteId}
-            displayName={row.displayName}
-            image={row.image}
-            athleteId={row.athleteId}
-            {...(row.existingLink !== undefined && { existingLink: row.existingLink })}
-            legacyOptions={legacyOptions}
-            legacyAthleteById={legacyAthleteById}
-            onLink={(legacyUserId) =>
-              createLink.mutate({
-                planId,
-                channel: "INDIVIDUAL",
-                athleteId: row.athleteId,
-                legacyUserId,
-              })
-            }
-            onUnlink={() => {
-              if (row.existingLink !== undefined) {
-                deleteLink.mutate(row.existingLink.id);
-              }
-            }}
-            isMutating={isMutating}
-          />
-        ))}
-      </Stack>
-    </Box>
+    <>
+      <Box sx={{ maxHeight: PICKLIST_MAX_HEIGHT, overflowY: "auto" }}>
+        <Stack spacing={1.5}>
+          {linkedRows.map(renderRow)}
+
+          {renderAddAffordance()}
+        </Stack>
+      </Box>
+
+      <ConnectMobileModal
+        open={isConnectOpen}
+        onClose={() => setIsConnectOpen(false)}
+        onConnected={() => setIsConnectOpen(false)}
+        title={RECONNECT_TITLE}
+      />
+    </>
   );
 };

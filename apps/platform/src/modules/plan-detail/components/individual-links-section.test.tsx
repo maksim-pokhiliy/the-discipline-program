@@ -232,41 +232,142 @@ describe("IndividualLinksSection (T6)", () => {
     expect(deleteLinkMutate).toHaveBeenCalledWith(ORPHAN_LINK_ID);
   });
 
-  it("shows the Reconnect CTA and no picker when the live list is reconnect-required (T6-e)", () => {
+  it("keeps the linked row unlinkable and shows the Reconnect CTA in place of the picker when the live list is reconnect-required (T6-e)", () => {
     athletesState.data = {
-      athletes: [makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" })],
+      athletes: [
+        makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" }),
+        makeAthlete({ userId: UNLINKED_ATHLETE_ID, name: "Sam Athlete" }),
+      ],
     };
     enrollmentsState.data = [
       makeEnrollment({ athleteId: LINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
+      makeEnrollment({
+        id: "ckenrl0000000000000000pat0",
+        athleteId: UNLINKED_ATHLETE_ID,
+        status: EnrollmentStatus.ACTIVE,
+      }),
     ];
     mobileAthletesState.data = undefined;
     mobileAthletesState.error = reconnectError();
     mobileAthletesState.isError = true;
 
-    renderSection([]);
+    renderSection([
+      makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID, legacyUserId: 101 }),
+    ]);
 
-    expect(screen.getByRole("button", { name: "Reconnect" })).toBeInTheDocument();
+    expect(screen.getByText("Pat Platform")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Link mobile athlete" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
 
     expect(screen.getByText("connect-modal-open")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unlink mobile athlete" }));
+
+    const dialog = screen.getByRole("dialog", { name: /Unlink mobile athlete\?/ });
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Unlink" }));
+
+    expect(deleteLinkMutate).toHaveBeenCalledWith(LINK_ID);
   });
 
-  it("shows an error alert and no silent empty picker on a non-reconnect error (T6-f)", () => {
+  it("keeps the linked row unlinkable and shows the error alert in place of the picker on a non-reconnect error (T6-f)", () => {
+    athletesState.data = {
+      athletes: [
+        makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" }),
+        makeAthlete({ userId: UNLINKED_ATHLETE_ID, name: "Sam Athlete" }),
+      ],
+    };
+    enrollmentsState.data = [
+      makeEnrollment({ athleteId: LINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
+      makeEnrollment({
+        id: "ckenrl0000000000000000pat0",
+        athleteId: UNLINKED_ATHLETE_ID,
+        status: EnrollmentStatus.ACTIVE,
+      }),
+    ];
+    mobileAthletesState.data = undefined;
+    mobileAthletesState.error = new Error("legacy 500");
+    mobileAthletesState.isError = true;
+
+    renderSection([
+      makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID, legacyUserId: 101 }),
+    ]);
+
+    expect(screen.getByText("Pat Platform")).toBeInTheDocument();
+    expect(screen.getByText("Couldn't load athletes. Try again.")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Link mobile athlete" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unlink mobile athlete" }));
+
+    const dialog = screen.getByRole("dialog", { name: /Unlink mobile athlete\?/ });
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Unlink" }));
+
+    expect(deleteLinkMutate).toHaveBeenCalledWith(LINK_ID);
+  });
+
+  it("shows a no-athletes hint instead of a dead picker when the live list is empty (QA-05)", () => {
     athletesState.data = {
       athletes: [makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" })],
     };
     enrollmentsState.data = [
       makeEnrollment({ athleteId: LINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
     ];
-    mobileAthletesState.data = undefined;
-    mobileAthletesState.error = new Error("legacy 500");
-    mobileAthletesState.isError = true;
+    mobileAthletesState.data = [];
 
     renderSection([]);
 
-    expect(screen.getByText("Couldn't load athletes. Try again.")).toBeInTheDocument();
+    expect(screen.getByText("No mobile athletes found.")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Link mobile athlete" })).toBeNull();
+  });
+
+  it("shows an all-linked hint instead of a dead picker when every legacy athlete is taken (QA-05)", () => {
+    athletesState.data = {
+      athletes: [
+        makeAthlete({ userId: UNLINKED_ATHLETE_ID, name: "Pat Platform" }),
+        makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Linked Athlete" }),
+      ],
+    };
+    enrollmentsState.data = [
+      makeEnrollment({ athleteId: UNLINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
+    ];
+    mobileAthletesState.data = [
+      { id: 101, username: "alice", firstName: "Alice", lastName: "Stone" },
+    ];
+
+    renderSection([
+      makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID, legacyUserId: 101 }),
+    ]);
+
+    expect(screen.getByText("Every mobile athlete is already linked.")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Link mobile athlete" })).toBeNull();
+  });
+
+  it("shows a spinner instead of the empty-state flash while the roster is still loading (QA-07)", () => {
+    enrollmentsState.data = undefined;
+    enrollmentsState.isPending = true;
+    athletesState.data = undefined;
+    athletesState.isPending = true;
+
+    renderSection([]);
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByText("No enrolled athletes to link yet.")).toBeNull();
+  });
+
+  it("shows a spinner instead of an Unknown athlete flash while the roster is still loading (QA-07)", () => {
+    enrollmentsState.data = undefined;
+    enrollmentsState.isPending = true;
+    athletesState.data = undefined;
+    athletesState.isPending = true;
+
+    renderSection([
+      makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID, legacyUserId: 101 }),
+    ]);
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByText("Unknown athlete")).toBeNull();
+    expect(screen.queryByText("No enrolled athletes to link yet.")).toBeNull();
   });
 });

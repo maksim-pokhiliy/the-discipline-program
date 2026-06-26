@@ -76,6 +76,7 @@ const {
 
 const PLAN_ID = "ckplan1234567890abcdef0123";
 const LINK_ID = "cklink1234567890abcdef0123";
+const ATHLETE_ID = "ckathl1234567890abcdef0123";
 
 const renderRunner = <THook>(hook: () => THook) => {
   const queryClient = new QueryClient();
@@ -240,6 +241,28 @@ describe("useCreateMobileLink", () => {
     await waitFor(() => expect(view.result.current.isError).toBe(true));
 
     expect(notifyErrorMock).toHaveBeenCalledWith(failure, "Failed to link training level");
+  });
+
+  it("notifies with the athlete fallback message when an individual create fails", async () => {
+    const failure = new Error("conflict");
+    const individualPayload: CreateMobileLinkRequest = {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+      legacyUserId: 101,
+    };
+
+    createLinkMock.mockRejectedValueOnce(failure);
+
+    const { view } = renderRunner(() => useCreateMobileLink(PLAN_ID));
+
+    await act(async () => {
+      view.result.current.mutate(individualPayload);
+    });
+
+    await waitFor(() => expect(view.result.current.isError).toBe(true));
+
+    expect(notifyErrorMock).toHaveBeenCalledWith(failure, "Failed to link athlete");
   });
 });
 

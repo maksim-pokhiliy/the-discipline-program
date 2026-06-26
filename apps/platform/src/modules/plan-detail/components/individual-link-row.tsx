@@ -59,6 +59,10 @@ export const IndividualLinkRow: React.FC<IndividualLinkRowProps> = ({
   const resolvedImage = image ?? null;
 
   const handleSelect = (value: string): void => {
+    if (value === NO_SELECTION) {
+      return;
+    }
+
     const legacyUserId = Number(value);
 
     if (!Number.isInteger(legacyUserId)) {
