@@ -1,11 +1,13 @@
 import { screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
 import type { MobileConnection } from "@repo/contracts/coaching/mobile-connection";
 import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
 
 import {
+  makeIndividualLink,
   makeMobileConnection,
   makeMobileLink,
   trainingLevelsFixture,
@@ -27,7 +29,20 @@ const levelsState: QueryState<LegacyTrainingLevel[]> = {
 };
 const linksState: QueryState<MobileLink[]> = { data: [], isPending: false };
 
+type RosterAthlete = Pick<CoachAthleteListItem, "userId" | "name" | "email">;
+
+const ALICE: RosterAthlete = {
+  userId: "ckathl1234567890abcdef0123",
+  name: "Alice Stone",
+  email: "alice@example.com",
+};
+const coachAthletesState: QueryState<{ athletes: RosterAthlete[] }> = {
+  data: { athletes: [ALICE] },
+  isPending: false,
+};
+
 vi.mock("@app/lib/hooks", () => ({
+  useCoachAthletes: () => coachAthletesState,
   useMobileConnections: () => connectionsState,
   useTrainingLevels: () => levelsState,
   useMobileLinks: () => linksState,
@@ -55,6 +70,8 @@ beforeEach(() => {
   levelsState.isPending = false;
   linksState.data = [];
   linksState.isPending = false;
+  coachAthletesState.data = { athletes: [ALICE] };
+  coachAthletesState.isPending = false;
 });
 
 afterEach(() => {
@@ -101,5 +118,39 @@ describe("MobilePublishingStrip (MT-14)", () => {
     const { container } = renderStrip();
 
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("MobilePublishingStrip individual + mixed channels", () => {
+  it("lists individual athlete names and enables Publish when only individual links exist", () => {
+    linksState.data = [makeIndividualLink()];
+
+    renderStrip();
+
+    expect(screen.getByText("Publishes to: Alice Stone")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publish this week" })).toBeEnabled();
+  });
+
+  it("labels both channels when general and individual links coexist", () => {
+    linksState.data = [
+      makeMobileLink({ id: "cklink2000000000000000000a", legacyLevelId: 2 }),
+      makeIndividualLink({ id: "cklink9000000000000000000a" }),
+    ];
+
+    renderStrip();
+
+    expect(screen.getByText("Levels: Pro · Athletes: Alice Stone")).toBeInTheDocument();
+  });
+
+  it("falls back to an athlete count when a roster name is unavailable", () => {
+    coachAthletesState.data = { athletes: [] };
+    linksState.data = [
+      makeMobileLink({ id: "cklink2000000000000000000a", legacyLevelId: 2 }),
+      makeIndividualLink({ id: "cklink9000000000000000000a" }),
+    ];
+
+    renderStrip();
+
+    expect(screen.getByText("Levels: Pro · Athletes: 1 athlete")).toBeInTheDocument();
   });
 });

@@ -71,6 +71,7 @@ const LEVEL_NAMES = new Map<number, string>([
   [2, "Pro"],
   [3, "RX"],
 ]);
+const EMPTY_ATHLETE_NAMES = new Map<string, string>();
 const CONFIRM_LABEL = "Overwrite & publish";
 
 const createDeferred = (): Deferred => {
@@ -105,6 +106,7 @@ const renderModal = (links: GeneralMobileLink[] = [LINK_A]) =>
       monday={MONDAY}
       links={links}
       levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
     />,
   );
 
@@ -125,7 +127,7 @@ describe("PublishResultsPanel (MT-1, MT-13)", () => {
     const groups: PublishLevelGroup[] = [
       {
         linkId: LINK_A.id,
-        levelName: "Pro",
+        heading: "Pro",
         outcome: { kind: "results", results: publishResultsAllActions },
       },
     ];
@@ -146,16 +148,16 @@ describe("PublishResultsPanel (MT-1, MT-13)", () => {
     expect(screen.getByText("Fri")).toBeInTheDocument();
   });
 
-  it("renders both rows when two groups share an empty/duplicate levelName but differ by linkId (QA-032)", () => {
+  it("renders both rows when two groups share an empty/duplicate heading but differ by linkId (QA-032)", () => {
     const groups: PublishLevelGroup[] = [
       {
         linkId: LINK_A.id,
-        levelName: "",
+        heading: "",
         outcome: { kind: "results", results: [makePublishDayResult({ action: "created" })] },
       },
       {
         linkId: LINK_B.id,
-        levelName: "",
+        heading: "",
         outcome: { kind: "results", results: [makePublishDayResult({ action: "updated" })] },
       },
     ];
@@ -255,6 +257,7 @@ describe("PublishWeekModal in-flight publish re-entrancy (MT-5, QA-001/QA-003)",
     monday: MONDAY,
     links: [LINK_A],
     levelNameById: LEVEL_NAMES,
+    athleteNameById: EMPTY_ATHLETE_NAMES,
   };
 
   it("does not fire a second concurrent publish when the open modal re-renders mid-flight", async () => {
@@ -372,6 +375,7 @@ describe("PublishWeekModal mounted-closed stability (regression: max update dept
       monday: new Date("2026-01-05T00:00:00.000Z"),
       links: [makeMobileLink({ id: LINK_A.id, legacyLevelId: 2 })],
       levelNameById: new Map<number, string>([[2, "Pro"]]),
+      athleteNameById: EMPTY_ATHLETE_NAMES,
     });
 
     const { rerender } = render(<PublishWeekModal {...freshProps()} />);

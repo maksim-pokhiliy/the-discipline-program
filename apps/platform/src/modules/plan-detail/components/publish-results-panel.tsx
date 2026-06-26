@@ -10,7 +10,7 @@ import { PUBLISH_RESULT_CHIPS } from "@app/lib/config";
 
 export type PublishLevelGroup = {
   linkId: string;
-  levelName: string;
+  heading: string;
   outcome:
     | { kind: "results"; results: PublishDayResult[] }
     | { kind: "reconnect" }
@@ -32,7 +32,7 @@ export const PublishResultsPanel: React.FC<PublishResultsPanelProps> = ({
     {groups.map((group) => (
       <Stack key={group.linkId} spacing={1}>
         <Typography variant="overline" color="text.secondary">
-          {group.levelName}
+          {group.heading}
         </Typography>
 
         {group.outcome.kind === "results" ? (
