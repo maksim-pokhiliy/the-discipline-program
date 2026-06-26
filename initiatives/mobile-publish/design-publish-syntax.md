@@ -106,6 +106,8 @@ Recovers: the `AMRAP 20’` identity, `80%` once (not per row), bracketed loads,
 
 Before any prod re-publish: render a **real Денys week** through projection v2 and show the owner the text (diff vs. the live legacy rows). The exact punctuation in §4/§5 is ratified there. This work **does not publish** — publishing stays a separate coach action in the platform UI. The PR can merge on green tests; the render-and-show gate governs when Денys re-publishes.
 
+**Multiline idempotency — validated (2026-06-26).** The new `exercises[]` entries carry `\n\n`/`\n`; if the legacy backend normalized that whitespace, `contentMatches` (sha of projected vs. GET-decoded, D-9) would never match → every re-publish would PUT-churn owned days and re-`conflict` unowned ones. Confirmed it does NOT: a POST→GET byte-exact round-trip of a projection-shaped multiline string (brackets, `·`, `’`, `×`, `\n\n`) through the local harness (the prod Spring clone) returned identical bytes (190==190). The `daily_program` JSONB preserves string values verbatim.
+
 ## 9. Vocabulary rules & a follow-up
 
 - **`timeCap` repetition = AMRAP, never "cap" (owner-ratified 2026-06-26).** In CrossFit "AMRAP" names the schema TYPE (as many rounds as possible in a window); "cap" is a time limit on NON-AMRAP work. Our model encodes an AMRAP as `repetition.kind = "timeCap"`, but the shared `formatRepetitionLabel` renders it `cap 20’` — domain-wrong. The projection relabels it to `AMRAP 20’` (`structureLabel` in `format-legacy-schema.ts`; the cross-cutting `composition.cap` field keeps "cap", correct). A schema whose `header` is the leading token of the structure label (his bare `AMRAP`) collapses to the label (`AMRAP 20’`) — no `AMRAP · AMRAP` double, no lost window.
