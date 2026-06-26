@@ -61,3 +61,13 @@ DTOs — `GeneralProgramDTO {id, scheduledDate, trainingLevel{id,name}, isRestDa
 - `schema.sql` is NOT auto-applied in prod (`sql.init.mode: never`, `ddl-auto: none`). The dev profile = `ddl-auto: update` (auto-DDL, but NO seed INSERTs).
 - The iOS app also has an in-app `CreateProgram` (ADMIN authoring) — a published day can collide with one Denys typed directly → overwrite-guard (D-4).
 - `docker-compose.yml` fronts everything with Caddy on the `thedisciplineprogram.com` host (`/api/*`→backend, `/dev-api/*`→backend-dev). Our local harness skips Caddy and hits `localhost:8080` directly.
+
+## Individual channel specifics (verified P2a, 2026-06-26; source HEAD `190d9fd`)
+
+The Individual channel mirrors General with two source-confirmed deltas:
+
+- **POST/PUT `/individualProgram` body is FLAT `userId`** — `IndividualProgramDTO` adds `@JsonProperty("userId") Long userId` (the mirror of General's NESTED `trainingLevel:{id}`). Body = `{userId, scheduledDate, isRestDay, dailyProgram}`. A nested `user:{id}` is WRONG (the `@JsonPropertyOrder({"id","user",…})` is a stale red herring). POST validates the target is on `userPlan.id==2` (→**400** `IncorrectUserPlan` otherwise) + the user exists (→**404**); insert-only → **409** on (userId,date); no DB unique on (userId,date) (same MP-8 TOCTOU as General).
+- **PUT `/individualProgram` is BROKEN — do NOT use (D-14).** `IndividualProgramDTO` carries `@JsonIgnoreProperties(value="id", allowGetters=true)` (General's DTO does NOT) → the body `id` is dropped on deserialization → `updateProgram` passes `dto.getId()==null` to `service.updateIndividualProgram(null, dto)` → `findById(null)` throws (and a slip-through would INSERT a duplicate). **Republish-in-place = DELETE `/individualProgram/{id}` (works by the real path id) + POST** (capture the new id). DELETE on an absent id → 404 (treated idempotent).
+- **`GET /user?userPlanId=2`** returns `List<UserRequestDTO>` (NOT a slim `UserDTO`) — `{id (Long), username (=email), firstName?, lastName?, trainingLevel?, userPlan?, …}`, no password; `firstName`/`lastName` nullable. The athlete `id` is a `Long` → `MobilePublishLink.legacyUserId Int` (≠ `MobileConnection.legacyUserId String`, the coach). This is the Individual identity-bridge picker source (P2b).
+
+`dailyProgram` JSON is byte-identical across channels (both DTOs extend `BaseProgramDTO` + share `DailyProgramMapper`) → the platform projection (`project-day.ts` + parity test) is reused unchanged. Verified live against the harness (P2a gated integration): signin → `GET /user?userPlanId=2` → POST individual (created) → GET → dup-POST 409 → DELETE+POST (republish edit → new id) → athlete `GET /program` routes to individual.
