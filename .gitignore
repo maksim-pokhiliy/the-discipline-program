@@ -33,6 +33,7 @@ yarn-error.log*
 # Audit artifacts
 .audit/
 .audit-smells/
+.fix-adhoc/
 
 # Claude Code runtime — settings.local.json stays local; the initiative-process layer is tracked
 .claude/*

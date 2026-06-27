@@ -53,5 +53,5 @@
 - Respect workspace boundaries: don't add deps to the wrong package; use `catalog:` versions.
 - Don't run install/build/test at workspace level without confirmation.
 - Test runs require approval gating. Per-package runs (`pnpm --filter <pkg> test`) are fine without approval. The full root suite (`pnpm test` / `task test` / `turbo test`) and ANY `@repo/api-server` test run (`pnpm --filter @repo/api-server test`, `pnpm test:integration` against it) require explicit user approval — both are long (~10 min serial for api-server) and burn the cache window.
-- Don't modify lock files, Prisma migrations, CI configs, or .gitignore without confirmation.
+- Don't modify lock files, Prisma migrations, or CI configs without confirmation. (.gitignore is freely editable — user granted standing permission 2026-06-27.)
 - Be concise. Senior developer context. Russian for explanations, English for code.

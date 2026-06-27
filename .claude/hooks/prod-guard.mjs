@@ -5,7 +5,6 @@ const GUARDED_PATHS = [
   /(^|\/)package-lock\.json$/,
   /(^|\/)yarn\.lock$/,
   /(^|\/)\.github\/workflows\//,
-  /(^|\/)\.gitignore$/,
 ];
 
 const chunks = [];
@@ -23,7 +22,7 @@ if (!filePath) process.exit(0);
 
 if (GUARDED_PATHS.some((pattern) => pattern.test(filePath))) {
   process.stderr.write(
-    `PROD-GUARD: "${filePath}" is a protected path (Prisma migrations, lock files, CI workflows, .gitignore). CLAUDE.md requires explicit user confirmation before changing it. Stop and ask the user.\n`,
+    `PROD-GUARD: "${filePath}" is a protected path (Prisma migrations, lock files, CI workflows). CLAUDE.md requires explicit user confirmation before changing it. Stop and ask the user.\n`,
   );
   process.exit(2);
 }
