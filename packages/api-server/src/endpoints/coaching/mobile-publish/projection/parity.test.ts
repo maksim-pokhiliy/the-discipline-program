@@ -253,4 +253,24 @@ describe("mobile-publish projection — element-formatter parity (D-13 SSOT)", (
     expect(lines[1]).toBe("");
     expect(lines.slice(2).filter((line) => line !== "")).toHaveLength(6);
   });
+
+  it("appends the count repetition label to a present header through the shared separator (RC-1)", () => {
+    const countComposition: Composition = { repetition: { kind: "count", count: 3 } };
+    const prismaBlock = makeBlock({
+      schemaHeader: "BSS DROP COMPLEX",
+      schemaComposition: countComposition as Prisma.JsonValue,
+      rows: [makeRow({ exerciseId: EX.squat, order: 1, reps: { kind: "count", value: 8 } })],
+    });
+    const block = mapToBlockWithSchemas(prismaBlock);
+    const schema = block.schemas[0];
+
+    if (schema === undefined) {
+      throw new Error("expected a schema");
+    }
+
+    const [headerLine = ""] = buildSchemaEntry(schema, block, exerciseById).split("\n");
+
+    expect(headerLine).toBe("BSS DROP COMPLEX · 3 rounds:");
+    expect(headerLine).toContain(` · ${formatRepetitionLabel(countComposition)}`);
+  });
 });
