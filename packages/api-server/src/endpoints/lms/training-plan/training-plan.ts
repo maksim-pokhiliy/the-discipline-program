@@ -1,6 +1,7 @@
 import { type Prisma, type TrainingPlan as PrismaTrainingPlan } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { EnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import {
   type CoachPlansPageData,
   type CreateTrainingPlanData,
@@ -14,6 +15,7 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 import { resolveCallerRole, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import {
+  ENROLLMENT_STATUS_TO_PRISMA_MAP,
   mapToTrainingPlan,
   TRAINING_PLAN_STATUS_MAP,
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
@@ -160,8 +162,20 @@ export const lmsTrainingPlanApi = {
   delete: async (userId: string, id: string): Promise<void> => {
     await verifyPlanOwnership(id, userId);
 
+    const now = new Date();
+
     try {
-      await prisma.trainingPlan.delete({ where: { id } });
+      await prisma.$transaction([
+        prisma.planEnrollment.updateMany({
+          where: { planId: id, deletedAt: null },
+          data: {
+            status: ENROLLMENT_STATUS_TO_PRISMA_MAP[EnrollmentStatus.REMOVED],
+            statusChangedAt: now,
+            deletedAt: now,
+          },
+        }),
+        prisma.trainingPlan.update({ where: { id }, data: { deletedAt: now } }),
+      ]);
     } catch (error) {
       return handlePrismaError(error, { entity: "Training plan" });
     }
