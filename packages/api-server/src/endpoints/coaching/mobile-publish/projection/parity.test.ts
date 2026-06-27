@@ -273,4 +273,53 @@ describe("mobile-publish projection — element-formatter parity (D-13 SSOT)", (
     expect(headerLine).toBe("BSS DROP COMPLEX · 3 rounds:");
     expect(headerLine).toContain(` · ${formatRepetitionLabel(countComposition)}`);
   });
+
+  it("appends an interval repetition label to a present header through the shared separator", () => {
+    const intervalComposition: Composition = {
+      repetition: {
+        kind: "interval",
+        work: { value: 30, unit: "sec" },
+        off: { value: 30, unit: "sec" },
+        count: 8,
+      },
+    };
+    const prismaBlock = makeBlock({
+      schemaHeader: "intervals",
+      schemaComposition: intervalComposition as Prisma.JsonValue,
+      rows: [makeRow({ exerciseId: EX.run, order: 1 })],
+    });
+    const block = mapToBlockWithSchemas(prismaBlock);
+    const schema = block.schemas[0];
+
+    if (schema === undefined) {
+      throw new Error("expected a schema");
+    }
+
+    const [headerLine = ""] = buildSchemaEntry(schema, block, exerciseById).split("\n");
+
+    expect(headerLine).toBe("intervals · 8×:30/:30:");
+    expect(headerLine).toContain(` · ${formatRepetitionLabel(intervalComposition)}`);
+  });
+
+  it("appends a range count rounds label to a present header through the shared separator", () => {
+    const rangeComposition: Composition = {
+      repetition: { kind: "count", count: { min: 3, max: 5 } },
+    };
+    const prismaBlock = makeBlock({
+      schemaHeader: "BSS DROP COMPLEX",
+      schemaComposition: rangeComposition as Prisma.JsonValue,
+      rows: [makeRow({ exerciseId: EX.squat, order: 1, reps: { kind: "count", value: 8 } })],
+    });
+    const block = mapToBlockWithSchemas(prismaBlock);
+    const schema = block.schemas[0];
+
+    if (schema === undefined) {
+      throw new Error("expected a schema");
+    }
+
+    const [headerLine = ""] = buildSchemaEntry(schema, block, exerciseById).split("\n");
+
+    expect(headerLine).toBe("BSS DROP COMPLEX · 3-5 rounds:");
+    expect(headerLine).toContain(` · ${formatRepetitionLabel(rangeComposition)}`);
+  });
 });

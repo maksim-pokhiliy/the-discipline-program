@@ -167,9 +167,9 @@ const buildMovementLine = (
 };
 
 const rowGroupLabel = (group: RowGroup): string | null => {
-  const note = group.notes?.[0];
+  const normalized = normalizeHeader(group.notes?.[0] ?? null);
 
-  return note === undefined ? null : `${normalizeHeader(note)}${HEADER_SUFFIX}`;
+  return normalized === "" ? null : `${normalized}${HEADER_SUFFIX}`;
 };
 
 const buildBodyLines = (

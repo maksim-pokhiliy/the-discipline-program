@@ -34,7 +34,7 @@ const renderBlockItem = (item: BlockItem, block: Block, exerciseById: ExerciseBy
 
   return memberEntries.length === 0
     ? []
-    : [buildSchemaGroupWrapper(item.group, item.members.length), ...memberEntries];
+    : [buildSchemaGroupWrapper(item.group, memberEntries.length), ...memberEntries];
 };
 
 const projectBlock = (block: Block, exerciseById: ExerciseById): LegacyBlock => ({
