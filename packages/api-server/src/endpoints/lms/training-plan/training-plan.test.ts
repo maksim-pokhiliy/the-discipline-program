@@ -1,10 +1,19 @@
+import { DayOfWeek, EnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import { trainingPlanListItemSchema, TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
+import { NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
-import { cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
+import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "../../../test/helpers";
+import {
+  createTestDay,
+  createTestEnrollment,
+  createTestPerformedSession,
+  createTestSession,
+  createTestWeek,
+} from "../../../test/schedule-helpers";
 
 import { lmsTrainingPlanApi } from "./training-plan";
 
@@ -94,6 +103,146 @@ describe("lmsTrainingPlanApi", () => {
           .catch(() => {});
         await cleanupRaw.user.delete({ where: { id: localCoach.user.id } }).catch(() => {});
       }
+    });
+
+    describe("when the plan has live enrollments and logged history", () => {
+      const removedAt = new Date("2025-01-01T00:00:00.000Z");
+
+      let localCoach: Awaited<ReturnType<typeof createTestCoach>>;
+      let enrolledAthlete: Awaited<ReturnType<typeof createTestUser>>;
+      let removedAthlete: Awaited<ReturnType<typeof createTestUser>>;
+      let localPlanId: string;
+      let activeEnrollmentId: string;
+      let removedEnrollmentId: string;
+      let weekId: string;
+      let dayId: string;
+      let sessionId: string;
+      let performedSessionId: string;
+
+      beforeAll(async () => {
+        localCoach = await createTestCoach();
+        enrolledAthlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
+        removedAthlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
+
+        const plan = await createTestPlan(localCoach.user.id, {
+          status: TrainingPlanStatus.ACTIVE,
+        });
+
+        localPlanId = plan.id;
+
+        const activeEnrollment = await createTestEnrollment(
+          localPlanId,
+          enrolledAthlete.id,
+          localCoach.user.id,
+        );
+
+        activeEnrollmentId = activeEnrollment.enrollment.id;
+
+        const removedEnrollment = await createTestEnrollment(
+          localPlanId,
+          removedAthlete.id,
+          localCoach.user.id,
+          { status: EnrollmentStatus.REMOVED },
+        );
+
+        removedEnrollmentId = removedEnrollment.enrollment.id;
+
+        await cleanupRaw.planEnrollment.update({
+          where: { id: removedEnrollmentId },
+          data: { statusChangedAt: removedAt, deletedAt: removedAt },
+        });
+
+        const week = await createTestWeek(localPlanId, {
+          startDate: new Date("2026-01-05T00:00:00.000Z"),
+        });
+
+        weekId = week.week.id;
+
+        const day = await createTestDay(weekId, { dayOfWeek: DayOfWeek.MONDAY });
+
+        dayId = day.day.id;
+
+        const session = await createTestSession(dayId, { order: 0 });
+
+        sessionId = session.session.id;
+
+        const performed = await createTestPerformedSession(sessionId, enrolledAthlete.id);
+
+        performedSessionId = performed.performed.id;
+
+        await lmsTrainingPlanApi.delete(localCoach.user.id, localPlanId);
+      });
+
+      afterAll(async () => {
+        await cleanupRaw.trainingPlan.delete({ where: { id: localPlanId } }).catch(() => {});
+        await cleanupRaw.user.delete({ where: { id: enrolledAthlete.id } }).catch(() => {});
+        await cleanupRaw.user.delete({ where: { id: removedAthlete.id } }).catch(() => {});
+        await cleanupRaw.coachProfile
+          .delete({ where: { id: localCoach.profile.id } })
+          .catch(() => {});
+        await cleanupRaw.user.delete({ where: { id: localCoach.user.id } }).catch(() => {});
+      });
+
+      it("marks the plan as soft-deleted", async () => {
+        const row = await cleanupRaw.trainingPlan.findUnique({ where: { id: localPlanId } });
+
+        expect(row?.deletedAt).not.toBeNull();
+      });
+
+      it("cascades live enrollments to REMOVED with deletedAt set", async () => {
+        const row = await cleanupRaw.planEnrollment.findUnique({
+          where: { id: activeEnrollmentId },
+        });
+
+        expect(row?.status).toBe(EnrollmentStatus.REMOVED);
+        expect(row?.deletedAt).not.toBeNull();
+      });
+
+      it("leaves already-removed enrollment history untouched", async () => {
+        const row = await cleanupRaw.planEnrollment.findUnique({
+          where: { id: removedEnrollmentId },
+        });
+
+        expect(row?.statusChangedAt.getTime()).toBe(removedAt.getTime());
+        expect(row?.deletedAt?.getTime()).toBe(removedAt.getTime());
+      });
+
+      it("preserves the logged athlete history chain under the plan", async () => {
+        const performed = await cleanupRaw.performedSession.findUnique({
+          where: { id: performedSessionId },
+        });
+        const session = await cleanupRaw.session.findUnique({ where: { id: sessionId } });
+        const day = await cleanupRaw.day.findUnique({ where: { id: dayId } });
+        const week = await cleanupRaw.week.findUnique({ where: { id: weekId } });
+
+        expect(performed).not.toBeNull();
+        expect(session).not.toBeNull();
+        expect(day).not.toBeNull();
+        expect(week).not.toBeNull();
+      });
+
+      it("excludes the soft-deleted plan from list endpoints", async () => {
+        const all = await lmsTrainingPlanApi.getAll(localCoach.user.id);
+        const page = await lmsTrainingPlanApi.getPageData(localCoach.user.id);
+
+        expect(all.find((p) => p.id === localPlanId)).toBeUndefined();
+        expect(page.plans.find((p) => p.id === localPlanId)).toBeUndefined();
+      });
+
+      it("throws NotFound for reads and mutations on the soft-deleted plan", async () => {
+        await expect(lmsTrainingPlanApi.getById(localCoach.user.id, localPlanId)).rejects.toThrow(
+          NotFoundError,
+        );
+        await expect(
+          lmsTrainingPlanApi.update(localCoach.user.id, localPlanId, { name: "Renamed" }),
+        ).rejects.toThrow(NotFoundError);
+        await expect(lmsTrainingPlanApi.delete(localCoach.user.id, localPlanId)).rejects.toThrow(
+          NotFoundError,
+        );
+        await expect(lmsTrainingPlanApi.archive(localCoach.user.id, localPlanId)).rejects.toThrow(
+          NotFoundError,
+        );
+      });
     });
   });
 });
