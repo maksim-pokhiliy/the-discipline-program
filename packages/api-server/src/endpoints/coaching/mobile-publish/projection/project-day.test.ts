@@ -1031,6 +1031,61 @@ describe("projectDay — row groups / coach separators (RC-3)", () => {
     );
   });
 
+  it("labels a multi-element-note row-group from notes[0] only, dropping notes[1+] (REV-003)", () => {
+    const bike = cuid("exmnbike");
+    const inchworm = cuid("exmninch");
+    const scap = cuid("exmnscap");
+    const rowGroupId = cuid("rgmulti");
+    const block = makeBlock({
+      labelName: "warm-up",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({
+              exerciseId: bike,
+              name: "Echo Bike",
+              order: 1,
+              reps: { kind: "unit_bound", unit: "cal", value: 10 },
+            }),
+            makeRow({
+              exerciseId: inchworm,
+              name: "Inchworm",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: scap,
+              name: "Scap Pull-ups",
+              order: 3,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+          ],
+          rowGroups: [
+            makeRowGroup({ id: rowGroupId, notes: ["super-set", "extra note", "third"] }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [bike, "Echo Bike"],
+        [inchworm, "Inchworm"],
+        [scap, "Scap Pull-ups"],
+      ]),
+    );
+
+    expect(entry).toBe(
+      ["10 cal Echo Bike", "super-set:", "5 reps Inchworm", "5 reps Scap Pull-ups"].join("\n"),
+    );
+    expect(entry).not.toContain("extra note");
+    expect(entry).not.toContain("third");
+  });
+
   it("renders descending round-labelled row-groups with no `· once` and the rest line last", () => {
     const calRow = cuid("excalrow");
     const pull = cuid("exrgpull");
