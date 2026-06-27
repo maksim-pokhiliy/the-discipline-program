@@ -5,9 +5,18 @@ import { useMemo, useState } from "react";
 import SmartphoneIcon from "@mui/icons-material/Smartphone";
 import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 
-import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
+import {
+  type GeneralMobileLink,
+  type IndividualMobileLink,
+  partitionMobileLinks,
+} from "@repo/contracts/coaching/mobile-link";
 
-import { useMobileConnections, useMobileLinks, useTrainingLevels } from "@app/lib/hooks";
+import {
+  useCoachAthletes,
+  useMobileConnections,
+  useMobileLinks,
+  useTrainingLevels,
+} from "@app/lib/hooks";
 
 import { ManageMobileLinksModal } from "./manage-mobile-links-modal";
 import { PublishWeekModal } from "./publish-week-modal";
@@ -19,19 +28,59 @@ type MobilePublishingStripProps = {
 
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level first";
 const NOT_LINKED_LABEL = "Not linked";
+const PUBLISHES_TO_PREFIX = "Publishes to: ";
+const LEVELS_CLAUSE_LABEL = "Levels: ";
+const ATHLETES_CLAUSE_LABEL = "Athletes: ";
+const CLAUSE_SEPARATOR = " · ";
 
-const describeLinks = (links: GeneralMobileLink[], levelNameById: Map<number, string>): string => {
-  if (links.length === 0) {
+type ChannelSummary = { clause: string; allResolved: boolean };
+
+const summarizeChannel = (
+  names: (string | undefined)[],
+  singular: string,
+  plural: string,
+): ChannelSummary => {
+  if (names.some((name) => name === undefined)) {
+    return {
+      clause: `${names.length} ${names.length === 1 ? singular : plural}`,
+      allResolved: false,
+    };
+  }
+
+  return { clause: names.join(", "), allResolved: true };
+};
+
+const describeLinks = (
+  generalLinks: GeneralMobileLink[],
+  individualLinks: IndividualMobileLink[],
+  levelNameById: Map<number, string>,
+  athleteNameById: Map<string, string>,
+): string => {
+  const hasGeneralLinks = generalLinks.length > 0;
+  const hasIndividualLinks = individualLinks.length > 0;
+
+  if (!hasGeneralLinks && !hasIndividualLinks) {
     return NOT_LINKED_LABEL;
   }
 
-  const names = links.map((link) => levelNameById.get(link.legacyLevelId));
+  const levels = summarizeChannel(
+    generalLinks.map((link) => levelNameById.get(link.legacyLevelId)),
+    "level",
+    "levels",
+  );
+  const athletes = summarizeChannel(
+    individualLinks.map((link) => athleteNameById.get(link.athleteId)),
+    "athlete",
+    "athletes",
+  );
 
-  if (names.some((name) => name === undefined)) {
-    return `${links.length} ${links.length === 1 ? "level" : "levels"}`;
+  if (hasGeneralLinks && hasIndividualLinks) {
+    return `${LEVELS_CLAUSE_LABEL}${levels.clause}${CLAUSE_SEPARATOR}${ATHLETES_CLAUSE_LABEL}${athletes.clause}`;
   }
 
-  return `Publishes to: ${names.join(", ")}`;
+  const summary = hasGeneralLinks ? levels : athletes;
+
+  return summary.allResolved ? `${PUBLISHES_TO_PREFIX}${summary.clause}` : summary.clause;
 };
 
 export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ planId, monday }) => {
@@ -40,15 +89,13 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
 
   const linksQuery = useMobileLinks(planId);
   const levelsQuery = useTrainingLevels(isConnected);
+  const athletesQuery = useCoachAthletes();
 
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
 
-  const links = useMemo<GeneralMobileLink[]>(
-    () =>
-      (linksQuery.data ?? []).filter(
-        (link): link is GeneralMobileLink => link.channel === "GENERAL",
-      ),
+  const { general: generalLinks, individual: individualLinks } = useMemo(
+    () => partitionMobileLinks(linksQuery.data ?? []),
     [linksQuery.data],
   );
 
@@ -57,12 +104,23 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
     [levelsQuery.data],
   );
 
+  const athleteNameById = useMemo(
+    () =>
+      new Map(
+        (athletesQuery.data?.athletes ?? []).map((athlete) => [
+          athlete.userId,
+          athlete.name ?? athlete.email,
+        ]),
+      ),
+    [athletesQuery.data],
+  );
+
   if (connectionsQuery.isPending || linksQuery.isPending) {
     return null;
   }
 
-  const statusLabel = describeLinks(links, levelNameById);
-  const hasLinks = links.length > 0;
+  const statusLabel = describeLinks(generalLinks, individualLinks, levelNameById, athleteNameById);
+  const hasLinks = generalLinks.length + individualLinks.length > 0;
 
   return (
     <>
@@ -118,8 +176,9 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
         open={isPublishOpen}
         onClose={() => setIsPublishOpen(false)}
         monday={monday}
-        links={links}
+        links={linksQuery.data ?? []}
         levelNameById={levelNameById}
+        athleteNameById={athleteNameById}
       />
     </>
   );

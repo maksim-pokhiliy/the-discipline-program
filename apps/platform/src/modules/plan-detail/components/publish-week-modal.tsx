@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
-import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
+import { type MobileLink, isGeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { formatCalendarWeekday, formatDateParam } from "@repo/shared";
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
@@ -19,8 +19,9 @@ type PublishWeekModalProps = {
   open: boolean;
   onClose: () => void;
   monday: Date;
-  links: GeneralMobileLink[];
+  links: MobileLink[];
   levelNameById: Map<number, string>;
+  athleteNameById: Map<string, string>;
 };
 
 const PUBLISHING_MESSAGE = "Publishing this week…";
@@ -56,6 +57,7 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   monday,
   links,
   levelNameById,
+  athleteNameById,
 }) => {
   const publishMobile = usePublishMobile();
 
@@ -68,10 +70,12 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   const runIdRef = useRef(0);
   const isRunningRef = useRef(false);
 
-  const resolveLevelName = useCallback(
-    (link: GeneralMobileLink): string =>
-      levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`,
-    [levelNameById],
+  const resolveHeading = useCallback(
+    (link: MobileLink): string =>
+      isGeneralMobileLink(link)
+        ? (levelNameById.get(link.legacyLevelId) ?? `Level ${link.legacyLevelId}`)
+        : (athleteNameById.get(link.athleteId) ?? `Athlete #${link.legacyUserId}`),
+    [levelNameById, athleteNameById],
   );
 
   const runPublish = useCallback(
@@ -108,23 +112,23 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
         const nextGroups = settled.map((outcome, index): PublishLevelGroup => {
           const link = links[index];
           const linkId = link === undefined ? String(index) : link.id;
-          const levelName = link === undefined ? "" : resolveLevelName(link);
+          const heading = link === undefined ? "" : resolveHeading(link);
 
           if (outcome.status === "fulfilled") {
             return {
               linkId,
-              levelName,
+              heading,
               outcome: { kind: "results", results: outcome.value.result.results },
             };
           }
 
           if (isReconnectRequired(outcome.reason)) {
-            return { linkId, levelName, outcome: { kind: "reconnect" } };
+            return { linkId, heading, outcome: { kind: "reconnect" } };
           }
 
           return {
             linkId,
-            levelName,
+            heading,
             outcome: { kind: "error", message: errorMessage(outcome.reason) },
           };
         });
@@ -139,7 +143,7 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
         isRunningRef.current = false;
       }
     },
-    [links, monday, publishMobile, resolveLevelName],
+    [links, monday, publishMobile, resolveHeading],
   );
 
   const latestRunPublish = useRef(runPublish);

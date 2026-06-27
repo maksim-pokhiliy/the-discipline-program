@@ -29,7 +29,7 @@ Status: ✅ done · 🔄 in progress · ⏳ pending · ⛔ blocked
 - 1.6b Publish button (week → `POST /publish`); render the per-day `{created,updated,skipped,conflict,failed}` results; surface `conflict` for the D-4 overwrite confirm ✅ (`PublishWeekModal` per-link `allSettled` loop, results grouped by level, conflict → nested overwrite confirm). Day-scope UI not built (P3); week scope only.
 - 1.8 Additive server addendum (shipped under P1b): `listLinks`/`deleteLink` services + `GET /links?planId=` + `DELETE /links/[id]` routes + contract query/params schemas; `MOBILE_RECONNECT_REQUIRED` promoted to `@repo/contracts` (D-12). Unlink IN scope; disconnect (`DELETE /connections`) DEFERRED to P3 (D-11, MP-12). ✅
 
-## P2 — Individual publish 🔄
+## P2 — Individual publish ✅ done (2a server + 2b coach UI; 2.7 weight-baking optional, deferred MP-2)
 
 ### P2a — server/integration foundation ✅ done (PR `feat/mobile-publish-p2a`; D-14/D-15)
 
@@ -38,11 +38,11 @@ Status: ✅ done · 🔄 in progress · ⏳ pending · ⛔ blocked
 - 2.3 Channel-aware publish seam (`ChannelProgramOps` injected into `publish-day` — GENERAL byte-identical, D-9 inherited verbatim) + flat-additive contract widening + minimal General-UI null-guards ✅
 - 2.4 Verify: api-server mobile units 92✓ (incl. the 5 GENERAL D-9 regression cases) + the gated integration (general + individual, 14✓ — D-15 DELETE+POST live proof: republish edit → `updated` + new legacyRowId) ✅
 
-### P2b — Individual coach UI ⏳
+### P2b — Individual coach UI ✅ done (PR `feat/mobile-publish-p2b`; D-16)
 
-- 2.5 Athlete picker (plan-enrollment ↔ live legacy athlete list; manual, coach-driven, no auto-match — MP-1 / D-2/D-3)
-- 2.6 Link-modal individual mode + strip/publish-modal individual display (grouped by athlete) + client slice/hook/key (`useMobileAthletes`)
-- 2.7 (optional) Bake the athlete's resolved working weights into the text — we know his 1RMs (MP-2; `athleteId` now stored)
+- 2.5 Athlete picker (plan-enrollment ↔ live legacy athlete list; manual, coach-driven, no auto-match — MP-1 / D-2/D-3) ✅ (per-enrollment list in a new "Athletes" section; bijection-excluded; graceful-degrade on a live-list outage — keeps linked rows manageable, D-16)
+- 2.6 Link-modal individual mode + strip/publish-modal individual display (grouped by athlete) + client slice/hook/key (`useMobileAthletes`) ✅ (`IndividualLinksSection`/`IndividualLinkRow`; per-channel strip status; publish grouped by platform athlete name — `Level null` killed; guards promoted to `@repo/contracts`). MP-1 CLOSED end-to-end.
+- 2.7 (optional) Bake the athlete's resolved working weights into the text — we know his 1RMs (MP-2; `athleteId` now stored) ⏳ NOT taken in P2b (out of scope; pure `renderRowLine` ctx follow-up)
 
 ## P3 — Hardening ⏳
 

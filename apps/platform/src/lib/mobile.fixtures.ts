@@ -1,6 +1,6 @@
-import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
+import type { LegacyTrainingLevel, MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
 import type { MobileConnection } from "@repo/contracts/coaching/mobile-connection";
-import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { GeneralMobileLink, IndividualMobileLink } from "@repo/contracts/coaching/mobile-link";
 import {
   MOBILE_PUBLISH_ACTIONS,
   type MobilePublishAction,
@@ -14,6 +14,7 @@ const MS_PER_DAY = 86_400_000;
 const CONNECTION_ID = "ckconn1234567890abcdef0123";
 const LINK_ID = "cklink1234567890abcdef0123";
 const PLAN_ID = "ckplan1234567890abcdef0123";
+const ATHLETE_ID = "ckathl1234567890abcdef0123";
 const LEGACY_ROW_ID = 5001;
 
 const addDays = (base: Date, days: number): Date => new Date(base.getTime() + days * MS_PER_DAY);
@@ -51,6 +52,20 @@ export const makeMobileLink = (overrides: Partial<GeneralMobileLink> = {}): Gene
   ...overrides,
 });
 
+export const makeIndividualLink = (
+  overrides: Partial<IndividualMobileLink> = {},
+): IndividualMobileLink => ({
+  id: LINK_ID,
+  planId: PLAN_ID,
+  channel: "INDIVIDUAL",
+  legacyLevelId: null,
+  legacyUserId: 101,
+  athleteId: ATHLETE_ID,
+  createdAt: NOW,
+  updatedAt: NOW,
+  ...overrides,
+});
+
 export const makeTrainingLevel = (
   overrides: Partial<LegacyTrainingLevel> = {},
 ): LegacyTrainingLevel => ({
@@ -63,6 +78,12 @@ export const trainingLevelsFixture: LegacyTrainingLevel[] = [
   { id: 1, name: "Scaled" },
   { id: 2, name: "Pro" },
   { id: 3, name: "RX" },
+];
+
+export const mobileAthletesFixture: MobileAthlete[] = [
+  { id: 101, username: "alice", firstName: "Alice", lastName: "Stone" },
+  { id: 102, username: "bob", firstName: "Bob", lastName: null },
+  { id: 103, username: "charlie", firstName: null, lastName: null },
 ];
 
 export const makePublishDayResult = (

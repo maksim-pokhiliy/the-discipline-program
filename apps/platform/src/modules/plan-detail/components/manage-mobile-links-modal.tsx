@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
-import type { GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
+import { type GeneralMobileLink, partitionMobileLinks } from "@repo/contracts/coaching/mobile-link";
 import { BaseModal, ConfirmationModal, EmptyState } from "@repo/ui";
 
 import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
@@ -31,6 +31,8 @@ import {
 } from "@app/lib/hooks";
 
 import { ConnectMobileModal } from "../../coach-profile/components";
+
+import { IndividualLinksSection } from "./individual-links-section";
 
 type ManageMobileLinksModalProps = {
   open: boolean;
@@ -46,6 +48,8 @@ const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
 const RECONNECT_TITLE = "Reconnect mobile app";
 const NO_LEVEL_SELECTED = "";
+const TRAINING_LEVELS_HEADING = "Training levels";
+const ATHLETES_HEADING = "Athletes";
 
 export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   open,
@@ -66,11 +70,8 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   const [pendingDelete, setPendingDelete] = useState<GeneralMobileLink | null>(null);
 
   const levels = useMemo<LegacyTrainingLevel[]>(() => levelsQuery.data ?? [], [levelsQuery.data]);
-  const links = useMemo<GeneralMobileLink[]>(
-    () =>
-      (linksQuery.data ?? []).filter(
-        (link): link is GeneralMobileLink => link.channel === "GENERAL",
-      ),
+  const { general: links, individual: individualLinks } = useMemo(
+    () => partitionMobileLinks(linksQuery.data ?? []),
     [linksQuery.data],
   );
 
@@ -150,6 +151,10 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
 
     return (
       <Stack spacing={2.5}>
+        <Typography variant="overline" color="text.secondary">
+          {TRAINING_LEVELS_HEADING}
+        </Typography>
+
         {links.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             {NO_LINKS_MESSAGE}
@@ -220,6 +225,18 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
             )}
           </>
         )}
+
+        <Divider />
+
+        <Typography variant="overline" color="text.secondary">
+          {ATHLETES_HEADING}
+        </Typography>
+
+        <IndividualLinksSection
+          planId={planId}
+          isConnected={isConnected}
+          individualLinks={individualLinks}
+        />
       </Stack>
     );
   };
