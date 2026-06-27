@@ -6,6 +6,7 @@ import {
   formatRepetitionLabel,
   formatRestSpec,
 } from "@repo/contracts/lms/composition";
+import { type RowGroup, buildRowItems } from "@repo/contracts/lms/row-group";
 import {
   type ExerciseById,
   buildEffectiveIntensityTexts,
@@ -22,6 +23,7 @@ const NAME_LABEL_SEPARATOR = " · ";
 const INTENSITY_SEPARATOR = " ";
 const LINE_SEPARATOR = "\n";
 const SCHEMA_BODY_SEPARATOR = "\n\n";
+const BLANK_LINE = "";
 const HEADER_SUFFIX = ":";
 const BRACKET_OPEN = "[ ";
 const BRACKET_CLOSE = " ]";
@@ -30,6 +32,7 @@ const HEADER_INTENSITY_LEVEL = "schema";
 type RepetitionKind = NonNullable<Composition["repetition"]>["kind"];
 
 const STRUCTURE_APPEND_KINDS = new Set<RepetitionKind>([
+  "count",
   "timeCap",
   "cadence",
   "interval",
@@ -163,15 +166,48 @@ const buildMovementLine = (
   return parts.join(PART_SEPARATOR);
 };
 
+const rowGroupLabel = (group: RowGroup): string | null => {
+  const normalized = normalizeHeader(group.notes?.[0] ?? null);
+
+  return normalized === "" ? null : `${normalized}${HEADER_SUFFIX}`;
+};
+
+const buildBodyLines = (
+  schema: SchemaWithBody,
+  block: Block,
+  exerciseById: ExerciseById,
+): string[] => {
+  const lines: string[] = [];
+
+  for (const item of buildRowItems(schema.rows, schema.rowGroups)) {
+    if (item.kind === "row") {
+      lines.push(buildMovementLine(item.row, schema, block, exerciseById));
+      continue;
+    }
+
+    const label = rowGroupLabel(item.group);
+
+    if (label !== null) {
+      lines.push(label);
+    } else if (lines.length > 0) {
+      lines.push(BLANK_LINE);
+    }
+
+    for (const row of item.members) {
+      lines.push(buildMovementLine(row, schema, block, exerciseById));
+    }
+  }
+
+  return lines;
+};
+
 export const buildSchemaEntry = (
   schema: SchemaWithBody,
   block: Block,
   exerciseById: ExerciseById,
 ): string => {
   const headerLine = buildHeaderLine(schema, block);
-  const movementLines = schema.rows.map((row) =>
-    buildMovementLine(row, schema, block, exerciseById),
-  );
+  const movementLines = buildBodyLines(schema, block, exerciseById);
   const restSpec = schema.schema.composition?.rest;
   const body = restSpec ? [...movementLines, formatRestSpec(restSpec)] : movementLines;
 

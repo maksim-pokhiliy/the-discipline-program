@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { type Exercise } from "@repo/contracts/lms/exercise";
 import { type ExerciseById } from "@repo/contracts/lms/row-text";
+import { type ParallelInterleaveOrder } from "@repo/contracts/lms/schema-group";
 
 import { type MobilePublishDayPayload } from "../day-include";
 
@@ -17,6 +18,8 @@ type PrismaSession = MobilePublishDayPayload["sessions"][number];
 type PrismaBlock = PrismaSession["blocks"][number];
 type PrismaSchema = PrismaBlock["schemas"][number];
 type PrismaRow = PrismaSchema["rows"][number];
+type PrismaSchemaGroup = PrismaBlock["groups"][number];
+type PrismaRowGroup = PrismaSchema["rowGroups"][number];
 
 const SCHEMA_ID = cuid("sc");
 const BLOCK_ID = cuid("b");
@@ -46,13 +49,14 @@ const makeRow = (over: {
   rest?: Prisma.JsonValue;
   modifiers?: string[];
   notes?: string[] | null;
+  rowGroupId?: string | null;
 }): PrismaRow => ({
   id: cuid(`r${over.order}${over.exerciseId}`),
   schemaId: SCHEMA_ID,
   order: over.order,
   exerciseId: over.exerciseId,
   sets: over.sets ?? null,
-  rowGroupId: null,
+  rowGroupId: over.rowGroupId ?? null,
   load: over.load ?? null,
   reps: over.reps ?? null,
   side: over.side ?? null,
@@ -85,11 +89,13 @@ const makeSchema = (over: {
   header?: string | null;
   composition?: Prisma.JsonValue;
   intensity?: Prisma.JsonValue;
+  groupId?: string | null;
   rows: PrismaRow[];
+  rowGroups?: PrismaRowGroup[];
 }): PrismaSchema => ({
   id: cuid(`s${over.order}`),
   blockId: BLOCK_ID,
-  groupId: null,
+  groupId: over.groupId ?? null,
   order: over.order,
   header: over.header ?? null,
   composition: over.composition ?? null,
@@ -98,7 +104,28 @@ const makeSchema = (over: {
   createdAt: NOW,
   updatedAt: NOW,
   rows: over.rows,
-  rowGroups: [],
+  rowGroups: over.rowGroups ?? [],
+});
+
+const makeRowGroup = (over: { id: string; notes?: string[] | null }): PrismaRowGroup => ({
+  id: over.id,
+  schemaId: SCHEMA_ID,
+  notes: over.notes ?? null,
+  createdAt: NOW,
+  updatedAt: NOW,
+});
+
+const makeSchemaGroup = (over: {
+  id: string;
+  interleaveOrder?: ParallelInterleaveOrder;
+  notes?: string[] | null;
+}): PrismaSchemaGroup => ({
+  id: over.id,
+  blockId: BLOCK_ID,
+  notes: over.notes ?? null,
+  interleaveOrder: over.interleaveOrder ?? "round_by_round",
+  createdAt: NOW,
+  updatedAt: NOW,
 });
 
 const makeBlock = (over: {
@@ -106,6 +133,7 @@ const makeBlock = (over: {
   labelName?: string;
   intensity?: Prisma.JsonValue;
   schemas: PrismaSchema[];
+  groups?: PrismaSchemaGroup[];
 }): PrismaBlock => ({
   id: BLOCK_ID,
   sessionId: cuid("sess"),
@@ -136,7 +164,7 @@ const makeBlock = (over: {
           },
         ],
   schemas: over.schemas,
-  groups: [],
+  groups: over.groups ?? [],
 });
 
 const makeSession = (order: number, blocks: PrismaBlock[]): PrismaSession => ({
@@ -758,5 +786,598 @@ describe("projectDay — review follow-ups (PR #319)", () => {
       "bike HR Z3",
       "ski erg 5:00 / km",
     ]);
+  });
+});
+
+describe("projectDay — count repetition with a present header (RC-1)", () => {
+  it("appends the count rounds label to a present header through the shared separator", () => {
+    const snatch = cuid("exsnatch");
+    const block = makeBlock({
+      labelName: "strength",
+      schemas: [
+        makeSchema({
+          order: 1,
+          header: "BSS DROP COMPLEX",
+          composition: { repetition: { kind: "count", count: 3 } },
+          rows: [
+            makeRow({
+              exerciseId: snatch,
+              name: "DB snatch",
+              order: 1,
+              reps: { kind: "count", value: 8 },
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(block, makeExerciseById([[snatch, "DB snatch"]]));
+
+    expect(entry.split("\n")[0]).toBe("BSS DROP COMPLEX · 3 rounds:");
+  });
+
+  it("keeps the trailing rest line after a header-counted, uniform schema body", () => {
+    const squat = cuid("exsesquat");
+    const block = makeBlock({
+      labelName: "strength endurance",
+      schemas: [
+        makeSchema({
+          order: 1,
+          header: "STRENGTH ENDURANCE",
+          composition: {
+            repetition: { kind: "count", count: 4 },
+            rest: { scope: "between_sets", duration: { unit: "sec", value: 90 } },
+          },
+          rows: [
+            makeRow({
+              exerciseId: squat,
+              name: "Back squat",
+              order: 1,
+              reps: { kind: "count", value: 5 },
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(block, makeExerciseById([[squat, "Back squat"]]));
+
+    expect(entry).toBe(
+      ["STRENGTH ENDURANCE · 4 rounds:", "", "5 reps Back squat", "rest 90s between sets"].join(
+        "\n",
+      ),
+    );
+  });
+});
+
+describe("projectDay — schema groups / parallel tracks (RC-2)", () => {
+  const fran = cuid("exfrantrk");
+  const franMember = (order: number, groupId: string): PrismaSchema =>
+    makeSchema({
+      order,
+      groupId,
+      header: "fran",
+      composition: {
+        repetition: { kind: "ladder", steps: [21, 15, 9] },
+        benchmark: { resultType: "time" },
+      },
+      rows: [makeRow({ exerciseId: fran, name: "Thrusters", order: 1 })],
+    });
+
+  it("renders a track_by_track wrapper line then one entry per member schema", () => {
+    const groupId = cuid("grptbt");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [franMember(1, groupId), franMember(2, groupId)],
+      groups: [makeSchemaGroup({ id: groupId, interleaveOrder: "track_by_track" })],
+    });
+
+    const exercises = projectBlockExercises(block, makeExerciseById([[fran, "Thrusters"]]));
+
+    expect(exercises).toHaveLength(3);
+    expect(exercises[0]).toBe("2 tracks — one after another:");
+    expect(exercises[1]?.split("\n")[0]).toBe("fran · ladder 21-15-9 | benchmark time:");
+    expect(exercises[2]?.split("\n")[0]).toBe("fran · ladder 21-15-9 | benchmark time:");
+  });
+
+  it("words the wrapper as alternating rounds for a round_by_round group", () => {
+    const groupId = cuid("grprbr");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [franMember(1, groupId), franMember(2, groupId)],
+      groups: [makeSchemaGroup({ id: groupId, interleaveOrder: "round_by_round" })],
+    });
+
+    const exercises = projectBlockExercises(block, makeExerciseById([[fran, "Thrusters"]]));
+
+    expect(exercises[0]).toBe("2 tracks — alternating rounds:");
+  });
+
+  it("uses the singular track noun for a one-member group", () => {
+    const groupId = cuid("grpsolo");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [franMember(1, groupId)],
+      groups: [makeSchemaGroup({ id: groupId, interleaveOrder: "track_by_track" })],
+    });
+
+    const exercises = projectBlockExercises(block, makeExerciseById([[fran, "Thrusters"]]));
+
+    expect(exercises[0]).toBe("1 track — one after another:");
+  });
+
+  it("contributes nothing when every member of a group renders empty (no orphan wrapper)", () => {
+    const groupId = cuid("grpempty");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({ order: 1, groupId, rows: [] }),
+        makeSchema({ order: 2, groupId, rows: [] }),
+      ],
+      groups: [makeSchemaGroup({ id: groupId, interleaveOrder: "track_by_track" })],
+    });
+
+    expect(projectBlockExercises(block, EMPTY_EXERCISES)).toEqual([]);
+  });
+
+  it("counts only the rendered tracks when one group member renders empty (QA-001)", () => {
+    const groupId = cuid("grppartial");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({ order: 1, groupId, header: "track A", rows: [] }),
+        makeSchema({ order: 2, groupId, rows: [] }),
+        makeSchema({ order: 3, groupId, header: "track C", rows: [] }),
+      ],
+      groups: [makeSchemaGroup({ id: groupId, interleaveOrder: "track_by_track" })],
+    });
+
+    const exercises = projectBlockExercises(block, EMPTY_EXERCISES);
+
+    expect(exercises).toHaveLength(3);
+    expect(exercises[0]).toBe("2 tracks — one after another:");
+    expect(exercises[1]).toBe("track A:");
+    expect(exercises[2]).toBe("track C:");
+  });
+
+  it("interleaves ungrouped schemas around a schema-group by representative order", () => {
+    const groupId = cuid("grpinter");
+    const first = cuid("exfirst");
+    const m2 = cuid("exmtwo");
+    const m3 = cuid("exmthree");
+    const fourth = cuid("exfourth");
+    const oneRow = (exerciseId: string, name: string): PrismaRow[] => [
+      makeRow({ exerciseId, name, order: 1, reps: { kind: "count", value: 5 } }),
+    ];
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({ order: 1, header: "first", rows: oneRow(first, "First") }),
+        makeSchema({ order: 2, groupId, header: "m2", rows: oneRow(m2, "Second") }),
+        makeSchema({ order: 3, groupId, header: "m3", rows: oneRow(m3, "Third") }),
+        makeSchema({ order: 4, header: "fourth", rows: oneRow(fourth, "Fourth") }),
+      ],
+      groups: [makeSchemaGroup({ id: groupId, interleaveOrder: "round_by_round" })],
+    });
+
+    const exercises = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [first, "First"],
+        [m2, "Second"],
+        [m3, "Third"],
+        [fourth, "Fourth"],
+      ]),
+    );
+
+    expect(exercises).toHaveLength(5);
+    expect(exercises[0]?.split("\n")[0]).toBe("first:");
+    expect(exercises[1]).toBe("2 tracks — alternating rounds:");
+    expect(exercises[2]?.split("\n")[0]).toBe("m2:");
+    expect(exercises[3]?.split("\n")[0]).toBe("m3:");
+    expect(exercises[4]?.split("\n")[0]).toBe("fourth:");
+  });
+});
+
+describe("projectDay — row groups / coach separators (RC-3)", () => {
+  it("labels a named row-group above its members and keeps ungrouped rows in place", () => {
+    const bike = cuid("exrgbike");
+    const inchworm = cuid("exrginch");
+    const scap = cuid("exrgscap");
+    const rowGroupId = cuid("rgsuper");
+    const block = makeBlock({
+      labelName: "warm-up",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({
+              exerciseId: bike,
+              name: "Echo Bike",
+              order: 1,
+              reps: { kind: "unit_bound", unit: "cal", value: 10 },
+            }),
+            makeRow({
+              exerciseId: inchworm,
+              name: "Inchworm",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: scap,
+              name: "Scap Pull-ups",
+              order: 3,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+          ],
+          rowGroups: [makeRowGroup({ id: rowGroupId, notes: ["super-set"] })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [bike, "Echo Bike"],
+        [inchworm, "Inchworm"],
+        [scap, "Scap Pull-ups"],
+      ]),
+    );
+
+    expect(entry).toBe(
+      ["10 cal Echo Bike", "super-set:", "5 reps Inchworm", "5 reps Scap Pull-ups"].join("\n"),
+    );
+  });
+
+  it("labels a multi-element-note row-group from notes[0] only, dropping notes[1+] (REV-003)", () => {
+    const bike = cuid("exmnbike");
+    const inchworm = cuid("exmninch");
+    const scap = cuid("exmnscap");
+    const rowGroupId = cuid("rgmulti");
+    const block = makeBlock({
+      labelName: "warm-up",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({
+              exerciseId: bike,
+              name: "Echo Bike",
+              order: 1,
+              reps: { kind: "unit_bound", unit: "cal", value: 10 },
+            }),
+            makeRow({
+              exerciseId: inchworm,
+              name: "Inchworm",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: scap,
+              name: "Scap Pull-ups",
+              order: 3,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+          ],
+          rowGroups: [
+            makeRowGroup({ id: rowGroupId, notes: ["super-set", "extra note", "third"] }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [bike, "Echo Bike"],
+        [inchworm, "Inchworm"],
+        [scap, "Scap Pull-ups"],
+      ]),
+    );
+
+    expect(entry).toBe(
+      ["10 cal Echo Bike", "super-set:", "5 reps Inchworm", "5 reps Scap Pull-ups"].join("\n"),
+    );
+    expect(entry).not.toContain("extra note");
+    expect(entry).not.toContain("third");
+  });
+
+  it("renders descending round-labelled row-groups with no `· once` and the rest line last", () => {
+    const calRow = cuid("excalrow");
+    const pull = cuid("exrgpull");
+    const round = (
+      groupId: string,
+      firstOrder: number,
+      rowReps: number,
+      pullReps: number,
+    ): PrismaRow[] => [
+      makeRow({
+        exerciseId: calRow,
+        name: "Cal row",
+        order: firstOrder,
+        reps: { kind: "count", value: rowReps },
+        rowGroupId: groupId,
+      }),
+      makeRow({
+        exerciseId: pull,
+        name: "Pull-ups",
+        order: firstOrder + 1,
+        reps: { kind: "count", value: pullReps },
+        rowGroupId: groupId,
+      }),
+    ];
+    const rg1 = cuid("rground1");
+    const rg2 = cuid("rground2");
+    const rg3 = cuid("rground3");
+    const block = makeBlock({
+      labelName: "strength endurance",
+      schemas: [
+        makeSchema({
+          order: 1,
+          header: "STRENGTH ENDURANCE | 2 sets | 1 set is",
+          composition: {
+            repetition: { kind: "once" },
+            rest: { scope: "between_sets", duration: { unit: "min", value: 5 } },
+          },
+          rows: [...round(rg1, 1, 18, 9), ...round(rg2, 3, 14, 7), ...round(rg3, 5, 10, 5)],
+          rowGroups: [
+            makeRowGroup({ id: rg1, notes: ["1st round:"] }),
+            makeRowGroup({ id: rg2, notes: ["2nd round:"] }),
+            makeRowGroup({ id: rg3, notes: ["3rd round:"] }),
+          ],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [calRow, "Cal row"],
+        [pull, "Pull-ups"],
+      ]),
+    );
+
+    expect(entry).toBe(
+      [
+        "STRENGTH ENDURANCE | 2 sets | 1 set is:",
+        "",
+        "1st round:",
+        "18 reps Cal row",
+        "9 reps Pull-ups",
+        "2nd round:",
+        "14 reps Cal row",
+        "7 reps Pull-ups",
+        "3rd round:",
+        "10 reps Cal row",
+        "5 reps Pull-ups",
+        "rest 5 min between sets",
+      ].join("\n"),
+    );
+    expect(entry).not.toContain("once");
+  });
+
+  it("sets an unnamed row-group apart with one blank line and no synthetic label", () => {
+    const a = cuid("exunga");
+    const b = cuid("exungb");
+    const c = cuid("exungc");
+    const rowGroupId = cuid("rgunnamed");
+    const block = makeBlock({
+      labelName: "core",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({ exerciseId: a, name: "A", order: 1, reps: { kind: "count", value: 5 } }),
+            makeRow({
+              exerciseId: b,
+              name: "B",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: c,
+              name: "C",
+              order: 3,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+          ],
+          rowGroups: [makeRowGroup({ id: rowGroupId })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [a, "A"],
+        [b, "B"],
+        [c, "C"],
+      ]),
+    );
+
+    expect(entry.split("\n")).toEqual(["5 reps A", "", "5 reps B", "5 reps C"]);
+    expect(entry).not.toContain("ROW GROUP");
+  });
+
+  it("omits the leading blank when an unnamed row-group starts the body", () => {
+    const b = cuid("exsolob");
+    const c = cuid("exsoloc");
+    const rowGroupId = cuid("rgsolo");
+    const block = makeBlock({
+      labelName: "core",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({
+              exerciseId: b,
+              name: "B",
+              order: 1,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: c,
+              name: "C",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+          ],
+          rowGroups: [makeRowGroup({ id: rowGroupId })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [b, "B"],
+        [c, "C"],
+      ]),
+    );
+
+    expect(entry.split("\n")).toEqual(["5 reps B", "5 reps C"]);
+  });
+
+  it("orders ungrouped rows around a group by representative order", () => {
+    const one = cuid("exordone");
+    const two = cuid("exordtwo");
+    const three = cuid("exordthree");
+    const four = cuid("exordfour");
+    const rowGroupId = cuid("rgmiddle");
+    const block = makeBlock({
+      labelName: "core",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({ exerciseId: one, name: "One", order: 1, reps: { kind: "count", value: 5 } }),
+            makeRow({
+              exerciseId: two,
+              name: "Two",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: three,
+              name: "Three",
+              order: 3,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: four,
+              name: "Four",
+              order: 4,
+              reps: { kind: "count", value: 5 },
+            }),
+          ],
+          rowGroups: [makeRowGroup({ id: rowGroupId, notes: ["round:"] })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [one, "One"],
+        [two, "Two"],
+        [three, "Three"],
+        [four, "Four"],
+      ]),
+    );
+
+    expect(entry.split("\n")).toEqual([
+      "5 reps One",
+      "round:",
+      "5 reps Two",
+      "5 reps Three",
+      "5 reps Four",
+    ]);
+  });
+
+  it("treats a row-group note that normalizes to empty as unnamed, no bare colon line (QA-002)", () => {
+    const a = cuid("excola");
+    const b = cuid("excolb");
+    const c = cuid("excolc");
+    const rowGroupId = cuid("rgcolon");
+    const block = makeBlock({
+      labelName: "core",
+      schemas: [
+        makeSchema({
+          order: 1,
+          rows: [
+            makeRow({ exerciseId: a, name: "A", order: 1, reps: { kind: "count", value: 5 } }),
+            makeRow({
+              exerciseId: b,
+              name: "B",
+              order: 2,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+            makeRow({
+              exerciseId: c,
+              name: "C",
+              order: 3,
+              reps: { kind: "count", value: 5 },
+              rowGroupId,
+            }),
+          ],
+          rowGroups: [makeRowGroup({ id: rowGroupId, notes: [":"] })],
+        }),
+      ],
+    });
+
+    const [entry = ""] = projectBlockExercises(
+      block,
+      makeExerciseById([
+        [a, "A"],
+        [b, "B"],
+        [c, "C"],
+      ]),
+    );
+
+    expect(entry.split("\n")).toEqual(["5 reps A", "", "5 reps B", "5 reps C"]);
+    expect(entry.split("\n")).not.toContain(":");
+  });
+});
+
+describe("projectDay — orphan membership fallback (defensive)", () => {
+  it("renders an unknown groupId and an unknown rowGroupId as flat ungrouped content", () => {
+    const move = cuid("exorphan");
+    const block = makeBlock({
+      labelName: "metcon",
+      schemas: [
+        makeSchema({
+          order: 1,
+          groupId: cuid("ghostgrp"),
+          header: "orphan",
+          rows: [
+            makeRow({
+              exerciseId: move,
+              name: "Move",
+              order: 1,
+              reps: { kind: "count", value: 5 },
+              rowGroupId: cuid("ghostrg"),
+            }),
+          ],
+          rowGroups: [],
+        }),
+      ],
+      groups: [],
+    });
+
+    const exercises = projectBlockExercises(block, makeExerciseById([[move, "Move"]]));
+
+    expect(exercises).toEqual(["orphan:\n\n5 reps Move"]);
+    expect(exercises[0]).not.toContain("track");
   });
 });
