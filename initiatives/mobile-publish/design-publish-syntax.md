@@ -113,3 +113,117 @@ Before any prod re-publish: render a **real Денys week** through projection v
 - **`timeCap` repetition = AMRAP, never "cap" (owner-ratified 2026-06-26).** In CrossFit "AMRAP" names the schema TYPE (as many rounds as possible in a window); "cap" is a time limit on NON-AMRAP work. Our model encodes an AMRAP as `repetition.kind = "timeCap"`, but the shared `formatRepetitionLabel` renders it `cap 20’` — domain-wrong. The projection relabels it to `AMRAP 20’` (`structureLabel` in `format-legacy-schema.ts`; the cross-cutting `composition.cap` field keeps "cap", correct). A schema whose `header` is the leading token of the structure label (his bare `AMRAP`) collapses to the label (`AMRAP 20’`) — no `AMRAP · AMRAP` double, no lost window.
 - **FOLLOW-UP (owner to ratify — athlete-facing):** the SAME `cap`→`AMRAP` correction belongs in the shared `@repo/contracts/lms/composition` formatter (+ the byte-dup `apps/platform/.../lib/format-composition-summary.ts`), because it also drives the athlete-session view, the records-view scheme subline, and the plan-editor composition tag — all of which currently mislabel an AMRAP as `cap`. Deferred out of this projection-only PR because it changes athlete-facing UI and wants its own ratification. → `deferred.md` (MP-14).
 - `composition.repetition.kind = count` → "N **sets**" vs "N **rounds**": Денys uses both (strength → sets, metcon → rounds). Resolution: prefer his verbatim `header` (he disambiguates himself); the composition-summary fallback (only the 7 headerless schemas) defaults to "rounds", trivially corrected if it reads wrong at the gate.
+
+---
+
+## v3 — structure-faithful (2026-06-27)
+
+**Status:** RATIFIED (owner, 2026-06-27; `/feature` full, PR `feat/mobile-publish-structure`). Drives **D-17**. §1–9 above are v2 (D-13). v2 fixed the per-row flatten + the Schema structural-layer drop (`header`/`composition`/`intensity`); v3 fixes the three remaining STRUCTURE losses — every composition kind, parallel tracks (`SchemaGroup`), and grouped rows (`RowGroup`). Projection-only (no schema/migration/contract/legacy change, §7).
+
+### v3.1 — Why (3 root causes, verified in code + against live prod 2026-06-27, read-only)
+
+The v2 assembler still drops three classes of structure. All three live in `projection/{project-day.ts, format-legacy-schema.ts}`.
+
+- **RC-1 — `count` repetition (rounds/sets) dropped when a header is present.** `resolveHeaderBase` appended the composition label only when `repetitionKind ∈ STRUCTURE_APPEND_KINDS = {timeCap, cadence, interval, ladder}` — `count` was excluded. So a schema with BOTH a `header` AND `repetition.kind === "count"` lost its "N rounds" label; only the bare header survived. Prod evidence: `BSS DROP COMPLEX` (`count:3` → "3 rounds" lost), `STRENGTH ENDURANCE` (`count:4` + rest → "4 rounds" lost), plus `BASIC`/`PUMP SESSION`/`SHOULDERS`/`legs`/… — ≈100% of strength/successory blocks. (Headerless `count` already rendered the label via the `header === ""` branch; the bug was specifically header-present + `count`.)
+- **RC-2 — `SchemaGroup` (parallel tracks) ignored entirely.** `projectBlock` iterated `block.schemas` flat and never called `buildBlockItems(block.schemas, block.groups)`. Schemas sharing a `groupId` rendered as independent flat entries; the group + its `interleaveOrder` vanished. Prod evidence: Jerkub's week-2 metcon — two `fran` schemas share one `groupId` (`interleaveOrder:"track_by_track"`), rendered as two unrelated blocks.
+- **RC-3 — `RowGroup` (grouped rows + notes-labels) ignored entirely.** `buildSchemaEntry` mapped `schema.rows` flat and never called `buildRowItems(schema.rows, schema.rowGroups)`. Денys puts his SEPARATORS in `rowGroup.notes[0]` (`super-set`, `AMRAP in remaining time`, `1st round:`/`2nd round:`/`3rd round:`) — all dropped, grouped rows flattened into one canvas.
+
+(RC-4 — labels — verified, no dropped surface: `block.labels[0]` is parity-consistent with the platform athlete view (`build-session-detail.ts` uses the same `labels[0]?.name`); `schema.label` is a derived `CompositionLabel` classification enum, not user-authored free text. Nothing to recover. Folding 2nd+ labels would DIVERGE from the platform view — a platform-wide change, out of this projection-only scope.)
+
+### v3.2 — The fix
+
+Reuse the platform's own SSOT groupers — the EXACT functions `endpoints/lms/session-detail/build-session-detail.ts` walks to render the athlete view — so published text and the platform athlete view group identically (zero drift; the D-13 element-formatter-SSOT principle, extended to grouping):
+
+- `buildBlockItems(schemas, groups)` from `@repo/contracts/lms/schema-group` → `BlockItem = {kind:"schema",schema} | {kind:"group",group,members}`.
+- `buildRowItems(rows, rowGroups)` from `@repo/contracts/lms/row-group` → `RowItem = {kind:"row",row} | {kind:"group",group,members}`.
+
+`projectBlock` now walks `buildBlockItems(...)` and `.flatMap`s each `BlockItem` to one-or-more `exercises[]` entries (`renderBlockItem`); `buildSchemaEntry` now walks `buildRowItems(...)` (`buildBodyLines`), emitting a label line per named row-group. **RC-1 is a one-token fix:** add `"count"` to `STRUCTURE_APPEND_KINDS` (now `{count, timeCap, cadence, interval, ladder}`) — **KEEPING the `.has()` gate** so `once` (literal `"once"` from `formatRepetitionLabel`) and `benchmark` stay excluded; `count` then appends exactly like every structured kind. Element formatters stay shared & untouched; only the legacy-text ASSEMBLY changes. Output type `LegacyDailyProgram` is unchanged — only the content + count of `exercises[]` strings change. New file `projection/format-schema-group.ts` holds the wrapper formatter (one-formatter-per-file convention).
+
+**Byte-identical guarantee (the prime risk — Денys is LIVE in prod):** for an ungrouped block/schema (today's 100% reality) the grouper walk emits the identical order to the old flat `.map()` — the Prisma include orders schemas/rows `order: asc` (`day-include.ts`, `schema-body-include.ts`) and the groupers sort by the same `order`, with `@@unique([blockId, order])` / `([schemaId, order])` ruling out ties. Adding `"count"` to the set is additive (cannot change `.has()` for the other kinds). The ONLY outputs that change are the three bugged classes — structural, not luck (Review + QA independently confirmed).
+
+### v3.3 — Ratified target format (A–D)
+
+#### A. Composition NEVER dropped (RC-1)
+
+Header line = `header` joined to the composition structure label via `NAME_LABEL_SEPARATOR` (`·`), suffixed `:`. Appended for ALL structured repetition kinds incl. `count`, keeping the existing "header already conveys the label → don't duplicate" (`headerConveysLabel`) collapse.
+
+```
+before:  BSS DROP COMPLEX:
+after:   BSS DROP COMPLEX · 3 rounds:
+```
+
+Already-working kinds (ladder/EMOM/AMRAP/interval) stay byte-identical where the header conveys them.
+
+#### B. Row-group with a notes label (RC-3)
+
+```
+before:  10 cal Echo Bike          after:  10 cal Echo Bike
+         5 reps Inchworm                   super-set:
+         5 reps Scap Pull-ups              5 reps Inchworm
+         30 sec Wall Squat Hold            5 reps Scap Pull-ups
+                                           30 sec Wall Squat Hold
+```
+
+Ungrouped rows before/after the group keep their position (order from `buildRowItems`). Group label line = `normalizeHeader(rowGroup.notes[0]) + ":"`. Unnamed group → a blank-line separator (no synthetic "ROW GROUP" header — that's platform-chip language).
+
+#### C. Row-groups as rounds (real example, RC-3)
+
+```
+after:   STRENGTH ENDURANCE | 2 sets | 1 set is: | EFFORT 80%:
+
+         1st round:
+         18 reps Cal row
+         9 reps Squat snatch [ RX M:45 F:30 / SC M:35 F:20 ]
+         9 reps Pull-ups
+         2nd round:
+         14 reps Cal row ...
+         | 5 min rest in between sets |
+```
+
+(Trailing rest line from `composition.rest` unchanged.) This schema is `once` — three DIFFERENT rep schemes (18/9/9 → 14/7/7 → 10/5/5) structurally REQUIRE three distinct row-groups, which a uniform `count:N` cannot express — so the composition layer emits NO label (`once ∉ STRUCTURE_APPEND_KINDS`); the row-group layer carries the round labels. No `· once`.
+
+#### D. Schema-group wrapper (RC-2)
+
+A `{kind:"group"}` BlockItem renders a wrapper line, then each member schema rendered normally, members separated by a blank line. Wrapper wording by `interleaveOrder` (ratified default — Денys has no existing house-style token):
+
+- `round_by_round` → `"N tracks — alternating rounds:"`
+- `track_by_track` → `"N tracks — one after another:"`
+
+(N = member count.)
+
+```
+after:   2 tracks — one after another:
+
+         fran · ladder 21-15-9 | cap 5’ | benchmark time:
+         Thrusters [ M:43 F:30 ]
+         Pull-ups
+
+         fran · ladder 21-15-9 | cap 5’ | benchmark time:
+         ...
+```
+
+The wrapper line is its OWN `exercises[]` entry; each member schema is its own entry after it (D-13 §5 one-schema-one-entry preserved). A group whose every member renders empty contributes nothing (no orphan wrapper).
+
+### v3.4 — Design decisions D-1..D-5 (RFC-local record; the initiative-level ratification is D-17)
+
+These are the v3 RFC's internal decision record — a distinct namespace from the initiative D-1..D-17. Each is reversible.
+
+- **D-1 — separator is `·` (NAME_LABEL_SEPARATOR), not `|`.** The shipped code + locked tests already join header↔label with `·` (`fran · ladder 21-15-9 | cap 5’ | benchmark time:`, `Part 2 · EMOM 12’×10:`); `count` flows through the same `resolveHeaderBase` path → `BSS DROP COMPLEX · 3 rounds:`. The brief's `BSS DROP COMPLEX | 3 rounds` (pipe) was ILLUSTRATIVE; code wins (manifesto 2.11). The `|` (`LABEL_SEPARATOR`) stays the separator between the header-base and cross-cutting extras (cap/benchmark/intensity), exactly as today. Reversible: one constant.
+- **D-2 — `composition` label and `rowGroup.notes` labels are orthogonal layers; no double-counting; `once` excluded from the append.** The composition append is driven PURELY by `composition`; row-group label lines PURELY by `rowGroup.notes`. No logic reads one to decide the other — no "suppress rounds if row-groups exist" special case. (a) `count:3` + header, no row-groups → `· 3 rounds` (RC-1 fix). (b) `once` + row-groups labelled `1st/2nd/3rd round:` → the row-group layer emits the rounds; the composition layer emits NOTHING (`once ∉ STRUCTURE_APPEND_KINDS`; `formatRepetitionLabel` returns the literal `"once"` → `STRENGTH ENDURANCE · once` would be noise). A `count:N`-AND-round-labelled-row-groups shape is semantically contradictory (uniform count vs per-round variation) and does not occur. Reversible: one set literal.
+- **D-3 — schema-group entry shape: wrapper line is its own `exercises[]` entry; one entry per member.** A `{kind:"group"}` BlockItem contributes `[wrapperLine, ...memberEntries]`; if every member renders empty it contributes nothing. Preserves the D-13 §5 one-schema-one-entry invariant; the §D blank-line separation is emergent from the consumer rendering each array element (no manual `\n\n`); reuses `buildSchemaEntry` verbatim. Rejected: one combined entry per group (breaks the invariant, forces manual member separators). Reversible: local to `renderBlockItem`.
+- **D-4 — reuse the SSOT groupers (no hand-roll).** Grouping/ordering comes from `buildBlockItems`/`buildRowItems`; zero drift from `build-session-detail.ts`; pure, already prod-tested. Rejected: hand-roll (duplicates bucket+order+orphan logic, drifts from the SSOT — a parallel-invention anti-pattern). Two new `@repo/contracts/lms/*` imports, same direction the file already uses; the forbidden dep-cruiser edge is api-server `lms → coaching` (the reverse), so `dep:check` stays green.
+- **D-5 — row-group label = `normalizeHeader(notes[0]) + ":"`; unnamed group = blank-line separator.** Reusing `normalizeHeader` (strip trailing `[\s:]+`) + `HEADER_SUFFIX` normalizes Денys's inconsistent notes (`super-set` no-colon vs `1st round:` colon) to a uniform colon-suffixed line. Unnamed group (`notes` null/empty) → a single LEADING blank line before its members when preceded by body content (no platform-chip header). Unnamed groups don't occur in current prod data — leading-blank-only is an unobserved edge, easy to flip at the gate (the asymmetry → MP-17). Reversible: local to `buildBodyLines`/`rowGroupLabel`.
+
+### v3.5 — Mechanism alternatives (locked)
+
+- **RC-1:** add `"count"` to the set (one-token diff; `once` stays excluded) — NOT drop the `.has()` gate entirely (would make `once` eligible → `STRENGTH ENDURANCE · once` noise, contradicting §C).
+- **Grouping:** reuse the SSOT groupers — NOT hand-roll.
+- **Schema-group entry:** wrapper-as-own-entry + one entry per member — NOT one combined `wrapper\n\nmember1\n\nmember2` entry.
+
+### v3.6 — Constraints & idempotency (unchanged from D-13 §7/§8)
+
+Projection-only; element formatters untouched; reuse `buildBlockItems`/`buildRowItems` (don't reimplement grouping). The new multiline structure changes the D-9 content-hash → a re-publish PUT-updates Денys's OWNED days (self-heal, D-9) and never clobbers his manually-authored days (conflict-guard, D-4). No migration of already-published rows; the legacy round-trip is byte-exact (validated 2026-06-26, §8). The owner render-and-show gate (§8) still governs the prod re-publish — the PR merges on green tests; re-publishing a real Денys week through v3 (text diff vs live) is a separate owner action.
+
+### v3.7 — Shipped
+
+`feat/mobile-publish-structure` — feat `c6e18657` (project schema-groups, row-groups, all composition types) · test `64731cf4` (cover structure-faithful projection) · fix `78ce4c15` (match group track count to rendered tracks; guard empty row-group label = QA-001/QA-002). 5 files, all under `projection/` (+ new `format-schema-group.ts`); isolated projection suite **38/38 green** (`SKIP_ENV_VALIDATION=1 npx vitest run …/projection/`); `check-types`/`lint` clean; `dep:check` direction safe. **Review APPROVE** (0 CRITICAL / 0 WARNING) · **QA B** (0 CRITICAL, 4 WARNING — QA-001/QA-002 fixed; QA-003/QA-004 → carry-forwards). Tests rewritten: `projection/{parity,project-day}.test.ts` had asserted the structure DROP as correct (the D-13 §2 stance); they now assert the structured output — this **SUPERSEDES the D-13 §2 "structure-drop is correct" stance**. Carry-forwards: MP-17 (unnamed-group blank-line asymmetry, owner KEPT the D-5 default at Gate B), MP-18 (`count` digit-collision collapse — non-issue), MP-19 (headerless `once:` — pre-existing), MP-20 (`notes[0]`-only — by-design SSOT parity) → `deferred.md`.
