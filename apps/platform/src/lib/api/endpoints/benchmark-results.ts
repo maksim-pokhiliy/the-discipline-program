@@ -8,6 +8,13 @@ export const createBenchmarkResultsAPI = (client: ApiClient) => ({
   create: (
     sessionId: string,
     data: CreateBenchmarkResultRequest,
+    idempotencyKey?: string,
   ): Promise<CreateBenchmarkResultResponse> =>
-    client.request(`/api/platform/athlete/sessions/${sessionId}/result`, "POST", data),
+    client.request(
+      `/api/platform/athlete/sessions/${sessionId}/result`,
+      "POST",
+      data,
+      undefined,
+      idempotencyKey === undefined ? undefined : { idempotencyKey },
+    ),
 });
