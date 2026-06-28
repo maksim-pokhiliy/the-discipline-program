@@ -4,8 +4,10 @@ export const ONE_RM_MAX_KG = 9999.99;
 
 const KG_DECIMAL_FACTOR = 100;
 
+const KG_DECIMAL_EPSILON = 1e-6;
+
 const hasAtMostTwoDecimals = (kg: number): boolean =>
-  Math.round(kg * KG_DECIMAL_FACTOR) === kg * KG_DECIMAL_FACTOR;
+  Math.abs(kg * KG_DECIMAL_FACTOR - Math.round(kg * KG_DECIMAL_FACTOR)) < KG_DECIMAL_EPSILON;
 
 export const kgSchema = z
   .number()
