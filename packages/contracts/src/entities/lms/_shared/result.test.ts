@@ -37,6 +37,18 @@ describe("resultSchema", () => {
     expect(resultSchema.safeParse({ type: "load", kg: 0 }).success).toBe(false);
   });
 
+  it("accepts a load result with a float-trap 2-decimal kg", () => {
+    expect(resultSchema.safeParse({ type: "load", kg: 142.45 }).success).toBe(true);
+  });
+
+  it("rejects a load result with kg over ONE_RM_MAX_KG", () => {
+    expect(resultSchema.safeParse({ type: "load", kg: 10000 }).success).toBe(false);
+  });
+
+  it("rejects a load result with kg over two decimals", () => {
+    expect(resultSchema.safeParse({ type: "load", kg: 100.125 }).success).toBe(false);
+  });
+
   it("accepts a max_reps result with a positive int", () => {
     expect(resultSchema.safeParse({ type: "max_reps", reps: 24 }).success).toBe(true);
   });
