@@ -8,6 +8,7 @@ import ForumIcon from "@mui/icons-material/Forum";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -38,6 +39,7 @@ type DrawerTab = "today" | "plan" | "notes" | "health";
 const DEFAULT_TAB: DrawerTab = "today";
 const AVATAR_SIZE = 48;
 const SPINNER_SIZE = 30;
+const LOAD_ERROR = "Couldn't load athlete details — try again.";
 
 type AthleteDetailDrawerProps = {
   athleteId: string | null;
@@ -58,7 +60,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
   onClose,
   onNavigate,
 }) => {
-  const { data, isLoading } = useCoachAthleteDetail(athleteId);
+  const { data, isLoading, error, refetch } = useCoachAthleteDetail(athleteId);
   const [tab, setTab] = useState<DrawerTab>(DEFAULT_TAB);
 
   const index = athleteId ? visibleIds.indexOf(athleteId) : -1;
@@ -165,7 +167,16 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
         </IconButton>
       </Stack>
 
-      {isLoading || !data ? (
+      {error ? (
+        <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1, p: 2 }}>
+          <Alert severity="error" sx={{ width: "100%" }}>
+            {LOAD_ERROR}
+          </Alert>
+          <Button variant="outlined" size="small" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Stack>
+      ) : isLoading || !data ? (
         <Stack alignItems="center" justifyContent="center" sx={{ flex: 1 }}>
           <CircularProgress size={SPINNER_SIZE} />
         </Stack>

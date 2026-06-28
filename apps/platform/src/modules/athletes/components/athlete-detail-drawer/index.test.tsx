@@ -17,10 +17,17 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const detailState = {
   data: undefined as CoachAthleteDetail | undefined,
   isLoading: false,
+  error: null as Error | null,
 };
+const refetchMock = vi.fn();
 
 vi.mock("@app/lib/hooks", () => ({
-  useCoachAthleteDetail: () => ({ data: detailState.data, isLoading: detailState.isLoading }),
+  useCoachAthleteDetail: () => ({
+    data: detailState.data,
+    isLoading: detailState.isLoading,
+    error: detailState.error,
+    refetch: refetchMock,
+  }),
   useCreateCoachNote: () => ({ mutate: vi.fn(), isPending: false }),
   useResolveActionItem: () => ({ mutate: vi.fn(), isPending: false }),
 }));
@@ -99,6 +106,8 @@ const renderDrawer = (athleteId: string | null) =>
 beforeEach(() => {
   detailState.data = makeDetail();
   detailState.isLoading = false;
+  detailState.error = null;
+  refetchMock.mockReset();
 });
 
 afterEach(() => {
@@ -223,5 +232,34 @@ describe("AthleteDetailDrawer footer", () => {
     renderDrawer(null);
 
     expect(screen.queryByRole("tab", { name: "Today" })).toBeNull();
+  });
+});
+
+describe("AthleteDetailDrawer error state", () => {
+  beforeEach(() => {
+    detailState.data = undefined;
+    detailState.error = new Error("detail fetch failed");
+  });
+
+  it("renders the error message and a retry control instead of a spinner when the fetch settles in error", () => {
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByText("Couldn't load athlete details — try again.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("keeps the drawer chrome reachable so the coach can still close it", () => {
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+  });
+
+  it("refetches the athlete detail when the coach clicks Retry", () => {
+    renderDrawer(ATHLETE_ID);
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(refetchMock).toHaveBeenCalledTimes(1);
   });
 });
