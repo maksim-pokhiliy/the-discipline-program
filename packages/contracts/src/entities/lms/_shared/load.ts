@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { kgSchema } from "./kg";
+
 export const LOAD_KINDS = ["absolute", "percentage", "bodyweight", "byProfile"] as const;
 
 export const PERCENTAGE_REFERENCE_SCOPES = ["self", "other_exercise"] as const;
@@ -29,7 +31,7 @@ export const loadSchema = z
     z.object({
       kind: z.literal("absolute"),
       count: z.union([z.literal(1), z.literal(2)]),
-      kg: z.number().positive(),
+      kg: kgSchema,
     }),
     z.object({
       kind: z.literal("percentage"),
@@ -45,7 +47,7 @@ export const loadSchema = z
         .array(
           z.object({
             coords: z.array(z.string().trim().min(1)).min(1).max(2),
-            kg: z.number().positive(),
+            kg: kgSchema,
           }),
         )
         .min(1),
