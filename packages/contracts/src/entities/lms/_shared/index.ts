@@ -3,6 +3,7 @@ export * from "./day-of-week";
 export * from "./exact-or-range";
 export * from "./format-result";
 export * from "./intensity";
+export * from "./kg";
 export * from "./load";
 export * from "./media";
 export * from "./notes";
