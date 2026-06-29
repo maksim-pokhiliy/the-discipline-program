@@ -75,6 +75,22 @@ describe("loadSchema", () => {
     expect(loadSchema.safeParse({ kind: "absolute", count: 1, kg: -5 }).success).toBe(false);
   });
 
+  it("accepts absolute with a float-trap 2-decimal kg", () => {
+    expect(loadSchema.safeParse({ kind: "absolute", count: 1, kg: 142.45 }).success).toBe(true);
+  });
+
+  it("accepts absolute at the kg ceiling (ONE_RM_MAX_KG)", () => {
+    expect(loadSchema.safeParse({ kind: "absolute", count: 1, kg: 9999.99 }).success).toBe(true);
+  });
+
+  it("rejects absolute with kg over ONE_RM_MAX_KG", () => {
+    expect(loadSchema.safeParse({ kind: "absolute", count: 1, kg: 10000 }).success).toBe(false);
+  });
+
+  it("rejects absolute with kg over two decimals", () => {
+    expect(loadSchema.safeParse({ kind: "absolute", count: 1, kg: 100.125 }).success).toBe(false);
+  });
+
   it("rejects the dropped absolute weight VO shape", () => {
     expect(
       loadSchema.safeParse({ kind: "absolute", weight: { variant: "single", valueKg: 20 } })
@@ -313,6 +329,36 @@ describe("loadSchema", () => {
         kind: "byProfile",
         axes: [{ axisId: CUID, label: "Level", values: ["RX"], binding: null }],
         cells: [{ coords: ["RX"], kg: 0 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a cell with a float-trap 2-decimal kg", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ axisId: CUID, label: "Level", values: ["RX"], binding: null }],
+        cells: [{ coords: ["RX"], kg: 142.45 }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a cell kg over ONE_RM_MAX_KG", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ axisId: CUID, label: "Level", values: ["RX"], binding: null }],
+        cells: [{ coords: ["RX"], kg: 10000 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a cell kg over two decimals", () => {
+    expect(
+      loadSchema.safeParse({
+        kind: "byProfile",
+        axes: [{ axisId: CUID, label: "Level", values: ["RX"], binding: null }],
+        cells: [{ coords: ["RX"], kg: 100.125 }],
       }).success,
     ).toBe(false);
   });

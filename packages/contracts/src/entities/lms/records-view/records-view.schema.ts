@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import { resultSchema, RESULT_TYPES } from "../_shared";
+import { kgSchema, resultSchema, RESULT_TYPES } from "../_shared";
 import { oneRMRecordSourceSchema } from "../one-rm-record";
 
 const isoInstant = z.string().datetime();
 
 export const oneRMSeriesPointSchema = z.object({
-  valueKg: z.number().finite().positive(),
+  valueKg: kgSchema,
   source: oneRMRecordSourceSchema,
   recordedAt: isoInstant,
   isBest: z.boolean(),
@@ -15,7 +15,7 @@ export const oneRMSeriesPointSchema = z.object({
 export const oneRMRecordViewSchema = z.object({
   exerciseId: z.string().cuid(),
   exerciseName: z.string(),
-  best: z.number().finite().positive(),
+  best: kgSchema,
   bestSource: oneRMRecordSourceSchema,
   bestRecordedAt: isoInstant,
   lastRecordedAt: isoInstant,

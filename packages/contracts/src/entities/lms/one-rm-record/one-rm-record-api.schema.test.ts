@@ -40,3 +40,27 @@ describe("createOneRMRecordRequestSchema", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("createOneRMRecordRequestSchema valueKg bound (M11 at the request boundary)", () => {
+  const base = {
+    exerciseId: "ckxabcdefghijklmnopqrst",
+    recordedAt: "2026-01-01",
+    source: "MANUAL",
+  };
+
+  it("rejects valueKg at the overflow boundary (10000)", () => {
+    expect(createOneRMRecordRequestSchema.safeParse({ ...base, valueKg: 10000 }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects valueKg with more than two decimals (100.125)", () => {
+    expect(createOneRMRecordRequestSchema.safeParse({ ...base, valueKg: 100.125 }).success).toBe(
+      false,
+    );
+  });
+
+  it.each([150.5, 9999.99])("accepts a realistic 1RM valueKg %p", (valueKg) => {
+    expect(createOneRMRecordRequestSchema.safeParse({ ...base, valueKg }).success).toBe(true);
+  });
+});
