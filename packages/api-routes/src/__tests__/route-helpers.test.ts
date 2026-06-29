@@ -104,7 +104,7 @@ describe("withErrorHandling", () => {
     expect(response.headers.get("x-request-id")).toMatch(/.+/);
   });
 
-  it("converts ZodError throws into a 400 validation error envelope", async () => {
+  it("surfaces a bare ZodError from a handler as a 500 server fault", async () => {
     const schema = z.object({ name: z.string() });
     const handler: RouteHandler = vi.fn(async () => {
       schema.parse({ name: 42 });
@@ -114,9 +114,22 @@ describe("withErrorHandling", () => {
     const wrapped = withErrorHandling(handler);
 
     const response = await wrapped(new Request("https://example.com"), dummyContext());
-    const json = (await response.json()) as {
-      error: { code: string; message: string; issues: unknown };
-    };
+    const json = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(500);
+    expect(json.error.code).toBe("INTERNAL_SERVER_ERROR");
+  });
+
+  it("maps request-body validation failure to a 400 VALIDATION_ERROR with issues", async () => {
+    const handler = createPostHandler(
+      async (data: { name: string }) => data,
+      z.object({ name: z.string() }),
+      z.object({ name: z.string() }),
+    );
+    const wrapped = withErrorHandling(handler);
+
+    const response = await wrapped(buildJsonRequest({ name: 42 }), dummyContext());
+    const json = (await response.json()) as { error: { code: string; issues?: unknown } };
 
     expect(response.status).toBe(400);
     expect(json.error.code).toBe("VALIDATION_ERROR");

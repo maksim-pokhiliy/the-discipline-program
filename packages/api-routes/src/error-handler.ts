@@ -39,7 +39,7 @@ const summarizeError = (error: unknown): Record<string, unknown> => {
 };
 
 const isClientError = (error: unknown): boolean =>
-  error instanceof ZodError || (error instanceof AppError && error.statusCode < 500);
+  error instanceof AppError && error.statusCode < 500;
 
 const reportError = (
   error: unknown,
@@ -72,46 +72,33 @@ const reportError = (
 const appErrorResponse = (error: AppError, requestId: string | undefined): NextResponse => {
   const headers = buildHeaders(requestId) ?? new Headers();
 
-  if (error.statusCode === 429 && typeof error.details?.retryAfter === "number") {
+  if (
+    (error.statusCode === 429 || error.statusCode === 503) &&
+    typeof error.details?.retryAfter === "number"
+  ) {
     headers.set("Retry-After", String(error.details.retryAfter));
   }
 
-  if (error.statusCode === 503 && typeof error.details?.retryAfter === "number") {
-    headers.set("Retry-After", String(error.details.retryAfter));
-  }
-
-  const redactedDetails =
-    error.statusCode < 500 && error.details ? redactPii(error.details) : undefined;
+  const isClient = error.statusCode < 500;
+  const issues =
+    isClient && Array.isArray(error.details?.issues) ? error.details.issues : undefined;
+  const otherDetails =
+    isClient && error.details
+      ? redactPii(
+          Object.fromEntries(Object.entries(error.details).filter(([key]) => key !== "issues")),
+        )
+      : undefined;
 
   return NextResponse.json(
     {
       error: {
         code: error.code,
         message: error.message,
-        ...(redactedDetails &&
-          Object.keys(redactedDetails).length > 0 && { details: redactedDetails }),
+        ...(issues && { issues }),
+        ...(otherDetails && Object.keys(otherDetails).length > 0 && { details: otherDetails }),
       },
     },
     { status: error.statusCode, headers },
-  );
-};
-
-const zodErrorResponse = (error: ZodError, requestId: string | undefined): NextResponse => {
-  const headers = buildHeaders(requestId);
-
-  return NextResponse.json(
-    {
-      error: {
-        code: ERROR_CODES.VALIDATION_ERROR,
-        message: "Validation failed",
-        issues: error.errors.map((e) => ({
-          path: e.path.join("."),
-          message: e.message,
-          code: e.code,
-        })),
-      },
-    },
-    { status: 400, ...(headers && { headers }) },
   );
 };
 
@@ -136,10 +123,6 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
 
   if (error instanceof AppError) {
     return appErrorResponse(error, requestId);
-  }
-
-  if (error instanceof ZodError) {
-    return zodErrorResponse(error, requestId);
   }
 
   return unknownErrorResponse(requestId);

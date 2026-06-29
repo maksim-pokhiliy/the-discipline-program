@@ -37,13 +37,29 @@ afterEach(() => {
 });
 
 describe("handleApiError — Sentry capture gating", () => {
-  it("does not capture a request-validation ZodError and returns 400", () => {
+  it("treats a bare ZodError as a server fault — 500 and captured", () => {
     const captureException = captureSpy();
 
     const response = handleApiError(makeZodError(), "req-1");
 
+    expect(response.status).toBe(500);
+    expect(captureException).toHaveBeenCalledOnce();
+  });
+
+  it("renders a ValidationError as 400 with top-level issues, not captured", async () => {
+    const captureException = captureSpy();
+    const issues = [{ path: "contact", message: "Required", code: "invalid_type" }];
+
+    const response = handleApiError(new ValidationError("Validation failed", { issues }), "req-1b");
+    const json = (await response.json()) as {
+      error: { code: string; issues?: unknown; details?: unknown };
+    };
+
     expect(response.status).toBe(400);
     expect(captureException).not.toHaveBeenCalled();
+    expect(json.error.code).toBe("VALIDATION_ERROR");
+    expect(json.error.issues).toEqual(issues);
+    expect(json.error.details).toBeUndefined();
   });
 
   it("does not capture 4xx client AppErrors", () => {
