@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { type ZodType } from "zod";
 
-import { withPublicRoute, withRateLimit, RATE_LIMIT_TIER } from "@repo/api-routes";
+import {
+  parseRequest,
+  parseResponse,
+  withPublicRoute,
+  withRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import type { RouteContext } from "@repo/api-routes";
 import { cmsPagesPublicApi } from "@repo/api-server/cms";
 import {
@@ -28,7 +34,7 @@ const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: Zod
 };
 
 const handler = async (_request: Request, context: RouteContext) => {
-  const { pageSlug } = getPageBySlugParamsSchema.parse(await context.params);
+  const { pageSlug } = parseRequest(getPageBySlugParamsSchema, await context.params);
   const config = PAGE_HANDLERS[pageSlug];
 
   if (!config) {
@@ -37,7 +43,7 @@ const handler = async (_request: Request, context: RouteContext) => {
 
   const data = await config.fetch();
 
-  return NextResponse.json(config.schema.parse(data));
+  return NextResponse.json(parseResponse(config.schema, data));
 };
 
 export const GET = withPublicRoute(withRateLimit(handler, RATE_LIMIT_TIER.PUBLIC));

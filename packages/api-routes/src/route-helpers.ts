@@ -26,7 +26,7 @@ const toIssues = (error: ZodError): Array<{ path: string; message: string; code:
     code: issue.code,
   }));
 
-const parseRequest = <T>(schema: ParseSchema<T>, value: unknown): T => {
+export const parseRequest = <T>(schema: ParseSchema<T>, value: unknown): T => {
   const result = schema.safeParse(value);
 
   if (!result.success) {
@@ -36,7 +36,7 @@ const parseRequest = <T>(schema: ParseSchema<T>, value: unknown): T => {
   return result.data;
 };
 
-const parseResponse = <T>(schema: ParseSchema<T>, value: unknown): T => {
+export const parseResponse = <T>(schema: ParseSchema<T>, value: unknown): T => {
   const result = schema.safeParse(value);
 
   if (!result.success) {

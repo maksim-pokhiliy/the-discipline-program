@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
 import {
+  parseJsonBody,
+  parseRequest,
+  parseResponse,
   RATE_LIMIT_TIER,
   type RouteContext,
   withPublicRoute,
@@ -12,25 +15,16 @@ import {
   consumeInviteRequestSchema,
   consumeInviteResponseSchema,
 } from "@repo/contracts/iam/invite-token";
-import { BadRequestError } from "@repo/errors";
-
-const parseRequestBody = async (request: Request): Promise<unknown> => {
-  try {
-    return await request.json();
-  } catch {
-    throw new BadRequestError("Invalid JSON in request body");
-  }
-};
 
 const consumeInviteHandler = async (request: Request, context: RouteContext): Promise<Response> => {
-  const { token } = consumeInviteParamsSchema.parse(await context.params);
-  const body = await parseRequestBody(request);
-  const input = consumeInviteRequestSchema.parse(body);
+  const { token } = parseRequest(consumeInviteParamsSchema, await context.params);
+  const body = await parseJsonBody(request);
+  const input = parseRequest(consumeInviteRequestSchema, body);
   const result = await iamInviteTokenApi.consume(token, {
     password: input.password,
     ...(input.timezone !== undefined && { timezone: input.timezone }),
   });
-  const validated = consumeInviteResponseSchema.parse(result);
+  const validated = parseResponse(consumeInviteResponseSchema, result);
 
   return NextResponse.json(validated);
 };

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
 import {
+  parseJsonBody,
+  parseRequest,
+  parseResponse,
   RATE_LIMIT_TIER,
   type RouteContext,
   withPublicRoute,
@@ -12,25 +15,16 @@ import {
   consumePasswordResetRequestSchema,
   consumePasswordResetResponseSchema,
 } from "@repo/contracts/iam/password-reset";
-import { BadRequestError } from "@repo/errors";
-
-const parseRequestBody = async (request: Request): Promise<unknown> => {
-  try {
-    return await request.json();
-  } catch {
-    throw new BadRequestError("Invalid JSON in request body");
-  }
-};
 
 const consumePasswordResetHandler = async (
   request: Request,
   context: RouteContext,
 ): Promise<Response> => {
-  const { token } = consumePasswordResetParamsSchema.parse(await context.params);
-  const body = await parseRequestBody(request);
-  const input = consumePasswordResetRequestSchema.parse(body);
+  const { token } = parseRequest(consumePasswordResetParamsSchema, await context.params);
+  const body = await parseJsonBody(request);
+  const input = parseRequest(consumePasswordResetRequestSchema, body);
   const result = await iamPasswordResetApi.consume(token, { password: input.password });
-  const validated = consumePasswordResetResponseSchema.parse(result);
+  const validated = parseResponse(consumePasswordResetResponseSchema, result);
 
   return NextResponse.json(validated);
 };

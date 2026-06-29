@@ -10,6 +10,9 @@ export {
 export type { RequestContext } from "./request-context";
 export {
   withPublicRoute,
+  parseJsonBody,
+  parseRequest,
+  parseResponse,
   createGetHandler,
   createGetByIdHandler,
   createGetByParamHandler,
