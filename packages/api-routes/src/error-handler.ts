@@ -38,12 +38,23 @@ const summarizeError = (error: unknown): Record<string, unknown> => {
   return { message: String(error) };
 };
 
+const isClientError = (error: unknown): boolean =>
+  error instanceof ZodError || (error instanceof AppError && error.statusCode < 500);
+
 const reportError = (
   error: unknown,
   safeError: Record<string, unknown>,
   requestId: string | undefined,
 ): void => {
-  logger.error("API Error", { ...safeError, ...(requestId && { requestId }) });
+  const payload = { ...safeError, ...(requestId && { requestId }) };
+
+  if (isClientError(error)) {
+    logger.warn("API client error", payload);
+
+    return;
+  }
+
+  logger.error("API Error", payload);
 
   const monitoring = getMonitoring();
 
@@ -54,7 +65,7 @@ const reportError = (
   monitoring.captureException(error, {
     tags: { requestId: requestId ?? "unknown" },
     extra: safeError,
-    level: error instanceof AppError && error.statusCode < 500 ? "warning" : "error",
+    level: "error",
   });
 };
 
@@ -69,7 +80,8 @@ const appErrorResponse = (error: AppError, requestId: string | undefined): NextR
     headers.set("Retry-After", String(error.details.retryAfter));
   }
 
-  const redactedDetails = error.details ? redactPii(error.details) : undefined;
+  const redactedDetails =
+    error.statusCode < 500 && error.details ? redactPii(error.details) : undefined;
 
   return NextResponse.json(
     {

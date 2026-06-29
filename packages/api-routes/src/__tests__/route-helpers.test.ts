@@ -147,6 +147,22 @@ describe("createGetHandler", () => {
     expect(data).toEqual({ id: "x", name: "alice" });
     expect(apiFn).toHaveBeenCalledOnce();
   });
+
+  it("maps a response-schema mismatch to a 500 without leaking issues", async () => {
+    const handler = withErrorHandling(
+      createGetHandler(async () => ({ name: "x" }), z.object({ name: z.string().min(5) })),
+    );
+
+    const response = await handler(new Request("https://example.com"), dummyContext());
+    const json = (await response.json()) as {
+      error: { code: string; issues?: unknown; details?: unknown };
+    };
+
+    expect(response.status).toBe(500);
+    expect(json.error.code).toBe("INTERNAL_SERVER_ERROR");
+    expect(json.error.issues).toBeUndefined();
+    expect(json.error.details).toBeUndefined();
+  });
 });
 
 describe("createGetByIdHandler", () => {

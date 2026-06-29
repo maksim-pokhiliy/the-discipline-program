@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { type ZodType, type ZodTypeDef } from "zod";
+import { ZodError, type ZodType, type ZodTypeDef } from "zod";
 
-import { BadRequestError } from "@repo/errors";
+import { BadRequestError, InternalServerError } from "@repo/errors";
 
 import { handleApiError } from "./error-handler";
 import { wrapHandler } from "./idempotency";
@@ -16,6 +16,24 @@ export const parseJsonBody = async (request: Request): Promise<unknown> => {
     return await request.json();
   } catch {
     throw new BadRequestError("Invalid JSON in request body");
+  }
+};
+
+const parseResponse = <T>(schema: ParseSchema<T>, value: unknown): T => {
+  try {
+    return schema.parse(value);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new InternalServerError("Response validation failed", {
+        issues: error.errors.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+          code: issue.code,
+        })),
+      });
+    }
+
+    throw error;
   }
 };
 
@@ -45,7 +63,7 @@ export const createGetHandler = <TResponse>(
 ) => {
   return async () => {
     const data = await apiFn();
-    const validated = responseSchema.parse(data);
+    const validated = parseResponse(responseSchema, data);
 
     return NextResponse.json(validated);
   };
@@ -59,7 +77,7 @@ export const createGetByIdHandler = <TResponse>(
   return async (_: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
     const data = await apiFn(id);
-    const validated = responseSchema.parse(data);
+    const validated = parseResponse(responseSchema, data);
 
     return NextResponse.json(validated);
   };
@@ -78,7 +96,7 @@ export const createPostHandler = <TRequest, TResponse>(
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(data);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated, { status: 201 });
   };
@@ -97,7 +115,7 @@ export const createPutHandler = <TRequest, TResponse>(
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(id, data);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated);
   };
@@ -113,7 +131,7 @@ export const createGetByParamHandler = <TParams, TResponse>(
   return async (_: Request, context: RouteContext) => {
     const params = paramsSchema.parse(await context.params);
     const data = await apiFn(params);
-    const validated = responseSchema.parse(data);
+    const validated = parseResponse(responseSchema, data);
 
     return NextResponse.json(validated);
   };
@@ -144,7 +162,7 @@ export const createFormDataPostHandler = <TResponse>(
   const inner: RouteHandler = async (request) => {
     const formData = await request.formData();
     const result = await apiFn(formData);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated, { status: 201 });
   };
@@ -191,7 +209,7 @@ export const createToggleHandler = <TResponse>(
   const inner: RouteHandler = async (_request, context) => {
     const { id } = paramsSchema.parse(await context.params);
     const result = await apiFn(id);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated);
   };
@@ -211,7 +229,7 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
       field: new URL(request.url).searchParams.get("field"),
     });
     const result = await handlers[field](id);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated);
   };
