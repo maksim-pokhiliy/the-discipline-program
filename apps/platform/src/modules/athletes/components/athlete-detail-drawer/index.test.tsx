@@ -17,6 +17,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const detailState = {
   data: undefined as CoachAthleteDetail | undefined,
   isLoading: false,
+  isFetching: false,
   error: null as Error | null,
 };
 const refetchMock = vi.fn();
@@ -25,6 +26,7 @@ vi.mock("@app/lib/hooks", () => ({
   useCoachAthleteDetail: () => ({
     data: detailState.data,
     isLoading: detailState.isLoading,
+    isFetching: detailState.isFetching,
     error: detailState.error,
     refetch: refetchMock,
   }),
@@ -106,6 +108,7 @@ const renderDrawer = (athleteId: string | null) =>
 beforeEach(() => {
   detailState.data = makeDetail();
   detailState.isLoading = false;
+  detailState.isFetching = false;
   detailState.error = null;
   refetchMock.mockReset();
 });
@@ -261,5 +264,23 @@ describe("AthleteDetailDrawer error state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(refetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows in-flight feedback on Retry while a refetch is running", () => {
+    detailState.isFetching = true;
+
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  });
+
+  it("keeps the cached content instead of the error state when a refetch errors but data remains", () => {
+    detailState.data = makeDetail();
+
+    renderDrawer(ATHLETE_ID);
+
+    expect(screen.getByText("aria@example.com")).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load athlete details — try again.")).toBeNull();
   });
 });

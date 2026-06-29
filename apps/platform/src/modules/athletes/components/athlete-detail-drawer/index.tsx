@@ -60,7 +60,7 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
   onClose,
   onNavigate,
 }) => {
-  const { data, isLoading, error, refetch } = useCoachAthleteDetail(athleteId);
+  const { data, isLoading, error, isFetching, refetch } = useCoachAthleteDetail(athleteId);
   const [tab, setTab] = useState<DrawerTab>(DEFAULT_TAB);
 
   const index = athleteId ? visibleIds.indexOf(athleteId) : -1;
@@ -167,12 +167,18 @@ export const AthleteDetailDrawer: React.FC<AthleteDetailDrawerProps> = ({
         </IconButton>
       </Stack>
 
-      {error ? (
+      {error && !data ? (
         <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1, p: 2 }}>
           <Alert severity="error" sx={{ width: "100%" }}>
             {LOAD_ERROR}
           </Alert>
-          <Button variant="outlined" size="small" onClick={() => refetch()}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            startIcon={isFetching ? <CircularProgress size={16} color="inherit" /> : null}
+          >
             Retry
           </Button>
         </Stack>
