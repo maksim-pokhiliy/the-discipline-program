@@ -20,9 +20,9 @@ export const useLogBenchmarkResult = () => {
 
   return useMutation({
     mutationFn: ({ sessionId, data }: LogBenchmarkResultArgs) =>
-      api.benchmarkResults.create(sessionId, data, submitToken.get()),
-    onSuccess: (_data, { sessionId }) => {
-      submitToken.reset();
+      api.benchmarkResults.create(sessionId, data, submitToken.get(data.plannedSchemaId)),
+    onSuccess: (_data, { sessionId, data }) => {
+      submitToken.reset(data.plannedSchemaId);
       queryClient.invalidateQueries({
         queryKey: platformKeys.athleteSessionView.detail(sessionId),
       });

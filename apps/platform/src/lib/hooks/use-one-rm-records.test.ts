@@ -141,4 +141,22 @@ describe("useCreateOneRMRecord", () => {
     expect(keyAt(1)).toBe(keyAt(0));
     expect(notifyErrorMock).toHaveBeenCalledWith(expect.any(Error), "Failed to save 1RM");
   });
+
+  it("isolates the key per exercise so a held key never poisons another exercise", async () => {
+    createOneRMRecordMock.mockReturnValue(new Promise<CreateOneRMRecordResponse>(() => undefined));
+
+    const { result } = renderRunner();
+    const otherExercise = "clp9z8x7w0000abcd1234exr2";
+
+    await act(async () => {
+      result.current.mutate(makeOneRMRequest());
+      result.current.mutate(makeOneRMRequest({ exerciseId: otherExercise }));
+    });
+
+    await waitFor(() => expect(createOneRMRecordMock).toHaveBeenCalledTimes(2));
+
+    expect(typeof keyAt(0)).toBe("string");
+    expect(typeof keyAt(1)).toBe("string");
+    expect(keyAt(1)).not.toBe(keyAt(0));
+  });
 });

@@ -21,9 +21,9 @@ export const useCreateOneRMRecord = () => {
 
   return useMutation({
     mutationFn: (data: CreateOneRMRecordRequest) =>
-      api.oneRMRecords.create(data, submitToken.get()),
-    onSuccess: () => {
-      submitToken.reset();
+      api.oneRMRecords.create(data, submitToken.get(data.exerciseId)),
+    onSuccess: (_result, variables) => {
+      submitToken.reset(variables.exerciseId);
       queryClient.invalidateQueries({ queryKey: platformKeys.oneRMRecords.list() });
       toast.success("1RM saved");
     },
