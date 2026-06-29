@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { type ZodType, type ZodTypeDef } from "zod";
+import { type ZodError, type ZodType, type ZodTypeDef } from "zod";
 
-import { BadRequestError } from "@repo/errors";
+import { BadRequestError, InternalServerError, ValidationError } from "@repo/errors";
 
 import { handleApiError } from "./error-handler";
 import { wrapHandler } from "./idempotency";
@@ -17,6 +17,33 @@ export const parseJsonBody = async (request: Request): Promise<unknown> => {
   } catch {
     throw new BadRequestError("Invalid JSON in request body");
   }
+};
+
+const toIssues = (error: ZodError): Array<{ path: string; message: string; code: string }> =>
+  error.errors.map((issue) => ({
+    path: issue.path.join("."),
+    message: issue.message,
+    code: issue.code,
+  }));
+
+export const parseRequest = <T>(schema: ParseSchema<T>, value: unknown): T => {
+  const result = schema.safeParse(value);
+
+  if (!result.success) {
+    throw new ValidationError("Validation failed", { issues: toIssues(result.error) });
+  }
+
+  return result.data;
+};
+
+export const parseResponse = <T>(schema: ParseSchema<T>, value: unknown): T => {
+  const result = schema.safeParse(value);
+
+  if (!result.success) {
+    throw new InternalServerError("Response validation failed", { issues: toIssues(result.error) });
+  }
+
+  return result.data;
 };
 
 export const withErrorHandling =
@@ -45,7 +72,7 @@ export const createGetHandler = <TResponse>(
 ) => {
   return async () => {
     const data = await apiFn();
-    const validated = responseSchema.parse(data);
+    const validated = parseResponse(responseSchema, data);
 
     return NextResponse.json(validated);
   };
@@ -57,9 +84,9 @@ export const createGetByIdHandler = <TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (_: Request, context: RouteContext) => {
-    const { id } = paramsSchema.parse(await context.params);
+    const { id } = parseRequest(paramsSchema, await context.params);
     const data = await apiFn(id);
-    const validated = responseSchema.parse(data);
+    const validated = parseResponse(responseSchema, data);
 
     return NextResponse.json(validated);
   };
@@ -76,9 +103,9 @@ export const createPostHandler = <TRequest, TResponse>(
 ): RouteHandler => {
   const inner: RouteHandler = async (request) => {
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
     const result = await apiFn(data);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated, { status: 201 });
   };
@@ -93,11 +120,11 @@ export const createPutHandler = <TRequest, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): RouteHandler => {
   const inner: RouteHandler = async (request, context) => {
-    const { id } = paramsSchema.parse(await context.params);
+    const { id } = parseRequest(paramsSchema, await context.params);
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
     const result = await apiFn(id, data);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated);
   };
@@ -111,9 +138,9 @@ export const createGetByParamHandler = <TParams, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (_: Request, context: RouteContext) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const data = await apiFn(params);
-    const validated = responseSchema.parse(data);
+    const validated = parseResponse(responseSchema, data);
 
     return NextResponse.json(validated);
   };
@@ -125,9 +152,9 @@ export const createPatchByParamHandler = <TParams, TRequest>(
   requestSchema: ParseSchema<TRequest>,
 ): RouteHandler => {
   const inner: RouteHandler = async (request, context) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
 
     await apiFn(params, data);
 
@@ -144,7 +171,7 @@ export const createFormDataPostHandler = <TResponse>(
   const inner: RouteHandler = async (request) => {
     const formData = await request.formData();
     const result = await apiFn(formData);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated, { status: 201 });
   };
@@ -158,7 +185,7 @@ export const createDeleteWithBodyHandler = <TRequest>(
 ): RouteHandler => {
   const inner: RouteHandler = async (request) => {
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
 
     await apiFn(data);
 
@@ -173,7 +200,7 @@ export const createDeleteHandler = (
   paramsSchema: ParseSchema<{ id: string }>,
 ): RouteHandler => {
   const inner: RouteHandler = async (_request, context) => {
-    const { id } = paramsSchema.parse(await context.params);
+    const { id } = parseRequest(paramsSchema, await context.params);
 
     await apiFn(id);
 
@@ -189,9 +216,9 @@ export const createToggleHandler = <TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): RouteHandler => {
   const inner: RouteHandler = async (_request, context) => {
-    const { id } = paramsSchema.parse(await context.params);
+    const { id } = parseRequest(paramsSchema, await context.params);
     const result = await apiFn(id);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated);
   };
@@ -206,12 +233,12 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): RouteHandler => {
   const inner: RouteHandler = async (request, context) => {
-    const { id } = paramsSchema.parse(await context.params);
-    const { field } = querySchema.parse({
+    const { id } = parseRequest(paramsSchema, await context.params);
+    const { field } = parseRequest(querySchema, {
       field: new URL(request.url).searchParams.get("field"),
     });
     const result = await handlers[field](id);
-    const validated = responseSchema.parse(result);
+    const validated = parseResponse(responseSchema, result);
 
     return NextResponse.json(validated);
   };
