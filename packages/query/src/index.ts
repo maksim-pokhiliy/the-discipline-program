@@ -5,5 +5,6 @@ export * from "./hooks/notify-error";
 export * from "./hooks/use-delete-confirmation";
 export * from "./hooks/use-optimistic-mutation";
 export * from "./hooks/use-scoped-mutation";
+export * from "./hooks/use-submit-token";
 export * from "./keys";
 export * from "./providers";

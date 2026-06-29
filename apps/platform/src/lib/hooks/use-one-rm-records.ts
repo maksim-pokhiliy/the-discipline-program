@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { CreateOneRMRecordRequest } from "@repo/contracts/lms/one-rm-record";
-import { notifyError } from "@repo/query";
+import { notifyError, useSubmitToken } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -17,10 +17,13 @@ export const useOneRMRecords = (exerciseId?: string) =>
 
 export const useCreateOneRMRecord = () => {
   const queryClient = useQueryClient();
+  const submitToken = useSubmitToken();
 
   return useMutation({
-    mutationFn: (data: CreateOneRMRecordRequest) => api.oneRMRecords.create(data),
-    onSuccess: () => {
+    mutationFn: (data: CreateOneRMRecordRequest) =>
+      api.oneRMRecords.create(data, submitToken.get(data.exerciseId)),
+    onSuccess: (_result, variables) => {
+      submitToken.reset(variables.exerciseId);
       queryClient.invalidateQueries({ queryKey: platformKeys.oneRMRecords.list() });
       toast.success("1RM saved");
     },

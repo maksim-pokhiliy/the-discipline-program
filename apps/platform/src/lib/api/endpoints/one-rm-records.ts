@@ -19,6 +19,15 @@ export const createOneRMRecordsAPI = (client: ApiClient) => ({
     );
   },
 
-  create: (data: CreateOneRMRecordRequest): Promise<CreateOneRMRecordResponse> =>
-    client.request("/api/platform/athlete/one-rm-records", "POST", data),
+  create: (
+    data: CreateOneRMRecordRequest,
+    idempotencyKey?: string,
+  ): Promise<CreateOneRMRecordResponse> =>
+    client.request(
+      "/api/platform/athlete/one-rm-records",
+      "POST",
+      data,
+      undefined,
+      idempotencyKey === undefined ? undefined : { idempotencyKey },
+    ),
 });
