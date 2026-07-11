@@ -88,7 +88,10 @@ export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
           overflowY: "auto",
           px: CONTENT_PAD_X,
           pt: CONTENT_PAD_TOP,
-          pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+          pb: {
+            xs: `calc(${theme.layout.platformBottomNavHeight}px + ${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+            md: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+          },
         })}
       >
         {workout}
@@ -126,7 +129,7 @@ export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
             position: "fixed",
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: `calc(${theme.layout.platformBottomNavHeight}px + env(safe-area-inset-bottom))`,
             zIndex: theme.zIndex.appBar,
           })}
         >
