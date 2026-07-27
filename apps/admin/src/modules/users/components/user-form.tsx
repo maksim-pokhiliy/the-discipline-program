@@ -16,13 +16,18 @@ import { AthleteCoachPicker } from "./athlete-coach-picker";
 type UserFormProps = {
   isEdit?: boolean;
   isLoading?: boolean;
+  isReadOnly?: boolean;
 };
 
 type UserFormValues = CreateUserData & UpdateUserData;
 
 const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.ATHLETE, UserRole.COACH];
 
-export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) => {
+export const UserForm = ({
+  isEdit = false,
+  isLoading = false,
+  isReadOnly = false,
+}: UserFormProps) => {
   const {
     control,
     register,
@@ -31,6 +36,7 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
   const currentRole = useWatch({ control, name: "role" });
 
   const roleOptions = isEdit ? Object.values(UserRole) : CREATE_ROLE_OPTIONS;
+  const readOnlySlotProps = { input: { readOnly: isReadOnly } };
 
   return (
     <Grid container spacing={3}>
@@ -44,6 +50,7 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                 variant="outlined"
                 fullWidth
                 disabled={isLoading || isEdit}
+                slotProps={readOnlySlotProps}
                 error={!!errors.email}
                 helperText={
                   isEdit ? "Email cannot be changed after creation" : errors.email?.message
@@ -57,6 +64,7 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                 variant="outlined"
                 fullWidth
                 disabled={isLoading}
+                slotProps={readOnlySlotProps}
                 error={!!errors.name}
                 helperText={errors.name?.message}
                 {...register("name", {
@@ -91,6 +99,7 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                     variant="outlined"
                     fullWidth
                     disabled={isLoading}
+                    slotProps={readOnlySlotProps}
                     error={!!errors.role}
                     helperText={errors.role?.message}
                   >
@@ -113,6 +122,7 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                       onChange={field.onChange}
                       onBlur={field.onBlur}
                       disabled={isLoading}
+                      readOnly={isReadOnly}
                       error={!!errors.timezone}
                       helperText={errors.timezone?.message}
                     />
@@ -121,7 +131,12 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
               )}
 
               {currentRole === UserRole.ATHLETE && (
-                <AthleteCoachPicker control={control} errors={errors} isFormLoading={isLoading} />
+                <AthleteCoachPicker
+                  control={control}
+                  errors={errors}
+                  isDisabled={isLoading}
+                  isReadOnly={isReadOnly}
+                />
               )}
             </Stack>
           </FormCard>

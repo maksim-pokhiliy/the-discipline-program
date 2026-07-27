@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
+import { iamUserAdminApi } from "../iam/users-admin";
 
 import { coachingAdminUserViewApi } from "./admin-user-view";
 
@@ -17,6 +19,7 @@ describe("coachingAdminUserViewApi", () => {
   let athleteEmpty: Awaited<ReturnType<typeof createTestUser>>;
   let athleteSoftDeletedCoach: Awaited<ReturnType<typeof createTestUser>>;
   let coachUser: Awaited<ReturnType<typeof createTestUser>>;
+  let adminActor: Awaited<ReturnType<typeof createTestUser>>;
 
   beforeAll(async () => {
     alphaCoach = await createTestCoach();
@@ -64,6 +67,8 @@ describe("coachingAdminUserViewApi", () => {
 
     coachUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
     await cleanupRaw.coachProfile.create({ data: { userId: coachUser.id } });
+
+    adminActor = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
   });
 
   afterAll(async () => {
@@ -95,6 +100,7 @@ describe("coachingAdminUserViewApi", () => {
       { table: "user", id: athleteEmpty.id },
       { table: "user", id: athleteSoftDeletedCoach.id },
       { table: "user", id: coachUser.id },
+      { table: "user", id: adminActor.id },
     );
   });
 
@@ -128,6 +134,26 @@ describe("coachingAdminUserViewApi", () => {
 
       expect(view.athleteProfile).toBeNull();
       expect(view).not.toHaveProperty("assignedCoaches");
+    });
+
+    it("throws NotFoundError for a user soft-deleted through the admin delete path", async () => {
+      const target = await createTestUser();
+
+      try {
+        await iamUserAdminApi.deleteUser(adminActor.id, target.id);
+
+        const tombstone = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+
+        if (!tombstone) {
+          throw new Error("expected the deleted user row to survive as a tombstone");
+        }
+
+        expect(tombstone.deletedAt).not.toBeNull();
+
+        await expect(coachingAdminUserViewApi.getById(target.id)).rejects.toThrow(NotFoundError);
+      } finally {
+        await cleanup({ table: "user", id: target.id });
+      }
     });
   });
 });

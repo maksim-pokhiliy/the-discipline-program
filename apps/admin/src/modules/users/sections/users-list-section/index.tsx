@@ -4,9 +4,11 @@ import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
+import { useCurrentUserId, useCurrentUserRole } from "@repo/auth/client";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type AdminUserListItem } from "@repo/contracts/iam/user";
 import { useDeleteConfirmation } from "@repo/query";
@@ -45,6 +47,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "createdAt", direction: "desc" },
   });
+
+  const canMutateUsers = useCurrentUserRole() === UserRole.ADMIN;
+  const currentUserId = useCurrentUserId();
+  const detailActionLabel = canMutateUsers ? "Edit" : "View";
 
   const { mutate: updateRole, isPending } = useUpdateUserRole();
   const deleteMutation = useDeleteUser();
@@ -120,7 +126,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               {...(config.color !== undefined && { color: config.color })}
               size="small"
               variant="outlined"
-              onClick={(e) => openMenu(e, user.id)}
+              {...(canMutateUsers &&
+                user.id !== currentUserId && {
+                  onClick: (event: React.MouseEvent<HTMLElement>) => openMenu(event, user.id),
+                })}
             />
           );
         },
@@ -144,27 +153,37 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         width: "15%",
         render: (user) => (
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Tooltip title="Edit">
+            <Tooltip title={detailActionLabel}>
               <IconButton
                 component={Link}
                 href={`/users/${user.id}`}
                 color="primary"
-                aria-label="Edit"
+                aria-label={detailActionLabel}
               >
-                <EditIcon fontSize="small" />
+                {canMutateUsers ? (
+                  <EditIcon fontSize="small" />
+                ) : (
+                  <VisibilityIcon fontSize="small" />
+                )}
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Delete">
-              <IconButton onClick={() => requestDelete(user.id)} color="error" aria-label="Delete">
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            {canMutateUsers && user.id !== currentUserId && (
+              <Tooltip title="Delete">
+                <IconButton
+                  onClick={() => requestDelete(user.id)}
+                  color="error"
+                  aria-label="Delete"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         ),
       },
     ],
-    [openMenu, requestDelete],
+    [canMutateUsers, currentUserId, detailActionLabel, openMenu, requestDelete],
   );
 
   return (

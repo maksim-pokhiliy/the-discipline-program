@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+import { useCurrentUserRole } from "@repo/auth/client";
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { updateUserSchema, type UpdateUserData } from "@repo/contracts/iam/user";
@@ -17,6 +18,8 @@ type UserDetailFormProps = {
 };
 
 export const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
+  const canMutateUsers = useCurrentUserRole() === UserRole.ADMIN;
+
   const { mutate: updateUser, isPending } = useUpdateUser();
 
   const methods = useForm<UpdateUserData>({
@@ -47,8 +50,9 @@ export const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
       subtitle={user.email}
       backHref="/users"
       backLabel="Back to Users"
+      isSubmitHidden={!canMutateUsers}
     >
-      <UserDetailSection user={user} isPending={isPending} />
+      <UserDetailSection user={user} isPending={isPending} isReadOnly={!canMutateUsers} />
     </FormView>
   );
 };

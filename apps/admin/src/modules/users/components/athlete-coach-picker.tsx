@@ -16,10 +16,16 @@ type UserFormValues = CreateUserData & UpdateUserData;
 type AthleteCoachPickerProps = {
   control: Control<UserFormValues>;
   errors: FieldErrors<UserFormValues>;
-  isFormLoading: boolean;
+  isDisabled: boolean;
+  isReadOnly: boolean;
 };
 
-export const AthleteCoachPicker = ({ control, errors, isFormLoading }: AthleteCoachPickerProps) => {
+export const AthleteCoachPicker = ({
+  control,
+  errors,
+  isDisabled,
+  isReadOnly,
+}: AthleteCoachPickerProps) => {
   const { data: coaches = [], isLoading: isCoachesLoading } = useCoachesList();
 
   return (
@@ -39,7 +45,8 @@ export const AthleteCoachPicker = ({ control, errors, isFormLoading }: AthleteCo
           placeholder="Select coaches"
           emptyLabel="No coaches available"
           isLoading={isCoachesLoading}
-          disabled={isFormLoading}
+          disabled={isDisabled}
+          readOnly={isReadOnly}
           errorText={errors.coachIds?.message}
         />
       )}

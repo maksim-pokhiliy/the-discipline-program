@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type FormEvent, type ReactNode } from "react";
 
 import SaveIcon from "@mui/icons-material/Save";
 import { Stack } from "@mui/material";
@@ -17,6 +17,7 @@ export type FormViewProps<TFieldValues extends FieldValues, TTransformedValues =
   backHref: string;
   backLabel: string;
   submitLabel?: string;
+  isSubmitHidden?: boolean;
   children: ReactNode;
 };
 
@@ -29,10 +30,19 @@ export const FormView = <TFieldValues extends FieldValues, TTransformedValues = 
   backHref,
   backLabel,
   submitLabel = "Save Changes",
+  isSubmitHidden = false,
   children,
 }: FormViewProps<TFieldValues, TTransformedValues>) => (
   <FormProvider {...methods}>
-    <Stack component="form" onSubmit={methods.handleSubmit(onSubmit)} noValidate>
+    <Stack
+      component="form"
+      onSubmit={
+        isSubmitHidden
+          ? (event: FormEvent) => event.preventDefault()
+          : methods.handleSubmit(onSubmit)
+      }
+      noValidate
+    >
       <ContentSection
         title={title}
         subtitle={subtitle}
@@ -41,14 +51,18 @@ export const FormView = <TFieldValues extends FieldValues, TTransformedValues = 
         maxWidth="xl"
         textAlign="left"
         animated={false}
-        actions={[
-          {
-            label: submitLabel,
-            type: "submit",
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
+        actions={
+          isSubmitHidden
+            ? []
+            : [
+                {
+                  label: submitLabel,
+                  type: "submit",
+                  loading: isPending,
+                  startIcon: <SaveIcon />,
+                },
+              ]
+        }
       >
         {children}
       </ContentSection>

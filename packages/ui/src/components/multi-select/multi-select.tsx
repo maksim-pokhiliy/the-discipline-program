@@ -34,6 +34,7 @@ export type MultiSelectProps<TOption> = {
   errorText?: string | undefined;
   isLoading?: boolean | undefined;
   disabled?: boolean | undefined;
+  readOnly?: boolean | undefined;
   emptyLabel?: string | undefined;
   selectAllLabel?: string | undefined;
   onInputChange?: ((next: string) => void) | undefined;
@@ -58,6 +59,7 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
     errorText,
     isLoading = false,
     disabled = false,
+    readOnly = false,
     emptyLabel,
     selectAllLabel,
     onInputChange,
@@ -159,6 +161,7 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
       getOptionLabel={getLabel}
       noOptionsText={emptyLabel ?? "No options"}
       disabled={disabled}
+      readOnly={readOnly}
       {...(isControlledInput
         ? {
             inputValue,
