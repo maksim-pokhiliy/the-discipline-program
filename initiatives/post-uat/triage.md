@@ -34,13 +34,15 @@
 
 ---
 
-## PU-03 · UX · platform/athlete-session — level switch is invisible (owner reframe 27.07)
+## PU-03 · UX · platform/athlete-session — level switch applies but is not PERCEIVED (→ design round Wd)
 
-**Symptom.** "Не хоче твоя програма, шоб я була RX" (Tetiana, 27.06 + video). **Owner reframe (27.07, precise venue): she was switching RX/SC on her PROFILE page (the picks card) — and there the primary button correctly shows the active variant.** The switch worked and is visible where it's MADE; its EFFECT is invisible where it MATTERS — the workout screen. A feedback gap, not a broken mutation.
+**Symptom.** "Не хоче твоя програма, шоб я була RX" (Tetiana, 27.06 + video). **Owner reframe (27.07, third refinement — final): she switched on her PROFILE page, and EVERYTHING updated everywhere, including the kg number on the workout screen. She just could not perceive that the change had applied** — the number changes with no label naming the level and no confirmation moment, so the update does not read as "it worked". This is a pure perception/interaction-design gap; nothing is broken.
 
 **Root cause (re-verified against code; consistent with the reframe).** The workout screen never names the active level: a resolved byProfile line renders a bare kg number — the resolved arm carries only `{kg, perHand}` (`session-detail.schema.ts:20-21`) — so after a profile-side switch the number changes silently and nothing says "you are RX now". The in-session re-switch affordance doesn't exist either (`buildLoadLine` returns no prompt on resolved — `athlete-session-presentation.ts:188-224`) — which is exactly WHY she ended up switching on the Profile page. Secondary friction on the FIRST in-session pick: `pickProfile` closes the popover instantly on success (`use-session-logging.ts:174-200`; one pickable axis → every tap is a full pick). Intact from recon: rows inside a **RowGroup never render a picker at all** (`schema-card.tsx:123` passes no `editor`; `row-group.tsx:31-37` discards prompts).
 
-**Fix (converges with PU-05c — one mechanism).** (a) **Label the resolved value with the picked coordinate** ("RX · 24 kg") — additive `coords` on the resolved arm (the server knows them at `resolve-load.ts:91`) or client-side derivation from `load.axes` + selections. This is simultaneously the missing switch-feedback AND the PU-05 honesty fix ("14 kg · RX/Female" exposes a mis-encoded grid). (b) Keep a prompt on resolved rows (label = current level, "RX ▾") so the picker re-opens and the switch is explorable — **~15 LOC, S**. (c) Pass `editor` into `RowGroup` so grouped rows get the same affordances — **~20-25 LOC, S**. Polish candidate: don't slam the popover — reflect the new active state for a beat before closing.
+**Disposition (owner, corpus read 27.07): DEFERRED TO A CLAUDE-DESIGN ROUND (Wd) before execution** — the sketch below is input for that round, not a ratified spec.
+
+**Fix sketch (design-round input; converges with PU-05c — one mechanism).** (a) **Label the resolved value with the picked coordinate** ("RX · 24 kg") — additive `coords` on the resolved arm (the server knows them at `resolve-load.ts:91`) or client-side derivation from `load.axes` + selections. This is simultaneously the missing switch-feedback AND the PU-05 honesty fix ("14 kg · RX/Female" exposes a mis-encoded grid). (b) Keep a prompt on resolved rows (label = current level, "RX ▾") so the picker re-opens and the switch is explorable — **~15 LOC, S**. (c) Pass `editor` into `RowGroup` so grouped rows get the same affordances — **~20-25 LOC, S**. Polish candidate: don't slam the popover — reflect the new active state for a beat before closing.
 
 **STR (owner).** As a female athlete with a picked level: open a workout → resolved byProfile rows show only a kg number, nothing names the active level. Switch RX↔SC on the Profile page → return to the workout → the number changed silently; nothing confirms which level produced it, and there is no in-session control to switch back. In a named group: no picker exists at all.
 
@@ -48,13 +50,15 @@
 
 ---
 
-## PU-04 · BUG · platform/athlete-session — weight can be written exactly once
+## PU-04 · BUG · platform/athlete-session — weight can be written exactly once (→ design round Wd)
 
 **Symptom.** "Where you must enter a weight, there's no way to replace it if you made a mistake — you can write it only once" (FB message, athlete).
 
 **Root cause (confirmed).** Best-match flow = the **in-session 1RM prompt** on `% of 1RM` rows: create-only POST (`use-session-logging.ts:147-172` → `one-rm-record/admin.ts:8-24`, `prisma.oneRMRecord.create`), and the entry point self-destructs — once resolved, `buildLoadLine` returns `prompt: null` (`schema-row.tsx:167`). The contract literally lacks the id needed to re-open: `rowViewSchema` has no `exerciseId` (`session-detail.schema.ts:45-59`). Records-page "Update 1RM" can't correct either (append-only + PU-01's scoping). Secondary wedge: the idempotency submit-token resets only on success (`use-submit-token.ts:20-44`) — a persisted-but-unseen 2xx makes every corrected retry 409 until remount.
 
-**Fix.** v1 (recommended, D-5): additive `exerciseId` on `rowViewSchema` + `buildRowView`, and `buildLoadLine` returns an "Edit 1RM" prompt for resolved percentage loads → re-opens `InlineOneRmEditor`, correction is an append (latest-wins is already the resolution law) — **~25-35 LOC, S/M, zero server change**. Plus: the PU-03(a) RowGroup editor (shared fix), and reset the submit token in `onSettled` — **~3 LOC**. True PATCH/DELETE history editing = separate decision, not this wave.
+**Disposition (owner, corpus read 27.07): DEFERRED TO A CLAUDE-DESIGN ROUND (Wd) before execution** — the correction affordance's shape is a design question; D-5 (append, never history-edit) stays the ratified mechanism underneath whatever the design round produces.
+
+**Fix sketch (design-round input).** v1 (recommended, D-5): additive `exerciseId` on `rowViewSchema` + `buildRowView`, and `buildLoadLine` returns an "Edit 1RM" prompt for resolved percentage loads → re-opens `InlineOneRmEditor`, correction is an append (latest-wins is already the resolution law) — **~25-35 LOC, S/M, zero server change**. Plus: the PU-03(a) RowGroup editor (shared fix), and reset the submit token in `onSettled` — **~3 LOC**. True PATCH/DELETE history editing = separate decision, not this wave.
 
 **STR (owner).** As an athlete on a `% of 1RM` row with no logged 1RM: tap the prompt → enter a WRONG weight → save → the row resolves and the prompt is gone; no way to correct from the day view.
 
