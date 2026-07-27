@@ -11,3 +11,9 @@ export const useCurrentUserRole = (): UserRole | null => {
 
   return session?.user?.role ?? null;
 };
+
+export const useCurrentUserId = (): string | null => {
+  const { data: session } = useSession();
+
+  return session?.user?.id ?? null;
+};

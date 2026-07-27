@@ -8,7 +8,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { useCurrentUserRole } from "@repo/auth/client";
+import { useCurrentUserId, useCurrentUserRole } from "@repo/auth/client";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type AdminUserListItem } from "@repo/contracts/iam/user";
 import { useDeleteConfirmation } from "@repo/query";
@@ -49,6 +49,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
   });
 
   const canMutateUsers = useCurrentUserRole() === UserRole.ADMIN;
+  const currentUserId = useCurrentUserId();
   const detailActionLabel = canMutateUsers ? "Edit" : "View";
 
   const { mutate: updateRole, isPending } = useUpdateUserRole();
@@ -125,9 +126,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               {...(config.color !== undefined && { color: config.color })}
               size="small"
               variant="outlined"
-              {...(canMutateUsers && {
-                onClick: (event: React.MouseEvent<HTMLElement>) => openMenu(event, user.id),
-              })}
+              {...(canMutateUsers &&
+                user.id !== currentUserId && {
+                  onClick: (event: React.MouseEvent<HTMLElement>) => openMenu(event, user.id),
+                })}
             />
           );
         },
@@ -166,7 +168,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               </IconButton>
             </Tooltip>
 
-            {canMutateUsers && (
+            {canMutateUsers && user.id !== currentUserId && (
               <Tooltip title="Delete">
                 <IconButton
                   onClick={() => requestDelete(user.id)}
@@ -181,7 +183,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         ),
       },
     ],
-    [canMutateUsers, detailActionLabel, openMenu, requestDelete],
+    [canMutateUsers, currentUserId, detailActionLabel, openMenu, requestDelete],
   );
 
   return (
