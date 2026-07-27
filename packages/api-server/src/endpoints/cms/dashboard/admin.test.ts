@@ -1,13 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DashboardActivityType } from "@repo/contracts/cms/dashboard";
+import { UserRole } from "@repo/contracts/iam/auth";
 
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
   cleanup,
   createTestContactSubmission,
   createTestProduct,
   createTestReview,
+  createTestUser,
 } from "../../../test/helpers";
+import { iamUserAdminApi } from "../../iam/users-admin";
 
 import { cmsDashboardAdminApi } from "./admin";
 
@@ -165,6 +169,35 @@ describe("cmsDashboardAdminApi", () => {
         expect(item.date).toBeInstanceOf(Date);
         expect(item.href).toBeDefined();
         expect(Object.values(DashboardActivityType)).toContain(item.type);
+      }
+    });
+  });
+
+  describe("soft-deleted users", () => {
+    let adminActor: Awaited<ReturnType<typeof createTestUser>>;
+
+    beforeAll(async () => {
+      adminActor = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+
+      toCleanup.push({ table: "user", id: adminActor.id });
+    });
+
+    it("drops the user from userStats.total and recentActivity after an admin delete", async () => {
+      const target = await createTestUser();
+
+      try {
+        const before = await cmsDashboardAdminApi.getDashboardData();
+
+        expect(before.recentActivity.some((a) => a.id === target.id)).toBe(true);
+
+        await iamUserAdminApi.deleteUser(adminActor.id, target.id);
+
+        const after = await cmsDashboardAdminApi.getDashboardData();
+
+        expect(after.userStats.total).toBe(before.userStats.total - 1);
+        expect(after.recentActivity.some((a) => a.id === target.id)).toBe(false);
+      } finally {
+        await cleanup({ table: "user", id: target.id });
       }
     });
   });

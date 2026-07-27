@@ -1,12 +1,19 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { getUsersPageDataResponseSchema } from "@repo/contracts/iam/user";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { iamUserAdminApi } from "./users-admin";
+
+const pageDataParseIssues = (pageData: unknown) => {
+  const parsed = getUsersPageDataResponseSchema.safeParse(pageData);
+
+  return parsed.success ? [] : parsed.error.issues;
+};
 
 describe("iamUserAdminApi", () => {
   let adminUser: Awaited<ReturnType<typeof createTestUser>>;
@@ -291,6 +298,43 @@ describe("iamUserAdminApi", () => {
       expect(after?.tokenVersion).toBe((before?.tokenVersion ?? 0) + 1);
 
       await cleanupRaw.user.delete({ where: { id: target.id } });
+    });
+
+    it("keeps the users list readable and schema-valid after repeated soft deletes", async () => {
+      const first = await createTestUser();
+      const second = await createTestUser();
+
+      try {
+        await iamUserAdminApi.deleteUser(adminUser.id, first.id);
+
+        const afterFirst = await iamUserAdminApi.getPageData();
+
+        expect(pageDataParseIssues(afterFirst)).toEqual([]);
+        expect(afterFirst.users.some((u) => u.id === first.id)).toBe(false);
+
+        await iamUserAdminApi.deleteUser(adminUser.id, second.id);
+
+        const afterSecond = await iamUserAdminApi.getPageData();
+
+        expect(pageDataParseIssues(afterSecond)).toEqual([]);
+        expect(afterSecond.users.some((u) => u.id === second.id)).toBe(false);
+      } finally {
+        await cleanup({ table: "user", id: first.id }, { table: "user", id: second.id });
+      }
+    });
+
+    it("throws NotFoundError when deleting an already soft-deleted user", async () => {
+      const target = await createTestUser();
+
+      try {
+        await iamUserAdminApi.deleteUser(adminUser.id, target.id);
+
+        await expect(iamUserAdminApi.deleteUser(adminUser.id, target.id)).rejects.toThrow(
+          NotFoundError,
+        );
+      } finally {
+        await cleanup({ table: "user", id: target.id });
+      }
     });
 
     it("throws ForbiddenError when actor attempts to delete themselves", async () => {
