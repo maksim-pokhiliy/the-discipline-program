@@ -13,7 +13,7 @@
 | W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | approved (D-3); PU-10 awaits links from Denys |
 | W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off         |
 | W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate          |
-| W7    | Payments charter (PU-14)                         | awaiting Tetiana's brief                      |
+| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7       |
 
 ## Next action
 
