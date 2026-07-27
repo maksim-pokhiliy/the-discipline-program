@@ -89,6 +89,8 @@
 
 **Verify after.** Fix A: ADMIN delete removes the row, list + dashboard stay healthy. Fix A′: HEAD_COACH sees no mutation controls.
 
+**Investigation outcome (2026-07-27, Fix-A executor run).** **Fix A is REFUTED at runtime.** The recon's _mechanism_ is real, but it never fires, because this repo enforces soft-delete filtering CENTRALLY rather than per query: `db/client.ts:7-16` lists `"User"` in `SOFT_DELETE_MODELS`, and the `$extends` block (`:119-225`) injects `where.deletedAt = null` into `findMany`/`findFirst`/`findFirstOrThrow`/`count`/`aggregate`/`groupBy` and null-filters `findUnique`/`findUniqueOrThrow`. So the absent `where` at `users-admin.ts:36` is the _expected_ shape here, not a missing filter; the by-id read returns `null` → `NotFoundError` (a clean 404); dashboard counts and Recent Activity are filtered too. Every line reference in the original recon is exact — only the conclusions drawn from them were wrong, because the static read stopped at the call site. **Proof:** a new guard test (soft-delete via the real `deleteUser` → re-read `getPageData()` → parse `getUsersPageDataResponseSchema` → second delete) is green on `main`; removing `"User"` from `SOFT_DELETE_MODELS` turns it red with exactly the predicted `validation: 'email'` / `"Invalid email"` at `users[N].email`. The predicted 500 is one config line away — which is precisely why the guard is worth keeping. **Consequences:** Fix A ships as regression tests only, with zero production-code change; the standing "no user deletion in the prod admin" freeze is **LIFTED**; Fix A′ (honest UI) is unaffected and ships as specified.
+
 ---
 
 ## PU-07 · FEATURE (small) · admin — email is not editable
