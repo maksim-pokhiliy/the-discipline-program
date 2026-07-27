@@ -1,6 +1,7 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { type GetAthleteMovementsResponse } from "@repo/contracts/lms/exercise";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import {
   type BenchmarkRecordView,
@@ -12,12 +13,35 @@ import { render } from "@app/test/render";
 
 const useAthleteRecordsMock = vi.fn();
 
+const MOVEMENT_CATALOG: GetAthleteMovementsResponse = [
+  { id: "clz0000000000000000000ex07", canonicalName: "Overhead Squat" },
+];
+
 vi.mock("@app/lib/hooks/use-athlete-records", () => ({
   useAthleteRecords: () => useAthleteRecordsMock(),
 }));
 
+vi.mock("@app/lib/hooks/use-exercises", () => ({
+  useAthleteMovements: () => ({ data: MOVEMENT_CATALOG }),
+}));
+
 vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
   useCreateOneRMRecord: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+type DatePickerProps = {
+  value: Date | null;
+  onChange: (next: Date | null) => void;
+};
+
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({
+  DatePicker: ({ value, onChange }: DatePickerProps) => (
+    <input
+      data-testid="datepicker"
+      data-value={value ? value.toISOString() : ""}
+      onChange={(event) => onChange(new Date(event.target.value))}
+    />
+  ),
 }));
 
 const { AthleteRecordsView } = await import("./athlete-records-view");
@@ -132,5 +156,22 @@ describe("AthleteRecordsView", () => {
 
     expect(screen.getByRole("heading", { name: "Records" })).toBeInTheDocument();
     expect(screen.getByText("Back Squat")).toBeInTheDocument();
+  });
+
+  it("feeds the fetched movement catalog into the 1RM picker", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse({ oneRM: [], benchmarks: [] }),
+      isLoading: false,
+      error: null,
+    });
+
+    render(<AthleteRecordsView />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Update 1RM" }));
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+
+    expect(screen.queryAllByRole("option").map((node) => node.textContent)).toEqual([
+      "Overhead Squat",
+    ]);
   });
 });

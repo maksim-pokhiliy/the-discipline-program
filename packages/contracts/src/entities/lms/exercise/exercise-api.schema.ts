@@ -2,9 +2,16 @@ import { z } from "zod";
 
 import { idParamSchema } from "../../../common";
 
-import { createExerciseSchema, exerciseSchema, updateExerciseSchema } from "./exercise.schema";
+import {
+  athleteMovementSchema,
+  createExerciseSchema,
+  exerciseSchema,
+  updateExerciseSchema,
+} from "./exercise.schema";
 
 export const getExercisesResponseSchema = z.array(exerciseSchema);
+
+export const getAthleteMovementsResponseSchema = z.array(athleteMovementSchema);
 
 export const getExerciseByIdParamsSchema = idParamSchema;
 

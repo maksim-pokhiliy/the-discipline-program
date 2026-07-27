@@ -1,11 +1,21 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type CreateExerciseData, getExercisesResponseSchema } from "@repo/contracts/lms/exercise";
+import {
+  type CreateExerciseData,
+  type ExerciseNature,
+  getAthleteMovementsResponseSchema,
+  getExercisesResponseSchema,
+} from "@repo/contracts/lms/exercise";
 import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
-import { cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
+import {
+  cleanupRaw,
+  createTestCoach,
+  createTestExercise,
+  createTestUser,
+} from "../../../test/helpers";
 
 import { cmsExerciseAdminApi } from "./admin";
 import { lmsExercisePlatformApi } from "./platform";
@@ -350,5 +360,111 @@ describe("lmsExercisePlatformApi.create", () => {
         baseExerciseData({ canonicalName: `Denied ${crypto.randomUUID().slice(0, 8)}` }),
       ),
     ).rejects.toMatchObject({ message: "Coach role required" });
+  });
+});
+
+describe("lmsExercisePlatformApi.listForAthlete", () => {
+  const createdUserIds: string[] = [];
+  const createdExerciseIds: string[] = [];
+
+  const mintExercise = async (canonicalName: string, nature: ExerciseNature) => {
+    const row = await createTestExercise({
+      canonicalName,
+      canonicalNameLower: canonicalName.toLowerCase(),
+      nature,
+    });
+
+    createdExerciseIds.push(row.id);
+
+    return row;
+  };
+
+  afterEach(async () => {
+    for (const id of createdExerciseIds.splice(0).reverse()) {
+      await cleanupRaw.exercise.delete({ where: { id } }).catch(() => {});
+    }
+
+    for (const id of createdUserIds.splice(0).reverse()) {
+      await cleanupRaw.user.delete({ where: { id } }).catch(() => {});
+    }
+  });
+
+  it("allows an athlete caller without a ForbiddenError, unlike list", async () => {
+    const athlete = await createTestUser();
+
+    createdUserIds.push(athlete.id);
+
+    await expect(lmsExercisePlatformApi.list(athlete.id)).rejects.toThrow(ForbiddenError);
+    await expect(lmsExercisePlatformApi.listForAthlete(athlete.id)).resolves.toBeInstanceOf(Array);
+  });
+
+  it("offers the CONCRETE row while withholding the PLACEHOLDER and REST ones", async () => {
+    const athlete = await createTestUser();
+
+    createdUserIds.push(athlete.id);
+
+    const suffix = crypto.randomUUID().slice(0, 6);
+    const concrete = await mintExercise(`Nature Concrete ${suffix}`, "CONCRETE");
+    const placeholder = await mintExercise(`Nature Placeholder ${suffix}`, "PLACEHOLDER");
+    const rest = await mintExercise(`Nature Rest ${suffix}`, "REST");
+
+    const ids = (await lmsExercisePlatformApi.listForAthlete(athlete.id)).map((row) => row.id);
+
+    expect(ids).toContain(concrete.id);
+    expect(ids).not.toContain(placeholder.id);
+    expect(ids).not.toContain(rest.id);
+  });
+
+  it("returns movements sorted by canonicalName ascending", async () => {
+    const athlete = await createTestUser();
+
+    createdUserIds.push(athlete.id);
+
+    const suffix = crypto.randomUUID().slice(0, 6);
+    const prefix = `ZZ Athlete Sort ${suffix}`;
+
+    await mintExercise(`${prefix} Charlie`, "CONCRETE");
+    await mintExercise(`${prefix} Alpha`, "CONCRETE");
+    await mintExercise(`${prefix} Bravo`, "CONCRETE");
+
+    const rows = await lmsExercisePlatformApi.listForAthlete(athlete.id);
+    const ours = rows
+      .filter((row) => row.canonicalName.startsWith(prefix))
+      .map((row) => row.canonicalName);
+
+    expect(ours).toEqual([`${prefix} Alpha`, `${prefix} Bravo`, `${prefix} Charlie`]);
+  });
+
+  it("trims every item to id and canonicalName and satisfies the response schema", async () => {
+    const athlete = await createTestUser();
+
+    createdUserIds.push(athlete.id);
+
+    const suffix = crypto.randomUUID().slice(0, 6);
+    const seeded = await createTestExercise({
+      canonicalName: `Athlete Shape ${suffix}`,
+      canonicalNameLower: `athlete shape ${suffix}`,
+      nature: "CONCRETE",
+      aliases: ["shape-alias"],
+      notes: "coach-only free text",
+    });
+
+    createdExerciseIds.push(seeded.id);
+
+    const rows = await lmsExercisePlatformApi.listForAthlete(athlete.id);
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(getAthleteMovementsResponseSchema.safeParse(rows).success).toBe(true);
+
+    const found = rows.find((row) => row.id === seeded.id);
+
+    expect(found).toBeDefined();
+
+    if (found === undefined) {
+      return;
+    }
+
+    expect(Object.keys(found).sort()).toEqual(["canonicalName", "id"]);
+    expect(found.canonicalName).toBe(`Athlete Shape ${suffix}`);
   });
 });

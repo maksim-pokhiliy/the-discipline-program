@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { type GetAthleteMovementsResponse } from "@repo/contracts/lms/exercise";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import {
   type BenchmarkRecordView,
@@ -12,6 +13,21 @@ import { render } from "@app/test/render";
 
 vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
   useCreateOneRMRecord: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+type DatePickerProps = {
+  value: Date | null;
+  onChange: (next: Date | null) => void;
+};
+
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({
+  DatePicker: ({ value, onChange }: DatePickerProps) => (
+    <input
+      data-testid="datepicker"
+      data-value={value ? value.toISOString() : ""}
+      onChange={(event) => onChange(new Date(event.target.value))}
+    />
+  ),
 }));
 
 const { RecordsContent } = await import("./records-content");
@@ -160,5 +176,65 @@ describe("RecordsContent", () => {
 
     expect(screen.getByText("No 1RMs logged yet")).toBeInTheDocument();
     expect(screen.queryByText("No records match your search.")).not.toBeInTheDocument();
+  });
+});
+
+const CONCRETE_CATALOG: GetAthleteMovementsResponse = [
+  { id: "clz0000000000000000000ex02", canonicalName: "Deadlift" },
+  { id: "clz0000000000000000000ex01", canonicalName: "Back Squat" },
+];
+
+const PLACEHOLDER_MOVEMENT_ID = "clz00000000000000000plc1";
+
+const freshAthlete = (): RecordsViewResponse => ({ oneRM: [], benchmarks: [] });
+
+const openPicker = (): void => {
+  fireEvent.mouseDown(screen.getByRole("combobox"));
+};
+
+const optionLabels = (): (string | null)[] =>
+  screen.queryAllByRole("option").map((node) => node.textContent);
+
+const saveButton = (): HTMLElement => screen.getByRole("button", { name: "Save Record" });
+
+describe("RecordsContent movement picker", () => {
+  it("offers the catalog to an athlete who has never logged a 1RM", () => {
+    render(<RecordsContent data={freshAthlete()} movementCatalog={CONCRETE_CATALOG} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Update 1RM" }));
+    openPicker();
+
+    expect(optionLabels()).toEqual(["Back Squat", "Deadlift"]);
+    expect(screen.queryByText("No options")).not.toBeInTheDocument();
+  });
+
+  it("keeps a logged movement pickable and Save reachable when the catalog omits it", () => {
+    render(
+      <RecordsContent
+        data={data({
+          oneRM: [
+            oneRMRecord({
+              exerciseId: PLACEHOLDER_MOVEMENT_ID,
+              exerciseName: "Any Squat Variation",
+            }),
+          ],
+          benchmarks: [],
+        })}
+        movementCatalog={CONCRETE_CATALOG}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Any Squat Variation"));
+    fireEvent.click(screen.getByRole("button", { name: "Update this 1RM" }));
+
+    openPicker();
+
+    expect(optionLabels()).toContain("Any Squat Variation");
+
+    expect(saveButton()).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Value (kg)"), { target: { value: "120" } });
+
+    expect(saveButton()).toBeEnabled();
   });
 });

@@ -38,6 +38,11 @@ export const exerciseSchema = z.object({
   updatedAt: z.date(),
 });
 
+export const athleteMovementSchema = z.object({
+  id: z.string().cuid(),
+  canonicalName: z.string().min(1).max(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
+});
+
 const exerciseFormBase = z.object({
   canonicalName: normalizedString(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
   nature: exerciseNatureSchema.default("CONCRETE"),
