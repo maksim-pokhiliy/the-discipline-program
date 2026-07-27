@@ -1,6 +1,6 @@
 # post-uat — triage (the UAT feedback corpus, grounded in code 2026-07-27)
 
-**Sources:** the Telegram UAT thread 2026-06-27 → 2026-07-26 (Denys, Tetiana, athletes' relayed feedback), 10 screenshots, one FB message, the 16.07 prod incident write-up (owner). **Method:** 6 parallel read-only recon agents over the monorepo + git history; every root cause below is verified against source, not inferred. **How to use:** each item carries an STR (steps to reproduce) for the owner's browser pass and a "verify after" check for post-merge confirmation. Registry + statuses: `plan.md`.
+**Sources:** the Telegram UAT thread 2026-06-27 → 2026-07-26 (Denys, Tetiana, athletes' relayed feedback), 10 screenshots, one FB message, the 16.07 prod incident write-up (owner). **Method:** 6 parallel read-only recon agents over the monorepo + git history; every root cause below is verified against source, not inferred. **How to use:** each item carries an STR (steps to reproduce) for the owner's browser pass and a "verify after" check for post-merge confirmation. Registry + statuses: `plan.md`. **Owner feedback round 27.07 folded in:** PU-01 design-check answered (→ D-6), PU-03 reframed (switch worked, feedback was invisible), PU-06 two-account workaround (→ D-2 ratified), PU-12/PU-13 scope expanded, PU-16 closed, PU-17 added.
 
 ---
 
@@ -10,7 +10,9 @@
 
 **Root cause (confirmed).** The options list is scoped to movements the athlete ALREADY has a `OneRMRecord` for — `records-content.tsx:186-194` feeds the modal from `data.oneRM`, built by `records-view.ts:10-14` (`prisma.oneRMRecord.findMany({where:{userId}})`). A first-ever 1RM for any movement is therefore unloggable (chicken-and-egg). Regression commit `bb6ed890` (2026-06-19) deliberately swapped the full catalog for this list because the catalog endpoint 403s athletes: `apps/platform/src/app/api/platform/exercises/route.ts:16` (`withCoachAuth`) + `requireCoachLikeRole` (`endpoints/lms/exercise/platform.ts:12`), pinned by `platform.test.ts:53-62`. MUI default filtering is case-insensitive `includes` — filtering hypotheses ruled out.
 
-**Fix.** Athlete-scoped read-only movement catalog: `listForAthlete` (CONCRETE-nature only, `{id, canonicalName}`) + new `athlete/movements` route (`withAthleteAuth` + rate-limit) + contract schema + hook (`staleTime: Infinity`) + union with existing record movements in `records-content.tsx`. Keeps the coach-only guard + its test intact. **~50 LOC / 6 files + 2 tests. Size S/M.**
+**Owner check (27.07): "это же по дизайну — там только движения, которые тренер хотя бы раз пометил как бенчмарк?"** Verified — **no.** The list is not coach-benchmark-scoped; it is scoped to the athlete's OWN `OneRMRecord` rows. The coach link exists but is indirect and different: a record appears only after the athlete logs one — via the in-session `% of 1RM` prompt, or as the side-effect append of a LOAD-type benchmark result (`benchmark-result/admin.ts:56-66`). Either way a fresh athlete has a permanently EMPTY picker (Tetiana's screenshot state — any input yields "No options"), and a proactive first-ever 1RM (her actual intent: log her squat) is impossible from Records. → **D-6 OPEN:** (a) open a read-only movement catalog to athletes (fix below), or (b) declare the record-scope intended and replace the dead autocomplete with an honest empty-state ("1RMs appear here once a workout asks for one"). Recommendation: (a) — records are athlete-owned by ratified stance, and proactive logging is a legitimate athlete flow.
+
+**Fix (if D-6 = a).** Athlete-scoped read-only movement catalog: `listForAthlete` (CONCRETE-nature only, `{id, canonicalName}`) + new `athlete/movements` route (`withAthleteAuth` + rate-limit) + contract schema + hook (`staleTime: Infinity`) + union with existing record movements in `records-content.tsx`. Keeps the coach-only guard + its test intact. **~50 LOC / 6 files + 2 tests. Size S/M.** (If D-6 = b: empty-state copy + drop the autocomplete for recordless athletes, ~15 LOC.)
 
 **STR (owner).** Platform as athlete → Records → UPDATE 1RM → type a movement you have NO 1RM record for (e.g. `snatch`) → observe "No options". Bonus: a fresh athlete with zero records has a permanently empty picker.
 
@@ -32,17 +34,17 @@
 
 ---
 
-## PU-03 · BUG · platform/athlete-session — "the program won't let me be RX"
+## PU-03 · UX · platform/athlete-session — level switch is invisible (owner reframe 27.07)
 
-**Symptom.** Female athlete cannot switch herself to RX (Tetiana, 27.06 + video).
+**Symptom.** "Не хоче твоя програма, шоб я була RX" (Tetiana, 27.06 + video). **Owner reframe (27.07): the switch WORKED — she didn't understand it had happened.** A feedback gap, not a broken mutation.
 
-**Root cause (confirmed, two stacked gaps).** RX/SC is a coach-defined `ProfileAxis`; the athlete's pick lives in `AthleteProfile.profileSelections`. (1) The in-session picker exists ONLY while the load is `unresolved` — `buildLoadLine` returns a `prompt` only for unresolved states (`athlete-session-presentation.ts:188-224`); once a cell resolves, the affordance vanishes — there is no way to switch SC→RX from the day view. (2) Rows inside a **RowGroup have no picker at all** — `schema-card.tsx:123` passes no `editor` to `RowGroup`; `memberLine` discards `prompt` (`row-group.tsx:31-37`). Gender is auto-derived from the profile (`resolve-load.ts:21-29`, `binding === "GENDER"` axes are filtered out of the picker). No per-result RX flag exists anywhere (`result.ts:16-34`) — she can never "mark herself RX" on a result either. The only escape hatch is the Profile page picks card, unlinked from the session.
+**Root cause (re-verified against code; consistent with the reframe).** The pick flow gives near-zero confirmation. `pickProfile` → on success `invalidateView()` + `setActiveEditor(null)` (`use-session-logging.ts:174-200`) — the popover SLAMS SHUT on the first tap (a Level×Gender load has exactly one pickable axis, so every tap is a full pick → instant mutate + close). After resolve the line renders a bare kg number with NO level label — the resolved arm carries only `{kg, perHand}` (`session-detail.schema.ts:20-21`) — so nothing on screen says "you are RX now". And the entry point disappears (`buildLoadLine` returns no prompt on resolved — `athlete-session-presentation.ts:188-224`), so tapping around to understand the toggle is impossible. Intact from recon: rows inside a **RowGroup never render a picker at all** (`schema-card.tsx:123` passes no `editor`; `row-group.tsx:31-37` discards prompts).
 
-**Fix.** (a) Pass `editor` into `RowGroup` + render the per-member prompt (mirror `schema-row.tsx:143-169`) — **~20-25 LOC, S**. (b) For a resolved byProfile load, still return a re-openable prompt labeled with the current coord ("RX ▾") — **~15 LOC, S**. (c) RX-attribution on logged results = product feature, NOT this wave (see D-5 note; M/L if ever wanted).
+**Fix (converges with PU-05c — one mechanism).** (a) **Label the resolved value with the picked coordinate** ("RX · 24 kg") — additive `coords` on the resolved arm (the server knows them at `resolve-load.ts:91`) or client-side derivation from `load.axes` + selections. This is simultaneously the missing switch-feedback AND the PU-05 honesty fix ("14 kg · RX/Female" exposes a mis-encoded grid). (b) Keep a prompt on resolved rows (label = current level, "RX ▾") so the picker re-opens and the switch is explorable — **~15 LOC, S**. (c) Pass `editor` into `RowGroup` so grouped rows get the same affordances — **~20-25 LOC, S**. Polish candidate: don't slam the popover — reflect the new active state for a beat before closing.
 
-**STR (owner).** As a female athlete with gender set: open a day with a Level×Gender byProfile row → pick "SC" when prompted → the prompt disappears; there is now no control to switch to RX from the day view. Then open a day where the same-shaped row sits inside a named group → no prompt existed at all.
+**STR (owner).** As a female athlete: tap a byProfile prompt → tap "SC" → the popover instantly closes and the row shows only a kg number — nothing names the active level, nothing confirms a change, and the tap target is gone. In a named group: no picker exists at all.
 
-**Verify after.** Grouped rows show the picker; a resolved row shows its current level as a tappable chip that re-opens the picker; switching SC→RX re-resolves the kg.
+**Verify after.** Resolved rows show the level label; tapping it re-opens the picker; switching updates kg + label; grouped rows behave identically.
 
 ---
 
@@ -83,11 +85,13 @@
 1. **For Denys (HEAD_COACH): 403.** `requireAdminStrict` (ADMIN only, `role-guards.ts:33-39`) guards update/role/delete (`users-admin.ts:93/101/148`) — the blanket sec-001 fix (`f3a13709`, pinned by `users-admin-actor-role.test.ts:79/128/141`). But `withAdminAuth` + admin proxy ADMIT HEAD_COACH, so the UI shows him Delete buttons and an Edit form that always 403. Asymmetry: he CAN create users (`users-admin.ts:49` unguarded).
 2. **For a real ADMIN: latent list-brick.** `deleteUser` soft-deletes (suffixes email to `*_deleted_<ts>`), but `getAll` doesn't filter `deletedAt` (`users-admin.ts:35-41`) and the response schema requires `z.string().email()` (`user.schema.ts:21`) → `parseResponse` throws (`route-helpers.ts:39-47`) → **the first successful delete 500s `/api/admin/users/page-data` permanently**. Verified against repo zod. Side effects: dashboard counts + Recent Activity include deleted users.
 
-**Fix.** **Fix A (urgent, S):** `where: {deletedAt: null}` in `getAll` + 404 on soft-deleted detail + dashboard hygiene + a test that soft-deletes then re-reads the list (the existing test hard-deletes in cleanup and hides this). **Fix B (M, gated on D-2):** replace blanket strict-guard with capability rules — HEAD_COACH may manage non-admin users; explicit denials: target is ADMIN / requested role is ADMIN / self role-change. Rewrites the 3 pinned test assertions deliberately.
+**Owner update (27.07, ratified as D-2).** Denys now operates a SEPARATE ADMIN account (two-account model: ADMIN for the console, HEAD_COACH for the platform). Consequences: the 403 no longer blocks his daily work, but **the latent list-brick became a LIVE risk** — under ADMIN he CAN trigger the first successful soft-delete. **Until Fix A ships: do NOT delete users in the prod admin.** The old Fix B (HEAD_COACH capability rules) is DROPPED.
 
-**STR (owner).** DEV DB ONLY (prod delete would soft-delete a real user + brick the list): admin as HEAD_COACH → Users → delete any user → error; edit any field → save → error. As ADMIN on dev: delete a user → the row stays and the whole list errors out.
+**Fix.** **Fix A (URGENT, S — candidate for an immediate standalone mini-fix):** `where: {deletedAt: null}` in `getAll` + 404 on soft-deleted detail + dashboard hygiene + a test that soft-deletes then re-reads the list (the existing test hard-deletes in cleanup and hides this). **Fix A′ (honest UI, XS):** hide user-mutation controls (delete button, edit-form save) from HEAD_COACH sessions — the coach account must stop showing dead buttons that always 403.
 
-**Verify after.** Fix A: ADMIN delete removes the row, list + dashboard stay healthy. Fix B: HEAD_COACH can edit/delete non-admins, still 403s on admin targets + role escalation.
+**STR (owner).** DEV DB ONLY: as ADMIN on dev, delete a user → the row stays and the whole users list errors out permanently. As HEAD_COACH: Users still shows Delete/Edit that always fail.
+
+**Verify after.** Fix A: ADMIN delete removes the row, list + dashboard stay healthy. Fix A′: HEAD_COACH sees no mutation controls.
 
 ---
 
@@ -145,19 +149,19 @@ The 16.07 prod incident (Denys created an INDIVIDUAL link for Stas, never presse
 
 ---
 
-## PU-12 · FEATURE (M/L) · platform — guided workout timer (EMOM first)
+## PU-12 · FEATURE (L) · platform — athlete session screen v2: guided execution (owner expanded 27.07)
 
-**Ask.** Tap the EMOM → fullscreen timer: running clock, current minute's exercise, Rest indicator, auto-advance (27.06; suspect the 18.07 TikTok link is a reference — ask).
+**Ask.** Initially: tap the EMOM → fullscreen timer with running clock, current minute's exercise, Rest indicator, auto-advance (27.06). **Owner expansion (27.07): "не только EMOM — эта штука разворачивается в полный масштабный допил скрина тренировки атлета."** So the deliverable is a guided-execution rework of the athlete workout screen — timers for the whole interval family + the screen experience itself. Likely spins off into its own initiative at design time; UI-first on mocks per the training-domain rule. (The 18.07 TikTok link is suspected reference material — still unanswered.)
 
 **Scoping (what exists / what's missing).** Composition lives on **Schema**, not Block (`schema.schema.ts:17`) → the tap target is the schema card (or a parallel-group track). The athlete client ALREADY receives `composition` verbatim (`session-detail.schema.ts:73`): `cadence {everyMin: int(minutes only), rounds}`, `interval {work{value,unit}, off{value,unit — 0 allowed}, count}`, `timeCap {cap}`. Gaps: (1) row→minute mapping is derived-on-read, coach-app-only (`derive-minute-view.ts:25`, `index % rounds`, D-EMOM-UX "never stored"; slotSpec = DEFER-001 lineage) — the athlete side must mirror the same derivation; (2) REST minutes are REST-natured exercise rows and **nature/exerciseId are stripped from the athlete wire** (`rowViewSchema:45-59`) — needs an additive field; (3) seconds-EMOM (E90s) unrepresentable (`everyMin` int) — out of v1; (4) no timer primitive exists in the repo at all; (5) `label.family === "INTERVALIC"` (derived) is the clean gate for showing the affordance. Row-level `rest` is delivered but never rendered athlete-side — timer UI may surface it.
 
-**v1 proposal.** `cadence` + `interval` + `timeCap` timers on the schema card; additive `nature` (or `isRest`) on rowView; minute view mirrors the coach derivation. UI-first on mocks per the training-domain rule. **`/feature` (full), own Gate A.**
+**Timer-core v1 (within the bigger design).** `cadence` + `interval` + `timeCap` timers on the schema card; additive `nature` (or `isRest`) on rowView; minute view mirrors the coach derivation. The screen-v2 design pass decides what else the rework covers (row states, logging flow, rest rendering — note row-level `rest` is delivered but never rendered today). **Design-first → own charter or a `/feature` (full) with its own Gate A.**
 
 ---
 
-## PU-13 · FEATURE (L) · domain — per-gender volume (M/F calories) = the true fix of PU-05
+## PU-13 · FEATURE (L) · domain — profiling v2: per-gender/level values beyond kg (owner: design-first)
 
-**Ask.** "когда выставляю калории, сделать отдельно для М и Ж" (Denys, 23.07).
+**Ask.** "когда выставляю калории, сделать отдельно для М и Ж" (Denys, 23.07). **Owner direction (27.07): "нужна переработка дизайна — там сейчас только килограммы, и вообще профайлинг сырой, его нужно проектировать."** So this is NOT a point feature (M/F calories) but a design-first rework of the profiling system — byProfile beyond kg cells; the M/F-calories ask is the first concrete use case, the Ski trap (PU-05) is the evidence. Likely its own initiative at start. The reach statement below is the ground map for that design.
 
 **Reach statement (verified).** Per-gender values today cover exactly one thing: `load.kind === "byProfile"` with kg cells. NOTHING else on the row (reps count/range/unit_bound, sets, tempo, side, rest, intensity) has an axis dimension — the model itself is load-kg-scoped, not merely editor-gated. Extending to cal rows touches: **contracts** (a 5th `repNotationSchema` arm or a generalized byProfile cell primitive shared by load+reps — `load.ts` is a sacred VO, zero-diff rule, needs its own ratified design + the four-projection gate + parity-test updates), **editor** (reps-side axes/cells grid; `by-profile-cells.ts` helpers are kg-typed), **resolver** (new reps resolver + `resolvedReps` sibling on rowView), **athlete renderer** (variant-blind `formatReps`), **mobile-publish formatter** (`format-rep-notation.ts` + `render-row-line.ts` need the spread branch + a bracketing decision). **Prisma: NO migration** (Json columns). Lineage: P6-REPS-UNIT (coach-station deferred). **Own `/feature` with a design doc; do NOT fold into a fix wave.**
 
@@ -169,15 +173,25 @@ The 16.07 prod incident (Denys created an INDIVIDUAL link for Stas, never presse
 
 ---
 
-## PU-15 · OPS · `head-coach@thedisciplineprogram.com` mailbox
+## PU-15 · OPS · domain mailboxes — ALL `@thedisciplineprogram.com` addresses
 
-Owner-side infra (mail provider), promised to Denys 16.07. Not code; listed so it doesn't get lost. Once created → consider `EMAIL_REPLY_TO`.
+Owner-side infra (mail provider). Expanded 27.07: not just `head-coach@` — **every mail address the system uses moves to the domain** (head-coach@, plus the From/Reply-To the transactional sender uses). Not code; listed so it doesn't get lost. Once live → set `EMAIL_FROM`/`EMAIL_REPLY_TO` accordingly (couples with PU-11 env verification and PU-17 sender identity).
 
 ---
 
-## PU-16 · INVESTIGATE · "на сайті є, але без тих змін шо були" (Stas, 16.07)
+## PU-16 · CLOSED (27.07) · platform — "на сайті є, але без тих змін шо були" (Stas, 16.07)
 
-During the publish incident Stas reported the PLATFORM view showed his plan "without the changes that were made". The app-side emptiness is fully explained (never published); the platform-staleness half was never reproduced — could be group-vs-individual plan confusion, an enrollment/clone semantic, or query caching. **Needs info from Denys/Stas:** what exactly was edited, where he looked, timestamps. STR impossible until then. Park; do not scope blind.
+Resolved by the owner: Denys had simply not published the plan — one publish cured everything; no platform staleness existed. **CLOSED, no code action.** The systemic guard against recurrence is PU-08/MP-22 (per-link publish status).
+
+---
+
+## PU-17 · FEATURE (S/M) · email — template redesign (Claude Design pass)
+
+**Ask (owner, 27.07).** The transactional email templates are generic ("сейчас они дженерик") — polish them as part of the notifications wave; explicitly a Claude Design job.
+
+**Grounding.** Templates live in `packages/email/src/templates/` (e.g. `lead-notification.tsx`), rendered through the Resend sender (`email-sender.ts:67-97`); invite + password-reset mails ride the same path (`users-admin.ts:213`). Scope at design time: a shared branded layout (logo, palette, typography consistent with the marketing site), per-template polish (lead notification, contact notification once PU-11 lands it, invite, password reset), plain-text fallbacks. **Sequence: after PU-11** so the design pass covers the full template inventory at once; sender identity depends on PU-15 (domain mailboxes).
+
+**Verify after.** Test sends of every template render correctly (Gmail web/mobile at minimum); From/Reply-To use `@thedisciplineprogram.com` addresses once PU-15 lands.
 
 ---
 
