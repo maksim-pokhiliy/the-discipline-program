@@ -4,20 +4,20 @@
 
 ## Board
 
-| Wave  | Scope                                            | Status                                        |
-| ----- | ------------------------------------------------ | --------------------------------------------- |
-| Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | 🔥 PROMPT READY → carry to an executor tab    |
-| W1    | Athlete pack (PU-01/02/03/04)                    | PROMPT READY → carry to an executor tab       |
-| W2    | Publish status (PU-08 → MP-22, `/feature small`) | approved; prompt after W1                     |
-| W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                |
-| W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | approved (D-3); PU-10 awaits links from Denys |
-| W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off         |
-| W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate          |
-| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7       |
+| Wave  | Scope                                            | Status                                     |
+| ----- | ------------------------------------------------ | ------------------------------------------ |
+| Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | 🔥 PROMPT READY → carry to an executor tab |
+| W1    | Athlete pack (PU-01/02/03/04)                    | PROMPT READY → carry to an executor tab    |
+| W2    | Publish status (PU-08 → MP-22, `/feature small`) | approved; prompt after W1                  |
+| W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                             |
+| W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)     |
+| W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off      |
+| W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate       |
+| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7    |
 
 ## Next action
 
-**▶ Owner: carry `initiatives/post-uat/prompt-fix-a-admin.md` to the executor session** (the session picks `post-uat` when the session-start hook asks). Then per the build loop: Gate A → tech-lead verdict → PR → diff review → browser scenario → two-ok merge. **W1 (`prompt-w1-athlete-pack.md`) starts only after Fix-A merges.** Corpus stage for Fix-A/W1 is already discharged — `triage.md` §§ PU-06/PU-01..04 + the two owner feedback rounds ARE the read-and-discussed corpus; new items from W2 onward run the full corpus stage explicitly. Independently: social links from Denys unblock PU-10 (W4).
+**▶ Owner: carry `initiatives/post-uat/prompt-fix-a-admin.md` to the executor session** (the session picks `post-uat` when the session-start hook asks). Then per the build loop: Gate A → tech-lead verdict → PR → diff review → browser scenario → two-ok merge. **W1 (`prompt-w1-athlete-pack.md`) starts only after Fix-A merges.** Corpus stage for Fix-A/W1 is already discharged — `triage.md` §§ PU-06/PU-01..04 + the two owner feedback rounds ARE the read-and-discussed corpus; new items from W2 onward run the full corpus stage explicitly. Social links arrived (27.07, brand YT/TG/IG — `triage.md` § PU-10) — W4 is fully unblocked, nothing external pending anywhere in the queue.
 
 ## Open decisions awaiting ratification
 
