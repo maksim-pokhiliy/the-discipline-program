@@ -210,6 +210,48 @@ const benchmarkSchema = (): SchemaCardView => ({
           modifiers: [],
           notes: null,
         },
+        {
+          rowId: "clz000000000000000000row9",
+          movement: "1-arm KB overhead walking lunges",
+          media: null,
+          sets: null,
+          reps: { kind: "count", value: 18 },
+          load: {
+            kind: "byProfile",
+            axes: [
+              {
+                axisId: "clz00000000000000000axs03",
+                label: "Level",
+                values: ["RX", "SC"],
+                binding: null,
+              },
+              {
+                axisId: "clz00000000000000000axs04",
+                label: "Sex",
+                values: ["Male", "Female"],
+                binding: null,
+              },
+            ],
+            cells: [
+              { coords: ["RX", "Male"], kg: 24 },
+              { coords: ["RX", "Female"], kg: 16 },
+              { coords: ["SC", "Male"], kg: 16 },
+              { coords: ["SC", "Female"], kg: 8 },
+            ],
+          },
+          resolvedLoad: {
+            status: "unresolved",
+            reason: "missing_profile_pick",
+            prompt: "pick_profile",
+            axisLabels: ["Level", "Sex"],
+          },
+          intensity: null,
+          tempo: null,
+          side: null,
+          rest: null,
+          modifiers: [],
+          notes: null,
+        },
       ],
     },
     {
@@ -428,6 +470,38 @@ describe("AthleteSessionView", () => {
 
     expect(screen.getByText("Group")).toBeInTheDocument();
     expect(screen.queryByText(/choose one/i)).not.toBeInTheDocument();
+  });
+
+  it("renders the whole two-axis spread for a byProfile member inside a row group", () => {
+    setView(buildResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(
+      screen.getByText("18 reps RX Male:24 Female:16 / SC Male:16 Female:8"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the grouped spread breakable rather than pinned to one line", () => {
+    setView(buildResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const groupedLoad = screen.getByText("18 reps RX Male:24 Female:16 / SC Male:16 Female:8");
+
+    expect(groupedLoad).toHaveStyle({ overflowWrap: "anywhere" });
+    expect(groupedLoad).not.toHaveStyle({ whiteSpace: "nowrap" });
+  });
+
+  it("keeps the row spread breakable rather than pinned to one line", () => {
+    setView(buildResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const rowLoad = screen.getByText("RX M:60 F:42 / Scaled M:45 F:30");
+
+    expect(rowLoad).toHaveStyle({ overflowWrap: "anywhere" });
+    expect(rowLoad).not.toHaveStyle({ whiteSpace: "nowrap" });
   });
 
   it("shows the Mark Completed action and no Done pill when the session is not done", () => {

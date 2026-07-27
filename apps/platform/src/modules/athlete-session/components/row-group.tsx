@@ -94,7 +94,8 @@ export const RowGroup = ({ label, members }: RowGroupProps): ReactElement => (
               <Typography
                 component="span"
                 sx={(theme) => ({
-                  flexShrink: 0,
+                  minWidth: 0,
+                  overflowWrap: "anywhere",
                   fontSize: theme.typography.pxToRem(ROW_GROUP_LINE_PX),
                   color: theme.palette.text.secondary,
                 })}

@@ -124,7 +124,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
           direction="row"
           alignItems="baseline"
           spacing={0.75}
-          sx={{ flex: "0 0 auto", flexWrap: "wrap", justifyContent: "flex-end" }}
+          sx={{ flex: "0 1 auto", minWidth: 0, flexWrap: "wrap", justifyContent: "flex-end" }}
         >
           {volume.length > 0 ? (
             <Box
@@ -158,7 +158,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
                 fontSize: theme.typography.pxToRem(ROW_LOAD_PX),
                 fontWeight: FONT_WEIGHT_SEMI_BOLD,
                 color: alpha(theme.palette.common.white, ROW_LOAD_ALPHA),
-                whiteSpace: "nowrap",
+                overflowWrap: "anywhere",
               })}
             >
               {loadLine.loadStr}
