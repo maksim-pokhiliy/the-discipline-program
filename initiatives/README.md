@@ -22,7 +22,11 @@ No per-step `prompt.md`/`output.md` dirs — that was the shuttle. Detailed `/fe
 
 ## Resume protocol (anti-context-loss)
 
-The active initiative is pinned in `initiatives/ACTIVE` (one line: the slug) and a **SessionStart hook force-loads its `state.md` into context** every session, so a fresh session opens with the board already loaded.
+Active initiatives are pinned in `initiatives/ACTIVE` — **one slug per line**. Usually one; more only when genuinely-parallel tracks run concurrently (e.g. post-UAT grinding in one session + an initiative-scoped feature in another tab/worktree). The **SessionStart hook** (`.claude/hooks/load-active-initiative.mjs`) resolves which one is active for _this_ session and loads only that board (worktree is deliberately NOT the mapping key — any initiative can be worked from any worktree):
+
+- **one active** → loads it directly.
+- **≥2 active, fresh start** (`startup`/`clear`) → loads no board; the hook asks the model to confirm via `AskUserQuestion` which initiative is active, records the pick in `initiatives/CURRENT` (gitignored, per-worktree), then loads that board.
+- **≥2 active, mid-session** (`compact`/`resume`) → silently restores the remembered pick from `CURRENT` — never re-interrogates while work is in flight.
 
 Read in order: `charter.md` (what & why) → `state.md` (board + next action) → `decisions.md` **open** entries + `deferred.md` **open** entries → `plan.md` (the step) → the relevant design docs. Trust the promoted distillate (`decisions.md`/`deferred.md`/recon docs) over re-deriving from code or chat.
 
@@ -42,17 +46,18 @@ At the end of any session that touched the initiative:
 
 ## Decisions vs working state — doc-map
 
-| Home                                                               | Holds                                                               |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `docs/adr/`                                                        | durable cross-initiative architecture decisions (the big WHY)       |
-| `docs/` (roadmap, runbooks, personas, `planner-discipline.md`)     | curated project docs + the planner read/verify-then-spec checklists |
-| `initiatives/<slug>/decisions.md`                                  | step-level ratified decisions (the initiative's WHY)                |
-| `initiatives/<slug>/deferred.md`                                   | carry-forwards / WARNINGs with disposition                          |
-| `initiatives/<slug>/{charter,plan,state,journal}.md` + design docs | WHERE WE ARE                                                        |
-| `initiatives/ACTIVE`                                               | the active slug (the SessionStart hook reads it)                    |
-| `.feature-dev/<ts>/`                                               | gitignored scratch — promote out of here at every gate              |
-| memory                                                             | cross-session pointers (active initiative, durable feedback)        |
+| Home                                                               | Holds                                                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `docs/adr/`                                                        | durable cross-initiative architecture decisions (the big WHY)                             |
+| `docs/` (roadmap, runbooks, personas, `planner-discipline.md`)     | curated project docs + the planner read/verify-then-spec checklists                       |
+| `initiatives/<slug>/decisions.md`                                  | step-level ratified decisions (the initiative's WHY)                                      |
+| `initiatives/<slug>/deferred.md`                                   | carry-forwards / WARNINGs with disposition                                                |
+| `initiatives/<slug>/{charter,plan,state,journal}.md` + design docs | WHERE WE ARE                                                                              |
+| `initiatives/ACTIVE`                                               | the active slug(s), one per line — the committed set the hook chooses from                |
+| `initiatives/CURRENT`                                              | this worktree's last-picked slug (gitignored) — menu default + silent mid-session restore |
+| `.feature-dev/<ts>/`                                               | gitignored scratch — promote out of here at every gate                                    |
+| memory                                                             | cross-session pointers (active initiative, durable feedback)                              |
 
 ## Starting a new initiative
 
-Copy `_template/` to `initiatives/<slug>/`, fill `charter.md`, seed `plan.md`, create the empty `decisions.md`/`deferred.md` (the template has them), set `initiatives/ACTIVE` to `<slug>`, and point memory at it.
+Copy `_template/` to `initiatives/<slug>/`, fill `charter.md`, seed `plan.md`, create the empty `decisions.md`/`deferred.md` (the template has them), add `<slug>` to `initiatives/ACTIVE` (one slug per line; keep the list to tracks genuinely being driven in parallel), and point memory at it.

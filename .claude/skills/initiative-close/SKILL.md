@@ -9,7 +9,7 @@ Bring the active initiative's durable docs up to date so the next session resume
 
 ## Steps
 
-1. **Identify the active initiative.** Read `initiatives/ACTIVE` (one line: the slug). Work in `initiatives/<slug>/`. If the user named a different one, use that.
+1. **Identify the active initiative.** Read `initiatives/ACTIVE` (one slug per line; several = parallel tracks) and `initiatives/CURRENT` (this session's pick). Close out the initiative THIS session touched — normally the `CURRENT` one; if the session touched more than one, run the checklist per initiative. If the user named a different one, use that.
 
 2. **Promote decisions.** Every decision ratified this session (a Gate-A call, a fork the user chose, a primitive/contract/sequencing call) → add or update an entry in `decisions.md`: D-id · one-liner · **rationale (the contentful why, not "we agreed")** · status (`RATIFIED`/`OPEN`/`SUPERSEDED`) · links. If reasoning lived only in a `/feature` run's `.feature-dev/<ts>/{design,qa,review}.md` or an external chat — distil it here now. Cross-initiative architecture calls → a `docs/adr/` instead, linked from the charter.
 
