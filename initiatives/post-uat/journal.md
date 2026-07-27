@@ -31,3 +31,7 @@ The owner ratified the permanent three-role build loop and it is now canonical i
 ## 2026-07-27 (late, +3) — PU-10 unblocked: brand social links delivered
 
 Denys delivered the socials for PU-10 (canonicalized, tracking params stripped): `https://www.youtube.com/@the_discipline_program` · `https://t.me/the_discipline_channel` · `https://www.instagram.com/the_discipline_program`. Notable deltas vs the git-era candidates: Instagram moved from the personal `denis_sergeev_coach` to the brand account, YouTube is entirely new, and the personal Telegram is off the list — brand channels only. W4 is now fully unblocked; nothing in the queue waits on external input.
+
+## 2026-07-27 (late, +4) — executor false start: prompts rewritten as skill-INPUT
+
+First Fix-A executor run aborted by the owner: the prompt's "do not re-derive" + step-by-step Scope instructions read as a pipeline override, so the executor skipped the /fix machinery entirely (no task list, no investigation/finding artifacts, no plan-approval gate) and worked bare-handed. Owner rule ratified: every skill MUST run by its original instructions — a prompt is INPUT to the skill (symptoms, recon evidence framed "verify, then use", ratified constraints, scope boundaries, acceptance), never a replacement for its stages/gates/artifacts. Both prompts rewritten in that form (findings-shaped, explicit "run the standard pipeline" opener, owner-pause heads-up at the plan gate); the rule promoted into `docs/process.md` § build-loop step 3 and memory. Fix-A relaunches on the rewritten prompt.

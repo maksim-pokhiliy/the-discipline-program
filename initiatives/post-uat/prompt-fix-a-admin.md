@@ -1,36 +1,42 @@
-/fix admin users: exclude soft-deleted users from every admin read path + hide user-mutation controls from HEAD_COACH sessions
+/fix admin users list breaks permanently after a soft delete; coach account shows user-mutation controls that always 403
 
-## Session setup
+## How to run this
 
-This session works the `post-uat` initiative — pick `post-uat` if the session-start hook asks. SSOT: `initiatives/post-uat/triage.md` § PU-06 and `decisions.md` D-2. Scope is FIXED — no self-expansion; anything discovered out of scope goes as a note into `initiatives/post-uat/deferred.md`, not into the diff.
+**Run the standard `/fix` pipeline exactly as the skill prescribes** — investigation, finding, fix plan, the plan-approval gate, fix agents, review, verify, PR. Everything in this prompt is INPUT to that pipeline (evidence, scope boundaries, acceptance) — it does not replace or skip any stage, gate, task tracking, or artifact of the skill. One heads-up for the plan-approval gate: present the plan and wait — the owner takes it for an external tech-lead review before answering the gate question.
 
-## Context (verified root cause — do not re-derive)
+Initiative context: this batch is `post-uat` PU-06 (pick `post-uat` if the session-start hook asks). SSOT: `initiatives/post-uat/triage.md` § PU-06 and `decisions.md` D-2. The batch is the TWO findings below — out-of-scope discoveries go to `initiatives/post-uat/deferred.md` as notes, not into the diff.
 
-`deleteUser` soft-deletes: sets `deletedAt`, suffixes email to `<email>_deleted_<ts>`, bumps `tokenVersion`. But every admin read path still returns soft-deleted rows, and the suffixed email fails `z.string().email()` in the response schemas → **the first successful delete permanently 500s the admin users list.** Anchors:
+## Finding 1 — the first successful user delete permanently 500s the admin users list
+
+`deleteUser` soft-deletes: sets `deletedAt`, suffixes the email to `<email>_deleted_<ts>`, bumps `tokenVersion`. Every admin read path still returns soft-deleted rows, and the suffixed email fails `z.string().email()` in the response schemas → response validation throws on every subsequent list read. The operator now holds a real ADMIN account, so this is a live prod hazard.
+
+Tech-lead recon evidence (a head start for your investigation — verify against the current tree, then use):
 
 - `packages/api-server/src/endpoints/iam/users-admin.ts:35-41` — `getAll` has no `deletedAt` filter (delete impl + email suffix at `:156-174`).
 - `packages/contracts/src/entities/iam/user/user.schema.ts:21` (and `:9`) — the strict `.email()` the suffixed address fails.
 - `packages/api-routes/src/route-helpers.ts:39-47,69-79` — `parseResponse` → `InternalServerError` on response-schema failure.
-- By-id detail read (`apps/admin/src/app/api/admin/users/[id]/route.ts` → the admin-user-view service) — same 500 for a soft-deleted id.
+- By-id detail read (`apps/admin/src/app/api/admin/users/[id]/route.ts` → the admin-user-view service) — the same 500 for a soft-deleted id.
 - `packages/api-server/src/endpoints/cms/dashboard/admin.ts:107-108,128-131` — dashboard user counts + Recent Activity include soft-deleted users.
 - The existing test hides the bug: `users-admin.test.ts:278-294` hard-deletes its row in cleanup and never re-reads the list.
 
-Denys operates a real ADMIN account since 27.07, so this is a live prod risk.
+Desired behavior: soft-deleted users disappear from ALL admin read paths — the users list, the by-id view (standard not-found), dashboard counts + Recent Activity — and a delete no longer degrades any screen.
 
-## Scope
+## Finding 2 — HEAD_COACH sees user-mutation controls that always fail
 
-1. **Exclude soft-deleted users from ALL admin read paths:** `getAll` (`where: { deletedAt: null }`), the by-id admin user view (soft-deleted id → the standard not-found path), dashboard user count + Recent Activity.
-2. **Honest UI for the coach account (D-2 two-account model):** in `apps/admin`, HEAD_COACH sessions must not see user-mutation affordances that always 403 — hide the row delete action (`apps/admin/src/modules/users/sections/users-list-section/index.tsx:158-162`, confirm modal `:212-222`) and make the user edit form non-submittable/read-only for HEAD_COACH (`apps/admin/src/modules/users/components/user-form.tsx`). Role source: the session (`session.user.role`). `requireAdminStrict` and the role guards stay UNTOUCHED.
-3. **Tests:** (a) api-server — soft-delete a user, then assert the users page-data EXCLUDES the row AND the response parses against `getUsersPageDataResponseSchema`; assert the by-id read returns not-found for the soft-deleted user. (b) admin UI — HEAD_COACH sees no delete/save affordances; ADMIN does.
+`withAdminAuth` + the admin proxy admit HEAD_COACH into the console, but user update/role/delete are ADMIN-gated server-side (`requireAdminStrict`), so the coach account sees a Delete action and an editable form whose save always 403s. Evidence: delete action `apps/admin/src/modules/users/sections/users-list-section/index.tsx:158-162` (confirm modal `:212-222`), edit form `apps/admin/src/modules/users/components/user-form.tsx`; role available via the session.
 
-## Constraints
+Desired behavior: HEAD_COACH sessions see no user-mutation affordances (no delete action, non-submittable/read-only edit form); ADMIN sessions unchanged. The server-side guards stay exactly as they are — ratified D-2 (the two-account model): the strict guard is correct, only the UI lies.
 
-- NO contract changes. NO changes to role guards or to the pinned `users-admin-actor-role.test.ts` assertions (D-2: the capability upgrade is dropped, not reworked).
-- api-server tests: run the touched test files in isolation (vitest path filter against the dev DB). The full serial api-server suite only at your discretion — standing approval exists, but it is ~10 min serial on live Neon dev.
-- Branch `fix/admin-soft-delete-reads`, PR against `main` (`main` is PR-only). Conventional commits, lowercase subjects, no comments in code, no AI trailers/signatures anywhere.
+## Scope boundaries (ratified — not negotiable within this batch)
+
+- NO contract changes.
+- Role guards and the pinned `users-admin-actor-role.test.ts` assertions stay untouched.
+- api-server tests: run the touched test files in isolation against the dev DB; the full serial api-server suite only at your discretion (standing approval exists; ~10 min serial, live Neon dev).
+- PR against `main` (`main` is PR-only). Suggested branch slug: `admin-soft-delete-reads`.
 
 ## Acceptance
 
-- On dev: ADMIN deletes a user → the row disappears; list, detail, dashboard all stay healthy (no 500); deleting another user still works.
+- Dev: ADMIN deletes a user → the row disappears; list, by-id, dashboard all stay healthy; deleting another user still works.
 - A HEAD_COACH session shows no user-mutation controls anywhere in Users.
-- check-types / lint / dep:check green; touched tests green.
+- Tests prove both: an api-server test that soft-deletes then re-reads the list AND parses the response against `getUsersPageDataResponseSchema`; a UI test asserting the per-role affordances.
+- check-types / lint / dep:check green.
