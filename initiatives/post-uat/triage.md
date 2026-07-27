@@ -125,7 +125,7 @@ The 16.07 prod incident (Denys created an INDIVIDUAL link for Stas, never presse
 
 **Symptom.** "додати соц мережі для контакту — люди лінуються форми заповняти" (27.06).
 
-**Grounding.** No social links anywhere today (`footerLinks: []`, zero instagram/tiktok hits; `sameAs` was dropped from structured data). Git history has both the data and the UI: handles in `f2e13f3e` (`t.me/the_discipline_channel`, `instagram.com/denis_sergeev_coach`, `t.me/denis_sergeev_coach` — **confirm currency with Denys**) and a ~120-line direct-contact card grid (needs a new Instagram icon branch — the old union never rendered IG).
+**Grounding.** No social links anywhere today (`footerLinks: []`, zero instagram/tiktok hits; `sameAs` was dropped from structured data). Git history has UI prior art (`f2e13f3e`, a ~120-line direct-contact card grid; its old type union never rendered IG — icon branches needed). **Final links (Denys, 27.07 — brand channels only, canonical, no tracking params):** `https://www.youtube.com/@the_discipline_program` · `https://t.me/the_discipline_channel` · `https://www.instagram.com/the_discipline_program`. The git-era personal handles (`denis_sergeev_coach` IG/TG) are superseded — do NOT publish them.
 
 **Fix.** Hardcoded `SOCIAL_LINKS` config + icon-map component + mount on /contact (below the form, `ContentSection` wrapper for the site's motion language) + footer instance (serves every page) + restore `sameAs` (SEO). A CMS-editable section is over-plumbing for 3 stable URLs — explicitly rejected for now. **S, ~2-3h.**
 

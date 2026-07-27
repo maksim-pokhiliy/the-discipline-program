@@ -3,7 +3,7 @@
 Status: `OPEN` / `SCHEDULED` / `CLOSED` / `DROPPED`.
 
 - **TikTok link (UAT chat 18.07).** DROPPED (owner 27.07) — accidental paste, unrelated to the project.
-- **Social links for PU-10.** OPEN — owner approved the feature (27.07); the actual current handles must come from Denys (git-recovered candidates: `t.me/the_discipline_channel`, `instagram.com/denis_sergeev_coach`, `t.me/denis_sergeev_coach`). W4 blocks on this for PU-10 only.
+- **Social links for PU-10.** CLOSED (27.07) — Denys delivered the current BRAND handles (canonicalized, tracking params stripped): `https://www.youtube.com/@the_discipline_program` · `https://t.me/the_discipline_channel` · `https://www.instagram.com/the_discipline_program`. Notable: the Instagram handle moved from the git-era personal `denis_sergeev_coach` to the brand account, YouTube is NEW (never in the codebase), and the personal `t.me/denis_sergeev_coach` is NOT on the list — publish brand channels only. PU-10 unblocked.
 - **Prod env verification (Resend + Telegram vars).** OPEN — folded into PU-11 acceptance (D-3). `RESEND_API_KEY`/`EMAIL_FROM`/`EMAIL_REPLY_TO` are optional in `packages/env` and silently skip when unset; nobody has confirmed they exist in Vercel prod → lead-notification emails may have never fired. Check BEFORE blaming the code.
 - **Legacy iOS app rejects platform credentials.** CLOSED (by design) — separate auth domain; unification is MP-NORTH-STAR (`mobile-publish/deferred.md`). Communicate to testers; no code.
 - **Live social content / team achievements on the site.** DROPPED — content production (Denys's side), not a platform feature. Revisit only if an embed/feed feature is explicitly requested.
