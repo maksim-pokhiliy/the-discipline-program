@@ -1,6 +1,6 @@
 # post-uat — state (the board)
 
-**Updated:** 2026-07-27 (late) — **ALL DECISIONS RESOLVED (D-1..D-6) → BOTH EXECUTOR PROMPTS WRITTEN.** Second owner round: **D-4 RATIFIED as NO interim mitigation** («ничего не инертим и не делаем временных заплаток — сразу делаем нормально; до тех пор Ден живёт с тем что есть») → PU-05 folded into PU-13 (profiling v2), the advisory/audit sketches dropped. **D-6 RATIFIED = (a)** — athletes get the read-only movement catalog («пусть ставит что хочет»). **PU-03 venue corrected:** Tetiana was switching RX/SC on her PROFILE page (where the active pick IS shown correctly) — the tension is that the WORKOUT screen never names the active level and offers no in-session re-switch; the fix set (resolved-coords label + re-openable prompt + RowGroup editor) is unchanged. TikTok link — accidental paste, unrelated, DROPPED. Prompts ready: **`prompt-fix-a-admin.md`** (urgent, `fix/admin-soft-delete-reads`) + **`prompt-w1-athlete-pack.md`** (PU-01..04, `fix/uat-athlete-pack`) — parallel-safe (disjoint zones).
+**Updated:** 2026-07-27 (late) — **ALL DECISIONS RESOLVED (D-1..D-6) → BOTH EXECUTOR PROMPTS WRITTEN.** Second owner round: **D-4 RATIFIED as NO interim mitigation** («ничего не инертим и не делаем временных заплаток — сразу делаем нормально; до тех пор Ден живёт с тем что есть») → PU-05 folded into PU-13 (profiling v2), the advisory/audit sketches dropped. **D-6 RATIFIED = (a)** — athletes get the read-only movement catalog («пусть ставит что хочет»). **PU-03 venue corrected:** Tetiana was switching RX/SC on her PROFILE page (where the active pick IS shown correctly) — the tension is that the WORKOUT screen never names the active level and offers no in-session re-switch; the fix set (resolved-coords label + re-openable prompt + RowGroup editor) is unchanged. TikTok link — accidental paste, unrelated, DROPPED. Prompts ready: **`prompt-fix-a-admin.md`** (urgent, `fix/admin-soft-delete-reads`) + **`prompt-w1-athlete-pack.md`** (PU-01..04, `fix/uat-athlete-pack`). **Build-loop standard ratified same day** (`docs/process.md` § "The build loop"): one executor at a time, tech lead orders the queue — order: Fix-A first, W1 after its merge.
 
 ## Board
 
@@ -17,7 +17,7 @@
 
 ## Next action
 
-**▶ Owner: paste `initiatives/post-uat/prompt-fix-a-admin.md` into one executor tab and `initiatives/post-uat/prompt-w1-athlete-pack.md` into another** (each session picks `post-uat` when the session-start hook asks). They are parallel-safe. The tech-lead session then validates each run's Gate A and reviews the PRs against the prompts. Independently: social links from Denys unblock PU-10 (W4).
+**▶ Owner: carry `initiatives/post-uat/prompt-fix-a-admin.md` to the executor session** (the session picks `post-uat` when the session-start hook asks). Then per the build loop: Gate A → tech-lead verdict → PR → diff review → browser scenario → two-ok merge. **W1 (`prompt-w1-athlete-pack.md`) starts only after Fix-A merges.** Corpus stage for Fix-A/W1 is already discharged — `triage.md` §§ PU-06/PU-01..04 + the two owner feedback rounds ARE the read-and-discussed corpus; new items from W2 onward run the full corpus stage explicitly. Independently: social links from Denys unblock PU-10 (W4).
 
 ## Open decisions awaiting ratification
 
