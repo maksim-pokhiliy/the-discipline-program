@@ -34,7 +34,7 @@ understand → design → plan → build → review → close out
 
 ## The build loop — the standing three-role standard (ratified 2026-07-27)
 
-The team is ALWAYS the same trio: **tech lead** (Claude, the planning session) · **owner** (Maksim) · **executor** (a fresh `/feature` / `/fix` session). **Executors run ONE AT A TIME** — no parallel executor tabs. **The tech lead decides the order of work.** Per work item, in order, no skipping:
+The team is ALWAYS the same trio: **tech lead** (Claude, the planning session) · **owner** (Maksim) · **executor(s)** (fresh `/feature` / `/fix` sessions). **The tech lead decides the order of work** — and how many executors run at once: 2+ in parallel is fine when the work calls for it (disjoint zones); it's a per-queue call, not a rule. Per work item, in order, no skipping:
 
 1. **Pick.** Owner + tech lead settle WHAT is next (the tech lead orders the queue).
 2. **Corpus.** The tech lead writes the corpus — HOW the item will be executed through an executor: approach, scope cut, constraints, risks — into the initiative docs. The owner reads it; discussion if needed. No prompt before the corpus is read.
@@ -50,7 +50,7 @@ Role duties, spelled out:
 - **Executor** (fresh session): executes ONE prompt to a PR; never self-expands scope; out-of-scope findings go to `deferred.md` as notes.
 - **Owner** (Maksim): reads corpora, ratifies decisions, transports prompts/gates/PRs between sessions, runs browser scenarios, merges.
 
-_(Supersedes the D-7 orchestrator/runner naming — same trio, now with the explicit corpus stage, the two-ok merge gate, and one-executor-at-a-time.)_
+_(Supersedes the D-7 orchestrator/runner naming — same trio, now with the explicit corpus stage and the two-ok merge gate.)_
 
 ## Definition of Done — the discipline
 
