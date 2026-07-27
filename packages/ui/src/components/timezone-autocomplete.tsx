@@ -31,6 +31,7 @@ type TimezoneAutocompleteProps = {
   onChange: (value: string) => void;
   onBlur: () => void;
   disabled?: boolean | undefined;
+  readOnly?: boolean | undefined;
   error?: boolean | undefined;
   helperText?: string | undefined;
   label?: string | undefined;
@@ -41,6 +42,7 @@ export const TimezoneAutocomplete = ({
   onChange,
   onBlur,
   disabled = false,
+  readOnly = false,
   error = false,
   helperText,
   label = "Timezone",
@@ -63,6 +65,7 @@ export const TimezoneAutocomplete = ({
       onChange={(_event, newValue) => onChange(newValue ?? "")}
       onBlur={onBlur}
       disabled={disabled}
+      readOnly={readOnly}
       disableClearable
       autoHighlight
       getOptionLabel={(option) => labelMap.get(option) ?? option}

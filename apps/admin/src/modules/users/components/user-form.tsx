@@ -36,7 +36,7 @@ export const UserForm = ({
   const currentRole = useWatch({ control, name: "role" });
 
   const roleOptions = isEdit ? Object.values(UserRole) : CREATE_ROLE_OPTIONS;
-  const isDisabled = isLoading || isReadOnly;
+  const readOnlySlotProps = { input: { readOnly: isReadOnly } };
 
   return (
     <Grid container spacing={3}>
@@ -49,7 +49,8 @@ export const UserForm = ({
                 placeholder="user@example.com"
                 variant="outlined"
                 fullWidth
-                disabled={isDisabled || isEdit}
+                disabled={isLoading || isEdit}
+                slotProps={readOnlySlotProps}
                 error={!!errors.email}
                 helperText={
                   isEdit ? "Email cannot be changed after creation" : errors.email?.message
@@ -62,7 +63,8 @@ export const UserForm = ({
                 placeholder="e.g. Jane Doe"
                 variant="outlined"
                 fullWidth
-                disabled={isDisabled}
+                disabled={isLoading}
+                slotProps={readOnlySlotProps}
                 error={!!errors.name}
                 helperText={errors.name?.message}
                 {...register("name", {
@@ -96,7 +98,8 @@ export const UserForm = ({
                     select
                     variant="outlined"
                     fullWidth
-                    disabled={isDisabled}
+                    disabled={isLoading}
+                    slotProps={readOnlySlotProps}
                     error={!!errors.role}
                     helperText={errors.role?.message}
                   >
@@ -118,7 +121,8 @@ export const UserForm = ({
                       value={field.value ?? ""}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
-                      disabled={isDisabled}
+                      disabled={isLoading}
+                      readOnly={isReadOnly}
                       error={!!errors.timezone}
                       helperText={errors.timezone?.message}
                     />
@@ -127,7 +131,12 @@ export const UserForm = ({
               )}
 
               {currentRole === UserRole.ATHLETE && (
-                <AthleteCoachPicker control={control} errors={errors} isFormLoading={isDisabled} />
+                <AthleteCoachPicker
+                  control={control}
+                  errors={errors}
+                  isDisabled={isLoading}
+                  isReadOnly={isReadOnly}
+                />
               )}
             </Stack>
           </FormCard>
