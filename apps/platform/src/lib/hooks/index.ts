@@ -6,7 +6,6 @@ export * from "./use-blur-commit";
 export * from "./use-catalog";
 export * from "./use-clone-highlight";
 export * from "./use-coach-athletes";
-export * from "./use-current-user-role";
 export * from "./use-coach-action-items";
 export * from "./use-coach-credentials";
 export * from "./use-coach-dashboard";

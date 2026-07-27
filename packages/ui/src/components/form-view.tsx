@@ -17,7 +17,7 @@ export type FormViewProps<TFieldValues extends FieldValues, TTransformedValues =
   backHref: string;
   backLabel: string;
   submitLabel?: string;
-  isReadOnly?: boolean;
+  isSubmitHidden?: boolean;
   children: ReactNode;
 };
 
@@ -30,14 +30,16 @@ export const FormView = <TFieldValues extends FieldValues, TTransformedValues = 
   backHref,
   backLabel,
   submitLabel = "Save Changes",
-  isReadOnly = false,
+  isSubmitHidden = false,
   children,
 }: FormViewProps<TFieldValues, TTransformedValues>) => (
   <FormProvider {...methods}>
     <Stack
       component="form"
       onSubmit={
-        isReadOnly ? (event: FormEvent) => event.preventDefault() : methods.handleSubmit(onSubmit)
+        isSubmitHidden
+          ? (event: FormEvent) => event.preventDefault()
+          : methods.handleSubmit(onSubmit)
       }
       noValidate
     >
@@ -50,7 +52,7 @@ export const FormView = <TFieldValues extends FieldValues, TTransformedValues = 
         textAlign="left"
         animated={false}
         actions={
-          isReadOnly
+          isSubmitHidden
             ? []
             : [
                 {

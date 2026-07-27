@@ -14,7 +14,10 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@repo/auth/client", () => ({
+vi.mock("next-auth/react", () => ({
+  getSession: vi.fn(),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
   useSession: () => ({ data: { user: { role: sessionState.role } } }),
 }));
 
@@ -41,6 +44,7 @@ describe("UsersListSection for an ADMIN viewer", () => {
     expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Coach" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "View" })).toBeNull();
     expect(screen.getByRole("link", { name: "Create User" })).toBeInTheDocument();
   });
 });
@@ -56,12 +60,15 @@ describe("UsersListSection for a HEAD_COACH viewer", () => {
     expect(screen.getByText("Coach")).toBeInTheDocument();
   });
 
-  it("keeps the edit link and the create action available", () => {
+  it("labels the row action View instead of Edit and keeps the create action available", () => {
     sessionState.role = UserRole.HEAD_COACH;
 
     render(<UsersListSection users={[makeUser()]} />);
 
-    expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
+    const detailLink = screen.getByRole("link", { name: "View" });
+
+    expect(detailLink).toHaveAttribute("href", "/users/clz00000000000000000usr1");
+    expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
     expect(screen.getByRole("link", { name: "Create User" })).toBeInTheDocument();
   });
 });

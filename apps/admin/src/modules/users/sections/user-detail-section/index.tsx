@@ -1,7 +1,7 @@
 "use client";
 
 import SendIcon from "@mui/icons-material/Send";
-import { Button, Grid, Stack, useTheme } from "@mui/material";
+import { Button, Grid, Stack, Typography, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { formatDate } from "@repo/shared";
@@ -46,6 +46,12 @@ export const UserDetailSection = ({ user, isPending, isReadOnly }: UserDetailSec
           </Button>
         )}
       </Stack>
+
+      {isReadOnly && (
+        <Typography variant="body2" color="text.secondary">
+          Only an ADMIN can change user records.
+        </Typography>
+      )}
 
       <UserForm isEdit isLoading={isPending} isReadOnly={isReadOnly} />
 

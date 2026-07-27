@@ -4,9 +4,11 @@ import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
+import { useCurrentUserRole } from "@repo/auth/client";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type AdminUserListItem } from "@repo/contracts/iam/user";
 import { useDeleteConfirmation } from "@repo/query";
@@ -21,7 +23,7 @@ import {
 } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import { useChipMenu, useCurrentUserRole, useDeleteUser, useUpdateUserRole } from "@app/lib/hooks";
+import { useChipMenu, useDeleteUser, useUpdateUserRole } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../../constants";
 
@@ -47,6 +49,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
   });
 
   const canMutateUsers = useCurrentUserRole() === UserRole.ADMIN;
+  const detailActionLabel = canMutateUsers ? "Edit" : "View";
 
   const { mutate: updateRole, isPending } = useUpdateUserRole();
   const deleteMutation = useDeleteUser();
@@ -148,14 +151,18 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         width: "15%",
         render: (user) => (
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Tooltip title="Edit">
+            <Tooltip title={detailActionLabel}>
               <IconButton
                 component={Link}
                 href={`/users/${user.id}`}
                 color="primary"
-                aria-label="Edit"
+                aria-label={detailActionLabel}
               >
-                <EditIcon fontSize="small" />
+                {canMutateUsers ? (
+                  <EditIcon fontSize="small" />
+                ) : (
+                  <VisibilityIcon fontSize="small" />
+                )}
               </IconButton>
             </Tooltip>
 
@@ -174,7 +181,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         ),
       },
     ],
-    [canMutateUsers, openMenu, requestDelete],
+    [canMutateUsers, detailActionLabel, openMenu, requestDelete],
   );
 
   return (
