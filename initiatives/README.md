@@ -6,7 +6,7 @@ A big feature spans many sessions. Without a durable home, each new session re-d
 
 This **replaces the two-session planner/executor workflow** (now superseded history). One session does both halves: plan the step, run the code through `/feature` (or an ultracode workflow), validate, close out. The `/feature` pipeline stays the quality gate — the single-session model drops the _shuttle ceremony_, not the quality bar, and (since 2026-06-03) **not the structured board either**.
 
-> **How a build actually runs (standing standard since 2026-07-27):** the three-role loop — tech lead (Claude) · owner · executor, ONE executor at a time — corpus → prompt → Gate A → PR diff review → browser pass → two-ok merge. Canonical description: `docs/process.md` § "The build loop".
+> **How a build actually runs (standing standard since 2026-07-27):** the three-role loop — tech lead (Claude) · owner · executor(s) — corpus → prompt → Gate A → PR diff review → browser pass → two-ok merge. Canonical description: `docs/process.md` § "The build loop".
 
 ## An initiative
 
