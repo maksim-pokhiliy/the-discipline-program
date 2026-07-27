@@ -7,6 +7,8 @@ import { Box, Drawer, IconButton, Stack, Typography, useMediaQuery, useTheme } f
 
 import { BaseModal } from "@repo/ui";
 
+import { type MovementCatalogStatus } from "../utils/movement-catalog-status";
+
 import { UpdateOneRmForm, type OneRmMovementOption } from "./update-one-rm-form";
 
 const MODAL_TITLE = "Update 1RM";
@@ -28,6 +30,7 @@ export type UpdateOneRmModalProps = {
   onClose: () => void;
   presetExerciseId?: string | undefined;
   movements: OneRmMovementOption[];
+  catalogStatus?: MovementCatalogStatus | undefined;
 };
 
 export const UpdateOneRmModal = ({
@@ -35,6 +38,7 @@ export const UpdateOneRmModal = ({
   onClose,
   presetExerciseId,
   movements,
+  catalogStatus,
 }: UpdateOneRmModalProps): ReactElement => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
@@ -51,6 +55,7 @@ export const UpdateOneRmModal = ({
         <UpdateOneRmForm
           presetExerciseId={presetExerciseId}
           movements={movements}
+          catalogStatus={catalogStatus}
           onClose={onClose}
         />
       </BaseModal>
@@ -107,6 +112,7 @@ export const UpdateOneRmModal = ({
       <UpdateOneRmForm
         presetExerciseId={presetExerciseId}
         movements={movements}
+        catalogStatus={catalogStatus}
         onClose={onClose}
       />
     </Drawer>

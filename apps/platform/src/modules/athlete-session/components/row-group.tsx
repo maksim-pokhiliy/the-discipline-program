@@ -75,10 +75,16 @@ export const RowGroup = ({ label, members }: RowGroupProps): ReactElement => (
             <Stack
               direction="row"
               alignItems="baseline"
-              justifyContent="space-between"
+              justifyContent="flex-end"
               spacing={1.5}
+              sx={{ flexWrap: "wrap" }}
             >
-              <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={0.5}
+                sx={{ flex: "1 1 auto", minWidth: 0 }}
+              >
                 <Typography
                   component="span"
                   sx={(theme) => ({

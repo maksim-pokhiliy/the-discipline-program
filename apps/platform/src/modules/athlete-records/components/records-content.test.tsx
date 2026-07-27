@@ -1,5 +1,6 @@
 import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { Mock } from "vitest";
 
 import { type GetAthleteMovementsResponse } from "@repo/contracts/lms/exercise";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
@@ -9,28 +10,22 @@ import {
   type RecordsViewResponse,
 } from "@repo/contracts/lms/records-view";
 
+import { DatePickerStub } from "@app/test/date-picker-stub";
 import { render } from "@app/test/render";
 
+const createOneRmMock: Mock = vi.fn();
+
 vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
-  useCreateOneRMRecord: () => ({ mutate: vi.fn(), isPending: false }),
+  useCreateOneRMRecord: () => ({ mutate: createOneRmMock, isPending: false }),
 }));
 
-type DatePickerProps = {
-  value: Date | null;
-  onChange: (next: Date | null) => void;
-};
-
-vi.mock("@mui/x-date-pickers/DatePicker", () => ({
-  DatePicker: ({ value, onChange }: DatePickerProps) => (
-    <input
-      data-testid="datepicker"
-      data-value={value ? value.toISOString() : ""}
-      onChange={(event) => onChange(new Date(event.target.value))}
-    />
-  ),
-}));
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({ DatePicker: DatePickerStub }));
 
 const { RecordsContent } = await import("./records-content");
+
+afterEach(() => {
+  createOneRmMock.mockReset();
+});
 
 const oneRMRecord = (overrides: Partial<OneRMRecordView> = {}): OneRMRecordView => ({
   exerciseId: "clz0000000000000000000ex01",
@@ -185,6 +180,7 @@ const CONCRETE_CATALOG: GetAthleteMovementsResponse = [
 ];
 
 const PLACEHOLDER_MOVEMENT_ID = "clz00000000000000000plc1";
+const PLACEHOLDER_MOVEMENT_NAME = "Squat (Any Variation)";
 
 const freshAthlete = (): RecordsViewResponse => ({ oneRM: [], benchmarks: [] });
 
@@ -208,14 +204,14 @@ describe("RecordsContent movement picker", () => {
     expect(screen.queryByText("No options")).not.toBeInTheDocument();
   });
 
-  it("keeps a logged movement pickable and Save reachable when the catalog omits it", () => {
+  it("saves the preset movement itself when the catalog omits it", () => {
     render(
       <RecordsContent
         data={data({
           oneRM: [
             oneRMRecord({
               exerciseId: PLACEHOLDER_MOVEMENT_ID,
-              exerciseName: "Any Squat Variation",
+              exerciseName: PLACEHOLDER_MOVEMENT_NAME,
             }),
           ],
           benchmarks: [],
@@ -224,17 +220,26 @@ describe("RecordsContent movement picker", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Any Squat Variation"));
+    fireEvent.click(screen.getByText(PLACEHOLDER_MOVEMENT_NAME));
     fireEvent.click(screen.getByRole("button", { name: "Update this 1RM" }));
 
     openPicker();
 
-    expect(optionLabels()).toContain("Any Squat Variation");
+    expect(optionLabels()).toContain(PLACEHOLDER_MOVEMENT_NAME);
+    expect(optionLabels()[0]).not.toBe(PLACEHOLDER_MOVEMENT_NAME);
 
     expect(saveButton()).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Value (kg)"), { target: { value: "120" } });
 
     expect(saveButton()).toBeEnabled();
+
+    fireEvent.click(saveButton());
+
+    expect(createOneRmMock).toHaveBeenCalledTimes(1);
+    expect(createOneRmMock.mock.calls[0]?.[0]).toMatchObject({
+      exerciseId: PLACEHOLDER_MOVEMENT_ID,
+      valueKg: 120,
+    });
   });
 });

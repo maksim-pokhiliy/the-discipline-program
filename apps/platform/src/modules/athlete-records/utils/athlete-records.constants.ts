@@ -138,6 +138,15 @@ export const UPDATE_ONE_RM_BUTTON_LABEL = "Update 1RM";
 export const SEARCH_PLACEHOLDER_ONE_RM = "Search movements…";
 export const SEARCH_PLACEHOLDER_BENCHMARK = "Search benchmarks…";
 
+export const CATALOG_STATUS_LOADING = "loading";
+export const CATALOG_STATUS_ERROR = "error";
+export const CATALOG_STATUS_READY = "ready";
+
+export const MOVEMENT_PICKER_LOADING_LABEL = "Loading movements…";
+export const MOVEMENT_PICKER_ERROR_LABEL =
+  "Movement list unavailable. Reload the page to try again.";
+export const MOVEMENT_PICKER_EMPTY_LABEL = "No movements found";
+
 export const EMPTY_ONE_RM_LABEL = "No 1RMs logged yet";
 export const EMPTY_BENCHMARK_LABEL = "No benchmark results yet";
 export const NO_RESULTS_LABEL = "No records match your search.";

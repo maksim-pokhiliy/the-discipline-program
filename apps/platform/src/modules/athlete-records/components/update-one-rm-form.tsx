@@ -19,6 +19,16 @@ import { OneRMRecordSource, ONE_RM_RECORD_SOURCE_LABELS } from "@repo/contracts/
 import { platformKeys } from "@app/lib/api/keys";
 import { useCreateOneRMRecord } from "@app/lib/hooks/use-one-rm-records";
 
+import {
+  CATALOG_STATUS_ERROR,
+  CATALOG_STATUS_LOADING,
+  CATALOG_STATUS_READY,
+  MOVEMENT_PICKER_EMPTY_LABEL,
+  MOVEMENT_PICKER_ERROR_LABEL,
+  MOVEMENT_PICKER_LOADING_LABEL,
+} from "../utils/athlete-records.constants";
+import { type MovementCatalogStatus } from "../utils/movement-catalog-status";
+
 const MOVEMENT_LABEL = "Movement";
 const VALUE_LABEL = "Value (kg)";
 const DATE_LABEL = "Date";
@@ -61,12 +71,14 @@ const parseValue = (raw: string): number | null => {
 export type UpdateOneRmFormProps = {
   presetExerciseId?: string | undefined;
   movements: OneRmMovementOption[];
+  catalogStatus?: MovementCatalogStatus | undefined;
   onClose: () => void;
 };
 
 export const UpdateOneRmForm = ({
   presetExerciseId,
   movements,
+  catalogStatus = CATALOG_STATUS_READY,
   onClose,
 }: UpdateOneRmFormProps): ReactElement => {
   const queryClient = useQueryClient();
@@ -77,16 +89,27 @@ export const UpdateOneRmForm = ({
     [movements, presetExerciseId],
   );
 
-  const [movement, setMovement] = useState<OneRmMovementOption | null>(presetMovement);
+  const [pickedMovement, setPickedMovement] = useState<OneRmMovementOption | null>(null);
+  const [hasPickedMovement, setHasPickedMovement] = useState(false);
   const [value, setValue] = useState("");
   const [date, setDate] = useState<Date | null>(() => new Date());
   const [source, setSource] = useState<OneRMRecordSource>(DEFAULT_SOURCE);
 
-  const activeMovement = movement ?? presetMovement;
+  const activeMovement = hasPickedMovement ? pickedMovement : presetMovement;
   const parsedValue = parseValue(value);
   const hasDate = date !== null && isValid(date);
   const canSubmit =
     activeMovement !== null && parsedValue !== null && hasDate && !createOneRm.isPending;
+  const isCatalogLoading = catalogStatus === CATALOG_STATUS_LOADING;
+  const emptyPickerLabel =
+    catalogStatus === CATALOG_STATUS_ERROR
+      ? MOVEMENT_PICKER_ERROR_LABEL
+      : MOVEMENT_PICKER_EMPTY_LABEL;
+
+  const handleMovement = (_event: SyntheticEvent, next: OneRmMovementOption | null): void => {
+    setHasPickedMovement(true);
+    setPickedMovement(next);
+  };
 
   const handleSource = (_event: SyntheticEvent, next: OneRMRecordSource | null): void => {
     if (next !== null) {
@@ -120,7 +143,10 @@ export const UpdateOneRmForm = ({
       <Autocomplete<OneRmMovementOption>
         options={movements}
         value={activeMovement}
-        onChange={(_event, next) => setMovement(next)}
+        onChange={handleMovement}
+        loading={isCatalogLoading}
+        loadingText={MOVEMENT_PICKER_LOADING_LABEL}
+        noOptionsText={emptyPickerLabel}
         getOptionLabel={(option) => option.exerciseName}
         isOptionEqualToValue={(a, b) => a.exerciseId === b.exerciseId}
         renderInput={(params) => {

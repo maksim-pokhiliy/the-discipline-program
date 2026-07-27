@@ -9,16 +9,24 @@ import { useAthleteMovements } from "@app/lib/hooks/use-exercises";
 
 import { RecordsContent } from "../components/records-content";
 import { LOADING_LABEL } from "../utils/athlete-records.constants";
+import { toMovementCatalogStatus } from "../utils/movement-catalog-status";
 
 export type AthleteRecordsViewProps = Record<string, never>;
 
 export const AthleteRecordsView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteRecords();
   const movementCatalog = useAthleteMovements();
+  const catalogStatus = toMovementCatalogStatus(movementCatalog.isLoading, movementCatalog.error);
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage={LOADING_LABEL}>
-      {(loaded) => <RecordsContent data={loaded} movementCatalog={movementCatalog.data} />}
+      {(loaded) => (
+        <RecordsContent
+          data={loaded}
+          movementCatalog={movementCatalog.data}
+          catalogStatus={catalogStatus}
+        />
+      )}
     </QueryWrapper>
   );
 };

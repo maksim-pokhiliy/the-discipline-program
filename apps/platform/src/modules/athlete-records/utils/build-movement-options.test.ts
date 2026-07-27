@@ -54,6 +54,15 @@ describe("buildMovementOptions", () => {
     ]);
   });
 
+  it("keeps the athlete's own label when the catalog spells the same movement differently", () => {
+    const options = buildMovementOptions(
+      [record("ex1", "Back Squat")],
+      catalog(["ex1", "Back Squat (Barbell)"]),
+    );
+
+    expect(options).toEqual([{ exerciseId: "ex1", exerciseName: "Back Squat" }]);
+  });
+
   it("keeps a logged movement that the catalog does not offer", () => {
     const options = buildMovementOptions(
       [record("placeholder-1", "Any Squat Variation")],
