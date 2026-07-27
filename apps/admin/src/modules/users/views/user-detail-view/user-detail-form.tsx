@@ -8,7 +8,7 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { updateUserSchema, type UpdateUserData } from "@repo/contracts/iam/user";
 import { FormView } from "@repo/ui";
 
-import { useUpdateUser } from "@app/lib/hooks";
+import { useCurrentUserRole, useUpdateUser } from "@app/lib/hooks";
 
 import { UserDetailSection } from "../../sections";
 
@@ -17,6 +17,8 @@ type UserDetailFormProps = {
 };
 
 export const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
+  const canMutateUsers = useCurrentUserRole() === UserRole.ADMIN;
+
   const { mutate: updateUser, isPending } = useUpdateUser();
 
   const methods = useForm<UpdateUserData>({
@@ -47,8 +49,9 @@ export const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
       subtitle={user.email}
       backHref="/users"
       backLabel="Back to Users"
+      isReadOnly={!canMutateUsers}
     >
-      <UserDetailSection user={user} isPending={isPending} />
+      <UserDetailSection user={user} isPending={isPending} isReadOnly={!canMutateUsers} />
     </FormView>
   );
 };

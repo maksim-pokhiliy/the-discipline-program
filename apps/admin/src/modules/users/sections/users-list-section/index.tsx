@@ -21,7 +21,7 @@ import {
 } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import { useChipMenu, useDeleteUser, useUpdateUserRole } from "@app/lib/hooks";
+import { useChipMenu, useCurrentUserRole, useDeleteUser, useUpdateUserRole } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../../constants";
 
@@ -45,6 +45,8 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "createdAt", direction: "desc" },
   });
+
+  const canMutateUsers = useCurrentUserRole() === UserRole.ADMIN;
 
   const { mutate: updateRole, isPending } = useUpdateUserRole();
   const deleteMutation = useDeleteUser();
@@ -120,7 +122,9 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               {...(config.color !== undefined && { color: config.color })}
               size="small"
               variant="outlined"
-              onClick={(e) => openMenu(e, user.id)}
+              {...(canMutateUsers && {
+                onClick: (event: React.MouseEvent<HTMLElement>) => openMenu(event, user.id),
+              })}
             />
           );
         },
@@ -155,16 +159,22 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Delete">
-              <IconButton onClick={() => requestDelete(user.id)} color="error" aria-label="Delete">
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            {canMutateUsers && (
+              <Tooltip title="Delete">
+                <IconButton
+                  onClick={() => requestDelete(user.id)}
+                  color="error"
+                  aria-label="Delete"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         ),
       },
     ],
-    [openMenu, requestDelete],
+    [canMutateUsers, openMenu, requestDelete],
   );
 
   return (

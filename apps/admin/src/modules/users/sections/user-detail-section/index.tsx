@@ -15,9 +15,10 @@ import { ProfileCard, UserForm } from "../../components";
 type UserDetailSectionProps = {
   user: AdminUserView;
   isPending: boolean;
+  isReadOnly: boolean;
 };
 
-export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
+export const UserDetailSection = ({ user, isPending, isReadOnly }: UserDetailSectionProps) => {
   const theme = useTheme();
   const { mutate: resendInvite, isPending: isResending } = useResendInvite();
   const canResendInvite = !user.hasPassword;
@@ -46,7 +47,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
         )}
       </Stack>
 
-      <UserForm isEdit isLoading={isPending} />
+      <UserForm isEdit isLoading={isPending} isReadOnly={isReadOnly} />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 8 }}>

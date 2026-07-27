@@ -59,6 +59,22 @@ export default defineConfig({
           setupFiles: ["./src/test/setup.ts"],
         },
       },
+      {
+        plugins: [reactPlugin()],
+        resolve: {
+          alias: {
+            "@app": resolve(__dirname, "apps/admin/src"),
+          },
+        },
+        test: {
+          name: "admin",
+          root: "apps/admin",
+          environment: "jsdom",
+          globals: true,
+          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+          setupFiles: ["./src/test/setup.ts"],
+        },
+      },
     ],
     coverage: {
       provider: "v8",
