@@ -30,6 +30,9 @@ yarn-error.log*
 # Feature dev artifacts
 .feature-dev/
 
+# Initiatives — per-worktree session pick (the SessionStart hook's remembered choice)
+initiatives/CURRENT
+
 # Audit artifacts
 .audit/
 .audit-smells/

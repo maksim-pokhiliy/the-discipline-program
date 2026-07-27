@@ -1,6 +1,6 @@
 # plan-editor-compose — state (the board)
 
-**Updated:** 2026-06-05
+**Updated:** 2026-06-05 — **🏁 CLOSED.** Core arc 10.0–10.4 merged to `main` (PR #245, `c20c082a`); theory↔code reconciliation done (zero unintentional drift); ph.5 scoring-execution = a separate future initiative. _(Header marker added 2026-07-27 during the initiatives revision — the body below already declared the arc concluded; nothing else changed.)_
 
 A scannable board, not prose. The narrative lives in `journal.md`; the "why" in `decisions.md`; carry-forwards in `deferred.md`. This file = where we are + the one next action. **Resume here** (the SessionStart hook force-loads it).
 

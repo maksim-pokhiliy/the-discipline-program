@@ -9,7 +9,7 @@ Load the active initiative's durable context before doing anything. Trust the pr
 
 ## Steps
 
-1. **Find it.** Read `initiatives/ACTIVE` (the slug). The SessionStart hook has already printed `state.md` (the board) into context — if not, read `initiatives/<slug>/state.md`.
+1. **Find it.** Read `initiatives/ACTIVE` (one slug per line; several = parallel tracks). If exactly one, that's it. If several: this session's pick is in `initiatives/CURRENT` (the SessionStart hook asked at startup and recorded it) — if `CURRENT` is missing or stale, ask the owner which track this session drives before loading anything. The hook has usually already printed the chosen `state.md` (the board) into context — if not, read `initiatives/<slug>/state.md`.
 
 2. **Read in order:**
 
