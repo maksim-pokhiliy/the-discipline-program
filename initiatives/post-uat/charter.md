@@ -6,13 +6,9 @@
 
 ## Operating model (how this initiative runs)
 
-This initiative runs as an **owner-in-the-loop grind**, not a single build arc:
+This initiative runs by the **standing three-role build loop** (ratified 2026-07-27, canonical in `docs/process.md` § "The build loop"): tech lead (Claude) · owner (Maksim) · executor (a fresh `/feature`/`/fix` session) — **one executor at a time, the tech lead orders the queue**. Per item: pick → **corpus** (tech lead writes HOW it will be executed; owner reads, discussion if needed) → executor prompt (checked into this dir) → Gate A back to the tech lead (ok / feedback-prompt loop) → PR → tech-lead diff review (never the self-report) → owner browser pass off a short scenario the tech lead writes → **merge only on both oks** → close-out promotion.
 
-- **Owner (Maksim)** — reproduces every item in the browser from the STR in `triage.md`, ratifies decisions and wave scope, carries approved prompts to executor sessions, merges PRs.
-- **Tech-lead session** — keeps the registry honest: triage + root cause, STR authoring, wave cuts, executor prompts, Gate-A validation of `/feature` runs, PR review against the approved scope, surfacing decisions with a recommendation (never deciding owner-level forks silently).
-- **Executor sessions (parallel tabs)** — run the approved prompts via `/feature` (full/small) or `/fix`; no self-expanded scope. Implementer self-reports are verified via `git status`/diff before the next stage (standing feedback rule).
-
-**Item lifecycle:** `TRIAGED → REPRO'D (owner) → SPEC'D (prompt approved) → IN-EXEC → PR → MERGED → VERIFIED (owner, prod/preview) → CLOSED`; `DROPPED` possible at any stage with rationale. Registry + statuses live in `plan.md`; evidence + STRs in `triage.md`.
+**Item lifecycle:** `TRIAGED → REPRO'D (owner) → SPEC'D (corpus read + prompt approved) → IN-EXEC → PR → MERGED → VERIFIED (owner, prod/preview) → CLOSED`; `DROPPED` possible at any stage with rationale. Registry + statuses live in `plan.md`; evidence + STRs in `triage.md`.
 
 ## Acceptance criteria
 

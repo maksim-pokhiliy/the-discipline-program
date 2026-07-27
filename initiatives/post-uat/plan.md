@@ -27,7 +27,7 @@ Lifecycle: `TRIAGED → REPRO'D → SPEC'D → IN-EXEC → PR → MERGED → VER
 ## Waves
 
 - **Fix-A mini-fix (now, ahead of everything):** PU-06 — soft-delete excluded from all admin reads + honest-UI hide for HEAD_COACH. Prompt: `prompt-fix-a-admin.md`, branch `fix/admin-soft-delete-reads`. Until merged: **no user deletion in prod admin.**
-- **W1 — athlete pack** (`/fix`, one branch `fix/uat-athlete-pack`): PU-01 + PU-02 + PU-03 + PU-04. Prompt: `prompt-w1-athlete-pack.md`. Contract changes additive only (athlete movements response, resolved-arm coords, exercise identity on resolved rows). Can run in PARALLEL with Fix-A — disjoint file zones (platform/lms vs admin/iam). Exit: owner + Tetiana re-verify the reported flows on prod.
+- **W1 — athlete pack** (`/fix`, one branch `fix/uat-athlete-pack`): PU-01 + PU-02 + PU-03 + PU-04. Prompt: `prompt-w1-athlete-pack.md`. Contract changes additive only (athlete movements response, resolved-arm coords, exercise identity on resolved rows). Starts AFTER Fix-A merges (one executor at a time — the standing build loop). Exit: owner + Tetiana re-verify the reported flows on prod.
 - **W2 — publish status** (`/feature small`, inside `mobile-publish` as MP-22): PU-08. Prompt next after W1 lands (or interleaved).
 - **W3 — admin rest** (`/fix`): PU-07 email edit under ADMIN (D-2).
 - **W4 — reach & notify** (`/fix` or `/feature small`): PU-09 + PU-10 (once links arrive) + PU-11; then **PU-17** as a follow-on Claude-Design pass over the full template inventory.
@@ -35,4 +35,4 @@ Lifecycle: `TRIAGED → REPRO'D → SPEC'D → IN-EXEC → PR → MERGED → VER
 - **W6 — profiling v2** (design-first; likely its own initiative; four-projection + sacred-VO gate): PU-13, absorbing PU-05 as the evidence case. Until it ships, the Ski-type rows stay as-is (D-4 — owner's explicit call).
 - **W7 — subscriptions charter** (docs only): PU-14 → new initiative from the owner-set scope: storefront products bound to training plans, purchase → auto-enroll, recurring subscription until cancel. The schema skeleton already exists (Price / Subscription / Transaction / RequestIdempotency); missing: Product→TrainingPlan link, payment provider (checkout/recurring/webhooks), subscription→enrollment lifecycle, UI. Tetiana's brief = additional input (the away-mode case), not a gate.
 
-**Proposed order:** Fix-A ∥ W1 → W2 → W3 → W4 (PU-10 whenever links arrive) → W5 → W6 → W7.
+**Order (tech-lead-set, one executor at a time):** Fix-A → W1 → W2 → W3 → W4 (PU-10 whenever links arrive) → W5 → W6 → W7.

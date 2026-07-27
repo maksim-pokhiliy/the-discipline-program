@@ -32,11 +32,25 @@ understand → design → plan → build → review → close out
 - **Review** = the orchestrator reads the **git diff**, never the agent's self-report (long runs over-report). UI / drag-and-drop / pointer layers are reviewed in a **browser walkthrough** — jsdom cannot see them.
 - **Close out** = promote every ratified decision and carry-forward into the durable docs, in the SAME PR.
 
-## Roles (D-7)
+## The build loop — the standing three-role standard (ratified 2026-07-27)
 
-- **Orchestrator** (the planning session): research, deep analysis, design with the owner, write runner prompts, review executed work by git diff.
-- **Runner** (a fresh `/feature` session): executes one self-contained prompt.
-- **Owner** (Maksim): discusses, ratifies, transports prompts, drives the walkthrough.
+The team is ALWAYS the same trio: **tech lead** (Claude, the planning session) · **owner** (Maksim) · **executor** (a fresh `/feature` / `/fix` session). **Executors run ONE AT A TIME** — no parallel executor tabs. **The tech lead decides the order of work.** Per work item, in order, no skipping:
+
+1. **Pick.** Owner + tech lead settle WHAT is next (the tech lead orders the queue).
+2. **Corpus.** The tech lead writes the corpus — HOW the item will be executed through an executor: approach, scope cut, constraints, risks — into the initiative docs. The owner reads it; discussion if needed. No prompt before the corpus is read.
+3. **Prompt.** The tech lead writes the executor prompt (a self-contained `/feature`/`/fix` brief, checked into the initiative dir). The owner transports it to the executor session.
+4. **Gate A.** The executor's Gate A comes back to the tech lead via the owner. Verdict ok / not-ok; a not-ok produces a feedback prompt the owner carries back to the SAME executor. Loop until ok.
+5. **PR.** The executor drives to a pull request. The owner brings the PR to the tech lead; the tech lead reviews the **git diff** (never the self-report).
+6. **Browser pass.** If anything is user-visible, the tech lead writes a SHORT browser-test scenario (a flat checklist); the owner runs it.
+7. **Merge.** Only after BOTH oks — tech lead (diff) AND owner (browser/product) — the PR merges. Then the close-out promotion as usual.
+
+Role duties, spelled out:
+
+- **Tech lead** (planning session): triage/research, corpora, executor prompts, Gate-A verdicts + feedback prompts, PR diff review, browser scenarios, queue order, board upkeep.
+- **Executor** (fresh session): executes ONE prompt to a PR; never self-expands scope; out-of-scope findings go to `deferred.md` as notes.
+- **Owner** (Maksim): reads corpora, ratifies decisions, transports prompts/gates/PRs between sessions, runs browser scenarios, merges.
+
+_(Supersedes the D-7 orchestrator/runner naming — same trio, now with the explicit corpus stage, the two-ok merge gate, and one-executor-at-a-time.)_
 
 ## Definition of Done — the discipline
 
