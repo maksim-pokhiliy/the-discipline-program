@@ -163,9 +163,13 @@ The 16.07 prod incident (Denys created an INDIVIDUAL link for Stas, never presse
 
 ---
 
-## PU-14 · INITIATIVE CANDIDATE · payments — self-serve weekly plan purchase
+## PU-14 · INITIATIVE CANDIDATE · payments — storefront subscription commerce (owner-scoped 27.07)
 
-**Ask.** Denys away → his SPLIT (personal-training) athletes buy a weekly plan on the site and train; online payment without his involvement (26.07; Tetiana holds the detailed vision). Prior art: roadmap Phase-5 billing (Monobank webhook lineage); athlete-core deferred "auto-create an empty plan on a personal-product purchase" couples directly. **Action here: collect Tetiana's brief → charter a separate initiative** (payment provider for UA — Monobank acquiring vs WayForPay/LiqPay/Fondy — delivery mechanics, product model). This is the first INBOUND monetization pull — do not let it rot.
+**Ask (final form, owner 27.07).** Not a point feature for the away-period: **every storefront product on the marketing app binds to a training plan; purchase → the user is auto-enrolled; billing runs as a regular subscription — charged until the user cancels.** «Это большая работа» — an initiative of its own. The original 26.07 trigger (SPLIT athletes buying a weekly plan while the coach is away) is one use case inside it; Tetiana's detailed vision is an additional input, not a charter gate. This is the first INBOUND monetization pull — do not let it rot.
+
+**Grounding (what already exists).** The billing skeleton is ALREADY in the schema: `Price` (`productId`, `Currency USD/EUR/UAH`, `PriceInterval MONTHLY/YEARLY/ONE_TIME`), `Subscription` (`userId @unique` — one subscription per user; `status`, `currentPeriodStart/End`, `graceEndsAt`, `canceledAt`), `Transaction` (`amountCents`, `providerTxId @unique`, `idempotencyKey @unique`), `RequestIdempotency` (`packages/api-server/prisma/schema.prisma` ~`:226-300`). `PlanEnrollment` exists independently (`:362`). **Missing:** the Product→TrainingPlan binding (Product has no plan link today), the payment-provider integration (checkout, card tokenization/recurring, webhooks), the subscription→enrollment lifecycle (activate→enroll; lapse/grace/cancel→pause or un-enroll), and all UI (storefront checkout, athlete billing page, admin). Prior art: roadmap Phase-5 billing (Monobank lineage); athlete-core deferred "auto-create an empty plan on a personal-product purchase" — the personal-product flavor (purchase spins an EMPTY plan instead of enrolling into an existing one); both flavors belong to this charter.
+
+**Charter-time key decisions (preview, not now):** UA-capable recurring provider (Monobank acquiring vs LiqPay/WayForPay/Fondy vs foreign-entity Stripe) · one-subscription-per-user (`userId @unique`) vs per-product subscriptions · what cancellation/lapse does to enrollment and to published mobile links · grace semantics (`graceEndsAt` already modeled). **W7: charter a separate initiative from the owner-set scope.**
 
 ---
 
