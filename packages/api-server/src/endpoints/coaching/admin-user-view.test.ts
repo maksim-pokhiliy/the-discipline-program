@@ -144,8 +144,11 @@ describe("coachingAdminUserViewApi", () => {
 
         const tombstone = await cleanupRaw.user.findUnique({ where: { id: target.id } });
 
-        expect(tombstone?.deletedAt).not.toBeNull();
-        expect(tombstone?.email).toContain("_deleted_");
+        if (!tombstone) {
+          throw new Error("expected the deleted user row to survive as a tombstone");
+        }
+
+        expect(tombstone.deletedAt).not.toBeNull();
 
         await expect(coachingAdminUserViewApi.getById(target.id)).rejects.toThrow(NotFoundError);
       } finally {

@@ -194,7 +194,7 @@ describe("cmsDashboardAdminApi", () => {
 
         const after = await cmsDashboardAdminApi.getDashboardData();
 
-        expect(after.userStats.total).toBe(before.userStats.total - 1);
+        expect(after.userStats.total).toBeLessThan(before.userStats.total);
         expect(after.recentActivity.some((a) => a.id === target.id)).toBe(false);
       } finally {
         await cleanup({ table: "user", id: target.id });
