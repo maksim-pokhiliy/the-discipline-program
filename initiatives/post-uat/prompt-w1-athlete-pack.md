@@ -1,51 +1,55 @@
-/fix athlete-core UAT pack: athlete 1RM movement catalog, RX/SC spread wrapping, active-level visibility + in-session re-pick, 1RM append-correction path
+/fix athlete-core UAT pack: first-ever 1RM unloggable, RX/SC spread clipping, active level invisible in the workout, in-session 1RM uncorrectable
 
-## Session setup
+## How to run this
 
-This session works the `post-uat` initiative — pick `post-uat` if the session-start hook asks. SSOT: `initiatives/post-uat/triage.md` §§ PU-01..PU-04 (evidence + file anchors + verify-after per item) and `decisions.md` D-5/D-6. Scope is FIXED: the four items below, ONE branch. Anything discovered out of scope goes as a note into `initiatives/post-uat/deferred.md`, not into the diff.
+**Run the standard `/fix` pipeline exactly as the skill prescribes** — investigation, findings, fix plan, the plan-approval gate, fix agents, review, verify, PR. Everything in this prompt is INPUT to that pipeline (evidence, ratified design constraints, scope boundaries, acceptance) — it does not replace or skip any stage, gate, task tracking, or artifact of the skill. Plan the FOUR findings below as one batch on one branch. One heads-up for the plan-approval gate: present the plan and wait — the owner takes it for an external tech-lead review before answering the gate question.
 
-## Items
+Initiative context: this batch is `post-uat` PU-01..PU-04 (pick `post-uat` if the session-start hook asks). SSOT: `initiatives/post-uat/triage.md` §§ PU-01..PU-04 and `decisions.md` D-5/D-6. Out-of-scope discoveries go to `initiatives/post-uat/deferred.md` as notes, not into the diff.
 
-### 1 · PU-01 — athlete read-only movement catalog for Update 1RM (D-6 = a)
+## Finding 1 (PU-01) — a first-ever 1RM is unloggable: the movement picker only offers movements the athlete already has records for
 
-Today the Update-1RM Movement autocomplete is fed ONLY from the athlete's own 1RM records (`apps/platform/src/modules/athlete-records/components/records-content.tsx:186-194`) — a fresh athlete has a permanently empty picker and a first-ever 1RM is unloggable. The full-catalog endpoint is coach-gated and must STAY coach-gated (`apps/platform/src/app/api/platform/exercises/route.ts:16` `withCoachAuth`; `packages/api-server/src/endpoints/lms/exercise/platform.ts:12` `requireCoachLikeRole`; pinned by `platform.test.ts:53-62`).
+Symptom (prod, UAT): athlete opens Records → UPDATE 1RM → types `squat` → "No options"; a fresh athlete has a permanently empty picker.
 
-Build: a sibling `listForAthlete` on the exercise endpoint (no coach guard; `nature: CONCRETE` only; select `{id, canonicalName}`; ordered by `canonicalName`) + a new route `apps/platform/src/app/api/platform/athlete/movements` (mirror `athlete/records/route.ts` — `withAthleteAuth` + rate limit) + an additive contract response schema matching the existing `OneRmMovementOption` shape (`{exerciseId, exerciseName}`) + query key & hook (`staleTime: Infinity`, mirror `use-exercises.ts`) + feed the modal with the union catalog ∪ own-record movements (dedupe by `exerciseId`). PLACEHOLDER/REST natures must NOT appear.
+Tech-lead recon evidence (a head start — verify, then use): the autocomplete is fed from the athlete's own 1RM records (`apps/platform/src/modules/athlete-records/components/records-content.tsx:186-194` maps `data.oneRM`), a deliberate swap in commit `bb6ed890` because the full-catalog endpoint is coach-gated: `apps/platform/src/app/api/platform/exercises/route.ts:16` (`withCoachAuth`) + `packages/api-server/src/endpoints/lms/exercise/platform.ts:12` (`requireCoachLikeRole`), pinned by `platform.test.ts:53-62`.
 
-Tests: the endpoint resolves for an athlete and excludes non-CONCRETE; `records-content` offers a catalog-only movement the athlete has no record for.
+Ratified design (D-6 = a): athletes get a READ-ONLY movement catalog — an athlete-authorized read (CONCRETE-nature movements only; PLACEHOLDER/REST must not appear), offered in the picker as the union with the athlete's own record movements. The coach-only endpoint and its 403 test stay exactly as they are. Useful mirrors: `athlete/records/route.ts` (athlete route shape), `use-exercises.ts` (catalog hook shape), the existing `OneRmMovementOption` `{exerciseId, exerciseName}` option shape.
 
-### 2 · PU-02 — RX/SC spread lines must wrap on phones
+Desired behavior: any athlete (including one with zero records) can find any concrete movement and log a first-ever 1RM from Records.
 
-Unresolved byProfile lines render the full spread ("RX Male:24 Female:16 / SC Male:16 Female:12") as an unbreakable run clipped by the card: `whiteSpace: "nowrap"` (`apps/platform/src/modules/athlete-session/components/schema-row.tsx:154-166`), `flexShrink: 0` on group-member lines (`.../row-group.tsx:94-103`), clipping via the card's `overflow: hidden`. Fix minimally: allow wrapping (`overflowWrap: "anywhere"`, drop the nowrap; `minWidth: 0` instead of the flexShrink pin). Verify no mid-token clipping anywhere in the day view at 320–430px. Do NOT redesign the line into chips/grouped rows — that belongs to the session-screen-v2 initiative.
+## Finding 2 (PU-02) — RX/SC spread lines clip mid-token on phones
 
-### 3 · PU-03 — make the active level visible + re-switchable in the workout
+Symptom (prod screenshot): "18 reps RX Male:24 Female:16 / SC Male:16 Female:…" — cut mid-token; the athlete cannot see the Scaled-Female value.
 
-The RX/SC switch itself works (the Profile page picks card correctly highlights the active variant). The WORKOUT screen is the gap: a resolved byProfile line renders a bare kg number — the resolved arm carries only `{kg, perHand}` (`packages/contracts/src/entities/lms/session-detail/session-detail.schema.ts:20-21`) — the prompt disappears once resolved (`apps/platform/src/modules/athlete-session/utils/athlete-session-presentation.ts:188-224`), and rows inside a `RowGroup` never render prompts at all (`.../components/schema-card.tsx:123` passes no `editor`; `row-group.tsx:31-37` discards them).
+Evidence: the spread is a single unbreakable run — `whiteSpace: "nowrap"` (`apps/platform/src/modules/athlete-session/components/schema-row.tsx:154-166`), `flexShrink: 0` on group-member lines (`.../row-group.tsx:94-103`), clipped by the card's `overflow: hidden` (`schema-card.tsx:49-55`).
 
-Build, additive-only:
+Desired behavior: spread lines wrap on narrow screens (320–430px) — no mid-token clipping anywhere in the day view. Boundary: do NOT redesign the line into chips/grouped renders — that belongs to the session-screen-v2 initiative.
 
-- **(a)** resolved byProfile lines carry and display the resolved coordinates — e.g. "24 kg · RX" (the server knows the coords at `packages/api-server/src/endpoints/lms/athlete-records/resolve-load.ts:86-91`; add an additive field on the resolved arm and render it; include the gender coord where it disambiguates — copy judgment is yours, keep it short).
-- **(b)** resolved byProfile lines with a pickable (non-gender-bound) axis keep a prompt labeled with the current value (e.g. "RX ▾") that re-opens `InlineProfilePicker`, so the athlete can re-switch in place; re-picking re-resolves the kg + label.
-- **(c)** `RowGroup` receives the `editor` wiring and renders per-member prompts (mirror `schema-row.tsx:143-169`).
+## Finding 3 (PU-03) — the active level is invisible in the workout and unswitchable in place
 
-Tests at the presentation level: resolved line exposes the coords label; resolved byProfile returns a re-open prompt; group members expose prompts.
+Symptom (UAT, owner-refined): the RX/SC switch works on the Profile page (active pick highlighted there), but the WORKOUT screen never confirms it — a resolved byProfile row shows a bare kg number, so after a switch the number changes silently; there is no in-session control to re-switch; rows inside a group never had a picker at all.
 
-### 4 · PU-04 — 1RM correction path (D-5: append, never history-edit)
+Evidence: the resolved arm carries only `{kg, perHand}` (`packages/contracts/src/entities/lms/session-detail/session-detail.schema.ts:20-21`); the prompt exists only for unresolved states (`.../utils/athlete-session-presentation.ts:188-224`); `RowGroup` gets no `editor` (`.../components/schema-card.tsx:123`; `row-group.tsx:31-37` discards prompts); the server knows the resolved coords at `packages/api-server/src/endpoints/lms/athlete-records/resolve-load.ts:86-91`.
 
-The in-session 1RM prompt on `% of 1RM` rows is create-only and self-destructs on resolve (`use-session-logging.ts:147-172` → `packages/api-server/src/endpoints/lms/one-rm-record/admin.ts:8-24`; prompt gone via `schema-row.tsx:167`) — a typo is uncorrectable from the day view.
+Desired behavior (additive-only contract changes): a resolved byProfile row NAMES its resolved coordinates next to the value (e.g. "24 kg · RX"; include the gender coord where it disambiguates — copy judgment yours, keep it short); a resolved row with a pickable (non-gender-bound) axis stays tappable and re-opens the picker, re-picking re-resolves value + label; rows inside groups get the same affordances as standalone rows.
 
-Build, additive-only: thread the exercise identity to RESOLVED percentage rows (mirror how the unresolved missing-1RM state carries it — an additive contract field), and have `buildLoadLine` return an "Edit 1RM"-style prompt for resolved percentage loads that re-opens `InlineOneRmEditor`; submitting APPENDS a new `OneRMRecord` — latest-wins resolution is already the law, so NO server change, NO PATCH/DELETE endpoints. Also: reset the idempotency submit token in `onSettled` (not only on success) — `packages/query/src/hooks/use-submit-token.ts:20-44`, consumers `use-one-rm-records.ts` / `use-benchmark-results.ts` — this kills the 409 wedge after a persisted-but-unseen 2xx.
+## Finding 4 (PU-04) — an in-session 1RM is write-once; a typo is uncorrectable
 
-Tests: a resolved `% of 1RM` row exposes the edit prompt; a correction appends and the resolved kg updates; the token resets on error.
+Symptom (UAT, FB message): "where you must enter a weight, you can write it only once — no way to replace a mistake."
 
-## Constraints
+Evidence: the `% of 1RM` prompt is a create-only POST (`use-session-logging.ts:147-172` → `packages/api-server/src/endpoints/lms/one-rm-record/admin.ts:8-24`) and the entry point self-destructs once the load resolves (`schema-row.tsx:167`); the rowView contract carries no exercise identity on resolved rows (mirror how the unresolved missing-1RM state carries it). Secondary wedge: the idempotency submit token resets only on success (`packages/query/src/hooks/use-submit-token.ts:20-44`; consumers `use-one-rm-records.ts` / `use-benchmark-results.ts`) — a persisted-but-unseen 2xx makes every corrected retry 409 until remount.
 
-- Contract changes ADDITIVE ONLY (athlete-movements response; resolved-arm coords; exercise identity on resolved rows). **ZERO diff on `packages/contracts/src/entities/lms/_shared/load.ts` and `reps.ts`** (sacred VOs).
+Ratified design (D-5): correction is an APPEND — a resolved percentage row exposes an edit affordance that re-opens the 1RM editor and appends a new record (latest-wins resolution is already the law); NO PATCH/DELETE endpoints, no history editing. The token wedge should also die (reset on settle, not only success).
+
+Desired behavior: a mistyped in-session 1RM is correctable from the day view; Records history keeps both entries; the resolved kg updates after correction.
+
+## Scope boundaries (ratified — not negotiable within this batch)
+
+- Contract changes ADDITIVE ONLY (athlete movement catalog response; resolved-arm coords; exercise identity on resolved rows). **ZERO diff on `packages/contracts/src/entities/lms/_shared/load.ts` and `reps.ts`** (sacred VOs).
 - **ZERO diff under `packages/api-server/src/endpoints/coaching/mobile-publish/`** — published legacy text must stay byte-identical (D-17 parity).
 - The coach-only `/api/platform/exercises` endpoint and its 403 test stay untouched.
 - House UI rules: MUI, palette tokens only (no hex), one component per file, no code comments.
 - Tests: platform runs via the root vitest runner with a project filter (apps/platform has no own `test` script); api-server touched files in isolation; the full serial api-server suite only at your discretion (standing approval; ~10 min serial, live Neon dev). Known pre-existing flake: `notes-list-editor.test.tsx` load-timeout under the full platform suite.
-- ONE branch `fix/uat-athlete-pack`, PR against `main` (`main` is PR-only). Conventional commits, lowercase subjects, no AI trailers/signatures anywhere.
+- ONE branch for the whole batch; suggested slug: `uat-athlete-pack`. PR against `main` (`main` is PR-only).
 
 ## Acceptance (owner verifies on prod after merge)
 

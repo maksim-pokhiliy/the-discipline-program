@@ -38,7 +38,7 @@ The team is ALWAYS the same trio: **tech lead** (Claude, the planning session) �
 
 1. **Pick.** Owner + tech lead settle WHAT is next (the tech lead orders the queue).
 2. **Corpus.** The tech lead writes the corpus — HOW the item will be executed through an executor: approach, scope cut, constraints, risks — into the initiative docs. The owner reads it; discussion if needed. No prompt before the corpus is read.
-3. **Prompt.** The tech lead writes the executor prompt (a self-contained `/feature`/`/fix` brief, checked into the initiative dir). The owner transports it to the executor session.
+3. **Prompt.** The tech lead writes the executor prompt (a self-contained `/feature`/`/fix` brief, checked into the initiative dir). The owner transports it to the executor session. **The prompt is INPUT to the executor's skill — evidence, ratified constraints, scope boundaries, acceptance. It must NEVER override, forbid, or replace the skill's own pipeline stages, gates, task tracking, or artifacts: every skill runs by its original instructions.** Prior recon is framed as "verify, then use — a head start for the investigation", never as "do not re-derive". (Ratified 2026-07-27 after an executor, given a plan-shaped prompt, skipped the pipeline and worked bare-handed.)
 4. **Gate A.** The executor's Gate A comes back to the tech lead via the owner. Verdict ok / not-ok; a not-ok produces a feedback prompt the owner carries back to the SAME executor. Loop until ok.
 5. **PR.** The executor drives to a pull request. The owner brings the PR to the tech lead; the tech lead reviews the **git diff** (never the self-report).
 6. **Browser pass.** If anything is user-visible, the tech lead writes a SHORT browser-test scenario (a flat checklist); the owner runs it.
