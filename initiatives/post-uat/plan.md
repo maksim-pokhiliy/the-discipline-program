@@ -6,8 +6,8 @@ Lifecycle: `TRIAGED → REPRO'D → SPEC'D → IN-EXEC → PR → MERGED → VER
 
 | ID    | Type       | Area             | Item                                                                        | Size | Wave | Status                                             |
 | ----- | ---------- | ---------------- | --------------------------------------------------------------------------- | ---- | ---- | -------------------------------------------------- |
-| PU-01 | bug        | platform/records | 1RM picker dead end → athlete read-only movement catalog (D-6 = a)          | S/M  | W1   | SPEC'D (`prompt-w1-athlete-pack.md`)               |
-| PU-02 | bug        | platform/session | RX/SC spread line clips mid-token on phones                                 | S    | W1   | SPEC'D (`prompt-w1-athlete-pack.md`)               |
+| PU-01 | bug        | platform/records | 1RM picker dead end → athlete read-only movement catalog (D-6 = a, D-6.1)   | S/M  | W1   | **PR** (`fix/uat-athlete-pack`)                    |
+| PU-02 | bug        | platform/session | RX/SC spread line clips mid-token on phones                                 | S    | W1   | **PR** (`fix/uat-athlete-pack`)                    |
 | PU-03 | ux         | platform/session | Level-switch feedback (all changes DO apply — perception gap only)          | S    | Wd   | DESIGN ROUND first (owner, corpus read 27.07)      |
 | PU-04 | bug        | platform/session | In-session 1RM write-once → append-correction path (D-5)                    | S/M  | Wd   | DESIGN ROUND first (owner, corpus read 27.07)      |
 | PU-05 | bug        | domain           | "Ski @ 14 kg" — kg grid abused for cal targets                              | —    | W6   | **FOLDED into PU-13** (D-4: no interim mitigation) |
@@ -27,7 +27,7 @@ Lifecycle: `TRIAGED → REPRO'D → SPEC'D → IN-EXEC → PR → MERGED → VER
 ## Waves
 
 - **Fix-A mini-fix (now, ahead of everything):** PU-06, branch `fix/admin-soft-delete-reads`, prompt `prompt-fix-a-admin.md`. Re-scoped at Gate A after the investigation **refuted** the soft-delete list-brick (filtering is central in `db/client.ts`): ships as **regression guards only** (no production diff) plus the honest-UI hide for HEAD_COACH — which hides exactly what 403s (Delete, role change, edit Save) and leaves Create User + Resend invite working. Includes standing up vitest infrastructure for `apps/admin`, previously untested. **The "no user deletion in prod admin" freeze is LIFTED** — see `triage.md` § PU-06 "Investigation outcome" and the D-2 addendum.
-- **W1 — athlete pack, CUT TO TWO at the owner's corpus read (27.07):** PU-01 + PU-02 only. Prompt: `prompt-w1-athlete-pack.md` (re-cut). One additive contract change (athlete movements response). Exit: owner + Tetiana re-verify the reported flows on prod.
+- **W1 — athlete pack, CUT TO TWO at the owner's corpus read (27.07):** PU-01 + PU-02 only. Prompt: `prompt-w1-athlete-pack.md` (re-cut). One additive contract change (athlete movements response). **IN PR on `fix/uat-athlete-pack` (28.07)** — three commits (catalog · wrapping · review round). D-6.1 addendum ratified at the plan gate. Exit: owner + Tetiana re-verify the reported flows on prod.
 - **Wd — design round (Claude Design) for PU-03 + PU-04:** both work correctly today — the gaps are perceptual/interaction design (level-switch feedback; the shape of the 1RM correction affordance). Tech lead prepares the design brief; execution prompts come only AFTER the design round lands. Scheduling: tech-lead call, can overlap W1 execution.
 - **W2 — publish status** (`/feature small`, inside `mobile-publish` as MP-22): PU-08. Prompt next after W1 lands (or interleaved).
 - **W3 — admin rest** (`/fix`): PU-07 email edit under ADMIN (D-2).
