@@ -77,6 +77,7 @@ export const RowGroup = ({ label, members }: RowGroupProps): ReactElement => (
               alignItems="baseline"
               justifyContent="flex-end"
               spacing={1.5}
+              useFlexGap
               sx={{ flexWrap: "wrap" }}
             >
               <Stack

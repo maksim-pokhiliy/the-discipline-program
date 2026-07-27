@@ -94,7 +94,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
       <Stack
         direction="row"
         alignItems="baseline"
-        justifyContent="space-between"
+        justifyContent="flex-end"
         spacing={1.75}
         sx={{ flexWrap: "wrap", minWidth: 0 }}
       >

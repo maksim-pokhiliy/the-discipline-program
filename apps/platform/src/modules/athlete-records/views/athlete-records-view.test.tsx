@@ -254,4 +254,23 @@ describe("AthleteRecordsView movement catalog states", () => {
       screen.queryByText("Movement list unavailable. Reload the page to try again."),
     ).not.toBeInTheDocument();
   });
+
+  it("keeps offering a loaded catalog when a background refetch errors", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse({ oneRM: [], benchmarks: [] }),
+      isLoading: false,
+      error: null,
+    });
+    useAthleteMovementsMock.mockReturnValue({
+      data: MOVEMENT_CATALOG,
+      isLoading: false,
+      error: new Error("boom"),
+    });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(optionLabels()).toEqual(["Overhead Squat"]);
+  });
 });

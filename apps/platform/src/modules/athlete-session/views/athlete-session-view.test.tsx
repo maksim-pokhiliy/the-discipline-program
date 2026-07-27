@@ -556,6 +556,19 @@ describe("AthleteSessionView", () => {
     expect(rowLoad.parentElement).toHaveStyle({ flex: "0 1 auto", minWidth: "0px" });
   });
 
+  it("lands a wrapped row metric on the right, the same edge as the grouped one", () => {
+    setView(spreadResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const rowMetric = screen.getByText("RX M:60 F:42 / Scaled M:45 F:30").parentElement;
+
+    expect(rowMetric?.parentElement).toHaveStyle({
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+    });
+  });
+
   it("shows the Mark Completed action and no Done pill when the session is not done", () => {
     setView(buildResponse({ done: false }));
 

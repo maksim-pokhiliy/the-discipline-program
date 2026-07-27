@@ -54,7 +54,7 @@ describe("buildMovementOptions", () => {
     ]);
   });
 
-  it("keeps the athlete's own label when the catalog spells the same movement differently", () => {
+  it("defensively prefers the athlete's own label, though the live join makes the two agree today", () => {
     const options = buildMovementOptions(
       [record("ex1", "Back Squat")],
       catalog(["ex1", "Back Squat (Barbell)"]),

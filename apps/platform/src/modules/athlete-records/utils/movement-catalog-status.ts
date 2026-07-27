@@ -1,3 +1,5 @@
+import { type GetAthleteMovementsResponse } from "@repo/contracts/lms/exercise";
+
 import {
   CATALOG_STATUS_ERROR,
   CATALOG_STATUS_LOADING,
@@ -9,11 +11,18 @@ export type MovementCatalogStatus =
   | typeof CATALOG_STATUS_ERROR
   | typeof CATALOG_STATUS_READY;
 
-export const toMovementCatalogStatus = (
-  isLoading: boolean,
-  error: Error | null,
-): MovementCatalogStatus => {
-  if (error !== null) {
+export type MovementCatalogQueryState = {
+  data: GetAthleteMovementsResponse | undefined;
+  isLoading: boolean;
+  error: Error | null;
+};
+
+export const toMovementCatalogStatus = ({
+  data,
+  isLoading,
+  error,
+}: MovementCatalogQueryState): MovementCatalogStatus => {
+  if (error !== null && data === undefined) {
     return CATALOG_STATUS_ERROR;
   }
 

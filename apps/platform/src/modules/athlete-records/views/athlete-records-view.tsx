@@ -16,7 +16,7 @@ export type AthleteRecordsViewProps = Record<string, never>;
 export const AthleteRecordsView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteRecords();
   const movementCatalog = useAthleteMovements();
-  const catalogStatus = toMovementCatalogStatus(movementCatalog.isLoading, movementCatalog.error);
+  const catalogStatus = toMovementCatalogStatus(movementCatalog);
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage={LOADING_LABEL}>
