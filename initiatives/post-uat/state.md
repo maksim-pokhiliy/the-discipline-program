@@ -4,20 +4,20 @@
 
 ## Board
 
-| Wave  | Scope                                            | Status                                                  |
-| ----- | ------------------------------------------------ | ------------------------------------------------------- |
-| Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed      |
-| W1    | Athlete pack (PU-01/02/03/04)                    | ⏳ NEXT — carry `prompt-w1-athlete-pack.md` to executor |
-| W2    | Publish status (PU-08 → MP-22, `/feature small`) | approved; prompt after W1                               |
-| W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                          |
-| W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)                  |
-| W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off                   |
-| W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate                    |
-| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7                 |
+| Wave  | Scope                                            | Status                                             |
+| ----- | ------------------------------------------------ | -------------------------------------------------- |
+| Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed |
+| W1    | Athlete pack (PU-01/02/03/04)                    | ⏳ NEXT — corpus at owner read (`corpus-w1.md`)    |
+| W2    | Publish status (PU-08 → MP-22, `/feature small`) | approved; prompt after W1                          |
+| W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                     |
+| W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)             |
+| W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off              |
+| W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate               |
+| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7            |
 
 ## Next action
 
-**▶ Owner: carry `initiatives/post-uat/prompt-w1-athlete-pack.md` to a fresh executor session** (pick `post-uat` at the hook question). Fix-A COMPLETED the full build loop 2026-07-27 — Gate A (re-scoped: Finding 1 refuted), fix round after the tech-lead diff review (6 items incl. D-2.2 self-affordances + readOnly view mode), owner browser pass, two-ok squash merge as **PR #338** (`11842574`). Owner re-check on prod after the Vercel deploy closes PU-06 as VERIFIED. Corpus stage for Fix-A/W1 is already discharged — `triage.md` §§ PU-06/PU-01..04 + the two owner feedback rounds ARE the read-and-discussed corpus; new items from W2 onward run the full corpus stage explicitly. Social links arrived (27.07, brand YT/TG/IG/Strava — `triage.md` § PU-10) — W4 is fully unblocked, nothing external pending anywhere in the queue.
+**▶ Owner: read `initiatives/post-uat/corpus-w1.md`** (the build-loop corpus stage for W1 — approach, per-finding confidence map post-Fix-A-lesson, contract blast radius, risks, deliberate non-scope). Discuss what needs discussing; only then carry `prompt-w1-athlete-pack.md` to a fresh executor session (pick `post-uat` at the hook question); the prompt gets re-cut first if discussion changes anything. Context: Fix-A COMPLETED the full build loop 2026-07-27 — Gate A (re-scoped: Finding 1 refuted), fix round after the tech-lead diff review (incl. D-2.2 + readOnly view mode), owner browser pass, two-ok squash merge as **PR #338** (`11842574`); owner re-check on prod after the Vercel deploy closes PU-06 as VERIFIED. The earlier claim that W1's corpus was "already discharged via triage" was owner-rejected — every wave gets an explicit owner-read corpus from now on. Social links arrived (27.07, brand YT/TG/IG/Strava — `triage.md` § PU-10) — W4 is fully unblocked, nothing external pending anywhere in the queue.
 
 ## Open decisions awaiting ratification
 
