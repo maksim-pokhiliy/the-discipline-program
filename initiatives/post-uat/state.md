@@ -7,7 +7,8 @@
 | Wave  | Scope                                            | Status                                             |
 | ----- | ------------------------------------------------ | -------------------------------------------------- |
 | Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed |
-| W1    | Athlete pack (PU-01/02/03/04)                    | ⏳ NEXT — corpus at owner read (`corpus-w1.md`)    |
+| W1    | Athlete pack — CUT to PU-01/02 (corpus read)     | ⏳ NEXT — carry the re-cut prompt to an executor   |
+| Wd    | Design round: PU-03 + PU-04 (Claude Design)      | queued — tech lead prepares the design brief       |
 | W2    | Publish status (PU-08 → MP-22, `/feature small`) | approved; prompt after W1                          |
 | W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                     |
 | W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)             |
@@ -17,7 +18,7 @@
 
 ## Next action
 
-**▶ Owner: read `initiatives/post-uat/corpus-w1.md`** (the build-loop corpus stage for W1 — approach, per-finding confidence map post-Fix-A-lesson, contract blast radius, risks, deliberate non-scope). Discuss what needs discussing; only then carry `prompt-w1-athlete-pack.md` to a fresh executor session (pick `post-uat` at the hook question); the prompt gets re-cut first if discussion changes anything. Context: Fix-A COMPLETED the full build loop 2026-07-27 — Gate A (re-scoped: Finding 1 refuted), fix round after the tech-lead diff review (incl. D-2.2 + readOnly view mode), owner browser pass, two-ok squash merge as **PR #338** (`11842574`); owner re-check on prod after the Vercel deploy closes PU-06 as VERIFIED. The earlier claim that W1's corpus was "already discharged via triage" was owner-rejected — every wave gets an explicit owner-read corpus from now on. Social links arrived (27.07, brand YT/TG/IG/Strava — `triage.md` § PU-10) — W4 is fully unblocked, nothing external pending anywhere in the queue.
+**▶ Owner: carry the RE-CUT `prompt-w1-athlete-pack.md` to a fresh executor session** (pick `post-uat` at the hook question). The corpus read (27.07) CUT W1 from four findings to two: **PU-01 (athlete movement catalog) + PU-02 (spread-line wrapping)** ship now; **PU-03 + PU-04 go to a Claude-Design round first (Wd)** — both work correctly at runtime (on the level switch EVERYTHING updates, including the kg — the athlete just could not perceive that it applied), so the remaining work is interaction design, not a bug fix. The prompt and corpus are re-cut accordingly (D-7); the dropped contract deltas (resolved coords, exercise identity) belong to Wd's outcome. Context: Fix-A completed the full loop as **PR #338** (`11842574`); owner prod re-check closes PU-06 as VERIFIED. Social links complete (YT/TG/IG/Strava) — W4 fully unblocked.
 
 ## Open decisions awaiting ratification
 
