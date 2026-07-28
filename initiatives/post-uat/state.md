@@ -40,7 +40,7 @@
 
 ## Open decisions awaiting ratification
 
-**(none)** — D-1..D-7 all resolved (D-6.1 addendum ratified 28.07 at the W1 plan gate). Next decision points arise at the W5/W6 design passes and the W7 charter.
+**(none)** — D-1..D-8 all resolved (D-6.1 ratified 28.07 at the W1 plan gate; D-8 — athlete history-hygiene rights on own 1RM records, superseding the D-5 "not history editing" clause — ratified 28.07 at the Wd corpus read). Next decision points arise at the Wd outcome, the W5/W6 design passes and the W7 charter.
 
 ## Gotchas a resuming session must know
 
