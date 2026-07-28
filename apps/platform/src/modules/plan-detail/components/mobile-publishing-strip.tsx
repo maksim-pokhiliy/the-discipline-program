@@ -31,18 +31,30 @@ import { PublishWeekModal } from "./publish-week-modal";
 type MobilePublishingStripProps = {
   planId: string;
   monday: Date;
+  hasWeekContent: boolean;
 };
 
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
 const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
+const LINKS_ERROR_LABEL = "Couldn't load the publishing status";
+const LINKS_ERROR_TOOLTIP = "Can't publish until the publishing status loads";
 const NOT_LINKED_LABEL = "Not linked";
 const PUBLISHES_TO_PREFIX = "Publishes to: ";
 const LEVELS_CLAUSE_LABEL = "Levels: ";
 const ATHLETES_CLAUSE_LABEL = "Athletes: ";
 const CLAUSE_SEPARATOR = " · ";
 const NO_PUBLISH_STATUS: StripPublishStatus = { kind: "none" };
+const CHECKING_PUBLISH_STATUS: StripPublishStatus = { kind: "checking" };
 
 type ChannelSummary = { clause: string; allResolved: boolean };
+
+const resolvePublishTooltip = (hasLinksError: boolean, canPublish: boolean): string => {
+  if (hasLinksError) {
+    return LINKS_ERROR_TOOLTIP;
+  }
+
+  return canPublish ? PUBLISH_WEEK_SCOPE_TOOLTIP : PUBLISH_DISABLED_TOOLTIP;
+};
 
 const summarizeChannel = (
   names: (string | undefined)[],
@@ -92,7 +104,11 @@ const describeLinks = (
   return summary.allResolved ? `${PUBLISHES_TO_PREFIX}${summary.clause}` : summary.clause;
 };
 
-export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ planId, monday }) => {
+export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
+  planId,
+  monday,
+  hasWeekContent,
+}) => {
   const connectionsQuery = useMobileConnections();
   const isConnected = (connectionsQuery.data ?? []).length > 0;
 
@@ -125,72 +141,82 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
     [athletesQuery.data],
   );
 
-  const publishStatus = useMemo(
-    () =>
-      linksQuery.isPlaceholderData
-        ? NO_PUBLISH_STATUS
-        : summarizeStripPublishStatus(linksQuery.data ?? []),
-    [linksQuery.data, linksQuery.isPlaceholderData],
-  );
+  const hasLinksError = linksQuery.isError;
 
-  if (connectionsQuery.isPending || linksQuery.isPending) {
-    return null;
-  }
+  const publishStatus = useMemo(() => {
+    if (linksQuery.isError) {
+      return NO_PUBLISH_STATUS;
+    }
 
-  const statusLabel = describeLinks(generalLinks, individualLinks, levelNameById, athleteNameById);
-  const hasLinks = generalLinks.length + individualLinks.length > 0;
+    if (linksQuery.isPlaceholderData) {
+      return CHECKING_PUBLISH_STATUS;
+    }
+
+    return summarizeStripPublishStatus(linksQuery.data ?? [], hasWeekContent);
+  }, [hasWeekContent, linksQuery.data, linksQuery.isError, linksQuery.isPlaceholderData]);
+
+  const statusLabel = hasLinksError
+    ? LINKS_ERROR_LABEL
+    : describeLinks(generalLinks, individualLinks, levelNameById, athleteNameById);
+  const canPublish = !hasLinksError && generalLinks.length + individualLinks.length > 0;
+  const publishTooltip = resolvePublishTooltip(hasLinksError, canPublish);
+  const isStripHidden = connectionsQuery.isPending || linksQuery.isPending;
 
   return (
     <>
-      <Card variant="outlined" sx={{ p: 1.25, px: 1.75 }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          spacing={2}
-          flexWrap="wrap"
-        >
+      {!isStripHidden && (
+        <Card variant="outlined" sx={{ p: 1.25, px: 1.75 }}>
           <Stack
             direction="row"
             alignItems="center"
-            spacing={1.5}
+            justifyContent="space-between"
+            spacing={2}
             flexWrap="wrap"
-            sx={{ minWidth: 0 }}
+            useFlexGap
           >
-            <Typography variant="overline" color="text.secondary">
-              Mobile publishing
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              {statusLabel}
-            </Typography>
-
-            <MobileStripPublishStatus status={publishStatus} />
-          </Stack>
-
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Button
-              variant="text"
-              startIcon={<SmartphoneIcon />}
-              onClick={() => setIsManageOpen(true)}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1.5}
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ minWidth: 0 }}
             >
-              Manage
-            </Button>
+              <Typography variant="overline" color="text.secondary">
+                Mobile publishing
+              </Typography>
 
-            <Tooltip title={hasLinks ? PUBLISH_WEEK_SCOPE_TOOLTIP : PUBLISH_DISABLED_TOOLTIP} arrow>
-              <Box component="span">
-                <Button
-                  variant="contained"
-                  disabled={!hasLinks}
-                  onClick={() => setIsPublishOpen(true)}
-                >
-                  Publish this week
-                </Button>
-              </Box>
-            </Tooltip>
+              <Typography variant="body2" color="text.secondary">
+                {statusLabel}
+              </Typography>
+
+              <MobileStripPublishStatus status={publishStatus} />
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button
+                variant="text"
+                startIcon={<SmartphoneIcon />}
+                onClick={() => setIsManageOpen(true)}
+              >
+                Manage
+              </Button>
+
+              <Tooltip title={publishTooltip} arrow>
+                <Box component="span">
+                  <Button
+                    variant="contained"
+                    disabled={!canPublish}
+                    onClick={() => setIsPublishOpen(true)}
+                  >
+                    Publish this week
+                  </Button>
+                </Box>
+              </Tooltip>
+            </Stack>
           </Stack>
-        </Stack>
-      </Card>
+        </Card>
+      )}
 
       <ManageMobileLinksModal
         open={isManageOpen}

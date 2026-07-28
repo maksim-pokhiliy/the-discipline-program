@@ -23,7 +23,14 @@ export const GeneralLinkRow: React.FC<GeneralLinkRowProps> = ({ link, label, onU
     spacing={1.5}
     sx={{ px: 1.5, py: 1 }}
   >
-    <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ minWidth: 0 }}>
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={1}
+      flexWrap="wrap"
+      useFlexGap
+      sx={{ minWidth: 0 }}
+    >
       <Typography variant="body2">{label}</Typography>
 
       <MobileLinkPublishStatus

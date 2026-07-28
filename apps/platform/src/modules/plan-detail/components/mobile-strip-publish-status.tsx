@@ -7,7 +7,8 @@ import { IndicatorChip } from "@repo/ui";
 import { formatPublishDate } from "../lib/format-publish-date";
 import { type StripPublishStatus } from "../lib/summarize-strip-publish-status";
 
-const WEEK_SENT_PREFIX = "Last sent this week ";
+const WEEK_SENT_PREFIX = "This week: sent ";
+const CHECKING_LABEL = "Checking this week…";
 
 type MobileStripPublishStatusProps = {
   status: StripPublishStatus;
@@ -16,6 +17,14 @@ type MobileStripPublishStatusProps = {
 export const MobileStripPublishStatus: React.FC<MobileStripPublishStatusProps> = ({ status }) => {
   if (status.kind === "none") {
     return null;
+  }
+
+  if (status.kind === "checking") {
+    return (
+      <Typography variant="caption" color="text.secondary">
+        {CHECKING_LABEL}
+      </Typography>
+    );
   }
 
   const weekCaption =

@@ -7,6 +7,7 @@ const WEEK_PENDING_SOME_SUFFIX = " not published this week";
 
 export type StripPublishStatus =
   | { kind: "none" }
+  | { kind: "checking" }
   | {
       kind: "never-published";
       label: string;
@@ -45,13 +46,16 @@ const latestWeekPublishedAt = (links: MobileLink[]): Date | null => {
   return latest;
 };
 
-export const summarizeStripPublishStatus = (links: MobileLink[]): StripPublishStatus => {
+export const summarizeStripPublishStatus = (
+  links: MobileLink[],
+  hasWeekContent: boolean,
+): StripPublishStatus => {
   if (links.length === 0) {
     return { kind: "none" };
   }
 
   const neverPublishedCount = links.filter(isNeverPublished).length;
-  const weekPendingCount = links.filter(isWeekPending).length;
+  const weekPendingCount = hasWeekContent ? links.filter(isWeekPending).length : 0;
   const weekPublishedAt = latestWeekPublishedAt(links);
 
   if (neverPublishedCount > 0) {

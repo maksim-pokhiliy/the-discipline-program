@@ -122,12 +122,6 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
       isRunningRef.current = true;
       const myRunId = runIdRef.current;
-
-      if (!overwrite) {
-        runLinksRef.current = links;
-        runStartDateRef.current = formatDateParam(monday);
-      }
-
       const runLinks = runLinksRef.current;
       const startDate = runStartDateRef.current;
 
@@ -165,15 +159,21 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
         isRunningRef.current = false;
       }
     },
-    [links, monday, planId, publishMobile, queryClient, resolveHeading],
+    [planId, publishMobile, queryClient, resolveHeading],
   );
 
   const latestRunPublish = useRef(runPublish);
+  const latestRunInput = useRef({ links, monday });
 
   latestRunPublish.current = runPublish;
+  latestRunInput.current = { links, monday };
 
   useEffect(() => {
     if (!open) {
+      if (isRunningRef.current) {
+        return;
+      }
+
       runIdRef.current += 1;
       hasStartedRef.current = false;
       runLinksRef.current = [];
@@ -191,6 +191,8 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
     }
 
     hasStartedRef.current = true;
+    runLinksRef.current = latestRunInput.current.links;
+    runStartDateRef.current = formatDateParam(latestRunInput.current.monday);
     void latestRunPublish.current(false);
   }, [open]);
 
@@ -233,7 +235,7 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
       </BaseModal>
 
       <ConfirmationModal
-        open={isConfirmOpen}
+        open={open && isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         type="warning"
         title="Overwrite existing days?"

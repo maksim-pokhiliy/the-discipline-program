@@ -325,6 +325,20 @@ describe("useCreateMobileLink", () => {
     expect(notifyErrorMock).toHaveBeenCalledWith(failure, "Failed to link training level");
   });
 
+  it("refreshes the links list even when the create request fails (F6)", async () => {
+    createLinkMock.mockRejectedValueOnce(new Error("aggregate read failed"));
+
+    const { view, invalidateSpy } = renderRunner(() => useCreateMobileLink(PLAN_ID));
+
+    await act(async () => {
+      view.result.current.mutate(payload);
+    });
+
+    await waitFor(() => expect(view.result.current.isError).toBe(true));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
+  });
+
   it("notifies with the athlete fallback message when an individual create fails", async () => {
     const failure = new Error("conflict");
     const individualPayload: CreateMobileLinkRequest = {
@@ -378,6 +392,20 @@ describe("useDeleteMobileLink", () => {
     await waitFor(() => expect(view.result.current.isError).toBe(true));
 
     expect(notifyErrorMock).toHaveBeenCalledWith(failure, "Failed to unlink training level");
+  });
+
+  it("refreshes the links list even when the delete request fails (F6)", async () => {
+    deleteLinkMock.mockRejectedValueOnce(new Error("gone"));
+
+    const { view, invalidateSpy } = renderRunner(() => useDeleteMobileLink(PLAN_ID));
+
+    await act(async () => {
+      view.result.current.mutate(LINK_ID);
+    });
+
+    await waitFor(() => expect(view.result.current.isError).toBe(true));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
   });
 });
 

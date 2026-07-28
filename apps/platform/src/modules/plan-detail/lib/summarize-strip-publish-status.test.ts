@@ -4,7 +4,10 @@ import type { MobileLink, MobileLinkPublishAggregate } from "@repo/contracts/coa
 
 import { makeMobileLink } from "@app/lib/mobile.fixtures";
 
-import { summarizeStripPublishStatus } from "./summarize-strip-publish-status";
+import {
+  type StripPublishStatus,
+  summarizeStripPublishStatus,
+} from "./summarize-strip-publish-status";
 
 const LINK_A = "cklinkaaaaaaaaaaaaaaaaaaaa";
 const LINK_B = "cklinkbbbbbbbbbbbbbbbbbbbb";
@@ -34,13 +37,19 @@ const makeLink = (
     ...(weekPublish !== undefined && { weekPublish }),
   });
 
+const WEEK_CARRIES_CONTENT = true;
+const WEEK_IS_EMPTY = false;
+
+const summarizeWeekWithContent = (links: MobileLink[]): StripPublishStatus =>
+  summarizeStripPublishStatus(links, WEEK_CARRIES_CONTENT);
+
 describe("summarizeStripPublishStatus", () => {
   it("returns the empty state when the plan has no links", () => {
-    expect(summarizeStripPublishStatus([])).toEqual({ kind: "none" });
+    expect(summarizeWeekWithContent([])).toEqual({ kind: "none" });
   });
 
   it("returns the empty state when every link has published and no week context was fetched", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME),
       makeLink(LINK_B, LIFETIME),
     ]);
@@ -51,7 +60,7 @@ describe("summarizeStripPublishStatus", () => {
 
 describe("summarizeStripPublishStatus never-published state", () => {
   it("labels the whole strip when no link has ever published", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, NEVER, NEVER),
     ]);
@@ -65,7 +74,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
   });
 
   it("carries the honest count when only some links have never published", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, LIFETIME, weekPublished(EARLIER)),
       makeLink(LINK_C, LIFETIME, weekPublished(LATER)),
@@ -80,7 +89,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
   });
 
   it("keeps this week's publish confirmation alongside the never-published warning", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, LIFETIME, weekPublished(LATER)),
     ]);
@@ -90,7 +99,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
   });
 
   it("wins over a week-pending link but still reports how many are missing this week (F4)", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, LIFETIME, NEVER),
     ]);
@@ -104,7 +113,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
   });
 
   it("does not let one brand-new link hide four established links missing this week (F4)", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, LIFETIME, NEVER),
       makeLink(LINK_C, LIFETIME, NEVER),
@@ -121,7 +130,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
   });
 
   it("leaves the week-pending label off when every other link already went out this week", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, LIFETIME, weekPublished(LATER)),
     ]);
@@ -132,7 +141,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
 
 describe("summarizeStripPublishStatus week-pending state", () => {
   it("labels the whole strip when every published link is missing this week", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME, NEVER),
       makeLink(LINK_B, LIFETIME, NEVER),
     ]);
@@ -145,7 +154,7 @@ describe("summarizeStripPublishStatus week-pending state", () => {
   });
 
   it("carries the honest count when only some links are missing this week", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME, NEVER),
       makeLink(LINK_B, LIFETIME, weekPublished(EARLIER)),
       makeLink(LINK_C, LIFETIME, weekPublished(LATER)),
@@ -159,7 +168,7 @@ describe("summarizeStripPublishStatus week-pending state", () => {
   });
 
   it("keeps this week's publish confirmation alongside the pending warning", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME, NEVER),
       makeLink(LINK_B, LIFETIME, weekPublished(EARLIER)),
     ]);
@@ -171,7 +180,7 @@ describe("summarizeStripPublishStatus week-pending state", () => {
 
 describe("summarizeStripPublishStatus week-published state", () => {
   it("reports the week as published when every link went out this week", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME, weekPublished(EARLIER)),
       makeLink(LINK_B, LIFETIME, weekPublished(LATER)),
     ]);
@@ -180,7 +189,7 @@ describe("summarizeStripPublishStatus week-published state", () => {
   });
 
   it("picks the newest publish across links regardless of their order", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME, weekPublished(LATEST)),
       makeLink(LINK_B, LIFETIME, weekPublished(EARLIER)),
       makeLink(LINK_C, LIFETIME, weekPublished(LATER)),
@@ -190,11 +199,61 @@ describe("summarizeStripPublishStatus week-published state", () => {
   });
 });
 
+describe("summarizeStripPublishStatus on a week that carries no content (F7)", () => {
+  it("does not nag about an empty week when every link published before", () => {
+    const links = [makeLink(LINK_A, LIFETIME, NEVER), makeLink(LINK_B, LIFETIME, NEVER)];
+
+    expect(summarizeStripPublishStatus(links, WEEK_IS_EMPTY)).toEqual({ kind: "none" });
+    expect(summarizeWeekWithContent(links)).toEqual({
+      kind: "week-pending",
+      label: "This week not published yet",
+      weekPublishedAt: null,
+    });
+  });
+
+  it("keeps the never-published warning on an empty week because it is a lifetime fact", () => {
+    const status = summarizeStripPublishStatus([makeLink(LINK_A, NEVER, NEVER)], WEEK_IS_EMPTY);
+
+    expect(status).toEqual({
+      kind: "never-published",
+      label: "Never published",
+      weekPendingLabel: null,
+      weekPublishedAt: null,
+    });
+  });
+
+  it("drops the secondary week-pending count on an empty week but keeps the warning", () => {
+    const links = [makeLink(LINK_A, NEVER, NEVER), makeLink(LINK_B, LIFETIME, NEVER)];
+
+    expect(summarizeStripPublishStatus(links, WEEK_IS_EMPTY)).toEqual({
+      kind: "never-published",
+      label: "1 never published",
+      weekPendingLabel: null,
+      weekPublishedAt: null,
+    });
+    expect(summarizeWeekWithContent(links)).toEqual({
+      kind: "never-published",
+      label: "1 never published",
+      weekPendingLabel: "1 not published this week",
+      weekPublishedAt: null,
+    });
+  });
+
+  it("still confirms what an empty week already sent", () => {
+    const status = summarizeStripPublishStatus(
+      [makeLink(LINK_A, LIFETIME, weekPublished(LATER))],
+      WEEK_IS_EMPTY,
+    );
+
+    expect(status).toEqual({ kind: "week-published", weekPublishedAt: LATER });
+  });
+});
+
 describe("summarizeStripPublishStatus against the ISO strings the wire actually delivers", () => {
   const asWireDate = (value: Date): Date => value.toISOString() as unknown as Date;
 
   it("compares wire dates by value, not by a Date method the runtime payload does not have", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, LIFETIME, weekPublished(asWireDate(EARLIER))),
       makeLink(LINK_B, LIFETIME, weekPublished(asWireDate(LATEST))),
       makeLink(LINK_C, LIFETIME, weekPublished(asWireDate(LATER))),
@@ -204,7 +263,7 @@ describe("summarizeStripPublishStatus against the ISO strings the wire actually 
   });
 
   it("still reads a wire-delivered lifetime aggregate as published", () => {
-    const status = summarizeStripPublishStatus([
+    const status = summarizeWeekWithContent([
       makeLink(LINK_A, { publishedDayCount: 8, lastPublishedAt: asWireDate(LIFETIME_AT) }, NEVER),
     ]);
 

@@ -46,6 +46,7 @@ const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training leve
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
+const LINKS_ERROR_MESSAGE = "Couldn't load what this plan is linked to. Try again.";
 const RECONNECT_TITLE = "Reconnect mobile app";
 const NO_LEVEL_SELECTED = "";
 const TRAINING_LEVELS_HEADING = "Training levels";
@@ -149,6 +150,10 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
           </Button>
         </Stack>
       );
+    }
+
+    if (linksQuery.isError) {
+      return <Alert severity="error">{LINKS_ERROR_MESSAGE}</Alert>;
     }
 
     return (

@@ -1,15 +1,19 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { formatDate } from "@repo/shared";
+
 import { render } from "@app/test/render";
 
 import { type StripPublishStatus } from "../lib/summarize-strip-publish-status";
 
 import { MobileStripPublishStatus } from "./mobile-strip-publish-status";
 
-const WEEK_PUBLISHED_AT = new Date(2026, 0, 5, 12);
-const LAST_YEAR_PUBLISHED_AT = new Date(new Date().getFullYear() - 1, 4, 3, 12);
-const WEEK_SENT_CAPTION = "Last sent this week Jan 5";
+const CURRENT_YEAR = new Date().getFullYear();
+const WEEK_PUBLISHED_AT = new Date(CURRENT_YEAR, 0, 5, 12);
+const LAST_YEAR_PUBLISHED_AT = new Date(CURRENT_YEAR - 1, 4, 3, 12);
+const WEEK_SENT_CAPTION = `This week: sent ${formatDate(WEEK_PUBLISHED_AT, "day")}`;
+const CHECKING_LABEL = "Checking this week…";
 const NEVER_PUBLISHED_LABEL = "Never published";
 const NEVER_PUBLISHED_SOME_LABEL = "2 never published";
 const WEEK_PENDING_LABEL = "This week not published yet";
@@ -31,6 +35,14 @@ describe("MobileStripPublishStatus", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("says the week is still being checked rather than looking like an all-clear (F8)", () => {
+    const { container } = renderStatus({ kind: "checking" });
+
+    expect(screen.getByText(CHECKING_LABEL)).toBeInTheDocument();
+    expect(container).not.toBeEmptyDOMElement();
+    expect(container.querySelector(".MuiChip-root")).toBeNull();
+  });
+
   it("renders the never-published warning chip on its own when nothing went out this week", () => {
     const { container } = renderStatus({
       kind: "never-published",
@@ -41,7 +53,7 @@ describe("MobileStripPublishStatus", () => {
 
     expect(screen.getByText(NEVER_PUBLISHED_LABEL)).toBeInTheDocument();
     expect(chipClassNameFor(NEVER_PUBLISHED_LABEL)).toContain("MuiChip-colorWarning");
-    expect(container.textContent).not.toContain("Last sent this week");
+    expect(container.textContent).not.toContain("This week: sent");
     expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(1);
   });
 
@@ -96,6 +108,16 @@ describe("MobileStripPublishStatus", () => {
     expect(screen.getByText(WEEK_SENT_CAPTION)).toBeInTheDocument();
     expect(container.textContent).not.toContain("This week published");
     expect(container.querySelector(".MuiChip-root")).toBeNull();
+  });
+
+  it("dates the send rather than naming a day inside the displayed week (F10)", () => {
+    const { container } = renderStatus({
+      kind: "week-published",
+      weekPublishedAt: WEEK_PUBLISHED_AT,
+    });
+
+    expect(container.textContent).toBe(WEEK_SENT_CAPTION);
+    expect(container.textContent).not.toContain("Last sent this week");
   });
 
   it("spells out the year on a week caption from an earlier year, like its sibling widget (F6)", () => {

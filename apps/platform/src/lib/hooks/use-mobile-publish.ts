@@ -63,8 +63,10 @@ export const useCreateMobileLink = (planId: string) => {
 
   return useMutation({
     mutationFn: api.mobile.createLink,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
+    },
+    onSuccess: () => {
       toast.success("Linked");
     },
     onError: (error: Error, variables) => {
@@ -81,8 +83,10 @@ export const useDeleteMobileLink = (planId: string) => {
 
   return useMutation({
     mutationFn: (linkId: string) => api.mobile.deleteLink(linkId),
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
+    },
+    onSuccess: () => {
       toast.success("Unlinked");
     },
     onError: (error: Error) => {

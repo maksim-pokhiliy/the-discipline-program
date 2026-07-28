@@ -69,6 +69,7 @@ const PLAN_ID = "ckplan1234567890abcdef0123";
 const WEEK_START = "2026-01-05";
 const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training levels.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
+const LINKS_ERROR_MESSAGE = "Couldn't load what this plan is linked to. Try again.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
 
@@ -188,6 +189,28 @@ describe("ManageMobileLinksModal shared links cache (F7)", () => {
     renderModal();
 
     expect(screen.getByText(NO_LINKS_MESSAGE)).toBeInTheDocument();
+  });
+});
+
+describe("ManageMobileLinksModal failed links fetch (F5)", () => {
+  beforeEach(() => {
+    linksState.data = undefined;
+    linksState.error = new Error("links 500");
+    linksState.isError = true;
+  });
+
+  it("does not claim nothing is linked yet when the links fetch failed", () => {
+    renderModal();
+
+    expect(screen.getByText(LINKS_ERROR_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByText(NO_LINKS_MESSAGE)).toBeNull();
+  });
+
+  it("does not invite the coach to re-add levels that may already be linked", () => {
+    renderModal();
+
+    expect(screen.queryByLabelText("Training level")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
   });
 });
 

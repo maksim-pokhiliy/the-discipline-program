@@ -135,7 +135,14 @@ export const IndividualLinkRow: React.FC<IndividualLinkRowProps> = ({
       spacing={1.5}
       sx={{ minWidth: 0 }}
     >
-      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ minWidth: 0 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ minWidth: 0 }}
+      >
         <Box sx={{ minWidth: 0 }}>
           <UserChip
             user={{ id: athleteId, name: displayName, image: resolvedImage }}
