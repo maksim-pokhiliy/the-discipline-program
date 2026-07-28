@@ -4,10 +4,11 @@ import {
 } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { mapToMobileLink } from "./mobile-link.mapper";
+import { type MobileLinkPublishAggregate, mapToMobileLink } from "./mobile-link.mapper";
 
 const NOW = new Date("2025-06-01T12:00:00Z");
 const LATER = new Date("2025-06-15T12:00:00Z");
+const NEVER_PUBLISHED: MobileLinkPublishAggregate = { publishedDayCount: 0, lastPublishedAt: null };
 
 const makeRow = (overrides: Partial<PrismaMobilePublishLink> = {}): PrismaMobilePublishLink => ({
   id: "cls_ml_1",
@@ -24,7 +25,7 @@ const makeRow = (overrides: Partial<PrismaMobilePublishLink> = {}): PrismaMobile
 
 describe("mapToMobileLink", () => {
   it("maps the persisted link to the DTO shape", () => {
-    const result = mapToMobileLink(makeRow());
+    const result = mapToMobileLink(makeRow(), NEVER_PUBLISHED);
 
     expect(result).toEqual({
       id: "cls_ml_1",
@@ -33,19 +34,21 @@ describe("mapToMobileLink", () => {
       legacyLevelId: 2,
       legacyUserId: null,
       athleteId: null,
+      publishedDayCount: 0,
+      lastPublishedAt: null,
       createdAt: NOW,
       updatedAt: LATER,
     });
   });
 
   it("does not expose the internal connectionId", () => {
-    const result = mapToMobileLink(makeRow());
+    const result = mapToMobileLink(makeRow(), NEVER_PUBLISHED);
 
     expect(result).not.toHaveProperty("connectionId");
   });
 
   it("preserves the legacy level id verbatim", () => {
-    const result = mapToMobileLink(makeRow({ legacyLevelId: 7 }));
+    const result = mapToMobileLink(makeRow({ legacyLevelId: 7 }), NEVER_PUBLISHED);
 
     expect(result.legacyLevelId).toBe(7);
   });
@@ -58,6 +61,7 @@ describe("mapToMobileLink", () => {
         legacyUserId: 5,
         athleteId: "cls_athlete_1",
       }),
+      NEVER_PUBLISHED,
     );
 
     expect(result).toEqual({
@@ -67,6 +71,8 @@ describe("mapToMobileLink", () => {
       legacyLevelId: null,
       legacyUserId: 5,
       athleteId: "cls_athlete_1",
+      publishedDayCount: 0,
+      lastPublishedAt: null,
       createdAt: NOW,
       updatedAt: LATER,
     });
@@ -74,7 +80,10 @@ describe("mapToMobileLink", () => {
 
   it("throws when an individual row is missing its identity keys (fail closed)", () => {
     expect(() =>
-      mapToMobileLink(makeRow({ channel: MobilePublishChannel.INDIVIDUAL, legacyLevelId: null })),
+      mapToMobileLink(
+        makeRow({ channel: MobilePublishChannel.INDIVIDUAL, legacyLevelId: null }),
+        NEVER_PUBLISHED,
+      ),
     ).toThrow("missing its identity keys");
   });
 });

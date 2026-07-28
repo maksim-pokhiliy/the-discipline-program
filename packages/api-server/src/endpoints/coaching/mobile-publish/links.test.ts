@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   deleteMock: vi.fn(),
   upsertMock: vi.fn(),
+  groupByMock: vi.fn(),
   connectionFindUniqueMock: vi.fn(),
   resolveCoachIdMock: vi.fn(),
   verifyPlanOwnershipMock: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock("../../../db/client", () => ({
       delete: mocks.deleteMock,
       upsert: mocks.upsertMock,
     },
+    mobilePublishedDay: { groupBy: mocks.groupByMock },
     mobileConnection: { findUnique: mocks.connectionFindUniqueMock },
     $disconnect: vi.fn(),
   },
@@ -78,11 +80,13 @@ const makePrismaError = (
 describe("linksApi.listLinks", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
+    mocks.groupByMock.mockReset();
     mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
     mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
+    mocks.groupByMock.mockResolvedValue([]);
   });
 
   it("scopes the findMany by planId and the coach's connection after verifying plan ownership", async () => {
@@ -102,6 +106,8 @@ describe("linksApi.listLinks", () => {
         legacyLevelId: LEGACY_LEVEL_ID,
         legacyUserId: null,
         athleteId: null,
+        publishedDayCount: 0,
+        lastPublishedAt: null,
         createdAt: NOW,
         updatedAt: NOW,
       },
@@ -122,6 +128,7 @@ describe("linksApi.listLinks", () => {
 describe("linksApi.createLink", () => {
   beforeEach(() => {
     mocks.upsertMock.mockReset();
+    mocks.groupByMock.mockReset();
     mocks.connectionFindUniqueMock.mockReset();
     mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
@@ -129,6 +136,7 @@ describe("linksApi.createLink", () => {
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.connectionFindUniqueMock.mockResolvedValue({ id: CONNECTION_ID });
     mocks.upsertMock.mockResolvedValue(makePrismaLink());
+    mocks.groupByMock.mockResolvedValue([]);
   });
 
   it("upserts a GENERAL link on the (plan, channel, legacyLevelId) key", async () => {
@@ -197,6 +205,8 @@ describe("linksApi.createLink", () => {
       legacyLevelId: null,
       legacyUserId: LEGACY_USER_ID,
       athleteId: ATHLETE_ID,
+      publishedDayCount: 0,
+      lastPublishedAt: null,
       createdAt: NOW,
       updatedAt: NOW,
     });

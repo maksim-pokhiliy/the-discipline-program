@@ -3,6 +3,8 @@ import { z } from "zod";
 const baseMobileLinkSchema = z.object({
   id: z.string().cuid(),
   planId: z.string().cuid(),
+  publishedDayCount: z.number().int().nonnegative(),
+  lastPublishedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

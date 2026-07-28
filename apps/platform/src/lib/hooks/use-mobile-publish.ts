@@ -90,7 +90,13 @@ export const useDeleteMobileLink = (planId: string) => {
   });
 };
 
-export const usePublishMobile = () =>
-  useMutation({
+export const usePublishMobile = (planId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: api.mobile.publish,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
+    },
   });
+};

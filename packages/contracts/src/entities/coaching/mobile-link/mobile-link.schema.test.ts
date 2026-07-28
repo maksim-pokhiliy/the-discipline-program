@@ -13,6 +13,8 @@ const baseEntity = {
   legacyLevelId: 7,
   legacyUserId: null,
   athleteId: null,
+  publishedDayCount: 0,
+  lastPublishedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

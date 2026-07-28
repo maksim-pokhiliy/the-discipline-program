@@ -12,13 +12,39 @@ import {
   verifyPlanOwnership,
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { mapToMobileLink } from "../../../mappers/coaching";
+import { type MobileLinkPublishAggregate, mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
 
 export type LinksApi = {
   createLink(userId: string, data: CreateMobileLinkRequest): Promise<MobileLink>;
   listLinks(userId: string, planId: string): Promise<MobileLink[]>;
   deleteLink(userId: string, linkId: string): Promise<void>;
+};
+
+const NEVER_PUBLISHED: MobileLinkPublishAggregate = { publishedDayCount: 0, lastPublishedAt: null };
+
+const loadPublishAggregates = async (
+  linkIds: string[],
+): Promise<Map<string, MobileLinkPublishAggregate>> => {
+  const publishedDays = await prisma.mobilePublishedDay.groupBy({
+    by: ["linkId"],
+    where: { linkId: { in: linkIds } },
+    _count: { id: true },
+    _max: { publishedAt: true },
+  });
+
+  return new Map(
+    publishedDays.map((row) => [
+      row.linkId,
+      { publishedDayCount: row._count.id, lastPublishedAt: row._max.publishedAt },
+    ]),
+  );
+};
+
+const loadPublishAggregate = async (linkId: string): Promise<MobileLinkPublishAggregate> => {
+  const aggregates = await loadPublishAggregates([linkId]);
+
+  return aggregates.get(linkId) ?? NEVER_PUBLISHED;
 };
 
 const loadCoachConnectionId = async (userId: string, planId: string): Promise<string> => {
@@ -38,52 +64,54 @@ const loadCoachConnectionId = async (userId: string, planId: string): Promise<st
   return connection.id;
 };
 
-const createGeneralLink = (
+const createGeneralLink = async (
   connectionId: string,
   data: { planId: string; legacyLevelId: number },
-): Promise<MobileLink> =>
-  prisma.mobilePublishLink
-    .upsert({
-      where: {
-        planId_channel_legacyLevelId: {
-          planId: data.planId,
-          channel: "GENERAL",
-          legacyLevelId: data.legacyLevelId,
-        },
-      },
-      create: {
-        connectionId,
+): Promise<MobileLink> => {
+  const link = await prisma.mobilePublishLink.upsert({
+    where: {
+      planId_channel_legacyLevelId: {
         planId: data.planId,
         channel: "GENERAL",
         legacyLevelId: data.legacyLevelId,
       },
-      update: { connectionId },
-    })
-    .then(mapToMobileLink);
+    },
+    create: {
+      connectionId,
+      planId: data.planId,
+      channel: "GENERAL",
+      legacyLevelId: data.legacyLevelId,
+    },
+    update: { connectionId },
+  });
 
-const createIndividualLink = (
+  return mapToMobileLink(link, await loadPublishAggregate(link.id));
+};
+
+const createIndividualLink = async (
   connectionId: string,
   data: { planId: string; athleteId: string; legacyUserId: number },
-): Promise<MobileLink> =>
-  prisma.mobilePublishLink
-    .upsert({
-      where: {
-        planId_channel_athleteId: {
-          planId: data.planId,
-          channel: "INDIVIDUAL",
-          athleteId: data.athleteId,
-        },
-      },
-      create: {
-        connectionId,
+): Promise<MobileLink> => {
+  const link = await prisma.mobilePublishLink.upsert({
+    where: {
+      planId_channel_athleteId: {
         planId: data.planId,
         channel: "INDIVIDUAL",
-        legacyUserId: data.legacyUserId,
         athleteId: data.athleteId,
       },
-      update: { connectionId, legacyUserId: data.legacyUserId },
-    })
-    .then(mapToMobileLink);
+    },
+    create: {
+      connectionId,
+      planId: data.planId,
+      channel: "INDIVIDUAL",
+      legacyUserId: data.legacyUserId,
+      athleteId: data.athleteId,
+    },
+    update: { connectionId, legacyUserId: data.legacyUserId },
+  });
+
+  return mapToMobileLink(link, await loadPublishAggregate(link.id));
+};
 
 const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
@@ -127,7 +155,13 @@ export const linksApi: LinksApi = {
       orderBy: { createdAt: "asc" },
     });
 
-    return links.map(mapToMobileLink);
+    if (links.length === 0) {
+      return [];
+    }
+
+    const aggregates = await loadPublishAggregates(links.map((link) => link.id));
+
+    return links.map((link) => mapToMobileLink(link, aggregates.get(link.id) ?? NEVER_PUBLISHED));
   },
 
   deleteLink: async (userId, linkId) => {

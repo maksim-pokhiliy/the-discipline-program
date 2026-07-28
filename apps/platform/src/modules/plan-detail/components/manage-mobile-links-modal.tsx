@@ -2,14 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
   Alert,
   Button,
   CircularProgress,
   Divider,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -32,6 +30,7 @@ import {
 
 import { ConnectMobileModal } from "../../coach-profile/components";
 
+import { GeneralLinkRow } from "./general-link-row";
 import { IndividualLinksSection } from "./individual-links-section";
 
 type ManageMobileLinksModalProps = {
@@ -165,24 +164,12 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
             sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
           >
             {links.map((link) => (
-              <Stack
+              <GeneralLinkRow
                 key={link.id}
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                spacing={1.5}
-                sx={{ px: 1.5, py: 1 }}
-              >
-                <Typography variant="body2">{levelLabelFor(link)}</Typography>
-
-                <IconButton
-                  aria-label="Unlink training level"
-                  size="small"
-                  onClick={() => setPendingDelete(link)}
-                >
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </Stack>
+                link={link}
+                label={levelLabelFor(link)}
+                onUnlink={() => setPendingDelete(link)}
+              />
             ))}
           </Stack>
         )}

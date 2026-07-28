@@ -18,6 +18,8 @@ const general: GeneralMobileLink = {
   legacyLevelId: 7,
   legacyUserId: null,
   athleteId: null,
+  publishedDayCount: 0,
+  lastPublishedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -29,6 +31,8 @@ const individual: IndividualMobileLink = {
   legacyLevelId: null,
   legacyUserId: 5,
   athleteId: ATHLETE_ID,
+  publishedDayCount: 0,
+  lastPublishedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

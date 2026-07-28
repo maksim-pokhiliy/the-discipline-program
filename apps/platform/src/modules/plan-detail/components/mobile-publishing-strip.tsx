@@ -8,6 +8,7 @@ import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 import {
   type GeneralMobileLink,
   type IndividualMobileLink,
+  type MobileLink,
   partitionMobileLinks,
 } from "@repo/contracts/coaching/mobile-link";
 
@@ -19,6 +20,7 @@ import {
 } from "@app/lib/hooks";
 
 import { ManageMobileLinksModal } from "./manage-mobile-links-modal";
+import { MobileLinkPublishStatus } from "./mobile-link-publish-status";
 import { PublishWeekModal } from "./publish-week-modal";
 
 type MobilePublishingStripProps = {
@@ -26,7 +28,8 @@ type MobilePublishingStripProps = {
   monday: Date;
 };
 
-const PUBLISH_DISABLED_TOOLTIP = "Link a training level first";
+const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
+const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
 const NOT_LINKED_LABEL = "Not linked";
 const PUBLISHES_TO_PREFIX = "Publishes to: ";
 const LEVELS_CLAUSE_LABEL = "Levels: ";
@@ -83,6 +86,36 @@ const describeLinks = (
   return summary.allResolved ? `${PUBLISHES_TO_PREFIX}${summary.clause}` : summary.clause;
 };
 
+type PublishStatusSummary = {
+  neverPublishedCount: number;
+  totalCount: number;
+  lastPublishedAt: Date | null;
+};
+
+const toTime = (value: Date): number => new Date(value).getTime();
+
+const summarizePublishStatus = (links: MobileLink[]): PublishStatusSummary => {
+  let neverPublishedCount = 0;
+  let lastPublishedAt: Date | null = null;
+
+  for (const link of links) {
+    if (link.publishedDayCount === 0) {
+      neverPublishedCount += 1;
+    }
+
+    const publishedAt = link.lastPublishedAt;
+
+    if (
+      publishedAt !== null &&
+      (lastPublishedAt === null || toTime(publishedAt) > toTime(lastPublishedAt))
+    ) {
+      lastPublishedAt = publishedAt;
+    }
+  }
+
+  return { neverPublishedCount, totalCount: links.length, lastPublishedAt };
+};
+
 export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ planId, monday }) => {
   const connectionsQuery = useMobileConnections();
   const isConnected = (connectionsQuery.data ?? []).length > 0;
@@ -115,6 +148,11 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
     [athletesQuery.data],
   );
 
+  const publishStatus = useMemo(
+    () => summarizePublishStatus(linksQuery.data ?? []),
+    [linksQuery.data],
+  );
+
   if (connectionsQuery.isPending || linksQuery.isPending) {
     return null;
   }
@@ -140,6 +178,12 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
             <Typography variant="body2" color="text.secondary">
               {statusLabel}
             </Typography>
+
+            <MobileLinkPublishStatus
+              neverPublishedCount={publishStatus.neverPublishedCount}
+              totalCount={publishStatus.totalCount}
+              lastPublishedAt={publishStatus.lastPublishedAt}
+            />
           </Stack>
 
           <Stack direction="row" alignItems="center" spacing={1}>
@@ -151,7 +195,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
               Manage
             </Button>
 
-            <Tooltip title={hasLinks ? "" : PUBLISH_DISABLED_TOOLTIP} arrow>
+            <Tooltip title={hasLinks ? PUBLISH_WEEK_SCOPE_TOOLTIP : PUBLISH_DISABLED_TOOLTIP} arrow>
               <Box component="span">
                 <Button
                   variant="contained"
@@ -175,6 +219,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
       <PublishWeekModal
         open={isPublishOpen}
         onClose={() => setIsPublishOpen(false)}
+        planId={planId}
         monday={monday}
         links={linksQuery.data ?? []}
         levelNameById={levelNameById}

@@ -3,8 +3,20 @@ import { type MobilePublishLink as PrismaMobilePublishLink } from "@prisma/clien
 import { type MobileLink } from "@repo/contracts/coaching/mobile-link";
 import { InternalServerError } from "@repo/errors";
 
-export const mapToMobileLink = (l: PrismaMobilePublishLink): MobileLink => {
-  const base = { id: l.id, planId: l.planId, createdAt: l.createdAt, updatedAt: l.updatedAt };
+export type MobileLinkPublishAggregate = Pick<MobileLink, "publishedDayCount" | "lastPublishedAt">;
+
+export const mapToMobileLink = (
+  l: PrismaMobilePublishLink,
+  aggregate: MobileLinkPublishAggregate,
+): MobileLink => {
+  const base = {
+    id: l.id,
+    planId: l.planId,
+    publishedDayCount: aggregate.publishedDayCount,
+    lastPublishedAt: aggregate.lastPublishedAt,
+    createdAt: l.createdAt,
+    updatedAt: l.updatedAt,
+  };
 
   if (l.channel === "INDIVIDUAL") {
     if (l.legacyUserId === null || l.athleteId === null) {

@@ -62,6 +62,7 @@ vi.mock("../../coach-profile/components", () => ({
 const { PublishWeekModal } = await import("./publish-week-modal");
 
 const MONDAY = new Date("2026-01-05T00:00:00.000Z");
+const PLAN_ID = "ckplan1234567890abcdef0123";
 const START_DATE = "2026-01-05";
 const CONFLICT_DATE = "2026-01-06";
 const LINK_A: GeneralMobileLink = makeMobileLink({
@@ -113,6 +114,7 @@ const renderModal = (links: GeneralMobileLink[] = [LINK_A]) =>
     <PublishWeekModal
       open
       onClose={onCloseMock}
+      planId={PLAN_ID}
       monday={MONDAY}
       links={links}
       levelNameById={LEVEL_NAMES}
@@ -264,6 +266,7 @@ describe("PublishWeekModal conflict → overwrite flow", () => {
 describe("PublishWeekModal in-flight publish re-entrancy (MT-5, QA-001/QA-003)", () => {
   const baseProps = {
     onClose: onCloseMock,
+    planId: PLAN_ID,
     monday: MONDAY,
     links: [LINK_A],
     levelNameById: LEVEL_NAMES,
@@ -382,6 +385,7 @@ describe("PublishWeekModal mounted-closed stability (regression: max update dept
     const freshProps = () => ({
       open: false,
       onClose: onCloseMock,
+      planId: PLAN_ID,
       monday: new Date("2026-01-05T00:00:00.000Z"),
       links: [makeMobileLink({ id: LINK_A.id, legacyLevelId: 2 })],
       levelNameById: new Map<number, string>([[2, "Pro"]]),
@@ -408,6 +412,7 @@ describe("PublishWeekModal individual + mixed publish headings (QA-14, MT-6)", (
       <PublishWeekModal
         open
         onClose={onCloseMock}
+        planId={PLAN_ID}
         monday={MONDAY}
         links={links}
         levelNameById={LEVEL_NAMES}

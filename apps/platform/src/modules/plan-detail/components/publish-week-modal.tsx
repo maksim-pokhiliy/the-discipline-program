@@ -18,6 +18,7 @@ import { PublishResultsPanel, type PublishLevelGroup } from "./publish-results-p
 type PublishWeekModalProps = {
   open: boolean;
   onClose: () => void;
+  planId: string;
   monday: Date;
   links: MobileLink[];
   levelNameById: Map<number, string>;
@@ -54,12 +55,13 @@ const hasReconnect = (groups: PublishLevelGroup[]): boolean =>
 export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   open,
   onClose,
+  planId,
   monday,
   links,
   levelNameById,
   athleteNameById,
 }) => {
-  const publishMobile = usePublishMobile();
+  const publishMobile = usePublishMobile(planId);
 
   const [groups, setGroups] = useState<PublishLevelGroup[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
