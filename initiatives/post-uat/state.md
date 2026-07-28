@@ -1,6 +1,10 @@
 # post-uat — state (the board)
 
-**Updated:** 2026-07-28 — **Fix-A MERGED (#338) · W1 MERGED (#344) — two full build-loop cycles done.** Fix-A: the list-brick was REFUTED at Gate A (central `$extends` soft-delete filtering; freeze lifted, D-2.1) and shipped as regression guards + honest UI (D-2.2 incl. the ADMIN self-row) + admin vitest infra. W1: athlete movement catalog (D-6/D-6.1 — catalog CONCRETE-filtered, own records pass unconditionally) + spread-line wrapping (4-property fix, measurement-corrected twice); owner browser pass done on dev. **Awaiting owner prod re-check → closes PU-06 + PU-01/02 as VERIFIED.** W1 was CUT to two findings at the corpus read (D-7): PU-03 (level-switch is a PERCEPTION gap — everything updates incl. the kg; not a bug) + PU-04 (correction affordance) route through **Wd, a Claude-Design round**, before any execution. **W2 = MP-22 BUILT:** PR `feat/mobile-publish-link-status` open against `main`, awaiting the owner browser pass + merge; ratified as **D-18** in `mobile-publish`. The first cut put a link-LIFETIME aggregate into the week-scoped strip and would have recreated the very incident it fixes one week into any plan — caught by code review, not by the plan or Gate A (error class: **a scope invariant closed by copy instead of by shape**). Now two aggregates, three strip states. Three `max` review rounds; rounds two and three were mostly cleaning up rounds one and two's own fixes. **Wd:** the design-round corpus is WRITTEN (`corpus-wd.md`) and at the owner read; on his ok the tech lead writes the Claude-Design session prompt. Standing process: the build loop (`docs/process.md`) — corpus in plain Russian prose → prompt as skill-INPUT → Gate A → tech-lead diff review → owner browser pass → two-ok squash merge (`main` is PR-only + squash-only). Executors share this working tree — check the current branch before any file edit.
+**Updated:** 2026-07-28 (late) — **THREE full build-loop cycles done: Fix-A #338 · W1 #344 · W2 #350 — and the Wd design round is COMPLETE.** W2 (MP-22, executed under `mobile-publish`, D-18 there): per-link publish status, week-scoped after four review rounds — merged as **PR #350** (`b46ea324`); the owner browser pass required resurrecting the local legacy harness (Docker was down — diagnosed, restacked, re-seeded, verified). **Wd:** three Claude Design prototypes delivered and ratified — the sourced-weight-chip language; reference distilled into **`design-wd.md`**, ratifications recorded as **D-9 (wave order Profile → Training Day → Records) · D-10 (S5 banner client-side) · D-11 (undo = re-create)**. Execution starts with **Wd-1 Profile**: the corpus (`corpus-wd1-profile.md`) is WRITTEN and at the owner read; on his ok the tech lead writes the executor prompt (`/feature small`, UI-only). Standing process: the build loop (`docs/process.md`) — corpus in plain Russian prose → prompt as skill-INPUT → Gate A → tech-lead diff review → owner browser pass → two-ok squash merge (`main` is PR-only + squash-only). Executors share this working tree — check the current branch before any file edit.
+
+<details><summary>Previous header (28.07 — two cycles done, W2 in flight)</summary>
+
+**Fix-A MERGED (#338) · W1 MERGED (#344) — two full build-loop cycles done.** Fix-A: the list-brick was REFUTED at Gate A (central `$extends` soft-delete filtering; freeze lifted, D-2.1) and shipped as regression guards + honest UI (D-2.2 incl. the ADMIN self-row) + admin vitest infra. W1: athlete movement catalog (D-6/D-6.1 — catalog CONCRETE-filtered, own records pass unconditionally) + spread-line wrapping (4-property fix, measurement-corrected twice); owner browser pass done on dev. **Awaiting owner prod re-check → closes PU-06 + PU-01/02 as VERIFIED.** W1 was CUT to two findings at the corpus read (D-7): PU-03 (level-switch is a PERCEPTION gap — everything updates incl. the kg; not a bug) + PU-04 (correction affordance) route through **Wd, a Claude-Design round**, before any execution. **W2 = MP-22 BUILT:** PR `feat/mobile-publish-link-status` open against `main`, awaiting the owner browser pass + merge; ratified as **D-18** in `mobile-publish`. The first cut put a link-LIFETIME aggregate into the week-scoped strip and would have recreated the very incident it fixes one week into any plan — caught by code review, not by the plan or Gate A (error class: **a scope invariant closed by copy instead of by shape**). Now two aggregates, three strip states. Three `max` review rounds; rounds two and three were mostly cleaning up rounds one and two's own fixes. **Wd:** the design-round corpus is WRITTEN (`corpus-wd.md`) and at the owner read; on his ok the tech lead writes the Claude-Design session prompt. Standing process: the build loop (`docs/process.md`) — corpus in plain Russian prose → prompt as skill-INPUT → Gate A → tech-lead diff review → owner browser pass → two-ok squash merge (`main` is PR-only + squash-only). Executors share this working tree — check the current branch before any file edit.
 
 <details><summary>Earlier the same day — W1 enters PR</summary>
 
@@ -16,21 +20,24 @@
 
 ## Board
 
-| Wave  | Scope                                            | Status                                                                                                         |
-| ----- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed                                                             |
-| W1    | Athlete pack PU-01/02                            | ✅ MERGED — PR #344 (`3c397a7a`), full loop passed                                                             |
-| Wd    | Design round: PU-03 + PU-04 (Claude Design)      | corpus WRITTEN (`corpus-wd.md`) — at owner read                                                                |
-| W2    | Publish status (PU-08 → MP-22, `/feature small`) | ✅ PR open — `feat/mobile-publish-link-status`, awaiting owner browser pass + merge (D-18 in `mobile-publish`) |
-| W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                                                                                 |
-| W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)                                                                         |
-| W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off                                                                          |
-| W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate                                                                           |
-| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7                                                                        |
+| Wave  | Scope                                            | Status                                                                        |
+| ----- | ------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed                            |
+| W1    | Athlete pack PU-01/02                            | ✅ MERGED — PR #344 (`3c397a7a`), full loop passed                            |
+| Wd    | Design round: PU-03 + PU-04 (Claude Design)      | ✅ DESIGN DONE — 3 prototypes ratified (D-9..D-11, `design-wd.md`)            |
+| Wd-1  | Profile level switcher (radio rows, UI-only)     | corpus WRITTEN (`corpus-wd1-profile.md`) — at owner read                      |
+| Wd-2  | Training Day sourced-weight chip + sheet         | queued — after Wd-1 (contract additives, PU-03/04 pains)                      |
+| Wd-3  | Records history hygiene + benchmarks (D-8)       | queued — after Wd-2                                                           |
+| W2    | Publish status (PU-08 → MP-22, `/feature small`) | ✅ MERGED — PR #350 (`b46ea324`), full loop passed (D-18 in `mobile-publish`) |
+| W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                                                |
+| W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)                                        |
+| W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off                                         |
+| W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate                                          |
+| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7                                       |
 
 ## Next action
 
-**▶ Owner, two carries: (1) take `../mobile-publish/prompt-w2-publish-status.md` to a fresh executor session** (`/feature small`, pick `mobile-publish` at the hook; Gate A comes back here for the tech-lead review); **(2) read the Wd corpus (`corpus-wd.md`)** — on the ok the tech lead writes the Claude-Design session prompt (screenshots + sketches + rails). Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
+**▶ Owner: read the Wd-1 corpus (`corpus-wd1-profile.md`) and give the ok → the tech lead writes the Wd-1 executor prompt** (`/feature small`, pick `post-uat` at the hook; the ratified spec extract is in `design-wd.md`). Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
 
 <details><summary>Superseded next-action (27.07 — kept for the trail)</summary>
 
@@ -40,7 +47,7 @@
 
 ## Open decisions awaiting ratification
 
-**(none)** — D-1..D-8 all resolved (D-6.1 ratified 28.07 at the W1 plan gate; D-8 — athlete history-hygiene rights on own 1RM records, superseding the D-5 "not history editing" clause — ratified 28.07 at the Wd corpus read). Next decision points arise at the Wd outcome, the W5/W6 design passes and the W7 charter.
+**(none)** — D-1..D-11 all resolved (D-8 — history-hygiene rights, 28.07 at the Wd corpus read; D-9..D-11 — the Wd outcome: wave order, client-side S5 banner, undo = re-create — 28.07 at the prototype review). Next decision points arise at the Wd-2 slicing (contract additives), the W5/W6 design passes and the W7 charter.
 
 ## Gotchas a resuming session must know
 
