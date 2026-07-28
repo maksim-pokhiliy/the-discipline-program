@@ -186,13 +186,17 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
       return;
     }
 
-    if (hasStartedRef.current) {
+    const startDate = formatDateParam(latestRunInput.current.monday);
+
+    if (hasStartedRef.current && (isRunningRef.current || runStartDateRef.current === startDate)) {
       return;
     }
 
     hasStartedRef.current = true;
     runLinksRef.current = latestRunInput.current.links;
-    runStartDateRef.current = formatDateParam(latestRunInput.current.monday);
+    runStartDateRef.current = startDate;
+    setGroups([]);
+    setIsConfirmOpen(false);
     void latestRunPublish.current(false);
   }, [open]);
 

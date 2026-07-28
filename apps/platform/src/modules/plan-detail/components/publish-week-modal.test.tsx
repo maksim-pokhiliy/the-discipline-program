@@ -744,3 +744,91 @@ describe("PublishWeekModal close mid-publish (F3)", () => {
     await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
   });
 });
+
+describe("PublishWeekModal reopened on another week after the batch settled (H1)", () => {
+  const modalFor = (open: boolean, monday: Date) => (
+    <PublishWeekModal
+      open={open}
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={monday}
+      links={[LINK_A]}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("publishes the newly opened week instead of replaying the finished week's results", async () => {
+    const closedRun = createDeferred();
+    const reopenedRun = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(closedRun.promise);
+    mutateAsyncMock.mockReturnValueOnce(reopenedRun.promise);
+
+    const { rerender } = render(modalFor(true, MONDAY));
+
+    expect(mutateAsyncMock.mock.calls[0]?.[0]?.startDate).toBe(START_DATE);
+
+    rerender(modalFor(false, MONDAY));
+
+    await act(async () => {
+      closedRun.resolve({ results: [makePublishDayResult({ action: "created" })] });
+      await closedRun.promise;
+    });
+
+    rerender(modalFor(true, OTHER_MONDAY));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(2);
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(OTHER_START_DATE);
+    expect(screen.queryByText("Created")).toBeNull();
+    expect(screen.getByText("Publishing this week…")).toBeInTheDocument();
+
+    await act(async () => {
+      reopenedRun.resolve({ results: [makePublishDayResult({ action: "updated" })] });
+      await reopenedRun.promise;
+    });
+
+    expect(screen.getByText("Updated")).toBeInTheDocument();
+  });
+
+  it("clears a conflict prompt left by the finished week rather than confirming it for the new one", async () => {
+    const closedRun = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(closedRun.promise);
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "created" })],
+    });
+
+    const { rerender } = render(modalFor(true, MONDAY));
+
+    rerender(modalFor(false, MONDAY));
+
+    await act(async () => {
+      closedRun.resolve(conflictResult());
+      await closedRun.promise;
+    });
+
+    await act(async () => {
+      rerender(modalFor(true, OTHER_MONDAY));
+    });
+
+    expect(screen.queryByRole("dialog", { name: /Overwrite existing days\?/ })).toBeNull();
+    expect(screen.queryByText("Conflict")).toBeNull();
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(OTHER_START_DATE);
+  });
+
+  it("still refuses a second concurrent run when the coach reopens on another week mid-batch", () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(inFlight.promise);
+
+    const { rerender } = render(modalFor(true, MONDAY));
+
+    rerender(modalFor(false, MONDAY));
+    rerender(modalFor(true, OTHER_MONDAY));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Publishing this week…")).toBeInTheDocument();
+  });
+});
