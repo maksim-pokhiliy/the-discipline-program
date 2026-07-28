@@ -19,7 +19,7 @@
 | Wave  | Scope                                            | Status                                             |
 | ----- | ------------------------------------------------ | -------------------------------------------------- |
 | Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed |
-| W1    | Athlete pack — CUT to PU-01/02 (corpus read)     | 🔵 IN PR — diff review passed, browser pass next   |
+| W1    | Athlete pack PU-01/02                            | ✅ MERGED — PR #344 (`3c397a7a`), full loop passed |
 | Wd    | Design round: PU-03 + PU-04 (Claude Design)      | queued — tech lead prepares the design brief       |
 | W2    | Publish status (PU-08 → MP-22, `/feature small`) | approved; prompt after W1                          |
 | W3    | Email edit under ADMIN (PU-07)                   | approved (D-2)                                     |
@@ -30,7 +30,7 @@
 
 ## Next action
 
-**▶ Owner: the W1 browser pass** — the diff review is done (five items, all applied; see the header). `fix/uat-athlete-pack` carries the athlete movement catalog, the spread-line wrapping, a review round that fixed three confirmed defects (a failed catalog fetch silently recreated the dead picker; clearing the movement field silently re-selected the preset, so a max could save against the wrong movement; and removing `flexShrink` let a long movement name break a short metric at 320px — the last one a regression W1 itself introduced, caught by the `max` review and settled by measurement, not argument). D-6.1 was ratified at the plan gate: the CONCRETE filter is on the catalog query only, never on the athlete's own record movements. **What needs the owner's eye at the browser pass:** the 320px screenshots — wrapping is the ratified call over chips, so the vertical cost is accepted, but the grouped path actually gets _shorter_, not taller. The `SchemaRow` left-edge flip that used to belong on this list was fixed in the micro-round at the owner's call, so a wrapped metric now lands right in both row forms; what still differs between them is the air above a wrapped line (12 px in `RowGroup` via `useFlexGap`, none in `SchemaRow`) — recorded in `deferred.md`, one token to close if it reads wrong on the phone. **PU-01 cannot be machine-verified end-to-end:** jsdom cannot drive MUI's Autocomplete typing, so "typing `squat` offers catalog movements" is the owner's pass alone, and `db:seed` produces no athlete fixture — the walkthrough needs an athlete created via the invite flow.
+**▶ Tech lead: write the W2 corpus (MP-22, plain-prose per the format rule) and the Wd design brief (PU-03 + PU-04, for Claude Design)** — both are tech-lead deliverables; the owner reads the corpus before the W2 prompt travels. W1 completed the full loop 2026-07-28: Gate A (two brief corrections measured, Q1/Q2 ruled), build, adversarial review + tech-lead diff review, a 5-item micro-round (status gate, guard-free acceptance record, useFlexGap, test rename, SchemaRow flex-end), owner browser pass, two-ok squash merge as **PR #344** (`3c397a7a`). Owner's prod re-check after the Vercel deploy closes PU-06 + PU-01/02 as VERIFIED (fresh-athlete 1RM via catalog · spread wrapping at phone widths · admin users list healthy).
 
 <details><summary>Superseded next-action (27.07 — kept for the trail)</summary>
 
