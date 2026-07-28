@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type MobilePublishLink as PrismaMobilePublishLink } from "@prisma/client";
 
 import {
   type CreateMobileLinkRequest,
@@ -7,6 +7,7 @@ import {
 } from "@repo/contracts/coaching/mobile-link";
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import { BadRequestError, ConflictError } from "@repo/errors";
+import { parseDateParam } from "@repo/shared";
 
 import {
   resolveCoachId,
@@ -25,8 +26,14 @@ export type LinksApi = {
 };
 
 const NEVER_PUBLISHED: MobileLinkPublishAggregate = { publishedDayCount: 0, lastPublishedAt: null };
+const WEEK_START_FIELD = "weekStart";
+const INVALID_WEEK_START_MESSAGE = "weekStart must be a valid YYYY-MM-DD date";
 
-const buildWeekScheduledDates = (weekStart: string): Date[] => {
+export const buildWeekScheduledDates = (weekStart: string): Date[] => {
+  if (parseDateParam(weekStart) === null) {
+    throw new BadRequestError(INVALID_WEEK_START_MESSAGE, { field: WEEK_START_FIELD });
+  }
+
   const weekStartDate = resolveWeekStartDate(weekStart);
 
   return dayOfWeekValues.map((dayOfWeek) => sessionAbsoluteDateFromParts(weekStartDate, dayOfWeek));
@@ -77,11 +84,11 @@ const loadCoachConnectionId = async (userId: string, planId: string): Promise<st
   return connection.id;
 };
 
-const createGeneralLink = async (
+const upsertGeneralLink = (
   connectionId: string,
   data: { planId: string; legacyLevelId: number },
-): Promise<MobileLink> => {
-  const link = await prisma.mobilePublishLink.upsert({
+): Promise<PrismaMobilePublishLink> =>
+  prisma.mobilePublishLink.upsert({
     where: {
       planId_channel_legacyLevelId: {
         planId: data.planId,
@@ -98,14 +105,11 @@ const createGeneralLink = async (
     update: { connectionId },
   });
 
-  return mapToMobileLink(link, await loadPublishAggregate(link.id));
-};
-
-const createIndividualLink = async (
+const upsertIndividualLink = (
   connectionId: string,
   data: { planId: string; athleteId: string; legacyUserId: number },
-): Promise<MobileLink> => {
-  const link = await prisma.mobilePublishLink.upsert({
+): Promise<PrismaMobilePublishLink> =>
+  prisma.mobilePublishLink.upsert({
     where: {
       planId_channel_athleteId: {
         planId: data.planId,
@@ -123,9 +127,6 @@ const createIndividualLink = async (
     update: { connectionId, legacyUserId: data.legacyUserId },
   });
 
-  return mapToMobileLink(link, await loadPublishAggregate(link.id));
-};
-
 const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
     return false;
@@ -139,26 +140,36 @@ const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
   );
 };
 
+const upsertLink = async (
+  connectionId: string,
+  data: CreateMobileLinkRequest,
+): Promise<PrismaMobilePublishLink> => {
+  try {
+    return "channel" in data
+      ? await upsertIndividualLink(connectionId, data)
+      : await upsertGeneralLink(connectionId, data);
+  } catch (error) {
+    if (isLegacyUserAlreadyLinked(error)) {
+      throw new ConflictError("This mobile athlete is already linked to another plan member", {
+        field: "legacyUserId",
+      });
+    }
+
+    return handlePrismaError(error, { entity: "Mobile publish link" });
+  }
+};
+
 export const linksApi: LinksApi = {
   createLink: async (userId, data) => {
     const connectionId = await loadCoachConnectionId(userId, data.planId);
+    const link = await upsertLink(connectionId, data);
 
-    try {
-      return "channel" in data
-        ? await createIndividualLink(connectionId, data)
-        : await createGeneralLink(connectionId, data);
-    } catch (error) {
-      if (isLegacyUserAlreadyLinked(error)) {
-        throw new ConflictError("This mobile athlete is already linked to another plan member", {
-          field: "legacyUserId",
-        });
-      }
-
-      return handlePrismaError(error, { entity: "Mobile publish link" });
-    }
+    return mapToMobileLink(link, await loadPublishAggregate(link.id));
   },
 
   listLinks: async (userId, planId, weekStart) => {
+    const weekScheduledDates =
+      weekStart === undefined ? undefined : buildWeekScheduledDates(weekStart);
     const coachProfileId = await resolveCoachId(userId);
 
     await verifyPlanOwnership(planId, userId);
@@ -175,9 +186,9 @@ export const linksApi: LinksApi = {
     const linkIds = links.map((link) => link.id);
     const [lifetimeAggregates, weekAggregates] = await Promise.all([
       loadPublishAggregates(linkIds),
-      weekStart === undefined
+      weekScheduledDates === undefined
         ? undefined
-        : loadPublishAggregates(linkIds, buildWeekScheduledDates(weekStart)),
+        : loadPublishAggregates(linkIds, weekScheduledDates),
     ]);
 
     return links.map((link) =>

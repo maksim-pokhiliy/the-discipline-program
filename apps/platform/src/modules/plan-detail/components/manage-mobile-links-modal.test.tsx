@@ -42,11 +42,16 @@ const linksState: QueryState<MobileLink[]> = {
 
 const createLinkMutate = vi.fn();
 const deleteLinkMutate = vi.fn();
+const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
 
 vi.mock("@app/lib/hooks", () => ({
   useMobileConnections: () => connectionsState,
   useTrainingLevels: () => levelsState,
-  useMobileLinks: () => linksState,
+  useMobileLinks: (planId: string, weekStart?: string) => {
+    mobileLinksSpy(planId, weekStart);
+
+    return linksState;
+  },
   useCreateMobileLink: () => ({ mutate: createLinkMutate, isPending: false }),
   useDeleteMobileLink: () => ({ mutate: deleteLinkMutate, isPending: false }),
 }));
@@ -61,9 +66,11 @@ vi.mock("./individual-links-section", () => ({ IndividualLinksSection: () => nul
 const { ManageMobileLinksModal } = await import("./manage-mobile-links-modal");
 
 const PLAN_ID = "ckplan1234567890abcdef0123";
+const WEEK_START = "2026-01-05";
 const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training levels.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
+const NO_LINKS_MESSAGE = "No training levels linked yet.";
 
 const reconnectError = (): Error => {
   const error = new Error("Session expired");
@@ -74,7 +81,7 @@ const reconnectError = (): Error => {
 };
 
 const renderModal = () =>
-  render(<ManageMobileLinksModal open onClose={vi.fn()} planId={PLAN_ID} />);
+  render(<ManageMobileLinksModal open onClose={vi.fn()} planId={PLAN_ID} weekStart={WEEK_START} />);
 
 beforeEach(() => {
   connectionsState.data = [makeMobileConnection()];
@@ -91,6 +98,7 @@ beforeEach(() => {
   linksState.isPending = false;
   createLinkMutate.mockReset();
   deleteLinkMutate.mockReset();
+  mobileLinksSpy.mockClear();
 });
 
 afterEach(() => {
@@ -153,6 +161,33 @@ describe("ManageMobileLinksModal (MT-12)", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
 
     expect(deleteLinkMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("ManageMobileLinksModal shared links cache (F7)", () => {
+  it("subscribes to the same week-scoped links key the strip already warmed", () => {
+    renderModal();
+
+    expect(mobileLinksSpy).toHaveBeenCalledWith(PLAN_ID, WEEK_START);
+  });
+
+  it("waits for the links query instead of claiming nothing is linked yet", () => {
+    linksState.data = undefined;
+    linksState.isPending = true;
+
+    renderModal();
+
+    expect(screen.queryByText(NO_LINKS_MESSAGE)).toBeNull();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  });
+
+  it("says nothing is linked only once the links query has actually answered", () => {
+    linksState.data = [];
+    linksState.isPending = false;
+
+    renderModal();
+
+    expect(screen.getByText(NO_LINKS_MESSAGE)).toBeInTheDocument();
   });
 });
 

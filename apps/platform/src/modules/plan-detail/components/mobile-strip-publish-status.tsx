@@ -2,17 +2,12 @@
 
 import { Typography } from "@mui/material";
 
-import { formatDate } from "@repo/shared";
-import { IndicatorChip, type IndicatorChipTone } from "@repo/ui";
+import { IndicatorChip } from "@repo/ui";
 
+import { formatPublishDate } from "../lib/format-publish-date";
 import { type StripPublishStatus } from "../lib/summarize-strip-publish-status";
 
-const WEEK_PUBLISHED_PREFIX = "This week published ";
-
-const CHIP_TONE_BY_KIND: Record<"never-published" | "week-pending", IndicatorChipTone> = {
-  "never-published": "warning",
-  "week-pending": "info",
-};
+const WEEK_SENT_PREFIX = "Last sent this week ";
 
 type MobileStripPublishStatusProps = {
   status: StripPublishStatus;
@@ -26,8 +21,8 @@ export const MobileStripPublishStatus: React.FC<MobileStripPublishStatusProps> =
   const weekCaption =
     status.weekPublishedAt === null ? null : (
       <Typography variant="caption" color="text.secondary">
-        {WEEK_PUBLISHED_PREFIX}
-        {formatDate(status.weekPublishedAt, "day")}
+        {WEEK_SENT_PREFIX}
+        {formatPublishDate(status.weekPublishedAt)}
       </Typography>
     );
 
@@ -35,9 +30,23 @@ export const MobileStripPublishStatus: React.FC<MobileStripPublishStatusProps> =
     return weekCaption;
   }
 
+  if (status.kind === "week-pending") {
+    return (
+      <>
+        <IndicatorChip tone="info" label={status.label} />
+
+        {weekCaption}
+      </>
+    );
+  }
+
   return (
     <>
-      <IndicatorChip tone={CHIP_TONE_BY_KIND[status.kind]} label={status.label} />
+      <IndicatorChip tone="warning" label={status.label} />
+
+      {status.weekPendingLabel !== null && (
+        <IndicatorChip tone="info" label={status.weekPendingLabel} />
+      )}
 
       {weekCaption}
     </>

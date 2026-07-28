@@ -5,11 +5,9 @@ import {
 } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
+import { BadRequestError } from "@repo/errors";
 
-import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
-
-import { linksApi } from "./links";
+import { buildWeekScheduledDates, linksApi } from "./links";
 
 const COACH_PROFILE_ID = "clcoach000000000000000000";
 const USER_ID = "cluser0000000000000000000";
@@ -23,9 +21,17 @@ const OTHER_LEGACY_LEVEL_ID = 3;
 const LEGACY_USER_ID = 5;
 const NOW = new Date("2026-01-05T00:00:00.000Z");
 const WEEK_START = "2026-01-07";
-const WEEK_MONDAY_ISO = "2026-01-05T00:00:00.000Z";
-const WEEK_SUNDAY_ISO = "2026-01-11T00:00:00.000Z";
-const DAYS_IN_WEEK = 7;
+const WEEK_SCHEDULED_ISO = [
+  "2026-01-05T00:00:00.000Z",
+  "2026-01-06T00:00:00.000Z",
+  "2026-01-07T00:00:00.000Z",
+  "2026-01-08T00:00:00.000Z",
+  "2026-01-09T00:00:00.000Z",
+  "2026-01-10T00:00:00.000Z",
+  "2026-01-11T00:00:00.000Z",
+];
+const IMPOSSIBLE_WEEK_START = "2026-13-45";
+const NON_EXISTENT_WEEK_START = "2026-02-30";
 const PUBLISHED_DAY_COUNT = 4;
 const PUBLISHED_AT = new Date("2026-01-08T09:30:00.000Z");
 const WEEK_DAY_COUNT = 2;
@@ -101,12 +107,6 @@ const makeAggregateRow = (
   _max: { publishedAt: PUBLISHED_AT },
   ...overrides,
 });
-
-const weekScheduledDates = (weekStart: string): Date[] => {
-  const weekStartDate = resolveWeekStartDate(weekStart);
-
-  return dayOfWeekValues.map((dayOfWeek) => sessionAbsoluteDateFromParts(weekStartDate, dayOfWeek));
-};
 
 const lifetimeAggregateQuery = (linkIds: string[]) => ({
   by: ["linkId"],
@@ -212,8 +212,6 @@ describe("linksApi.listLinks publish aggregates", () => {
   });
 
   it("runs a second aggregate scoped to the seven scheduled days of the requested week", async () => {
-    const scheduledDates = weekScheduledDates(WEEK_START);
-
     mocks.groupByMock.mockResolvedValueOnce([makeAggregateRow()]);
     mocks.groupByMock.mockResolvedValueOnce([
       makeAggregateRow({
@@ -228,13 +226,13 @@ describe("linksApi.listLinks publish aggregates", () => {
     expect(mocks.groupByMock).toHaveBeenNthCalledWith(1, lifetimeAggregateQuery([LINK_ID]));
     expect(mocks.groupByMock).toHaveBeenNthCalledWith(2, {
       by: ["linkId"],
-      where: { linkId: { in: [LINK_ID] }, scheduledDate: { in: scheduledDates } },
+      where: {
+        linkId: { in: [LINK_ID] },
+        scheduledDate: { in: WEEK_SCHEDULED_ISO.map((iso) => new Date(iso)) },
+      },
       _count: { id: true },
       _max: { publishedAt: true },
     });
-    expect(scheduledDates).toHaveLength(DAYS_IN_WEEK);
-    expect(scheduledDates.at(0)?.toISOString()).toBe(WEEK_MONDAY_ISO);
-    expect(scheduledDates.at(-1)?.toISOString()).toBe(WEEK_SUNDAY_ISO);
     expect(result.map((link) => link.weekPublish)).toEqual([
       { publishedDayCount: WEEK_DAY_COUNT, lastPublishedAt: WEEK_PUBLISHED_AT },
     ]);
@@ -258,6 +256,87 @@ describe("linksApi.listLinks publish aggregates", () => {
 
     expect(result).toEqual([]);
     expect(mocks.groupByMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("buildWeekScheduledDates", () => {
+  it("expands a mid-week calendar date into the seven UTC midnights of its Monday-anchored week", () => {
+    expect(buildWeekScheduledDates(WEEK_START).map((date) => date.toISOString())).toEqual(
+      WEEK_SCHEDULED_ISO,
+    );
+  });
+
+  it("expands the Monday itself into the same seven days", () => {
+    const [monday] = WEEK_SCHEDULED_ISO;
+
+    expect(buildWeekScheduledDates("2026-01-05").map((date) => date.toISOString())).toEqual(
+      WEEK_SCHEDULED_ISO,
+    );
+    expect(monday).toBe("2026-01-05T00:00:00.000Z");
+  });
+
+  it("anchors a Sunday back onto the Monday that opens its week", () => {
+    expect(buildWeekScheduledDates("2026-01-11").map((date) => date.toISOString())).toEqual(
+      WEEK_SCHEDULED_ISO,
+    );
+  });
+
+  it("rejects a calendar-shaped but impossible date under the weekStart field", () => {
+    expect(() => buildWeekScheduledDates(IMPOSSIBLE_WEEK_START)).toThrow(BadRequestError);
+
+    try {
+      buildWeekScheduledDates(IMPOSSIBLE_WEEK_START);
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+      expect(error instanceof BadRequestError ? error.details : null).toEqual({
+        field: "weekStart",
+      });
+    }
+  });
+
+  it("rejects a day that does not exist in its month", () => {
+    expect(() => buildWeekScheduledDates(NON_EXISTENT_WEEK_START)).toThrow(BadRequestError);
+  });
+});
+
+describe("linksApi.listLinks weekStart validation", () => {
+  beforeEach(() => {
+    mocks.findManyMock.mockReset();
+    mocks.groupByMock.mockReset();
+    mocks.resolveCoachIdMock.mockReset();
+    mocks.verifyPlanOwnershipMock.mockReset();
+    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
+    mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
+    mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
+    mocks.groupByMock.mockResolvedValue([]);
+  });
+
+  it("rejects an impossible weekStart before issuing a single query", async () => {
+    await expect(
+      linksApi.listLinks(USER_ID, PLAN_ID, IMPOSSIBLE_WEEK_START),
+    ).rejects.toBeInstanceOf(BadRequestError);
+
+    expect(mocks.resolveCoachIdMock).not.toHaveBeenCalled();
+    expect(mocks.verifyPlanOwnershipMock).not.toHaveBeenCalled();
+    expect(mocks.findManyMock).not.toHaveBeenCalled();
+    expect(mocks.groupByMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an impossible weekStart for a plan with no links too, rather than returning an empty list", async () => {
+    mocks.findManyMock.mockResolvedValue([]);
+
+    await expect(
+      linksApi.listLinks(USER_ID, PLAN_ID, IMPOSSIBLE_WEEK_START),
+    ).rejects.toBeInstanceOf(BadRequestError);
+
+    expect(mocks.findManyMock).not.toHaveBeenCalled();
+  });
+
+  it("names the weekStart query param in the error, not the startDate of a sibling endpoint", async () => {
+    const attempt = linksApi.listLinks(USER_ID, PLAN_ID, IMPOSSIBLE_WEEK_START);
+
+    await expect(attempt).rejects.toThrow("weekStart must be a valid YYYY-MM-DD date");
+    await expect(attempt).rejects.toMatchObject({ details: { field: "weekStart" } });
   });
 });
 
@@ -388,6 +467,36 @@ describe("linksApi.createLink", () => {
 
     expect(result.publishedDayCount).toBe(0);
     expect(result.lastPublishedAt).toBeNull();
+  });
+
+  it("surfaces a failed aggregate read as itself instead of reporting the link creation as failed", async () => {
+    const readFailure = new Error("aggregate read failed");
+
+    mocks.groupByMock.mockRejectedValue(readFailure);
+
+    await expect(
+      linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID }),
+    ).rejects.toBe(readFailure);
+
+    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the legacy-athlete conflict scoped to the upsert, never raising it from the aggregate read", async () => {
+    const { ConflictError } = await import("@repo/errors");
+
+    mocks.groupByMock.mockRejectedValue(
+      makePrismaError("P2002", { target: ["planId", "channel", "legacyUserId"] }),
+    );
+
+    const attempt = linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+      legacyUserId: LEGACY_USER_ID,
+    });
+
+    await expect(attempt).rejects.not.toBeInstanceOf(ConflictError);
+    await expect(attempt).rejects.not.toThrow("already linked to another plan member");
   });
 
   it("rejects with BadRequestError when the coach has no mobile connection", async () => {

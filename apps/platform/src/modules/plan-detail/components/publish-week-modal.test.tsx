@@ -64,8 +64,10 @@ vi.mock("../../coach-profile/components", () => ({
 const { PublishWeekModal } = await import("./publish-week-modal");
 
 const MONDAY = new Date("2026-01-05T00:00:00.000Z");
+const OTHER_MONDAY = new Date("2026-01-12T00:00:00.000Z");
 const PLAN_ID = "ckplan1234567890abcdef0123";
 const START_DATE = "2026-01-05";
+const OTHER_START_DATE = "2026-01-12";
 const CONFLICT_DATE = "2026-01-06";
 const LINK_A: GeneralMobileLink = makeMobileLink({
   id: "cklinkaaaaaaaaaaaaaaaaaaaa",
@@ -523,5 +525,122 @@ describe("PublishWeekModal links-cache refresh (DR-10)", () => {
       scope: "week",
       overwriteUnowned: true,
     });
+  });
+});
+
+describe("PublishWeekModal overwrite week snapshot (F2)", () => {
+  const modalForWeek = (monday: Date) => (
+    <PublishWeekModal
+      open
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={monday}
+      links={[LINK_A]}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("overwrites the week the conflict summary was built for, not the week the coach navigated to", async () => {
+    mutateAsyncMock.mockResolvedValueOnce(conflictResult());
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "updated" })],
+    });
+
+    const { rerender } = render(modalForWeek(MONDAY));
+
+    await screen.findByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    rerender(modalForWeek(OTHER_MONDAY));
+
+    const dialog = screen.getByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: CONFIRM_LABEL }));
+    });
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]).toEqual({
+      linkId: LINK_A.id,
+      startDate: START_DATE,
+      scope: "week",
+      overwriteUnowned: true,
+    });
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).not.toBe(OTHER_START_DATE);
+  });
+
+  it("takes the newly opened week once a fresh run starts", async () => {
+    mutateAsyncMock.mockResolvedValue({ results: [makePublishDayResult({ action: "created" })] });
+
+    const first = render(modalForWeek(MONDAY));
+
+    expect(await screen.findByText("Created")).toBeInTheDocument();
+
+    first.unmount();
+
+    render(modalForWeek(OTHER_MONDAY));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(OTHER_START_DATE);
+  });
+});
+
+describe("PublishWeekModal close mid-publish (F3)", () => {
+  const modalWithOpen = (open: boolean) => (
+    <PublishWeekModal
+      open={open}
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={MONDAY}
+      links={[LINK_A]}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("does not start a second batch when the coach closes and reopens while one is still in flight", async () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValue(inFlight.promise);
+
+    const { rerender } = render(modalWithOpen(true));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+
+    rerender(modalWithOpen(false));
+    rerender(modalWithOpen(true));
+    rerender(modalWithOpen(false));
+    rerender(modalWithOpen(true));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      inFlight.resolve({ results: [makePublishDayResult({ action: "created" })] });
+      await inFlight.promise;
+    });
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("frees the lock once the orphaned batch settles so a later open publishes again", async () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(inFlight.promise);
+    mutateAsyncMock.mockResolvedValue({ results: [makePublishDayResult({ action: "created" })] });
+
+    const { rerender } = render(modalWithOpen(true));
+
+    rerender(modalWithOpen(false));
+
+    await act(async () => {
+      inFlight.resolve({ results: [makePublishDayResult({ action: "created" })] });
+      await inFlight.promise;
+    });
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+
+    rerender(modalWithOpen(true));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
   });
 });

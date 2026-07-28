@@ -8,7 +8,8 @@ import { type StripPublishStatus } from "../lib/summarize-strip-publish-status";
 import { MobileStripPublishStatus } from "./mobile-strip-publish-status";
 
 const WEEK_PUBLISHED_AT = new Date(2026, 0, 5, 12);
-const WEEK_PUBLISHED_CAPTION = "This week published Jan 5";
+const LAST_YEAR_PUBLISHED_AT = new Date(new Date().getFullYear() - 1, 4, 3, 12);
+const WEEK_SENT_CAPTION = "Last sent this week Jan 5";
 const NEVER_PUBLISHED_LABEL = "Never published";
 const NEVER_PUBLISHED_SOME_LABEL = "2 never published";
 const WEEK_PENDING_LABEL = "This week not published yet";
@@ -34,23 +35,38 @@ describe("MobileStripPublishStatus", () => {
     const { container } = renderStatus({
       kind: "never-published",
       label: NEVER_PUBLISHED_LABEL,
+      weekPendingLabel: null,
       weekPublishedAt: null,
     });
 
     expect(screen.getByText(NEVER_PUBLISHED_LABEL)).toBeInTheDocument();
     expect(chipClassNameFor(NEVER_PUBLISHED_LABEL)).toContain("MuiChip-colorWarning");
-    expect(container.textContent).not.toContain("This week published");
+    expect(container.textContent).not.toContain("Last sent this week");
+    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(1);
   });
 
   it("keeps this week's confirmation next to the never-published chip", () => {
     renderStatus({
       kind: "never-published",
       label: NEVER_PUBLISHED_SOME_LABEL,
+      weekPendingLabel: null,
       weekPublishedAt: WEEK_PUBLISHED_AT,
     });
 
     expect(screen.getByText(NEVER_PUBLISHED_SOME_LABEL)).toBeInTheDocument();
-    expect(screen.getByText(WEEK_PUBLISHED_CAPTION)).toBeInTheDocument();
+    expect(screen.getByText(WEEK_SENT_CAPTION)).toBeInTheDocument();
+  });
+
+  it("adds an info chip for the links that are merely missing this week (F4)", () => {
+    renderStatus({
+      kind: "never-published",
+      label: NEVER_PUBLISHED_LABEL,
+      weekPendingLabel: WEEK_PENDING_SOME_LABEL,
+      weekPublishedAt: null,
+    });
+
+    expect(chipClassNameFor(NEVER_PUBLISHED_LABEL)).toContain("MuiChip-colorWarning");
+    expect(chipClassNameFor(WEEK_PENDING_SOME_LABEL)).toContain("MuiChip-colorInfo");
   });
 
   it("renders the week-pending state as an info chip, not a warning", () => {
@@ -68,16 +84,26 @@ describe("MobileStripPublishStatus", () => {
     });
 
     expect(screen.getByText(WEEK_PENDING_SOME_LABEL)).toBeInTheDocument();
-    expect(screen.getByText(WEEK_PUBLISHED_CAPTION)).toBeInTheDocument();
+    expect(screen.getByText(WEEK_SENT_CAPTION)).toBeInTheDocument();
   });
 
-  it("drops the chip entirely once the whole week has published", () => {
+  it("drops the chip once something went out for the week, claiming only when it was last sent (F5)", () => {
     const { container } = renderStatus({
       kind: "week-published",
       weekPublishedAt: WEEK_PUBLISHED_AT,
     });
 
-    expect(screen.getByText(WEEK_PUBLISHED_CAPTION)).toBeInTheDocument();
+    expect(screen.getByText(WEEK_SENT_CAPTION)).toBeInTheDocument();
+    expect(container.textContent).not.toContain("This week published");
     expect(container.querySelector(".MuiChip-root")).toBeNull();
+  });
+
+  it("spells out the year on a week caption from an earlier year, like its sibling widget (F6)", () => {
+    const { container } = renderStatus({
+      kind: "week-published",
+      weekPublishedAt: LAST_YEAR_PUBLISHED_AT,
+    });
+
+    expect(container.textContent).toContain(String(new Date().getFullYear() - 1));
   });
 });

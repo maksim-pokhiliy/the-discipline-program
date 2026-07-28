@@ -19,7 +19,10 @@ import {
   useTrainingLevels,
 } from "@app/lib/hooks";
 
-import { summarizeStripPublishStatus } from "../lib/summarize-strip-publish-status";
+import {
+  summarizeStripPublishStatus,
+  type StripPublishStatus,
+} from "../lib/summarize-strip-publish-status";
 
 import { ManageMobileLinksModal } from "./manage-mobile-links-modal";
 import { MobileStripPublishStatus } from "./mobile-strip-publish-status";
@@ -37,6 +40,7 @@ const PUBLISHES_TO_PREFIX = "Publishes to: ";
 const LEVELS_CLAUSE_LABEL = "Levels: ";
 const ATHLETES_CLAUSE_LABEL = "Athletes: ";
 const CLAUSE_SEPARATOR = " · ";
+const NO_PUBLISH_STATUS: StripPublishStatus = { kind: "none" };
 
 type ChannelSummary = { clause: string; allResolved: boolean };
 
@@ -92,7 +96,8 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
   const connectionsQuery = useMobileConnections();
   const isConnected = (connectionsQuery.data ?? []).length > 0;
 
-  const linksQuery = useMobileLinks(planId, formatDateParam(monday));
+  const weekStart = formatDateParam(monday);
+  const linksQuery = useMobileLinks(planId, weekStart);
   const levelsQuery = useTrainingLevels(isConnected);
   const athletesQuery = useCoachAthletes();
 
@@ -121,8 +126,11 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
   );
 
   const publishStatus = useMemo(
-    () => summarizeStripPublishStatus(linksQuery.data ?? []),
-    [linksQuery.data],
+    () =>
+      linksQuery.isPlaceholderData
+        ? NO_PUBLISH_STATUS
+        : summarizeStripPublishStatus(linksQuery.data ?? []),
+    [linksQuery.data, linksQuery.isPlaceholderData],
   );
 
   if (connectionsQuery.isPending || linksQuery.isPending) {
@@ -188,6 +196,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
         open={isManageOpen}
         onClose={() => setIsManageOpen(false)}
         planId={planId}
+        weekStart={weekStart}
       />
 
       <PublishWeekModal

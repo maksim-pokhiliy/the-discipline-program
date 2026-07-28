@@ -59,6 +59,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
     expect(status).toEqual({
       kind: "never-published",
       label: "Never published",
+      weekPendingLabel: null,
       weekPublishedAt: null,
     });
   });
@@ -73,6 +74,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
     expect(status).toEqual({
       kind: "never-published",
       label: "1 never published",
+      weekPendingLabel: null,
       weekPublishedAt: LATER,
     });
   });
@@ -87,7 +89,7 @@ describe("summarizeStripPublishStatus never-published state", () => {
     expect(status.kind === "never-published" ? status.weekPublishedAt : null).toEqual(LATER);
   });
 
-  it("wins over a week-pending link so the worst case is the one the coach sees", () => {
+  it("wins over a week-pending link but still reports how many are missing this week (F4)", () => {
     const status = summarizeStripPublishStatus([
       makeLink(LINK_A, NEVER, NEVER),
       makeLink(LINK_B, LIFETIME, NEVER),
@@ -96,8 +98,35 @@ describe("summarizeStripPublishStatus never-published state", () => {
     expect(status).toEqual({
       kind: "never-published",
       label: "1 never published",
+      weekPendingLabel: "1 not published this week",
       weekPublishedAt: null,
     });
+  });
+
+  it("does not let one brand-new link hide four established links missing this week (F4)", () => {
+    const status = summarizeStripPublishStatus([
+      makeLink(LINK_A, NEVER, NEVER),
+      makeLink(LINK_B, LIFETIME, NEVER),
+      makeLink(LINK_C, LIFETIME, NEVER),
+      makeLink("cklinkdddddddddddddddddddd", LIFETIME, NEVER),
+      makeLink("cklinkeeeeeeeeeeeeeeeeeeee", LIFETIME, NEVER),
+    ]);
+
+    expect(status).toEqual({
+      kind: "never-published",
+      label: "1 never published",
+      weekPendingLabel: "4 not published this week",
+      weekPublishedAt: null,
+    });
+  });
+
+  it("leaves the week-pending label off when every other link already went out this week", () => {
+    const status = summarizeStripPublishStatus([
+      makeLink(LINK_A, NEVER, NEVER),
+      makeLink(LINK_B, LIFETIME, weekPublished(LATER)),
+    ]);
+
+    expect(status.kind === "never-published" ? status.weekPendingLabel : "unset").toBeNull();
   });
 });
 
@@ -158,5 +187,31 @@ describe("summarizeStripPublishStatus week-published state", () => {
     ]);
 
     expect(status).toEqual({ kind: "week-published", weekPublishedAt: LATEST });
+  });
+});
+
+describe("summarizeStripPublishStatus against the ISO strings the wire actually delivers", () => {
+  const asWireDate = (value: Date): Date => value.toISOString() as unknown as Date;
+
+  it("compares wire dates by value, not by a Date method the runtime payload does not have", () => {
+    const status = summarizeStripPublishStatus([
+      makeLink(LINK_A, LIFETIME, weekPublished(asWireDate(EARLIER))),
+      makeLink(LINK_B, LIFETIME, weekPublished(asWireDate(LATEST))),
+      makeLink(LINK_C, LIFETIME, weekPublished(asWireDate(LATER))),
+    ]);
+
+    expect(status).toEqual({ kind: "week-published", weekPublishedAt: LATEST.toISOString() });
+  });
+
+  it("still reads a wire-delivered lifetime aggregate as published", () => {
+    const status = summarizeStripPublishStatus([
+      makeLink(LINK_A, { publishedDayCount: 8, lastPublishedAt: asWireDate(LIFETIME_AT) }, NEVER),
+    ]);
+
+    expect(status).toEqual({
+      kind: "week-pending",
+      label: "This week not published yet",
+      weekPublishedAt: null,
+    });
   });
 });

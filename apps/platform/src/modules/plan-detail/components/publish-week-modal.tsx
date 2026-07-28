@@ -30,6 +30,7 @@ type PublishWeekModalProps = {
 
 const PUBLISHING_MESSAGE = "Publishing this week…";
 const RECONNECT_TITLE = "Reconnect mobile app";
+const NO_START_DATE = "";
 
 const errorMessage = (reason: unknown): string =>
   reason instanceof Error ? reason.message : "Publish failed";
@@ -103,6 +104,7 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   const runIdRef = useRef(0);
   const isRunningRef = useRef(false);
   const runLinksRef = useRef<MobileLink[]>([]);
+  const runStartDateRef = useRef(NO_START_DATE);
 
   const resolveHeading = useCallback(
     (link: MobileLink): string =>
@@ -123,13 +125,13 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
       if (!overwrite) {
         runLinksRef.current = links;
+        runStartDateRef.current = formatDateParam(monday);
       }
 
       const runLinks = runLinksRef.current;
+      const startDate = runStartDateRef.current;
 
       try {
-        const startDate = formatDateParam(monday);
-
         setIsPublishing(true);
         setIsConfirmOpen(false);
 
@@ -173,9 +175,9 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   useEffect(() => {
     if (!open) {
       runIdRef.current += 1;
-      isRunningRef.current = false;
       hasStartedRef.current = false;
       runLinksRef.current = [];
+      runStartDateRef.current = NO_START_DATE;
       setGroups([]);
       setIsPublishing(false);
       setIsConfirmOpen(false);

@@ -2,8 +2,9 @@
 
 import { Typography } from "@mui/material";
 
-import { formatDate } from "@repo/shared";
 import { IndicatorChip } from "@repo/ui";
+
+import { formatPublishDate } from "../lib/format-publish-date";
 
 const NEVER_PUBLISHED_LABEL = "Never published";
 const LAST_PUBLISHED_PREFIX = "Last published ";
@@ -11,13 +12,6 @@ const LAST_PUBLISHED_PREFIX = "Last published ";
 type MobileLinkPublishStatusProps = {
   publishedDayCount: number;
   lastPublishedAt: Date | null;
-};
-
-const formatLifetimePublishDate = (value: Date): string => {
-  const publishedAt = new Date(value);
-  const isCurrentYear = publishedAt.getFullYear() === new Date().getFullYear();
-
-  return isCurrentYear ? formatDate(publishedAt, "day") : formatDate(publishedAt, "short");
 };
 
 export const MobileLinkPublishStatus: React.FC<MobileLinkPublishStatusProps> = ({
@@ -35,7 +29,7 @@ export const MobileLinkPublishStatus: React.FC<MobileLinkPublishStatusProps> = (
   return (
     <Typography variant="caption" color="text.secondary">
       {LAST_PUBLISHED_PREFIX}
-      {formatLifetimePublishDate(lastPublishedAt)}
+      {formatPublishDate(lastPublishedAt)}
     </Typography>
   );
 };

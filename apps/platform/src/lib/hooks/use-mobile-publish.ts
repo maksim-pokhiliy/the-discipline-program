@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { notifyError } from "@repo/query";
@@ -38,6 +38,7 @@ export const useMobileLinks = (planId: string, weekStart?: string) =>
     queryKey: platformKeys.mobile.links(planId, weekStart),
     queryFn: () => api.mobile.listLinks(planId, weekStart),
     enabled: Boolean(planId),
+    placeholderData: keepPreviousData,
   });
 
 export const useConnectMobile = () => {

@@ -157,8 +157,23 @@ describe("useMobileAthletes", () => {
   });
 });
 
+type DeferredLinks = {
+  promise: Promise<MobileLink[]>;
+  resolve: (value: MobileLink[]) => void;
+};
+
+const createDeferredLinks = (): DeferredLinks => {
+  let resolve!: (value: MobileLink[]) => void;
+  const promise = new Promise<MobileLink[]>((res) => {
+    resolve = res;
+  });
+
+  return { promise, resolve };
+};
+
 describe("useMobileLinks", () => {
   const WEEK_START = "2026-01-05";
+  const NEXT_WEEK_START = "2026-01-12";
 
   it("queries api.mobile.listLinks with the planId", async () => {
     const links = [makeMobileLink()];
@@ -203,6 +218,39 @@ describe("useMobileLinks", () => {
       ...platformKeys.mobile.links(PLAN_ID),
       WEEK_START,
     ]);
+  });
+
+  it("keeps the previous week's links mounted while the next week loads (F1)", async () => {
+    const firstWeek = [makeMobileLink({ id: LINK_ID })];
+    const nextWeek = [makeMobileLink({ id: LINK_ID, publishedDayCount: 3 })];
+    const pendingNextWeek = createDeferredLinks();
+
+    listLinksMock.mockResolvedValueOnce(firstWeek);
+    listLinksMock.mockReturnValueOnce(pendingNextWeek.promise);
+
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    const view = renderHook(
+      ({ weekStart }: { weekStart: string }) => useMobileLinks(PLAN_ID, weekStart),
+      { wrapper, initialProps: { weekStart: WEEK_START } },
+    );
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    view.rerender({ weekStart: NEXT_WEEK_START });
+
+    expect(view.result.current.isPending).toBe(false);
+    expect(view.result.current.isPlaceholderData).toBe(true);
+    expect(view.result.current.data).toEqual(firstWeek);
+
+    await act(async () => {
+      pendingNextWeek.resolve(nextWeek);
+      await pendingNextWeek.promise;
+    });
+
+    await waitFor(() => expect(view.result.current.isPlaceholderData).toBe(false));
+    expect(view.result.current.data).toEqual(nextWeek);
   });
 });
 

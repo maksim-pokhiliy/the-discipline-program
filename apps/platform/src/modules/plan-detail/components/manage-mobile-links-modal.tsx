@@ -37,6 +37,7 @@ type ManageMobileLinksModalProps = {
   open: boolean;
   onClose: () => void;
   planId: string;
+  weekStart: string;
 };
 
 const MODAL_TITLE = "Mobile publishing";
@@ -54,12 +55,13 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   open,
   onClose,
   planId,
+  weekStart,
 }) => {
   const connectionsQuery = useMobileConnections();
   const isConnected = (connectionsQuery.data ?? []).length > 0;
 
   const levelsQuery = useTrainingLevels(isConnected);
-  const linksQuery = useMobileLinks(planId);
+  const linksQuery = useMobileLinks(planId, weekStart);
 
   const createLink = useCreateMobileLink(planId);
   const deleteLink = useDeleteMobileLink(planId);
@@ -91,7 +93,8 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
 
   const isReconnect = levelsQuery.error !== null && isReconnectRequired(levelsQuery.error);
   const hasLevelsError = levelsQuery.isError && !isReconnect;
-  const isLoading = connectionsQuery.isPending || (isConnected && levelsQuery.isPending);
+  const isLoading =
+    connectionsQuery.isPending || (isConnected && (levelsQuery.isPending || linksQuery.isPending));
 
   const handleAdd = () => {
     if (selectedLevelId === NO_LEVEL_SELECTED) {

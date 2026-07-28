@@ -17,18 +17,26 @@ import { render } from "@app/test/render";
 type QueryState<TData> = {
   data: TData | undefined;
   isPending: boolean;
+  isPlaceholderData: boolean;
 };
 
 const connectionsState: QueryState<MobileConnection[]> = {
   data: [makeMobileConnection()],
   isPending: false,
+  isPlaceholderData: false,
 };
 const levelsState: QueryState<LegacyTrainingLevel[]> = {
   data: trainingLevelsFixture,
   isPending: false,
+  isPlaceholderData: false,
 };
-const linksState: QueryState<MobileLink[]> = { data: [], isPending: false };
+const linksState: QueryState<MobileLink[]> = {
+  data: [],
+  isPending: false,
+  isPlaceholderData: false,
+};
 const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
+const manageModalSpy = vi.fn<(props: { planId: string; weekStart: string }) => void>();
 
 type RosterAthlete = Pick<CoachAthleteListItem, "userId" | "name" | "email">;
 
@@ -40,6 +48,7 @@ const ALICE: RosterAthlete = {
 const coachAthletesState: QueryState<{ athletes: RosterAthlete[] }> = {
   data: { athletes: [ALICE] },
   isPending: false,
+  isPlaceholderData: false,
 };
 
 vi.mock("@app/lib/hooks", () => ({
@@ -54,7 +63,11 @@ vi.mock("@app/lib/hooks", () => ({
 }));
 
 vi.mock("./manage-mobile-links-modal", () => ({
-  ManageMobileLinksModal: () => null,
+  ManageMobileLinksModal: (props: { planId: string; weekStart: string }) => {
+    manageModalSpy(props);
+
+    return null;
+  },
 }));
 
 vi.mock("./publish-week-modal", () => ({
@@ -69,6 +82,7 @@ const MONDAY_PARAM = "2026-01-05";
 const PUBLISH_BUTTON_NAME = "Publish this week";
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
 const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
+const WEEK_SENT_CAPTION = "Last sent this week Jan 5";
 const WEEK_PUBLISHED_AT = new Date(2026, 0, 5, 12);
 const LIFETIME_PUBLISHED_AT = new Date(2025, 10, 20, 12);
 const LIFETIME_DAY_COUNT = 8;
@@ -100,9 +114,11 @@ beforeEach(() => {
   levelsState.isPending = false;
   linksState.data = [];
   linksState.isPending = false;
+  linksState.isPlaceholderData = false;
   coachAthletesState.data = { athletes: [ALICE] };
   coachAthletesState.isPending = false;
   mobileLinksSpy.mockClear();
+  manageModalSpy.mockClear();
 });
 
 afterEach(() => {
@@ -262,7 +278,26 @@ describe("MobilePublishingStrip publish status (MP-22)", () => {
     renderStrip();
 
     expect(screen.getByText("1 never published")).toBeInTheDocument();
-    expect(screen.getByText("This week published Jan 5")).toBeInTheDocument();
+    expect(screen.getByText(WEEK_SENT_CAPTION)).toBeInTheDocument();
+  });
+
+  it("surfaces the week-pending count alongside the never-published warning (F4)", () => {
+    linksState.data = [
+      makeMobileLink({ id: "cklink2000000000000000000a", weekPublish: NEVER_PUBLISHED }),
+      ...[3, 4, 5].map((legacyLevelId) =>
+        makeMobileLink({
+          id: `cklink${legacyLevelId}000000000000000000`,
+          legacyLevelId,
+          ...PUBLISHED_BEFORE,
+          weekPublish: NEVER_PUBLISHED,
+        }),
+      ),
+    ];
+
+    renderStrip();
+
+    expect(screen.getByText("1 never published")).toBeInTheDocument();
+    expect(screen.getByText("3 not published this week")).toBeInTheDocument();
   });
 
   it("flags the open week as pending when every link published before but not this week", () => {
@@ -285,13 +320,38 @@ describe("MobilePublishingStrip publish status (MP-22)", () => {
     expect(screen.getByText("This week not published yet")).toBeInTheDocument();
   });
 
-  it("confirms the week publish date once every link has gone out this week", () => {
+  it("reports only when the week was last sent, never that the week is complete (F5)", () => {
     linksState.data = [makeMobileLink({ ...PUBLISHED_BEFORE, weekPublish: PUBLISHED_THIS_WEEK })];
 
     renderStrip();
 
-    expect(screen.getByText("This week published Jan 5")).toBeInTheDocument();
+    expect(screen.getByText(WEEK_SENT_CAPTION)).toBeInTheDocument();
+    expect(screen.queryByText(/This week published/)).toBeNull();
     expect(screen.queryByText("Never published")).toBeNull();
+  });
+
+  it("hides the publish status while the previous week's data is still on screen (F1)", () => {
+    linksState.data = [makeMobileLink({ weekPublish: NEVER_PUBLISHED })];
+    linksState.isPlaceholderData = true;
+
+    renderStrip();
+
+    expect(screen.queryByText("Never published")).toBeNull();
+    expect(screen.queryByText(/not published this week/)).toBeNull();
+    expect(screen.queryByText(/Last sent this week/)).toBeNull();
+    expect(screen.getByText("Publishes to: Pro")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
+  });
+
+  it("hands the Manage modal the same week the strip subscribes to (F7)", () => {
+    linksState.data = [makeMobileLink()];
+
+    renderStrip();
+
+    expect(mobileLinksSpy).toHaveBeenCalledWith(PLAN_ID, MONDAY_PARAM);
+    expect(manageModalSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: PLAN_ID, weekStart: MONDAY_PARAM }),
+    );
   });
 
   it("explains what to link first when Publish is disabled", async () => {

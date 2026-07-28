@@ -7,7 +7,12 @@ const WEEK_PENDING_SOME_SUFFIX = " not published this week";
 
 export type StripPublishStatus =
   | { kind: "none" }
-  | { kind: "never-published"; label: string; weekPublishedAt: Date | null }
+  | {
+      kind: "never-published";
+      label: string;
+      weekPendingLabel: string | null;
+      weekPublishedAt: Date | null;
+    }
   | { kind: "week-pending"; label: string; weekPublishedAt: Date | null }
   | { kind: "week-published"; weekPublishedAt: Date };
 
@@ -22,6 +27,9 @@ const isWeekPending = (link: MobileLink): boolean =>
 
 const buildLabel = (count: number, total: number, allLabel: string, someSuffix: string): string =>
   count === total ? allLabel : `${count}${someSuffix}`;
+
+const buildWeekPendingLabel = (count: number, total: number): string =>
+  buildLabel(count, total, WEEK_PENDING_ALL_LABEL, WEEK_PENDING_SOME_SUFFIX);
 
 const latestWeekPublishedAt = (links: MobileLink[]): Date | null => {
   let latest: Date | null = null;
@@ -54,18 +62,21 @@ export const summarizeStripPublishStatus = (links: MobileLink[]): StripPublishSt
       NEVER_PUBLISHED_SOME_SUFFIX,
     );
 
-    return { kind: "never-published", label, weekPublishedAt };
+    return {
+      kind: "never-published",
+      label,
+      weekPendingLabel:
+        weekPendingCount === 0 ? null : buildWeekPendingLabel(weekPendingCount, links.length),
+      weekPublishedAt,
+    };
   }
 
   if (weekPendingCount > 0) {
-    const label = buildLabel(
-      weekPendingCount,
-      links.length,
-      WEEK_PENDING_ALL_LABEL,
-      WEEK_PENDING_SOME_SUFFIX,
-    );
-
-    return { kind: "week-pending", label, weekPublishedAt };
+    return {
+      kind: "week-pending",
+      label: buildWeekPendingLabel(weekPendingCount, links.length),
+      weekPublishedAt,
+    };
   }
 
   if (weekPublishedAt !== null) {
