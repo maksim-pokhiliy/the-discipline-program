@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { notifyError } from "@repo/query";
@@ -33,11 +33,12 @@ export const useMobileAthletes = (enabled: boolean) =>
     staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
   });
 
-export const useMobileLinks = (planId: string) =>
+export const useMobileLinks = (planId: string, weekStart?: string) =>
   useQuery({
-    queryKey: platformKeys.mobile.links(planId),
-    queryFn: () => api.mobile.listLinks(planId),
+    queryKey: platformKeys.mobile.links(planId, weekStart),
+    queryFn: () => api.mobile.listLinks(planId, weekStart),
     enabled: Boolean(planId),
+    placeholderData: keepPreviousData,
   });
 
 export const useConnectMobile = () => {
@@ -62,8 +63,10 @@ export const useCreateMobileLink = (planId: string) => {
 
   return useMutation({
     mutationFn: api.mobile.createLink,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
+    },
+    onSuccess: () => {
       toast.success("Linked");
     },
     onError: (error: Error, variables) => {
@@ -80,8 +83,10 @@ export const useDeleteMobileLink = (planId: string) => {
 
   return useMutation({
     mutationFn: (linkId: string) => api.mobile.deleteLink(linkId),
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
+    },
+    onSuccess: () => {
       toast.success("Unlinked");
     },
     onError: (error: Error) => {

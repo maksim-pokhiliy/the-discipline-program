@@ -2,14 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
   Alert,
   Button,
   CircularProgress,
   Divider,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -32,12 +30,14 @@ import {
 
 import { ConnectMobileModal } from "../../coach-profile/components";
 
+import { GeneralLinkRow } from "./general-link-row";
 import { IndividualLinksSection } from "./individual-links-section";
 
 type ManageMobileLinksModalProps = {
   open: boolean;
   onClose: () => void;
   planId: string;
+  weekStart: string;
 };
 
 const MODAL_TITLE = "Mobile publishing";
@@ -46,6 +46,7 @@ const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training leve
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
+const LINKS_ERROR_MESSAGE = "Couldn't load what this plan is linked to. Try again.";
 const RECONNECT_TITLE = "Reconnect mobile app";
 const NO_LEVEL_SELECTED = "";
 const TRAINING_LEVELS_HEADING = "Training levels";
@@ -55,12 +56,13 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   open,
   onClose,
   planId,
+  weekStart,
 }) => {
   const connectionsQuery = useMobileConnections();
   const isConnected = (connectionsQuery.data ?? []).length > 0;
 
   const levelsQuery = useTrainingLevels(isConnected);
-  const linksQuery = useMobileLinks(planId);
+  const linksQuery = useMobileLinks(planId, weekStart);
 
   const createLink = useCreateMobileLink(planId);
   const deleteLink = useDeleteMobileLink(planId);
@@ -92,7 +94,8 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
 
   const isReconnect = levelsQuery.error !== null && isReconnectRequired(levelsQuery.error);
   const hasLevelsError = levelsQuery.isError && !isReconnect;
-  const isLoading = connectionsQuery.isPending || (isConnected && levelsQuery.isPending);
+  const isLoading =
+    connectionsQuery.isPending || (isConnected && (levelsQuery.isPending || linksQuery.isPending));
 
   const handleAdd = () => {
     if (selectedLevelId === NO_LEVEL_SELECTED) {
@@ -149,6 +152,10 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
       );
     }
 
+    if (linksQuery.isError) {
+      return <Alert severity="error">{LINKS_ERROR_MESSAGE}</Alert>;
+    }
+
     return (
       <Stack spacing={2.5}>
         <Typography variant="overline" color="text.secondary">
@@ -165,24 +172,12 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
             sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
           >
             {links.map((link) => (
-              <Stack
+              <GeneralLinkRow
                 key={link.id}
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                spacing={1.5}
-                sx={{ px: 1.5, py: 1 }}
-              >
-                <Typography variant="body2">{levelLabelFor(link)}</Typography>
-
-                <IconButton
-                  aria-label="Unlink training level"
-                  size="small"
-                  onClick={() => setPendingDelete(link)}
-                >
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </Stack>
+                link={link}
+                label={levelLabelFor(link)}
+                onUnlink={() => setPendingDelete(link)}
+              />
             ))}
           </Stack>
         )}

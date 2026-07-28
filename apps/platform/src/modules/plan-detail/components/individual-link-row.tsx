@@ -21,6 +21,8 @@ import { ConfirmationModal, UserChip } from "@repo/ui";
 
 import { formatMobileAthleteName } from "@app/lib/format-mobile-athlete-name";
 
+import { MobileLinkPublishStatus } from "./mobile-link-publish-status";
+
 const LINK_LABEL = "Link mobile athlete";
 const UNLINK_ARIA = "Unlink mobile athlete";
 const UNLINK_TITLE = "Unlink mobile athlete?";
@@ -133,12 +135,26 @@ export const IndividualLinkRow: React.FC<IndividualLinkRowProps> = ({
       spacing={1.5}
       sx={{ minWidth: 0 }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <UserChip
-          user={{ id: athleteId, name: displayName, image: resolvedImage }}
-          secondary={secondary}
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ minWidth: 0 }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <UserChip
+            user={{ id: athleteId, name: displayName, image: resolvedImage }}
+            secondary={secondary}
+          />
+        </Box>
+
+        <MobileLinkPublishStatus
+          publishedDayCount={existingLink.publishedDayCount}
+          lastPublishedAt={existingLink.lastPublishedAt}
         />
-      </Box>
+      </Stack>
 
       <IconButton
         aria-label={UNLINK_ARIA}

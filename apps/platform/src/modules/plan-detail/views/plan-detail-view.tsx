@@ -63,6 +63,7 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
     (sum, day) => sum + day.sessions.length,
     0,
   );
+  const hasWeekContent = currentSessionCount > 0;
 
   const statusOptions = useMemo<StatusOption[]>(() => {
     if (!plan) {
@@ -151,7 +152,11 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
 
                 <EnrollmentsStrip planId={planId} onManage={() => setIsManageOpen(true)} />
 
-                <MobilePublishingStrip planId={planId} monday={activeMonday} />
+                <MobilePublishingStrip
+                  planId={planId}
+                  monday={activeMonday}
+                  hasWeekContent={hasWeekContent}
+                />
 
                 <WeekNavigator
                   monday={activeMonday}

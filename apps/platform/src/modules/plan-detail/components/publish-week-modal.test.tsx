@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +13,7 @@ import type {
   PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 
+import { platformKeys } from "@app/lib/api/keys";
 import {
   makeIndividualLink,
   makeMobileLink,
@@ -61,8 +63,11 @@ vi.mock("../../coach-profile/components", () => ({
 
 const { PublishWeekModal } = await import("./publish-week-modal");
 
-const MONDAY = new Date("2026-01-05T00:00:00.000Z");
+const MONDAY = new Date(2026, 0, 5);
+const OTHER_MONDAY = new Date(2026, 0, 12);
+const PLAN_ID = "ckplan1234567890abcdef0123";
 const START_DATE = "2026-01-05";
+const OTHER_START_DATE = "2026-01-12";
 const CONFLICT_DATE = "2026-01-06";
 const LINK_A: GeneralMobileLink = makeMobileLink({
   id: "cklinkaaaaaaaaaaaaaaaaaaaa",
@@ -113,6 +118,7 @@ const renderModal = (links: GeneralMobileLink[] = [LINK_A]) =>
     <PublishWeekModal
       open
       onClose={onCloseMock}
+      planId={PLAN_ID}
       monday={MONDAY}
       links={links}
       levelNameById={LEVEL_NAMES}
@@ -264,6 +270,7 @@ describe("PublishWeekModal conflict → overwrite flow", () => {
 describe("PublishWeekModal in-flight publish re-entrancy (MT-5, QA-001/QA-003)", () => {
   const baseProps = {
     onClose: onCloseMock,
+    planId: PLAN_ID,
     monday: MONDAY,
     links: [LINK_A],
     levelNameById: LEVEL_NAMES,
@@ -382,7 +389,8 @@ describe("PublishWeekModal mounted-closed stability (regression: max update dept
     const freshProps = () => ({
       open: false,
       onClose: onCloseMock,
-      monday: new Date("2026-01-05T00:00:00.000Z"),
+      planId: PLAN_ID,
+      monday: new Date(2026, 0, 5),
       links: [makeMobileLink({ id: LINK_A.id, legacyLevelId: 2 })],
       levelNameById: new Map<number, string>([[2, "Pro"]]),
       athleteNameById: EMPTY_ATHLETE_NAMES,
@@ -408,6 +416,7 @@ describe("PublishWeekModal individual + mixed publish headings (QA-14, MT-6)", (
       <PublishWeekModal
         open
         onClose={onCloseMock}
+        planId={PLAN_ID}
         monday={MONDAY}
         links={links}
         levelNameById={LEVEL_NAMES}
@@ -442,5 +451,384 @@ describe("PublishWeekModal individual + mixed publish headings (QA-14, MT-6)", (
     expect(await screen.findByText("Pro")).toBeInTheDocument();
     expect(screen.getByText("Alice Stone")).toBeInTheDocument();
     expect(screen.getAllByText("Created")).toHaveLength(2);
+  });
+});
+
+describe("PublishWeekModal links-cache refresh (DR-10)", () => {
+  const modalWithLinks = (links: MobileLink[]) => (
+    <PublishWeekModal
+      open
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={MONDAY}
+      links={links}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("refreshes the links query once for the whole fan-out, not once per link", async () => {
+    const invalidateSpy = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+
+    mutateAsyncMock.mockResolvedValue({
+      results: [makePublishDayResult({ action: "created" })],
+    });
+
+    renderModal([LINK_A, LINK_B]);
+
+    expect(await screen.findAllByText("Created")).toHaveLength(2);
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(2);
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
+  });
+
+  it("still refreshes the links query when one link's publish rejects mid-batch", async () => {
+    const invalidateSpy = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+
+    mutateAsyncMock.mockImplementation(async (vars) => {
+      if (vars.linkId === LINK_A.id) {
+        throw new Error("legacy 500");
+      }
+
+      return { results: [makePublishDayResult({ action: "created" })] };
+    });
+
+    renderModal([LINK_A, LINK_B]);
+
+    expect(await screen.findByText("legacy 500")).toBeInTheDocument();
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
+  });
+
+  it("overwrites the links the conflict summary was built from, not a list that changed underneath", async () => {
+    mutateAsyncMock.mockResolvedValueOnce(conflictResult());
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "updated" })],
+    });
+
+    const { rerender } = render(modalWithLinks([LINK_A]));
+
+    await screen.findByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    rerender(modalWithLinks([LINK_B]));
+
+    const dialog = screen.getByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: CONFIRM_LABEL }));
+    });
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]).toEqual({
+      linkId: LINK_A.id,
+      startDate: START_DATE,
+      scope: "week",
+      overwriteUnowned: true,
+    });
+  });
+});
+
+describe("PublishWeekModal overwrite week snapshot (F2)", () => {
+  const modalForWeek = (monday: Date) => (
+    <PublishWeekModal
+      open
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={monday}
+      links={[LINK_A]}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("overwrites the week the conflict summary was built for, not the week the coach navigated to", async () => {
+    mutateAsyncMock.mockResolvedValueOnce(conflictResult());
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "updated" })],
+    });
+
+    const { rerender } = render(modalForWeek(MONDAY));
+
+    await screen.findByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    rerender(modalForWeek(OTHER_MONDAY));
+
+    const dialog = screen.getByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: CONFIRM_LABEL }));
+    });
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]).toEqual({
+      linkId: LINK_A.id,
+      startDate: START_DATE,
+      scope: "week",
+      overwriteUnowned: true,
+    });
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).not.toBe(OTHER_START_DATE);
+  });
+
+  it("takes the newly opened week once a fresh run starts", async () => {
+    mutateAsyncMock.mockResolvedValue({ results: [makePublishDayResult({ action: "created" })] });
+
+    const first = render(modalForWeek(MONDAY));
+
+    expect(await screen.findByText("Created")).toBeInTheDocument();
+
+    first.unmount();
+
+    render(modalForWeek(OTHER_MONDAY));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(OTHER_START_DATE);
+  });
+});
+
+describe("PublishWeekModal reconnect retry snapshot (H1)", () => {
+  const modalForWeek = (monday: Date, links: MobileLink[] = [LINK_A]) => (
+    <PublishWeekModal
+      open
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={monday}
+      links={links}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  const reconnectThenRetry = async (rerenderWith: () => void): Promise<void> => {
+    const reconnectButton = await screen.findByRole("button", { name: "Reconnect" });
+
+    rerenderWith();
+
+    await act(async () => {
+      fireEvent.click(reconnectButton);
+    });
+
+    const reconnectStub = await screen.findByTestId("stub-reconnect");
+
+    await act(async () => {
+      fireEvent.click(reconnectStub);
+    });
+  };
+
+  it("retries the week the modal was opened for, not the week the coach navigated to meanwhile", async () => {
+    mutateAsyncMock.mockRejectedValueOnce(reconnectError());
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "created" })],
+    });
+
+    const { rerender } = render(modalForWeek(MONDAY));
+
+    await reconnectThenRetry(() => rerender(modalForWeek(OTHER_MONDAY)));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(START_DATE);
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).not.toBe(OTHER_START_DATE);
+  });
+
+  it("retries the links the modal was opened for, not a list that changed meanwhile", async () => {
+    mutateAsyncMock.mockRejectedValueOnce(reconnectError());
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "created" })],
+    });
+
+    const { rerender } = render(modalForWeek(MONDAY, [LINK_A]));
+
+    await reconnectThenRetry(() => rerender(modalForWeek(MONDAY, [LINK_B])));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.linkId).toBe(LINK_A.id);
+  });
+});
+
+describe("PublishWeekModal close mid-publish (F3)", () => {
+  const modalWithOpen = (open: boolean) => (
+    <PublishWeekModal
+      open={open}
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={MONDAY}
+      links={[LINK_A]}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("does not start a second batch when the coach closes and reopens while one is still in flight", async () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValue(inFlight.promise);
+
+    const { rerender } = render(modalWithOpen(true));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+
+    rerender(modalWithOpen(false));
+    rerender(modalWithOpen(true));
+    rerender(modalWithOpen(false));
+    rerender(modalWithOpen(true));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      inFlight.resolve({ results: [makePublishDayResult({ action: "created" })] });
+      await inFlight.promise;
+    });
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the in-flight batch's results instead of discarding them, so reopening still shows the conflict prompt", async () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(inFlight.promise);
+
+    const { rerender } = render(modalWithOpen(true));
+
+    rerender(modalWithOpen(false));
+
+    await act(async () => {
+      inFlight.resolve(conflictResult());
+      await inFlight.promise;
+    });
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog", { name: /Overwrite existing days\?/ })).toBeNull();
+
+    rerender(modalWithOpen(true));
+
+    const dialog = await screen.findByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    expect(within(dialog).getByText(/1 day already have content/)).toBeInTheDocument();
+    expect(screen.getByText("Conflict")).toBeInTheDocument();
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the running state again when the coach reopens mid-batch", async () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(inFlight.promise);
+
+    const { rerender } = render(modalWithOpen(true));
+
+    rerender(modalWithOpen(false));
+    rerender(modalWithOpen(true));
+
+    expect(screen.getByText("Publishing this week…")).toBeInTheDocument();
+
+    await act(async () => {
+      inFlight.resolve({ results: [makePublishDayResult({ action: "created" })] });
+      await inFlight.promise;
+    });
+
+    expect(screen.getByText("Created")).toBeInTheDocument();
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("still resets and republishes on a close that happens after the batch settled", async () => {
+    mutateAsyncMock.mockResolvedValue({ results: [makePublishDayResult({ action: "created" })] });
+
+    const { rerender } = render(modalWithOpen(true));
+
+    expect(await screen.findByText("Created")).toBeInTheDocument();
+
+    rerender(modalWithOpen(false));
+
+    expect(screen.queryByText("Created")).toBeNull();
+
+    rerender(modalWithOpen(true));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe("PublishWeekModal reopened on another week after the batch settled (H1)", () => {
+  const modalFor = (open: boolean, monday: Date) => (
+    <PublishWeekModal
+      open={open}
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={monday}
+      links={[LINK_A]}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("publishes the newly opened week instead of replaying the finished week's results", async () => {
+    const closedRun = createDeferred();
+    const reopenedRun = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(closedRun.promise);
+    mutateAsyncMock.mockReturnValueOnce(reopenedRun.promise);
+
+    const { rerender } = render(modalFor(true, MONDAY));
+
+    expect(mutateAsyncMock.mock.calls[0]?.[0]?.startDate).toBe(START_DATE);
+
+    rerender(modalFor(false, MONDAY));
+
+    await act(async () => {
+      closedRun.resolve({ results: [makePublishDayResult({ action: "created" })] });
+      await closedRun.promise;
+    });
+
+    rerender(modalFor(true, OTHER_MONDAY));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(2);
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(OTHER_START_DATE);
+    expect(screen.queryByText("Created")).toBeNull();
+    expect(screen.getByText("Publishing this week…")).toBeInTheDocument();
+
+    await act(async () => {
+      reopenedRun.resolve({ results: [makePublishDayResult({ action: "updated" })] });
+      await reopenedRun.promise;
+    });
+
+    expect(screen.getByText("Updated")).toBeInTheDocument();
+  });
+
+  it("clears a conflict prompt left by the finished week rather than confirming it for the new one", async () => {
+    const closedRun = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(closedRun.promise);
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "created" })],
+    });
+
+    const { rerender } = render(modalFor(true, MONDAY));
+
+    rerender(modalFor(false, MONDAY));
+
+    await act(async () => {
+      closedRun.resolve(conflictResult());
+      await closedRun.promise;
+    });
+
+    await act(async () => {
+      rerender(modalFor(true, OTHER_MONDAY));
+    });
+
+    expect(screen.queryByRole("dialog", { name: /Overwrite existing days\?/ })).toBeNull();
+    expect(screen.queryByText("Conflict")).toBeNull();
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]?.startDate).toBe(OTHER_START_DATE);
+  });
+
+  it("still refuses a second concurrent run when the coach reopens on another week mid-batch", () => {
+    const inFlight = createDeferred();
+
+    mutateAsyncMock.mockReturnValueOnce(inFlight.promise);
+
+    const { rerender } = render(modalFor(true, MONDAY));
+
+    rerender(modalFor(false, MONDAY));
+    rerender(modalFor(true, OTHER_MONDAY));
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Publishing this week…")).toBeInTheDocument();
   });
 });

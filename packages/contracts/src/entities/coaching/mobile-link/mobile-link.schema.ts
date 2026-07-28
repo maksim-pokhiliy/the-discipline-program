@@ -1,8 +1,16 @@
 import { z } from "zod";
 
+export const publishAggregateSchema = z.object({
+  publishedDayCount: z.number().int().nonnegative(),
+  lastPublishedAt: z.date().nullable(),
+});
+
 const baseMobileLinkSchema = z.object({
   id: z.string().cuid(),
   planId: z.string().cuid(),
+  publishedDayCount: z.number().int().nonnegative(),
+  lastPublishedAt: z.date().nullable(),
+  weekPublish: publishAggregateSchema.optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

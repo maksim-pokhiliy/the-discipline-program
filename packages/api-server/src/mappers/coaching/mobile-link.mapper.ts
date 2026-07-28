@@ -1,10 +1,25 @@
 import { type MobilePublishLink as PrismaMobilePublishLink } from "@prisma/client";
 
-import { type MobileLink } from "@repo/contracts/coaching/mobile-link";
+import {
+  type MobileLink,
+  type MobileLinkPublishAggregate,
+} from "@repo/contracts/coaching/mobile-link";
 import { InternalServerError } from "@repo/errors";
 
-export const mapToMobileLink = (l: PrismaMobilePublishLink): MobileLink => {
-  const base = { id: l.id, planId: l.planId, createdAt: l.createdAt, updatedAt: l.updatedAt };
+export const mapToMobileLink = (
+  l: PrismaMobilePublishLink,
+  aggregate: MobileLinkPublishAggregate,
+  weekAggregate?: MobileLinkPublishAggregate,
+): MobileLink => {
+  const base = {
+    id: l.id,
+    planId: l.planId,
+    publishedDayCount: aggregate.publishedDayCount,
+    lastPublishedAt: aggregate.lastPublishedAt,
+    ...(weekAggregate !== undefined && { weekPublish: weekAggregate }),
+    createdAt: l.createdAt,
+    updatedAt: l.updatedAt,
+  };
 
   if (l.channel === "INDIVIDUAL") {
     if (l.legacyUserId === null || l.athleteId === null) {

@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CircularProgress, Stack, Typography } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { type MobileLink, isGeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
+import { type PublishMobileResult } from "@repo/contracts/coaching/mobile-publish";
 import { formatCalendarWeekday, formatDateParam } from "@repo/shared";
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
 import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
+import { platformKeys } from "@app/lib/api/keys";
 import { usePublishMobile } from "@app/lib/hooks";
 
 import { ConnectMobileModal } from "../../coach-profile/components";
@@ -18,6 +21,7 @@ import { PublishResultsPanel, type PublishLevelGroup } from "./publish-results-p
 type PublishWeekModalProps = {
   open: boolean;
   onClose: () => void;
+  planId: string;
   monday: Date;
   links: MobileLink[];
   levelNameById: Map<number, string>;
@@ -26,6 +30,7 @@ type PublishWeekModalProps = {
 
 const PUBLISHING_MESSAGE = "Publishing this week…";
 const RECONNECT_TITLE = "Reconnect mobile app";
+const NO_START_DATE = "";
 
 const errorMessage = (reason: unknown): string =>
   reason instanceof Error ? reason.message : "Publish failed";
@@ -51,15 +56,44 @@ const collectConflictDays = (groups: PublishLevelGroup[]): string[] => {
 const hasReconnect = (groups: PublishLevelGroup[]): boolean =>
   groups.some((group) => group.outcome.kind === "reconnect");
 
+type PublishRunOutcome = PromiseSettledResult<{ link: MobileLink; result: PublishMobileResult }>;
+
+const toPublishGroups = (
+  settled: PublishRunOutcome[],
+  runLinks: MobileLink[],
+  resolveHeading: (link: MobileLink) => string,
+): PublishLevelGroup[] =>
+  settled.map((outcome, index): PublishLevelGroup => {
+    const link = runLinks[index];
+    const linkId = link === undefined ? String(index) : link.id;
+    const heading = link === undefined ? "" : resolveHeading(link);
+
+    if (outcome.status === "fulfilled") {
+      return {
+        linkId,
+        heading,
+        outcome: { kind: "results", results: outcome.value.result.results },
+      };
+    }
+
+    if (isReconnectRequired(outcome.reason)) {
+      return { linkId, heading, outcome: { kind: "reconnect" } };
+    }
+
+    return { linkId, heading, outcome: { kind: "error", message: errorMessage(outcome.reason) } };
+  });
+
 export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   open,
   onClose,
+  planId,
   monday,
   links,
   levelNameById,
   athleteNameById,
 }) => {
   const publishMobile = usePublishMobile();
+  const queryClient = useQueryClient();
 
   const [groups, setGroups] = useState<PublishLevelGroup[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -69,6 +103,8 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
   const hasStartedRef = useRef(false);
   const runIdRef = useRef(0);
   const isRunningRef = useRef(false);
+  const runLinksRef = useRef<MobileLink[]>([]);
+  const runStartDateRef = useRef(NO_START_DATE);
 
   const resolveHeading = useCallback(
     (link: MobileLink): string =>
@@ -86,15 +122,15 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
 
       isRunningRef.current = true;
       const myRunId = runIdRef.current;
+      const runLinks = runLinksRef.current;
+      const startDate = runStartDateRef.current;
 
       try {
-        const startDate = formatDateParam(monday);
-
         setIsPublishing(true);
         setIsConfirmOpen(false);
 
         const settled = await Promise.allSettled(
-          links.map(async (link) => ({
+          runLinks.map(async (link) => ({
             link,
             result: await publishMobile.mutateAsync({
               linkId: link.id,
@@ -105,33 +141,13 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
           })),
         );
 
+        queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
+
         if (myRunId !== runIdRef.current) {
           return;
         }
 
-        const nextGroups = settled.map((outcome, index): PublishLevelGroup => {
-          const link = links[index];
-          const linkId = link === undefined ? String(index) : link.id;
-          const heading = link === undefined ? "" : resolveHeading(link);
-
-          if (outcome.status === "fulfilled") {
-            return {
-              linkId,
-              heading,
-              outcome: { kind: "results", results: outcome.value.result.results },
-            };
-          }
-
-          if (isReconnectRequired(outcome.reason)) {
-            return { linkId, heading, outcome: { kind: "reconnect" } };
-          }
-
-          return {
-            linkId,
-            heading,
-            outcome: { kind: "error", message: errorMessage(outcome.reason) },
-          };
-        });
+        const nextGroups = toPublishGroups(settled, runLinks, resolveHeading);
 
         setGroups(nextGroups);
         setIsPublishing(false);
@@ -143,18 +159,25 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
         isRunningRef.current = false;
       }
     },
-    [links, monday, publishMobile, resolveHeading],
+    [planId, publishMobile, queryClient, resolveHeading],
   );
 
   const latestRunPublish = useRef(runPublish);
+  const latestRunInput = useRef({ links, monday });
 
   latestRunPublish.current = runPublish;
+  latestRunInput.current = { links, monday };
 
   useEffect(() => {
     if (!open) {
+      if (isRunningRef.current) {
+        return;
+      }
+
       runIdRef.current += 1;
-      isRunningRef.current = false;
       hasStartedRef.current = false;
+      runLinksRef.current = [];
+      runStartDateRef.current = NO_START_DATE;
       setGroups([]);
       setIsPublishing(false);
       setIsConfirmOpen(false);
@@ -163,11 +186,17 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
       return;
     }
 
-    if (hasStartedRef.current) {
+    const startDate = formatDateParam(latestRunInput.current.monday);
+
+    if (hasStartedRef.current && (isRunningRef.current || runStartDateRef.current === startDate)) {
       return;
     }
 
     hasStartedRef.current = true;
+    runLinksRef.current = latestRunInput.current.links;
+    runStartDateRef.current = startDate;
+    setGroups([]);
+    setIsConfirmOpen(false);
     void latestRunPublish.current(false);
   }, [open]);
 
@@ -210,7 +239,7 @@ export const PublishWeekModal: React.FC<PublishWeekModalProps> = ({
       </BaseModal>
 
       <ConfirmationModal
-        open={isConfirmOpen}
+        open={open && isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         type="warning"
         title="Overwrite existing days?"
