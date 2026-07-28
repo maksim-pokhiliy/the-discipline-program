@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +13,7 @@ import type {
   PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 
+import { platformKeys } from "@app/lib/api/keys";
 import {
   makeIndividualLink,
   makeMobileLink,
@@ -447,5 +449,79 @@ describe("PublishWeekModal individual + mixed publish headings (QA-14, MT-6)", (
     expect(await screen.findByText("Pro")).toBeInTheDocument();
     expect(screen.getByText("Alice Stone")).toBeInTheDocument();
     expect(screen.getAllByText("Created")).toHaveLength(2);
+  });
+});
+
+describe("PublishWeekModal links-cache refresh (DR-10)", () => {
+  const modalWithLinks = (links: MobileLink[]) => (
+    <PublishWeekModal
+      open
+      onClose={onCloseMock}
+      planId={PLAN_ID}
+      monday={MONDAY}
+      links={links}
+      levelNameById={LEVEL_NAMES}
+      athleteNameById={EMPTY_ATHLETE_NAMES}
+    />
+  );
+
+  it("refreshes the links query once for the whole fan-out, not once per link", async () => {
+    const invalidateSpy = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+
+    mutateAsyncMock.mockResolvedValue({
+      results: [makePublishDayResult({ action: "created" })],
+    });
+
+    renderModal([LINK_A, LINK_B]);
+
+    expect(await screen.findAllByText("Created")).toHaveLength(2);
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(2);
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
+  });
+
+  it("still refreshes the links query when one link's publish rejects mid-batch", async () => {
+    const invalidateSpy = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+
+    mutateAsyncMock.mockImplementation(async (vars) => {
+      if (vars.linkId === LINK_A.id) {
+        throw new Error("legacy 500");
+      }
+
+      return { results: [makePublishDayResult({ action: "created" })] };
+    });
+
+    renderModal([LINK_A, LINK_B]);
+
+    expect(await screen.findByText("legacy 500")).toBeInTheDocument();
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
+  });
+
+  it("overwrites the links the conflict summary was built from, not a list that changed underneath", async () => {
+    mutateAsyncMock.mockResolvedValueOnce(conflictResult());
+    mutateAsyncMock.mockResolvedValueOnce({
+      results: [makePublishDayResult({ action: "updated" })],
+    });
+
+    const { rerender } = render(modalWithLinks([LINK_A]));
+
+    await screen.findByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    rerender(modalWithLinks([LINK_B]));
+
+    const dialog = screen.getByRole("dialog", { name: /Overwrite existing days\?/ });
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: CONFIRM_LABEL }));
+    });
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+    expect(mutateAsyncMock.mock.calls[1]?.[0]).toEqual({
+      linkId: LINK_A.id,
+      startDate: START_DATE,
+      scope: "week",
+      overwriteUnowned: true,
+    });
   });
 });

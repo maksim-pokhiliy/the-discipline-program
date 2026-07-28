@@ -30,7 +30,7 @@ const listConnectionsMock = vi.fn<() => Promise<MobileConnection[]>>();
 const listTrainingLevelsMock = vi.fn<() => Promise<LegacyTrainingLevel[]>>();
 const listAthletesMock = vi.fn<() => Promise<MobileAthlete[]>>();
 const createLinkMock = vi.fn<(data: CreateMobileLinkRequest) => Promise<MobileLink>>();
-const listLinksMock = vi.fn<(planId: string) => Promise<MobileLink[]>>();
+const listLinksMock = vi.fn<(planId: string, weekStart?: string) => Promise<MobileLink[]>>();
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
 const publishMock = vi.fn<(data: PublishMobileData) => Promise<PublishMobileResult>>();
 const notifyErrorMock = vi.fn<(error: Error, fallback: string) => void>();
@@ -43,7 +43,7 @@ vi.mock("../api", () => ({
       listTrainingLevels: () => listTrainingLevelsMock(),
       listAthletes: () => listAthletesMock(),
       createLink: (data: CreateMobileLinkRequest) => createLinkMock(data),
-      listLinks: (planId: string) => listLinksMock(planId),
+      listLinks: (planId: string, weekStart?: string) => listLinksMock(planId, weekStart),
       deleteLink: (linkId: string) => deleteLinkMock(linkId),
       publish: (data: PublishMobileData) => publishMock(data),
     },
@@ -85,7 +85,7 @@ const renderRunner = <THook>(hook: () => THook) => {
     createElement(QueryClientProvider, { client: queryClient }, children);
   const view = renderHook(hook, { wrapper });
 
-  return { view, invalidateSpy };
+  return { view, invalidateSpy, queryClient };
 };
 
 beforeEach(() => {
@@ -158,6 +158,8 @@ describe("useMobileAthletes", () => {
 });
 
 describe("useMobileLinks", () => {
+  const WEEK_START = "2026-01-05";
+
   it("queries api.mobile.listLinks with the planId", async () => {
     const links = [makeMobileLink()];
 
@@ -167,8 +169,40 @@ describe("useMobileLinks", () => {
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
-    expect(listLinksMock).toHaveBeenCalledWith(PLAN_ID);
+    expect(listLinksMock).toHaveBeenCalledWith(PLAN_ID, undefined);
     expect(view.result.current.data).toEqual(links);
+  });
+
+  it("passes the requested week through to the API", async () => {
+    listLinksMock.mockResolvedValueOnce([makeMobileLink()]);
+
+    const { view } = renderRunner(() => useMobileLinks(PLAN_ID, WEEK_START));
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    expect(listLinksMock).toHaveBeenCalledWith(PLAN_ID, WEEK_START);
+  });
+
+  it("caches the week-scoped links under their own query key", async () => {
+    listLinksMock.mockResolvedValueOnce([makeMobileLink()]);
+
+    const { view, queryClient } = renderRunner(() => useMobileLinks(PLAN_ID, WEEK_START));
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    expect(
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .map(({ queryKey }) => queryKey),
+    ).toEqual([platformKeys.mobile.links(PLAN_ID, WEEK_START)]);
+  });
+
+  it("extends the plan links key with the week so a prefix invalidation covers both", () => {
+    expect(platformKeys.mobile.links(PLAN_ID, WEEK_START)).toEqual([
+      ...platformKeys.mobile.links(PLAN_ID),
+      WEEK_START,
+    ]);
   });
 });
 
@@ -336,5 +370,19 @@ describe("usePublishMobile", () => {
     });
 
     expect(notifyErrorMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves cache invalidation to the modal that owns the publish batch (DR-10)", async () => {
+    publishMock.mockResolvedValueOnce({ results: [makePublishDayResult({ action: "created" })] });
+
+    const { view, invalidateSpy } = renderRunner(() => usePublishMobile());
+
+    await act(async () => {
+      await view.result.current.mutateAsync(payload);
+    });
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 });

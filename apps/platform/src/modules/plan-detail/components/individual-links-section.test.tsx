@@ -8,6 +8,7 @@ import type { MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
 import type { IndividualMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { MOBILE_RECONNECT_REQUIRED } from "@repo/contracts/coaching/mobile-publish";
 import { EnrollmentStatus, type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
+import { formatDate } from "@repo/shared";
 
 import { makeIndividualLink, mobileAthletesFixture } from "@app/lib/mobile.fixtures";
 import { render } from "@app/test/render";
@@ -419,6 +420,41 @@ describe("IndividualLinksSection (T6)", () => {
       athleteId: RACE_ROW_B_ID,
       legacyUserId: 101,
     });
+  });
+
+  it("renders the publish status of each linked athlete row (MP-22)", () => {
+    const PUBLISHED_AT = new Date(new Date().getFullYear(), 5, 11, 12);
+
+    athletesState.data = {
+      athletes: [
+        makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" }),
+        makeAthlete({ userId: UNLINKED_ATHLETE_ID, name: "Sam Athlete" }),
+      ],
+    };
+    enrollmentsState.data = [
+      makeEnrollment({ athleteId: LINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
+      makeEnrollment({
+        id: "ckenrl0000000000000000pat0",
+        athleteId: UNLINKED_ATHLETE_ID,
+        status: EnrollmentStatus.ACTIVE,
+      }),
+    ];
+
+    renderSection([
+      makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID, legacyUserId: 101 }),
+      makeIndividualLink({
+        id: "cklink0000000000000000pub0",
+        athleteId: UNLINKED_ATHLETE_ID,
+        legacyUserId: 102,
+        publishedDayCount: 7,
+        lastPublishedAt: PUBLISHED_AT,
+      }),
+    ]);
+
+    expect(screen.getByText("Never published")).toBeInTheDocument();
+    expect(
+      screen.getByText(`Last published ${formatDate(PUBLISHED_AT, "day")}`),
+    ).toBeInTheDocument();
   });
 
   it("shows a skeleton for the linked legacy identity instead of the raw #id while the live list is still loading (flash fix)", () => {

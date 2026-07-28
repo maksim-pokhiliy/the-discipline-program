@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
@@ -28,6 +28,7 @@ const levelsState: QueryState<LegacyTrainingLevel[]> = {
   isPending: false,
 };
 const linksState: QueryState<MobileLink[]> = { data: [], isPending: false };
+const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
 
 type RosterAthlete = Pick<CoachAthleteListItem, "userId" | "name" | "email">;
 
@@ -45,7 +46,11 @@ vi.mock("@app/lib/hooks", () => ({
   useCoachAthletes: () => coachAthletesState,
   useMobileConnections: () => connectionsState,
   useTrainingLevels: () => levelsState,
-  useMobileLinks: () => linksState,
+  useMobileLinks: (planId: string, weekStart?: string) => {
+    mobileLinksSpy(planId, weekStart);
+
+    return linksState;
+  },
 }));
 
 vi.mock("./manage-mobile-links-modal", () => ({
@@ -59,9 +64,34 @@ vi.mock("./publish-week-modal", () => ({
 const { MobilePublishingStrip } = await import("./mobile-publishing-strip");
 
 const PLAN_ID = "ckplan1234567890abcdef0123";
-const MONDAY = new Date("2026-01-05T00:00:00.000Z");
+const MONDAY = new Date(2026, 0, 5);
+const MONDAY_PARAM = "2026-01-05";
+const PUBLISH_BUTTON_NAME = "Publish this week";
+const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
+const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
+const WEEK_PUBLISHED_AT = new Date(2026, 0, 5, 12);
+const LIFETIME_PUBLISHED_AT = new Date(2025, 10, 20, 12);
+const LIFETIME_DAY_COUNT = 8;
+const WEEK_DAY_COUNT = 5;
+const NEVER_PUBLISHED = { publishedDayCount: 0, lastPublishedAt: null };
+const PUBLISHED_THIS_WEEK = {
+  publishedDayCount: WEEK_DAY_COUNT,
+  lastPublishedAt: WEEK_PUBLISHED_AT,
+};
+const PUBLISHED_BEFORE = {
+  publishedDayCount: LIFETIME_DAY_COUNT,
+  lastPublishedAt: LIFETIME_PUBLISHED_AT,
+};
 
 const renderStrip = () => render(<MobilePublishingStrip planId={PLAN_ID} monday={MONDAY} />);
+
+const hoverPublishTooltip = async (): Promise<HTMLElement> => {
+  const publishButton = screen.getByRole("button", { name: PUBLISH_BUTTON_NAME });
+
+  fireEvent.mouseOver(publishButton.parentElement ?? publishButton);
+
+  return screen.findByRole("tooltip");
+};
 
 beforeEach(() => {
   connectionsState.data = [makeMobileConnection()];
@@ -72,6 +102,7 @@ beforeEach(() => {
   linksState.isPending = false;
   coachAthletesState.data = { athletes: [ALICE] };
   coachAthletesState.isPending = false;
+  mobileLinksSpy.mockClear();
 });
 
 afterEach(() => {
@@ -85,7 +116,7 @@ describe("MobilePublishingStrip (MT-14)", () => {
     renderStrip();
 
     expect(screen.getByText("Not linked")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Publish this week" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeDisabled();
   });
 
   it("lists the linked level names when names resolve", () => {
@@ -97,7 +128,7 @@ describe("MobilePublishingStrip (MT-14)", () => {
     renderStrip();
 
     expect(screen.getByText("Publishes to: Pro, RX")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Publish this week" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
   });
 
   it("falls back to a level count when training levels are unavailable", () => {
@@ -128,7 +159,7 @@ describe("MobilePublishingStrip individual + mixed channels", () => {
     renderStrip();
 
     expect(screen.getByText("Publishes to: Alice Stone")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Publish this week" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
   });
 
   it("labels both channels when general and individual links coexist", () => {
@@ -198,5 +229,84 @@ describe("MobilePublishingStrip individual + mixed channels", () => {
     renderStrip();
 
     expect(screen.getByText("Publishes to: ghost@example.com")).toBeInTheDocument();
+  });
+});
+
+describe("MobilePublishingStrip publish status (MP-22)", () => {
+  it("subscribes to the links query scoped to the week the coach has open", () => {
+    renderStrip();
+
+    expect(mobileLinksSpy).toHaveBeenCalledWith(PLAN_ID, MONDAY_PARAM);
+  });
+
+  it("warns that a link has never published without the coach opening Manage", () => {
+    linksState.data = [makeMobileLink({ weekPublish: NEVER_PUBLISHED })];
+
+    renderStrip();
+
+    expect(screen.getByText("Never published")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
+  });
+
+  it("counts the never-published links honestly when the others already went out", () => {
+    linksState.data = [
+      makeMobileLink({ id: "cklink2000000000000000000a", weekPublish: NEVER_PUBLISHED }),
+      makeMobileLink({
+        id: "cklink3000000000000000000a",
+        legacyLevelId: 3,
+        ...PUBLISHED_BEFORE,
+        weekPublish: PUBLISHED_THIS_WEEK,
+      }),
+    ];
+
+    renderStrip();
+
+    expect(screen.getByText("1 never published")).toBeInTheDocument();
+    expect(screen.getByText("This week published Jan 5")).toBeInTheDocument();
+  });
+
+  it("flags the open week as pending when every link published before but not this week", () => {
+    linksState.data = [
+      makeMobileLink({
+        id: "cklink2000000000000000000a",
+        ...PUBLISHED_BEFORE,
+        weekPublish: NEVER_PUBLISHED,
+      }),
+      makeMobileLink({
+        id: "cklink3000000000000000000a",
+        legacyLevelId: 3,
+        ...PUBLISHED_BEFORE,
+        weekPublish: NEVER_PUBLISHED,
+      }),
+    ];
+
+    renderStrip();
+
+    expect(screen.getByText("This week not published yet")).toBeInTheDocument();
+  });
+
+  it("confirms the week publish date once every link has gone out this week", () => {
+    linksState.data = [makeMobileLink({ ...PUBLISHED_BEFORE, weekPublish: PUBLISHED_THIS_WEEK })];
+
+    renderStrip();
+
+    expect(screen.getByText("This week published Jan 5")).toBeInTheDocument();
+    expect(screen.queryByText("Never published")).toBeNull();
+  });
+
+  it("explains what to link first when Publish is disabled", async () => {
+    linksState.data = [];
+
+    renderStrip();
+
+    expect(await hoverPublishTooltip()).toHaveTextContent(PUBLISH_DISABLED_TOOLTIP);
+  });
+
+  it("spells out the week scope on the enabled Publish button", async () => {
+    linksState.data = [makeMobileLink()];
+
+    renderStrip();
+
+    expect(await hoverPublishTooltip()).toHaveTextContent(PUBLISH_WEEK_SCOPE_TOOLTIP);
   });
 });

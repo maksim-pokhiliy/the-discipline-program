@@ -5,6 +5,7 @@ import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile
 import type { MobileConnection } from "@repo/contracts/coaching/mobile-connection";
 import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
 import { MOBILE_RECONNECT_REQUIRED } from "@repo/contracts/coaching/mobile-publish";
+import { formatDate } from "@repo/shared";
 
 import {
   makeMobileConnection,
@@ -152,5 +153,73 @@ describe("ManageMobileLinksModal (MT-12)", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
 
     expect(deleteLinkMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("ManageMobileLinksModal row publish status (MP-22)", () => {
+  const PUBLISHED_AT = new Date(new Date().getFullYear(), 5, 11, 12);
+  const PUBLISHED_DAY_COUNT = 12;
+
+  it("warns on a training level that has never published", () => {
+    linksState.data = [makeMobileLink({ legacyLevelId: 2 })];
+
+    renderModal();
+
+    expect(screen.getByText("Never published")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unlink training level" })).toBeInTheDocument();
+  });
+
+  it("shows the last publish date on a training level that has published", () => {
+    linksState.data = [
+      makeMobileLink({
+        legacyLevelId: 2,
+        publishedDayCount: PUBLISHED_DAY_COUNT,
+        lastPublishedAt: PUBLISHED_AT,
+      }),
+    ];
+
+    renderModal();
+
+    expect(
+      screen.getByText(`Last published ${formatDate(PUBLISHED_AT, "day")}`),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Never published")).toBeNull();
+  });
+
+  it("stays on the lifetime status even when the link is pending for the open week", () => {
+    linksState.data = [
+      makeMobileLink({
+        legacyLevelId: 2,
+        publishedDayCount: PUBLISHED_DAY_COUNT,
+        lastPublishedAt: PUBLISHED_AT,
+        weekPublish: { publishedDayCount: 0, lastPublishedAt: null },
+      }),
+    ];
+
+    renderModal();
+
+    expect(
+      screen.getByText(`Last published ${formatDate(PUBLISHED_AT, "day")}`),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("This week not published yet")).toBeNull();
+  });
+
+  it("labels each linked level with its own status", () => {
+    linksState.data = [
+      makeMobileLink({ id: "cklink2000000000000000000a", legacyLevelId: 2 }),
+      makeMobileLink({
+        id: "cklink3000000000000000000a",
+        legacyLevelId: 3,
+        publishedDayCount: PUBLISHED_DAY_COUNT,
+        lastPublishedAt: PUBLISHED_AT,
+      }),
+    ];
+
+    renderModal();
+
+    expect(screen.getByText("Never published")).toBeInTheDocument();
+    expect(
+      screen.getByText(`Last published ${formatDate(PUBLISHED_AT, "day")}`),
+    ).toBeInTheDocument();
   });
 });

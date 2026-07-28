@@ -1,5 +1,13 @@
-import { Prisma } from "@prisma/client";
+import {
+  MobilePublishChannel,
+  Prisma,
+  type MobilePublishLink as PrismaMobilePublishLink,
+} from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
+
+import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
 import { linksApi } from "./links";
 
@@ -7,11 +15,21 @@ const COACH_PROFILE_ID = "clcoach000000000000000000";
 const USER_ID = "cluser0000000000000000000";
 const PLAN_ID = "clplan0000000000000000000";
 const LINK_ID = "cllink0000000000000000000";
+const OTHER_LINK_ID = "cllink1111111111111111111";
 const CONNECTION_ID = "clconn0000000000000000000";
 const ATHLETE_ID = "clathlete00000000000000000";
 const LEGACY_LEVEL_ID = 2;
+const OTHER_LEGACY_LEVEL_ID = 3;
 const LEGACY_USER_ID = 5;
 const NOW = new Date("2026-01-05T00:00:00.000Z");
+const WEEK_START = "2026-01-07";
+const WEEK_MONDAY_ISO = "2026-01-05T00:00:00.000Z";
+const WEEK_SUNDAY_ISO = "2026-01-11T00:00:00.000Z";
+const DAYS_IN_WEEK = 7;
+const PUBLISHED_DAY_COUNT = 4;
+const PUBLISHED_AT = new Date("2026-01-08T09:30:00.000Z");
+const WEEK_DAY_COUNT = 2;
+const WEEK_PUBLISHED_AT = new Date("2026-01-09T18:00:00.000Z");
 
 const mocks = vi.hoisted(() => ({
   findManyMock: vi.fn(),
@@ -43,28 +61,58 @@ vi.mock("../../../authz/guards", () => ({
   verifyMobileLinkOwnership: mocks.verifyMobileLinkOwnershipMock,
 }));
 
-const makePrismaLink = () => ({
+const makePrismaLink = (
+  overrides: Partial<PrismaMobilePublishLink> = {},
+): PrismaMobilePublishLink => ({
   id: LINK_ID,
   connectionId: CONNECTION_ID,
   planId: PLAN_ID,
-  channel: "GENERAL" as const,
+  channel: MobilePublishChannel.GENERAL,
   legacyLevelId: LEGACY_LEVEL_ID,
   legacyUserId: null,
   athleteId: null,
   createdAt: NOW,
   updatedAt: NOW,
+  ...overrides,
 });
 
-const makeIndividualPrismaLink = () => ({
-  id: LINK_ID,
-  connectionId: CONNECTION_ID,
-  planId: PLAN_ID,
-  channel: "INDIVIDUAL" as const,
-  legacyLevelId: null,
-  legacyUserId: LEGACY_USER_ID,
-  athleteId: ATHLETE_ID,
-  createdAt: NOW,
-  updatedAt: NOW,
+const makeIndividualPrismaLink = (
+  overrides: Partial<PrismaMobilePublishLink> = {},
+): PrismaMobilePublishLink =>
+  makePrismaLink({
+    channel: MobilePublishChannel.INDIVIDUAL,
+    legacyLevelId: null,
+    legacyUserId: LEGACY_USER_ID,
+    athleteId: ATHLETE_ID,
+    ...overrides,
+  });
+
+type PublishedDayAggregateRow = {
+  linkId: string;
+  _count: { id: number };
+  _max: { publishedAt: Date | null };
+};
+
+const makeAggregateRow = (
+  overrides: Partial<PublishedDayAggregateRow> = {},
+): PublishedDayAggregateRow => ({
+  linkId: LINK_ID,
+  _count: { id: PUBLISHED_DAY_COUNT },
+  _max: { publishedAt: PUBLISHED_AT },
+  ...overrides,
+});
+
+const weekScheduledDates = (weekStart: string): Date[] => {
+  const weekStartDate = resolveWeekStartDate(weekStart);
+
+  return dayOfWeekValues.map((dayOfWeek) => sessionAbsoluteDateFromParts(weekStartDate, dayOfWeek));
+};
+
+const lifetimeAggregateQuery = (linkIds: string[]) => ({
+  by: ["linkId"],
+  where: { linkId: { in: linkIds } },
+  _count: { id: true },
+  _max: { publishedAt: true },
 });
 
 const makePrismaError = (
@@ -122,6 +170,94 @@ describe("linksApi.listLinks", () => {
     await expect(linksApi.listLinks(USER_ID, PLAN_ID)).rejects.toBeInstanceOf(ForbiddenError);
 
     expect(mocks.findManyMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("linksApi.listLinks publish aggregates", () => {
+  beforeEach(() => {
+    mocks.findManyMock.mockReset();
+    mocks.groupByMock.mockReset();
+    mocks.resolveCoachIdMock.mockReset();
+    mocks.verifyPlanOwnershipMock.mockReset();
+    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
+    mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
+    mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
+    mocks.groupByMock.mockResolvedValue([]);
+  });
+
+  it("joins each aggregate row onto its own link and reports zero for the links with no rows", async () => {
+    mocks.findManyMock.mockResolvedValue([
+      makePrismaLink(),
+      makePrismaLink({ id: OTHER_LINK_ID, legacyLevelId: OTHER_LEGACY_LEVEL_ID }),
+    ]);
+    mocks.groupByMock.mockResolvedValue([makeAggregateRow({ linkId: OTHER_LINK_ID })]);
+
+    const result = await linksApi.listLinks(USER_ID, PLAN_ID);
+
+    expect(result.map((link) => [link.id, link.publishedDayCount, link.lastPublishedAt])).toEqual([
+      [LINK_ID, 0, null],
+      [OTHER_LINK_ID, PUBLISHED_DAY_COUNT, PUBLISHED_AT],
+    ]);
+  });
+
+  it("issues a single lifetime aggregate query and omits weekPublish when no weekStart is given", async () => {
+    mocks.groupByMock.mockResolvedValue([makeAggregateRow()]);
+
+    const result = await linksApi.listLinks(USER_ID, PLAN_ID);
+
+    expect(mocks.groupByMock).toHaveBeenCalledTimes(1);
+    expect(mocks.groupByMock).toHaveBeenCalledWith(lifetimeAggregateQuery([LINK_ID]));
+    expect(result.flatMap((link) => Object.keys(link))).not.toContain("weekPublish");
+    expect(result.map((link) => link.publishedDayCount)).toEqual([PUBLISHED_DAY_COUNT]);
+  });
+
+  it("runs a second aggregate scoped to the seven scheduled days of the requested week", async () => {
+    const scheduledDates = weekScheduledDates(WEEK_START);
+
+    mocks.groupByMock.mockResolvedValueOnce([makeAggregateRow()]);
+    mocks.groupByMock.mockResolvedValueOnce([
+      makeAggregateRow({
+        _count: { id: WEEK_DAY_COUNT },
+        _max: { publishedAt: WEEK_PUBLISHED_AT },
+      }),
+    ]);
+
+    const result = await linksApi.listLinks(USER_ID, PLAN_ID, WEEK_START);
+
+    expect(mocks.groupByMock).toHaveBeenCalledTimes(2);
+    expect(mocks.groupByMock).toHaveBeenNthCalledWith(1, lifetimeAggregateQuery([LINK_ID]));
+    expect(mocks.groupByMock).toHaveBeenNthCalledWith(2, {
+      by: ["linkId"],
+      where: { linkId: { in: [LINK_ID] }, scheduledDate: { in: scheduledDates } },
+      _count: { id: true },
+      _max: { publishedAt: true },
+    });
+    expect(scheduledDates).toHaveLength(DAYS_IN_WEEK);
+    expect(scheduledDates.at(0)?.toISOString()).toBe(WEEK_MONDAY_ISO);
+    expect(scheduledDates.at(-1)?.toISOString()).toBe(WEEK_SUNDAY_ISO);
+    expect(result.map((link) => link.weekPublish)).toEqual([
+      { publishedDayCount: WEEK_DAY_COUNT, lastPublishedAt: WEEK_PUBLISHED_AT },
+    ]);
+  });
+
+  it("reports a zero week aggregate for a link that published earlier but not in the open week", async () => {
+    mocks.groupByMock.mockResolvedValueOnce([makeAggregateRow()]);
+    mocks.groupByMock.mockResolvedValueOnce([]);
+
+    const result = await linksApi.listLinks(USER_ID, PLAN_ID, WEEK_START);
+
+    expect(result.map((link) => [link.publishedDayCount, link.weekPublish])).toEqual([
+      [PUBLISHED_DAY_COUNT, { publishedDayCount: 0, lastPublishedAt: null }],
+    ]);
+  });
+
+  it("issues no aggregate query at all when the plan has no links", async () => {
+    mocks.findManyMock.mockResolvedValue([]);
+
+    const result = await linksApi.listLinks(USER_ID, PLAN_ID, WEEK_START);
+
+    expect(result).toEqual([]);
+    expect(mocks.groupByMock).not.toHaveBeenCalled();
   });
 });
 
@@ -210,6 +346,48 @@ describe("linksApi.createLink", () => {
       createdAt: NOW,
       updatedAt: NOW,
     });
+  });
+
+  it("returns the real aggregate of an already-published GENERAL link the upsert resolved to", async () => {
+    mocks.groupByMock.mockResolvedValue([makeAggregateRow()]);
+
+    const result = await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      legacyLevelId: LEGACY_LEVEL_ID,
+    });
+
+    expect(mocks.groupByMock).toHaveBeenCalledWith(lifetimeAggregateQuery([LINK_ID]));
+    expect(result.publishedDayCount).toBe(PUBLISHED_DAY_COUNT);
+    expect(result.lastPublishedAt).toEqual(PUBLISHED_AT);
+    expect(Object.keys(result)).not.toContain("weekPublish");
+  });
+
+  it("returns the real aggregate of an already-published INDIVIDUAL link the upsert resolved to", async () => {
+    mocks.upsertMock.mockResolvedValue(makeIndividualPrismaLink());
+    mocks.groupByMock.mockResolvedValue([makeAggregateRow()]);
+
+    const result = await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+      legacyUserId: LEGACY_USER_ID,
+    });
+
+    expect(mocks.groupByMock).toHaveBeenCalledWith(lifetimeAggregateQuery([LINK_ID]));
+    expect(result.publishedDayCount).toBe(PUBLISHED_DAY_COUNT);
+    expect(result.lastPublishedAt).toEqual(PUBLISHED_AT);
+  });
+
+  it("ignores aggregate rows belonging to another link when resolving the created link", async () => {
+    mocks.groupByMock.mockResolvedValue([makeAggregateRow({ linkId: OTHER_LINK_ID })]);
+
+    const result = await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      legacyLevelId: LEGACY_LEVEL_ID,
+    });
+
+    expect(result.publishedDayCount).toBe(0);
+    expect(result.lastPublishedAt).toBeNull();
   });
 
   it("rejects with BadRequestError when the coach has no mobile connection", async () => {
