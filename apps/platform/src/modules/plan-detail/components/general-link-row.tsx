@@ -8,7 +8,6 @@ import { type GeneralMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { MobileLinkPublishStatus } from "./mobile-link-publish-status";
 
 const UNLINK_ARIA = "Unlink training level";
-const SINGLE_LINK_COUNT = 1;
 
 type GeneralLinkRowProps = {
   link: GeneralMobileLink;
@@ -28,8 +27,7 @@ export const GeneralLinkRow: React.FC<GeneralLinkRowProps> = ({ link, label, onU
       <Typography variant="body2">{label}</Typography>
 
       <MobileLinkPublishStatus
-        neverPublishedCount={link.publishedDayCount === 0 ? SINGLE_LINK_COUNT : 0}
-        totalCount={SINGLE_LINK_COUNT}
+        publishedDayCount={link.publishedDayCount}
         lastPublishedAt={link.lastPublishedAt}
       />
     </Stack>

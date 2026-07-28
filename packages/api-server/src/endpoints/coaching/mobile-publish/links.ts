@@ -3,7 +3,9 @@ import { Prisma } from "@prisma/client";
 import {
   type CreateMobileLinkRequest,
   type MobileLink,
+  type MobileLinkPublishAggregate,
 } from "@repo/contracts/coaching/mobile-link";
+import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import { BadRequestError, ConflictError } from "@repo/errors";
 
 import {
@@ -12,23 +14,34 @@ import {
   verifyPlanOwnership,
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { type MobileLinkPublishAggregate, mapToMobileLink } from "../../../mappers/coaching";
+import { mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
+import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
 export type LinksApi = {
   createLink(userId: string, data: CreateMobileLinkRequest): Promise<MobileLink>;
-  listLinks(userId: string, planId: string): Promise<MobileLink[]>;
+  listLinks(userId: string, planId: string, weekStart?: string): Promise<MobileLink[]>;
   deleteLink(userId: string, linkId: string): Promise<void>;
 };
 
 const NEVER_PUBLISHED: MobileLinkPublishAggregate = { publishedDayCount: 0, lastPublishedAt: null };
 
+const buildWeekScheduledDates = (weekStart: string): Date[] => {
+  const weekStartDate = resolveWeekStartDate(weekStart);
+
+  return dayOfWeekValues.map((dayOfWeek) => sessionAbsoluteDateFromParts(weekStartDate, dayOfWeek));
+};
+
 const loadPublishAggregates = async (
   linkIds: string[],
+  scheduledDates?: Date[],
 ): Promise<Map<string, MobileLinkPublishAggregate>> => {
   const publishedDays = await prisma.mobilePublishedDay.groupBy({
     by: ["linkId"],
-    where: { linkId: { in: linkIds } },
+    where: {
+      linkId: { in: linkIds },
+      ...(scheduledDates !== undefined && { scheduledDate: { in: scheduledDates } }),
+    },
     _count: { id: true },
     _max: { publishedAt: true },
   });
@@ -145,7 +158,7 @@ export const linksApi: LinksApi = {
     }
   },
 
-  listLinks: async (userId, planId) => {
+  listLinks: async (userId, planId, weekStart) => {
     const coachProfileId = await resolveCoachId(userId);
 
     await verifyPlanOwnership(planId, userId);
@@ -159,9 +172,21 @@ export const linksApi: LinksApi = {
       return [];
     }
 
-    const aggregates = await loadPublishAggregates(links.map((link) => link.id));
+    const linkIds = links.map((link) => link.id);
+    const [lifetimeAggregates, weekAggregates] = await Promise.all([
+      loadPublishAggregates(linkIds),
+      weekStart === undefined
+        ? undefined
+        : loadPublishAggregates(linkIds, buildWeekScheduledDates(weekStart)),
+    ]);
 
-    return links.map((link) => mapToMobileLink(link, aggregates.get(link.id) ?? NEVER_PUBLISHED));
+    return links.map((link) =>
+      mapToMobileLink(
+        link,
+        lifetimeAggregates.get(link.id) ?? NEVER_PUBLISHED,
+        weekAggregates === undefined ? undefined : (weekAggregates.get(link.id) ?? NEVER_PUBLISHED),
+      ),
+    );
   },
 
   deleteLink: async (userId, linkId) => {

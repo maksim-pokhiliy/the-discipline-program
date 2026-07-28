@@ -4,7 +4,9 @@ import {
 } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { type MobileLinkPublishAggregate, mapToMobileLink } from "./mobile-link.mapper";
+import { type MobileLinkPublishAggregate } from "@repo/contracts/coaching/mobile-link";
+
+import { mapToMobileLink } from "./mobile-link.mapper";
 
 const NOW = new Date("2025-06-01T12:00:00Z");
 const LATER = new Date("2025-06-15T12:00:00Z");

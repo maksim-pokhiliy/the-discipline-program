@@ -17,7 +17,7 @@ import { withCoachAuth } from "@app/lib/server/auth";
 export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetWithQueryHandler(
-      (userId, { planId }) => mobilePublishApi.listLinks(userId, planId),
+      (userId, { planId, weekStart }) => mobilePublishApi.listLinks(userId, planId, weekStart),
       getMobileLinksQuerySchema,
       getMobileLinksResponseSchema,
     ),

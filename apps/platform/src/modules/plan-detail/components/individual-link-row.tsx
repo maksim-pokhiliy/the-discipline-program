@@ -31,7 +31,6 @@ const MOBILE_PREFIX = "Mobile: ";
 const USERNAME_PREFIX = " · @";
 const NO_SELECTION = "";
 const SECONDARY_SKELETON_WIDTH = 140;
-const SINGLE_LINK_COUNT = 1;
 
 type IndividualLinkRowProps = {
   displayName: string;
@@ -136,18 +135,19 @@ export const IndividualLinkRow: React.FC<IndividualLinkRowProps> = ({
       spacing={1.5}
       sx={{ minWidth: 0 }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <UserChip
-          user={{ id: athleteId, name: displayName, image: resolvedImage }}
-          secondary={secondary}
-        />
-      </Box>
+      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ minWidth: 0 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <UserChip
+            user={{ id: athleteId, name: displayName, image: resolvedImage }}
+            secondary={secondary}
+          />
+        </Box>
 
-      <MobileLinkPublishStatus
-        neverPublishedCount={existingLink.publishedDayCount === 0 ? SINGLE_LINK_COUNT : 0}
-        totalCount={SINGLE_LINK_COUNT}
-        lastPublishedAt={existingLink.lastPublishedAt}
-      />
+        <MobileLinkPublishStatus
+          publishedDayCount={existingLink.publishedDayCount}
+          lastPublishedAt={existingLink.lastPublishedAt}
+        />
+      </Stack>
 
       <IconButton
         aria-label={UNLINK_ARIA}

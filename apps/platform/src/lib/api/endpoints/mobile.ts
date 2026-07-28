@@ -27,8 +27,14 @@ export const createMobileAPI = (client: ApiClient) => ({
   createLink: (data: CreateMobileLinkRequest): Promise<MobileLink> =>
     client.request("/api/platform/mobile/links", "POST", data),
 
-  listLinks: (planId: string): Promise<MobileLink[]> =>
-    client.request("/api/platform/mobile/links", "GET", undefined, { planId }),
+  listLinks: (planId: string, weekStart?: string): Promise<MobileLink[]> => {
+    const queryParams: Record<string, string> = {
+      planId,
+      ...(weekStart !== undefined && { weekStart }),
+    };
+
+    return client.request("/api/platform/mobile/links", "GET", undefined, queryParams);
+  },
 
   deleteLink: (linkId: string): Promise<void> =>
     client.requestNoContent(`/api/platform/mobile/links/${linkId}`, "DELETE"),

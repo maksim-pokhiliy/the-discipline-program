@@ -8,9 +8,9 @@ import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 import {
   type GeneralMobileLink,
   type IndividualMobileLink,
-  type MobileLink,
   partitionMobileLinks,
 } from "@repo/contracts/coaching/mobile-link";
+import { formatDateParam } from "@repo/shared";
 
 import {
   useCoachAthletes,
@@ -19,8 +19,10 @@ import {
   useTrainingLevels,
 } from "@app/lib/hooks";
 
+import { summarizeStripPublishStatus } from "../lib/summarize-strip-publish-status";
+
 import { ManageMobileLinksModal } from "./manage-mobile-links-modal";
-import { MobileLinkPublishStatus } from "./mobile-link-publish-status";
+import { MobileStripPublishStatus } from "./mobile-strip-publish-status";
 import { PublishWeekModal } from "./publish-week-modal";
 
 type MobilePublishingStripProps = {
@@ -86,41 +88,11 @@ const describeLinks = (
   return summary.allResolved ? `${PUBLISHES_TO_PREFIX}${summary.clause}` : summary.clause;
 };
 
-type PublishStatusSummary = {
-  neverPublishedCount: number;
-  totalCount: number;
-  lastPublishedAt: Date | null;
-};
-
-const toTime = (value: Date): number => new Date(value).getTime();
-
-const summarizePublishStatus = (links: MobileLink[]): PublishStatusSummary => {
-  let neverPublishedCount = 0;
-  let lastPublishedAt: Date | null = null;
-
-  for (const link of links) {
-    if (link.publishedDayCount === 0) {
-      neverPublishedCount += 1;
-    }
-
-    const publishedAt = link.lastPublishedAt;
-
-    if (
-      publishedAt !== null &&
-      (lastPublishedAt === null || toTime(publishedAt) > toTime(lastPublishedAt))
-    ) {
-      lastPublishedAt = publishedAt;
-    }
-  }
-
-  return { neverPublishedCount, totalCount: links.length, lastPublishedAt };
-};
-
 export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ planId, monday }) => {
   const connectionsQuery = useMobileConnections();
   const isConnected = (connectionsQuery.data ?? []).length > 0;
 
-  const linksQuery = useMobileLinks(planId);
+  const linksQuery = useMobileLinks(planId, formatDateParam(monday));
   const levelsQuery = useTrainingLevels(isConnected);
   const athletesQuery = useCoachAthletes();
 
@@ -149,7 +121,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
   );
 
   const publishStatus = useMemo(
-    () => summarizePublishStatus(linksQuery.data ?? []),
+    () => summarizeStripPublishStatus(linksQuery.data ?? []),
     [linksQuery.data],
   );
 
@@ -170,7 +142,13 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
           spacing={2}
           flexWrap="wrap"
         >
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            flexWrap="wrap"
+            sx={{ minWidth: 0 }}
+          >
             <Typography variant="overline" color="text.secondary">
               Mobile publishing
             </Typography>
@@ -179,11 +157,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({ pl
               {statusLabel}
             </Typography>
 
-            <MobileLinkPublishStatus
-              neverPublishedCount={publishStatus.neverPublishedCount}
-              totalCount={publishStatus.totalCount}
-              lastPublishedAt={publishStatus.lastPublishedAt}
-            />
+            <MobileStripPublishStatus status={publishStatus} />
           </Stack>
 
           <Stack direction="row" alignItems="center" spacing={1}>

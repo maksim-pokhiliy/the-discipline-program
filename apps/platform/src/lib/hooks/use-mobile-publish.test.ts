@@ -312,7 +312,7 @@ describe("usePublishMobile", () => {
 
     publishMock.mockResolvedValueOnce(result);
 
-    const { view } = renderRunner(() => usePublishMobile(PLAN_ID));
+    const { view } = renderRunner(() => usePublishMobile());
 
     let resolved: PublishMobileResult | undefined;
 
@@ -329,7 +329,7 @@ describe("usePublishMobile", () => {
 
     publishMock.mockRejectedValueOnce(failure);
 
-    const { view } = renderRunner(() => usePublishMobile(PLAN_ID));
+    const { view } = renderRunner(() => usePublishMobile());
 
     await act(async () => {
       await expect(view.result.current.mutateAsync(payload)).rejects.toBe(failure);

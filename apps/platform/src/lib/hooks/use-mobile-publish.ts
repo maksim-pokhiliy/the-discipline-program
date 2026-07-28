@@ -33,10 +33,10 @@ export const useMobileAthletes = (enabled: boolean) =>
     staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
   });
 
-export const useMobileLinks = (planId: string) =>
+export const useMobileLinks = (planId: string, weekStart?: string) =>
   useQuery({
-    queryKey: platformKeys.mobile.links(planId),
-    queryFn: () => api.mobile.listLinks(planId),
+    queryKey: platformKeys.mobile.links(planId, weekStart),
+    queryFn: () => api.mobile.listLinks(planId, weekStart),
     enabled: Boolean(planId),
   });
 
@@ -90,13 +90,7 @@ export const useDeleteMobileLink = (planId: string) => {
   });
 };
 
-export const usePublishMobile = (planId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+export const usePublishMobile = () =>
+  useMutation({
     mutationFn: api.mobile.publish,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.links(planId) });
-    },
   });
-};
