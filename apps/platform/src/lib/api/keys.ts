@@ -40,6 +40,7 @@ export const platformKeys = {
   },
   exercises: {
     all: () => [...ROOT, "exercises"] as const,
+    forAthlete: () => [...ROOT, "exercises", "athlete"] as const,
   },
   modifiers: {
     search: (q?: string) => [...ROOT, "modifiers", "search", q ?? null] as const,

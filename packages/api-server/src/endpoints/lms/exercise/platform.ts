@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 
-import { type CreateExerciseData, type Exercise } from "@repo/contracts/lms/exercise";
+import {
+  type CreateExerciseData,
+  type Exercise,
+  type GetAthleteMovementsResponse,
+} from "@repo/contracts/lms/exercise";
 
 import { requireCoachLikeRole } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
@@ -47,5 +51,13 @@ export const lmsExercisePlatformApi = {
 
       return handlePrismaError(error, { entity: "Exercise" });
     }
+  },
+
+  listForAthlete: async (_userId: string): Promise<GetAthleteMovementsResponse> => {
+    return prisma.exercise.findMany({
+      where: { nature: natureToPrisma.CONCRETE },
+      orderBy: { canonicalName: "asc" },
+      select: { id: true, canonicalName: true },
+    });
   },
 };

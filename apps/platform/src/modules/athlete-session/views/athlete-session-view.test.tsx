@@ -343,6 +343,83 @@ const buildResponse = (
   ],
 });
 
+const spreadGroupBlock = (): BlockView => ({
+  blockId: "clz0000000000000000000blk5",
+  label: "Kettlebell Complex",
+  intensity: null,
+  note: null,
+  items: [
+    {
+      kind: "schema",
+      schema: {
+        schemaId: "clz000000000000000000sch6",
+        header: "Kettlebell Complex",
+        composition: { repetition: { kind: "count", count: 3 } },
+        label: { kind: "rounds", family: "ROUNDS" },
+        isBenchmark: false,
+        resultType: null,
+        intensity: null,
+        existingResult: null,
+        items: [
+          {
+            kind: "group",
+            label: null,
+            members: [
+              {
+                rowId: "clz000000000000000000row9",
+                movement: "1-arm KB overhead walking lunges",
+                media: null,
+                sets: null,
+                reps: { kind: "count", value: 18 },
+                load: {
+                  kind: "byProfile",
+                  axes: [
+                    {
+                      axisId: "clz00000000000000000axs03",
+                      label: "Level",
+                      values: ["RX", "SC"],
+                      binding: null,
+                    },
+                    {
+                      axisId: "clz00000000000000000axs04",
+                      label: "Sex",
+                      values: ["Male", "Female"],
+                      binding: null,
+                    },
+                  ],
+                  cells: [
+                    { coords: ["RX", "Male"], kg: 24 },
+                    { coords: ["RX", "Female"], kg: 16 },
+                    { coords: ["SC", "Male"], kg: 16 },
+                    { coords: ["SC", "Female"], kg: 8 },
+                  ],
+                },
+                resolvedLoad: {
+                  status: "unresolved",
+                  reason: "missing_profile_pick",
+                  prompt: "pick_profile",
+                  axisLabels: ["Level", "Sex"],
+                },
+                intensity: null,
+                tempo: null,
+                side: null,
+                rest: null,
+                modifiers: [],
+                notes: null,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+});
+
+const spreadResponse = (): SessionDetailResponse => ({
+  ...buildResponse(),
+  blocks: [spreadGroupBlock(), powerBlock()],
+});
+
 const setView = (response: SessionDetailResponse): void => {
   useAthleteSessionViewMock.mockReturnValue({ data: response, isLoading: false, error: null });
 };
@@ -428,6 +505,68 @@ describe("AthleteSessionView", () => {
 
     expect(screen.getByText("Group")).toBeInTheDocument();
     expect(screen.queryByText(/choose one/i)).not.toBeInTheDocument();
+  });
+
+  it("renders the whole two-axis spread for a byProfile member inside a row group", () => {
+    setView(spreadResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    expect(
+      screen.getByText("18 reps RX Male:24 Female:16 / SC Male:16 Female:8"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the grouped spread breakable rather than pinned to one line", () => {
+    setView(spreadResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const groupedLoad = screen.getByText("18 reps RX Male:24 Female:16 / SC Male:16 Female:8");
+
+    expect(groupedLoad).toHaveStyle({ overflowWrap: "anywhere" });
+    expect(groupedLoad).not.toHaveStyle({ whiteSpace: "nowrap" });
+    expect(groupedLoad).toHaveStyle({ minWidth: "0px", flexShrink: "1" });
+  });
+
+  it("gives the grouped metric its own right-aligned line instead of squeezing it", () => {
+    setView(spreadResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const groupedLoad = screen.getByText("18 reps RX Male:24 Female:16 / SC Male:16 Female:8");
+    const movementWrap = screen.getByText("1-arm KB overhead walking lunges").parentElement;
+
+    expect(groupedLoad.parentElement).toHaveStyle({
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+    });
+    expect(movementWrap).toHaveStyle({ flex: "1 1 auto" });
+  });
+
+  it("keeps the row spread breakable rather than pinned to one line", () => {
+    setView(spreadResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const rowLoad = screen.getByText("RX M:60 F:42 / Scaled M:45 F:30");
+
+    expect(rowLoad).toHaveStyle({ overflowWrap: "anywhere" });
+    expect(rowLoad).not.toHaveStyle({ whiteSpace: "nowrap" });
+    expect(rowLoad.parentElement).toHaveStyle({ flex: "0 1 auto", minWidth: "0px" });
+  });
+
+  it("lands a wrapped row metric on the right, the same edge as the grouped one", () => {
+    setView(spreadResponse());
+
+    render(<AthleteSessionView sessionId={SESSION_ID} />);
+
+    const rowMetric = screen.getByText("RX M:60 F:42 / Scaled M:45 F:30").parentElement;
+
+    expect(rowMetric?.parentElement).toHaveStyle({
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+    });
   });
 
   it("shows the Mark Completed action and no Done pill when the session is not done", () => {

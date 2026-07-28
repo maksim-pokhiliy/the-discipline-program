@@ -1,6 +1,7 @@
-import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type GetAthleteMovementsResponse } from "@repo/contracts/lms/exercise";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import {
   type BenchmarkRecordView,
@@ -8,19 +9,39 @@ import {
   type RecordsViewResponse,
 } from "@repo/contracts/lms/records-view";
 
+import { DatePickerStub } from "@app/test/date-picker-stub";
 import { render } from "@app/test/render";
 
 const useAthleteRecordsMock = vi.fn();
+const useAthleteMovementsMock = vi.fn();
+
+const MOVEMENT_CATALOG: GetAthleteMovementsResponse = [
+  { id: "clz0000000000000000000ex07", canonicalName: "Overhead Squat" },
+];
 
 vi.mock("@app/lib/hooks/use-athlete-records", () => ({
   useAthleteRecords: () => useAthleteRecordsMock(),
+}));
+
+vi.mock("@app/lib/hooks/use-exercises", () => ({
+  useAthleteMovements: () => useAthleteMovementsMock(),
 }));
 
 vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
   useCreateOneRMRecord: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({ DatePicker: DatePickerStub }));
+
 const { AthleteRecordsView } = await import("./athlete-records-view");
+
+beforeEach(() => {
+  useAthleteMovementsMock.mockReturnValue({
+    data: MOVEMENT_CATALOG,
+    isLoading: false,
+    error: null,
+  });
+});
 
 const oneRMRecord = (overrides: Partial<OneRMRecordView> = {}): OneRMRecordView => ({
   exerciseId: "clz0000000000000000000ex01",
@@ -87,6 +108,14 @@ const buildResponse = (overrides: Partial<RecordsViewResponse> = {}): RecordsVie
   ...overrides,
 });
 
+const openPicker = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: "Update 1RM" }));
+  fireEvent.mouseDown(screen.getByRole("combobox"));
+};
+
+const optionLabels = (): (string | null)[] =>
+  screen.queryAllByRole("option").map((node) => node.textContent);
+
 describe("AthleteRecordsView", () => {
   it("renders the loading state while the query is pending", () => {
     useAthleteRecordsMock.mockReturnValue({ data: undefined, isLoading: true, error: null });
@@ -132,5 +161,116 @@ describe("AthleteRecordsView", () => {
 
     expect(screen.getByRole("heading", { name: "Records" })).toBeInTheDocument();
     expect(screen.getByText("Back Squat")).toBeInTheDocument();
+  });
+
+  it("feeds the fetched movement catalog into the 1RM picker", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse({ oneRM: [], benchmarks: [] }),
+      isLoading: false,
+      error: null,
+    });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(optionLabels()).toEqual(["Overhead Squat"]);
+  });
+});
+
+describe("AthleteRecordsView movement catalog states", () => {
+  it("says the movement list is loading rather than reading as no such movement", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse({ oneRM: [], benchmarks: [] }),
+      isLoading: false,
+      error: null,
+    });
+    useAthleteMovementsMock.mockReturnValue({ data: undefined, isLoading: true, error: null });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(screen.getByText("Loading movements…")).toBeInTheDocument();
+    expect(screen.queryByText("No options")).not.toBeInTheDocument();
+  });
+
+  it("says the movement list failed rather than reading as no such movement", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse({ oneRM: [], benchmarks: [] }),
+      isLoading: false,
+      error: null,
+    });
+    useAthleteMovementsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error("boom"),
+    });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(
+      screen.getByText("Movement list unavailable. Reload the page to try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No options")).not.toBeInTheDocument();
+  });
+
+  it("still offers the athlete's own movements while the catalog is loading", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse(),
+      isLoading: false,
+      error: null,
+    });
+    useAthleteMovementsMock.mockReturnValue({ data: undefined, isLoading: true, error: null });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(optionLabels()).toEqual(["Back Squat"]);
+    expect(screen.queryByText("Loading movements…")).not.toBeInTheDocument();
+  });
+
+  it("still offers the athlete's own movements when the catalog failed", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse(),
+      isLoading: false,
+      error: null,
+    });
+    useAthleteMovementsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error("boom"),
+    });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(optionLabels()).toEqual(["Back Squat"]);
+    expect(
+      screen.queryByText("Movement list unavailable. Reload the page to try again."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps offering a loaded catalog when a background refetch errors", () => {
+    useAthleteRecordsMock.mockReturnValue({
+      data: buildResponse({ oneRM: [], benchmarks: [] }),
+      isLoading: false,
+      error: null,
+    });
+    useAthleteMovementsMock.mockReturnValue({
+      data: MOVEMENT_CATALOG,
+      isLoading: false,
+      error: new Error("boom"),
+    });
+
+    render(<AthleteRecordsView />);
+
+    openPicker();
+
+    expect(optionLabels()).toEqual(["Overhead Squat"]);
   });
 });

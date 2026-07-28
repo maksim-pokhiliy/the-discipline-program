@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
 import { platformKeys } from "@app/lib/api/keys";
+import { DatePickerStub } from "@app/test/date-picker-stub";
 import { render } from "@app/test/render";
 
 import { type OneRmMovementOption } from "./update-one-rm-form";
@@ -13,7 +14,13 @@ const BACK_SQUAT: OneRmMovementOption = {
   exerciseName: "Back Squat",
 };
 
+const DEADLIFT: OneRmMovementOption = {
+  exerciseId: "ckxw5p7gp0000q1mnzv5cuq02",
+  exerciseName: "Deadlift",
+};
+
 const MOVEMENTS: OneRmMovementOption[] = [BACK_SQUAT];
+const TWO_MOVEMENTS: OneRmMovementOption[] = [BACK_SQUAT, DEADLIFT];
 
 const createOneRmState = { isPending: false };
 const createOneRmMock: Mock = vi.fn();
@@ -25,25 +32,14 @@ vi.mock("@app/lib/hooks/use-one-rm-records", () => ({
   }),
 }));
 
-type DatePickerProps = {
-  value: Date | null;
-  onChange: (next: Date | null) => void;
-};
-
-vi.mock("@mui/x-date-pickers/DatePicker", () => ({
-  DatePicker: ({ value, onChange }: DatePickerProps) => (
-    <input
-      data-testid="datepicker"
-      data-value={value ? value.toISOString() : ""}
-      onChange={(event) => onChange(new Date(event.target.value))}
-    />
-  ),
-}));
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({ DatePicker: DatePickerStub }));
 
 const { UpdateOneRmModal } = await import("./update-one-rm-modal");
 
 const saveButton = (): HTMLElement => screen.getByRole("button", { name: "Save Record" });
 const valueField = (): HTMLElement => screen.getByLabelText("Value (kg)");
+const movementField = (): HTMLElement => screen.getByRole("combobox");
+const clearButton = (): HTMLElement => screen.getByLabelText("Clear");
 
 const selectBackSquat = (): void => {
   fireEvent.mouseDown(screen.getByRole("combobox"));
@@ -180,5 +176,82 @@ describe("UpdateOneRmModal", () => {
     fireEvent.click(saveButton());
 
     expect(createOneRmMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("UpdateOneRmModal movement choice", () => {
+  it("leaves the movement empty when the athlete clears the preset", () => {
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={TWO_MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
+
+    fireEvent.change(valueField(), { target: { value: "120" } });
+
+    expect(saveButton()).toBeEnabled();
+
+    fireEvent.click(clearButton());
+
+    expect(movementField()).toHaveValue("");
+    expect(saveButton()).toBeDisabled();
+  });
+
+  it("submits the movement the athlete switched to, not the preset", () => {
+    render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={TWO_MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
+
+    fireEvent.mouseDown(movementField());
+    fireEvent.click(screen.getByText(DEADLIFT.exerciseName));
+    fireEvent.change(valueField(), { target: { value: "180" } });
+    fireEvent.click(saveButton());
+
+    expect(createOneRmMock).toHaveBeenCalledTimes(1);
+    expect(createOneRmMock.mock.calls[0]?.[0]).toMatchObject({
+      exerciseId: DEADLIFT.exerciseId,
+      valueKg: 180,
+    });
+  });
+
+  it("applies the preset when the catalog arrives after the first render", () => {
+    const { rerender } = render(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={[]}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
+
+    fireEvent.change(valueField(), { target: { value: "120" } });
+
+    expect(saveButton()).toBeDisabled();
+
+    rerender(
+      <UpdateOneRmModal
+        open
+        onClose={vi.fn()}
+        movements={MOVEMENTS}
+        presetExerciseId={BACK_SQUAT.exerciseId}
+      />,
+    );
+
+    expect(saveButton()).toBeEnabled();
+
+    fireEvent.click(saveButton());
+
+    expect(createOneRmMock.mock.calls[0]?.[0]).toMatchObject({
+      exerciseId: BACK_SQUAT.exerciseId,
+      valueKg: 120,
+    });
   });
 });

@@ -1,11 +1,12 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { useMemo, type ReactElement } from "react";
 
 import AddRounded from "@mui/icons-material/AddRounded";
 import SearchRounded from "@mui/icons-material/SearchRounded";
 import { Box, Button, InputAdornment, Stack, Tabs, TextField, Typography } from "@mui/material";
 
+import { type GetAthleteMovementsResponse } from "@repo/contracts/lms/exercise";
 import { type RecordsViewResponse } from "@repo/contracts/lms/records-view";
 import { ChipTab, EmptyState } from "@repo/ui";
 
@@ -30,6 +31,8 @@ import {
   UPDATE_BUTTON_ICON_PX,
   UPDATE_ONE_RM_BUTTON_LABEL,
 } from "../utils/athlete-records.constants";
+import { buildMovementOptions } from "../utils/build-movement-options";
+import { type MovementCatalogStatus } from "../utils/movement-catalog-status";
 import {
   type RecordsFilter,
   type RecordsSection,
@@ -41,7 +44,11 @@ import { UpdateOneRmModal } from "./update-one-rm-modal";
 
 export type RecordsContentProps = {
   data: RecordsViewResponse;
+  movementCatalog?: GetAthleteMovementsResponse | undefined;
+  catalogStatus?: MovementCatalogStatus | undefined;
 };
+
+const EMPTY_CATALOG: GetAthleteMovementsResponse = [];
 
 const renderTitle = (): ReactElement => (
   <Stack spacing={TOOLBAR_TITLE_GAP} sx={{ minWidth: 0 }}>
@@ -162,8 +169,16 @@ const renderBenchmarkList = (filter: RecordsFilter): ReactElement => {
   );
 };
 
-export const RecordsContent = ({ data }: RecordsContentProps): ReactElement => {
+export const RecordsContent = ({
+  data,
+  movementCatalog = EMPTY_CATALOG,
+  catalogStatus,
+}: RecordsContentProps): ReactElement => {
   const filter = useRecordsFilter(data);
+  const movements = useMemo(
+    () => buildMovementOptions(data.oneRM, movementCatalog),
+    [data.oneRM, movementCatalog],
+  );
 
   return (
     <Stack spacing={CONTENT_STACK_GAP}>
@@ -187,10 +202,8 @@ export const RecordsContent = ({ data }: RecordsContentProps): ReactElement => {
         open={filter.isModalOpen}
         onClose={filter.closeModal}
         presetExerciseId={filter.modalExerciseId ?? undefined}
-        movements={data.oneRM.map((record) => ({
-          exerciseId: record.exerciseId,
-          exerciseName: record.exerciseName,
-        }))}
+        movements={movements}
+        catalogStatus={catalogStatus}
       />
     </Stack>
   );

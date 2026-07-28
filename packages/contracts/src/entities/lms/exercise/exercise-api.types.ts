@@ -3,6 +3,7 @@ import { type z } from "zod";
 import {
   type createExerciseRequestSchema,
   type deleteExerciseParamsSchema,
+  type getAthleteMovementsResponseSchema,
   type getExerciseByIdParamsSchema,
   type getExercisesPageDataResponseSchema,
   type getExercisesResponseSchema,
@@ -11,6 +12,8 @@ import {
 } from "./exercise-api.schema";
 
 export type GetExercisesResponse = z.infer<typeof getExercisesResponseSchema>;
+
+export type GetAthleteMovementsResponse = z.infer<typeof getAthleteMovementsResponseSchema>;
 
 export type GetExerciseByIdParams = z.infer<typeof getExerciseByIdParamsSchema>;
 
