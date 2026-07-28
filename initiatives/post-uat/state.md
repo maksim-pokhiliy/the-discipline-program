@@ -37,7 +37,7 @@
 
 ## Next action
 
-**▶ Owner: read the Wd-1 corpus (`corpus-wd1-profile.md`) and give the ok → the tech lead writes the Wd-1 executor prompt** (`/feature small`, pick `post-uat` at the hook; the ratified spec extract is in `design-wd.md`). Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
+**▶ Owner: carry `prompt-wd1-profile.md` to a fresh executor session** (`/feature small`, pick `post-uat` at the hook; Gate A comes back to the tech lead). Corpus accepted 28.07 (with two rulings at the read: the "See today's session" deep-link DROPPED — a day can hold several sessions; component mapping pinned — radiogroup of `ListItemButton`s + `Alert`-in-`Collapse` + `IndicatorChip`, recorded in `design-wd.md`). Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
 
 <details><summary>Superseded next-action (27.07 — kept for the trail)</summary>
 
