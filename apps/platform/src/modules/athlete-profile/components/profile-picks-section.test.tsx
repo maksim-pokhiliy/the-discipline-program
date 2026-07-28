@@ -8,10 +8,11 @@ import { render } from "@app/test/render";
 import {
   CLEAR_PICK_ARIA_PREFIX,
   CLEAR_PICK_ARIA_SUFFIX,
+  PICK_CURRENT_LABEL,
   PROFILE_PICKS_NO_AXES,
 } from "../utils/athlete-profile.constants";
 
-import { ProfilePicksCard } from "./profile-picks-card";
+import { ProfilePicksSection } from "./profile-picks-section";
 
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";
 const SCALE_AXIS_ID = "clz00000000000000000axs02";
@@ -41,15 +42,21 @@ const genderAxis: ProfileAxis = {
 
 const onPick = vi.fn();
 const onClearPick = vi.fn();
+const onRetry = vi.fn();
 
-const renderCard = (axes: ProfileAxis[], selections: Record<string, string>): void => {
+const currentName = (value: string): string => `${value} ${PICK_CURRENT_LABEL}`;
+
+const renderSection = (axes: ProfileAxis[], selections: Record<string, string>): void => {
   render(
-    <ProfilePicksCard
+    <ProfilePicksSection
       axes={axes}
       selections={selections}
       isSaving={false}
+      flight={null}
+      outcome={null}
       onPick={onPick}
       onClearPick={onClearPick}
+      onRetry={onRetry}
     />,
   );
 };
@@ -57,11 +64,12 @@ const renderCard = (axes: ProfileAxis[], selections: Record<string, string>): vo
 beforeEach(() => {
   onPick.mockReset();
   onClearPick.mockReset();
+  onRetry.mockReset();
 });
 
-describe("ProfilePicksCard groups (Must-Test 7)", () => {
-  it("renders one value button per axis value across every binding-null axis", () => {
-    renderCard(
+describe("ProfilePicksSection groups (Must-Test 7)", () => {
+  it("renders one option row per axis value across every binding-null axis", () => {
+    renderSection(
       [
         plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
         plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
@@ -69,52 +77,68 @@ describe("ProfilePicksCard groups (Must-Test 7)", () => {
       {},
     );
 
-    expect(screen.getByRole("button", { name: "RX" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "SC" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "M" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "F" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "RX" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "SC" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "M" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "F" })).toBeInTheDocument();
     expect(screen.getByText("Level")).toBeInTheDocument();
     expect(screen.getByText("Scale")).toBeInTheDocument();
   });
 
-  it("never renders a bound gender axis passed in axes (defensive binding filter)", () => {
-    renderCard([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]), genderAxis], {});
+  it("renders one radiogroup per axis and exactly one radio per axis value", () => {
+    renderSection(
+      [
+        plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
+        plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
+      ],
+      {},
+    );
 
-    expect(screen.getByRole("button", { name: "RX" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Male" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Female" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(2);
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
+  });
+
+  it("never renders a bound gender axis passed in axes (defensive binding filter)", () => {
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]), genderAxis], {});
+
+    expect(screen.getByRole("radio", { name: "RX" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Male" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Female" })).not.toBeInTheDocument();
     expect(screen.queryByText("Gender")).not.toBeInTheDocument();
   });
 });
 
-describe("ProfilePicksCard active-marking (Must-Test 8)", () => {
-  it("marks the value button active by selections[axis.id] === value (contained vs outlined)", () => {
-    renderCard([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "SC" });
+describe("ProfilePicksSection active-marking (Must-Test 8)", () => {
+  it("checks the option row by selections[axis.id] === value and tags it Current", () => {
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "SC" });
 
-    expect(screen.getByRole("button", { name: "SC" })).toHaveClass("MuiButton-contained");
-    expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-outlined");
+    expect(screen.getByRole("radio", { name: currentName("SC") })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "RX" })).toHaveAttribute("aria-checked", "false");
   });
 
-  it("highlights nothing when a stale selection value is not among the axis values", () => {
-    renderCard([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "GONE" });
+  it("checks nothing when a stale selection value is not among the axis values", () => {
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "GONE" });
 
-    expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-outlined");
-    expect(screen.getByRole("button", { name: "SC" })).toHaveClass("MuiButton-outlined");
+    expect(screen.getByRole("radio", { name: "RX" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("radio", { name: "SC" })).toHaveAttribute("aria-checked", "false");
   });
 
   it("calls onPick with the axis id and value, not the label, on click", () => {
-    renderCard([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], {});
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], {});
 
-    fireEvent.click(screen.getByRole("button", { name: "RX" }));
+    fireEvent.click(screen.getByRole("radio", { name: "RX" }));
 
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick).toHaveBeenCalledWith(LEVEL_AXIS_ID, "RX");
   });
 });
 
-describe("ProfilePicksCard clear control (Must-Test 10)", () => {
+describe("ProfilePicksSection clear control (Must-Test 10)", () => {
   it("calls onClearPick with the axis id when the active pick is cleared", () => {
-    renderCard([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "RX" });
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "RX" });
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -126,8 +150,8 @@ describe("ProfilePicksCard clear control (Must-Test 10)", () => {
     expect(onClearPick).toHaveBeenCalledWith(LEVEL_AXIS_ID);
   });
 
-  it("renders the clear control only for a group that has an active pick", () => {
-    renderCard(
+  it("renders the clear control only for an axis card that has an active pick", () => {
+    renderSection(
       [
         plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
         plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
@@ -150,20 +174,26 @@ describe("ProfilePicksCard clear control (Must-Test 10)", () => {
   });
 });
 
-describe("ProfilePicksCard disabled while saving (Must-Test 9)", () => {
-  it("disables every value button and the clear control while a write is in flight", () => {
+describe("ProfilePicksSection disabled while saving (Must-Test 9)", () => {
+  it("locks every option row and the clear control while a write is in flight", () => {
     render(
-      <ProfilePicksCard
+      <ProfilePicksSection
         axes={[plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])]}
         selections={{ [LEVEL_AXIS_ID]: "RX" }}
         isSaving
+        flight={null}
+        outcome={null}
         onPick={onPick}
         onClearPick={onClearPick}
+        onRetry={onRetry}
       />,
     );
 
-    expect(screen.getByRole("button", { name: "RX" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "SC" })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: currentName("RX") })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "SC" })).toHaveAttribute("aria-disabled", "true");
     expect(
       screen.getByRole("button", {
         name: `${CLEAR_PICK_ARIA_PREFIX}Level${CLEAR_PICK_ARIA_SUFFIX}`,
@@ -172,18 +202,21 @@ describe("ProfilePicksCard disabled while saving (Must-Test 9)", () => {
   });
 });
 
-describe("ProfilePicksCard empty and orphan states (Must-Test 11)", () => {
+describe("ProfilePicksSection empty and orphan states (Must-Test 11)", () => {
   it("renders the no-axes message when there are no axes", () => {
-    renderCard([], {});
+    renderSection([], {});
 
     expect(screen.getByText(PROFILE_PICKS_NO_AXES)).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   });
 
   it("skips an orphan selection key absent from axes without crashing or a stray row", () => {
-    renderCard([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [ORPHAN_AXIS_ID]: "Deleted" });
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], {
+      [ORPHAN_AXIS_ID]: "Deleted",
+    });
 
-    expect(screen.getByRole("button", { name: "RX" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "RX" })).toBeInTheDocument();
     expect(screen.queryByText("Deleted")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: new RegExp(CLEAR_PICK_ARIA_PREFIX) }),

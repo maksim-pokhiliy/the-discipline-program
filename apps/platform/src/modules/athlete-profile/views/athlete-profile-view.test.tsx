@@ -27,6 +27,7 @@ import {
   HEALTH_STATUS_FIELD_LABEL,
   HEIGHT_UNIT_LABEL,
   KG_LABEL,
+  PICK_CURRENT_LABEL,
   PROFILE_PICKS_NO_AXES,
   ROLE_BADGE_LABEL,
   TITLE_LABEL,
@@ -359,27 +360,35 @@ describe("AthleteProfileView body weight edit", () => {
   });
 });
 
+const mutateOptions = expect.objectContaining({
+  onSuccess: expect.any(Function),
+  onError: expect.any(Function),
+});
+
 describe("AthleteProfileView profile picks", () => {
-  it("renders a pick-group per catalog axis with its label and value buttons", () => {
+  it("renders an axis card per catalog axis with its label and option rows", () => {
     profileState.data = makeProfile({ profileSelections: null });
 
     render(<AthleteProfileView />);
 
     expect(screen.getByText("Level")).toBeInTheDocument();
     expect(screen.getByText("Scale")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "RX" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "SC" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "M" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "F" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "RX" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "SC" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "M" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "F" })).toBeInTheDocument();
   });
 
-  it("highlights the saved pick by axisId-keyed selection", () => {
+  it("checks the saved pick by axisId-keyed selection", () => {
     profileState.data = makeProfile({ profileSelections: { [LEVEL_AXIS_ID]: "SC" } });
 
     render(<AthleteProfileView />);
 
-    expect(screen.getByRole("button", { name: "SC" })).toHaveClass("MuiButton-contained");
-    expect(screen.getByRole("button", { name: "RX" })).toHaveClass("MuiButton-outlined");
+    expect(screen.getByRole("radio", { name: `SC ${PICK_CURRENT_LABEL}` })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "RX" })).toHaveAttribute("aria-checked", "false");
   });
 
   it("picks a value via mutate, merging one key and preserving the others", () => {
@@ -387,12 +396,13 @@ describe("AthleteProfileView profile picks", () => {
 
     render(<AthleteProfileView />);
 
-    fireEvent.click(screen.getByRole("button", { name: "RX" }));
+    fireEvent.click(screen.getByRole("radio", { name: "RX" }));
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith({
-      profileSelections: { [SCALE_AXIS_ID]: "M", [LEVEL_AXIS_ID]: "RX" },
-    });
+    expect(updateMutate).toHaveBeenCalledWith(
+      { profileSelections: { [SCALE_AXIS_ID]: "M", [LEVEL_AXIS_ID]: "RX" } },
+      mutateOptions,
+    );
   });
 
   it("clears a pick via mutate with the map minus that axisId key", () => {
@@ -409,7 +419,10 @@ describe("AthleteProfileView profile picks", () => {
     );
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith({ profileSelections: { [SCALE_AXIS_ID]: "M" } });
+    expect(updateMutate).toHaveBeenCalledWith(
+      { profileSelections: { [SCALE_AXIS_ID]: "M" } },
+      mutateOptions,
+    );
   });
 
   it("clears the sole pick via mutate with an empty object, never null", () => {
@@ -424,7 +437,7 @@ describe("AthleteProfileView profile picks", () => {
     );
 
     expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith({ profileSelections: {} });
+    expect(updateMutate).toHaveBeenCalledWith({ profileSelections: {} }, mutateOptions);
   });
 
   it("renders the no-axes state when the catalog has no axes", () => {
@@ -434,7 +447,7 @@ describe("AthleteProfileView profile picks", () => {
     render(<AthleteProfileView />);
 
     expect(screen.getByText(PROFILE_PICKS_NO_AXES)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "RX" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: "RX" })).toBeNull();
   });
 
   it("skips an orphan saved pick whose axis is absent from the catalog without crashing", () => {

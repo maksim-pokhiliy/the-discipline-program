@@ -21,7 +21,7 @@ import {
   BodyHeightCard,
   BodyWeightCard,
   ProfileIdentityCard,
-  ProfilePicksCard,
+  ProfilePicksSection,
 } from "../components";
 import {
   CONTENT_GAP,
@@ -32,6 +32,7 @@ import {
   TITLE_LABEL,
   TITLE_PX,
 } from "../utils/athlete-profile.constants";
+import { useProfileLevelSwitch } from "../utils/use-profile-level-switch";
 
 export const AthleteProfileView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteProfile();
@@ -39,6 +40,18 @@ export const AthleteProfileView = (): ReactElement => {
   const { update: updateSession } = useSession();
   const { mutate, isPending } = useUpdateAthleteProfile();
   const upload = useUploadImage();
+
+  const profileAxes = axes ?? [];
+  const selections = data?.profileSelections ?? {};
+  const gender = data?.gender ?? null;
+
+  const levelSwitch = useProfileLevelSwitch({
+    axes: profileAxes,
+    selections,
+    gender,
+    isPending,
+    mutate,
+  });
 
   const isMissing = error instanceof NotFoundError;
 
@@ -52,7 +65,6 @@ export const AthleteProfileView = (): ReactElement => {
 
   const weightKg = data?.weightKg ?? null;
   const heightCm = data?.heightCm ?? null;
-  const selections = data?.profileSelections ?? {};
 
   const handleSaveWeight = (kg: number): void => {
     mutate({ weightKg: kg });
@@ -60,24 +72,6 @@ export const AthleteProfileView = (): ReactElement => {
 
   const handleSaveHeight = (cm: number): void => {
     mutate({ heightCm: cm });
-  };
-
-  const handlePick = (axisId: string, value: string): void => {
-    if (isPending) {
-      return;
-    }
-
-    mutate({ profileSelections: { ...selections, [axisId]: value } });
-  };
-
-  const handleClearPick = (axis: string): void => {
-    if (isPending) {
-      return;
-    }
-
-    const next = Object.fromEntries(Object.entries(selections).filter(([key]) => key !== axis));
-
-    mutate({ profileSelections: next });
   };
 
   const onSelectAvatarFile = (file: File): void => {
@@ -117,16 +111,19 @@ export const AthleteProfileView = (): ReactElement => {
         <BodyHeightCard heightCm={heightCm} isSaving={isPending} onSave={handleSaveHeight} />
       </Stack>
 
-      <ProfilePicksCard
-        axes={axes ?? []}
-        selections={selections}
+      <ProfilePicksSection
+        axes={profileAxes}
+        selections={levelSwitch.displaySelections}
         isSaving={isPending}
-        onPick={handlePick}
-        onClearPick={handleClearPick}
+        flight={levelSwitch.flight}
+        outcome={levelSwitch.outcome}
+        onPick={levelSwitch.pick}
+        onClearPick={levelSwitch.clearPick}
+        onRetry={levelSwitch.retry}
       />
 
       <AthleteDetailsCard
-        gender={data?.gender ?? null}
+        gender={gender}
         healthStatus={data?.healthStatus ?? HealthStatus.HEALTHY}
         healthNote={data?.healthNote ?? null}
         isSaving={isPending}
