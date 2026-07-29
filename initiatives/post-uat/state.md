@@ -43,7 +43,7 @@
 
 <details><summary>Superseded next-action (28.07 — carry the Wd-1 prompt to an executor)</summary>
 
-**▶ Owner: read the Wd-2 corpus (`corpus-wd2-training-day.md`) and give the ok → the tech lead writes the Wd-2 executor prompt** (full `/feature` — contract additives + the session sheet + the remote-change banner + the sourced-weight chip; spec extract in `design-wd.md`). Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
+**▶ Owner: carry `prompt-wd2-training-day.md` to a fresh executor session** (full `/feature`, pick `post-uat` at the hook; Gate A comes back to the tech lead). Corpus accepted 29.07 with two rulings folded in (D-14): the S5 remote-change banner is CUT (Wd-1 made the profile switch self-announcing; the chip makes provenance permanent — a one-time notice about one's own already-announced action is a standing state machine buying marginal delta), and the sheet container is pinned — phone `Drawer anchor="bottom"`, desktop dialog. Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
 
 <details><summary>Superseded next-action (27.07 — kept for the trail)</summary>
 
