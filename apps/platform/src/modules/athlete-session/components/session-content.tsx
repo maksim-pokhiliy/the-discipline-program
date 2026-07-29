@@ -22,6 +22,7 @@ import { CompletionRail } from "./completion-rail";
 import { CompletionSheet } from "./completion-sheet";
 import { SessionBlock } from "./session-block";
 import { SessionMetaHeader } from "./session-meta-header";
+import { WeightSourceSheet } from "./weight-source-sheet";
 
 export type SessionContentProps = {
   data: SessionDetailResponse;
@@ -140,6 +141,8 @@ export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
           onConfirm={logging.confirm}
         />
       </Box>
+
+      <WeightSourceSheet {...weightSheet.controls} />
     </Box>
   );
 };

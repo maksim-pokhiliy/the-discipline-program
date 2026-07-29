@@ -1,21 +1,6 @@
 import { type ResultType } from "@repo/contracts/lms/_shared";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 
-export const MONTH_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
 export const FONT_WEIGHT_MEDIUM = 500;
 export const FONT_WEIGHT_SEMI_BOLD = 600;
 export const FONT_WEIGHT_DISPLAY = 700;
