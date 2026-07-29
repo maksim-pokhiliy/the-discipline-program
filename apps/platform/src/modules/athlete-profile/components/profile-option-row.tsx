@@ -1,3 +1,5 @@
+"use client";
+
 import { type ReactElement } from "react";
 
 import { CircularProgress, ListItemButton, ListItemText, Radio, Typography } from "@mui/material";
@@ -44,6 +46,7 @@ export const ProfileOptionRow = ({
 
   return (
     <ListItemButton
+      component="li"
       role="radio"
       aria-checked={isCurrent}
       selected={isCurrent}

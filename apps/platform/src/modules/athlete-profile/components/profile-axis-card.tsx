@@ -1,3 +1,5 @@
+"use client";
+
 import { type ReactElement } from "react";
 
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
