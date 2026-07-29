@@ -10,6 +10,7 @@ export * from "./demo-link";
 export * from "./inline-gender-picker";
 export * from "./inline-one-rm-editor";
 export * from "./inline-profile-picker";
+export * from "./load-cell";
 export * from "./load-prompt-button";
 export * from "./logged-result-strip";
 export * from "./parallel-group";

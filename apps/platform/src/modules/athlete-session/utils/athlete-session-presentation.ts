@@ -1,15 +1,9 @@
 import { alpha, type Theme } from "@mui/material";
 
-import {
-  type Load,
-  type RepNotation,
-  type Result,
-  type ResultType,
-} from "@repo/contracts/lms/_shared";
+import { type RepNotation, type Result, type ResultType } from "@repo/contracts/lms/_shared";
 import { formatRepetitionLabel } from "@repo/contracts/lms/composition";
 import {
   type BlockView,
-  type ResolvedLoad,
   type RowView,
   type SchemaCardView,
   type SessionHeaderView,
@@ -18,22 +12,10 @@ import {
 import { formatRepNotation, formatSide, formatTempoInput } from "@app/lib/training-format";
 
 import {
-  ABSOLUTE_PAIR_PREFIX,
-  AXIS_AND_SEPARATOR,
-  BODYWEIGHT_LABEL,
-  KG_LABEL,
   LOGGED_PREFIX,
   MONTH_LONG,
-  ONE_RM_HINT_SUFFIX,
-  PICK_YOUR_PREFIX,
-  PROFILE_AXIS_SEPARATOR,
-  PROFILE_GROUP_SEPARATOR,
-  PROFILE_INNER_SEPARATOR,
-  PROFILE_KG_SEPARATOR,
   REPS_LABEL,
   SCHEMA_BENCHMARK_BORDER_ALPHA,
-  SET_ONE_RM_LABEL,
-  SET_SEX_PROMPT_LABEL,
   SETS_SEPARATOR,
   SUB_LINE_SEPARATOR,
   SUMMARY_SEPARATOR,
@@ -43,7 +25,6 @@ import {
 import { formatIntensity } from "./format-intensity";
 
 const MODIFIER_SEPARATOR = ", ";
-const SINGLE_AXIS_COUNT = 1;
 const COUNTED_REP_KINDS = new Set<RepNotation["kind"]>(["count", "range"]);
 
 export type CardDecoration = {
@@ -55,173 +36,6 @@ export const resolveCardDecoration = (isBenchmark: boolean, theme: Theme): CardD
     ? alpha(theme.palette.success.main, SCHEMA_BENCHMARK_BORDER_ALPHA)
     : theme.palette.divider,
 });
-
-export type ResolvedLoadCell = { state: "resolved"; value: string };
-export type BodyweightLoadCell = { state: "bodyweight" };
-export type OneRmLoadCell = { state: "missing_one_rm"; exerciseId: string; hint: string };
-export type ProfilePickLoadCell = {
-  state: "missing_profile_pick";
-  spread: string;
-  axisLabels: string[];
-};
-export type ProfileAttributeLoadCell = {
-  state: "missing_profile_attribute";
-  spread: string;
-  attribute: "gender";
-};
-export type EmptyLoadCell = { state: "empty" };
-
-export type LoadCellModel =
-  | ResolvedLoadCell
-  | BodyweightLoadCell
-  | OneRmLoadCell
-  | ProfilePickLoadCell
-  | ProfileAttributeLoadCell
-  | EmptyLoadCell;
-
-type ByProfileLoad = Extract<Load, { kind: "byProfile" }>;
-type ByProfileCell = ByProfileLoad["cells"][number];
-
-const formatSingleAxisSpread = (cells: readonly ByProfileCell[]): string =>
-  cells
-    .map((cell) => `${cell.coords[0] ?? ""}${PROFILE_KG_SEPARATOR}${cell.kg}`)
-    .join(PROFILE_GROUP_SEPARATOR);
-
-const formatTwoAxisSpread = (cells: readonly ByProfileCell[]): string => {
-  const groups = new Map<string, string[]>();
-
-  for (const cell of cells) {
-    const [outer = "", inner = ""] = cell.coords;
-    const entry = `${inner}${PROFILE_KG_SEPARATOR}${cell.kg}`;
-
-    groups.set(outer, [...(groups.get(outer) ?? []), entry]);
-  }
-
-  return [...groups.entries()]
-    .map(([outer, entries]) => `${outer} ${entries.join(PROFILE_INNER_SEPARATOR)}`)
-    .join(PROFILE_GROUP_SEPARATOR);
-};
-
-const formatProfileSpread = (load: Load | null, axisLabels: string[]): string => {
-  if (load === null || load.kind !== "byProfile") {
-    return axisLabels.join(PROFILE_AXIS_SEPARATOR);
-  }
-
-  return load.axes.length === SINGLE_AXIS_COUNT
-    ? formatSingleAxisSpread(load.cells)
-    : formatTwoAxisSpread(load.cells);
-};
-
-const absoluteValue = (count: 1 | 2, kg: number): string =>
-  `${count === 2 ? ABSOLUTE_PAIR_PREFIX : ""}${kg} ${KG_LABEL}`;
-
-const resolvedValue = (load: Load | null, kg: number): string =>
-  load !== null && load.kind === "absolute"
-    ? absoluteValue(load.count, load.kg)
-    : `${kg} ${KG_LABEL}`;
-
-const oneRmHint = (load: Load | null): string =>
-  load !== null && load.kind === "percentage"
-    ? `${load.value}${ONE_RM_HINT_SUFFIX}`
-    : ONE_RM_HINT_SUFFIX.trim();
-
-type UnresolvedLoad = Extract<ResolvedLoad, { status: "unresolved" }>;
-
-const resolveUnresolvedCell = (resolvedLoad: UnresolvedLoad, load: Load | null): LoadCellModel => {
-  switch (resolvedLoad.reason) {
-    case "missing_one_rm":
-      return {
-        state: "missing_one_rm",
-        exerciseId: resolvedLoad.exerciseId,
-        hint: oneRmHint(load),
-      };
-    case "missing_profile_pick":
-      return {
-        state: "missing_profile_pick",
-        spread: formatProfileSpread(load, resolvedLoad.axisLabels),
-        axisLabels: resolvedLoad.axisLabels,
-      };
-    case "missing_profile_attribute":
-      return {
-        state: "missing_profile_attribute",
-        spread: formatProfileSpread(load, resolvedLoad.axisLabels),
-        attribute: resolvedLoad.attribute,
-      };
-    default:
-      resolvedLoad satisfies never;
-
-      return { state: "empty" };
-  }
-};
-
-export const resolveLoadCell = (
-  resolvedLoad: ResolvedLoad | null,
-  load: Load | null,
-): LoadCellModel => {
-  if (resolvedLoad === null) {
-    return { state: "empty" };
-  }
-
-  switch (resolvedLoad.status) {
-    case "resolved":
-      return { state: "resolved", value: resolvedValue(load, resolvedLoad.kg) };
-    case "bodyweight":
-      return { state: "bodyweight" };
-    case "not_applicable":
-      return { state: "empty" };
-    case "unresolved":
-      return resolveUnresolvedCell(resolvedLoad, load);
-    default:
-      resolvedLoad satisfies never;
-
-      return { state: "empty" };
-  }
-};
-
-export type LoadPrompt =
-  | { kind: "one_rm"; exerciseId: string; label: string }
-  | { kind: "profile"; label: string }
-  | { kind: "profile_attribute"; label: string };
-
-export type LoadLine = { loadStr: string; showAt: boolean; prompt: LoadPrompt | null };
-
-export const buildLoadLine = (resolvedLoad: ResolvedLoad | null, load: Load | null): LoadLine => {
-  const cell = resolveLoadCell(resolvedLoad, load);
-
-  switch (cell.state) {
-    case "empty":
-      return { loadStr: "", showAt: false, prompt: null };
-    case "bodyweight":
-      return { loadStr: BODYWEIGHT_LABEL, showAt: true, prompt: null };
-    case "resolved":
-      return { loadStr: cell.value, showAt: true, prompt: null };
-    case "missing_one_rm":
-      return {
-        loadStr: cell.hint,
-        showAt: true,
-        prompt: { kind: "one_rm", exerciseId: cell.exerciseId, label: SET_ONE_RM_LABEL },
-      };
-    case "missing_profile_pick":
-      return {
-        loadStr: cell.spread,
-        showAt: false,
-        prompt: {
-          kind: "profile",
-          label: `${PICK_YOUR_PREFIX}${cell.axisLabels.join(AXIS_AND_SEPARATOR)}`,
-        },
-      };
-    case "missing_profile_attribute":
-      return {
-        loadStr: cell.spread,
-        showAt: false,
-        prompt: { kind: "profile_attribute", label: SET_SEX_PROMPT_LABEL },
-      };
-    default:
-      cell satisfies never;
-
-      return { loadStr: "", showAt: false, prompt: null };
-  }
-};
 
 const formatReps = (reps: RepNotation): string => {
   const notation = formatRepNotation(reps);
@@ -300,6 +114,12 @@ const collectSchemaCards = (block: BlockView): SchemaCardView[] =>
   block.items.flatMap((item) =>
     item.kind === "schema" ? [item.schema] : item.tracks.map((track) => track.schema),
   );
+
+const collectSchemaRows = (schema: SchemaCardView): RowView[] =>
+  schema.items.flatMap((item) => (item.kind === "row" ? [item.row] : item.members));
+
+export const collectRowViews = (blocks: BlockView[]): RowView[] =>
+  blocks.flatMap(collectSchemaCards).flatMap(collectSchemaRows);
 
 export const collectBenchmarkSchemas = (blocks: BlockView[]): BenchmarkSchema[] =>
   blocks
