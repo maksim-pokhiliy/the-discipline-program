@@ -18,6 +18,8 @@
 
 </details>
 
+</details>
+
 ## Board
 
 | Wave  | Scope                                            | Status                                                                        |
@@ -25,7 +27,7 @@
 | Fix-A | Admin soft-delete reads + honest-UI (PU-06)      | ✅ MERGED — PR #338 (`11842574`), full loop passed                            |
 | W1    | Athlete pack PU-01/02                            | ✅ MERGED — PR #344 (`3c397a7a`), full loop passed                            |
 | Wd    | Design round: PU-03 + PU-04 (Claude Design)      | ✅ DESIGN DONE — 3 prototypes ratified (D-9..D-11, `design-wd.md`)            |
-| Wd-1  | Profile level switcher (radio rows, UI-only)     | corpus WRITTEN (`corpus-wd1-profile.md`) — at owner read                      |
+| Wd-1  | Profile level switcher (radio rows, UI-only)     | 🔵 IN PR — **#354**, two `max` review rounds                                  |
 | Wd-2  | Training Day sourced-weight chip + sheet         | queued — after Wd-1 (contract additives, PU-03/04 pains)                      |
 | Wd-3  | Records history hygiene + benchmarks (D-8)       | queued — after Wd-2                                                           |
 | W2    | Publish status (PU-08 → MP-22, `/feature small`) | ✅ MERGED — PR #350 (`b46ea324`), full loop passed (D-18 in `mobile-publish`) |
@@ -37,11 +39,17 @@
 
 ## Next action
 
+**▶ Owner: browser pass on the Wd-1 PR, then two-ok merge.** **PR #354** (`feat/profile-level-switcher`) against `main`. Walk the acceptance from `prompt-wd1-profile.md`: the three selected signals, the applying frame where the OLD row keeps Current, the green strip naming the full resolved coordinates plus its auto-dismiss, the failure path with Retry, an unpicked axis, clearing, 320px with a long value, and keyboard focus. Gate A ratified six build calls (**D-12**), the run took **two full `max` review rounds**, and a **third pre-merge fix round** landed six review findings plus one boundary change: the outcome slot is now per-axis (a failure on Level keeps its Retry while the athlete works Scale), the strip holds the sentence built at the moment of the write instead of re-deriving it from a cache that can move under it, a repeat offline refusal changes its wording so pressing Retry is visibly answered, and the option row got `component="li"` plus the three new components got their `"use client"` boundary. The wave's zero-diff-in-`packages/` boundary was deliberately relaxed once, by owner ratification (**D-13**): `useOptimisticMutation` now sets `networkMode: "always"`, so offline writes fail and roll back instead of parking on a promise that never settles — every optimistic mutation in the app inherits it, and it is pinned by a `packages/query` test that times out on the pre-fix hook. Wd-2 (Training Day) is next and will reuse the option-row and strip components verbatim — they were deliberately left inside the platform module rather than promoted to `@repo/ui` on one call site.
+
+<details><summary>Superseded next-action (28.07 — carry the Wd-1 prompt to an executor)</summary>
+
 **▶ Owner: carry `prompt-wd1-profile.md` to a fresh executor session** (`/feature small`, pick `post-uat` at the hook; Gate A comes back to the tech lead). Corpus accepted 28.07 (with two rulings at the read: the "See today's session" deep-link DROPPED — a day can hold several sessions; component mapping pinned — radiogroup of `ListItemButton`s + `Alert`-in-`Collapse` + `IndicatorChip`, recorded in `design-wd.md`). Owner side-task: the 2-minute prod re-check after the Vercel deploy (admin users list healthy · fresh-athlete `squat` finds catalog movements · spread wraps on a phone) closes PU-06 + PU-01/02 as VERIFIED.
 
 <details><summary>Superseded next-action (27.07 — kept for the trail)</summary>
 
 **▶ Owner: carry the RE-CUT `prompt-w1-athlete-pack.md` to a fresh executor session** (pick `post-uat` at the hook question). The corpus read (27.07) CUT W1 from four findings to two: **PU-01 (athlete movement catalog) + PU-02 (spread-line wrapping)** ship now; **PU-03 + PU-04 go to a Claude-Design round first (Wd)** — both work correctly at runtime (on the level switch EVERYTHING updates, including the kg — the athlete just could not perceive that it applied), so the remaining work is interaction design, not a bug fix. The prompt and corpus are re-cut accordingly (D-7); the dropped contract deltas (resolved coords, exercise identity) belong to Wd's outcome. Context: Fix-A completed the full loop as **PR #338** (`11842574`); owner prod re-check closes PU-06 as VERIFIED. Social links complete (YT/TG/IG/Strava) — W4 fully unblocked.
+
+</details>
 
 </details>
 

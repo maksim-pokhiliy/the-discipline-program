@@ -12,6 +12,7 @@ import { LoadingState } from "@repo/ui";
 import {
   useAthleteProfile,
   useAthleteProfileAxes,
+  useSwitchAthleteProfileLevel,
   useUpdateAthleteProfile,
   useUploadImage,
 } from "@app/lib/hooks";
@@ -21,7 +22,7 @@ import {
   BodyHeightCard,
   BodyWeightCard,
   ProfileIdentityCard,
-  ProfilePicksCard,
+  ProfilePicksSection,
 } from "../components";
 import {
   CONTENT_GAP,
@@ -32,13 +33,29 @@ import {
   TITLE_LABEL,
   TITLE_PX,
 } from "../utils/athlete-profile.constants";
+import { useProfileLevelSwitch } from "../utils/use-profile-level-switch";
 
 export const AthleteProfileView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteProfile();
   const { data: axes } = useAthleteProfileAxes();
   const { update: updateSession } = useSession();
   const { mutate, isPending } = useUpdateAthleteProfile();
+  const { mutateAsync: switchLevel, isPending: isSwitchingLevel } = useSwitchAthleteProfileLevel();
   const upload = useUploadImage();
+
+  const profileAxes = axes ?? [];
+  const selections = data?.profileSelections ?? {};
+  const gender = data?.gender ?? null;
+
+  const levelSwitch = useProfileLevelSwitch({
+    axes: profileAxes,
+    selections,
+    gender,
+    isPending,
+    mutateAsync: switchLevel,
+  });
+
+  const isSavingProfile = isPending || isSwitchingLevel;
 
   const isMissing = error instanceof NotFoundError;
 
@@ -46,13 +63,12 @@ export const AthleteProfileView = (): ReactElement => {
     return <LoadingState message={LOADING_LABEL} />;
   }
 
-  if (error && !isMissing) {
+  if (error && !isMissing && data === undefined) {
     return <Alert severity="error">{ERROR_LABEL}</Alert>;
   }
 
   const weightKg = data?.weightKg ?? null;
   const heightCm = data?.heightCm ?? null;
-  const selections = data?.profileSelections ?? {};
 
   const handleSaveWeight = (kg: number): void => {
     mutate({ weightKg: kg });
@@ -60,24 +76,6 @@ export const AthleteProfileView = (): ReactElement => {
 
   const handleSaveHeight = (cm: number): void => {
     mutate({ heightCm: cm });
-  };
-
-  const handlePick = (axisId: string, value: string): void => {
-    if (isPending) {
-      return;
-    }
-
-    mutate({ profileSelections: { ...selections, [axisId]: value } });
-  };
-
-  const handleClearPick = (axis: string): void => {
-    if (isPending) {
-      return;
-    }
-
-    const next = Object.fromEntries(Object.entries(selections).filter(([key]) => key !== axis));
-
-    mutate({ profileSelections: next });
   };
 
   const onSelectAvatarFile = (file: File): void => {
@@ -113,23 +111,26 @@ export const AthleteProfileView = (): ReactElement => {
       />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={SECTION_GAP} alignItems="stretch">
-        <BodyWeightCard weightKg={weightKg} isSaving={isPending} onSave={handleSaveWeight} />
-        <BodyHeightCard heightCm={heightCm} isSaving={isPending} onSave={handleSaveHeight} />
+        <BodyWeightCard weightKg={weightKg} isSaving={isSavingProfile} onSave={handleSaveWeight} />
+        <BodyHeightCard heightCm={heightCm} isSaving={isSavingProfile} onSave={handleSaveHeight} />
       </Stack>
 
-      <ProfilePicksCard
-        axes={axes ?? []}
-        selections={selections}
+      <ProfilePicksSection
+        axes={axes}
+        selections={levelSwitch.displaySelections}
         isSaving={isPending}
-        onPick={handlePick}
-        onClearPick={handleClearPick}
+        flight={levelSwitch.flight}
+        outcomes={levelSwitch.outcomes}
+        onPick={levelSwitch.pick}
+        onClearPick={levelSwitch.clearPick}
+        onRetry={levelSwitch.retry}
       />
 
       <AthleteDetailsCard
-        gender={data?.gender ?? null}
+        gender={gender}
         healthStatus={data?.healthStatus ?? HealthStatus.HEALTHY}
         healthNote={data?.healthNote ?? null}
-        isSaving={isPending}
+        isSaving={isSavingProfile}
         onChange={mutate}
       />
     </Stack>
