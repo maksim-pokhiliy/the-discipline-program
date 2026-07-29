@@ -3,6 +3,7 @@ import { type ReactElement } from "react";
 import { Stack, Typography } from "@mui/material";
 
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
+import { LoadingState } from "@repo/ui";
 
 import {
   CAPTION_LINE_HEIGHT,
@@ -11,6 +12,7 @@ import {
   EYEBROW_LETTER_SPACING,
   EYEBROW_PX,
   FONT_WEIGHT_SEMI_BOLD,
+  PICKS_LOADING_MIN_HEIGHT,
   PROFILE_PICKS_CAPTION,
   PROFILE_PICKS_EYEBROW,
   PROFILE_PICKS_NO_AXES,
@@ -20,7 +22,7 @@ import { type LevelSwitchFlight, type LevelSwitchOutcome } from "../utils/use-pr
 import { ProfileAxisCard } from "./profile-axis-card";
 
 export type ProfilePicksSectionProps = {
-  axes: ProfileAxis[];
+  axes: ProfileAxis[] | undefined;
   selections: Record<string, string>;
   isSaving: boolean;
   flight: LevelSwitchFlight | null;
@@ -40,7 +42,7 @@ export const ProfilePicksSection = ({
   onClearPick,
   onRetry,
 }: ProfilePicksSectionProps): ReactElement => {
-  const pickableAxes = axes.filter((axis) => axis.binding === null);
+  const pickableAxes = (axes ?? []).filter((axis) => axis.binding === null);
   const isLocked = isSaving || flight !== null;
 
   return (
@@ -71,7 +73,9 @@ export const ProfilePicksSection = ({
         </Typography>
       </Stack>
 
-      {pickableAxes.length > 0 ? (
+      {axes === undefined && <LoadingState minHeight={PICKS_LOADING_MIN_HEIGHT} />}
+
+      {axes !== undefined && pickableAxes.length > 0 && (
         <Stack spacing={CARD_GAP}>
           {pickableAxes.map((axis) => (
             <ProfileAxisCard
@@ -88,7 +92,9 @@ export const ProfilePicksSection = ({
             />
           ))}
         </Stack>
-      ) : (
+      )}
+
+      {axes !== undefined && pickableAxes.length === 0 && (
         <Typography
           component="div"
           sx={(theme) => ({

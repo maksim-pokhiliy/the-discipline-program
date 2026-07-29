@@ -57,7 +57,7 @@ export const ProfileOptionRow = ({
         px: 1.75,
         borderRadius: `${CARD_RADIUS_PX}px`,
         border: `1px solid ${isCurrent ? theme.palette.primary.main : theme.palette.divider}`,
-        "&.Mui-disabled": { opacity: 1 },
+        ...((isCurrent || isApplying) && { "&.Mui-disabled": { opacity: 1 } }),
         "&.Mui-focusVisible": {
           outline: `${PICK_FOCUS_RING_PX}px solid ${theme.palette.primary.main}`,
           outlineOffset: `${PICK_FOCUS_RING_PX}px`,

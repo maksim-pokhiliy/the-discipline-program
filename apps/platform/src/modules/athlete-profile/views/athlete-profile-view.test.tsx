@@ -572,7 +572,9 @@ describe("AthleteProfileView level switch", () => {
     const strip = await screen.findByRole("alert");
 
     expect(
-      within(strip).getByText("Couldn't apply. Your level is still SC · Female."),
+      within(strip).getByText(
+        "Couldn't apply. Your level is still SC · Female. Scale still not picked.",
+      ),
     ).toBeInTheDocument();
     expect(within(strip).getByRole("button", { name: PICK_RETRY_LABEL })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: `SC ${PICK_CURRENT_LABEL}` })).toHaveAttribute(
@@ -581,7 +583,7 @@ describe("AthleteProfileView level switch", () => {
     );
   });
 
-  it("re-issues the identical patch when Retry is pressed after a failure", async () => {
+  it("re-applies the failed value onto the current selections when Retry is pressed", async () => {
     profileState.data = makeProfile({
       gender: Gender.FEMALE,
       profileSelections: { [LEVEL_AXIS_ID]: "SC" },
@@ -600,7 +602,6 @@ describe("AthleteProfileView level switch", () => {
       expect(updateMutateAsync).toHaveBeenCalledTimes(2);
     });
 
-    expect(updateMutateAsync.mock.calls[1]).toEqual(updateMutateAsync.mock.calls[0]);
     expect(updateMutateAsync).toHaveBeenLastCalledWith({
       profileSelections: { [LEVEL_AXIS_ID]: "RX" },
     });

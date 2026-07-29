@@ -87,7 +87,7 @@ export const ProfileAxisCard = ({
         <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
           {stateChip}
 
-          {pickedValue !== null && (
+          {resolvedValue !== null && (
             <IconButton
               aria-label={`${CLEAR_PICK_ARIA_PREFIX}${axis.label}${CLEAR_PICK_ARIA_SUFFIX}`}
               disabled={isLocked}

@@ -20,14 +20,16 @@ export type ProfileCoordinatesInput = {
   gender: Gender | null;
 };
 
-export const shortenCoordinate = (value: string): string => {
-  const characters = [...value];
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
-  if (characters.length <= PICK_VALUE_MAX_CHARS) {
+export const shortenCoordinate = (value: string): string => {
+  const graphemes = [...graphemeSegmenter.segment(value)].map((segment) => segment.segment);
+
+  if (graphemes.length <= PICK_VALUE_MAX_CHARS) {
     return value;
   }
 
-  return `${characters.slice(0, PICK_VALUE_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
+  return `${graphemes.slice(0, PICK_VALUE_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
 };
 
 const pickableAxesOf = (axes: ProfileAxis[]): ProfileAxis[] =>
@@ -96,6 +98,12 @@ export const buildFailedMessage = (coordinates: ProfileCoordinatesInput): string
   }
 
   const parts = buildCoordinateParts(coordinates).join(PICK_COORDINATE_SEPARATOR);
+  const missing = buildMissingCoordinate(coordinates);
+  const failed = `${PICK_FAILED_PREFIX}${parts}${PICK_SENTENCE_END}`;
 
-  return `${PICK_FAILED_PREFIX}${parts}${PICK_SENTENCE_END}`;
+  if (missing === null) {
+    return failed;
+  }
+
+  return `${failed} ${missing}${PICK_MISSING_SUFFIX}`;
 };

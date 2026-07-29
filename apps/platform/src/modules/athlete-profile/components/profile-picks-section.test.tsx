@@ -176,6 +176,15 @@ describe("ProfilePicksSection active-marking (Must-Test 8)", () => {
     expect(screen.getByRole("radio", { name: "SC" })).toHaveAttribute("aria-checked", "false");
   });
 
+  it("offers no clear control for a stale pick, so the card never contradicts its own chip", () => {
+    renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], { [LEVEL_AXIS_ID]: "GONE" });
+
+    expect(screen.getByText(PICK_NOT_PICKED_LABEL)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: new RegExp(CLEAR_PICK_ARIA_PREFIX) }),
+    ).not.toBeInTheDocument();
+  });
+
   it("calls onPick with the axis id and value, not the label, on click", () => {
     renderSection([plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])], {});
 

@@ -59,7 +59,7 @@ export const AthleteProfileView = (): ReactElement => {
     return <LoadingState message={LOADING_LABEL} />;
   }
 
-  if (error && !isMissing) {
+  if (error && !isMissing && data === undefined) {
     return <Alert severity="error">{ERROR_LABEL}</Alert>;
   }
 
@@ -112,7 +112,7 @@ export const AthleteProfileView = (): ReactElement => {
       </Stack>
 
       <ProfilePicksSection
-        axes={profileAxes}
+        axes={axes}
         selections={levelSwitch.displaySelections}
         isSaving={isPending}
         flight={levelSwitch.flight}

@@ -9,7 +9,7 @@ import {
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
 import { PICK_OUTCOME_DISMISS_MS } from "./athlete-profile.constants";
-import { buildAppliedMessage, buildFailedMessage } from "./profile-coordinates";
+import { buildAppliedMessage, buildFailedMessage, resolvePickedValue } from "./profile-coordinates";
 
 export type LevelSwitchFlight = {
   axisId: string;
@@ -17,9 +17,11 @@ export type LevelSwitchFlight = {
   previousValue: string | null;
 };
 
-export type LevelSwitchOutcome =
-  | { axisId: string; isApplied: true; message: string }
-  | { axisId: string; isApplied: false; message: string; failedValue: string | null };
+type LevelSwitchResult =
+  | { axisId: string; isApplied: true }
+  | { axisId: string; isApplied: false; failedValue: string | null };
+
+export type LevelSwitchOutcome = LevelSwitchResult & { message: string };
 
 export type LevelSwitchMutate = (patch: UpdateAthleteProfileRequest) => Promise<unknown>;
 
@@ -41,13 +43,14 @@ export type ProfileLevelSwitch = {
 };
 
 type ApplyContext = {
-  axes: ProfileAxis[];
-  gender: Gender | null;
   selections: Record<string, string>;
   mutateAsync: LevelSwitchMutate;
   setFlight: Dispatch<SetStateAction<LevelSwitchFlight | null>>;
-  setOutcome: Dispatch<SetStateAction<LevelSwitchOutcome | null>>;
+  setResult: Dispatch<SetStateAction<LevelSwitchResult | null>>;
 };
+
+const isBrowserOffline = (): boolean =>
+  typeof navigator !== "undefined" && navigator.onLine === false;
 
 const withAxisValue = (
   selections: Record<string, string>,
@@ -77,49 +80,67 @@ const applyPick = async (
   axisId: string,
   value: string | null,
 ): Promise<void> => {
-  const { axes, gender, selections, mutateAsync, setFlight, setOutcome } = context;
-  const applied = withAxisValue(selections, axisId, value);
+  const { selections, mutateAsync, setFlight, setResult } = context;
+
+  setResult(null);
+
+  if (isBrowserOffline()) {
+    setResult({ axisId, isApplied: false, failedValue: value });
+
+    return;
+  }
 
   setFlight({ axisId, value, previousValue: selections[axisId] ?? null });
-  setOutcome(null);
 
   try {
-    await mutateAsync({ profileSelections: applied });
-
-    setOutcome({
-      axisId,
-      isApplied: true,
-      message: buildAppliedMessage({ axes, selections: applied, gender }),
-    });
+    await mutateAsync({ profileSelections: withAxisValue(selections, axisId, value) });
+    setResult({ axisId, isApplied: true });
   } catch {
-    setOutcome({
-      axisId,
-      isApplied: false,
-      message: buildFailedMessage({ axes, selections, gender }),
-      failedValue: value,
-    });
+    setResult({ axisId, isApplied: false, failedValue: value });
   } finally {
     setFlight(null);
   }
 };
 
+const isResultStale = (
+  result: LevelSwitchResult,
+  axes: ProfileAxis[],
+  selections: Record<string, string>,
+): boolean => {
+  if (result.isApplied) {
+    return false;
+  }
+
+  const axis = axes.find((candidate) => candidate.id === result.axisId);
+
+  if (axis === undefined) {
+    return true;
+  }
+
+  if (result.failedValue !== null && !axis.values.includes(result.failedValue)) {
+    return true;
+  }
+
+  return resolvePickedValue(axis, selections) === result.failedValue;
+};
+
 const useAutoDismissApplied = (
-  outcome: LevelSwitchOutcome | null,
-  setOutcome: Dispatch<SetStateAction<LevelSwitchOutcome | null>>,
+  result: LevelSwitchResult | null,
+  setResult: Dispatch<SetStateAction<LevelSwitchResult | null>>,
 ): void => {
   useEffect(() => {
-    if (outcome === null || !outcome.isApplied) {
+    if (result === null || !result.isApplied) {
       return;
     }
 
     const timer = setTimeout(() => {
-      setOutcome(null);
+      setResult(null);
     }, PICK_OUTCOME_DISMISS_MS);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [outcome, setOutcome]);
+  }, [result, setResult]);
 };
 
 export const useProfileLevelSwitch = ({
@@ -130,17 +151,26 @@ export const useProfileLevelSwitch = ({
   mutateAsync,
 }: UseProfileLevelSwitchArgs): ProfileLevelSwitch => {
   const [flight, setFlight] = useState<LevelSwitchFlight | null>(null);
-  const [outcome, setOutcome] = useState<LevelSwitchOutcome | null>(null);
+  const [result, setResult] = useState<LevelSwitchResult | null>(null);
 
-  useAutoDismissApplied(outcome, setOutcome);
+  useAutoDismissApplied(result, setResult);
 
   const displaySelections = preFlightSelections(selections, flight);
   const isLocked = isPending || flight !== null;
 
-  const apply = (axisId: string, value: string | null): void => {
-    const context = { axes, gender, selections, mutateAsync, setFlight, setOutcome };
+  const coordinates = { axes, selections: displaySelections, gender };
+  const outcome =
+    result === null || isResultStale(result, axes, displaySelections)
+      ? null
+      : {
+          ...result,
+          message: result.isApplied
+            ? buildAppliedMessage(coordinates)
+            : buildFailedMessage(coordinates),
+        };
 
-    void applyPick(context, axisId, value);
+  const apply = (axisId: string, value: string | null): void => {
+    void applyPick({ selections, mutateAsync, setFlight, setResult }, axisId, value);
   };
 
   const pick = (axisId: string, value: string): void => {

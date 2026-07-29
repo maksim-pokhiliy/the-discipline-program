@@ -28,7 +28,7 @@ export const ProfileAxisOutcomeStrip = ({
 
   const shown = outcome ?? lastOutcome;
 
-  if (shown === null) {
+  if (shown === null || (outcome === null && isLocked)) {
     return null;
   }
 

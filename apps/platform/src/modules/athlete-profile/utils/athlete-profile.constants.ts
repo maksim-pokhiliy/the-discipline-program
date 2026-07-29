@@ -100,6 +100,7 @@ export const PICK_TAG_PX = 10;
 export const PICK_TAG_LETTER_SPACING = "0.08em";
 export const PICK_SPINNER_PX = 20;
 export const PICK_FOCUS_RING_PX = 2;
+export const PICKS_LOADING_MIN_HEIGHT = "8vh";
 export const PICK_OUTCOME_DISMISS_MS = 5000;
 
 export const PICK_CURRENT_LABEL = "Current";

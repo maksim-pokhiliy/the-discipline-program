@@ -173,12 +173,22 @@ describe("buildAppliedMessage", () => {
 describe("buildFailedMessage", () => {
   it("names the coordinates that still hold when the apply fails", () => {
     const message = buildFailedMessage({
-      axes: AXES,
+      axes: [LEVEL_AXIS],
       selections: { [LEVEL_AXIS_ID]: "SC" },
       gender: Gender.FEMALE,
     });
 
     expect(message).toBe("Couldn't apply. Your level is still SC · Female.");
+  });
+
+  it("names the axis that is still unpicked instead of passing a sibling off as the level", () => {
+    const message = buildFailedMessage({
+      axes: AXES,
+      selections: { [SCALE_AXIS_ID]: "M" },
+      gender: Gender.FEMALE,
+    });
+
+    expect(message).toBe("Couldn't apply. Your level is still M · Female. Level still not picked.");
   });
 
   it("falls back to the not-picked sentence and never claims gender is the level", () => {
