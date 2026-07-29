@@ -13,12 +13,45 @@ import {
   tempoModifierSchema,
 } from "../_shared";
 import { compositionLabelSchema, compositionSchema } from "../composition";
+import { oneRMRecordSourceSchema } from "../one-rm-record";
 
 const MIN_DAY_OF_MONTH = 1;
 const MAX_DAY_OF_MONTH = 31;
 
+const isoInstant = z.string().datetime();
+
+export const resolvedLoadSourceSchema = z.union([
+  z.object({
+    kind: z.literal("profile"),
+    coords: z
+      .array(
+        z.object({
+          axisId: z.string().cuid(),
+          label: z.string(),
+          value: z.string(),
+          binding: z.literal("GENDER").nullable(),
+        }),
+      )
+      .min(1),
+  }),
+  z.object({
+    kind: z.literal("one_rm"),
+    exerciseId: z.string().cuid(),
+    percent: z.number(),
+    percentMax: z.number().optional(),
+    baseKg: z.number(),
+    recordedAt: isoInstant,
+    recordSource: oneRMRecordSourceSchema,
+  }),
+]);
+
 export const resolvedLoadSchema = z.union([
-  z.object({ status: z.literal("resolved"), kg: z.number(), perHand: z.boolean() }),
+  z.object({
+    status: z.literal("resolved"),
+    kg: z.number(),
+    perHand: z.boolean(),
+    source: resolvedLoadSourceSchema.optional(),
+  }),
   z.object({
     status: z.literal("unresolved"),
     reason: z.literal("missing_one_rm"),

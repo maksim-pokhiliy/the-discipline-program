@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ONE_RM_MAX_KG } from "@repo/contracts/lms/_shared";
 import { createBenchmarkResultSchema } from "@repo/contracts/lms/benchmark-result";
+import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
@@ -271,7 +272,19 @@ describe("lmsBenchmarkResultApi.logBenchmarkResult", () => {
           .flatMap((rowItem) => (rowItem.kind === "row" ? [rowItem.row] : rowItem.members))
           .map((row) => row.resolvedLoad);
 
-        expect(resolvedStatuses).toContainEqual({ status: "resolved", kg: 75, perHand: false });
+        expect(resolvedStatuses).toContainEqual({
+          status: "resolved",
+          kg: 75,
+          perHand: false,
+          source: {
+            kind: "one_rm",
+            exerciseId: loadBenchmark.exerciseId,
+            percent: PERCENT_VALUE,
+            baseKg: 100,
+            recordedAt: expect.any(String),
+            recordSource: OneRMRecordSource.MANUAL,
+          },
+        });
       } finally {
         await cleanupRaw.benchmarkResult.delete({ where: { id: created.id } }).catch(() => {});
         await cleanupRaw.oneRMRecord

@@ -2,7 +2,11 @@ import { Gender } from "@prisma/client";
 
 import { GENDER_AXIS_COORDS, type Load } from "@repo/contracts/lms/_shared";
 
-import { type AthleteLoadContext, type ResolvedLoad } from "./athlete-records.types";
+import {
+  type AthleteLoadContext,
+  type ResolvedLoad,
+  type ResolvedLoadProfileCoord,
+} from "./athlete-records.types";
 
 const PER_HAND_COUNT = 2;
 const PERCENT_DIVISOR = 100;
@@ -33,8 +37,8 @@ const axisLabel = (axis: ByProfileAxis): string => axis.label;
 const resolveCoords = (
   axes: readonly ByProfileAxis[],
   ctx: AthleteLoadContext,
-): string[] | null => {
-  const coords: string[] = [];
+): ResolvedLoadProfileCoord[] | null => {
+  const coords: ResolvedLoadProfileCoord[] = [];
 
   for (const axis of axes) {
     const coord = resolveAxisCoord(axis, ctx);
@@ -43,7 +47,12 @@ const resolveCoords = (
       return null;
     }
 
-    coords.push(coord);
+    coords.push({
+      axisId: axis.axisId,
+      label: axis.label,
+      value: coord,
+      binding: axis.binding,
+    });
   }
 
   return coords;
@@ -84,11 +93,19 @@ const resolveByProfile = (load: ByProfileLoad, ctx: AthleteLoadContext): Resolve
   }
 
   const wantedCoords = resolveCoords(load.axes, ctx);
-  const cell =
-    wantedCoords === null ? undefined : load.cells.find((c) => coordsEqual(c.coords, wantedCoords));
 
-  if (cell !== undefined) {
-    return { status: "resolved", kg: cell.kg, perHand: false };
+  if (wantedCoords !== null) {
+    const wantedValues = wantedCoords.map((coord) => coord.value);
+    const cell = load.cells.find((c) => coordsEqual(c.coords, wantedValues));
+
+    if (cell !== undefined) {
+      return {
+        status: "resolved",
+        kg: cell.kg,
+        perHand: false,
+        source: { kind: "profile", coords: wantedCoords },
+      };
+    }
   }
 
   const labels = plainAxisLabels(load);
@@ -130,8 +147,17 @@ export const resolveLoad = (
         ? { status: "unresolved", reason: "missing_one_rm", prompt: "set_one_rm", exerciseId }
         : {
             status: "resolved",
-            kg: round1((oneRM * load.value) / PERCENT_DIVISOR),
+            kg: round1((oneRM.valueKg * load.value) / PERCENT_DIVISOR),
             perHand: false,
+            source: {
+              kind: "one_rm",
+              exerciseId,
+              percent: load.value,
+              ...(load.rangeMax !== undefined && { percentMax: load.rangeMax }),
+              baseKg: oneRM.valueKg,
+              recordedAt: oneRM.recordedAt.toISOString(),
+              recordSource: oneRM.source,
+            },
           };
     }
     case "byProfile":

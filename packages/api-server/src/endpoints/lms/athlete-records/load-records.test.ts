@@ -1,3 +1,4 @@
+import { OneRMRecordSource } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "../../../db/client";
@@ -75,7 +76,32 @@ describe("loadAthleteLoadContext", () => {
   it("holds the latest-by-recordedAt valueKg per exercise as the current 1RM, not the max (QA-011)", async () => {
     const ctx = await loadAthleteLoadContext(athlete.id, [exerciseAId]);
 
-    expect(ctx.currentOneRMByExercise.get(exerciseAId)).toBe(110);
+    expect(ctx.currentOneRMByExercise.get(exerciseAId)?.valueKg).toBe(110);
+  });
+
+  it("carries the base record's recordedAt and source alongside its value, from the same row", async () => {
+    const tested = await createTestOneRMRecord(athlete.id, exerciseBId, {
+      valueKg: 140,
+      recordedAt: new Date("2026-06-01T00:00:00.000Z"),
+      source: OneRMRecordSource.TESTED,
+    });
+
+    try {
+      const ctx = await loadAthleteLoadContext(athlete.id, [exerciseAId, exerciseBId]);
+
+      expect(ctx.currentOneRMByExercise.get(exerciseAId)).toEqual({
+        valueKg: 110,
+        recordedAt: new Date("2026-03-01T00:00:00.000Z"),
+        source: OneRMRecordSource.MANUAL,
+      });
+      expect(ctx.currentOneRMByExercise.get(exerciseBId)).toEqual({
+        valueKg: 140,
+        recordedAt: new Date("2026-06-01T00:00:00.000Z"),
+        source: OneRMRecordSource.TESTED,
+      });
+    } finally {
+      await cleanupRaw.oneRMRecord.delete({ where: { id: tested.record.id } }).catch(() => {});
+    }
   });
 
   it("lets a newer, lower 1RM lower the resolved current value (QA-011)", async () => {
@@ -91,7 +117,7 @@ describe("loadAthleteLoadContext", () => {
     try {
       const ctx = await loadAthleteLoadContext(athlete.id, [exerciseBId]);
 
-      expect(ctx.currentOneRMByExercise.get(exerciseBId)).toBe(105);
+      expect(ctx.currentOneRMByExercise.get(exerciseBId)?.valueKg).toBe(105);
     } finally {
       await cleanupRaw.oneRMRecord
         .deleteMany({ where: { id: { in: [dropped.record.id, later.record.id] } } })
@@ -112,7 +138,9 @@ describe("loadAthleteLoadContext", () => {
 
       const ctx = await loadAthleteLoadContext(athlete.id, [exerciseBId]);
 
-      expect(ctx.currentOneRMByExercise.get(exerciseBId)).toBe(Number(winner?.record.valueKg));
+      expect(ctx.currentOneRMByExercise.get(exerciseBId)?.valueKg).toBe(
+        Number(winner?.record.valueKg),
+      );
     } finally {
       for (const record of tied) {
         await cleanupRaw.oneRMRecord.delete({ where: { id: record.record.id } }).catch(() => {});
