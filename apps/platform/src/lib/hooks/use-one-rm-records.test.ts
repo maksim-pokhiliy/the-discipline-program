@@ -204,6 +204,31 @@ describe("useCreateOneRMRecord", () => {
     expect(notifyErrorMock).toHaveBeenCalledWith(expect.any(Error), SAVE_FAILURE_MESSAGE);
   });
 
+  it("replays the persisted write even though the retry stamps a fresher recordedAt", async () => {
+    const server = createIdempotentServer();
+
+    mockServerWithLostFirstResponse(server);
+
+    const { result } = renderRunner();
+
+    await act(async () => {
+      await result.current
+        .mutateAsync(makeOneRMRequest({ recordedAt: new Date("2026-01-06T09:15:00.000Z") }))
+        .catch(() => undefined);
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync(
+        makeOneRMRequest({ recordedAt: new Date("2026-01-06T09:15:02.750Z") }),
+      );
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(keyAt(1)).toBe(keyAt(0));
+    expect(server.countRecords()).toBe(ONE_RECORD);
+  });
+
   it("lets a corrected value through after a persisted-but-unseen 2xx instead of conflicting", async () => {
     const server = createIdempotentServer();
 

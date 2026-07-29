@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+
 import {
   useMutation,
   useQuery,
@@ -19,9 +21,20 @@ import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 const SUBMIT_TOKEN_SEPARATOR = ":";
+const CALENDAR_PART_SEPARATOR = "-";
 
-const submitTokenKeyOf = ({ exerciseId, valueKg }: CreateOneRMRecordRequest): string =>
-  `${exerciseId}${SUBMIT_TOKEN_SEPARATOR}${valueKg}`;
+const calendarDayOf = (recordedAt: Date): string =>
+  [recordedAt.getFullYear(), recordedAt.getMonth(), recordedAt.getDate()].join(
+    CALENDAR_PART_SEPARATOR,
+  );
+
+const submitTokenKeyOf = ({
+  exerciseId,
+  valueKg,
+  source,
+  recordedAt,
+}: CreateOneRMRecordRequest): string =>
+  [exerciseId, valueKg, source, calendarDayOf(recordedAt)].join(SUBMIT_TOKEN_SEPARATOR);
 
 export const useOneRMRecords = (
   exerciseId?: string,
@@ -38,13 +51,23 @@ export const useCreateOneRMRecord = (): UseMutationResult<
 > => {
   const queryClient = useQueryClient();
   const submitToken = useSubmitToken();
+  const inFlightBodies = useRef(new Map<string, CreateOneRMRecordRequest>());
 
   return useMutation({
     networkMode: "always",
-    mutationFn: (data: CreateOneRMRecordRequest) =>
-      api.oneRMRecords.create(data, submitToken.get(submitTokenKeyOf(data))),
+    mutationFn: (data: CreateOneRMRecordRequest) => {
+      const key = submitTokenKeyOf(data);
+      const body = inFlightBodies.current.get(key) ?? data;
+
+      inFlightBodies.current.set(key, body);
+
+      return api.oneRMRecords.create(body, submitToken.get(key));
+    },
     onSuccess: (_result, variables) => {
-      submitToken.reset(submitTokenKeyOf(variables));
+      const key = submitTokenKeyOf(variables);
+
+      submitToken.reset(key);
+      inFlightBodies.current.delete(key);
       queryClient.invalidateQueries({ queryKey: platformKeys.oneRMRecords.list() });
     },
     onError: (error: Error) => {
