@@ -22,7 +22,7 @@ import {
   ROW_VOLUME_ALPHA,
   ROW_VOLUME_PX,
 } from "../utils/athlete-session.constants";
-import { buildLoadCell } from "../utils/load-cell";
+import { buildLoadCell, hasLoadValue } from "../utils/load-cell";
 import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { DemoLink } from "./demo-link";
@@ -40,7 +40,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
   const cell = buildLoadCell(row);
   const subLine = buildRowSubLine(row);
   const noteText = row.notes !== null ? row.notes.join(NOTE_SEPARATOR) : "";
-  const hasLoad = cell.kind !== "empty" && cell.value.length > 0;
+  const hasLoad = hasLoadValue(cell);
 
   return (
     <Box sx={{ px: `${ROW_PADDING_X_PX}px`, py: `${ROW_PADDING_Y_PX}px` }}>
@@ -105,7 +105,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
             </Box>
           ) : null}
           <LoadCell
-            row={row}
+            cell={cell}
             isPulsing={editor.pulsingRowIds.has(row.rowId)}
             onOpen={(target) => editor.openWeightSheet(row, target)}
           />

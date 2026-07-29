@@ -3,15 +3,13 @@ import { type ReactElement } from "react";
 import UnfoldMoreRounded from "@mui/icons-material/UnfoldMoreRounded";
 import { alpha, Box, ButtonBase, Typography } from "@mui/material";
 
-import { type RowView } from "@repo/contracts/lms/session-detail";
-
 import {
   FONT_WEIGHT_SEMI_BOLD,
   ROW_AT_ALPHA,
   ROW_LOAD_ALPHA,
   ROW_LOAD_PX,
 } from "../utils/athlete-session.constants";
-import { buildLoadCell, type LoadChipTarget } from "../utils/load-cell";
+import { type LoadCellView, type LoadChipTarget } from "../utils/load-cell";
 import { buildPulseKeyframes } from "../utils/pulse-animation";
 import {
   CHIP_ACTION_LABEL,
@@ -33,14 +31,12 @@ import {
 const NO_MOTION_QUERY = "@media (prefers-reduced-motion: no-preference)";
 
 export type LoadCellProps = {
-  row: RowView;
+  cell: LoadCellView;
   isPulsing: boolean;
   onOpen: (target: LoadChipTarget) => void;
 };
 
-export const LoadCell = ({ row, isPulsing, onOpen }: LoadCellProps): ReactElement | null => {
-  const cell = buildLoadCell(row);
-
+export const LoadCell = ({ cell, isPulsing, onOpen }: LoadCellProps): ReactElement | null => {
   switch (cell.kind) {
     case "empty":
       return null;

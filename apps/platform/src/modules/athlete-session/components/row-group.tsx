@@ -25,7 +25,7 @@ import {
   ROW_SUB_PX,
   TRACK_LABEL_LETTER_SPACING,
 } from "../utils/athlete-session.constants";
-import { buildLoadCell } from "../utils/load-cell";
+import { buildLoadCell, hasLoadValue } from "../utils/load-cell";
 import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { DemoLink } from "./demo-link";
@@ -67,7 +67,7 @@ export const RowGroup = ({ label, members, editor }: RowGroupProps): ReactElemen
         const settings = buildRowSubLine(member);
         const volume = buildVolume(member);
         const cell = buildLoadCell(member);
-        const hasLoad = cell.kind !== "empty" && cell.value.length > 0;
+        const hasLoad = hasLoadValue(cell);
 
         return (
           <Stack key={member.rowId} spacing={0.25}>
@@ -127,7 +127,7 @@ export const RowGroup = ({ label, members, editor }: RowGroupProps): ReactElemen
                   </Box>
                 ) : null}
                 <LoadCell
-                  row={member}
+                  cell={cell}
                   isPulsing={editor.pulsingRowIds.has(member.rowId)}
                   onOpen={(target) => editor.openWeightSheet(member, target)}
                 />

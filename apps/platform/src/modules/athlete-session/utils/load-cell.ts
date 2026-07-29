@@ -143,6 +143,9 @@ const buildUnresolvedCell = (resolvedLoad: UnresolvedArm, load: Load | null): Lo
   }
 };
 
+export const hasLoadValue = (cell: LoadCellView): boolean =>
+  cell.kind !== "empty" && cell.value.length > 0;
+
 export const buildLoadCell = (row: RowView): LoadCellView => {
   const resolvedLoad = row.resolvedLoad;
 
