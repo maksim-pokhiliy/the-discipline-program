@@ -21,27 +21,42 @@ export type ProfileCoordinatesInput = {
 };
 
 export const shortenCoordinate = (value: string): string => {
-  if (value.length <= PICK_VALUE_MAX_CHARS) {
+  const characters = [...value];
+
+  if (characters.length <= PICK_VALUE_MAX_CHARS) {
     return value;
   }
 
-  return `${value.slice(0, PICK_VALUE_MAX_CHARS).trim()}${PICK_VALUE_ELLIPSIS}`;
+  return `${characters.slice(0, PICK_VALUE_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
 };
 
 const pickableAxesOf = (axes: ProfileAxis[]): ProfileAxis[] =>
   axes.filter((axis) => axis.binding === null);
 
-export const buildCoordinateParts = ({
-  axes,
-  selections,
-  gender,
-}: ProfileCoordinatesInput): string[] => {
-  const picked = pickableAxesOf(axes)
-    .map((axis) => selections[axis.id])
-    .filter((value): value is string => value !== undefined);
-  const genderPart = gender === null ? [] : [GENDER_LABELS[gender]];
+export const resolvePickedValue = (
+  axis: ProfileAxis,
+  selections: Record<string, string>,
+): string | null => {
+  const value = selections[axis.id];
 
-  return [...picked, ...genderPart].map(shortenCoordinate);
+  if (value === undefined || !axis.values.includes(value)) {
+    return null;
+  }
+
+  return value;
+};
+
+const buildAxisParts = ({ axes, selections }: ProfileCoordinatesInput): string[] =>
+  pickableAxesOf(axes)
+    .map((axis) => resolvePickedValue(axis, selections))
+    .filter((value): value is string => value !== null)
+    .map(shortenCoordinate);
+
+export const buildCoordinateParts = (coordinates: ProfileCoordinatesInput): string[] => {
+  const { gender } = coordinates;
+  const genderParts = gender === null ? [] : [shortenCoordinate(GENDER_LABELS[gender])];
+
+  return [...buildAxisParts(coordinates), ...genderParts];
 };
 
 export const buildMissingCoordinate = ({
@@ -49,7 +64,9 @@ export const buildMissingCoordinate = ({
   selections,
   gender,
 }: ProfileCoordinatesInput): string | null => {
-  const unpicked = pickableAxesOf(axes).find((axis) => selections[axis.id] === undefined);
+  const unpicked = pickableAxesOf(axes).find(
+    (axis) => resolvePickedValue(axis, selections) === null,
+  );
 
   if (unpicked !== undefined) {
     return unpicked.label;
@@ -66,7 +83,7 @@ export const buildAppliedMessage = (coordinates: ProfileCoordinatesInput): strin
     return `${PICK_APPLIED_PREFIX}${PICK_APPLIED_RESOLVE_PREFIX}${parts}${PICK_SENTENCE_END}`;
   }
 
-  if (parts.length === 0) {
+  if (buildAxisParts(coordinates).length === 0) {
     return `${PICK_APPLIED_PREFIX}${missing}${PICK_MISSING_SUFFIX}`;
   }
 
@@ -74,11 +91,11 @@ export const buildAppliedMessage = (coordinates: ProfileCoordinatesInput): strin
 };
 
 export const buildFailedMessage = (coordinates: ProfileCoordinatesInput): string => {
-  const parts = buildCoordinateParts(coordinates).join(PICK_COORDINATE_SEPARATOR);
-
-  if (parts.length === 0) {
+  if (buildAxisParts(coordinates).length === 0) {
     return PICK_FAILED_NOT_PICKED;
   }
+
+  const parts = buildCoordinateParts(coordinates).join(PICK_COORDINATE_SEPARATOR);
 
   return `${PICK_FAILED_PREFIX}${parts}${PICK_SENTENCE_END}`;
 };

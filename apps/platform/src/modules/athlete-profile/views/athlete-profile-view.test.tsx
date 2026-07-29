@@ -61,6 +61,7 @@ const profileState = {
 };
 const axesState = { data: MOCK_AXES as ProfileAxis[] | undefined };
 const updateMutate = vi.fn();
+const updateMutateAsync = vi.fn<(patch: unknown) => Promise<unknown>>();
 const uploadMutate = vi.fn();
 const updateSession = vi.fn().mockResolvedValue(null);
 const sessionUser = {
@@ -76,7 +77,11 @@ vi.mock("@app/lib/hooks", () => ({
     error: profileState.error,
   }),
   useAthleteProfileAxes: () => ({ data: axesState.data }),
-  useUpdateAthleteProfile: () => ({ mutate: updateMutate, isPending: false }),
+  useUpdateAthleteProfile: () => ({
+    mutate: updateMutate,
+    mutateAsync: updateMutateAsync,
+    isPending: false,
+  }),
   useUploadImage: () => ({ mutate: uploadMutate, isPending: false }),
 }));
 
@@ -139,6 +144,8 @@ beforeEach(() => {
   sessionUser.email = "aria@example.com";
   sessionUser.image = null;
   updateMutate.mockReset();
+  updateMutateAsync.mockReset();
+  updateMutateAsync.mockResolvedValue(undefined);
   uploadMutate.mockReset();
   updateSession.mockReset();
 });
@@ -360,11 +367,6 @@ describe("AthleteProfileView body weight edit", () => {
   });
 });
 
-const mutateOptions = expect.objectContaining({
-  onSuccess: expect.any(Function),
-  onError: expect.any(Function),
-});
-
 describe("AthleteProfileView profile picks", () => {
   it("renders an axis card per catalog axis with its label and option rows", () => {
     profileState.data = makeProfile({ profileSelections: null });
@@ -398,11 +400,10 @@ describe("AthleteProfileView profile picks", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: "RX" }));
 
-    expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith(
-      { profileSelections: { [SCALE_AXIS_ID]: "M", [LEVEL_AXIS_ID]: "RX" } },
-      mutateOptions,
-    );
+    expect(updateMutateAsync).toHaveBeenCalledTimes(1);
+    expect(updateMutateAsync).toHaveBeenCalledWith({
+      profileSelections: { [SCALE_AXIS_ID]: "M", [LEVEL_AXIS_ID]: "RX" },
+    });
   });
 
   it("clears a pick via mutate with the map minus that axisId key", () => {
@@ -418,11 +419,10 @@ describe("AthleteProfileView profile picks", () => {
       }),
     );
 
-    expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith(
-      { profileSelections: { [SCALE_AXIS_ID]: "M" } },
-      mutateOptions,
-    );
+    expect(updateMutateAsync).toHaveBeenCalledTimes(1);
+    expect(updateMutateAsync).toHaveBeenCalledWith({
+      profileSelections: { [SCALE_AXIS_ID]: "M" },
+    });
   });
 
   it("clears the sole pick via mutate with an empty object, never null", () => {
@@ -436,8 +436,8 @@ describe("AthleteProfileView profile picks", () => {
       }),
     );
 
-    expect(updateMutate).toHaveBeenCalledTimes(1);
-    expect(updateMutate).toHaveBeenCalledWith({ profileSelections: {} }, mutateOptions);
+    expect(updateMutateAsync).toHaveBeenCalledTimes(1);
+    expect(updateMutateAsync).toHaveBeenCalledWith({ profileSelections: {} });
   });
 
   it("renders the no-axes state when the catalog has no axes", () => {

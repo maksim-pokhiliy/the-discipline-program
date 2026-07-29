@@ -17,23 +17,18 @@ export type LevelSwitchFlight = {
   previousValue: string | null;
 };
 
-export type LevelSwitchOutcome = {
-  axisId: string;
-  isApplied: boolean;
-  message: string;
-};
+export type LevelSwitchOutcome =
+  | { axisId: string; isApplied: true; message: string }
+  | { axisId: string; isApplied: false; message: string; failedValue: string | null };
 
-export type LevelSwitchMutate = (
-  patch: UpdateAthleteProfileRequest,
-  options: { onSuccess: () => void; onError: () => void },
-) => void;
+export type LevelSwitchMutate = (patch: UpdateAthleteProfileRequest) => Promise<unknown>;
 
 export type UseProfileLevelSwitchArgs = {
   axes: ProfileAxis[];
   selections: Record<string, string>;
   gender: Gender | null;
   isPending: boolean;
-  mutate: LevelSwitchMutate;
+  mutateAsync: LevelSwitchMutate;
 };
 
 export type ProfileLevelSwitch = {
@@ -43,17 +38,13 @@ export type ProfileLevelSwitch = {
   pick: (axisId: string, value: string) => void;
   clearPick: (axisId: string) => void;
   retry: () => void;
-  dismissOutcome: () => void;
 };
-
-type LevelSwitchAttempt = { axisId: string; value: string | null };
 
 type ApplyContext = {
   axes: ProfileAxis[];
   gender: Gender | null;
   selections: Record<string, string>;
-  mutate: LevelSwitchMutate;
-  setAttempt: Dispatch<SetStateAction<LevelSwitchAttempt | null>>;
+  mutateAsync: LevelSwitchMutate;
   setFlight: Dispatch<SetStateAction<LevelSwitchFlight | null>>;
   setOutcome: Dispatch<SetStateAction<LevelSwitchOutcome | null>>;
 };
@@ -81,35 +72,35 @@ const preFlightSelections = (
   return withAxisValue(selections, flight.axisId, flight.previousValue);
 };
 
-const applyPick = (context: ApplyContext, axisId: string, value: string | null): void => {
-  const { axes, gender, selections, mutate, setAttempt, setFlight, setOutcome } = context;
+const applyPick = async (
+  context: ApplyContext,
+  axisId: string,
+  value: string | null,
+): Promise<void> => {
+  const { axes, gender, selections, mutateAsync, setFlight, setOutcome } = context;
   const applied = withAxisValue(selections, axisId, value);
 
-  setAttempt({ axisId, value });
   setFlight({ axisId, value, previousValue: selections[axisId] ?? null });
   setOutcome(null);
 
-  mutate(
-    { profileSelections: applied },
-    {
-      onSuccess: () => {
-        setFlight(null);
-        setOutcome({
-          axisId,
-          isApplied: true,
-          message: buildAppliedMessage({ axes, selections: applied, gender }),
-        });
-      },
-      onError: () => {
-        setFlight(null);
-        setOutcome({
-          axisId,
-          isApplied: false,
-          message: buildFailedMessage({ axes, selections, gender }),
-        });
-      },
-    },
-  );
+  try {
+    await mutateAsync({ profileSelections: applied });
+
+    setOutcome({
+      axisId,
+      isApplied: true,
+      message: buildAppliedMessage({ axes, selections: applied, gender }),
+    });
+  } catch {
+    setOutcome({
+      axisId,
+      isApplied: false,
+      message: buildFailedMessage({ axes, selections, gender }),
+      failedValue: value,
+    });
+  } finally {
+    setFlight(null);
+  }
 };
 
 const useAutoDismissApplied = (
@@ -136,11 +127,10 @@ export const useProfileLevelSwitch = ({
   selections,
   gender,
   isPending,
-  mutate,
+  mutateAsync,
 }: UseProfileLevelSwitchArgs): ProfileLevelSwitch => {
   const [flight, setFlight] = useState<LevelSwitchFlight | null>(null);
   const [outcome, setOutcome] = useState<LevelSwitchOutcome | null>(null);
-  const [attempt, setAttempt] = useState<LevelSwitchAttempt | null>(null);
 
   useAutoDismissApplied(outcome, setOutcome);
 
@@ -148,9 +138,9 @@ export const useProfileLevelSwitch = ({
   const isLocked = isPending || flight !== null;
 
   const apply = (axisId: string, value: string | null): void => {
-    const context = { axes, gender, selections, mutate, setAttempt, setFlight, setOutcome };
+    const context = { axes, gender, selections, mutateAsync, setFlight, setOutcome };
 
-    applyPick(context, axisId, value);
+    void applyPick(context, axisId, value);
   };
 
   const pick = (axisId: string, value: string): void => {
@@ -162,7 +152,7 @@ export const useProfileLevelSwitch = ({
   };
 
   const clearPick = (axisId: string): void => {
-    if (isLocked) {
+    if (isLocked || displaySelections[axisId] === undefined) {
       return;
     }
 
@@ -170,16 +160,12 @@ export const useProfileLevelSwitch = ({
   };
 
   const retry = (): void => {
-    if (isLocked || attempt === null) {
+    if (isLocked || outcome === null || outcome.isApplied) {
       return;
     }
 
-    apply(attempt.axisId, attempt.value);
+    apply(outcome.axisId, outcome.failedValue);
   };
 
-  const dismissOutcome = (): void => {
-    setOutcome(null);
-  };
-
-  return { displaySelections, flight, outcome, pick, clearPick, retry, dismissOutcome };
+  return { displaySelections, flight, outcome, pick, clearPick, retry };
 };

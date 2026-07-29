@@ -9,20 +9,24 @@ import { type LevelSwitchOutcome } from "../utils/use-profile-level-switch";
 
 export type ProfileAxisOutcomeStripProps = {
   outcome: LevelSwitchOutcome | null;
+  isLocked: boolean;
   onRetry: () => void;
 };
 
 export const ProfileAxisOutcomeStrip = ({
   outcome,
+  isLocked,
   onRetry,
 }: ProfileAxisOutcomeStripProps): ReactElement | null => {
-  const [shown, setShown] = useState<LevelSwitchOutcome | null>(outcome);
+  const [lastOutcome, setLastOutcome] = useState<LevelSwitchOutcome | null>(outcome);
 
   useEffect(() => {
     if (outcome !== null) {
-      setShown(outcome);
+      setLastOutcome(outcome);
     }
   }, [outcome]);
+
+  const shown = outcome ?? lastOutcome;
 
   if (shown === null) {
     return null;
@@ -34,7 +38,7 @@ export const ProfileAxisOutcomeStrip = ({
         severity={shown.isApplied ? "success" : "error"}
         {...(!shown.isApplied && {
           action: (
-            <Button color="inherit" size="small" onClick={onRetry}>
+            <Button color="inherit" size="small" disabled={isLocked} onClick={onRetry}>
               {PICK_RETRY_LABEL}
             </Button>
           ),

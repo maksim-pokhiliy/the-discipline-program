@@ -38,7 +38,7 @@ export const AthleteProfileView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteProfile();
   const { data: axes } = useAthleteProfileAxes();
   const { update: updateSession } = useSession();
-  const { mutate, isPending } = useUpdateAthleteProfile();
+  const { mutate, mutateAsync, isPending } = useUpdateAthleteProfile();
   const upload = useUploadImage();
 
   const profileAxes = axes ?? [];
@@ -50,7 +50,7 @@ export const AthleteProfileView = (): ReactElement => {
     selections,
     gender,
     isPending,
-    mutate,
+    mutateAsync,
   });
 
   const isMissing = error instanceof NotFoundError;

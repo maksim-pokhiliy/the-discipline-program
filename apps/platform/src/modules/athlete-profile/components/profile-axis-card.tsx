@@ -2,7 +2,7 @@ import { type ReactElement } from "react";
 
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import CloseRounded from "@mui/icons-material/CloseRounded";
-import { IconButton, List, Stack, Typography } from "@mui/material";
+import { CircularProgress, IconButton, List, Stack, Typography } from "@mui/material";
 
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { IndicatorChip } from "@repo/ui";
@@ -30,6 +30,7 @@ export type ProfileAxisCardProps = {
   axis: ProfileAxis;
   pickedValue: string | null;
   applyingValue: string | null;
+  isClearing: boolean;
   outcome: LevelSwitchOutcome | null;
   isLocked: boolean;
   onPick: (value: string) => void;
@@ -41,6 +42,7 @@ export const ProfileAxisCard = ({
   axis,
   pickedValue,
   applyingValue,
+  isClearing,
   outcome,
   isLocked,
   onPick,
@@ -92,7 +94,11 @@ export const ProfileAxisCard = ({
               onClick={onClear}
               sx={(theme) => ({ color: theme.palette.text.secondary })}
             >
-              <CloseRounded sx={{ fontSize: PICK_CLEAR_ICON_PX }} />
+              {isClearing ? (
+                <CircularProgress size={PICK_CLEAR_ICON_PX} color="inherit" />
+              ) : (
+                <CloseRounded sx={{ fontSize: PICK_CLEAR_ICON_PX }} />
+              )}
             </IconButton>
           )}
         </Stack>
@@ -129,7 +135,7 @@ export const ProfileAxisCard = ({
         </Typography>
       )}
 
-      <ProfileAxisOutcomeStrip outcome={outcome} onRetry={onRetry} />
+      <ProfileAxisOutcomeStrip outcome={outcome} isLocked={isLocked} onRetry={onRetry} />
     </Stack>
   );
 };

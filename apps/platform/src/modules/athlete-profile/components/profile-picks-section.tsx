@@ -79,6 +79,7 @@ export const ProfilePicksSection = ({
               axis={axis}
               pickedValue={selections[axis.id] ?? null}
               applyingValue={flight !== null && flight.axisId === axis.id ? flight.value : null}
+              isClearing={flight !== null && flight.axisId === axis.id && flight.value === null}
               outcome={outcome !== null && outcome.axisId === axis.id ? outcome : null}
               isLocked={isLocked}
               onPick={(value) => onPick(axis.id, value)}
