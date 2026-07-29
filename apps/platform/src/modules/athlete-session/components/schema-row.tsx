@@ -1,24 +1,16 @@
-import { type MouseEvent, type ReactElement, useEffect, useState } from "react";
+import { type ReactElement } from "react";
 
 import StickyNote2Rounded from "@mui/icons-material/StickyNote2Rounded";
-import { alpha, Box, Popover, Stack, Typography } from "@mui/material";
+import { alpha, Box, Stack, Typography } from "@mui/material";
 
 import { type RowView } from "@repo/contracts/lms/session-detail";
 
-import {
-  buildLoadLine,
-  buildRowSubLine,
-  buildVolume,
-  type LoadPrompt,
-} from "../utils/athlete-session-presentation";
+import { buildRowSubLine, buildVolume } from "../utils/athlete-session-presentation";
 import {
   FONT_WEIGHT_SEMI_BOLD,
   LOAD_AT_PREFIX,
-  RESOLVE_POPOVER_WIDTH_PX,
   ROW_AT_ALPHA,
   ROW_AT_PX,
-  ROW_LOAD_ALPHA,
-  ROW_LOAD_PX,
   ROW_MOVEMENT_ALPHA,
   ROW_MOVEMENT_PX,
   ROW_NOTE_ALPHA,
@@ -30,13 +22,11 @@ import {
   ROW_VOLUME_ALPHA,
   ROW_VOLUME_PX,
 } from "../utils/athlete-session.constants";
+import { buildLoadCell } from "../utils/load-cell";
 import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { DemoLink } from "./demo-link";
-import { InlineGenderPicker } from "./inline-gender-picker";
-import { InlineOneRmEditor } from "./inline-one-rm-editor";
-import { InlineProfilePicker } from "./inline-profile-picker";
-import { LoadPromptButton } from "./load-prompt-button";
+import { LoadCell } from "./load-cell";
 
 const NOTE_SEPARATOR = " ";
 
@@ -46,48 +36,11 @@ export type SchemaRowProps = {
 };
 
 export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-
   const volume = buildVolume(row);
-  const loadLine = buildLoadLine(row.resolvedLoad, row.load);
+  const cell = buildLoadCell(row);
   const subLine = buildRowSubLine(row);
   const noteText = row.notes !== null ? row.notes.join(NOTE_SEPARATOR) : "";
-  const prompt = loadLine.prompt;
-  const isEditing = editor.activeEditor?.rowId === row.rowId;
-  const editorKind = isEditing ? editor.activeEditor?.kind : null;
-
-  useEffect(() => {
-    if (!isEditing) {
-      setAnchorEl(null);
-    }
-  }, [isEditing]);
-
-  const openPrompt = (event: MouseEvent<HTMLElement>, next: LoadPrompt): void => {
-    switch (next.kind) {
-      case "one_rm":
-        setAnchorEl(event.currentTarget);
-        editor.openOneRmEditor(row.rowId, next.exerciseId);
-
-        return;
-      case "profile":
-        setAnchorEl(event.currentTarget);
-        editor.openProfileEditor(row.rowId);
-
-        return;
-      case "profile_attribute":
-        setAnchorEl(event.currentTarget);
-        editor.openProfileAttributeEditor(row.rowId);
-
-        return;
-      default:
-        next satisfies never;
-    }
-  };
-
-  const closePrompt = (): void => {
-    setAnchorEl(null);
-    editor.closeEditor();
-  };
+  const hasLoad = cell.kind !== "empty" && cell.value.length > 0;
 
   return (
     <Box sx={{ px: `${ROW_PADDING_X_PX}px`, py: `${ROW_PADDING_Y_PX}px` }}>
@@ -140,7 +93,7 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
               {volume}
             </Box>
           ) : null}
-          {loadLine.showAt ? (
+          {hasLoad ? (
             <Box
               component="span"
               sx={(theme) => ({
@@ -151,22 +104,11 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
               {LOAD_AT_PREFIX}
             </Box>
           ) : null}
-          {loadLine.loadStr.length > 0 ? (
-            <Typography
-              component="span"
-              sx={(theme) => ({
-                fontSize: theme.typography.pxToRem(ROW_LOAD_PX),
-                fontWeight: FONT_WEIGHT_SEMI_BOLD,
-                color: alpha(theme.palette.common.white, ROW_LOAD_ALPHA),
-                overflowWrap: "anywhere",
-              })}
-            >
-              {loadLine.loadStr}
-            </Typography>
-          ) : null}
-          {prompt !== null ? (
-            <LoadPromptButton label={prompt.label} onClick={(event) => openPrompt(event, prompt)} />
-          ) : null}
+          <LoadCell
+            row={row}
+            isPulsing={editor.pulsingRowIds.has(row.rowId)}
+            onOpen={(target) => editor.openWeightSheet(row, target)}
+          />
         </Stack>
       </Stack>
 
@@ -199,41 +141,6 @@ export const SchemaRow = ({ row, editor }: SchemaRowProps): ReactElement => {
           </Typography>
         </Stack>
       ) : null}
-
-      <Popover
-        open={anchorEl !== null && isEditing}
-        anchorEl={anchorEl}
-        onClose={closePrompt}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { sx: { mt: 1, p: 2, width: RESOLVE_POPOVER_WIDTH_PX } } }}
-      >
-        {editorKind === "one_rm" ? (
-          <InlineOneRmEditor
-            movement={row.movement}
-            value={editor.oneRmValue}
-            isSubmitting={editor.oneRmPending}
-            canSubmit={editor.oneRmCanSubmit}
-            onChange={editor.setOneRmValue}
-            onCommit={editor.commitOneRm}
-          />
-        ) : null}
-        {editorKind === "profile" && row.load !== null ? (
-          <InlineProfilePicker
-            load={row.load}
-            selections={editor.profileSelections}
-            isSubmitting={editor.profilePending}
-            onPick={editor.pickProfile}
-          />
-        ) : null}
-        {editorKind === "profile_attribute" && row.load !== null ? (
-          <InlineGenderPicker
-            load={row.load}
-            isSubmitting={editor.profilePending}
-            onPick={editor.pickGender}
-          />
-        ) : null}
-      </Popover>
     </Box>
   );
 };

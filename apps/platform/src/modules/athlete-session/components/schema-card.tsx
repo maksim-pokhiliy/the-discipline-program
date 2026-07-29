@@ -120,7 +120,7 @@ export const SchemaCard = ({ schema, editor }: SchemaCardProps): ReactElement =>
             {item.kind === "row" ? (
               <SchemaRow row={item.row} editor={editor} />
             ) : (
-              <RowGroup label={item.label} members={item.members} />
+              <RowGroup label={item.label} members={item.members} editor={editor} />
             )}
           </Box>
         ))}
