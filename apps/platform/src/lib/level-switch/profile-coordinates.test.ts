@@ -4,11 +4,11 @@ import { Gender } from "@repo/contracts/coaching/athlete-profile";
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
 import {
-  GENDER_FIELD_LABEL,
+  GENDER_COORDINATE_LABEL,
   PICK_FAILED_NOT_PICKED,
   PICK_VALUE_ELLIPSIS,
   PICK_VALUE_MAX_CHARS,
-} from "./athlete-profile.constants";
+} from "./level-switch.constants";
 import {
   buildAppliedMessage,
   buildCoordinateParts,
@@ -121,7 +121,7 @@ describe("buildAppliedMessage", () => {
       gender: null,
     });
 
-    expect(message).toBe(`Applied — RX · M. ${GENDER_FIELD_LABEL} still not picked.`);
+    expect(message).toBe(`Applied — RX · M. ${GENDER_COORDINATE_LABEL} still not picked.`);
   });
 
   it("reports the unpicked axis and never passes gender off as the level when nothing is picked", () => {
@@ -268,7 +268,7 @@ describe("buildMissingCoordinate", () => {
         selections: { [LEVEL_AXIS_ID]: "RX", [SCALE_AXIS_ID]: "M" },
         gender: null,
       }),
-    ).toBe(GENDER_FIELD_LABEL);
+    ).toBe(GENDER_COORDINATE_LABEL);
   });
 
   it("returns null when every coordinate is resolved", () => {

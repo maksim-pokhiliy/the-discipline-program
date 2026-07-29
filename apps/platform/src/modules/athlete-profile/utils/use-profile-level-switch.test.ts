@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Gender, type UpdateAthleteProfileRequest } from "@repo/contracts/coaching/athlete-profile";
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
-import { PICK_OFFLINE_REPEAT } from "./athlete-profile.constants";
+import { PICK_OFFLINE_REPEAT } from "@app/lib/level-switch";
+
 import { useProfileLevelSwitch, type UseProfileLevelSwitchArgs } from "./use-profile-level-switch";
 
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";

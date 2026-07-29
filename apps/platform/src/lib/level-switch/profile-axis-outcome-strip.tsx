@@ -4,11 +4,11 @@ import { type ReactElement, useEffect, useState } from "react";
 
 import { Alert, Button, Collapse } from "@mui/material";
 
-import { PICK_RETRY_LABEL } from "../utils/athlete-profile.constants";
-import { type LevelSwitchOutcome } from "../utils/use-profile-level-switch";
+import { PICK_RETRY_LABEL } from "./level-switch.constants";
+import { type LevelApplyOutcome } from "./use-level-apply";
 
 export type ProfileAxisOutcomeStripProps = {
-  outcome: LevelSwitchOutcome | null;
+  outcome: LevelApplyOutcome | null;
   isLocked: boolean;
   onRetry: () => void;
 };
@@ -18,7 +18,7 @@ export const ProfileAxisOutcomeStrip = ({
   isLocked,
   onRetry,
 }: ProfileAxisOutcomeStripProps): ReactElement | null => {
-  const [lastOutcome, setLastOutcome] = useState<LevelSwitchOutcome | null>(outcome);
+  const [lastOutcome, setLastOutcome] = useState<LevelApplyOutcome | null>(outcome);
 
   useEffect(() => {
     if (outcome !== null) {

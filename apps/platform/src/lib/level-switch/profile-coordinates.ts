@@ -1,8 +1,8 @@
 import { type Gender, GENDER_LABELS } from "@repo/contracts/coaching/athlete-profile";
-import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
+import { type LevelAxis } from "./level-axis";
 import {
-  GENDER_FIELD_LABEL,
+  GENDER_COORDINATE_LABEL,
   PICK_APPLIED_PREFIX,
   PICK_APPLIED_RESOLVE_PREFIX,
   PICK_COORDINATE_SEPARATOR,
@@ -12,10 +12,10 @@ import {
   PICK_SENTENCE_END,
   PICK_VALUE_ELLIPSIS,
   PICK_VALUE_MAX_CHARS,
-} from "./athlete-profile.constants";
+} from "./level-switch.constants";
 
 export type ProfileCoordinatesInput = {
-  axes: ProfileAxis[];
+  axes: LevelAxis[];
   selections: Record<string, string>;
   gender: Gender | null;
 };
@@ -32,11 +32,11 @@ export const shortenCoordinate = (value: string): string => {
   return `${graphemes.slice(0, PICK_VALUE_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
 };
 
-const pickableAxesOf = (axes: ProfileAxis[]): ProfileAxis[] =>
+const pickableAxesOf = (axes: LevelAxis[]): LevelAxis[] =>
   axes.filter((axis) => axis.binding === null);
 
 export const resolvePickedValue = (
-  axis: ProfileAxis,
+  axis: LevelAxis,
   selections: Record<string, string>,
 ): string | null => {
   const value = selections[axis.id];
@@ -74,7 +74,7 @@ export const buildMissingCoordinate = ({
     return unpicked.label;
   }
 
-  return gender === null ? GENDER_FIELD_LABEL : null;
+  return gender === null ? GENDER_COORDINATE_LABEL : null;
 };
 
 export const buildAppliedMessage = (coordinates: ProfileCoordinatesInput): string => {

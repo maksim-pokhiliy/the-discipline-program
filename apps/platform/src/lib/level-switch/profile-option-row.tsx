@@ -16,7 +16,7 @@ import {
   PICK_SPINNER_PX,
   PICK_TAG_LETTER_SPACING,
   PICK_TAG_PX,
-} from "../utils/athlete-profile.constants";
+} from "./level-switch.constants";
 
 export type ProfileOptionRowProps = {
   value: string;
