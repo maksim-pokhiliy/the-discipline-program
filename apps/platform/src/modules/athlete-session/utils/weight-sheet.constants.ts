@@ -20,6 +20,14 @@ export const CHIP_NARROW_BREAKPOINT_PX = 360;
 export const CHIP_SOURCE_MAX_WIDTH_PX = { narrow: 118, phone: 168, desktop: 260 } as const;
 export const DOTTED_UNDERLINE_ALPHA = 0.6;
 
+export const RECEIPT_LEVEL_APPLIED = " applied · ";
+export const RECEIPT_LEVEL_SUFFIX_SINGULAR = " weight updated";
+export const RECEIPT_LEVEL_SUFFIX_PLURAL = " weights updated";
+export const RECEIPT_COORD_SEPARATOR = " · ";
+export const RECEIPT_COORD_MAX_CHARS = 24;
+export const RECEIPT_MAX_INFIX = " 1RM · ";
+export const RECEIPT_MAX_SUFFIX = " kg saved";
+
 export const PULSE_DURATION_MS = 1400;
 export const PULSE_CLEAR_MS = 1600;
 export const PULSE_RING_WIDTH_PX = 1;

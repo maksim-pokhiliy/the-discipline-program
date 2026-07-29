@@ -15,6 +15,7 @@ import {
   RAIL_WIDTH_PX,
 } from "../utils/athlete-session.constants";
 import { type SessionEditorControls, useSessionLogging } from "../utils/use-session-logging";
+import { useWeightSheet } from "../utils/use-weight-sheet";
 
 import { CompletionBar } from "./completion-bar";
 import { CompletionRail } from "./completion-rail";
@@ -31,32 +32,21 @@ const BACK_HREF = "/athlete";
 export const SessionContent = ({ data }: SessionContentProps): ReactElement => {
   const { session, blocks } = data;
   const logging = useSessionLogging(data);
+  const weightSheet = useWeightSheet(data);
 
   const completedLabel =
     session.completedAt !== null ? formatCompletedDate(session.completedAt) : null;
 
   const editor: SessionEditorControls = {
-    activeEditor: logging.activeEditor,
-    oneRmValue: logging.oneRmValue,
-    oneRmCanSubmit: logging.oneRmCanSubmit,
-    oneRmPending: logging.oneRmPending,
-    profileSelections: logging.profileSelections,
-    profilePending: logging.profilePending,
     activeLogSchemaId: logging.activeLogSchemaId,
     isLoggingBenchmark: logging.isLoggingBenchmark,
-    openOneRmEditor: logging.openOneRmEditor,
-    openProfileEditor: logging.openProfileEditor,
-    openProfileAttributeEditor: logging.openProfileAttributeEditor,
-    closeEditor: logging.closeEditor,
-    setOneRmValue: logging.setOneRmValue,
-    commitOneRm: logging.commitOneRm,
-    pickProfile: logging.pickProfile,
-    pickGender: logging.pickGender,
+    pulsingRowIds: weightSheet.pulsingRowIds,
     draftFor: logging.draftFor,
     openLog: logging.openLog,
     cancelLog: logging.cancelLog,
     saveLog: logging.saveLog,
     setDraftField: logging.setDraftField,
+    openWeightSheet: weightSheet.openWeightSheet,
   };
 
   const workout = (
