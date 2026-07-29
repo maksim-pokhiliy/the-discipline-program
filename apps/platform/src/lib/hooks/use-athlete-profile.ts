@@ -33,15 +33,24 @@ export const applyAthleteProfileUpdate = (
   ...(data.profileSelections !== undefined && { profileSelections: data.profileSelections }),
 });
 
+const athleteProfileUpdateConfig = {
+  mutationFn: (data: UpdateAthleteProfileRequest) => api.athleteProfile.update(data),
+  queryKey: () => platformKeys.athleteProfile.data(),
+  transform: applyAthleteProfileUpdate,
+  invalidateKeys: () => [platformKeys.athleteProfile.data()],
+  errorMessage: "Failed to update profile",
+};
+
 export const useUpdateAthleteProfile = () =>
   useOptimisticMutation<
     GetAthleteProfileResponse,
     UpdateAthleteProfileRequest,
     UpdateAthleteProfileResponse
-  >({
-    mutationFn: (data) => api.athleteProfile.update(data),
-    queryKey: () => platformKeys.athleteProfile.data(),
-    transform: applyAthleteProfileUpdate,
-    invalidateKeys: () => [platformKeys.athleteProfile.data()],
-    errorMessage: "Failed to update profile",
-  });
+  >(athleteProfileUpdateConfig);
+
+export const useSwitchAthleteProfileLevel = () =>
+  useOptimisticMutation<
+    GetAthleteProfileResponse,
+    UpdateAthleteProfileRequest,
+    UpdateAthleteProfileResponse
+  >({ ...athleteProfileUpdateConfig, suppressErrorToast: true });

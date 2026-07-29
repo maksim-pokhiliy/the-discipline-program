@@ -88,6 +88,11 @@ vi.mock("@app/lib/hooks", () => ({
     mutateAsync: updateMutateAsync,
     isPending: false,
   }),
+  useSwitchAthleteProfileLevel: () => ({
+    mutate: updateMutate,
+    mutateAsync: updateMutateAsync,
+    isPending: false,
+  }),
   useUploadImage: () => ({ mutate: uploadMutate, isPending: false }),
 }));
 

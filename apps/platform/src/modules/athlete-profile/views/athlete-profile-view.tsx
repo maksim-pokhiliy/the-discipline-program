@@ -12,6 +12,7 @@ import { LoadingState } from "@repo/ui";
 import {
   useAthleteProfile,
   useAthleteProfileAxes,
+  useSwitchAthleteProfileLevel,
   useUpdateAthleteProfile,
   useUploadImage,
 } from "@app/lib/hooks";
@@ -38,7 +39,8 @@ export const AthleteProfileView = (): ReactElement => {
   const { data, isLoading, error } = useAthleteProfile();
   const { data: axes } = useAthleteProfileAxes();
   const { update: updateSession } = useSession();
-  const { mutate, mutateAsync, isPending } = useUpdateAthleteProfile();
+  const { mutate, isPending } = useUpdateAthleteProfile();
+  const { mutateAsync: switchLevel, isPending: isSwitchingLevel } = useSwitchAthleteProfileLevel();
   const upload = useUploadImage();
 
   const profileAxes = axes ?? [];
@@ -50,8 +52,10 @@ export const AthleteProfileView = (): ReactElement => {
     selections,
     gender,
     isPending,
-    mutateAsync,
+    mutateAsync: switchLevel,
   });
+
+  const isSavingProfile = isPending || isSwitchingLevel;
 
   const isMissing = error instanceof NotFoundError;
 
@@ -107,8 +111,8 @@ export const AthleteProfileView = (): ReactElement => {
       />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={SECTION_GAP} alignItems="stretch">
-        <BodyWeightCard weightKg={weightKg} isSaving={isPending} onSave={handleSaveWeight} />
-        <BodyHeightCard heightCm={heightCm} isSaving={isPending} onSave={handleSaveHeight} />
+        <BodyWeightCard weightKg={weightKg} isSaving={isSavingProfile} onSave={handleSaveWeight} />
+        <BodyHeightCard heightCm={heightCm} isSaving={isSavingProfile} onSave={handleSaveHeight} />
       </Stack>
 
       <ProfilePicksSection
@@ -126,7 +130,7 @@ export const AthleteProfileView = (): ReactElement => {
         gender={gender}
         healthStatus={data?.healthStatus ?? HealthStatus.HEALTHY}
         healthNote={data?.healthNote ?? null}
-        isSaving={isPending}
+        isSaving={isSavingProfile}
         onChange={mutate}
       />
     </Stack>
