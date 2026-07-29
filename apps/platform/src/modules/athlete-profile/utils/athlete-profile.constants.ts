@@ -119,3 +119,4 @@ export const PICK_APPLIED_RESOLVE_PREFIX = "training weights everywhere now reso
 export const PICK_MISSING_SUFFIX = " still not picked.";
 export const PICK_FAILED_PREFIX = "Couldn't apply. Your level is still ";
 export const PICK_FAILED_NOT_PICKED = "Couldn't apply. Your level is still not picked.";
+export const PICK_OFFLINE_REPEAT = "Still no connection — your level is unchanged.";

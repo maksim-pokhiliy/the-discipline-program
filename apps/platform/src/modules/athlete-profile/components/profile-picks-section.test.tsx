@@ -15,7 +15,10 @@ import {
   PICK_RETRY_LABEL,
   PROFILE_PICKS_NO_AXES,
 } from "../utils/athlete-profile.constants";
-import { type LevelSwitchFlight, type LevelSwitchOutcome } from "../utils/use-profile-level-switch";
+import {
+  type LevelSwitchFlight,
+  type LevelSwitchOutcomes,
+} from "../utils/use-profile-level-switch";
 
 import { ProfilePicksSection } from "./profile-picks-section";
 
@@ -61,7 +64,7 @@ const applyingName = (value: string): string => `${value} ${PICK_APPLYING_LABEL}
 type SectionState = {
   isSaving?: boolean;
   flight?: LevelSwitchFlight | null;
-  outcome?: LevelSwitchOutcome | null;
+  outcomes?: LevelSwitchOutcomes;
 };
 
 const renderSection = (
@@ -75,7 +78,7 @@ const renderSection = (
       selections={selections}
       isSaving={state.isSaving ?? false}
       flight={state.flight ?? null}
-      outcome={state.outcome ?? null}
+      outcomes={state.outcomes ?? {}}
       onPick={onPick}
       onClearPick={onClearPick}
       onRetry={onRetry}
@@ -317,7 +320,7 @@ describe("ProfilePicksSection outcome strip", () => {
     renderSection(
       [plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])],
       { [LEVEL_AXIS_ID]: "RX" },
-      { outcome: { axisId: LEVEL_AXIS_ID, isApplied: true, message: APPLIED_MESSAGE } },
+      { outcomes: { [LEVEL_AXIS_ID]: { isApplied: true, message: APPLIED_MESSAGE } } },
     );
 
     const strip = screen.getByRole("alert");
@@ -331,11 +334,13 @@ describe("ProfilePicksSection outcome strip", () => {
       [plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"])],
       { [LEVEL_AXIS_ID]: "SC" },
       {
-        outcome: {
-          axisId: LEVEL_AXIS_ID,
-          isApplied: false,
-          message: FAILED_MESSAGE,
-          failedValue: "RX",
+        outcomes: {
+          [LEVEL_AXIS_ID]: {
+            isApplied: false,
+            message: FAILED_MESSAGE,
+            failedValue: "RX",
+            isOffline: false,
+          },
         },
       },
     );
@@ -347,6 +352,7 @@ describe("ProfilePicksSection outcome strip", () => {
     fireEvent.click(within(strip).getByRole("button", { name: PICK_RETRY_LABEL }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(onRetry).toHaveBeenCalledWith(LEVEL_AXIS_ID);
   });
 
   it("disables Retry while a write is in flight", () => {
@@ -355,11 +361,13 @@ describe("ProfilePicksSection outcome strip", () => {
       { [LEVEL_AXIS_ID]: "SC" },
       {
         isSaving: true,
-        outcome: {
-          axisId: LEVEL_AXIS_ID,
-          isApplied: false,
-          message: FAILED_MESSAGE,
-          failedValue: "RX",
+        outcomes: {
+          [LEVEL_AXIS_ID]: {
+            isApplied: false,
+            message: FAILED_MESSAGE,
+            failedValue: "RX",
+            isOffline: false,
+          },
         },
       },
     );
@@ -374,12 +382,40 @@ describe("ProfilePicksSection outcome strip", () => {
         plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
       ],
       { [SCALE_AXIS_ID]: "M" },
-      { outcome: { axisId: SCALE_AXIS_ID, isApplied: true, message: APPLIED_MESSAGE } },
+      { outcomes: { [SCALE_AXIS_ID]: { isApplied: true, message: APPLIED_MESSAGE } } },
     );
 
     expect(within(axisCard("Level")).queryByRole("alert")).not.toBeInTheDocument();
     expect(within(axisCard("Scale")).getByRole("alert")).toBeInTheDocument();
     expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("renders a strip in each axis card when both axes carry an outcome", () => {
+    renderSection(
+      [
+        plainAxis(LEVEL_AXIS_ID, "Level", ["RX", "SC"]),
+        plainAxis(SCALE_AXIS_ID, "Scale", ["M", "F"]),
+      ],
+      { [SCALE_AXIS_ID]: "M" },
+      {
+        outcomes: {
+          [LEVEL_AXIS_ID]: {
+            isApplied: false,
+            message: FAILED_MESSAGE,
+            failedValue: "RX",
+            isOffline: false,
+          },
+          [SCALE_AXIS_ID]: { isApplied: true, message: APPLIED_MESSAGE },
+        },
+      },
+    );
+
+    expect(within(axisCard("Level")).getByText(FAILED_MESSAGE)).toBeInTheDocument();
+    expect(within(axisCard("Scale")).getByText(APPLIED_MESSAGE)).toBeInTheDocument();
+
+    fireEvent.click(within(axisCard("Level")).getByRole("button", { name: PICK_RETRY_LABEL }));
+
+    expect(onRetry).toHaveBeenCalledWith(LEVEL_AXIS_ID);
   });
 });
 

@@ -116,7 +116,7 @@ export const AthleteProfileView = (): ReactElement => {
         selections={levelSwitch.displaySelections}
         isSaving={isPending}
         flight={levelSwitch.flight}
-        outcome={levelSwitch.outcome}
+        outcomes={levelSwitch.outcomes}
         onPick={levelSwitch.pick}
         onClearPick={levelSwitch.clearPick}
         onRetry={levelSwitch.retry}

@@ -1,3 +1,5 @@
+"use client";
+
 import { type ReactElement } from "react";
 
 import { Stack, Typography } from "@mui/material";
@@ -17,7 +19,10 @@ import {
   PROFILE_PICKS_EYEBROW,
   PROFILE_PICKS_NO_AXES,
 } from "../utils/athlete-profile.constants";
-import { type LevelSwitchFlight, type LevelSwitchOutcome } from "../utils/use-profile-level-switch";
+import {
+  type LevelSwitchFlight,
+  type LevelSwitchOutcomes,
+} from "../utils/use-profile-level-switch";
 
 import { ProfileAxisCard } from "./profile-axis-card";
 
@@ -26,10 +31,10 @@ export type ProfilePicksSectionProps = {
   selections: Record<string, string>;
   isSaving: boolean;
   flight: LevelSwitchFlight | null;
-  outcome: LevelSwitchOutcome | null;
+  outcomes: LevelSwitchOutcomes;
   onPick: (axisId: string, value: string) => void;
   onClearPick: (axisId: string) => void;
-  onRetry: () => void;
+  onRetry: (axisId: string) => void;
 };
 
 export const ProfilePicksSection = ({
@@ -37,7 +42,7 @@ export const ProfilePicksSection = ({
   selections,
   isSaving,
   flight,
-  outcome,
+  outcomes,
   onPick,
   onClearPick,
   onRetry,
@@ -84,11 +89,11 @@ export const ProfilePicksSection = ({
               pickedValue={selections[axis.id] ?? null}
               applyingValue={flight !== null && flight.axisId === axis.id ? flight.value : null}
               isClearing={flight !== null && flight.axisId === axis.id && flight.value === null}
-              outcome={outcome !== null && outcome.axisId === axis.id ? outcome : null}
+              outcome={outcomes[axis.id] ?? null}
               isLocked={isLocked}
               onPick={(value) => onPick(axis.id, value)}
               onClear={() => onClearPick(axis.id)}
-              onRetry={onRetry}
+              onRetry={() => onRetry(axis.id)}
             />
           ))}
         </Stack>
