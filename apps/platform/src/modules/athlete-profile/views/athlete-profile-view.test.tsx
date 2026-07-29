@@ -1,9 +1,11 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  Gender,
   type GetAthleteProfileResponse,
   HealthStatus,
+  type UpdateAthleteProfileRequest,
 } from "@repo/contracts/coaching/athlete-profile";
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { NotFoundError } from "@repo/errors";
@@ -27,7 +29,10 @@ import {
   HEALTH_STATUS_FIELD_LABEL,
   HEIGHT_UNIT_LABEL,
   KG_LABEL,
+  PICK_APPLYING_LABEL,
   PICK_CURRENT_LABEL,
+  PICK_OUTCOME_DISMISS_MS,
+  PICK_RETRY_LABEL,
   PROFILE_PICKS_NO_AXES,
   ROLE_BADGE_LABEL,
   TITLE_LABEL,
@@ -38,6 +43,7 @@ const VALID_USER_CUID = "clz00000000000000000user1";
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";
 const SCALE_AXIS_ID = "clz00000000000000000axs02";
 const NOW = new Date("2026-06-16T09:00:00.000Z");
+const STRIP_EXIT_GRACE_MS = 1000;
 
 const plainAxis = (id: string, label: string, values: string[]): ProfileAxis => ({
   id,
@@ -61,7 +67,7 @@ const profileState = {
 };
 const axesState = { data: MOCK_AXES as ProfileAxis[] | undefined };
 const updateMutate = vi.fn();
-const updateMutateAsync = vi.fn<(patch: unknown) => Promise<unknown>>();
+const updateMutateAsync = vi.fn<(patch: UpdateAthleteProfileRequest) => Promise<unknown>>();
 const uploadMutate = vi.fn();
 const updateSession = vi.fn().mockResolvedValue(null);
 const sessionUser = {
@@ -118,6 +124,32 @@ const makeProfile = (
   ...overrides,
 });
 
+const writeOptimisticSelections = (patch: UpdateAthleteProfileRequest): void => {
+  const { profileSelections } = patch;
+
+  if (profileSelections === undefined || profileState.data === undefined) {
+    return;
+  }
+
+  profileState.data = { ...profileState.data, profileSelections };
+};
+
+const commitPatchOnResolve = (): void => {
+  updateMutateAsync.mockImplementation((patch) => {
+    writeOptimisticSelections(patch);
+
+    return Promise.resolve();
+  });
+};
+
+const holdPatchInFlight = (): void => {
+  updateMutateAsync.mockImplementation((patch) => {
+    writeOptimisticSelections(patch);
+
+    return new Promise<void>(() => undefined);
+  });
+};
+
 const statCardByEyebrow = (eyebrow: string): HTMLElement => {
   let node: HTMLElement | null = screen.getByText(eyebrow);
   let card: HTMLElement = node;
@@ -133,6 +165,23 @@ const statCardByEyebrow = (eyebrow: string): HTMLElement => {
   }
 
   return card;
+};
+
+const flushTimers = async (ms: number): Promise<void> => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+};
+
+const axisStateChip = (label: string): HTMLElement => {
+  const card = screen.getByRole("radiogroup", { name: label }).parentElement;
+  const chip = card?.querySelector<HTMLElement>(".MuiChip-root") ?? null;
+
+  if (chip === null) {
+    throw new Error(`no state chip rendered in the ${label} axis card`);
+  }
+
+  return chip;
 };
 
 beforeEach(() => {
@@ -459,6 +508,130 @@ describe("AthleteProfileView profile picks", () => {
 
     expect(screen.getByText("Level")).toBeInTheDocument();
     expect(screen.queryByText("Deleted")).toBeNull();
+  });
+});
+
+describe("AthleteProfileView level switch", () => {
+  it("keeps the previous pick Current while the tapped value is still applying", () => {
+    profileState.data = makeProfile({
+      gender: Gender.FEMALE,
+      profileSelections: { [LEVEL_AXIS_ID]: "SC" },
+    });
+    holdPatchInFlight();
+
+    render(<AthleteProfileView />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "RX" }));
+
+    expect(screen.getByRole("radio", { name: `SC ${PICK_CURRENT_LABEL}` })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: `RX ${PICK_APPLYING_LABEL}` })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+  });
+
+  it("names the full resolved coordinates and marks the row Current once the patch resolves", async () => {
+    profileState.data = makeProfile({
+      gender: Gender.FEMALE,
+      profileSelections: { [SCALE_AXIS_ID]: "M" },
+    });
+    commitPatchOnResolve();
+
+    render(<AthleteProfileView />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "RX" }));
+
+    const strip = await screen.findByRole("alert");
+
+    expect(
+      within(strip).getByText(
+        "Applied — training weights everywhere now resolve as RX · M · Female.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(strip).queryByRole("button", { name: PICK_RETRY_LABEL })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: `RX ${PICK_CURRENT_LABEL}` })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
+  it("keeps the previous pick Current and offers Retry when the patch rejects", async () => {
+    profileState.data = makeProfile({
+      gender: Gender.FEMALE,
+      profileSelections: { [LEVEL_AXIS_ID]: "SC" },
+    });
+    updateMutateAsync.mockRejectedValue(new Error("boom"));
+
+    render(<AthleteProfileView />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "RX" }));
+
+    const strip = await screen.findByRole("alert");
+
+    expect(
+      within(strip).getByText("Couldn't apply. Your level is still SC · Female."),
+    ).toBeInTheDocument();
+    expect(within(strip).getByRole("button", { name: PICK_RETRY_LABEL })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: `SC ${PICK_CURRENT_LABEL}` })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
+  it("re-issues the identical patch when Retry is pressed after a failure", async () => {
+    profileState.data = makeProfile({
+      gender: Gender.FEMALE,
+      profileSelections: { [LEVEL_AXIS_ID]: "SC" },
+    });
+    updateMutateAsync.mockRejectedValue(new Error("boom"));
+
+    render(<AthleteProfileView />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "RX" }));
+
+    const strip = await screen.findByRole("alert");
+
+    fireEvent.click(within(strip).getByRole("button", { name: PICK_RETRY_LABEL }));
+
+    await waitFor(() => {
+      expect(updateMutateAsync).toHaveBeenCalledTimes(2);
+    });
+
+    expect(updateMutateAsync.mock.calls[1]).toEqual(updateMutateAsync.mock.calls[0]);
+    expect(updateMutateAsync).toHaveBeenLastCalledWith({
+      profileSelections: { [LEVEL_AXIS_ID]: "RX" },
+    });
+  });
+
+  it("dismisses the applied strip on its own while the axis chip keeps naming the value", async () => {
+    vi.useFakeTimers();
+
+    try {
+      profileState.data = makeProfile({
+        gender: Gender.FEMALE,
+        profileSelections: { [SCALE_AXIS_ID]: "M" },
+      });
+      commitPatchOnResolve();
+
+      render(<AthleteProfileView />);
+
+      fireEvent.click(screen.getByRole("radio", { name: "RX" }));
+
+      await flushTimers(0);
+
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+
+      await flushTimers(PICK_OUTCOME_DISMISS_MS);
+      await flushTimers(STRIP_EXIT_GRACE_MS);
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(axisStateChip("Level")).toHaveTextContent("RX");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
