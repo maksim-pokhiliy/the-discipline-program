@@ -1,38 +1,98 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ProfileAxisBinding } from "@prisma/client";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Gender, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
-import { NotFoundError } from "@repo/errors";
+import { NotFoundError, ValidationError } from "@repo/errors";
 
+import { prisma } from "../../db/client";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { coachingAthleteProfileApi } from "./athlete-profile";
 
+const DELETED_AXIS_ID = "cdeletedaxis000000000001";
+
 describe("coachingAthleteProfileApi", () => {
   let userWithProfile: Awaited<ReturnType<typeof createTestUser>>;
   let userWithoutProfile: Awaited<ReturnType<typeof createTestUser>>;
+  let guardUser: Awaited<ReturnType<typeof createTestUser>>;
   let profileId: string;
+  let levelAxisId: string;
+  let equipmentAxisId: string;
+  let genderAxisId: string;
+  let ownedGenderAxisId: string | null;
 
   beforeAll(async () => {
     userWithProfile = await createTestUser();
     userWithoutProfile = await createTestUser();
+    guardUser = await createTestUser();
 
     const profile = await cleanupRaw.athleteProfile.create({
       data: { userId: userWithProfile.id },
     });
 
     profileId = profile.id;
+
+    await cleanupRaw.athleteProfile.create({ data: { userId: guardUser.id } });
+
+    const levelAxis = await cleanupRaw.profileAxis.create({
+      data: {
+        key: `test-level-${crypto.randomUUID()}`,
+        label: "Test Level",
+        values: ["RX", "Scaled"],
+      },
+    });
+
+    levelAxisId = levelAxis.id;
+
+    const equipmentAxis = await cleanupRaw.profileAxis.create({
+      data: {
+        key: `test-equipment-${crypto.randomUUID()}`,
+        label: "Test Equipment",
+        values: ["Barbell", "Dumbbell"],
+      },
+    });
+
+    equipmentAxisId = equipmentAxis.id;
+
+    const existingGenderAxis = await cleanupRaw.profileAxis.findFirst({
+      where: { binding: ProfileAxisBinding.GENDER },
+    });
+    const genderAxis =
+      existingGenderAxis ??
+      (await cleanupRaw.profileAxis.create({
+        data: {
+          key: `test-gender-${crypto.randomUUID()}`,
+          label: "Test Gender",
+          values: ["Male", "Female"],
+          binding: ProfileAxisBinding.GENDER,
+        },
+      }));
+
+    genderAxisId = genderAxis.id;
+    ownedGenderAxisId = existingGenderAxis === null ? genderAxis.id : null;
   });
 
   afterAll(async () => {
     await cleanupRaw.athleteProfile
       .deleteMany({
-        where: { userId: { in: [userWithProfile.id, userWithoutProfile.id] } },
+        where: { userId: { in: [userWithProfile.id, userWithoutProfile.id, guardUser.id] } },
+      })
+      .catch(() => {});
+
+    await cleanupRaw.profileAxis
+      .deleteMany({
+        where: {
+          id: {
+            in: [levelAxisId, equipmentAxisId, ...(ownedGenderAxisId ? [ownedGenderAxisId] : [])],
+          },
+        },
       })
       .catch(() => {});
 
     await cleanup(
       { table: "user", id: userWithProfile.id },
       { table: "user", id: userWithoutProfile.id },
+      { table: "user", id: guardUser.id },
     );
   });
 
@@ -102,6 +162,84 @@ describe("coachingAthleteProfileApi", () => {
       expect(profile.healthStatus).toBe(HealthStatus.RESTRICTED);
       expect(profile.gender).toBe(Gender.FEMALE);
       expect(profile.heightCm).toBe(165);
+    });
+  });
+
+  describe("upsert — profileSelections guard", () => {
+    beforeEach(async () => {
+      await cleanupRaw.athleteProfile.update({
+        where: { userId: guardUser.id },
+        data: { profileSelections: { [levelAxisId]: "RX" } },
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("rejects the whole request when a key targets a system-bound axis", async () => {
+      await expect(
+        coachingAthleteProfileApi.upsert(guardUser.id, {
+          profileSelections: { [levelAxisId]: "Scaled", [genderAxisId]: "Female" },
+        }),
+      ).rejects.toThrow(ValidationError);
+
+      const profile = await coachingAthleteProfileApi.get(guardUser.id);
+
+      expect(profile.profileSelections).toEqual({ [levelAxisId]: "RX" });
+    });
+
+    it("names the offending axis in the validation details", async () => {
+      await expect(
+        coachingAthleteProfileApi.upsert(guardUser.id, {
+          profileSelections: { [genderAxisId]: "Female" },
+        }),
+      ).rejects.toMatchObject({
+        details: { field: "profileSelections", axisId: genderAxisId },
+      });
+    });
+
+    it("prunes a value that is no longer one of the axis values and still succeeds", async () => {
+      const updated = await coachingAthleteProfileApi.upsert(guardUser.id, {
+        profileSelections: { [levelAxisId]: "Scaled", [equipmentAxisId]: "Kettlebell" },
+      });
+
+      expect(updated.profileSelections).toEqual({ [levelAxisId]: "Scaled" });
+    });
+
+    it("prunes a key whose axis no longer exists and still succeeds", async () => {
+      const updated = await coachingAthleteProfileApi.upsert(guardUser.id, {
+        profileSelections: { [levelAxisId]: "Scaled", [DELETED_AXIS_ID]: "Anything" },
+      });
+
+      expect(updated.profileSelections).toEqual({ [levelAxisId]: "Scaled" });
+    });
+
+    it("stores a fully valid map byte-identical after exactly one axis query", async () => {
+      const findManySpy = vi.spyOn(prisma.profileAxis, "findMany");
+      const sent = { [levelAxisId]: "Scaled", [equipmentAxisId]: "Dumbbell" };
+      const updated = await coachingAthleteProfileApi.upsert(guardUser.id, {
+        profileSelections: sent,
+      });
+
+      expect(findManySpy).toHaveBeenCalledTimes(1);
+      expect(updated.profileSelections).toEqual(sent);
+
+      const reread = await coachingAthleteProfileApi.get(guardUser.id);
+
+      expect(reread.profileSelections).toEqual(sent);
+    });
+
+    it("leaves profileSelections untouched and issues no axis query for a gender-only write", async () => {
+      const findManySpy = vi.spyOn(prisma.profileAxis, "findMany");
+
+      const updated = await coachingAthleteProfileApi.upsert(guardUser.id, {
+        gender: Gender.FEMALE,
+      });
+
+      expect(findManySpy).not.toHaveBeenCalled();
+      expect(updated.gender).toBe(Gender.FEMALE);
+      expect(updated.profileSelections).toEqual({ [levelAxisId]: "RX" });
     });
   });
 });
