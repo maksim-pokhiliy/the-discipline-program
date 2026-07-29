@@ -35,6 +35,7 @@ const buildClient = (): QueryClient =>
 const renderProfileMutation = (
   queryClient: QueryClient,
   mutationFn: (vars: Profile) => Promise<unknown>,
+  suppressErrorToast = false,
 ) =>
   renderHook(
     () =>
@@ -44,6 +45,7 @@ const renderProfileMutation = (
         transform: (previous, vars) => ({ ...previous, ...vars }),
         invalidateKeys: () => [PROFILE_KEY],
         errorMessage: "Failed to update profile",
+        suppressErrorToast,
       }),
     { wrapper: buildWrapper(queryClient) },
   );
@@ -94,6 +96,52 @@ describe("useOptimisticMutation", () => {
       expect(mutationFn).toHaveBeenCalledTimes(1);
       expect(queryClient.getQueryData(PROFILE_KEY)).toEqual({ name: "before" });
       expect(toastErrorMock).toHaveBeenCalledWith("Failed to fetch");
+    },
+    OFFLINE_TIMEOUT_MS,
+  );
+
+  it("still rolls the cache back when the caller suppresses the error toast", async () => {
+    const queryClient = buildClient();
+
+    queryClient.setQueryData(PROFILE_KEY, { name: "before" });
+
+    const { result } = renderProfileMutation(
+      queryClient,
+      () => Promise.reject(new Error("boom")),
+      true,
+    );
+
+    await act(async () => {
+      await expect(result.current.mutateAsync({ name: "after" })).rejects.toThrow("boom");
+    });
+
+    expect(queryClient.getQueryData(PROFILE_KEY)).toEqual({ name: "before" });
+    expect(toastErrorMock).not.toHaveBeenCalled();
+  });
+
+  it(
+    "suppresses the toast on the offline path too, cache rollback included",
+    async () => {
+      onlineManager.setOnline(false);
+
+      const queryClient = buildClient();
+
+      queryClient.setQueryData(PROFILE_KEY, { name: "before" });
+
+      const { result } = renderProfileMutation(
+        queryClient,
+        () => Promise.reject(new Error("Failed to fetch")),
+        true,
+      );
+
+      await act(async () => {
+        await expect(result.current.mutateAsync({ name: "after" })).rejects.toThrow(
+          "Failed to fetch",
+        );
+      });
+
+      expect(queryClient.getQueryData(PROFILE_KEY)).toEqual({ name: "before" });
+      expect(toastErrorMock).not.toHaveBeenCalled();
     },
     OFFLINE_TIMEOUT_MS,
   );

@@ -18,6 +18,7 @@ type OptimisticMutationConfig<TData, TVars, TResult = unknown> = {
   transform: (previous: TData, vars: TVars) => TData;
   invalidateKeys: ResolveFromVars<QueryKey[], TVars>;
   errorMessage: string;
+  suppressErrorToast?: boolean;
 };
 
 export const useOptimisticMutation = <TData, TVars, TResult = unknown>(
@@ -49,6 +50,10 @@ export const useOptimisticMutation = <TData, TVars, TResult = unknown>(
     onError: (error, _vars, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(context.queryKey, context.previous);
+      }
+
+      if (config.suppressErrorToast === true) {
+        return;
       }
 
       notifyError(error, config.errorMessage);
