@@ -199,20 +199,30 @@ describe("coachingAthleteProfileApi", () => {
       });
     });
 
-    it("prunes a value that is no longer one of the axis values and still succeeds", async () => {
+    it("keeps a value the catalogue no longer lists — a published plan snapshot still offers it", async () => {
+      const sent = { [levelAxisId]: "Scaled", [equipmentAxisId]: "Kettlebell" };
       const updated = await coachingAthleteProfileApi.upsert(guardUser.id, {
-        profileSelections: { [levelAxisId]: "Scaled", [equipmentAxisId]: "Kettlebell" },
+        profileSelections: sent,
       });
 
-      expect(updated.profileSelections).toEqual({ [levelAxisId]: "Scaled" });
+      expect(updated.profileSelections).toEqual(sent);
+
+      const reread = await coachingAthleteProfileApi.get(guardUser.id);
+
+      expect(reread.profileSelections).toEqual(sent);
     });
 
-    it("prunes a key whose axis no longer exists and still succeeds", async () => {
+    it("keeps a key whose axis was deleted — published plan snapshots still resolve weights from it", async () => {
+      const sent = { [levelAxisId]: "Scaled", [DELETED_AXIS_ID]: "Anything" };
       const updated = await coachingAthleteProfileApi.upsert(guardUser.id, {
-        profileSelections: { [levelAxisId]: "Scaled", [DELETED_AXIS_ID]: "Anything" },
+        profileSelections: sent,
       });
 
-      expect(updated.profileSelections).toEqual({ [levelAxisId]: "Scaled" });
+      expect(updated.profileSelections).toEqual(sent);
+
+      const reread = await coachingAthleteProfileApi.get(guardUser.id);
+
+      expect(reread.profileSelections).toEqual(sent);
     });
 
     it("stores a fully valid map byte-identical after exactly one axis query", async () => {

@@ -11,7 +11,7 @@ import {
 } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
-import { assertAndPruneProfileSelections } from "./profile-selections-guard";
+import { assertProfileSelectionsWritable } from "./profile-selections-guard";
 
 export const coachingAthleteProfileApi = {
   get: async (userId: string): Promise<AthleteProfile> => {
@@ -30,7 +30,7 @@ export const coachingAthleteProfileApi = {
     const profileSelections =
       data.profileSelections === undefined
         ? undefined
-        : await assertAndPruneProfileSelections(data.profileSelections);
+        : await assertProfileSelectionsWritable(data.profileSelections);
 
     const prismaData = {
       ...(data.gender && { gender: GENDER_TO_PRISMA_MAP[data.gender] }),

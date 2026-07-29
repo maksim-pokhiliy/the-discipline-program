@@ -53,18 +53,13 @@ const assertNoBoundAxis = (entries: readonly SelectionEntry[]): void => {
   }
 };
 
-const keepResolvable = (entries: readonly SelectionEntry[]): Record<string, string> =>
-  Object.fromEntries(
-    entries.filter((entry) => entry.verdict === "ok").map((entry) => [entry.key, entry.value]),
-  );
-
-export const assertAndPruneProfileSelections = async (
+export const assertProfileSelectionsWritable = async (
   selections: Record<string, string>,
 ): Promise<Record<string, string>> => {
   const keys = Object.keys(selections);
 
   if (keys.length === 0) {
-    return {};
+    return selections;
   }
 
   const axes = await prisma.profileAxis.findMany({
@@ -72,9 +67,7 @@ export const assertAndPruneProfileSelections = async (
     select: { id: true, label: true, values: true, binding: true },
   });
 
-  const entries = classifyProfileSelections(selections, axes);
+  assertNoBoundAxis(classifyProfileSelections(selections, axes));
 
-  assertNoBoundAxis(entries);
-
-  return keepResolvable(entries);
+  return selections;
 };

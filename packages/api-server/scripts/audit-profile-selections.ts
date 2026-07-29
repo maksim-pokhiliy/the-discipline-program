@@ -96,6 +96,13 @@ const printReport = (report: AuditReport): void => {
   console.log(
     `\ntotals: OK=${totals.ok} ORPHAN=${totals.orphan} STALE=${totals.stale} REJECTED=${totals.bound}`,
   );
+
+  console.log(
+    `\nORPHAN and STALE are INFORMATIONAL ONLY — the guard writes both through unchanged. ` +
+      `They are not inert: a published plan carries its own axis snapshot, so a key the ` +
+      `catalogue has dropped, or a value the catalogue has renamed, can still resolve a ` +
+      `weight for every session built from that plan. Only REJECTED gates the merge.`,
+  );
 };
 
 const main = async (): Promise<void> => {

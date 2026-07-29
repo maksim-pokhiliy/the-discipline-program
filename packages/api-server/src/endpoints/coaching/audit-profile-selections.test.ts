@@ -37,7 +37,7 @@ const cleanProfile: AuditProfile = {
   selections: { [levelAxis.id]: "RX" },
 };
 
-const repairableProfile: AuditProfile = {
+const informationalProfile: AuditProfile = {
   id: "cprofiletwo000000000002",
   selections: { [levelAxis.id]: "Intermediate", [DELETED_AXIS_ID]: "Anything" },
 };
@@ -47,7 +47,7 @@ const rejectedProfile: AuditProfile = {
   selections: { [genderAxis.id]: "Female" },
 };
 
-const profiles = [cleanProfile, repairableProfile, rejectedProfile];
+const profiles = [cleanProfile, informationalProfile, rejectedProfile];
 
 describe("buildAuditReport", () => {
   afterEach(() => {
@@ -60,13 +60,13 @@ describe("buildAuditReport", () => {
     expect(report.rows).toEqual([
       { profileId: cleanProfile.id, key: levelAxis.id, value: "RX", verdict: "ok" },
       {
-        profileId: repairableProfile.id,
+        profileId: informationalProfile.id,
         key: levelAxis.id,
         value: "Intermediate",
         verdict: "stale",
       },
       {
-        profileId: repairableProfile.id,
+        profileId: informationalProfile.id,
         key: DELETED_AXIS_ID,
         value: "Anything",
         verdict: "orphan",
@@ -78,7 +78,9 @@ describe("buildAuditReport", () => {
 
   it("blocks the merge only when some key resolves to the rejecting verdict", () => {
     expect(buildAuditReport(profiles, axes).hasRejectedKeys).toBe(true);
-    expect(buildAuditReport([cleanProfile, repairableProfile], axes).hasRejectedKeys).toBe(false);
+    expect(buildAuditReport([cleanProfile, informationalProfile], axes).hasRejectedKeys).toBe(
+      false,
+    );
   });
 
   it("delegates to the guard's classifier once per profile, catalogue and all", () => {
