@@ -66,6 +66,7 @@ export const MAX_HELPER_NO_RECORD_SUFFIX = ". You can correct it any time.";
 export const MAX_SAVE_CTA_PREFIX = "Save ";
 export const MAX_SAVE_CTA_SUFFIX = " kg";
 export const MAX_SAVE_CTA_INVALID = "Enter weight";
+export const MAX_OFFLINE_MESSAGE = "No connection — your max is unchanged.";
 
 export const SOURCE_CHIP_COLOR = {
   [OneRMRecordSource.TESTED]: "success",

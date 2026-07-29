@@ -118,6 +118,7 @@ export const ProfileAxisCard = ({
           <ProfileOptionRow
             key={`${axis.id}:${value}`}
             value={value}
+            isSelected={pickedValue === value}
             isCurrent={pickedValue === value}
             isApplying={applyingValue === value}
             isLocked={isLocked}

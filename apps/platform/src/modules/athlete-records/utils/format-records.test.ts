@@ -1,39 +1,74 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { formatLongDate, formatMagnitude, formatShortDate } from "./format-records";
 
-const UTC_LATE_NIGHT = "2026-04-22T23:30:00.000Z";
-const SAME_INSTANT_PLUS_ONE = "2026-04-23T00:30:00.000+01:00";
-const SAME_INSTANT_MINUS_FIVE = "2026-04-22T18:30:00.000-05:00";
-const UTC_YEAR_BOUNDARY = "2026-01-01T00:30:00.000Z";
-const SAME_BOUNDARY_MINUS_ONE = "2025-12-31T23:30:00.000-01:00";
+const TZ_ENV_KEY = "TZ";
+const KYIV_TZ = "Europe/Kyiv";
+const NEW_YORK_TZ = "America/New_York";
 
-describe("format-records date formatters (tz-stable)", () => {
-  it("formatShortDate normalizes equivalent instants to the same UTC month and year", () => {
-    expect(formatShortDate(UTC_LATE_NIGHT)).toBe("Apr 2026");
-    expect(formatShortDate(SAME_INSTANT_PLUS_ONE)).toBe("Apr 2026");
-    expect(formatShortDate(SAME_INSTANT_MINUS_FIVE)).toBe("Apr 2026");
+const KYIV_PAST_MIDNIGHT_UTC = "2026-04-21T22:00:00.000Z";
+const KYIV_PAST_MIDNIGHT_OFFSET = "2026-04-22T01:00:00.000+03:00";
+const KYIV_PAST_MIDNIGHT_MINUS_FIVE = "2026-04-21T17:00:00.000-05:00";
+const NEW_YORK_EVENING_UTC = "2026-04-23T00:00:00.000Z";
+const KYIV_MONTH_ROLLOVER_UTC = "2026-04-30T22:00:00.000Z";
+const KYIV_YEAR_ROLLOVER_UTC = "2025-12-31T23:00:00.000Z";
+const NEW_YORK_YEAR_HOLD_UTC = "2026-01-01T02:00:00.000Z";
+const MIDDAY_UTC = "2025-12-06T12:00:00.000Z";
+
+describe("format-records date formatters (viewer-local calendar)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it("formatLongDate normalizes equivalent instants to the same UTC calendar day", () => {
-    expect(formatLongDate(UTC_LATE_NIGHT)).toBe("22 Apr 2026");
-    expect(formatLongDate(SAME_INSTANT_PLUS_ONE)).toBe("22 Apr 2026");
-    expect(formatLongDate(SAME_INSTANT_MINUS_FIVE)).toBe("22 Apr 2026");
+  it("formatLongDate names the day the athlete lived when her clock runs ahead of UTC", () => {
+    vi.stubEnv(TZ_ENV_KEY, KYIV_TZ);
+
+    expect(formatLongDate(KYIV_PAST_MIDNIGHT_UTC)).toBe("22 Apr 2026");
   });
 
-  it("holds the UTC day across a year boundary regardless of the source offset", () => {
-    expect(formatShortDate(UTC_YEAR_BOUNDARY)).toBe("Jan 2026");
-    expect(formatShortDate(SAME_BOUNDARY_MINUS_ONE)).toBe("Jan 2026");
-    expect(formatLongDate(UTC_YEAR_BOUNDARY)).toBe("1 Jan 2026");
-    expect(formatLongDate(SAME_BOUNDARY_MINUS_ONE)).toBe("1 Jan 2026");
+  it("formatLongDate names the day the athlete lived when her clock runs behind UTC", () => {
+    vi.stubEnv(TZ_ENV_KEY, NEW_YORK_TZ);
+
+    expect(formatLongDate(NEW_YORK_EVENING_UTC)).toBe("22 Apr 2026");
+  });
+
+  it("formatLongDate reads one instant the same way however the payload spells it", () => {
+    vi.stubEnv(TZ_ENV_KEY, KYIV_TZ);
+
+    expect(formatLongDate(KYIV_PAST_MIDNIGHT_OFFSET)).toBe("22 Apr 2026");
+    expect(formatLongDate(KYIV_PAST_MIDNIGHT_MINUS_FIVE)).toBe("22 Apr 2026");
+  });
+
+  it("formatShortDate follows the viewer's month across a local month rollover", () => {
+    vi.stubEnv(TZ_ENV_KEY, KYIV_TZ);
+
+    expect(formatShortDate(KYIV_MONTH_ROLLOVER_UTC)).toBe("May 2026");
+  });
+
+  it("both formatters follow the viewer's year across a local year rollover", () => {
+    vi.stubEnv(TZ_ENV_KEY, KYIV_TZ);
+
+    expect(formatLongDate(KYIV_YEAR_ROLLOVER_UTC)).toBe("1 Jan 2026");
+    expect(formatShortDate(KYIV_YEAR_ROLLOVER_UTC)).toBe("Jan 2026");
+  });
+
+  it("both formatters hold the old year for a viewer whose local clock has not turned it", () => {
+    vi.stubEnv(TZ_ENV_KEY, NEW_YORK_TZ);
+
+    expect(formatLongDate(NEW_YORK_YEAR_HOLD_UTC)).toBe("31 Dec 2025");
+    expect(formatShortDate(NEW_YORK_YEAR_HOLD_UTC)).toBe("Dec 2025");
   });
 
   it("formatShortDate renders the short month and full year", () => {
-    expect(formatShortDate("2025-12-06T12:00:00.000Z")).toBe("Dec 2025");
+    vi.stubEnv(TZ_ENV_KEY, KYIV_TZ);
+
+    expect(formatShortDate(MIDDAY_UTC)).toBe("Dec 2025");
   });
 
   it("formatLongDate renders the day, short month, and full year", () => {
-    expect(formatLongDate("2025-12-06T12:00:00.000Z")).toBe("6 Dec 2025");
+    vi.stubEnv(TZ_ENV_KEY, KYIV_TZ);
+
+    expect(formatLongDate(MIDDAY_UTC)).toBe("6 Dec 2025");
   });
 });
 

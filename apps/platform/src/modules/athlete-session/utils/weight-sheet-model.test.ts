@@ -1,20 +1,24 @@
 import { describe, expect, it } from "vitest";
 
 import { Gender } from "@repo/contracts/coaching/athlete-profile";
+import { type Load, ONE_RM_MAX_KG } from "@repo/contracts/lms/_shared";
 import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import { type ResolvedLoad, type RowView } from "@repo/contracts/lms/session-detail";
 
 import { type LevelAxis } from "@app/lib/level-switch";
 
 import {
+  boundAxisIdsOf,
   buildLevelPatch,
   buildLevelReceipt,
   buildMaxReceipt,
   coordinatesOf,
   exerciseOf,
-  type LevelDraft,
+  type LevelState,
   levelAxesOf,
+  mergeLevelState,
   parseOneRm,
+  rowIdsSharingAxes,
   shortenReceiptCoordinate,
 } from "./weight-sheet-model";
 import { RECEIPT_COORD_MAX_CHARS } from "./weight-sheet.constants";
@@ -22,7 +26,12 @@ import { RECEIPT_COORD_MAX_CHARS } from "./weight-sheet.constants";
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";
 const GENDER_AXIS_ID = "clz00000000000000000axs02";
 const UNRELATED_AXIS_ID = "clz00000000000000000axs03";
+const TIER_AXIS_ID = "clz00000000000000000axs04";
 const EXERCISE_ID = "clz000000000000000000ex01";
+
+const LEVEL_ROW_ID = "clz0000000000000000000row1";
+const GENDER_ROW_ID = "clz0000000000000000000row2";
+const TIER_ROW_ID = "clz0000000000000000000row3";
 
 const LEVEL_AXIS: LevelAxis = {
   id: LEVEL_AXIS_ID,
@@ -38,14 +47,23 @@ const GENDER_AXIS: LevelAxis = {
   binding: "GENDER",
 };
 
-const draft = (overrides: Partial<LevelDraft> = {}): LevelDraft => ({
+const TIER_AXIS: LevelAxis = {
+  id: TIER_AXIS_ID,
+  label: "Barbell tier",
+  values: ["Heavy", "Light"],
+  binding: null,
+};
+
+const NO_BOUND_AXES: ReadonlySet<string> = new Set<string>();
+
+const state = (overrides: Partial<LevelState> = {}): LevelState => ({
   selections: {},
   gender: null,
   ...overrides,
 });
 
 const baseRow = (overrides: Partial<RowView> = {}): RowView => ({
-  rowId: "clz0000000000000000000row1",
+  rowId: LEVEL_ROW_ID,
   movement: "Back Squat",
   media: null,
   sets: null,
@@ -61,6 +79,32 @@ const baseRow = (overrides: Partial<RowView> = {}): RowView => ({
   ...overrides,
 });
 
+const byProfileLoad = (axes: LevelAxis[]): Load => ({
+  kind: "byProfile",
+  axes: axes.map((axis) => ({
+    axisId: axis.id,
+    label: axis.label,
+    values: axis.values,
+    binding: axis.binding,
+  })),
+  cells: [],
+});
+
+const LEVEL_AND_GENDER_ROW = baseRow({
+  rowId: LEVEL_ROW_ID,
+  load: byProfileLoad([LEVEL_AXIS, GENDER_AXIS]),
+});
+
+const GENDER_ONLY_ROW = baseRow({
+  rowId: GENDER_ROW_ID,
+  load: byProfileLoad([GENDER_AXIS]),
+});
+
+const TIER_ONLY_ROW = baseRow({
+  rowId: TIER_ROW_ID,
+  load: byProfileLoad([TIER_AXIS]),
+});
+
 describe("parseOneRm", () => {
   it("accepts a trimmed positive number", () => {
     expect(parseOneRm(" 125.5 ")).toBe(125.5);
@@ -71,6 +115,14 @@ describe("parseOneRm", () => {
     expect(parseOneRm("-10")).toBeNull();
     expect(parseOneRm("heavy")).toBeNull();
     expect(parseOneRm("")).toBeNull();
+  });
+
+  it("rejects what the server's kg bounds reject — over the cap and past two decimals", () => {
+    expect(parseOneRm(String(ONE_RM_MAX_KG))).toBe(ONE_RM_MAX_KG);
+    expect(parseOneRm("102.55")).toBe(102.55);
+    expect(parseOneRm("102.555")).toBeNull();
+    expect(parseOneRm(String(ONE_RM_MAX_KG + 1))).toBeNull();
+    expect(parseOneRm("Infinity")).toBeNull();
   });
 });
 
@@ -110,9 +162,63 @@ describe("levelAxesOf", () => {
   });
 });
 
+describe("boundAxisIdsOf", () => {
+  it("collects every bound axis the session's grids are keyed on", () => {
+    const bound = boundAxisIdsOf([LEVEL_AND_GENDER_ROW, TIER_ONLY_ROW, baseRow()]);
+
+    expect([...bound]).toEqual([GENDER_AXIS_ID]);
+  });
+});
+
+describe("rowIdsSharingAxes", () => {
+  it("keeps only the rows keyed on an axis that was applied", () => {
+    const rows = [LEVEL_AND_GENDER_ROW, GENDER_ONLY_ROW, TIER_ONLY_ROW, baseRow({ rowId: "x" })];
+
+    expect(rowIdsSharingAxes(rows, [TIER_AXIS])).toEqual([TIER_ROW_ID]);
+    expect(rowIdsSharingAxes(rows, [LEVEL_AXIS, GENDER_AXIS])).toEqual([
+      LEVEL_ROW_ID,
+      GENDER_ROW_ID,
+    ]);
+  });
+
+  it("has no rows to touch when no axis was applied", () => {
+    expect(rowIdsSharingAxes([LEVEL_AND_GENDER_ROW], [])).toEqual([]);
+  });
+});
+
+describe("mergeLevelState", () => {
+  it("lays the sheet's picks over the athlete's live profile", () => {
+    const merged = mergeLevelState(
+      state({ selections: { [UNRELATED_AXIS_ID]: "Beginner" }, gender: Gender.MALE }),
+      state({ selections: { [LEVEL_AXIS_ID]: "Scaled" }, gender: Gender.FEMALE }),
+    );
+
+    expect(merged).toEqual({
+      selections: { [UNRELATED_AXIS_ID]: "Beginner", [LEVEL_AXIS_ID]: "Scaled" },
+      gender: Gender.FEMALE,
+    });
+  });
+
+  it("falls back to the profile for anything the sheet has not touched", () => {
+    const merged = mergeLevelState(
+      state({ selections: { [LEVEL_AXIS_ID]: "RX" }, gender: Gender.MALE }),
+      state(),
+    );
+
+    expect(merged).toEqual({ selections: { [LEVEL_AXIS_ID]: "RX" }, gender: Gender.MALE });
+  });
+
+  it("carries the draft alone while the profile is unknown", () => {
+    expect(mergeLevelState(null, state({ selections: { [LEVEL_AXIS_ID]: "RX" } }))).toEqual({
+      selections: { [LEVEL_AXIS_ID]: "RX" },
+      gender: null,
+    });
+  });
+});
+
 describe("coordinatesOf", () => {
-  it("reads the gender coordinate from the draft's gender, not from the selections", () => {
-    const coordinates = coordinatesOf([LEVEL_AXIS, GENDER_AXIS], draft({ gender: Gender.FEMALE }));
+  it("reads the gender coordinate from the gender field, not from the selections", () => {
+    const coordinates = coordinatesOf([LEVEL_AXIS, GENDER_AXIS], state({ gender: Gender.FEMALE }));
 
     expect(coordinates).toEqual({ [GENDER_AXIS_ID]: "Female" });
   });
@@ -120,7 +226,7 @@ describe("coordinatesOf", () => {
   it("drops a selection whose value the coach has since renamed away", () => {
     const coordinates = coordinatesOf(
       [LEVEL_AXIS],
-      draft({ selections: { [LEVEL_AXIS_ID]: "Intermediate" } }),
+      state({ selections: { [LEVEL_AXIS_ID]: "Intermediate" } }),
     );
 
     expect(coordinates).toEqual({});
@@ -129,11 +235,12 @@ describe("coordinatesOf", () => {
 
 describe("buildLevelPatch", () => {
   it("routes gender to its own field and merges picks over the saved map", () => {
-    const patch = buildLevelPatch(
-      [LEVEL_AXIS, GENDER_AXIS],
-      { [LEVEL_AXIS_ID]: "Scaled", [GENDER_AXIS_ID]: "Female" },
-      { [UNRELATED_AXIS_ID]: "Beginner" },
-    );
+    const patch = buildLevelPatch({
+      axes: [LEVEL_AXIS, GENDER_AXIS],
+      coordinates: { [LEVEL_AXIS_ID]: "Scaled", [GENDER_AXIS_ID]: "Female" },
+      saved: state({ selections: { [UNRELATED_AXIS_ID]: "Beginner" } }),
+      boundAxisIds: NO_BOUND_AXES,
+    });
 
     expect(patch).toEqual({
       profileSelections: { [UNRELATED_AXIS_ID]: "Beginner", [LEVEL_AXIS_ID]: "Scaled" },
@@ -142,20 +249,106 @@ describe("buildLevelPatch", () => {
   });
 
   it("omits the gender field when the row has no bound axis", () => {
-    const patch = buildLevelPatch([LEVEL_AXIS], { [LEVEL_AXIS_ID]: "RX" }, {});
+    const patch = buildLevelPatch({
+      axes: [LEVEL_AXIS],
+      coordinates: { [LEVEL_AXIS_ID]: "RX" },
+      saved: state(),
+      boundAxisIds: NO_BOUND_AXES,
+    });
 
     expect(patch).toEqual({ profileSelections: { [LEVEL_AXIS_ID]: "RX" } });
   });
 
+  it("never rewrites the selections map for a gender-only row", () => {
+    const patch = buildLevelPatch({
+      axes: [GENDER_AXIS],
+      coordinates: { [GENDER_AXIS_ID]: "Female" },
+      saved: state({ selections: { [UNRELATED_AXIS_ID]: "Beginner" } }),
+      boundAxisIds: NO_BOUND_AXES,
+    });
+
+    expect(patch).toEqual({ gender: Gender.FEMALE });
+  });
+
+  it("refuses to build a patch while the athlete's profile is unknown", () => {
+    const patch = buildLevelPatch({
+      axes: [LEVEL_AXIS],
+      coordinates: { [LEVEL_AXIS_ID]: "RX" },
+      saved: null,
+      boundAxisIds: NO_BOUND_AXES,
+    });
+
+    expect(patch).toBeNull();
+  });
+
+  it("strips a bound-axis key out of the base it echoes back", () => {
+    const patch = buildLevelPatch({
+      axes: [LEVEL_AXIS],
+      coordinates: { [LEVEL_AXIS_ID]: "RX" },
+      saved: state({
+        selections: {
+          [UNRELATED_AXIS_ID]: "Beginner",
+          [GENDER_AXIS_ID]: "Female",
+          [TIER_AXIS_ID]: "Heavy",
+        },
+      }),
+      boundAxisIds: new Set([GENDER_AXIS_ID]),
+    });
+
+    expect(patch).toEqual({
+      profileSelections: {
+        [UNRELATED_AXIS_ID]: "Beginner",
+        [TIER_AXIS_ID]: "Heavy",
+        [LEVEL_AXIS_ID]: "RX",
+      },
+    });
+  });
+
+  it("strips the row's own bound axis even when the session set is empty", () => {
+    const patch = buildLevelPatch({
+      axes: [LEVEL_AXIS, GENDER_AXIS],
+      coordinates: { [LEVEL_AXIS_ID]: "RX", [GENDER_AXIS_ID]: "Female" },
+      saved: state({ selections: { [GENDER_AXIS_ID]: "Male" } }),
+      boundAxisIds: NO_BOUND_AXES,
+    });
+
+    expect(patch).toEqual({
+      profileSelections: { [LEVEL_AXIS_ID]: "RX" },
+      gender: Gender.FEMALE,
+    });
+  });
+
   it("refuses an incomplete draft and a grid with no axes", () => {
-    expect(buildLevelPatch([LEVEL_AXIS, GENDER_AXIS], { [LEVEL_AXIS_ID]: "RX" }, {})).toBeNull();
-    expect(buildLevelPatch([], {}, {})).toBeNull();
+    expect(
+      buildLevelPatch({
+        axes: [LEVEL_AXIS, GENDER_AXIS],
+        coordinates: { [LEVEL_AXIS_ID]: "RX" },
+        saved: state(),
+        boundAxisIds: NO_BOUND_AXES,
+      }),
+    ).toBeNull();
+
+    expect(
+      buildLevelPatch({
+        axes: [],
+        coordinates: {},
+        saved: state(),
+        boundAxisIds: NO_BOUND_AXES,
+      }),
+    ).toBeNull();
   });
 
   it("refuses a gender coordinate the coordinate map does not know", () => {
     const unknownGenderAxis: LevelAxis = { ...GENDER_AXIS, values: ["Other"] };
 
-    expect(buildLevelPatch([unknownGenderAxis], { [GENDER_AXIS_ID]: "Other" }, {})).toBeNull();
+    expect(
+      buildLevelPatch({
+        axes: [unknownGenderAxis],
+        coordinates: { [GENDER_AXIS_ID]: "Other" },
+        saved: state(),
+        boundAxisIds: NO_BOUND_AXES,
+      }),
+    ).toBeNull();
   });
 });
 

@@ -1,10 +1,19 @@
+import { type QueryKey } from "@tanstack/react-query";
+
 import {
   type Gender,
   type UpdateAthleteProfileRequest,
 } from "@repo/contracts/coaching/athlete-profile";
+import { kgSchema } from "@repo/contracts/lms/_shared";
 import { type RowView } from "@repo/contracts/lms/session-detail";
 
-import { type LevelAxis, shortenGraphemes, toLevelAxes } from "@app/lib/level-switch";
+import {
+  buildAppliedMessage,
+  buildFailedMessage,
+  type LevelAxis,
+  shortenGraphemes,
+  toLevelAxes,
+} from "@app/lib/level-switch";
 
 import { GENDER_BY_COORD } from "./gender-coord-map";
 import {
@@ -17,18 +26,43 @@ import {
   RECEIPT_MAX_SUFFIX,
 } from "./weight-sheet.constants";
 
-export type LevelDraft = {
+export type LevelState = {
   selections: Record<string, string>;
   gender: Gender | null;
 };
 
+export type WeightSheetState =
+  | { kind: "level"; row: RowView }
+  | { kind: "one_rm"; row: RowView; exerciseId: string };
+
+export type Settlement = {
+  opened: WeightSheetState;
+  queryKeys: readonly QueryKey[];
+  pulseRowIds: string[];
+  receipt: string;
+};
+
+export type LevelPatchInput = {
+  axes: LevelAxis[];
+  coordinates: Record<string, string>;
+  saved: LevelState | null;
+  boundAxisIds: ReadonlySet<string>;
+};
+
+export type LevelMessages = {
+  appliedMessage: string;
+  failedMessage: string;
+};
+
 const SINGLE_WEIGHT_COUNT = 1;
 const NO_AXES: LevelAxis[] = [];
+const NO_ROW_IDS: string[] = [];
+const NO_SELECTIONS: Record<string, string> = {};
 
 export const parseOneRm = (raw: string): number | null => {
-  const parsed = Number(raw.trim());
+  const parsed = kgSchema.safeParse(Number(raw.trim()));
 
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  return parsed.success ? parsed.data : null;
 };
 
 export const shortenReceiptCoordinate = (value: string): string =>
@@ -40,34 +74,71 @@ export const levelAxesOf = (row: RowView | null): LevelAxis[] => {
   return load !== null && load.kind === "byProfile" ? toLevelAxes(load.axes) : NO_AXES;
 };
 
-const coordinateOf = (axis: LevelAxis, draft: LevelDraft): string | null => {
-  if (axis.binding === "GENDER") {
-    return axis.values.find((value) => GENDER_BY_COORD[value] === draft.gender) ?? null;
+export const boundAxisIdsOf = (rows: RowView[]): ReadonlySet<string> =>
+  new Set(
+    rows
+      .flatMap((row) => levelAxesOf(row))
+      .filter((axis) => axis.binding !== null)
+      .map((axis) => axis.id),
+  );
+
+export const rowIdsSharingAxes = (rows: RowView[], axes: LevelAxis[]): string[] => {
+  const wanted = new Set(axes.map((axis) => axis.id));
+
+  if (wanted.size === 0) {
+    return NO_ROW_IDS;
   }
 
-  const picked = draft.selections[axis.id];
+  return rows
+    .filter((row) => levelAxesOf(row).some((axis) => wanted.has(axis.id)))
+    .map((row) => row.rowId);
+};
+
+export const mergeLevelState = (saved: LevelState | null, draft: LevelState): LevelState => ({
+  selections: { ...(saved?.selections ?? NO_SELECTIONS), ...draft.selections },
+  gender: draft.gender ?? saved?.gender ?? null,
+});
+
+const coordinateOf = (axis: LevelAxis, state: LevelState): string | null => {
+  if (axis.binding === "GENDER") {
+    return axis.values.find((value) => GENDER_BY_COORD[value] === state.gender) ?? null;
+  }
+
+  const picked = state.selections[axis.id];
 
   return picked !== undefined && axis.values.includes(picked) ? picked : null;
 };
 
-export const coordinatesOf = (axes: LevelAxis[], draft: LevelDraft): Record<string, string> =>
+export const coordinatesOf = (axes: LevelAxis[], state: LevelState): Record<string, string> =>
   Object.fromEntries(
     axes
-      .map((axis) => [axis.id, coordinateOf(axis, draft)] as const)
+      .map((axis) => [axis.id, coordinateOf(axis, state)] as const)
       .filter((entry): entry is readonly [string, string] => entry[1] !== null),
   );
 
-export const buildLevelPatch = (
-  axes: LevelAxis[],
-  coordinates: Record<string, string>,
-  savedSelections: Record<string, string>,
-): UpdateAthleteProfileRequest | null => {
-  if (axes.length === 0) {
+const withoutBoundKeys = (
+  selections: Record<string, string>,
+  boundAxisIds: ReadonlySet<string>,
+): Record<string, string> =>
+  Object.fromEntries(Object.entries(selections).filter(([axisId]) => !boundAxisIds.has(axisId)));
+
+export const buildLevelPatch = ({
+  axes,
+  coordinates,
+  saved,
+  boundAxisIds,
+}: LevelPatchInput): UpdateAthleteProfileRequest | null => {
+  if (axes.length === 0 || saved === null) {
     return null;
   }
 
-  const selections: Record<string, string> = { ...savedSelections };
+  const bound = new Set([
+    ...boundAxisIds,
+    ...axes.filter((axis) => axis.binding !== null).map((axis) => axis.id),
+  ]);
+  const selections = withoutBoundKeys(saved.selections, bound);
   let gender: Gender | undefined;
+  let hasPickedAxis = false;
 
   for (const axis of axes) {
     const value = coordinates[axis.id];
@@ -78,6 +149,7 @@ export const buildLevelPatch = (
 
     if (axis.binding === null) {
       selections[axis.id] = value;
+      hasPickedAxis = true;
       continue;
     }
 
@@ -90,8 +162,28 @@ export const buildLevelPatch = (
     gender = mapped;
   }
 
-  return { profileSelections: selections, ...(gender !== undefined && { gender }) };
+  return {
+    ...(hasPickedAxis && { profileSelections: selections }),
+    ...(gender !== undefined && { gender }),
+  };
 };
+
+export const buildLevelMessages = (
+  axes: LevelAxis[],
+  patch: UpdateAthleteProfileRequest,
+  saved: LevelState,
+): LevelMessages => ({
+  appliedMessage: buildAppliedMessage({
+    axes,
+    selections: patch.profileSelections ?? saved.selections,
+    gender: patch.gender ?? saved.gender,
+  }),
+  failedMessage: buildFailedMessage({
+    axes,
+    selections: saved.selections,
+    gender: saved.gender,
+  }),
+});
 
 export const buildLevelReceipt = (coordinates: string[], weightCount: number): string => {
   const named = coordinates.map(shortenReceiptCoordinate).join(RECEIPT_COORD_SEPARATOR);

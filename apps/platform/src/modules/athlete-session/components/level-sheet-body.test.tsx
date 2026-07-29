@@ -1,4 +1,6 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { type ReactElement } from "react";
+
+import { fireEvent, type RenderResult, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type Load } from "@repo/contracts/lms/_shared";
@@ -83,29 +85,29 @@ type BodyState = {
   outcome?: LevelApplyOutcome | null;
 };
 
-const renderBody = (state: BodyState = {}): void => {
-  const coordinates = state.coordinates ?? {};
+const bodyOf = (state: BodyState = {}): ReactElement => (
+  <LevelSheetBody
+    row={state.row ?? row()}
+    axes={state.axes ?? [LEVEL_AXIS, GENDER_AXIS]}
+    coordinates={state.coordinates ?? {}}
+    weightCount={state.weightCount ?? 2}
+    isComplete={state.isComplete ?? false}
+    isApplying={state.isApplying ?? false}
+    outcome={state.outcome ?? null}
+    onPick={onPick}
+    onApply={onApply}
+    onCancel={onCancel}
+  />
+);
 
-  render(
-    <LevelSheetBody
-      row={state.row ?? row()}
-      axes={state.axes ?? [LEVEL_AXIS, GENDER_AXIS]}
-      coordinates={coordinates}
-      weightCount={state.weightCount ?? 2}
-      isComplete={state.isComplete ?? false}
-      isApplying={state.isApplying ?? false}
-      outcome={state.outcome ?? null}
-      onPick={onPick}
-      onApply={onApply}
-      onCancel={onCancel}
-    />,
-  );
-};
+const renderBody = (state: BodyState = {}): RenderResult => render(bodyOf(state));
 
 const pickedBoth: Record<string, string> = {
   [LEVEL_AXIS_ID]: "RX",
   [GENDER_AXIS_ID]: "Female",
 };
+
+const draftedScaled: Record<string, string> = { ...pickedBoth, [LEVEL_AXIS_ID]: "Scaled" };
 
 const currentName = (value: string): string => `${value} ${PICK_CURRENT_LABEL}`;
 
@@ -257,6 +259,49 @@ describe("LevelSheetBody radiogroups (D-12)", () => {
 
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick).toHaveBeenCalledWith(GENDER_AXIS_ID, "Female");
+  });
+});
+
+describe("LevelSheetBody draft against the applied level", () => {
+  it("keeps Current on the level the athlete came in with once the draft moves off it", () => {
+    const { rerender } = renderBody({ coordinates: pickedBoth });
+
+    rerender(bodyOf({ coordinates: draftedScaled }));
+
+    const applied = screen.getByRole("radio", { name: currentName("RX") });
+
+    expect(applied).toHaveAttribute("aria-checked", "false");
+    expect(applied).not.toHaveClass("Mui-selected");
+  });
+
+  it("selects the drafted level without calling it Current", () => {
+    const { rerender } = renderBody({ coordinates: pickedBoth });
+
+    rerender(bodyOf({ coordinates: draftedScaled }));
+
+    const drafted = screen.getByRole("radio", { name: "Scaled" });
+
+    expect(drafted).toHaveAttribute("aria-checked", "true");
+    expect(drafted).toHaveClass("Mui-selected");
+    expect(screen.queryByRole("radio", { name: currentName("Scaled") })).not.toBeInTheDocument();
+  });
+
+  it("lets the athlete pick her way back to the level she came in with", () => {
+    const { rerender } = renderBody({ coordinates: pickedBoth });
+
+    rerender(bodyOf({ coordinates: draftedScaled }));
+    fireEvent.click(screen.getByRole("radio", { name: currentName("RX") }));
+
+    expect(onPick).toHaveBeenCalledTimes(1);
+    expect(onPick).toHaveBeenCalledWith(LEVEL_AXIS_ID, "RX");
+  });
+
+  it("tags nothing Current when the athlete came in with no level at all", () => {
+    const { rerender } = renderBody();
+
+    rerender(bodyOf({ coordinates: { [LEVEL_AXIS_ID]: "Scaled" } }));
+
+    expect(screen.queryByText(PICK_CURRENT_LABEL)).not.toBeInTheDocument();
   });
 });
 

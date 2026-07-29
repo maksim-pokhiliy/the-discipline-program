@@ -54,7 +54,11 @@ const CORRECTED_VALUE_KG = 120;
 const VALUE_FIELD_LABEL = "Value (kg)";
 const SAVE_BUTTON_LABEL = "Save Record";
 const ONE_RM_SAVED_MESSAGE = "1RM saved";
+const SAVE_FAILURE_MESSAGE = "Failed to save 1RM";
 const IDEMPOTENCY_MISMATCH_MESSAGE = "Idempotency-Key reuse with different request body";
+const LOST_RESPONSE_MESSAGE = "response lost";
+const ONE_RECORD = 1;
+const TWO_RECORDS = 2;
 
 const makeOneRMRequest = (
   overrides: Partial<CreateOneRMRecordRequest> = {},
@@ -78,28 +82,56 @@ const makeOneRMResponse = (
   ...overrides,
 });
 
-type IdempotentServer = (
-  data: CreateOneRMRecordRequest,
-  idempotencyKey?: string,
-) => Promise<CreateOneRMRecordResponse>;
+type IdempotentServer = {
+  handle: (
+    data: CreateOneRMRecordRequest,
+    idempotencyKey?: string,
+  ) => Promise<CreateOneRMRecordResponse>;
+  countRecords: () => number;
+};
 
 const createIdempotentServer = (): IdempotentServer => {
-  const fingerprintByKey = new Map<string, string>();
+  const cacheByKey = new Map<
+    string,
+    { fingerprint: string; response: CreateOneRMRecordResponse }
+  >();
+  let writtenRecords = 0;
 
-  return (data, idempotencyKey) => {
+  const handle = (
+    data: CreateOneRMRecordRequest,
+    idempotencyKey?: string,
+  ): Promise<CreateOneRMRecordResponse> => {
     const fingerprint = JSON.stringify(data);
-    const stored = idempotencyKey === undefined ? undefined : fingerprintByKey.get(idempotencyKey);
+    const cached = idempotencyKey === undefined ? undefined : cacheByKey.get(idempotencyKey);
 
-    if (stored !== undefined && stored !== fingerprint) {
-      return Promise.reject(new Error(IDEMPOTENCY_MISMATCH_MESSAGE));
+    if (cached !== undefined) {
+      return cached.fingerprint === fingerprint
+        ? Promise.resolve(cached.response)
+        : Promise.reject(new Error(IDEMPOTENCY_MISMATCH_MESSAGE));
     }
+
+    const response = makeOneRMResponse({ valueKg: data.valueKg });
+
+    writtenRecords += 1;
 
     if (idempotencyKey !== undefined) {
-      fingerprintByKey.set(idempotencyKey, fingerprint);
+      cacheByKey.set(idempotencyKey, { fingerprint, response });
     }
 
-    return Promise.resolve(makeOneRMResponse({ valueKg: data.valueKg }));
+    return Promise.resolve(response);
   };
+
+  return { handle, countRecords: (): number => writtenRecords };
+};
+
+const mockServerWithLostFirstResponse = (server: IdempotentServer): void => {
+  createOneRMRecordMock
+    .mockImplementationOnce(async (data, idempotencyKey) => {
+      await server.handle(data, idempotencyKey);
+
+      throw new Error(LOST_RESPONSE_MESSAGE);
+    })
+    .mockImplementation((data, idempotencyKey) => server.handle(data, idempotencyKey));
 };
 
 const renderRunner = () => {
@@ -134,7 +166,7 @@ describe("useCreateOneRMRecord", () => {
     vi.restoreAllMocks();
   });
 
-  it("reuses the idempotency key across retries until the submit settles", async () => {
+  it("reuses the idempotency key while a submit of the same value is in flight", async () => {
     createOneRMRecordMock.mockReturnValue(new Promise<CreateOneRMRecordResponse>(() => undefined));
 
     const { result } = renderRunner();
@@ -150,27 +182,10 @@ describe("useCreateOneRMRecord", () => {
     expect(keyAt(1)).toBe(keyAt(0));
   });
 
-  it("mints a new key after a successful submit", async () => {
-    createOneRMRecordMock.mockResolvedValue(makeOneRMResponse());
+  it("replays the persisted write when the same value is retried after a lost response", async () => {
+    const server = createIdempotentServer();
 
-    const { result } = renderRunner();
-
-    await act(async () => {
-      await result.current.mutateAsync(makeOneRMRequest());
-    });
-
-    await act(async () => {
-      await result.current.mutateAsync(makeOneRMRequest());
-    });
-
-    expect(typeof keyAt(0)).toBe("string");
-    expect(keyAt(1)).not.toBe(keyAt(0));
-  });
-
-  it("mints a new key after a failed submit", async () => {
-    createOneRMRecordMock
-      .mockRejectedValueOnce(new Error("network down"))
-      .mockResolvedValueOnce(makeOneRMResponse());
+    mockServerWithLostFirstResponse(server);
 
     const { result } = renderRunner();
 
@@ -182,21 +197,17 @@ describe("useCreateOneRMRecord", () => {
       await result.current.mutateAsync(makeOneRMRequest());
     });
 
-    expect(typeof keyAt(0)).toBe("string");
-    expect(keyAt(1)).not.toBe(keyAt(0));
-    expect(notifyErrorMock).toHaveBeenCalledWith(expect.any(Error), "Failed to save 1RM");
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(keyAt(1)).toBe(keyAt(0));
+    expect(server.countRecords()).toBe(ONE_RECORD);
+    expect(notifyErrorMock).toHaveBeenCalledWith(expect.any(Error), SAVE_FAILURE_MESSAGE);
   });
 
   it("lets a corrected value through after a persisted-but-unseen 2xx instead of conflicting", async () => {
     const server = createIdempotentServer();
 
-    createOneRMRecordMock
-      .mockImplementationOnce(async (data, idempotencyKey) => {
-        await server(data, idempotencyKey);
-
-        throw new Error("response lost");
-      })
-      .mockImplementation((data, idempotencyKey) => server(data, idempotencyKey));
+    mockServerWithLostFirstResponse(server);
 
     const { result } = renderRunner();
 
@@ -211,10 +222,33 @@ describe("useCreateOneRMRecord", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(keyAt(1)).not.toBe(keyAt(0));
+    expect(server.countRecords()).toBe(TWO_RECORDS);
     expect(notifyErrorMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ message: IDEMPOTENCY_MISMATCH_MESSAGE }),
       expect.any(String),
     );
+  });
+
+  it("writes a second record when the same value is logged again after a successful save", async () => {
+    const server = createIdempotentServer();
+
+    createOneRMRecordMock.mockImplementation((data, idempotencyKey) =>
+      server.handle(data, idempotencyKey),
+    );
+
+    const { result } = renderRunner();
+
+    await act(async () => {
+      await result.current.mutateAsync(makeOneRMRequest());
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync(makeOneRMRequest());
+    });
+
+    expect(typeof keyAt(0)).toBe("string");
+    expect(keyAt(1)).not.toBe(keyAt(0));
+    expect(server.countRecords()).toBe(TWO_RECORDS);
   });
 
   it("isolates the key per exercise so a held key never poisons another exercise", async () => {

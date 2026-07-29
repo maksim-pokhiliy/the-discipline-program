@@ -18,7 +18,7 @@ export const MONTH_SHORT = [
 export const formatLongDate = (iso: string): string => {
   const date = new Date(iso);
 
-  return [date.getUTCDate(), MONTH_SHORT[date.getUTCMonth()], date.getUTCFullYear()].join(
+  return [date.getDate(), MONTH_SHORT[date.getMonth()], date.getFullYear()].join(
     LONG_DATE_SEPARATOR,
   );
 };

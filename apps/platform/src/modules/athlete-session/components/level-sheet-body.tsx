@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 
 import VisibilityRounded from "@mui/icons-material/VisibilityRounded";
 import { alpha, Button, List, Stack, Typography } from "@mui/material";
@@ -65,6 +65,11 @@ export type LevelSheetBodyProps = {
   onPick: (axisId: string, value: string) => void;
   onApply: () => void;
   onCancel: () => void;
+};
+
+type AppliedLevel = {
+  rowId: string;
+  coordinates: Record<string, string>;
 };
 
 const shortenApplyCoordinate = (value: string): string =>
@@ -132,7 +137,11 @@ const buildCta = (
   coordinates: Record<string, string>,
   isComplete: boolean,
 ): string => {
-  if (isComplete) {
+  const missing = axes
+    .filter((axis) => coordinates[axis.id] === undefined)
+    .map((axis) => axis.label.toLowerCase());
+
+  if (isComplete || missing.length === 0) {
     const picked = axes
       .map((axis) => coordinates[axis.id])
       .filter((value): value is string => value !== undefined)
@@ -140,10 +149,6 @@ const buildCta = (
 
     return `${APPLY_CTA_PREFIX}${picked.join(PICK_COORDINATE_SEPARATOR)}`;
   }
-
-  const missing = axes
-    .filter((axis) => coordinates[axis.id] === undefined)
-    .map((axis) => axis.label.toLowerCase());
 
   return `${PICK_CTA_PREFIX}${missing.join(AXIS_AND_SEPARATOR)}`;
 };
@@ -160,6 +165,12 @@ export const LevelSheetBody = ({
   onApply,
   onCancel,
 }: LevelSheetBodyProps): ReactElement => {
+  const [applied, setApplied] = useState<AppliedLevel>({ rowId: row.rowId, coordinates });
+
+  if (applied.rowId !== row.rowId) {
+    setApplied({ rowId: row.rowId, coordinates });
+  }
+
   const preview = isComplete ? buildPreview(row, axes, coordinates) : null;
 
   return (
@@ -200,7 +211,8 @@ export const LevelSheetBody = ({
               <ProfileOptionRow
                 key={`${axis.id}:${value}`}
                 value={value}
-                isCurrent={coordinates[axis.id] === value}
+                isSelected={coordinates[axis.id] === value}
+                isCurrent={applied.coordinates[axis.id] === value}
                 isApplying={isApplying && coordinates[axis.id] === value}
                 isLocked={isApplying}
                 onPick={() => onPick(axis.id, value)}

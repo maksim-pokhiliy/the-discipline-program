@@ -20,13 +20,14 @@ import {
   type BlockView,
   type ResolvedLoad,
   type RowView,
+  type SchemaCardView,
   type SessionDetailResponse,
 } from "@repo/contracts/lms/session-detail";
 
 import type * as ApiModule from "@app/lib/api";
 import { platformKeys } from "@app/lib/api/keys";
 
-import { PULSE_CLEAR_MS } from "./weight-sheet.constants";
+import { MAX_OFFLINE_MESSAGE, PULSE_CLEAR_MS } from "./weight-sheet.constants";
 
 const getProfileMock = vi.fn<() => Promise<GetAthleteProfileResponse>>();
 const updateProfileMock =
@@ -36,7 +37,9 @@ const createOneRmMock =
     (data: CreateOneRMRecordRequest, idempotencyKey?: string) => Promise<CreateOneRMRecordResponse>
   >();
 const sessionViewMock = vi.fn<() => Promise<SessionDetailResponse>>();
+const recordsViewMock = vi.fn<() => Promise<{ records: [] }>>();
 const toastSuccessMock = vi.fn<(message: string) => void>();
+const toastErrorMock = vi.fn<(message: string) => void>();
 
 vi.mock("@app/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof ApiModule>();
@@ -60,7 +63,10 @@ vi.mock("@app/lib/api", async (importOriginal) => {
 });
 
 vi.mock("sonner", () => ({
-  toast: { success: (message: string) => toastSuccessMock(message) },
+  toast: {
+    success: (message: string) => toastSuccessMock(message),
+    error: (message: string) => toastErrorMock(message),
+  },
 }));
 
 const { useWeightSheet } = await import("./use-weight-sheet");
@@ -69,6 +75,7 @@ const SESSION_ID = "clz000000000000000000sess1";
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";
 const GENDER_AXIS_ID = "clz00000000000000000axs02";
 const UNRELATED_AXIS_ID = "clz00000000000000000axs03";
+const TIER_AXIS_ID = "clz00000000000000000axs04";
 const EXERCISE_ID = "clz000000000000000000ex01";
 const OTHER_EXERCISE_ID = "clz000000000000000000ex02";
 
@@ -77,10 +84,13 @@ const OTHER_LEVEL_ROW_ID = "clz0000000000000000000row2";
 const MAX_ROW_ID = "clz0000000000000000000row3";
 const SAME_EXERCISE_ROW_ID = "clz0000000000000000000row4";
 const OTHER_EXERCISE_ROW_ID = "clz0000000000000000000row5";
+const TIER_ROW_ID = "clz0000000000000000000row6";
+const GENDER_ROW_ID = "clz0000000000000000000row7";
 
 const UNRELATED_PICK = "Beginner";
 const LEVEL_PICK = "Scaled";
 const GENDER_PICK = "Female";
+const TIER_PICK = "Light";
 
 const LEVEL_AND_GENDER_LOAD: Load = {
   kind: "byProfile",
@@ -105,6 +115,28 @@ const LEVEL_ONLY_LOAD: Load = {
   ],
 };
 
+const TIER_ONLY_LOAD: Load = {
+  kind: "byProfile",
+  axes: [
+    { axisId: TIER_AXIS_ID, label: "Barbell tier", values: ["Heavy", TIER_PICK], binding: null },
+  ],
+  cells: [
+    { coords: ["Heavy"], kg: 60 },
+    { coords: [TIER_PICK], kg: 45 },
+  ],
+};
+
+const GENDER_ONLY_LOAD: Load = {
+  kind: "byProfile",
+  axes: [
+    { axisId: GENDER_AXIS_ID, label: "Gender", values: ["Male", GENDER_PICK], binding: "GENDER" },
+  ],
+  cells: [
+    { coords: ["Male"], kg: 20 },
+    { coords: [GENDER_PICK], kg: 14 },
+  ],
+};
+
 const PERCENTAGE_LOAD: Load = { kind: "percentage", value: 80, reference: { scope: "self" } };
 
 const MISSING_ONE_RM: ResolvedLoad = {
@@ -112,6 +144,13 @@ const MISSING_ONE_RM: ResolvedLoad = {
   reason: "missing_one_rm",
   prompt: "set_one_rm",
   exerciseId: EXERCISE_ID,
+};
+
+const MISSING_PROFILE_PICK: ResolvedLoad = {
+  status: "unresolved",
+  reason: "missing_profile_pick",
+  prompt: "pick_profile",
+  axisLabels: ["Level"],
 };
 
 const resolvedFromOneRm = (exerciseId: string): ResolvedLoad => ({
@@ -161,12 +200,21 @@ const OTHER_LEVEL_ROW = baseRow({
   rowId: OTHER_LEVEL_ROW_ID,
   movement: "Wall Ball",
   load: LEVEL_ONLY_LOAD,
-  resolvedLoad: {
-    status: "unresolved",
-    reason: "missing_profile_pick",
-    prompt: "pick_profile",
-    axisLabels: ["Level"],
-  },
+  resolvedLoad: MISSING_PROFILE_PICK,
+});
+
+const TIER_ROW = baseRow({
+  rowId: TIER_ROW_ID,
+  movement: "Push Press",
+  load: TIER_ONLY_LOAD,
+  resolvedLoad: MISSING_PROFILE_PICK,
+});
+
+const GENDER_ROW = baseRow({
+  rowId: GENDER_ROW_ID,
+  movement: "Row",
+  load: GENDER_ONLY_LOAD,
+  resolvedLoad: MISSING_PROFILE_PICK,
 });
 
 const MAX_ROW = baseRow({
@@ -190,48 +238,65 @@ const OTHER_EXERCISE_ROW = baseRow({
   resolvedLoad: resolvedFromOneRm(OTHER_EXERCISE_ID),
 });
 
-const BLOCK: BlockView = {
-  blockId: "clz0000000000000000000blk1",
-  label: "Strength",
-  intensity: null,
-  note: null,
-  items: [
-    {
-      kind: "schema",
-      schema: {
-        schemaId: "clz000000000000000000sch1",
-        header: null,
-        composition: null,
-        label: null,
-        isBenchmark: false,
-        resultType: null,
-        intensity: null,
-        existingResult: null,
-        items: [
-          { kind: "row", row: LEVEL_ROW },
-          { kind: "group", label: "Superset", members: [OTHER_LEVEL_ROW, MAX_ROW] },
-          { kind: "row", row: SAME_EXERCISE_ROW },
-          { kind: "row", row: OTHER_EXERCISE_ROW },
-        ],
+type SchemaItem = SchemaCardView["items"][number];
+
+const row = (view: RowView): SchemaItem => ({ kind: "row", row: view });
+
+const group = (label: string, members: RowView[]): SchemaItem => ({
+  kind: "group",
+  label,
+  members,
+});
+
+const sessionOf = (items: SchemaItem[]): SessionDetailResponse => {
+  const block: BlockView = {
+    blockId: "clz0000000000000000000blk1",
+    label: "Strength",
+    intensity: null,
+    note: null,
+    items: [
+      {
+        kind: "schema",
+        schema: {
+          schemaId: "clz000000000000000000sch1",
+          header: null,
+          composition: null,
+          label: null,
+          isBenchmark: false,
+          resultType: null,
+          intensity: null,
+          existingResult: null,
+          items,
+        },
       },
+    ],
+  };
+
+  return {
+    session: {
+      sessionId: SESSION_ID,
+      planTitle: "Performance RX",
+      position: "Week 3 · Day 4",
+      title: "Heavy Back Squat",
+      dayOfWeek: "THURSDAY",
+      dayOfMonth: 18,
+      summary: "1 block",
+      done: false,
+      completedAt: null,
     },
-  ],
+    blocks: [block],
+  };
 };
 
-const SESSION: SessionDetailResponse = {
-  session: {
-    sessionId: SESSION_ID,
-    planTitle: "Performance RX",
-    position: "Week 3 · Day 4",
-    title: "Heavy Back Squat",
-    dayOfWeek: "THURSDAY",
-    dayOfMonth: 18,
-    summary: "1 block",
-    done: false,
-    completedAt: null,
-  },
-  blocks: [BLOCK],
-};
+const SESSION = sessionOf([
+  row(LEVEL_ROW),
+  group("Superset", [OTHER_LEVEL_ROW, MAX_ROW]),
+  row(SAME_EXERCISE_ROW),
+  row(OTHER_EXERCISE_ROW),
+  row(TIER_ROW),
+]);
+
+const GENDER_ONLY_SESSION = sessionOf([row(GENDER_ROW)]);
 
 const PROFILE: GetAthleteProfileResponse = {
   id: "clz000000000000000000prf1",
@@ -256,7 +321,12 @@ const oneRmResponse = (valueKg: number): CreateOneRMRecordResponse => ({
   source: OneRMRecordSource.MANUAL,
 });
 
-const renderSheet = () => {
+type RenderOptions = {
+  session?: SessionDetailResponse;
+  profile?: GetAthleteProfileResponse | null;
+};
+
+const renderSheet = ({ session = SESSION, profile = PROFILE }: RenderOptions = {}) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: Infinity },
@@ -264,7 +334,10 @@ const renderSheet = () => {
     },
   });
 
-  queryClient.setQueryData(platformKeys.athleteProfile.data(), PROFILE);
+  if (profile !== null) {
+    getProfileMock.mockResolvedValue(profile);
+    queryClient.setQueryData(platformKeys.athleteProfile.data(), profile);
+  }
 
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
@@ -275,14 +348,27 @@ const renderSheet = () => {
         queryKey: platformKeys.athleteSessionView.detail(SESSION_ID),
         queryFn: () => sessionViewMock(),
       });
+      useQuery({
+        queryKey: platformKeys.athleteRecords.data(),
+        queryFn: () => recordsViewMock(),
+      });
 
-      return useWeightSheet(SESSION);
+      return useWeightSheet(session);
     },
     { wrapper },
   );
 };
 
 type SheetHook = ReturnType<typeof renderSheet>["result"];
+
+const deferred = <T>(): { promise: Promise<T>; resolve: (value: T) => void } => {
+  let resolve = (_value: T): void => undefined;
+  const promise = new Promise<T>((settle) => {
+    resolve = settle;
+  });
+
+  return { promise, resolve };
+};
 
 const openLevelSheetWithFullDraft = async (result: SheetHook): Promise<void> => {
   await act(async () => {
@@ -309,13 +395,7 @@ const openMaxSheet = async (result: SheetHook, value: string): Promise<void> => 
 };
 
 const pulseFromMaxSave = async (result: SheetHook): Promise<void> => {
-  await act(async () => {
-    result.current.openWeightSheet(MAX_ROW, { kind: "one_rm", exerciseId: EXERCISE_ID });
-  });
-
-  await act(async () => {
-    result.current.controls.setMaxValue("125");
-  });
+  await openMaxSheet(result, "125");
 
   await act(async () => {
     result.current.controls.saveMax();
@@ -331,12 +411,15 @@ beforeEach(() => {
   updateProfileMock.mockReset();
   createOneRmMock.mockReset();
   sessionViewMock.mockReset();
+  recordsViewMock.mockReset();
   toastSuccessMock.mockReset();
+  toastErrorMock.mockReset();
 
   getProfileMock.mockResolvedValue(PROFILE);
   updateProfileMock.mockResolvedValue(PROFILE);
   createOneRmMock.mockResolvedValue(oneRmResponse(125));
   sessionViewMock.mockResolvedValue(SESSION);
+  recordsViewMock.mockResolvedValue({ records: [] });
   vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
 });
 
@@ -392,18 +475,134 @@ describe("useWeightSheet level apply — the write", () => {
     expect(updateProfileMock).not.toHaveBeenCalled();
     expect(result.current.controls.sheet).not.toBeNull();
   });
+
+  it("refuses to write a wholesale replace while the athlete's profile is still in flight", async () => {
+    const profileFlight = deferred<GetAthleteProfileResponse>();
+
+    getProfileMock.mockReturnValue(profileFlight.promise);
+
+    const { result } = renderSheet({ profile: null });
+
+    await openLevelSheetWithFullDraft(result);
+
+    expect(result.current.controls.isLevelDraftComplete).toBe(false);
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    expect(updateProfileMock).not.toHaveBeenCalled();
+    expect(result.current.controls.sheet).not.toBeNull();
+
+    await act(async () => {
+      profileFlight.resolve(PROFILE);
+    });
+  });
+
+  it("refuses to write a wholesale replace after the profile request failed", async () => {
+    getProfileMock.mockRejectedValue(new Error("profile unavailable"));
+
+    const { result } = renderSheet({ profile: null });
+
+    await waitFor(() => expect(getProfileMock).toHaveBeenCalled());
+    await openLevelSheetWithFullDraft(result);
+
+    expect(result.current.controls.isLevelDraftComplete).toBe(false);
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    expect(updateProfileMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the athlete's saved coordinates as soon as the profile lands under an open sheet", async () => {
+    const profileFlight = deferred<GetAthleteProfileResponse>();
+
+    getProfileMock.mockReturnValue(profileFlight.promise);
+
+    const { result } = renderSheet({ profile: null });
+
+    await act(async () => {
+      result.current.openWeightSheet(LEVEL_ROW, { kind: "level" });
+    });
+
+    expect(result.current.controls.levelCoordinates).toEqual({});
+    expect(result.current.controls.isLevelDraftComplete).toBe(false);
+
+    await act(async () => {
+      profileFlight.resolve({
+        ...PROFILE,
+        gender: Gender.FEMALE,
+        profileSelections: { [LEVEL_AXIS_ID]: LEVEL_PICK },
+      });
+    });
+
+    await waitFor(() => expect(result.current.controls.isLevelDraftComplete).toBe(true));
+
+    expect(result.current.controls.levelCoordinates).toEqual({
+      [LEVEL_AXIS_ID]: LEVEL_PICK,
+      [GENDER_AXIS_ID]: GENDER_PICK,
+    });
+  });
+
+  it("leaves the selections map alone for a row whose only axis is the bound gender axis", async () => {
+    const { result } = renderSheet({ session: GENDER_ONLY_SESSION });
+
+    await act(async () => {
+      result.current.openWeightSheet(GENDER_ROW, { kind: "level" });
+    });
+
+    await act(async () => {
+      result.current.controls.pickLevelCoordinate(GENDER_AXIS_ID, GENDER_PICK);
+    });
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(updateProfileMock).toHaveBeenCalledTimes(1);
+    expect(updateProfileMock).toHaveBeenCalledWith({ gender: Gender.FEMALE });
+  });
+
+  it("strips a bound-axis key out of the saved map it echoes back", async () => {
+    const { result } = renderSheet({
+      profile: {
+        ...PROFILE,
+        profileSelections: {
+          [UNRELATED_AXIS_ID]: UNRELATED_PICK,
+          [GENDER_AXIS_ID]: "Male",
+        },
+      },
+    });
+
+    await openLevelSheetWithFullDraft(result);
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(updateProfileMock).toHaveBeenCalledWith({
+      profileSelections: {
+        [UNRELATED_AXIS_ID]: UNRELATED_PICK,
+        [LEVEL_AXIS_ID]: LEVEL_PICK,
+      },
+      gender: Gender.FEMALE,
+    });
+  });
 });
 
 describe("useWeightSheet level apply — the applied moment", () => {
   it("holds the pulse and the receipt until the session refetch settles", async () => {
-    let releaseSession = (): void => undefined;
+    const sessionFlight = deferred<SessionDetailResponse>();
 
-    sessionViewMock.mockResolvedValueOnce(SESSION).mockImplementationOnce(
-      () =>
-        new Promise<SessionDetailResponse>((resolve) => {
-          releaseSession = () => resolve(SESSION);
-        }),
-    );
+    sessionViewMock
+      .mockResolvedValueOnce(SESSION)
+      .mockImplementationOnce(() => sessionFlight.promise);
 
     const { result } = renderSheet();
 
@@ -423,7 +622,7 @@ describe("useWeightSheet level apply — the applied moment", () => {
     expect(result.current.controls.isApplyingLevel).toBe(true);
 
     await act(async () => {
-      releaseSession();
+      sessionFlight.resolve(SESSION);
     });
 
     await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
@@ -431,6 +630,24 @@ describe("useWeightSheet level apply — the applied moment", () => {
     expect([...result.current.pulsingRowIds]).toEqual([LEVEL_ROW_ID, OTHER_LEVEL_ROW_ID]);
     expect(result.current.controls.sheet).toBeNull();
     expect(result.current.controls.isApplyingLevel).toBe(false);
+  });
+
+  it("counts and pulses only the rows keyed on an axis that was applied", async () => {
+    const { result } = renderSheet();
+
+    await openLevelSheetWithFullDraft(result);
+
+    expect(result.current.controls.levelWeightCount).toBe(2);
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect([...result.current.pulsingRowIds]).toEqual([LEVEL_ROW_ID, OTHER_LEVEL_ROW_ID]);
+    expect(result.current.pulsingRowIds.has(TIER_ROW_ID)).toBe(false);
+    expect(toastSuccessMock).toHaveBeenCalledWith("Scaled · Female applied · 2 weights updated");
   });
 
   it("names the coordinates and the number of weights in the receipt", async () => {
@@ -539,6 +756,20 @@ describe("useWeightSheet max save", () => {
     expect(createOneRmMock).not.toHaveBeenCalled();
   });
 
+  it("refuses a value the API's kg bounds would reject", async () => {
+    const { result } = renderSheet();
+
+    await openMaxSheet(result, "102.555");
+
+    expect(result.current.controls.canSaveMax).toBe(false);
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    expect(createOneRmMock).not.toHaveBeenCalled();
+  });
+
   it("keeps the sheet open and fires no receipt when the write rejects", async () => {
     createOneRmMock.mockRejectedValue(new Error("write failed"));
 
@@ -555,6 +786,111 @@ describe("useWeightSheet max save", () => {
     expect(toastSuccessMock).not.toHaveBeenCalled();
     expect(result.current.pulsingRowIds.size).toBe(0);
     expect(result.current.controls.sheet).not.toBeNull();
+  });
+
+  it("writes one record however many times the athlete taps Save before the sheet closes", async () => {
+    const sessionFlight = deferred<SessionDetailResponse>();
+
+    sessionViewMock
+      .mockResolvedValueOnce(SESSION)
+      .mockImplementationOnce(() => sessionFlight.promise);
+
+    const { result } = renderSheet();
+
+    await waitFor(() => expect(sessionViewMock).toHaveBeenCalledTimes(1));
+    await openMaxSheet(result, "125");
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    await waitFor(() => expect(createOneRmMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(sessionViewMock).toHaveBeenCalledTimes(2));
+
+    expect(result.current.controls.sheet).not.toBeNull();
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    expect(createOneRmMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      sessionFlight.resolve(SESSION);
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(createOneRmMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes the records surface the athlete taps through to next", async () => {
+    const { result } = renderSheet();
+
+    await waitFor(() => expect(recordsViewMock).toHaveBeenCalledTimes(1));
+    await openMaxSheet(result, "125");
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(recordsViewMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("refuses the save offline and says so instead of firing a doomed request", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+    const { result } = renderSheet();
+
+    await openMaxSheet(result, "125");
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    expect(createOneRmMock).not.toHaveBeenCalled();
+    expect(toastErrorMock).toHaveBeenCalledWith(MAX_OFFLINE_MESSAGE);
+    expect(toastSuccessMock).not.toHaveBeenCalled();
+    expect(result.current.controls.sheet).not.toBeNull();
+  });
+});
+
+describe("useWeightSheet sheet identity", () => {
+  it("never closes a sheet the athlete opened after the save that is still settling", async () => {
+    const sessionFlight = deferred<SessionDetailResponse>();
+
+    sessionViewMock
+      .mockResolvedValueOnce(SESSION)
+      .mockImplementationOnce(() => sessionFlight.promise);
+
+    const { result } = renderSheet();
+
+    await waitFor(() => expect(sessionViewMock).toHaveBeenCalledTimes(1));
+    await openMaxSheet(result, "125");
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    await waitFor(() => expect(sessionViewMock).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      result.current.controls.closeSheet();
+    });
+
+    await act(async () => {
+      result.current.openWeightSheet(LEVEL_ROW, { kind: "level" });
+    });
+
+    await act(async () => {
+      sessionFlight.resolve(SESSION);
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(result.current.controls.sheet).toEqual({ kind: "level", row: LEVEL_ROW });
   });
 });
 

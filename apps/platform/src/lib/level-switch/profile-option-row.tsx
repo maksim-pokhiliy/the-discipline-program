@@ -20,6 +20,7 @@ import {
 
 export type ProfileOptionRowProps = {
   value: string;
+  isSelected: boolean;
   isCurrent: boolean;
   isApplying: boolean;
   isLocked: boolean;
@@ -28,6 +29,7 @@ export type ProfileOptionRowProps = {
 
 export const ProfileOptionRow = ({
   value,
+  isSelected,
   isCurrent,
   isApplying,
   isLocked,
@@ -37,7 +39,7 @@ export const ProfileOptionRow = ({
   const tag = isApplying ? PICK_APPLYING_LABEL : isCurrent ? PICK_CURRENT_LABEL : null;
 
   const handleClick = (): void => {
-    if (isLocked || isCurrent) {
+    if (isLocked || isSelected) {
       return;
     }
 
@@ -48,8 +50,8 @@ export const ProfileOptionRow = ({
     <ListItemButton
       component="li"
       role="radio"
-      aria-checked={isCurrent}
-      selected={isCurrent}
+      aria-checked={isSelected}
+      selected={isSelected}
       disabled={isLocked}
       onClick={handleClick}
       sx={(theme) => ({
@@ -59,17 +61,17 @@ export const ProfileOptionRow = ({
         py: 1.5,
         px: 1.75,
         borderRadius: `${CARD_RADIUS_PX}px`,
-        border: `1px solid ${isCurrent ? theme.palette.primary.main : theme.palette.divider}`,
-        ...((isCurrent || isApplying) && { "&.Mui-disabled": { opacity: 1 } }),
+        border: `1px solid ${isSelected ? theme.palette.primary.main : theme.palette.divider}`,
+        ...((isSelected || isApplying) && { "&.Mui-disabled": { opacity: 1 } }),
         "&.Mui-focusVisible": {
           outline: `${PICK_FOCUS_RING_PX}px solid ${theme.palette.primary.main}`,
           outlineOffset: `${PICK_FOCUS_RING_PX}px`,
         },
-        ...(isCurrent && { cursor: "default" }),
+        ...(isSelected && { cursor: "default" }),
       })}
     >
       <Radio
-        checked={isCurrent}
+        checked={isSelected}
         readOnly
         disableRipple
         sx={{ p: 0, "& input": { pointerEvents: "none" } }}
@@ -86,7 +88,7 @@ export const ProfileOptionRow = ({
               fontSize: theme.typography.pxToRem(PICK_OPTION_LABEL_PX),
               fontWeight: FONT_WEIGHT_SEMI_BOLD,
               wordBreak: "break-word",
-              ...(isCurrent && { color: theme.palette.primary.main }),
+              ...(isSelected && { color: theme.palette.primary.main }),
             }),
           },
         }}

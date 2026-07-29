@@ -5,43 +5,32 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 import { type RowView, type SessionDetailResponse } from "@repo/contracts/lms/session-detail";
 
 import { platformKeys } from "@app/lib/api/keys";
-import {
-  useAthleteProfile,
-  useCreateOneRMRecord,
-  useSwitchAthleteProfileLevel,
-} from "@app/lib/hooks";
-import {
-  buildAppliedMessage,
-  buildFailedMessage,
-  type LevelApplyOutcome,
-  type LevelAxis,
-  useLevelApply,
-} from "@app/lib/level-switch";
+import { useAthleteProfile, useSwitchAthleteProfileLevel } from "@app/lib/hooks";
+import { type LevelApplyOutcome, type LevelAxis, useLevelApply } from "@app/lib/level-switch";
 
 import { collectRowViews } from "./athlete-session-presentation";
 import { GENDER_BY_COORD } from "./gender-coord-map";
 import { type LoadChipTarget } from "./load-cell";
+import { useMaxSave } from "./use-max-save";
 import {
+  boundAxisIdsOf,
+  buildLevelMessages,
   buildLevelPatch,
   buildLevelReceipt,
-  buildMaxReceipt,
   coordinatesOf,
-  exerciseOf,
-  type LevelDraft,
+  type LevelState,
   levelAxesOf,
-  parseOneRm,
+  mergeLevelState,
+  rowIdsSharingAxes,
+  type Settlement,
+  type WeightSheetState,
 } from "./weight-sheet-model";
 import { PULSE_CLEAR_MS } from "./weight-sheet.constants";
 
-export type { LevelDraft } from "./weight-sheet-model";
-
-export type WeightSheetState =
-  | { kind: "level"; row: RowView }
-  | { kind: "one_rm"; row: RowView; exerciseId: string };
+export type { LevelState, WeightSheetState } from "./weight-sheet-model";
 
 export type WeightSheetControls = {
   sheet: WeightSheetState | null;
@@ -69,7 +58,7 @@ export type WeightSheet = {
 
 const EMPTY_SELECTIONS: Record<string, string> = {};
 const EMPTY_ROW_IDS: ReadonlySet<string> = new Set<string>();
-const EMPTY_DRAFT: LevelDraft = { selections: EMPTY_SELECTIONS, gender: null };
+const EMPTY_DRAFT: LevelState = { selections: EMPTY_SELECTIONS, gender: null };
 
 export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   const { sessionId } = data.session;
@@ -77,31 +66,37 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   const queryClient = useQueryClient();
 
   const [sheet, setSheet] = useState<WeightSheetState | null>(null);
-  const [levelDraft, setLevelDraft] = useState<LevelDraft>(EMPTY_DRAFT);
-  const [maxValue, setMaxValue] = useState("");
+  const [levelDraft, setLevelDraft] = useState<LevelState>(EMPTY_DRAFT);
   const [isApplyingLevel, setIsApplyingLevel] = useState(false);
   const [pulsingRowIds, setPulsingRowIds] = useState<ReadonlySet<string>>(EMPTY_ROW_IDS);
 
-  const athleteProfile = useAthleteProfile();
+  const { data: profile } = useAthleteProfile();
   const switchLevel = useSwitchAthleteProfileLevel();
-  const createOneRm = useCreateOneRMRecord();
   const levelApply = useLevelApply<null>(switchLevel.mutateAsync);
 
-  const savedSelections = athleteProfile.data?.profileSelections ?? EMPTY_SELECTIONS;
-  const savedGender = athleteProfile.data?.gender ?? null;
+  const savedLevel = useMemo<LevelState | null>(
+    () =>
+      profile === undefined
+        ? null
+        : { selections: profile.profileSelections ?? EMPTY_SELECTIONS, gender: profile.gender },
+    [profile],
+  );
 
   const rows = useMemo(() => collectRowViews(blocks), [blocks]);
-  const levelRowIds = useMemo(
-    () => rows.filter((row) => row.load?.kind === "byProfile").map((row) => row.rowId),
-    [rows],
-  );
+  const boundAxisIds = useMemo(() => boundAxisIdsOf(rows), [rows]);
 
   const levelAxes = useMemo(() => levelAxesOf(sheet?.kind === "level" ? sheet.row : null), [sheet]);
+  const levelRowIds = useMemo(() => rowIdsSharingAxes(rows, levelAxes), [rows, levelAxes]);
   const levelCoordinates = useMemo(
-    () => coordinatesOf(levelAxes, levelDraft),
-    [levelAxes, levelDraft],
+    () => coordinatesOf(levelAxes, mergeLevelState(savedLevel, levelDraft)),
+    [levelAxes, savedLevel, levelDraft],
   );
-  const levelPatch = buildLevelPatch(levelAxes, levelCoordinates, savedSelections);
+  const levelPatch = buildLevelPatch({
+    axes: levelAxes,
+    coordinates: levelCoordinates,
+    saved: savedLevel,
+    boundAxisIds,
+  });
 
   useEffect(() => {
     if (pulsingRowIds.size === 0) {
@@ -113,19 +108,20 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
     return () => clearTimeout(timer);
   }, [pulsingRowIds]);
 
-  const settle = async (pulseRowIds: string[], receipt: string): Promise<void> => {
+  const settle = async ({ opened, queryKeys, pulseRowIds, receipt }: Settlement): Promise<void> => {
     let isRefetched = true;
 
     try {
-      await queryClient.invalidateQueries(
-        { queryKey: platformKeys.athleteSessionView.detail(sessionId) },
-        { throwOnError: true },
+      await Promise.all(
+        queryKeys.map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }, { throwOnError: true }),
+        ),
       );
     } catch {
       isRefetched = false;
     }
 
-    setSheet(null);
+    setSheet((current) => (current === opened ? null : current));
 
     if (isRefetched && pulseRowIds.length > 0) {
       setPulsingRowIds(new Set(pulseRowIds));
@@ -134,15 +130,17 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
     toast.success(receipt);
   };
 
+  const maxSave = useMaxSave({ sheet, rows, sessionId, settle });
+
   const openWeightSheet = (row: RowView, target: LoadChipTarget): void => {
     switch (target.kind) {
       case "level":
-        setLevelDraft({ selections: savedSelections, gender: savedGender });
+        setLevelDraft(EMPTY_DRAFT);
         setSheet({ kind: "level", row });
 
         return;
       case "one_rm":
-        setMaxValue("");
+        maxSave.setValue("");
         setSheet({ kind: "one_rm", row, exerciseId: target.exerciseId });
 
         return;
@@ -185,25 +183,21 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   };
 
   const applyLevel = (): void => {
-    if (sheet === null || sheet.kind !== "level" || isApplyingLevel || levelPatch === null) {
+    if (sheet === null || sheet.kind !== "level" || isApplyingLevel) {
       return;
     }
 
+    if (levelPatch === null || savedLevel === null) {
+      return;
+    }
+
+    const opened = sheet;
     const { rowId } = sheet.row;
     const coordinates = levelAxes
       .map((axis) => levelCoordinates[axis.id])
       .filter((value): value is string => value !== undefined);
     const receipt = buildLevelReceipt(coordinates, levelRowIds.length);
-    const appliedMessage = buildAppliedMessage({
-      axes: levelAxes,
-      selections: levelPatch.profileSelections ?? EMPTY_SELECTIONS,
-      gender: levelPatch.gender ?? savedGender,
-    });
-    const failedMessage = buildFailedMessage({
-      axes: levelAxes,
-      selections: savedSelections,
-      gender: savedGender,
-    });
+    const { appliedMessage, failedMessage } = buildLevelMessages(levelAxes, levelPatch, savedLevel);
 
     setIsApplyingLevel(true);
 
@@ -223,43 +217,15 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
         }
 
         levelApply.dismiss(rowId);
-        await settle(levelRowIds, receipt);
+        await settle({
+          opened,
+          queryKeys: [platformKeys.athleteSessionView.detail(sessionId)],
+          pulseRowIds: levelRowIds,
+          receipt,
+        });
       } finally {
         setIsApplyingLevel(false);
       }
-    })();
-  };
-
-  const saveMax = (): void => {
-    if (sheet === null || sheet.kind !== "one_rm" || createOneRm.isPending) {
-      return;
-    }
-
-    const valueKg = parseOneRm(maxValue);
-
-    if (valueKg === null) {
-      return;
-    }
-
-    const { exerciseId } = sheet;
-    const receipt = buildMaxReceipt(sheet.row.movement, valueKg);
-    const pulseRowIds = rows
-      .filter((row) => exerciseOf(row) === exerciseId)
-      .map((row) => row.rowId);
-
-    void (async (): Promise<void> => {
-      try {
-        await createOneRm.mutateAsync({
-          exerciseId,
-          valueKg,
-          recordedAt: new Date(),
-          source: OneRMRecordSource.MANUAL,
-        });
-      } catch {
-        return;
-      }
-
-      await settle(pulseRowIds, receipt);
     })();
   };
 
@@ -277,14 +243,14 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
       isLevelDraftComplete: levelPatch !== null,
       isApplyingLevel,
       levelOutcome,
-      maxValue,
-      isSavingMax: createOneRm.isPending,
-      canSaveMax: parseOneRm(maxValue) !== null,
+      maxValue: maxSave.value,
+      isSavingMax: maxSave.isSaving,
+      canSaveMax: maxSave.canSave,
       closeSheet,
       pickLevelCoordinate,
       applyLevel,
-      setMaxValue,
-      saveMax,
+      setMaxValue: maxSave.setValue,
+      saveMax: maxSave.save,
     },
     pulsingRowIds,
     openWeightSheet,

@@ -18,6 +18,11 @@ import { notifyError, useSubmitToken } from "@repo/query";
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
+const SUBMIT_TOKEN_SEPARATOR = ":";
+
+const submitTokenKeyOf = ({ exerciseId, valueKg }: CreateOneRMRecordRequest): string =>
+  `${exerciseId}${SUBMIT_TOKEN_SEPARATOR}${valueKg}`;
+
 export const useOneRMRecords = (
   exerciseId?: string,
 ): UseQueryResult<GetOneRMRecordsResponse, Error> =>
@@ -37,15 +42,13 @@ export const useCreateOneRMRecord = (): UseMutationResult<
   return useMutation({
     networkMode: "always",
     mutationFn: (data: CreateOneRMRecordRequest) =>
-      api.oneRMRecords.create(data, submitToken.get(data.exerciseId)),
-    onSuccess: () => {
+      api.oneRMRecords.create(data, submitToken.get(submitTokenKeyOf(data))),
+    onSuccess: (_result, variables) => {
+      submitToken.reset(submitTokenKeyOf(variables));
       queryClient.invalidateQueries({ queryKey: platformKeys.oneRMRecords.list() });
     },
     onError: (error: Error) => {
       notifyError(error, "Failed to save 1RM");
-    },
-    onSettled: (_result, _error, variables) => {
-      submitToken.reset(variables.exerciseId);
     },
   });
 };

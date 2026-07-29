@@ -7,7 +7,7 @@ export { formatLongDate } from "@app/lib/format-record-date";
 export const formatShortDate = (iso: string): string => {
   const date = new Date(iso);
 
-  return `${MONTH_SHORT[date.getUTCMonth()]}${SHORT_DATE_SEPARATOR}${date.getUTCFullYear()}`;
+  return `${MONTH_SHORT[date.getMonth()]}${SHORT_DATE_SEPARATOR}${date.getFullYear()}`;
 };
 
 export const formatMagnitude = (value: number, unit: string): string => {
