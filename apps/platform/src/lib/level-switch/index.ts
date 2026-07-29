@@ -3,4 +3,5 @@ export * from "./level-switch.constants";
 export * from "./profile-axis-outcome-strip";
 export * from "./profile-coordinates";
 export * from "./profile-option-row";
+export * from "./shorten-graphemes";
 export * from "./use-level-apply";

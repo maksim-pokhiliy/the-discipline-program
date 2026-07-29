@@ -4,7 +4,7 @@ import {
 } from "@repo/contracts/coaching/athlete-profile";
 import { type RowView } from "@repo/contracts/lms/session-detail";
 
-import { type LevelAxis, PICK_VALUE_ELLIPSIS, toLevelAxes } from "@app/lib/level-switch";
+import { type LevelAxis, shortenGraphemes, toLevelAxes } from "@app/lib/level-switch";
 
 import { GENDER_BY_COORD } from "./gender-coord-map";
 import {
@@ -25,23 +25,14 @@ export type LevelDraft = {
 const SINGLE_WEIGHT_COUNT = 1;
 const NO_AXES: LevelAxis[] = [];
 
-const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-
 export const parseOneRm = (raw: string): number | null => {
   const parsed = Number(raw.trim());
 
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
 
-export const shortenReceiptCoordinate = (value: string): string => {
-  const graphemes = [...graphemeSegmenter.segment(value)].map((segment) => segment.segment);
-
-  if (graphemes.length <= RECEIPT_COORD_MAX_CHARS) {
-    return value;
-  }
-
-  return `${graphemes.slice(0, RECEIPT_COORD_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
-};
+export const shortenReceiptCoordinate = (value: string): string =>
+  shortenGraphemes(value, RECEIPT_COORD_MAX_CHARS);
 
 export const levelAxesOf = (row: RowView | null): LevelAxis[] => {
   const load = row?.load ?? null;

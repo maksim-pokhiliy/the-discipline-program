@@ -12,7 +12,7 @@ import {
   type LevelApplyOutcome,
   type LevelAxis,
   PICK_COORDINATE_SEPARATOR,
-  PICK_VALUE_ELLIPSIS,
+  shortenGraphemes,
   ProfileAxisOutcomeStrip,
   ProfileOptionRow,
 } from "@app/lib/level-switch";
@@ -54,8 +54,6 @@ import {
 
 const SINGLE_WEIGHT_COUNT = 1;
 
-const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-
 export type LevelSheetBodyProps = {
   row: RowView;
   axes: LevelAxis[];
@@ -69,15 +67,8 @@ export type LevelSheetBodyProps = {
   onCancel: () => void;
 };
 
-const shortenApplyCoordinate = (value: string): string => {
-  const graphemes = [...graphemeSegmenter.segment(value)].map((segment) => segment.segment);
-
-  if (graphemes.length <= APPLY_COORD_MAX_CHARS) {
-    return value;
-  }
-
-  return `${graphemes.slice(0, APPLY_COORD_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
-};
+const shortenApplyCoordinate = (value: string): string =>
+  shortenGraphemes(value, APPLY_COORD_MAX_CHARS);
 
 const byProfileLoadOf = (load: Load | null): Extract<Load, { kind: "byProfile" }> | null =>
   load !== null && load.kind === "byProfile" ? load : null;

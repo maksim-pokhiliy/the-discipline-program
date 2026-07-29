@@ -10,9 +10,9 @@ import {
   PICK_FAILED_PREFIX,
   PICK_MISSING_SUFFIX,
   PICK_SENTENCE_END,
-  PICK_VALUE_ELLIPSIS,
   PICK_VALUE_MAX_CHARS,
 } from "./level-switch.constants";
+import { shortenGraphemes } from "./shorten-graphemes";
 
 export type ProfileCoordinatesInput = {
   axes: LevelAxis[];
@@ -20,17 +20,8 @@ export type ProfileCoordinatesInput = {
   gender: Gender | null;
 };
 
-const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-
-export const shortenCoordinate = (value: string): string => {
-  const graphemes = [...graphemeSegmenter.segment(value)].map((segment) => segment.segment);
-
-  if (graphemes.length <= PICK_VALUE_MAX_CHARS) {
-    return value;
-  }
-
-  return `${graphemes.slice(0, PICK_VALUE_MAX_CHARS).join("").trim()}${PICK_VALUE_ELLIPSIS}`;
-};
+export const shortenCoordinate = (value: string): string =>
+  shortenGraphemes(value, PICK_VALUE_MAX_CHARS);
 
 const pickableAxesOf = (axes: LevelAxis[]): LevelAxis[] =>
   axes.filter((axis) => axis.binding === null);

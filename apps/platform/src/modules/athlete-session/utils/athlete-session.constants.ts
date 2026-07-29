@@ -97,7 +97,6 @@ export const RESULT_STRIP_VALUE_PX = 22;
 export const ROW_PADDING_Y_PX = 11;
 export const ROW_PADDING_X_PX = 14;
 export const ROW_GAP_PX = 12;
-export const ROW_TOP_DIVIDER_ALPHA = 0.08;
 export const ROW_MOVEMENT_PX = 14;
 export const ROW_MOVEMENT_ALPHA = 0.9;
 export const ROW_VOLUME_PX = 19;
@@ -193,7 +192,6 @@ export const REPS_LABEL = "reps";
 export const PICK_YOUR_PREFIX = "Pick your ";
 export const AXIS_AND_SEPARATOR = " & ";
 export const PROFILE_GROUP_SEPARATOR = " / ";
-export const ROW_LEADER_ALPHA = 0.18;
 
 export const SHEET_RADIUS_PX = 14;
 export const SHEET_HANDLE_WIDTH_PX = 36;
