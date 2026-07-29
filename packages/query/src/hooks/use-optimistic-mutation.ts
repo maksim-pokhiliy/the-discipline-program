@@ -31,6 +31,7 @@ export const useOptimisticMutation = <TData, TVars, TResult = unknown>(
     TVars,
     { previous?: TData | undefined; queryKey: readonly unknown[] }
   >({
+    networkMode: "always",
     mutationFn: config.mutationFn,
     onMutate: async (vars) => {
       const queryKey = resolve(config.queryKey, vars);
