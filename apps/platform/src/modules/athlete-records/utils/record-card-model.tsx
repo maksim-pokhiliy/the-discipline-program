@@ -12,7 +12,7 @@ import { RecordHistoryList } from "../components/record-history-list";
 
 import { DELTA_UNIT_BY_RESULT_TYPE, KG_UNIT } from "./athlete-records.constants";
 import { type ChartPoint } from "./build-chart-geometry";
-import { formatMagnitude, formatShortDate } from "./format-records";
+import { formatMagnitude, formatLocalShortDate } from "./format-records";
 
 type IconComponent = typeof TrendingUpRounded;
 
@@ -55,7 +55,7 @@ export const buildOneRmView = (record: OneRMRecordView): RecordView => {
     series: record.series.map((point) => ({
       value: point.valueKg,
       valueLabel: String(point.valueKg),
-      dateLabel: formatShortDate(point.recordedAt),
+      dateLabel: formatLocalShortDate(point.recordedAt),
     })),
     history: <RecordHistoryList kind="oneRM" series={record.series} />,
   };
@@ -81,7 +81,7 @@ export const buildBenchmarkView = (record: BenchmarkRecordView): RecordView => (
   series: record.series.map((point) => ({
     value: point.scalar,
     valueLabel: formatResultParts(point.result).value,
-    dateLabel: formatShortDate(point.recordedAt),
+    dateLabel: formatLocalShortDate(point.recordedAt),
   })),
   history: <RecordHistoryList kind="benchmark" series={record.series} />,
 });

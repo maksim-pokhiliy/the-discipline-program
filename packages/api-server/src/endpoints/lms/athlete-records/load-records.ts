@@ -1,19 +1,29 @@
-import { type Prisma } from "@prisma/client";
+import { type OneRMRecordSource, type Prisma } from "@prisma/client";
 
 import { profileSelectionsSchema } from "@repo/contracts/coaching/athlete-profile";
 
 import { prisma } from "../../../db/client";
+import { ONE_RM_RECORD_SOURCE_MAP } from "../../../mappers/lms";
 
-import { type AthleteLoadContext } from "./athlete-records.types";
+import { type AthleteLoadContext, type AthleteOneRMBase } from "./athlete-records.types";
 
 const buildCurrentOneRMMap = (
-  rows: { exerciseId: string; valueKg: Prisma.Decimal }[],
-): Map<string, number> => {
-  const byExercise = new Map<string, number>();
+  rows: {
+    exerciseId: string;
+    valueKg: Prisma.Decimal;
+    recordedAt: Date;
+    source: OneRMRecordSource;
+  }[],
+): Map<string, AthleteOneRMBase> => {
+  const byExercise = new Map<string, AthleteOneRMBase>();
 
   for (const row of rows) {
     if (!byExercise.has(row.exerciseId)) {
-      byExercise.set(row.exerciseId, Number(row.valueKg));
+      byExercise.set(row.exerciseId, {
+        valueKg: Number(row.valueKg),
+        recordedAt: row.recordedAt,
+        source: ONE_RM_RECORD_SOURCE_MAP[row.source],
+      });
     }
   }
 
@@ -34,7 +44,7 @@ export const loadAthleteLoadContext = async (
       : prisma.oneRMRecord.findMany({
           where: { userId, exerciseId: { in: exerciseIds } },
           orderBy: [{ recordedAt: "desc" }, { id: "desc" }],
-          select: { exerciseId: true, valueKg: true },
+          select: { exerciseId: true, valueKg: true, recordedAt: true, source: true },
         }),
   ]);
 

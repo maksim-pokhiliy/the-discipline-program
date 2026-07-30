@@ -13,6 +13,7 @@ import {
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useQueryClient } from "@tanstack/react-query";
 import { isValid } from "date-fns";
+import { toast } from "sonner";
 
 import { OneRMRecordSource, ONE_RM_RECORD_SOURCE_LABELS } from "@repo/contracts/lms/one-rm-record";
 
@@ -34,6 +35,7 @@ const VALUE_LABEL = "Value (kg)";
 const DATE_LABEL = "Date";
 const CANCEL_LABEL = "Cancel";
 const SAVE_LABEL = "Save Record";
+const ONE_RM_SAVED_LABEL = "1RM saved";
 const VALUE_INPUT_MODE = "numeric";
 const FORM_GAP = 2;
 const SOURCE_GAP = 1;
@@ -50,15 +52,13 @@ const recordedAtForDay = (date: Date): Date => {
   const now = new Date();
 
   return new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      now.getUTCHours(),
-      now.getUTCMinutes(),
-      now.getUTCSeconds(),
-      now.getUTCMilliseconds(),
-    ),
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+    now.getMilliseconds(),
   );
 };
 
@@ -132,6 +132,7 @@ export const UpdateOneRmForm = ({
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: platformKeys.athleteRecords.data() });
+          toast.success(ONE_RM_SAVED_LABEL);
           onClose();
         },
       },

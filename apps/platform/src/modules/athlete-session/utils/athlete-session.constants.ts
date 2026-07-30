@@ -97,7 +97,6 @@ export const RESULT_STRIP_VALUE_PX = 22;
 export const ROW_PADDING_Y_PX = 11;
 export const ROW_PADDING_X_PX = 14;
 export const ROW_GAP_PX = 12;
-export const ROW_TOP_DIVIDER_ALPHA = 0.08;
 export const ROW_MOVEMENT_PX = 14;
 export const ROW_MOVEMENT_ALPHA = 0.9;
 export const ROW_VOLUME_PX = 19;
@@ -121,15 +120,6 @@ export const ROW_GROUP_MEMBER_GAP_PX = 8;
 export const ROW_GROUP_MEMBER_PX = 14;
 export const ROW_GROUP_MEMBER_ALPHA = 0.85;
 export const ROW_GROUP_LINE_PX = 13;
-
-export const LOAD_MIN_WIDTH_PX = 64;
-export const LOAD_VALUE_PX = 20;
-export const LOAD_SUB_PX = 11;
-export const LOAD_SUB_ALPHA = 0.42;
-export const LOAD_BW_PX = 12;
-export const LOAD_HINT_PX = 11;
-export const LOAD_HINT_ALPHA = 0.42;
-export const LOAD_BUTTON_GAP_PX = 0.5;
 
 export const COMPLETION_BAR_PADDING_TOP_PX = 14;
 export const COMPLETION_BAR_PADDING_BOTTOM_PX = 18;
@@ -183,17 +173,11 @@ export const BENCHMARK_LABEL_BY_RESULT_TYPE = {
   calories: "Calories",
 } as const;
 
-export const SET_ONE_RM_LABEL = "Set 1RM";
-export const PICK_PROFILE_LABEL = "Pick profile";
-export const SET_SEX_PROMPT_LABEL = "Set your sex";
 export const BODYWEIGHT_LABEL = "Bodyweight";
 export const KG_LABEL = "kg";
 export const LOAD_AT_PREFIX = "@";
 export const ABSOLUTE_PAIR_PREFIX = "2x";
 export const DEMO_LINK_ARIA = "Watch demo";
-export const PER_HAND_SUFFIX = "kg / hand";
-export const ONE_RM_HINT_SUFFIX = "% of 1RM";
-export const ONE_RM_REFERENCE_PREFIX = "1RM";
 export const LOGGED_PREFIX = "Logged";
 export const WORKOUT_FALLBACK_TITLE = "Workout";
 export const LOADING_LABEL = "Loading your workout...";
@@ -207,34 +191,7 @@ export const VOLUME_SEPARATOR = " ";
 export const REPS_LABEL = "reps";
 export const PICK_YOUR_PREFIX = "Pick your ";
 export const AXIS_AND_SEPARATOR = " & ";
-export const PROFILE_KG_SEPARATOR = ":";
 export const PROFILE_GROUP_SEPARATOR = " / ";
-export const PROFILE_INNER_SEPARATOR = " ";
-export const ROW_LEADER_ALPHA = 0.18;
-
-export const RESOLVE_POPOVER_WIDTH_PX = 240;
-export const INLINE_EDITOR_MARGIN_X_PX = 14;
-export const INLINE_EDITOR_MARGIN_BOTTOM_PX = 12;
-export const INLINE_EDITOR_PADDING_PX = 12;
-export const INLINE_EDITOR_BG_ALPHA = 0.06;
-export const INLINE_EDITOR_BORDER_ALPHA = 0.3;
-export const INLINE_EDITOR_TITLE_PX = 11;
-export const INLINE_EDITOR_TITLE_LETTER_SPACING = "0.06em";
-export const INLINE_EDITOR_INPUT_HEIGHT_PX = 40;
-export const INLINE_EDITOR_GAP_PX = 8;
-export const INLINE_AXIS_GAP_PX = 6;
-export const INLINE_AXIS_OPTION_HEIGHT_PX = 36;
-export const INLINE_AXIS_LABEL_PX = 11;
-export const INLINE_AXIS_LABEL_ALPHA = 0.5;
-export const INLINE_OPTION_INACTIVE_BG_ALPHA = 0.04;
-export const INLINE_OPTION_INACTIVE_BORDER_ALPHA = 0.18;
-
-export const ONE_RM_EDITOR_TITLE_PREFIX = "Your";
-export const ONE_RM_EDITOR_TITLE_SUFFIX = "1RM";
-export const ONE_RM_INPUT_LABEL = "Estimated 1RM";
-export const ONE_RM_SET_LABEL = "Set";
-export const PROFILE_EDITOR_TITLE = "Pick your profile";
-export const PROFILE_AXIS_PREFIX = "your ";
 
 export const SHEET_RADIUS_PX = 14;
 export const SHEET_HANDLE_WIDTH_PX = 36;

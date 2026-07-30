@@ -3,16 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
+import { PICK_APPLYING_LABEL, PICK_CURRENT_LABEL, PICK_RETRY_LABEL } from "@app/lib/level-switch";
 import { render } from "@app/test/render";
 
 import {
   CLEAR_PICK_ARIA_PREFIX,
   CLEAR_PICK_ARIA_SUFFIX,
-  PICK_APPLYING_LABEL,
-  PICK_CURRENT_LABEL,
   PICK_NOT_PICKED_HELPER,
   PICK_NOT_PICKED_LABEL,
-  PICK_RETRY_LABEL,
   PROFILE_PICKS_NO_AXES,
 } from "../utils/athlete-profile.constants";
 import {

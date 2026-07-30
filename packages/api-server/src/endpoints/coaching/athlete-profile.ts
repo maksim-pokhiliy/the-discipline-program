@@ -11,6 +11,8 @@ import {
 } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
+import { assertProfileSelectionsWritable } from "./profile-selections-guard";
+
 export const coachingAthleteProfileApi = {
   get: async (userId: string): Promise<AthleteProfile> => {
     const profile = await findOrThrow(
@@ -25,14 +27,19 @@ export const coachingAthleteProfileApi = {
   },
 
   upsert: async (userId: string, data: UpdateAthleteProfileData): Promise<AthleteProfile> => {
+    const profileSelections =
+      data.profileSelections === undefined
+        ? undefined
+        : await assertProfileSelectionsWritable(data.profileSelections);
+
     const prismaData = {
       ...(data.gender && { gender: GENDER_TO_PRISMA_MAP[data.gender] }),
       ...(data.healthStatus && { healthStatus: HEALTH_STATUS_TO_PRISMA_MAP[data.healthStatus] }),
       ...(data.heightCm !== undefined && { heightCm: data.heightCm }),
       ...(data.weightKg !== undefined && { weightKg: data.weightKg }),
       ...(data.healthNote !== undefined && { healthNote: data.healthNote }),
-      ...(data.profileSelections !== undefined && {
-        profileSelections: toInputJson(data.profileSelections),
+      ...(profileSelections !== undefined && {
+        profileSelections: toInputJson(profileSelections),
       }),
     };
 

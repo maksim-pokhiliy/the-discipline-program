@@ -1,15 +1,17 @@
 import { type ReactElement } from "react";
 
 import LayersRounded from "@mui/icons-material/LayersRounded";
-import { alpha, Stack, Typography } from "@mui/material";
+import { alpha, Box, Stack, Typography } from "@mui/material";
 
 import { type RowView } from "@repo/contracts/lms/session-detail";
 
-import { buildLoadLine, buildRowSubLine, buildVolume } from "../utils/athlete-session-presentation";
+import { buildRowSubLine, buildVolume } from "../utils/athlete-session-presentation";
 import {
   FONT_WEIGHT_DISPLAY,
   FONT_WEIGHT_MEDIUM,
   LOAD_AT_PREFIX,
+  ROW_AT_ALPHA,
+  ROW_AT_PX,
   ROW_GROUP_ICON_PX,
   ROW_GROUP_LABEL,
   ROW_GROUP_LABEL_ALPHA,
@@ -23,25 +25,19 @@ import {
   ROW_SUB_PX,
   TRACK_LABEL_LETTER_SPACING,
 } from "../utils/athlete-session.constants";
+import { buildLoadCell, hasLoadValue } from "../utils/load-cell";
+import { type SessionEditorControls } from "../utils/use-session-logging";
 
 import { DemoLink } from "./demo-link";
-
-const MEMBER_LINE_GAP = " ";
-
-const memberLine = (member: RowView): string => {
-  const volume = buildVolume(member);
-  const { loadStr, showAt } = buildLoadLine(member.resolvedLoad, member.load);
-  const load = showAt && loadStr.length > 0 ? `${LOAD_AT_PREFIX} ${loadStr}` : loadStr;
-
-  return [volume, load].filter((part) => part.length > 0).join(MEMBER_LINE_GAP);
-};
+import { LoadCell } from "./load-cell";
 
 export type RowGroupProps = {
   label: string | null;
   members: RowView[];
+  editor: SessionEditorControls;
 };
 
-export const RowGroup = ({ label, members }: RowGroupProps): ReactElement => (
+export const RowGroup = ({ label, members, editor }: RowGroupProps): ReactElement => (
   <Stack sx={{ px: `${ROW_GROUP_PADDING_X_PX}px`, py: `${ROW_GROUP_PADDING_Y_PX}px` }}>
     <Stack
       direction="row"
@@ -69,6 +65,9 @@ export const RowGroup = ({ label, members }: RowGroupProps): ReactElement => (
     <Stack spacing={`${ROW_GROUP_MEMBER_GAP_PX}px`}>
       {members.map((member) => {
         const settings = buildRowSubLine(member);
+        const volume = buildVolume(member);
+        const cell = buildLoadCell(member);
+        const hasLoad = hasLoadValue(cell);
 
         return (
           <Stack key={member.rowId} spacing={0.25}>
@@ -98,17 +97,41 @@ export const RowGroup = ({ label, members }: RowGroupProps): ReactElement => (
                 </Typography>
                 {member.media !== null ? <DemoLink url={member.media} /> : null}
               </Stack>
-              <Typography
-                component="span"
-                sx={(theme) => ({
-                  minWidth: 0,
-                  overflowWrap: "anywhere",
-                  fontSize: theme.typography.pxToRem(ROW_GROUP_LINE_PX),
-                  color: theme.palette.text.secondary,
-                })}
+              <Stack
+                direction="row"
+                alignItems="baseline"
+                spacing={0.75}
+                useFlexGap
+                sx={{ flexWrap: "wrap", minWidth: 0, overflowWrap: "anywhere" }}
               >
-                {memberLine(member)}
-              </Typography>
+                {volume.length > 0 ? (
+                  <Box
+                    component="span"
+                    sx={(theme) => ({
+                      fontSize: theme.typography.pxToRem(ROW_GROUP_LINE_PX),
+                      color: theme.palette.text.secondary,
+                    })}
+                  >
+                    {volume}
+                  </Box>
+                ) : null}
+                {hasLoad ? (
+                  <Box
+                    component="span"
+                    sx={(theme) => ({
+                      fontSize: theme.typography.pxToRem(ROW_AT_PX),
+                      color: alpha(theme.palette.common.white, ROW_AT_ALPHA),
+                    })}
+                  >
+                    {LOAD_AT_PREFIX}
+                  </Box>
+                ) : null}
+                <LoadCell
+                  cell={cell}
+                  isPulsing={editor.pulsingRowIds.has(member.rowId)}
+                  onOpen={(target) => editor.openWeightSheet(member, target)}
+                />
+              </Stack>
             </Stack>
             {settings.length > 0 ? (
               <Typography

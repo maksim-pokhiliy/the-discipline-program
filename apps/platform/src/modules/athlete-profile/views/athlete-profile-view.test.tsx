@@ -10,6 +10,12 @@ import {
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { NotFoundError } from "@repo/errors";
 
+import {
+  PICK_APPLYING_LABEL,
+  PICK_CURRENT_LABEL,
+  PICK_OUTCOME_DISMISS_MS,
+  PICK_RETRY_LABEL,
+} from "@app/lib/level-switch";
 import { render } from "@app/test/render";
 
 import {
@@ -29,10 +35,6 @@ import {
   HEALTH_STATUS_FIELD_LABEL,
   HEIGHT_UNIT_LABEL,
   KG_LABEL,
-  PICK_APPLYING_LABEL,
-  PICK_CURRENT_LABEL,
-  PICK_OUTCOME_DISMISS_MS,
-  PICK_RETRY_LABEL,
   PROFILE_PICKS_NO_AXES,
   ROLE_BADGE_LABEL,
   TITLE_LABEL,

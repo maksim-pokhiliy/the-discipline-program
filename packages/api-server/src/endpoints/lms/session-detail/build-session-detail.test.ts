@@ -2,8 +2,9 @@ import { DayOfWeek } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { type Load } from "@repo/contracts/lms/_shared";
+import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
 
-import { type AthleteLoadContext } from "../athlete-records";
+import { type AthleteLoadContext, type AthleteOneRMBase } from "../athlete-records";
 
 import { buildSessionDetail, collectExerciseIds } from "./build-session-detail";
 import {
@@ -226,6 +227,14 @@ const makeSession = (overrides: SessionOverrides = {}): SessionDetailRecord => {
 };
 
 const LEVEL_AXIS_ID = "clz0000000000000000axis01";
+const RECORDED_AT = new Date("2026-07-12T10:00:00.000Z");
+const RECORDED_AT_ISO = "2026-07-12T10:00:00.000Z";
+
+const oneRMBase = (valueKg: number): AthleteOneRMBase => ({
+  valueKg,
+  recordedAt: RECORDED_AT,
+  source: OneRMRecordSource.MANUAL,
+});
 
 const makeCtx = (overrides: Partial<AthleteLoadContext> = {}): AthleteLoadContext => ({
   bodyweightKg: null,
@@ -329,7 +338,9 @@ describe("buildSessionDetail load resolution", () => {
         }),
       ],
     });
-    const ctx = makeCtx({ currentOneRMByExercise: new Map([[ROW_EXERCISE_ID, 100]]) });
+    const ctx = makeCtx({
+      currentOneRMByExercise: new Map([[ROW_EXERCISE_ID, oneRMBase(100)]]),
+    });
 
     expect(
       firstRowView(buildSessionDetail({ session, ctx, performed: [], latestResults: [] }))
@@ -338,6 +349,14 @@ describe("buildSessionDetail load resolution", () => {
       status: "resolved",
       kg: 80,
       perHand: false,
+      source: {
+        kind: "one_rm",
+        exerciseId: ROW_EXERCISE_ID,
+        percent: 80,
+        baseKg: 100,
+        recordedAt: RECORDED_AT_ISO,
+        recordSource: OneRMRecordSource.MANUAL,
+      },
     });
   });
 
@@ -350,7 +369,9 @@ describe("buildSessionDetail load resolution", () => {
     const session = makeSession({
       blocks: [makeBlock({ schemas: [makeSchema({ rows: [makeRow({ load })] })] })],
     });
-    const ctx = makeCtx({ currentOneRMByExercise: new Map([[OTHER_EXERCISE_ID, 90]]) });
+    const ctx = makeCtx({
+      currentOneRMByExercise: new Map([[OTHER_EXERCISE_ID, oneRMBase(90)]]),
+    });
 
     expect(
       firstRowView(buildSessionDetail({ session, ctx, performed: [], latestResults: [] }))
@@ -359,6 +380,14 @@ describe("buildSessionDetail load resolution", () => {
       status: "resolved",
       kg: 45,
       perHand: false,
+      source: {
+        kind: "one_rm",
+        exerciseId: OTHER_EXERCISE_ID,
+        percent: 50,
+        baseKg: 90,
+        recordedAt: RECORDED_AT_ISO,
+        recordSource: OneRMRecordSource.MANUAL,
+      },
     });
   });
 

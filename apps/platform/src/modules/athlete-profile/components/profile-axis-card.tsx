@@ -10,6 +10,12 @@ import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 import { IndicatorChip } from "@repo/ui";
 
 import {
+  ProfileAxisOutcomeStrip,
+  ProfileOptionRow,
+  shortenCoordinate,
+} from "@app/lib/level-switch";
+
+import {
   CAPTION_LINE_HEIGHT,
   CAPTION_PX,
   CARD_PADDING,
@@ -22,11 +28,7 @@ import {
   PICK_NOT_PICKED_LABEL,
   PICK_ROW_TITLE_PX,
 } from "../utils/athlete-profile.constants";
-import { shortenCoordinate } from "../utils/profile-coordinates";
 import { type LevelSwitchOutcome } from "../utils/use-profile-level-switch";
-
-import { ProfileAxisOutcomeStrip } from "./profile-axis-outcome-strip";
-import { ProfileOptionRow } from "./profile-option-row";
 
 export type ProfileAxisCardProps = {
   axis: ProfileAxis;
@@ -116,6 +118,7 @@ export const ProfileAxisCard = ({
           <ProfileOptionRow
             key={`${axis.id}:${value}`}
             value={value}
+            isSelected={pickedValue === value}
             isCurrent={pickedValue === value}
             isApplying={applyingValue === value}
             isLocked={isLocked}

@@ -2,70 +2,30 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { useQueryClient } from "@tanstack/react-query";
-
 import { type ResultType } from "@repo/contracts/lms/_shared";
-import { OneRMRecordSource } from "@repo/contracts/lms/one-rm-record";
-import { type SessionDetailResponse } from "@repo/contracts/lms/session-detail";
+import { type RowView, type SessionDetailResponse } from "@repo/contracts/lms/session-detail";
 
-import { platformKeys } from "@app/lib/api/keys";
-import {
-  useAthleteProfile,
-  useCreateOneRMRecord,
-  useCreatePerformedSession,
-  useLogBenchmarkResult,
-  useUpdateAthleteProfile,
-} from "@app/lib/hooks";
+import { useCreatePerformedSession, useLogBenchmarkResult } from "@app/lib/hooks";
 
 import { type BenchmarkSchema, collectBenchmarkSchemas } from "./athlete-session-presentation";
-import { GENDER_BY_COORD } from "./gender-coord-map";
+import { type LoadChipTarget } from "./load-cell";
 import { buildResult, type ResultDraft, resultToDraft } from "./result-form-config";
 
-export type ActiveEditor =
-  | { rowId: string; kind: "one_rm"; exerciseId: string }
-  | { rowId: string; kind: "profile" }
-  | { rowId: string; kind: "profile_attribute" };
-
 export type SessionEditorControls = {
-  activeEditor: ActiveEditor | null;
-  oneRmValue: string;
-  oneRmCanSubmit: boolean;
-  oneRmPending: boolean;
-  profileSelections: Record<string, string>;
-  profilePending: boolean;
   activeLogSchemaId: string | null;
   isLoggingBenchmark: boolean;
-  openOneRmEditor: (rowId: string, exerciseId: string) => void;
-  openProfileEditor: (rowId: string) => void;
-  openProfileAttributeEditor: (rowId: string) => void;
-  closeEditor: () => void;
-  setOneRmValue: (value: string) => void;
-  commitOneRm: () => void;
-  pickProfile: (catalogAxisIds: string[], axisId: string, value: string) => void;
-  pickGender: (value: string) => void;
+  pulsingRowIds: ReadonlySet<string>;
   draftFor: (schemaId: string) => ResultDraft;
   openLog: (schemaId: string) => void;
   cancelLog: () => void;
   saveLog: (schemaId: string, resultType: ResultType) => void;
   setDraftField: (schemaId: string, key: string, value: string) => void;
+  openWeightSheet: (row: RowView, target: LoadChipTarget) => void;
 };
 
 const EMPTY_DRAFT: ResultDraft = {};
-const EMPTY_SELECTIONS: Record<string, string> = {};
-
-const parseOneRm = (raw: string): number | null => {
-  const parsed = Number(raw.trim());
-
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-};
 
 export type SessionLogging = {
-  activeEditor: ActiveEditor | null;
-  oneRmValue: string;
-  oneRmCanSubmit: boolean;
-  oneRmPending: boolean;
-  profileSelections: Record<string, string>;
-  profilePending: boolean;
   activeLogSchemaId: string | null;
   isLoggingBenchmark: boolean;
   benchmarks: BenchmarkSchema[];
@@ -73,14 +33,6 @@ export type SessionLogging = {
   isSheetOpen: boolean;
   isSubmitting: boolean;
   isLoggingState: boolean;
-  openOneRmEditor: (rowId: string, exerciseId: string) => void;
-  openProfileEditor: (rowId: string) => void;
-  openProfileAttributeEditor: (rowId: string) => void;
-  closeEditor: () => void;
-  setOneRmValue: (value: string) => void;
-  commitOneRm: () => void;
-  pickProfile: (catalogAxisIds: string[], axisId: string, value: string) => void;
-  pickGender: (value: string) => void;
   draftFor: (schemaId: string) => ResultDraft;
   openLog: (schemaId: string) => void;
   cancelLog: () => void;
@@ -95,134 +47,17 @@ export type SessionLogging = {
 
 export const useSessionLogging = (data: SessionDetailResponse): SessionLogging => {
   const { sessionId, done } = data.session;
-  const queryClient = useQueryClient();
 
-  const [activeEditor, setActiveEditor] = useState<ActiveEditor | null>(null);
-  const [oneRmValue, setOneRmValueState] = useState("");
-  const [stagedProfile, setStagedProfile] = useState<Record<string, string>>(EMPTY_SELECTIONS);
   const [drafts, setDrafts] = useState<Record<string, ResultDraft>>({});
   const [activeLogSchemaId, setActiveLogSchemaId] = useState<string | null>(null);
   const [note, setNoteState] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isReopened, setIsReopened] = useState(false);
 
-  const athleteProfile = useAthleteProfile();
-  const updateProfile = useUpdateAthleteProfile();
-  const createOneRm = useCreateOneRMRecord();
   const createPerformedSession = useCreatePerformedSession();
   const logBenchmark = useLogBenchmarkResult();
 
   const benchmarks = useMemo(() => collectBenchmarkSchemas(data.blocks), [data.blocks]);
-  const savedSelections = athleteProfile.data?.profileSelections ?? EMPTY_SELECTIONS;
-  const profileSelections = useMemo(
-    () => ({ ...savedSelections, ...stagedProfile }),
-    [savedSelections, stagedProfile],
-  );
-
-  const invalidateView = useCallback((): void => {
-    queryClient.invalidateQueries({
-      queryKey: platformKeys.athleteSessionView.detail(sessionId),
-    });
-  }, [queryClient, sessionId]);
-
-  const openOneRmEditor = useCallback((rowId: string, exerciseId: string): void => {
-    setOneRmValueState("");
-    setActiveEditor({ rowId, kind: "one_rm", exerciseId });
-  }, []);
-
-  const openProfileEditor = useCallback((rowId: string): void => {
-    setStagedProfile(EMPTY_SELECTIONS);
-    setActiveEditor({ rowId, kind: "profile" });
-  }, []);
-
-  const openProfileAttributeEditor = useCallback((rowId: string): void => {
-    setActiveEditor({ rowId, kind: "profile_attribute" });
-  }, []);
-
-  const closeEditor = useCallback((): void => {
-    setStagedProfile(EMPTY_SELECTIONS);
-    setActiveEditor(null);
-  }, []);
-
-  const commitOneRm = useCallback((): void => {
-    if (activeEditor?.kind !== "one_rm" || createOneRm.isPending) {
-      return;
-    }
-
-    const valueKg = parseOneRm(oneRmValue);
-
-    if (valueKg === null) {
-      return;
-    }
-
-    createOneRm.mutate(
-      {
-        exerciseId: activeEditor.exerciseId,
-        valueKg,
-        recordedAt: new Date(),
-        source: OneRMRecordSource.MANUAL,
-      },
-      {
-        onSuccess: () => {
-          invalidateView();
-          setActiveEditor(null);
-        },
-      },
-    );
-  }, [activeEditor, oneRmValue, createOneRm, invalidateView]);
-
-  const pickProfile = useCallback(
-    (catalogAxisIds: string[], axisId: string, value: string): void => {
-      if (updateProfile.isPending) {
-        return;
-      }
-
-      const merged = { ...savedSelections, ...stagedProfile, [axisId]: value };
-      const isFullPick = catalogAxisIds.every((id) => merged[id] !== undefined);
-
-      if (!isFullPick) {
-        setStagedProfile((prev) => ({ ...prev, [axisId]: value }));
-
-        return;
-      }
-
-      updateProfile.mutate(
-        { profileSelections: merged },
-        {
-          onSuccess: () => {
-            invalidateView();
-            setActiveEditor(null);
-          },
-        },
-      );
-    },
-    [savedSelections, stagedProfile, updateProfile, invalidateView],
-  );
-
-  const pickGender = useCallback(
-    (value: string): void => {
-      if (updateProfile.isPending) {
-        return;
-      }
-
-      const gender = GENDER_BY_COORD[value];
-
-      if (gender === undefined) {
-        return;
-      }
-
-      updateProfile.mutate(
-        { gender },
-        {
-          onSuccess: () => {
-            invalidateView();
-            setActiveEditor(null);
-          },
-        },
-      );
-    },
-    [updateProfile, invalidateView],
-  );
 
   const setDraftField = useCallback((schemaId: string, key: string, value: string): void => {
     setDrafts((prev) => ({
@@ -317,12 +152,6 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
   }, [isSubmitting, note, sessionId, createPerformedSession]);
 
   return {
-    activeEditor,
-    oneRmValue,
-    oneRmCanSubmit: parseOneRm(oneRmValue) !== null,
-    oneRmPending: createOneRm.isPending,
-    profileSelections,
-    profilePending: updateProfile.isPending,
     activeLogSchemaId,
     isLoggingBenchmark: logBenchmark.isPending,
     benchmarks,
@@ -330,14 +159,6 @@ export const useSessionLogging = (data: SessionDetailResponse): SessionLogging =
     isSheetOpen,
     isSubmitting,
     isLoggingState,
-    openOneRmEditor,
-    openProfileEditor,
-    openProfileAttributeEditor,
-    closeEditor,
-    setOneRmValue: setOneRmValueState,
-    commitOneRm,
-    pickProfile,
-    pickGender,
     draftFor,
     openLog,
     cancelLog,

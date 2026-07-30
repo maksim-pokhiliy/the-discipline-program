@@ -6,6 +6,8 @@ import { formatResultParts } from "@repo/contracts/lms/_shared";
 import { type OneRMRecordSourceValue } from "@repo/contracts/lms/one-rm-record";
 import { type BenchmarkSeriesPoint, type OneRMSeriesPoint } from "@repo/contracts/lms/records-view";
 
+import { formatLocalLongDate } from "@app/lib/format-record-date";
+
 import {
   CARD_DATE_PX,
   CURRENT_PR_CHIP_LABEL,
@@ -18,7 +20,6 @@ import {
   KG_UNIT,
   PR_CHIP_LABEL,
 } from "../utils/athlete-records.constants";
-import { formatLongDate } from "../utils/format-records";
 
 import { DisplayNumber } from "./display-number";
 import { PrChip } from "./pr-chip";
@@ -98,7 +99,7 @@ export const RecordHistoryList = (props: RecordHistoryListProps): ReactElement =
               whiteSpace: "nowrap",
             })}
           >
-            {formatLongDate(row.recordedAt)}
+            {formatLocalLongDate(row.recordedAt)}
           </Typography>
         </Stack>
       ))}

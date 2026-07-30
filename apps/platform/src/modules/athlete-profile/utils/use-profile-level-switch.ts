@@ -1,15 +1,20 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
-
 import {
   type Gender,
   type UpdateAthleteProfileRequest,
 } from "@repo/contracts/coaching/athlete-profile";
 import { type ProfileAxis } from "@repo/contracts/coaching/profile-axis";
 
-import { PICK_OFFLINE_REPEAT, PICK_OUTCOME_DISMISS_MS } from "./athlete-profile.constants";
-import { buildAppliedMessage, buildFailedMessage, resolvePickedValue } from "./profile-coordinates";
+import {
+  buildAppliedMessage,
+  buildFailedMessage,
+  type LevelApplyFlight,
+  type LevelApplyOutcome,
+  type LevelApplyOutcomes,
+  resolvePickedValue,
+  useLevelApply,
+} from "@app/lib/level-switch";
 
 export type LevelSwitchFlight = {
   axisId: string;
@@ -17,11 +22,9 @@ export type LevelSwitchFlight = {
   previousValue: string | null;
 };
 
-export type LevelSwitchOutcome =
-  | { isApplied: true; message: string }
-  | { isApplied: false; failedValue: string | null; isOffline: boolean; message: string };
+export type LevelSwitchOutcome = LevelApplyOutcome;
 
-export type LevelSwitchOutcomes = Record<string, LevelSwitchOutcome>;
+export type LevelSwitchOutcomes = LevelApplyOutcomes;
 
 export type LevelSwitchMutate = (patch: UpdateAthleteProfileRequest) => Promise<unknown>;
 
@@ -42,20 +45,10 @@ export type ProfileLevelSwitch = {
   retry: (axisId: string) => void;
 };
 
-type ApplyContext = {
-  axes: ProfileAxis[];
-  selections: Record<string, string>;
-  gender: Gender | null;
-  mutateAsync: LevelSwitchMutate;
-  setFlight: Dispatch<SetStateAction<LevelSwitchFlight | null>>;
-  setOutcomes: Dispatch<SetStateAction<LevelSwitchOutcomes>>;
+type PickMeta = {
+  value: string | null;
+  previousValue: string | null;
 };
-
-const isBrowserOffline = (): boolean =>
-  typeof navigator !== "undefined" && navigator.onLine === false;
-
-const withoutKey = <T>(source: Record<string, T>, key: string): Record<string, T> =>
-  Object.fromEntries(Object.entries(source).filter(([candidate]) => candidate !== key));
 
 const withAxisValue = (
   selections: Record<string, string>,
@@ -63,11 +56,18 @@ const withAxisValue = (
   value: string | null,
 ): Record<string, string> => {
   if (value === null) {
-    return withoutKey(selections, axisId);
+    return Object.fromEntries(Object.entries(selections).filter(([key]) => key !== axisId));
   }
 
   return { ...selections, [axisId]: value };
 };
+
+const toLevelSwitchFlight = (
+  flight: LevelApplyFlight<PickMeta> | null,
+): LevelSwitchFlight | null =>
+  flight === null
+    ? null
+    : { axisId: flight.scope, value: flight.meta.value, previousValue: flight.meta.previousValue };
 
 const preFlightSelections = (
   selections: Record<string, string>,
@@ -78,52 +78,6 @@ const preFlightSelections = (
   }
 
   return withAxisValue(selections, flight.axisId, flight.previousValue);
-};
-
-const isOfflineRepeat = (previous: LevelSwitchOutcome | undefined): boolean =>
-  previous !== undefined && !previous.isApplied && previous.isOffline;
-
-const applyPick = async (
-  context: ApplyContext,
-  axisId: string,
-  value: string | null,
-): Promise<void> => {
-  const { axes, selections, gender, mutateAsync, setFlight, setOutcomes } = context;
-  const nextSelections = withAxisValue(selections, axisId, value);
-  const appliedMessage = buildAppliedMessage({ axes, selections: nextSelections, gender });
-  const failedMessage = buildFailedMessage({ axes, selections, gender });
-
-  if (isBrowserOffline()) {
-    setOutcomes((current) => ({
-      ...current,
-      [axisId]: {
-        isApplied: false,
-        failedValue: value,
-        isOffline: true,
-        message: isOfflineRepeat(current[axisId]) ? PICK_OFFLINE_REPEAT : failedMessage,
-      },
-    }));
-
-    return;
-  }
-
-  setOutcomes((current) => withoutKey(current, axisId));
-  setFlight({ axisId, value, previousValue: selections[axisId] ?? null });
-
-  try {
-    await mutateAsync({ profileSelections: nextSelections });
-    setOutcomes((current) => ({
-      ...current,
-      [axisId]: { isApplied: true, message: appliedMessage },
-    }));
-  } catch {
-    setOutcomes((current) => ({
-      ...current,
-      [axisId]: { isApplied: false, failedValue: value, isOffline: false, message: failedMessage },
-    }));
-  } finally {
-    setFlight(null);
-  }
 };
 
 const isOutcomeStale = (
@@ -149,54 +103,6 @@ const isOutcomeStale = (
   return resolvePickedValue(axis, selections) === outcome.failedValue;
 };
 
-const useAutoDismissApplied = (
-  results: LevelSwitchOutcomes,
-  setResults: Dispatch<SetStateAction<LevelSwitchOutcomes>>,
-): void => {
-  const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-
-  useEffect(() => {
-    const scheduled = timers.current;
-
-    for (const axisId of [...scheduled.keys()]) {
-      if (results[axisId]?.isApplied === true) {
-        continue;
-      }
-
-      clearTimeout(scheduled.get(axisId));
-      scheduled.delete(axisId);
-    }
-
-    for (const [axisId, outcome] of Object.entries(results)) {
-      if (!outcome.isApplied || scheduled.has(axisId)) {
-        continue;
-      }
-
-      scheduled.set(
-        axisId,
-        setTimeout(() => {
-          scheduled.delete(axisId);
-          setResults((current) =>
-            current[axisId]?.isApplied === true ? withoutKey(current, axisId) : current,
-          );
-        }, PICK_OUTCOME_DISMISS_MS),
-      );
-    }
-  }, [results, setResults]);
-
-  useEffect(() => {
-    const scheduled = timers.current;
-
-    return () => {
-      for (const timer of scheduled.values()) {
-        clearTimeout(timer);
-      }
-
-      scheduled.clear();
-    };
-  }, []);
-};
-
 export const useProfileLevelSwitch = ({
   axes,
   selections,
@@ -204,26 +110,29 @@ export const useProfileLevelSwitch = ({
   isPending,
   mutateAsync,
 }: UseProfileLevelSwitchArgs): ProfileLevelSwitch => {
-  const [flight, setFlight] = useState<LevelSwitchFlight | null>(null);
-  const [results, setResults] = useState<LevelSwitchOutcomes>({});
+  const levelApply = useLevelApply<PickMeta>(mutateAsync);
 
-  useAutoDismissApplied(results, setResults);
-
+  const flight = toLevelSwitchFlight(levelApply.flight);
   const displaySelections = preFlightSelections(selections, flight);
   const isLocked = isPending || flight !== null;
 
   const outcomes: LevelSwitchOutcomes = Object.fromEntries(
-    Object.entries(results).filter(
+    Object.entries(levelApply.outcomes).filter(
       ([axisId, outcome]) => !isOutcomeStale(axisId, outcome, axes, displaySelections),
     ),
   );
 
   const apply = (axisId: string, value: string | null): void => {
-    void applyPick(
-      { axes, selections, gender, mutateAsync, setFlight, setOutcomes: setResults },
-      axisId,
-      value,
-    );
+    const nextSelections = withAxisValue(selections, axisId, value);
+
+    void levelApply.apply({
+      scope: axisId,
+      meta: { value, previousValue: selections[axisId] ?? null },
+      patch: { profileSelections: nextSelections },
+      appliedMessage: buildAppliedMessage({ axes, selections: nextSelections, gender }),
+      failedMessage: buildFailedMessage({ axes, selections, gender }),
+      failedValue: value,
+    });
   };
 
   const pick = (axisId: string, value: string): void => {
