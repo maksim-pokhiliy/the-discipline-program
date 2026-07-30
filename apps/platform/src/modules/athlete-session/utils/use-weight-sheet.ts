@@ -35,6 +35,7 @@ export type { LevelState, WeightSheetState } from "./weight-sheet-model";
 
 export type WeightSheetControls = {
   sheet: WeightSheetState | null;
+  displayedSheet: WeightSheetState | null;
   levelAxes: LevelAxis[];
   levelCoordinates: Record<string, string>;
   levelSavedCoordinates: Record<string, string>;
@@ -47,6 +48,7 @@ export type WeightSheetControls = {
   isSavingMax: boolean;
   canSaveMax: boolean;
   closeSheet: () => void;
+  forgetDisplayedSheet: () => void;
   pickLevelCoordinate: (axisId: string, value: string) => void;
   applyLevel: () => void;
   setMaxValue: (value: string) => void;
@@ -69,9 +71,14 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   const queryClient = useQueryClient();
 
   const [sheet, setSheet] = useState<WeightSheetState | null>(null);
+  const [displayedSheet, setDisplayedSheet] = useState<WeightSheetState | null>(null);
   const [levelDraft, setLevelDraft] = useState<LevelState>(EMPTY_DRAFT);
   const [applyingSheet, setApplyingSheet] = useState<WeightSheetState | null>(null);
   const [pulsingRowIds, setPulsingRowIds] = useState<ReadonlySet<string>>(EMPTY_ROW_IDS);
+
+  if (sheet !== null && sheet !== displayedSheet) {
+    setDisplayedSheet(sheet);
+  }
 
   const { data: profile } = useAthleteProfile();
   const switchLevel = useSwitchAthleteProfileLevel();
@@ -88,7 +95,10 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   const rows = useMemo(() => collectRowViews(blocks), [blocks]);
   const boundAxisIds = useMemo(() => boundAxisIdsOf(rows), [rows]);
 
-  const levelAxes = useMemo(() => levelAxesOf(sheet?.kind === "level" ? sheet.row : null), [sheet]);
+  const levelAxes = useMemo(
+    () => levelAxesOf(displayedSheet?.kind === "level" ? displayedSheet.row : null),
+    [displayedSheet],
+  );
   const levelScopeRowIds = useMemo(() => rowIdsSharingAxes(rows, levelAxes), [rows, levelAxes]);
   const draftLevel = useMemo(
     () => mergeLevelState(savedLevel, levelDraft),
@@ -259,13 +269,18 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   };
 
   const levelOutcome =
-    sheet !== null && sheet.kind === "level"
-      ? (levelApply.outcomes[sheet.row.rowId] ?? null)
+    displayedSheet !== null && displayedSheet.kind === "level"
+      ? (levelApply.outcomes[displayedSheet.row.rowId] ?? null)
       : null;
+
+  const forgetDisplayedSheet = (): void => {
+    setDisplayedSheet(null);
+  };
 
   return {
     controls: {
       sheet,
+      displayedSheet,
       levelAxes,
       levelCoordinates,
       levelSavedCoordinates,
@@ -278,6 +293,7 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
       isSavingMax: maxSave.isSaving,
       canSaveMax: maxSave.canSave,
       closeSheet,
+      forgetDisplayedSheet,
       pickLevelCoordinate,
       applyLevel,
       setMaxValue: maxSave.setValue,

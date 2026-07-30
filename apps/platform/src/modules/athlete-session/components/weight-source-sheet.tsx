@@ -40,6 +40,7 @@ const titleOf = (sheet: WeightSheetState): string =>
 
 export const WeightSourceSheet = ({
   sheet,
+  displayedSheet,
   levelAxes,
   levelCoordinates,
   levelSavedCoordinates,
@@ -52,24 +53,22 @@ export const WeightSourceSheet = ({
   isSavingMax,
   canSaveMax,
   closeSheet,
+  forgetDisplayedSheet,
   pickLevelCoordinate,
   applyLevel,
   setMaxValue,
   saveMax,
-}: WeightSourceSheetProps): ReactElement | null => {
+}: WeightSourceSheetProps): ReactElement => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const titleId = useId();
 
-  if (sheet === null) {
-    return null;
-  }
-
-  const title = titleOf(sheet);
+  const isOpen = sheet !== null;
+  const title = displayedSheet === null ? "" : titleOf(displayedSheet);
   const body =
-    sheet.kind === "level" ? (
+    displayedSheet === null ? null : displayedSheet.kind === "level" ? (
       <LevelSheetBody
-        row={sheet.row}
+        row={displayedSheet.row}
         axes={levelAxes}
         coordinates={levelCoordinates}
         savedCoordinates={levelSavedCoordinates}
@@ -84,7 +83,7 @@ export const WeightSourceSheet = ({
       />
     ) : (
       <MaxSheetBody
-        row={sheet.row}
+        row={displayedSheet.row}
         value={maxValue}
         isSaving={isSavingMax}
         canSave={canSaveMax}
@@ -96,7 +95,13 @@ export const WeightSourceSheet = ({
 
   if (isDesktop) {
     return (
-      <BaseModal open onClose={closeSheet} title={title} maxWidth={SHEET_DIALOG_MAX_WIDTH}>
+      <BaseModal
+        open={isOpen}
+        onClose={closeSheet}
+        title={title}
+        maxWidth={SHEET_DIALOG_MAX_WIDTH}
+        onTransitionExited={forgetDisplayedSheet}
+      >
         {body}
       </BaseModal>
     );
@@ -105,9 +110,10 @@ export const WeightSourceSheet = ({
   return (
     <Drawer
       anchor="bottom"
-      open
+      open={isOpen}
       onClose={closeSheet}
       slotProps={{
+        transition: { onExited: forgetDisplayedSheet },
         paper: {
           role: "dialog",
           "aria-modal": true,

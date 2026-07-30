@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type Load } from "@repo/contracts/lms/_shared";
@@ -13,6 +13,7 @@ import { type LevelAxis } from "@app/lib/level-switch";
 import { render } from "@app/test/render";
 
 import { type WeightSheetControls, type WeightSheetState } from "../utils/use-weight-sheet";
+import { LEVEL_SHEET_SUBTITLE } from "../utils/weight-sheet.constants";
 
 import { WeightSourceSheet } from "./weight-source-sheet";
 
@@ -81,14 +82,19 @@ const MAX_SHEET: WeightSheetState = {
 };
 
 const closeSheet = vi.fn();
+const forgetDisplayedSheet = vi.fn();
 const pickLevelCoordinate = vi.fn();
 const applyLevel = vi.fn();
 const setMaxValue = vi.fn();
 const saveMax = vi.fn();
 
-const controls = (sheet: WeightSheetState | null): WeightSheetControls => ({
+const controls = (
+  sheet: WeightSheetState | null,
+  displayedSheet: WeightSheetState | null = sheet,
+): WeightSheetControls => ({
   sheet,
-  levelAxes: sheet?.kind === "level" ? [LEVEL_AXIS] : [],
+  displayedSheet,
+  levelAxes: displayedSheet?.kind === "level" ? [LEVEL_AXIS] : [],
   levelCoordinates: {},
   levelSavedCoordinates: {},
   levelWeightCount: 2,
@@ -100,6 +106,7 @@ const controls = (sheet: WeightSheetState | null): WeightSheetControls => ({
   isSavingMax: false,
   canSaveMax: false,
   closeSheet,
+  forgetDisplayedSheet,
   pickLevelCoordinate,
   applyLevel,
   setMaxValue,
@@ -120,10 +127,12 @@ const stubViewport = (isDesktop: boolean): void => {
 };
 
 const drawerRoot = (): Element | null => document.querySelector(".MuiDrawer-root");
+const drawerPaper = (): Element | null => document.querySelector(".MuiDrawer-paper");
 const dialogRoot = (): Element | null => document.querySelector(".MuiDialog-root");
 
 beforeEach(() => {
   closeSheet.mockReset();
+  forgetDisplayedSheet.mockReset();
   pickLevelCoordinate.mockReset();
   applyLevel.mockReset();
   setMaxValue.mockReset();
@@ -159,6 +168,56 @@ describe("WeightSourceSheet responsive container (D-F)", () => {
 
     expect(drawerRoot()).toBeNull();
     expect(dialogRoot()).toBeNull();
+  });
+
+  it("closes the drawer by its open prop rather than unmounting the container", () => {
+    stubViewport(false);
+
+    const { rerender } = render(<WeightSourceSheet {...controls(LEVEL_SHEET)} />);
+
+    expect(drawerRoot()).not.toBeNull();
+
+    rerender(<WeightSourceSheet {...controls(null, LEVEL_SHEET)} />);
+
+    expect(drawerRoot()).not.toBeNull();
+    expect(drawerRoot()).toHaveAttribute("aria-hidden", "true");
+    expect(drawerPaper()?.getAttribute("style")).toContain("translateY");
+  });
+
+  it("keeps the sliding-out body on screen instead of blanking it mid-exit", () => {
+    stubViewport(false);
+
+    const { rerender } = render(<WeightSourceSheet {...controls(LEVEL_SHEET)} />);
+
+    rerender(<WeightSourceSheet {...controls(null, LEVEL_SHEET)} />);
+
+    expect(screen.getByText("Your level")).toBeInTheDocument();
+    expect(screen.getByText(LEVEL_SHEET_SUBTITLE)).toBeInTheDocument();
+    expect(document.querySelector('[role="radiogroup"][aria-label="Level"]')).not.toBeNull();
+  });
+
+  it("closes the desktop dialog by its open prop too, body intact", () => {
+    stubViewport(true);
+
+    const { rerender } = render(<WeightSourceSheet {...controls(LEVEL_SHEET)} />);
+
+    expect(dialogRoot()).not.toBeNull();
+
+    rerender(<WeightSourceSheet {...controls(null, LEVEL_SHEET)} />);
+
+    expect(dialogRoot()).not.toBeNull();
+    expect(screen.getByText(LEVEL_SHEET_SUBTITLE)).toBeInTheDocument();
+  });
+
+  it("hands the retained sheet back and unmounts once the exit transition has run", async () => {
+    stubViewport(false);
+
+    const { rerender } = render(<WeightSourceSheet {...controls(LEVEL_SHEET)} />);
+
+    rerender(<WeightSourceSheet {...controls(null, LEVEL_SHEET)} />);
+
+    await waitFor(() => expect(forgetDisplayedSheet).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(drawerRoot()).toBeNull());
   });
 
   it("labels the mobile sheet by its own title node", () => {

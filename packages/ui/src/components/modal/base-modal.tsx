@@ -30,6 +30,7 @@ export type BaseModalProps = {
   actions?: ReactNode | undefined;
   disableBackdropClick?: boolean | undefined;
   disableEscapeKeyDown?: boolean | undefined;
+  onTransitionExited?: (() => void) | undefined;
 };
 
 export const BaseModal = ({
@@ -43,6 +44,7 @@ export const BaseModal = ({
   actions,
   disableBackdropClick = false,
   disableEscapeKeyDown = false,
+  onTransitionExited,
 }: BaseModalProps) => {
   const handleClose = (_: unknown, reason?: "backdropClick" | "escapeKeyDown") => {
     if (reason === "backdropClick" && disableBackdropClick) {
@@ -64,6 +66,7 @@ export const BaseModal = ({
       fullWidth={fullWidth}
       disableRestoreFocus={true}
       disableAutoFocus={false}
+      slotProps={{ transition: { onExited: onTransitionExited } }}
     >
       <DialogTitle>
         <Stack direction="row" spacing={MODAL_TITLE_GAP} sx={{ alignItems: "baseline" }}>
