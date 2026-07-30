@@ -23,12 +23,15 @@ export const CHIP_SOURCE_MAX_WIDTH_PX = { narrow: 118, phone: 168, desktop: 260 
 export const DOTTED_UNDERLINE_ALPHA = 0.6;
 
 export const RECEIPT_LEVEL_APPLIED = " applied · ";
+export const RECEIPT_LEVEL_APPLIED_BARE = " applied";
 export const RECEIPT_LEVEL_SUFFIX_SINGULAR = " weight updated";
 export const RECEIPT_LEVEL_SUFFIX_PLURAL = " weights updated";
 export const RECEIPT_COORD_SEPARATOR = " · ";
 export const RECEIPT_COORD_MAX_CHARS = 24;
 export const RECEIPT_MAX_INFIX = " 1RM · ";
 export const RECEIPT_MAX_SUFFIX = " kg saved";
+export const RECEIPT_LEVEL_STALE = "Applied — pull to refresh to see the new weights.";
+export const RECEIPT_MAX_STALE = "Saved — pull to refresh to see the new weights.";
 
 export const PULSE_DURATION_MS = 1400;
 export const PULSE_CLEAR_MS = 1600;
@@ -49,6 +52,8 @@ export const SCOPE_LINE_SUFFIX = " in this session — and this whole plan.";
 export const APPLY_CTA_PREFIX = "Apply ";
 export const PICK_CTA_PREFIX = "Pick ";
 export const APPLY_COORD_MAX_CHARS = 14;
+export const LEVEL_CTA_LOADING = "Loading your level…";
+export const LEVEL_CTA_BUSY = "Applying your last pick…";
 
 export const MAX_SHEET_TITLE_PREFIX = "Your ";
 export const MAX_SHEET_TITLE_SUFFIX = " max";

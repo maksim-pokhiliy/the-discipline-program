@@ -9,7 +9,7 @@ import { type Load } from "@repo/contracts/lms/_shared";
 import { ONE_RM_RECORD_SOURCE_LABELS } from "@repo/contracts/lms/one-rm-record";
 import { type ResolvedLoad, type RowView } from "@repo/contracts/lms/session-detail";
 
-import { formatLongDate } from "@app/lib/format-record-date";
+import { formatLocalLongDate } from "@app/lib/format-record-date";
 
 import {
   CANCEL_LABEL,
@@ -91,7 +91,7 @@ const buildSubtitle = (row: RowView, source: OneRmSource | null): string => {
 };
 
 const buildLatestRecord = (source: OneRmSource): string =>
-  `${LATEST_RECORD_PREFIX}${source.baseKg} ${KG_LABEL}${LATEST_RECORD_SEPARATOR}${formatLongDate(source.recordedAt)}`;
+  `${LATEST_RECORD_PREFIX}${source.baseKg} ${KG_LABEL}${LATEST_RECORD_SEPARATOR}${formatLocalLongDate(source.recordedAt)}`;
 
 const buildHelper = (row: RowView, source: OneRmSource | null): string =>
   source !== null

@@ -15,7 +15,7 @@ export const MONTH_SHORT = [
   "Dec",
 ] as const;
 
-export const formatLongDate = (iso: string): string => {
+export const formatLocalLongDate = (iso: string): string => {
   const date = new Date(iso);
 
   return [date.getDate(), MONTH_SHORT[date.getMonth()], date.getFullYear()].join(

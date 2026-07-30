@@ -143,10 +143,12 @@ const buildUnresolvedCell = (resolvedLoad: UnresolvedArm, load: Load | null): Lo
   }
 };
 
-export const hasLoadValue = (cell: LoadCellView): boolean =>
-  cell.kind !== "empty" && cell.value.length > 0;
+export const hasLoadValue = (cell: LoadCellView): boolean => cell.kind !== "empty";
 
-export const buildLoadCell = (row: RowView): LoadCellView => {
+const withoutBlankValue = (cell: LoadCellView): LoadCellView =>
+  cell.kind !== "empty" && cell.value.length === 0 ? { kind: "empty" } : cell;
+
+const buildCell = (row: RowView): LoadCellView => {
   const resolvedLoad = row.resolvedLoad;
 
   if (resolvedLoad === null) {
@@ -168,3 +170,5 @@ export const buildLoadCell = (row: RowView): LoadCellView => {
       return { kind: "empty" };
   }
 };
+
+export const buildLoadCell = (row: RowView): LoadCellView => withoutBlankValue(buildCell(row));

@@ -12,8 +12,11 @@ import {
   buildLevelPatch,
   buildLevelReceipt,
   buildMaxReceipt,
+  changingRowIds,
   coordinatesOf,
+  currentKgOf,
   exerciseOf,
+  kgForState,
   type LevelState,
   levelAxesOf,
   mergeLevelState,
@@ -103,6 +106,47 @@ const GENDER_ONLY_ROW = baseRow({
 const TIER_ONLY_ROW = baseRow({
   rowId: TIER_ROW_ID,
   load: byProfileLoad([TIER_AXIS]),
+});
+
+const gridLoad = (axis: LevelAxis, kgByValue: Record<string, number>): Load => ({
+  kind: "byProfile",
+  axes: [{ axisId: axis.id, label: axis.label, values: axis.values, binding: axis.binding }],
+  cells: axis.values.map((value) => ({ coords: [value], kg: kgByValue[value] ?? 0 })),
+});
+
+const LEVEL_GRID_ROW = baseRow({
+  rowId: LEVEL_ROW_ID,
+  load: gridLoad(LEVEL_AXIS, { RX: 40, Scaled: 30 }),
+  resolvedLoad: {
+    status: "unresolved",
+    reason: "missing_profile_pick",
+    prompt: "pick_profile",
+    axisLabels: ["Level"],
+  },
+});
+
+const ALREADY_SCALED_ROW = baseRow({
+  rowId: GENDER_ROW_ID,
+  load: gridLoad(LEVEL_AXIS, { RX: 40, Scaled: 30 }),
+  resolvedLoad: {
+    status: "resolved",
+    kg: 30,
+    perHand: false,
+    source: {
+      kind: "profile",
+      coords: [{ axisId: LEVEL_AXIS_ID, label: "Level", value: "Scaled", binding: null }],
+    },
+  },
+});
+
+const GENDER_GRID_ROW = baseRow({
+  rowId: GENDER_ROW_ID,
+  load: gridLoad(GENDER_AXIS, { Male: 20, Female: 14 }),
+});
+
+const TIER_GRID_ROW = baseRow({
+  rowId: TIER_ROW_ID,
+  load: gridLoad(TIER_AXIS, { Heavy: 60, Light: 45 }),
 });
 
 describe("parseOneRm", () => {
@@ -352,6 +396,64 @@ describe("buildLevelPatch", () => {
   });
 });
 
+describe("kgForState", () => {
+  it("resolves the row's own grid against the athlete's coordinates", () => {
+    expect(kgForState(LEVEL_GRID_ROW, state({ selections: { [LEVEL_AXIS_ID]: "RX" } }))).toBe(40);
+    expect(kgForState(LEVEL_GRID_ROW, state({ selections: { [LEVEL_AXIS_ID]: "Scaled" } }))).toBe(
+      30,
+    );
+  });
+
+  it("reads a bound axis off the typed gender field, not off the selections map", () => {
+    expect(kgForState(GENDER_GRID_ROW, state({ gender: Gender.FEMALE }))).toBe(14);
+    expect(kgForState(GENDER_GRID_ROW, state({ selections: { [GENDER_AXIS_ID]: "Female" } }))).toBe(
+      null,
+    );
+  });
+
+  it("has no number for a coordinate set the grid does not cover, or for no grid at all", () => {
+    expect(kgForState(LEVEL_GRID_ROW, state())).toBeNull();
+    expect(kgForState(TIER_GRID_ROW, state({ selections: { [LEVEL_AXIS_ID]: "RX" } }))).toBeNull();
+    expect(kgForState(baseRow(), state())).toBeNull();
+  });
+});
+
+describe("currentKgOf", () => {
+  it("reads the number the server already resolved", () => {
+    expect(
+      currentKgOf(baseRow({ resolvedLoad: { status: "resolved", kg: 30, perHand: false } })),
+    ).toBe(30);
+  });
+
+  it("has no number for an unresolved, bodyweight or absent arm", () => {
+    expect(currentKgOf(LEVEL_GRID_ROW)).toBeNull();
+    expect(currentKgOf(baseRow({ resolvedLoad: { status: "bodyweight" } }))).toBeNull();
+    expect(currentKgOf(baseRow())).toBeNull();
+  });
+});
+
+describe("changingRowIds", () => {
+  it("keeps only the rows whose number actually moves", () => {
+    const rows = [LEVEL_GRID_ROW, ALREADY_SCALED_ROW, TIER_GRID_ROW];
+
+    expect(changingRowIds(rows, state({ selections: { [LEVEL_AXIS_ID]: "Scaled" } }))).toEqual([
+      LEVEL_ROW_ID,
+    ]);
+  });
+
+  it("counts a row that had no number at all as moving", () => {
+    expect(
+      changingRowIds([LEVEL_GRID_ROW], state({ selections: { [LEVEL_AXIS_ID]: "RX" } })),
+    ).toEqual([LEVEL_ROW_ID]);
+  });
+
+  it("is empty when the applied coordinates leave every number where it was", () => {
+    expect(
+      changingRowIds([ALREADY_SCALED_ROW], state({ selections: { [LEVEL_AXIS_ID]: "Scaled" } })),
+    ).toEqual([]);
+  });
+});
+
 describe("receipts", () => {
   it("switches to the singular when exactly one weight moved", () => {
     expect(buildLevelReceipt(["RX"], 1)).toBe("RX applied · 1 weight updated");
@@ -361,6 +463,10 @@ describe("receipts", () => {
     expect(buildLevelReceipt(["Scaled", "Female"], 3)).toBe(
       "Scaled · Female applied · 3 weights updated",
     );
+  });
+
+  it("claims no count when the applied level moved nothing on this screen", () => {
+    expect(buildLevelReceipt(["Scaled", "Female"], 0)).toBe("Scaled · Female applied");
   });
 
   it("names the movement and the saved value", () => {

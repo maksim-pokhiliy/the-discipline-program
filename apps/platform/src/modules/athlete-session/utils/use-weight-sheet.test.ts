@@ -27,7 +27,12 @@ import {
 import type * as ApiModule from "@app/lib/api";
 import { platformKeys } from "@app/lib/api/keys";
 
-import { MAX_OFFLINE_MESSAGE, PULSE_CLEAR_MS } from "./weight-sheet.constants";
+import {
+  MAX_OFFLINE_MESSAGE,
+  PULSE_CLEAR_MS,
+  RECEIPT_LEVEL_STALE,
+  RECEIPT_MAX_STALE,
+} from "./weight-sheet.constants";
 
 const getProfileMock = vi.fn<() => Promise<GetAthleteProfileResponse>>();
 const updateProfileMock =
@@ -224,6 +229,35 @@ const MAX_ROW = baseRow({
   resolvedLoad: MISSING_ONE_RM,
 });
 
+const resolvedFromProfile = (kg: number, coords: string[]): ResolvedLoad => ({
+  status: "resolved",
+  kg,
+  perHand: false,
+  source: {
+    kind: "profile",
+    coords: coords.map((value, index) => ({
+      axisId: index === 0 ? LEVEL_AXIS_ID : GENDER_AXIS_ID,
+      label: index === 0 ? "Level" : "Gender",
+      value,
+      binding: index === 0 ? null : "GENDER",
+    })),
+  },
+});
+
+const SETTLED_LEVEL_ROW = baseRow({
+  rowId: OTHER_LEVEL_ROW_ID,
+  movement: "Wall Ball",
+  load: LEVEL_ONLY_LOAD,
+  resolvedLoad: resolvedFromProfile(30, [LEVEL_PICK]),
+});
+
+const SETTLED_TWO_AXIS_ROW = baseRow({
+  rowId: LEVEL_ROW_ID,
+  movement: "DB Snatch",
+  load: LEVEL_AND_GENDER_LOAD,
+  resolvedLoad: resolvedFromProfile(12, [LEVEL_PICK, GENDER_PICK]),
+});
+
 const SAME_EXERCISE_ROW = baseRow({
   rowId: SAME_EXERCISE_ROW_ID,
   movement: "Back Squat",
@@ -297,6 +331,10 @@ const SESSION = sessionOf([
 ]);
 
 const GENDER_ONLY_SESSION = sessionOf([row(GENDER_ROW)]);
+
+const MIXED_DELTA_SESSION = sessionOf([row(LEVEL_ROW), row(SETTLED_LEVEL_ROW), row(TIER_ROW)]);
+
+const SETTLED_SESSION = sessionOf([row(SETTLED_TWO_AXIS_ROW), row(SETTLED_LEVEL_ROW)]);
 
 const PROFILE: GetAthleteProfileResponse = {
   id: "clz000000000000000000prf1",
@@ -632,7 +670,7 @@ describe("useWeightSheet level apply — the applied moment", () => {
     expect(result.current.controls.isApplyingLevel).toBe(false);
   });
 
-  it("counts and pulses only the rows keyed on an axis that was applied", async () => {
+  it("leaves out a row keyed on an axis the apply never touched", async () => {
     const { result } = renderSheet();
 
     await openLevelSheetWithFullDraft(result);
@@ -664,7 +702,51 @@ describe("useWeightSheet level apply — the applied moment", () => {
     expect(toastSuccessMock).toHaveBeenCalledWith("Scaled · Female applied · 2 weights updated");
   });
 
-  it("still fires the receipt but never the pulse when the refetch fails after a successful write", async () => {
+  it("counts and pulses the weights that moved, not every weight the axis governs", async () => {
+    const { result } = renderSheet({ session: MIXED_DELTA_SESSION });
+
+    await openLevelSheetWithFullDraft(result);
+
+    expect(result.current.controls.levelWeightCount).toBe(2);
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect([...result.current.pulsingRowIds]).toEqual([LEVEL_ROW_ID]);
+    expect(result.current.pulsingRowIds.has(OTHER_LEVEL_ROW_ID)).toBe(false);
+    expect(toastSuccessMock).toHaveBeenCalledWith("Scaled · Female applied · 1 weight updated");
+  });
+
+  it("claims no count and pulses nothing when Apply re-states the level already in force", async () => {
+    const { result } = renderSheet({
+      session: SETTLED_SESSION,
+      profile: {
+        ...PROFILE,
+        gender: Gender.FEMALE,
+        profileSelections: { [UNRELATED_AXIS_ID]: UNRELATED_PICK, [LEVEL_AXIS_ID]: LEVEL_PICK },
+      },
+    });
+
+    await act(async () => {
+      result.current.openWeightSheet(SETTLED_TWO_AXIS_ROW, { kind: "level" });
+    });
+
+    await waitFor(() => expect(result.current.controls.isLevelDraftComplete).toBe(true));
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(toastSuccessMock).toHaveBeenCalledWith("Scaled · Female applied");
+    expect(result.current.pulsingRowIds.size).toBe(0);
+  });
+
+  it("says the screen is stale instead of claiming updated weights when the refetch fails", async () => {
     sessionViewMock
       .mockResolvedValueOnce(SESSION)
       .mockRejectedValueOnce(new Error("session refetch failed"));
@@ -681,8 +763,68 @@ describe("useWeightSheet level apply — the applied moment", () => {
     await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
 
     expect(updateProfileMock).toHaveBeenCalledTimes(1);
+    expect(toastSuccessMock).toHaveBeenCalledWith(RECEIPT_LEVEL_STALE);
+    expect(toastSuccessMock).not.toHaveBeenCalledWith(
+      "Scaled · Female applied · 2 weights updated",
+    );
     expect(result.current.pulsingRowIds.size).toBe(0);
     expect(result.current.controls.sheet).toBeNull();
+  });
+
+  it("leaves a freshly opened sheet unlocked while the previous apply is still settling", async () => {
+    const writeFlight = deferred<GetAthleteProfileResponse>();
+
+    updateProfileMock.mockReturnValue(writeFlight.promise);
+
+    const { result } = renderSheet();
+
+    await openLevelSheetWithFullDraft(result);
+
+    await act(async () => {
+      result.current.controls.applyLevel();
+    });
+
+    await waitFor(() => expect(result.current.controls.isApplyingLevel).toBe(true));
+
+    await act(async () => {
+      result.current.controls.closeSheet();
+    });
+
+    await act(async () => {
+      result.current.openWeightSheet(OTHER_LEVEL_ROW, { kind: "level" });
+    });
+
+    expect(result.current.controls.isApplyingLevel).toBe(false);
+    expect(result.current.controls.isOtherApplyPending).toBe(true);
+
+    await act(async () => {
+      result.current.controls.pickLevelCoordinate(LEVEL_AXIS_ID, "RX");
+    });
+
+    expect(result.current.controls.levelCoordinates).toEqual({ [LEVEL_AXIS_ID]: "RX" });
+
+    await act(async () => {
+      writeFlight.resolve(PROFILE);
+    });
+
+    await waitFor(() => expect(result.current.controls.isOtherApplyPending).toBe(false));
+  });
+
+  it("exposes the saved coordinates apart from the draft laid over them", async () => {
+    const { result } = renderSheet();
+
+    await act(async () => {
+      result.current.openWeightSheet(LEVEL_ROW, { kind: "level" });
+    });
+
+    expect(result.current.controls.levelSavedCoordinates).toEqual({});
+
+    await act(async () => {
+      result.current.controls.pickLevelCoordinate(LEVEL_AXIS_ID, LEVEL_PICK);
+    });
+
+    expect(result.current.controls.levelCoordinates).toEqual({ [LEVEL_AXIS_ID]: LEVEL_PICK });
+    expect(result.current.controls.levelSavedCoordinates).toEqual({});
   });
 
   it("keeps the sheet open with a failure outcome when the write itself rejects", async () => {
@@ -822,6 +964,27 @@ describe("useWeightSheet max save", () => {
     await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
 
     expect(createOneRmMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the screen is stale instead of naming a saved max when the refetch fails", async () => {
+    sessionViewMock
+      .mockResolvedValueOnce(SESSION)
+      .mockRejectedValueOnce(new Error("session refetch failed"));
+
+    const { result } = renderSheet();
+
+    await waitFor(() => expect(sessionViewMock).toHaveBeenCalledTimes(1));
+    await openMaxSheet(result, "125");
+
+    await act(async () => {
+      result.current.controls.saveMax();
+    });
+
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledTimes(1));
+
+    expect(createOneRmMock).toHaveBeenCalledTimes(1);
+    expect(toastSuccessMock).toHaveBeenCalledWith(RECEIPT_MAX_STALE);
+    expect(result.current.pulsingRowIds.size).toBe(0);
   });
 
   it("refreshes the records surface the athlete taps through to next", async () => {

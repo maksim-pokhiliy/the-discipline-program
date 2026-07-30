@@ -51,23 +51,31 @@ export const useCreateOneRMRecord = (): UseMutationResult<
 > => {
   const queryClient = useQueryClient();
   const submitToken = useSubmitToken();
-  const inFlightBodies = useRef(new Map<string, CreateOneRMRecordRequest>());
+  const bodyFrozenUnderToken = useRef(new Map<string, CreateOneRMRecordRequest>());
+
+  const freezeBodyUnderToken = (data: CreateOneRMRecordRequest): CreateOneRMRecordRequest => {
+    const key = submitTokenKeyOf(data);
+    const frozen = bodyFrozenUnderToken.current.get(key) ?? data;
+
+    bodyFrozenUnderToken.current.set(key, frozen);
+
+    return frozen;
+  };
+
+  const retireTokenAndItsBody = (key: string): void => {
+    submitToken.reset(key);
+    bodyFrozenUnderToken.current.delete(key);
+  };
 
   return useMutation({
     networkMode: "always",
     mutationFn: (data: CreateOneRMRecordRequest) => {
-      const key = submitTokenKeyOf(data);
-      const body = inFlightBodies.current.get(key) ?? data;
+      const frozen = freezeBodyUnderToken(data);
 
-      inFlightBodies.current.set(key, body);
-
-      return api.oneRMRecords.create(body, submitToken.get(key));
+      return api.oneRMRecords.create(frozen, submitToken.get(submitTokenKeyOf(data)));
     },
     onSuccess: (_result, variables) => {
-      const key = submitTokenKeyOf(variables);
-
-      submitToken.reset(key);
-      inFlightBodies.current.delete(key);
+      retireTokenAndItsBody(submitTokenKeyOf(variables));
       queryClient.invalidateQueries({ queryKey: platformKeys.oneRMRecords.list() });
     },
     onError: (error: Error) => {

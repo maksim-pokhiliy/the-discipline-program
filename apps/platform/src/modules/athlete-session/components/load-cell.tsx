@@ -1,7 +1,9 @@
+"use client";
+
 import { type ReactElement } from "react";
 
 import UnfoldMoreRounded from "@mui/icons-material/UnfoldMoreRounded";
-import { alpha, Box, ButtonBase, Typography } from "@mui/material";
+import { alpha, Box, ButtonBase, Typography, useTheme } from "@mui/material";
 
 import {
   FONT_WEIGHT_SEMI_BOLD,
@@ -37,6 +39,9 @@ export type LoadCellProps = {
 };
 
 export const LoadCell = ({ cell, isPulsing, onOpen }: LoadCellProps): ReactElement | null => {
+  const theme = useTheme();
+  const pulse = isPulsing ? buildPulseKeyframes(theme) : null;
+
   switch (cell.kind) {
     case "empty":
       return null;
@@ -77,9 +82,9 @@ export const LoadCell = ({ cell, isPulsing, onOpen }: LoadCellProps): ReactEleme
             borderRadius: 1,
             "&:hover": { backgroundColor: theme.palette.action.hover },
             "&:active": { backgroundColor: theme.palette.action.selected },
-            ...(isPulsing && {
+            ...(pulse !== null && {
               [NO_MOTION_QUERY]: {
-                animation: `${buildPulseKeyframes(theme)} ${PULSE_DURATION_MS}ms ease-out`,
+                animation: `${pulse} ${PULSE_DURATION_MS}ms ease-out`,
               },
             }),
           })}

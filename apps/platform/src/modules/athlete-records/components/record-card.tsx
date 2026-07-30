@@ -49,7 +49,7 @@ import {
   UPDATE_ONE_RM_LABEL,
 } from "../utils/athlete-records.constants";
 import { type ChartPoint } from "../utils/build-chart-geometry";
-import { formatShortDate } from "../utils/format-records";
+import { formatLocalShortDate } from "../utils/format-records";
 import { buildBenchmarkView, buildOneRmView, type Trend } from "../utils/record-card-model";
 
 import { DisplayNumber } from "./display-number";
@@ -226,7 +226,7 @@ export const RecordCard = (props: RecordCardProps): ReactElement => {
         <Stack direction="row" alignItems="center" spacing={COLLAPSED_RIGHT_GAP}>
           {renderHeadline(headline.value, headline.unit)}
           {renderTrend(view.trend)}
-          {mutedText(formatShortDate(props.record.bestRecordedAt), CARD_DATE_PX, true)}
+          {mutedText(formatLocalShortDate(props.record.bestRecordedAt), CARD_DATE_PX, true)}
           <Chevron
             sx={(theme) => ({ fontSize: CHEVRON_ICON_PX, color: theme.palette.text.muted })}
           />

@@ -15,7 +15,11 @@ import {
 } from "@app/lib/level-switch";
 import { render } from "@app/test/render";
 
-import { LEVEL_SHEET_SUBTITLE } from "../utils/weight-sheet.constants";
+import {
+  LEVEL_CTA_BUSY,
+  LEVEL_CTA_LOADING,
+  LEVEL_SHEET_SUBTITLE,
+} from "../utils/weight-sheet.constants";
 
 import { LevelSheetBody } from "./level-sheet-body";
 
@@ -79,9 +83,11 @@ type BodyState = {
   row?: RowView;
   axes?: LevelAxis[];
   coordinates?: Record<string, string>;
+  savedCoordinates?: Record<string, string>;
   weightCount?: number;
   isComplete?: boolean;
   isApplying?: boolean;
+  isBlocked?: boolean;
   outcome?: LevelApplyOutcome | null;
 };
 
@@ -90,9 +96,11 @@ const bodyOf = (state: BodyState = {}): ReactElement => (
     row={state.row ?? row()}
     axes={state.axes ?? [LEVEL_AXIS, GENDER_AXIS]}
     coordinates={state.coordinates ?? {}}
+    savedCoordinates={state.savedCoordinates ?? {}}
     weightCount={state.weightCount ?? 2}
     isComplete={state.isComplete ?? false}
     isApplying={state.isApplying ?? false}
+    isBlocked={state.isBlocked ?? false}
     outcome={state.outcome ?? null}
     onPick={onPick}
     onApply={onApply}
@@ -151,6 +159,27 @@ describe("LevelSheetBody microcopy", () => {
     renderBody();
 
     expect(screen.getByRole("button", { name: "Pick level & gender" })).toBeDisabled();
+  });
+
+  it("owns up to still loading rather than promising an apply the button cannot do", () => {
+    renderBody({ coordinates: pickedBoth, isComplete: false });
+
+    const cta = screen.getByRole("button", { name: LEVEL_CTA_LOADING });
+
+    expect(cta).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Apply RX · Female" })).not.toBeInTheDocument();
+  });
+
+  it("names the apply still settling rather than dying silently on a second sheet", () => {
+    renderBody({ coordinates: pickedBoth, isComplete: true, isBlocked: true });
+
+    const cta = screen.getByRole("button", { name: LEVEL_CTA_BUSY });
+
+    expect(cta).toBeDisabled();
+    expect(screen.getByRole("radio", { name: "Scaled" })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("truncates a long coordinate on the apply CTA", () => {
@@ -243,7 +272,7 @@ describe("LevelSheetBody radiogroups (D-12)", () => {
   });
 
   it("marks the drafted coordinate as the selected row", () => {
-    renderBody({ coordinates: pickedBoth });
+    renderBody({ savedCoordinates: pickedBoth, coordinates: pickedBoth });
 
     const picked = screen.getByRole("radio", { name: currentName("RX") });
 
@@ -264,9 +293,7 @@ describe("LevelSheetBody radiogroups (D-12)", () => {
 
 describe("LevelSheetBody draft against the applied level", () => {
   it("keeps Current on the level the athlete came in with once the draft moves off it", () => {
-    const { rerender } = renderBody({ coordinates: pickedBoth });
-
-    rerender(bodyOf({ coordinates: draftedScaled }));
+    renderBody({ savedCoordinates: pickedBoth, coordinates: draftedScaled });
 
     const applied = screen.getByRole("radio", { name: currentName("RX") });
 
@@ -275,9 +302,7 @@ describe("LevelSheetBody draft against the applied level", () => {
   });
 
   it("selects the drafted level without calling it Current", () => {
-    const { rerender } = renderBody({ coordinates: pickedBoth });
-
-    rerender(bodyOf({ coordinates: draftedScaled }));
+    renderBody({ savedCoordinates: pickedBoth, coordinates: draftedScaled });
 
     const drafted = screen.getByRole("radio", { name: "Scaled" });
 
@@ -287,9 +312,8 @@ describe("LevelSheetBody draft against the applied level", () => {
   });
 
   it("lets the athlete pick her way back to the level she came in with", () => {
-    const { rerender } = renderBody({ coordinates: pickedBoth });
+    renderBody({ savedCoordinates: pickedBoth, coordinates: draftedScaled });
 
-    rerender(bodyOf({ coordinates: draftedScaled }));
     fireEvent.click(screen.getByRole("radio", { name: currentName("RX") }));
 
     expect(onPick).toHaveBeenCalledTimes(1);
@@ -302,6 +326,27 @@ describe("LevelSheetBody draft against the applied level", () => {
     rerender(bodyOf({ coordinates: { [LEVEL_AXIS_ID]: "Scaled" } }));
 
     expect(screen.queryByText(PICK_CURRENT_LABEL)).not.toBeInTheDocument();
+  });
+
+  it("names the saved level as Current once the profile lands under an already open sheet", () => {
+    const { rerender } = renderBody();
+
+    expect(screen.queryByText(PICK_CURRENT_LABEL)).not.toBeInTheDocument();
+
+    rerender(bodyOf({ savedCoordinates: pickedBoth, coordinates: pickedBoth }));
+
+    expect(screen.getByRole("radio", { name: currentName("RX") })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: currentName("Female") })).toBeInTheDocument();
+  });
+
+  it("never lets a pick made before the profile landed masquerade as Current", () => {
+    const { rerender } = renderBody();
+
+    rerender(bodyOf({ coordinates: draftedScaled }));
+    rerender(bodyOf({ savedCoordinates: pickedBoth, coordinates: draftedScaled }));
+
+    expect(screen.queryByRole("radio", { name: currentName("Scaled") })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: currentName("RX") })).toBeInTheDocument();
   });
 });
 

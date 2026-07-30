@@ -17,7 +17,7 @@ import {
   type Settlement,
   type WeightSheetState,
 } from "./weight-sheet-model";
-import { MAX_OFFLINE_MESSAGE } from "./weight-sheet.constants";
+import { MAX_OFFLINE_MESSAGE, RECEIPT_MAX_STALE } from "./weight-sheet.constants";
 
 export type MaxSaveInput = {
   sheet: WeightSheetState | null;
@@ -39,9 +39,10 @@ const isBrowserOffline = (): boolean =>
 
 export const useMaxSave = ({ sheet, rows, sessionId, settle }: MaxSaveInput): MaxSave => {
   const [value, setValue] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingSheet, setSavingSheet] = useState<WeightSheetState | null>(null);
 
   const createOneRm = useCreateOneRMRecord();
+  const isSaving = savingSheet !== null && savingSheet === sheet;
 
   const save = (): void => {
     if (sheet === null || sheet.kind !== "one_rm" || isSaving) {
@@ -67,7 +68,7 @@ export const useMaxSave = ({ sheet, rows, sessionId, settle }: MaxSaveInput): Ma
       .filter((row) => exerciseOf(row) === exerciseId)
       .map((row) => row.rowId);
 
-    setIsSaving(true);
+    setSavingSheet(opened);
 
     void (async (): Promise<void> => {
       try {
@@ -90,9 +91,10 @@ export const useMaxSave = ({ sheet, rows, sessionId, settle }: MaxSaveInput): Ma
           ],
           pulseRowIds,
           receipt,
+          staleReceipt: RECEIPT_MAX_STALE,
         });
       } finally {
-        setIsSaving(false);
+        setSavingSheet((current) => (current === opened ? null : current));
       }
     })();
   };

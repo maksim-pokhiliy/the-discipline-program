@@ -8,7 +8,7 @@ import {
   type RowView,
 } from "@repo/contracts/lms/session-detail";
 
-import { buildLoadCell } from "./load-cell";
+import { buildLoadCell, hasLoadValue } from "./load-cell";
 
 const EXERCISE_ID = "clz000000000000000000ex01";
 const LEVEL_AXIS_ID = "clz00000000000000000axs01";
@@ -110,6 +110,40 @@ describe("buildLoadCell — no cell", () => {
     expect(buildLoadCell(baseRow({ resolvedLoad: { status: "not_applicable" } }))).toEqual({
       kind: "empty",
     });
+  });
+
+  it("is empty rather than a chip with nothing to read when the grid names no axis", () => {
+    const cell = buildLoadCell(
+      baseRow({
+        load: null,
+        resolvedLoad: {
+          status: "unresolved",
+          reason: "missing_profile_pick",
+          prompt: "pick_profile",
+          axisLabels: [],
+        },
+      }),
+    );
+
+    expect(cell).toEqual({ kind: "empty" });
+    expect(hasLoadValue(cell)).toBe(false);
+  });
+
+  it("agrees with hasLoadValue on every cell it can build", () => {
+    const cells = [
+      buildLoadCell(baseRow()),
+      buildLoadCell(
+        baseRow({
+          load: { kind: "absolute", count: 1, kg: 40 },
+          resolvedLoad: { status: "resolved", kg: 40, perHand: false },
+        }),
+      ),
+      buildLoadCell(baseRow({ resolvedLoad: { status: "bodyweight" } })),
+    ];
+
+    for (const cell of cells) {
+      expect(hasLoadValue(cell)).toBe(cell.kind !== "empty");
+    }
   });
 });
 

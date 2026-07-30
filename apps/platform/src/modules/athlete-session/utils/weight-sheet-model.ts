@@ -20,6 +20,7 @@ import {
   RECEIPT_COORD_MAX_CHARS,
   RECEIPT_COORD_SEPARATOR,
   RECEIPT_LEVEL_APPLIED,
+  RECEIPT_LEVEL_APPLIED_BARE,
   RECEIPT_LEVEL_SUFFIX_PLURAL,
   RECEIPT_LEVEL_SUFFIX_SINGULAR,
   RECEIPT_MAX_INFIX,
@@ -40,6 +41,7 @@ export type Settlement = {
   queryKeys: readonly QueryKey[];
   pulseRowIds: string[];
   receipt: string;
+  staleReceipt: string;
 };
 
 export type LevelPatchInput = {
@@ -55,6 +57,7 @@ export type LevelMessages = {
 };
 
 const SINGLE_WEIGHT_COUNT = 1;
+const NO_WEIGHT_COUNT = 0;
 const NO_AXES: LevelAxis[] = [];
 const NO_ROW_IDS: string[] = [];
 const NO_SELECTIONS: Record<string, string> = {};
@@ -94,6 +97,12 @@ export const rowIdsSharingAxes = (rows: RowView[], axes: LevelAxis[]): string[] 
     .map((row) => row.rowId);
 };
 
+export const currentKgOf = (row: RowView): number | null => {
+  const { resolvedLoad } = row;
+
+  return resolvedLoad !== null && resolvedLoad.status === "resolved" ? resolvedLoad.kg : null;
+};
+
 export const mergeLevelState = (saved: LevelState | null, draft: LevelState): LevelState => ({
   selections: { ...(saved?.selections ?? NO_SELECTIONS), ...draft.selections },
   gender: draft.gender ?? saved?.gender ?? null,
@@ -115,6 +124,50 @@ export const coordinatesOf = (axes: LevelAxis[], state: LevelState): Record<stri
       .map((axis) => [axis.id, coordinateOf(axis, state)] as const)
       .filter((entry): entry is readonly [string, string] => entry[1] !== null),
   );
+
+export const kgForCoordinates = (
+  row: RowView,
+  coordinates: Record<string, string>,
+): number | null => {
+  const load = row.load;
+
+  if (load === null || load.kind !== "byProfile") {
+    return null;
+  }
+
+  const wanted = load.axes.map((axis) => coordinates[axis.axisId]);
+
+  if (wanted.some((value) => value === undefined)) {
+    return null;
+  }
+
+  const cell = load.cells.find(
+    (candidate) =>
+      candidate.coords.length === wanted.length &&
+      candidate.coords.every((coord, index) => coord === wanted[index]),
+  );
+
+  return cell?.kg ?? null;
+};
+
+export const kgForState = (row: RowView, state: LevelState): number | null => {
+  const load = row.load;
+
+  if (load === null || load.kind !== "byProfile") {
+    return null;
+  }
+
+  return kgForCoordinates(row, coordinatesOf(toLevelAxes(load.axes), state));
+};
+
+export const changingRowIds = (rows: RowView[], state: LevelState): string[] =>
+  rows
+    .filter((row) => {
+      const next = kgForState(row, state);
+
+      return next !== null && next !== currentKgOf(row);
+    })
+    .map((row) => row.rowId);
 
 const withoutBoundKeys = (
   selections: Record<string, string>,
@@ -187,6 +240,11 @@ export const buildLevelMessages = (
 
 export const buildLevelReceipt = (coordinates: string[], weightCount: number): string => {
   const named = coordinates.map(shortenReceiptCoordinate).join(RECEIPT_COORD_SEPARATOR);
+
+  if (weightCount === NO_WEIGHT_COUNT) {
+    return `${named}${RECEIPT_LEVEL_APPLIED_BARE}`;
+  }
+
   const suffix =
     weightCount === SINGLE_WEIGHT_COUNT
       ? RECEIPT_LEVEL_SUFFIX_SINGULAR

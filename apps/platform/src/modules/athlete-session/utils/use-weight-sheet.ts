@@ -20,6 +20,7 @@ import {
   buildLevelMessages,
   buildLevelPatch,
   buildLevelReceipt,
+  changingRowIds,
   coordinatesOf,
   type LevelState,
   levelAxesOf,
@@ -28,7 +29,7 @@ import {
   type Settlement,
   type WeightSheetState,
 } from "./weight-sheet-model";
-import { PULSE_CLEAR_MS } from "./weight-sheet.constants";
+import { PULSE_CLEAR_MS, RECEIPT_LEVEL_STALE } from "./weight-sheet.constants";
 
 export type { LevelState, WeightSheetState } from "./weight-sheet-model";
 
@@ -36,9 +37,11 @@ export type WeightSheetControls = {
   sheet: WeightSheetState | null;
   levelAxes: LevelAxis[];
   levelCoordinates: Record<string, string>;
+  levelSavedCoordinates: Record<string, string>;
   levelWeightCount: number;
   isLevelDraftComplete: boolean;
   isApplyingLevel: boolean;
+  isOtherApplyPending: boolean;
   levelOutcome: LevelApplyOutcome | null;
   maxValue: string;
   isSavingMax: boolean;
@@ -67,7 +70,7 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
 
   const [sheet, setSheet] = useState<WeightSheetState | null>(null);
   const [levelDraft, setLevelDraft] = useState<LevelState>(EMPTY_DRAFT);
-  const [isApplyingLevel, setIsApplyingLevel] = useState(false);
+  const [applyingSheet, setApplyingSheet] = useState<WeightSheetState | null>(null);
   const [pulsingRowIds, setPulsingRowIds] = useState<ReadonlySet<string>>(EMPTY_ROW_IDS);
 
   const { data: profile } = useAthleteProfile();
@@ -86,17 +89,29 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   const boundAxisIds = useMemo(() => boundAxisIdsOf(rows), [rows]);
 
   const levelAxes = useMemo(() => levelAxesOf(sheet?.kind === "level" ? sheet.row : null), [sheet]);
-  const levelRowIds = useMemo(() => rowIdsSharingAxes(rows, levelAxes), [rows, levelAxes]);
-  const levelCoordinates = useMemo(
-    () => coordinatesOf(levelAxes, mergeLevelState(savedLevel, levelDraft)),
-    [levelAxes, savedLevel, levelDraft],
+  const levelScopeRowIds = useMemo(() => rowIdsSharingAxes(rows, levelAxes), [rows, levelAxes]);
+  const draftLevel = useMemo(
+    () => mergeLevelState(savedLevel, levelDraft),
+    [savedLevel, levelDraft],
   );
+  const levelCoordinates = useMemo(
+    () => coordinatesOf(levelAxes, draftLevel),
+    [levelAxes, draftLevel],
+  );
+  const levelSavedCoordinates = useMemo(
+    () => coordinatesOf(levelAxes, savedLevel ?? EMPTY_DRAFT),
+    [levelAxes, savedLevel],
+  );
+  const levelChangingRowIds = useMemo(() => changingRowIds(rows, draftLevel), [rows, draftLevel]);
   const levelPatch = buildLevelPatch({
     axes: levelAxes,
     coordinates: levelCoordinates,
     saved: savedLevel,
     boundAxisIds,
   });
+
+  const isApplyingLevel = applyingSheet !== null && applyingSheet === sheet;
+  const isOtherApplyPending = applyingSheet !== null && applyingSheet !== sheet;
 
   useEffect(() => {
     if (pulsingRowIds.size === 0) {
@@ -108,7 +123,13 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
     return () => clearTimeout(timer);
   }, [pulsingRowIds]);
 
-  const settle = async ({ opened, queryKeys, pulseRowIds, receipt }: Settlement): Promise<void> => {
+  const settle = async ({
+    opened,
+    queryKeys,
+    pulseRowIds,
+    receipt,
+    staleReceipt,
+  }: Settlement): Promise<void> => {
     let isRefetched = true;
 
     try {
@@ -123,7 +144,13 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
 
     setSheet((current) => (current === opened ? null : current));
 
-    if (isRefetched && pulseRowIds.length > 0) {
+    if (!isRefetched) {
+      toast.success(staleReceipt);
+
+      return;
+    }
+
+    if (pulseRowIds.length > 0) {
       setPulsingRowIds(new Set(pulseRowIds));
     }
 
@@ -183,7 +210,7 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
   };
 
   const applyLevel = (): void => {
-    if (sheet === null || sheet.kind !== "level" || isApplyingLevel) {
+    if (sheet === null || sheet.kind !== "level" || applyingSheet !== null) {
       return;
     }
 
@@ -196,10 +223,11 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
     const coordinates = levelAxes
       .map((axis) => levelCoordinates[axis.id])
       .filter((value): value is string => value !== undefined);
-    const receipt = buildLevelReceipt(coordinates, levelRowIds.length);
+    const pulseRowIds = levelChangingRowIds;
+    const receipt = buildLevelReceipt(coordinates, pulseRowIds.length);
     const { appliedMessage, failedMessage } = buildLevelMessages(levelAxes, levelPatch, savedLevel);
 
-    setIsApplyingLevel(true);
+    setApplyingSheet(opened);
 
     void (async (): Promise<void> => {
       try {
@@ -220,11 +248,12 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
         await settle({
           opened,
           queryKeys: [platformKeys.athleteSessionView.detail(sessionId)],
-          pulseRowIds: levelRowIds,
+          pulseRowIds,
           receipt,
+          staleReceipt: RECEIPT_LEVEL_STALE,
         });
       } finally {
-        setIsApplyingLevel(false);
+        setApplyingSheet((current) => (current === opened ? null : current));
       }
     })();
   };
@@ -239,9 +268,11 @@ export const useWeightSheet = (data: SessionDetailResponse): WeightSheet => {
       sheet,
       levelAxes,
       levelCoordinates,
-      levelWeightCount: levelRowIds.length,
+      levelSavedCoordinates,
+      levelWeightCount: levelScopeRowIds.length,
       isLevelDraftComplete: levelPatch !== null,
       isApplyingLevel,
+      isOtherApplyPending,
       levelOutcome,
       maxValue: maxSave.value,
       isSavingMax: maxSave.isSaving,

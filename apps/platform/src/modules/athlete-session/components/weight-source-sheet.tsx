@@ -42,9 +42,11 @@ export const WeightSourceSheet = ({
   sheet,
   levelAxes,
   levelCoordinates,
+  levelSavedCoordinates,
   levelWeightCount,
   isLevelDraftComplete,
   isApplyingLevel,
+  isOtherApplyPending,
   levelOutcome,
   maxValue,
   isSavingMax,
@@ -70,9 +72,11 @@ export const WeightSourceSheet = ({
         row={sheet.row}
         axes={levelAxes}
         coordinates={levelCoordinates}
+        savedCoordinates={levelSavedCoordinates}
         weightCount={levelWeightCount}
         isComplete={isLevelDraftComplete}
         isApplying={isApplyingLevel}
+        isBlocked={isOtherApplyPending}
         outcome={levelOutcome}
         onPick={pickLevelCoordinate}
         onApply={applyLevel}

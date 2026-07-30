@@ -5,7 +5,6 @@ import { type ReactElement, useState } from "react";
 import VisibilityRounded from "@mui/icons-material/VisibilityRounded";
 import { alpha, Button, List, Stack, Typography } from "@mui/material";
 
-import { type Load } from "@repo/contracts/lms/_shared";
 import { type RowView } from "@repo/contracts/lms/session-detail";
 
 import {
@@ -26,10 +25,13 @@ import {
   SHEET_SUBTITLE_LINE_HEIGHT,
   SHEET_SUBTITLE_PX,
 } from "../utils/athlete-session.constants";
+import { currentKgOf, kgForCoordinates } from "../utils/weight-sheet-model";
 import {
   APPLY_COORD_MAX_CHARS,
   APPLY_CTA_PREFIX,
   AXIS_LABEL_PX,
+  LEVEL_CTA_BUSY,
+  LEVEL_CTA_LOADING,
   LEVEL_SHEET_SUBTITLE,
   PICK_CTA_PREFIX,
   PREVIEW_ARROW,
@@ -58,9 +60,11 @@ export type LevelSheetBodyProps = {
   row: RowView;
   axes: LevelAxis[];
   coordinates: Record<string, string>;
+  savedCoordinates: Record<string, string>;
   weightCount: number;
   isComplete: boolean;
   isApplying: boolean;
+  isBlocked: boolean;
   outcome: LevelApplyOutcome | null;
   onPick: (axisId: string, value: string) => void;
   onApply: () => void;
@@ -75,42 +79,8 @@ type AppliedLevel = {
 const shortenApplyCoordinate = (value: string): string =>
   shortenGraphemes(value, APPLY_COORD_MAX_CHARS);
 
-const byProfileLoadOf = (load: Load | null): Extract<Load, { kind: "byProfile" }> | null =>
-  load !== null && load.kind === "byProfile" ? load : null;
-
-const draftKgOf = (
-  row: RowView,
-  axes: LevelAxis[],
-  coordinates: Record<string, string>,
-): number | null => {
-  const load = byProfileLoadOf(row.load);
-
-  if (load === null) {
-    return null;
-  }
-
-  const wanted = axes.map((axis) => coordinates[axis.id]);
-  const cell = load.cells.find(
-    (candidate) =>
-      candidate.coords.length === wanted.length &&
-      candidate.coords.every((coord, index) => coord === wanted[index]),
-  );
-
-  return cell?.kg ?? null;
-};
-
-const currentKgOf = (row: RowView): number | null => {
-  const { resolvedLoad } = row;
-
-  return resolvedLoad !== null && resolvedLoad.status === "resolved" ? resolvedLoad.kg : null;
-};
-
-const buildPreview = (
-  row: RowView,
-  axes: LevelAxis[],
-  coordinates: Record<string, string>,
-): string | null => {
-  const nextKg = draftKgOf(row, axes, coordinates);
+const buildPreview = (row: RowView, coordinates: Record<string, string>): string | null => {
+  const nextKg = kgForCoordinates(row, coordinates);
 
   if (nextKg === null) {
     return null;
@@ -132,46 +102,69 @@ const buildScopeLine = (weightCount: number): string => {
   return `${SCOPE_LINE_PREFIX}${weightCount}${unit}${SCOPE_LINE_SUFFIX}`;
 };
 
-const buildCta = (
-  axes: LevelAxis[],
-  coordinates: Record<string, string>,
-  isComplete: boolean,
-): string => {
+type CtaInput = {
+  axes: LevelAxis[];
+  coordinates: Record<string, string>;
+  isComplete: boolean;
+  isBlocked: boolean;
+};
+
+const buildCta = ({ axes, coordinates, isComplete, isBlocked }: CtaInput): string => {
   const missing = axes
     .filter((axis) => coordinates[axis.id] === undefined)
     .map((axis) => axis.label.toLowerCase());
 
-  if (isComplete || missing.length === 0) {
-    const picked = axes
-      .map((axis) => coordinates[axis.id])
-      .filter((value): value is string => value !== undefined)
-      .map(shortenApplyCoordinate);
-
-    return `${APPLY_CTA_PREFIX}${picked.join(PICK_COORDINATE_SEPARATOR)}`;
+  if (missing.length > 0) {
+    return `${PICK_CTA_PREFIX}${missing.join(AXIS_AND_SEPARATOR)}`;
   }
 
-  return `${PICK_CTA_PREFIX}${missing.join(AXIS_AND_SEPARATOR)}`;
+  if (isBlocked) {
+    return LEVEL_CTA_BUSY;
+  }
+
+  if (!isComplete) {
+    return LEVEL_CTA_LOADING;
+  }
+
+  const picked = axes
+    .map((axis) => coordinates[axis.id])
+    .filter((value): value is string => value !== undefined)
+    .map(shortenApplyCoordinate);
+
+  return `${APPLY_CTA_PREFIX}${picked.join(PICK_COORDINATE_SEPARATOR)}`;
 };
+
+const isEmptyCoordinates = (coordinates: Record<string, string>): boolean =>
+  Object.keys(coordinates).length === 0;
 
 export const LevelSheetBody = ({
   row,
   axes,
   coordinates,
+  savedCoordinates,
   weightCount,
   isComplete,
   isApplying,
+  isBlocked,
   outcome,
   onPick,
   onApply,
   onCancel,
 }: LevelSheetBodyProps): ReactElement => {
-  const [applied, setApplied] = useState<AppliedLevel>({ rowId: row.rowId, coordinates });
+  const [applied, setApplied] = useState<AppliedLevel>({
+    rowId: row.rowId,
+    coordinates: savedCoordinates,
+  });
 
-  if (applied.rowId !== row.rowId) {
-    setApplied({ rowId: row.rowId, coordinates });
+  const isStaleSnapshot =
+    applied.rowId !== row.rowId ||
+    (isEmptyCoordinates(applied.coordinates) && !isEmptyCoordinates(savedCoordinates));
+
+  if (isStaleSnapshot) {
+    setApplied({ rowId: row.rowId, coordinates: savedCoordinates });
   }
 
-  const preview = isComplete ? buildPreview(row, axes, coordinates) : null;
+  const preview = isComplete ? buildPreview(row, coordinates) : null;
 
   return (
     <Stack spacing={SHEET_BODY_GAP}>
@@ -280,10 +273,10 @@ export const LevelSheetBody = ({
           fullWidth
           variant="contained"
           color="primary"
-          disabled={!isComplete || isApplying}
+          disabled={!isComplete || isApplying || isBlocked}
           onClick={onApply}
         >
-          {buildCta(axes, coordinates, isComplete)}
+          {buildCta({ axes, coordinates, isComplete, isBlocked })}
         </Button>
       </Stack>
     </Stack>
