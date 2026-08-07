@@ -41,6 +41,7 @@
     "@repo/shared": "workspace:*",
     "@vercel/blob": "catalog:",
     "bcryptjs": "catalog:",
+    "jose": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
