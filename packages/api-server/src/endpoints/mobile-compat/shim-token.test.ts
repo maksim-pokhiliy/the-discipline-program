@@ -19,9 +19,22 @@ describe("mobile shim token", () => {
 
   it("rejects a token with a tampered signature", async () => {
     const token = await signMobileShimToken(CLAIMS);
-    const tampered = `${token.slice(0, -1)}${token.endsWith("A") ? "B" : "A"}`;
+    const [header, payload, signature] = token.split(".");
+    const flipped = signature?.startsWith("A") ? "B" : "A";
+    const tampered = `${header}.${payload}.${flipped}${signature?.slice(1)}`;
 
+    expect(tampered).not.toBe(token);
     expect(await verifyMobileShimToken(tampered)).toBeNull();
+  });
+
+  it("rejects a token whose payload was edited after signing", async () => {
+    const token = await signMobileShimToken(CLAIMS);
+    const [header, , signature] = token.split(".");
+    const forgedPayload = Buffer.from(JSON.stringify({ ...CLAIMS, legacyUserId: 9999 })).toString(
+      "base64url",
+    );
+
+    expect(await verifyMobileShimToken(`${header}.${forgedPayload}.${signature}`)).toBeNull();
   });
 
   it("rejects a structurally invalid token", async () => {

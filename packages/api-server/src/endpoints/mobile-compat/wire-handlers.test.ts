@@ -71,13 +71,17 @@ describe("mobile compat signin wire handler", () => {
     expect(result.body).toBe("");
   });
 
-  it("denies any control character in the credentials", async () => {
+  it("denies any control character in the username, which is what reaches the database", async () => {
     const tab = String.fromCharCode(9);
 
     expect((await post(JSON.stringify({ username: `a${tab}b`, password: "x" }))).status).toBe(403);
-    expect((await post(JSON.stringify({ username: "a@b.c", password: `x${NUL}` }))).status).toBe(
-      403,
-    );
+    expect((await post(JSON.stringify({ username: `a${NUL}b`, password: "x" }))).status).toBe(403);
+  });
+
+  it("accepts a control character in the password, which only ever reaches bcrypt", async () => {
+    const result = await post(JSON.stringify({ username: "a@b.c", password: `x${NUL}` }));
+
+    expect(result.status).toBe(200);
   });
 
   it.each([

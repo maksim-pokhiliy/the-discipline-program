@@ -46,7 +46,12 @@ docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
 
 echo "==> verifying schema postcondition"
 for table in training_levels user_roles user_plans users general_programs individual_programs; do
-  if ! psql_do -tAc "SELECT to_regclass('public.$table')" | grep -q "^$table$"; then
+  if ! found="$(psql_do -tAc "SELECT to_regclass('public.$table')")"; then
+    echo "FAILED: could not query the harness database while checking '$table'" >&2
+    exit 1
+  fi
+
+  if [ "$(printf '%s' "$found" | tr -d '[:space:]')" != "$table" ]; then
     echo "FAILED: table '$table' is missing after applying schema.sql" >&2
     exit 1
   fi

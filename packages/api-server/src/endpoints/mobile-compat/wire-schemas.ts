@@ -11,11 +11,11 @@ const isControlCharacter = (character: string): boolean => {
 
 const hasNoControlCharacters = (value: string): boolean => ![...value].some(isControlCharacter);
 
-const wireString = z.string().refine(hasNoControlCharacters);
+const usernameSchema = z.string().refine(hasNoControlCharacters);
 
 export const legacySigninRequestSchema = z.object({
-  username: wireString,
-  password: wireString,
+  username: usernameSchema,
+  password: z.string(),
 });
 
 export type LegacySigninRequest = z.infer<typeof legacySigninRequestSchema>;

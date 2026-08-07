@@ -3,35 +3,49 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const DI_IMPORT = "instrumentation/ensure-di";
 
-const ENDPOINTS_PREFIX = "./src/endpoints/";
+const EXEMPT_SUBPATHS = new Set([
+  "./instrumentation",
+  "./idempotency",
+  "./infrastructure/monitoring",
+  "./test-helpers",
+]);
 
-const readExportedEndpointBarrels = (): string[] => {
-  const manifest: unknown = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8"));
+const manifestSchema = z.object({ exports: z.record(z.string()) });
 
-  if (typeof manifest !== "object" || manifest === null || !("exports" in manifest)) {
-    throw new Error("api-server package.json has no exports map");
-  }
+const readRequestServingSubpaths = (): Array<[string, string]> => {
+  const manifest = manifestSchema.parse(
+    JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")),
+  );
 
-  const exportsMap = (manifest as { exports: Record<string, string> }).exports;
-
-  return Object.values(exportsMap).filter((target) => target.startsWith(ENDPOINTS_PREFIX));
+  return Object.entries(manifest.exports).filter(([subpath]) => !EXEMPT_SUBPATHS.has(subpath));
 };
 
-describe("exported endpoint barrels bootstrap dependency injection", () => {
-  it("every endpoints barrel reachable from the package exports map imports ensure-di", () => {
-    const barrels = readExportedEndpointBarrels();
+describe("exported api-server entry points bootstrap dependency injection", () => {
+  it("every request-serving subpath export imports ensure-di", () => {
+    const subpaths = readRequestServingSubpaths();
 
-    expect(barrels.length).toBeGreaterThan(5);
+    expect(subpaths.length).toBeGreaterThan(5);
 
-    const missing = barrels.filter(
-      (barrel) => !readFileSync(join(PACKAGE_ROOT, barrel), "utf8").includes(DI_IMPORT),
-    );
+    const missing = subpaths
+      .filter(([, target]) => !readFileSync(join(PACKAGE_ROOT, target), "utf8").includes(DI_IMPORT))
+      .map(([subpath]) => subpath);
 
     expect(missing).toEqual([]);
+  });
+
+  it("exempts only entry points that cannot serve a request on their own", () => {
+    const manifest = manifestSchema.parse(
+      JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")),
+    );
+
+    for (const subpath of EXEMPT_SUBPATHS) {
+      expect(Object.keys(manifest.exports)).toContain(subpath);
+    }
   });
 });

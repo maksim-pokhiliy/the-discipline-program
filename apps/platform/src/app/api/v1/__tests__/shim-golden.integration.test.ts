@@ -7,6 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type * as ApiServerTestHelpers from "@repo/api-server/test-helpers";
 
+import { MOBILE_SHIM_SIGNIN_RATE_LIMIT } from "@app/lib/server/mobile-shim-rate-limit";
+
 const V1_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const collectRouteFiles = (dir: string, prefix = ""): string[] =>
@@ -38,6 +40,22 @@ describe("api/v1 route mounting", () => {
 
     expect(source).toMatch(new RegExp(`export const ${expectedVerb}\\b`));
     expect(source).not.toMatch(new RegExp(`export const ${forbiddenVerb}\\b`));
+  });
+});
+
+describe("mobile shim signin rate limit configuration", () => {
+  it("keys the account limb on the field the handler authenticates with", () => {
+    expect(MOBILE_SHIM_SIGNIN_RATE_LIMIT.identifierFields).toEqual(["username"]);
+  });
+
+  it("parses the body as json so the limiter cannot be steered by a form-encoded decoy", () => {
+    expect(MOBILE_SHIM_SIGNIN_RATE_LIMIT.identifierParse).toBe("json");
+  });
+
+  it("keeps the per-address allowance far above the per-account one", () => {
+    expect(MOBILE_SHIM_SIGNIN_RATE_LIMIT.ipTier.limit).toBeGreaterThan(
+      MOBILE_SHIM_SIGNIN_RATE_LIMIT.identifierTier.limit,
+    );
   });
 });
 

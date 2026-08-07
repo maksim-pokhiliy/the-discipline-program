@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createNoopRateLimiter } from "../noop-adapter";
 import { RATE_LIMIT_TIER } from "../rate-limit-tiers";
 import type { RateLimitResult } from "../rate-limiter-port";
-import { setRateLimiter } from "../rate-limiter-registry";
+import { getRateLimiter, setRateLimiter } from "../rate-limiter-registry";
 import { readCredentialIdentifier } from "../read-credential-identifier";
 import { withAuthCredentialsRateLimit, withCredentialsRateLimit } from "../with-rate-limit";
 
@@ -77,6 +78,12 @@ describe("readCredentialIdentifier field selection", () => {
 
 describe("withCredentialsRateLimit bucket keys", () => {
   const checks: Array<{ key: string; limit: number; windowMs: number }> = [];
+
+  const previous = getRateLimiter();
+
+  afterEach(() => {
+    setRateLimiter(previous ?? createNoopRateLimiter());
+  });
 
   beforeEach(() => {
     checks.length = 0;

@@ -18,8 +18,11 @@ const JSON_CONTENT_TYPE = "application/json";
 
 const DENIED = { kind: "denied" } as const;
 
-const isJsonRequest = (request: Request): boolean =>
-  (request.headers.get("content-type") ?? "").includes(JSON_CONTENT_TYPE);
+const isJsonRequest = (request: Request): boolean => {
+  const mediaType = (request.headers.get("content-type") ?? "").split(";")[0] ?? "";
+
+  return mediaType.trim().toLowerCase() === JSON_CONTENT_TYPE;
+};
 
 export const createMobileCompatRoutes = (api: MobileCompatApi): MobileCompatRoutes => ({
   signin: async (request) => {
