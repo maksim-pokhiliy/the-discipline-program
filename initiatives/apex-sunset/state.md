@@ -14,7 +14,7 @@
 
 ## Next action
 
-**▶ P0** — one session: `git fetch` both clones (0.1) + bcrypt compatibility check on the harness (0.4) + draft the absorb-and-retire ADR (0.5). Owner-side in parallel: VPS/DNS access + read-only prod `pg_dump` (0.2/0.3) — the dump is the P2 dry-run input, so P2 is blocked until it exists.
+**▶ P0 session half DONE (2026-08-07):** 0.1 clones current (`190d9fd` / `b780e61`, 0 behind) · 0.4 bcrypt compatible at library level (`bcryptjs.compare` takes `$2a/$2y/$2b`; real-hash proof rides P2.1) · 0.5 ADR-0043 + the `mobile-publish` successor note · 0.3 DNS half done (read-only Cloudflare MCP on Vladyslav's account; zone snapshot in `journal.md` — apex A `173.249.38.144` proxied is the ONLY VPS-pointing record; CF Worker route on `/api/v1/*` = new 3.2 cutover candidate). **Remaining, owner-side:** VPS SSH from Vladyslav → read-only `pg_dump` of both schemas (0.2) — the P2 dry-run input, P2 is blocked until it exists; App Store Connect rides along (AS-1). Vladyslav-facing process: owner's Trello workspace, owner-run board, Claude drafts the tickets (суть/требования/шаги/DoD). **Next build step once the dump lands: P1.1 (shim foundation) via `/step`.**
 
 ## Open decisions awaiting ratification
 

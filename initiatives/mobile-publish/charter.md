@@ -20,6 +20,8 @@
 
 **Sacred (do not touch).** The legacy Spring backend + the iOS app — we ONLY consume the legacy REST API as ADMIN. The platform's sacred `byProfile` load VO + resolver are read-only inputs to the projection. The legacy prod DB is inviolable (memory `prod-data-inviolable`) — every publish is idempotent + dry-runnable + guarded against clobbering coach-authored days.
 
+> **Successor note (2026-08-07, ADR-0043 / `initiatives/apex-sunset/`).** The "legacy is untouchable" half of this constraint is SUPERSEDED: the legacy backend + its DB are being absorbed into the platform and retired (the blocker — the legacy dev's unavailability — lifted). Still in force until apex-sunset P3/P4 land: the legacy prod DB stays inviolable (final snapshot first), the overwrite-guard discipline stands, and the iOS app stays unmodified — now by apex-sunset D-1/D-2 (production surface, zero-release repoint), not by necessity.
+
 **Stable working tree.** All TDP repos under `~/projects/contrib/tdp/`: `mobile-ios/` + `mobile-backend/` (full clones of Vladyslav's repos) alongside the platform monorepo (left in place). Local legacy stack via `tdp/local/docker-compose.yml`. The verified legacy wire contract lives in `legacy-contract.md`.
 
 **Driving context.** memory `project-domain-architecture` (apex = legacy Spring API, don't touch); ADR-0005 / ADR-0020 (the API was designed anticipating a future mobile consumer); `docs/personas/denys.md` (the mobile app his clients use today).
