@@ -48,12 +48,14 @@ export {
   withRateLimit,
   withAuthRateLimit,
   withAuthCredentialsRateLimit,
+  withCredentialsRateLimit,
   setRateLimiter,
   getRateLimiter,
   defaultRateLimiter,
   RATE_LIMIT_TIER,
 } from "./rate-limit";
 export type {
+  CredentialsRateLimitConfig,
   RateLimiterPort,
   RateLimitResult,
   RateLimitTier,

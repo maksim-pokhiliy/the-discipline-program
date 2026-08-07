@@ -95,8 +95,14 @@ export const withAuthRateLimit =
     return response;
   };
 
-export const withAuthCredentialsRateLimit =
-  (handler: RouteHandler, tier: RateLimitTierValue): RouteHandler =>
+export type CredentialsRateLimitConfig = {
+  ipTier: RateLimitTierValue;
+  identifierTier: RateLimitTierValue;
+  identifierFields: readonly string[];
+};
+
+export const withCredentialsRateLimit =
+  (handler: RouteHandler, config: CredentialsRateLimitConfig): RouteHandler =>
   async (request, context) => {
     const limiter = getRateLimiter();
 
@@ -109,15 +115,15 @@ export const withAuthCredentialsRateLimit =
     try {
       const ip = getClientIp(request);
 
-      ipResult = await limiter.check(`ip:${ip}`, tier.limit, tier.windowMs);
+      ipResult = await limiter.check(`ip:${ip}`, config.ipTier.limit, config.ipTier.windowMs);
 
-      const identifier = await readCredentialIdentifier(request);
+      const identifier = await readCredentialIdentifier(request, config.identifierFields);
 
       if (identifier) {
         const identifierResult = await limiter.check(
           `auth:${identifier}`,
-          tier.limit,
-          tier.windowMs,
+          config.identifierTier.limit,
+          config.identifierTier.windowMs,
         );
 
         denyIfExceeded(identifierResult);
@@ -143,3 +149,15 @@ export const withAuthCredentialsRateLimit =
 
     return response;
   };
+
+const EMAIL_IDENTIFIER_FIELDS = ["email"] as const;
+
+export const withAuthCredentialsRateLimit = (
+  handler: RouteHandler,
+  tier: RateLimitTierValue,
+): RouteHandler =>
+  withCredentialsRateLimit(handler, {
+    ipTier: tier,
+    identifierTier: tier,
+    identifierFields: EMAIL_IDENTIFIER_FIELDS,
+  });
