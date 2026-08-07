@@ -252,3 +252,34 @@ export const cleanup = async (...ids: { table: string; id: string }[]) => {
 };
 
 export const cleanupRaw = rawPrisma;
+
+const RANDOM_LEGACY_ID_SPAN = 1_000_000;
+const RANDOM_LEGACY_ID_OFFSET = 100_000;
+
+export const createTestLegacyIdentity = async (
+  userId: string,
+  overrides: Partial<Omit<Prisma.MobileLegacyIdentityUncheckedCreateInput, "userId">> = {},
+) => {
+  return rawPrisma.mobileLegacyIdentity.create({
+    data: {
+      userId,
+      legacyUserId: Math.floor(Math.random() * RANDOM_LEGACY_ID_SPAN) + RANDOM_LEGACY_ID_OFFSET,
+      legacyRoleId: 1,
+      legacyPlanId: 1,
+      legacyLevelId: 1,
+      isEnabled: true,
+      ...overrides,
+    },
+  });
+};
+
+export {
+  GOLDEN_ADMIN,
+  GOLDEN_ATHLETE,
+  GOLDEN_BCRYPT_HASH,
+  GOLDEN_DISABLED,
+  GOLDEN_FIXTURE_USERS,
+  GOLDEN_PASSWORD,
+  GOLDEN_UNKNOWN_EMAIL,
+} from "./golden-fixture";
+export type { GoldenFixtureUser } from "./golden-fixture";

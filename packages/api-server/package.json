@@ -9,11 +9,13 @@
     "./retention": "./src/services/retention/index.ts",
     "./coaching": "./src/endpoints/coaching/index.ts",
     "./iam": "./src/endpoints/iam/index.ts",
+    "./mobile-compat": "./src/endpoints/mobile-compat/index.ts",
     "./storage": "./src/endpoints/storage/index.ts",
     "./ops": "./src/endpoints/ops/index.ts",
     "./infrastructure/monitoring": "./src/infrastructure/monitoring/index.ts",
     "./idempotency": "./src/idempotency/index.ts",
-    "./instrumentation": "./src/instrumentation/index.ts"
+    "./instrumentation": "./src/instrumentation/index.ts",
+    "./test-helpers": "./src/test/helpers.ts"
   },
   "scripts": {
     "test": "vitest run",
