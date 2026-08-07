@@ -1,0 +1,47 @@
+# apex-sunset — plan
+
+Phased. Steps ship via the standing build loop (`/step` → `/feature` executor + independent review + owner browser pass), except owner-side ops steps marked as such. Expect multiple sessions.
+
+## P0 — Facts & safety net
+
+| #   | Step                                                                                                                             | Mechanism           | Gate (how it's accepted)                                                                 | Status  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------- | ------- |
+| 0.1 | `git fetch` both legacy clones (snapshots may lag: backend pinned at `190d9fd`, iOS at Feb 2026)                                 | manual session      | clones at their remote HEADs; deltas (if any) noted in journal                           | pending |
+| 0.2 | Read-only `pg_dump` of legacy prod — BOTH schemas (prod + `/dev-api` twin) — archived off-VPS                                    | owner ops + session | dump restored locally into the harness DB and row counts sanity-checked                  | pending |
+| 0.3 | Access inventory from Vladyslav: VPS SSH, DNS control confirmation, App Store Connect (the latter = AS-1, not a cutover blocker) | owner ops           | VPS + DNS access verified hands-on                                                       | pending |
+| 0.4 | Bcrypt compatibility check: legacy `$2a` hashes vs our credentials validator                                                     | manual session      | a legacy hash verifies against its known password through OUR validator (harness-seeded) | pending |
+| 0.5 | ADR: absorb-and-retire (supersedes the `mobile-publish` "legacy is sacred" constraint; first ADR on the legacy integration)      | docs                | ADR merged; `mobile-publish` charter's Sacred line gets a successor pointer              | pending |
+
+## P1 — The shim
+
+| #   | Step                                                                                                                                                    | Mechanism | Gate                                                                                                              | Status  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------- | ------- |
+| 1.1 | Shim foundation: `/api/v1` namespace + legacy-format bearer wrapper (raw token) + `signin` + catalog endpoints (`trainingLevel/all`, `userPlans`)       | `/step`   | golden tests green for auth + catalogs against the docker harness                                                 | pending |
+| 1.2 | User endpoints: `GET /user/{id}`, `GET /user`, `PUT /user`, `changePassword`, `changeTrainingLevel` — served from platform models via the legacy-id map | `/step`   | golden tests green; responses byte-compatible incl. nested `trainingLevel`/`userPlan`/`userRole` shapes           | pending |
+| 1.3 | Publish snapshot + program serve: snapshot write on Publish (D-4 schema design inside this step) + `GET /program?userId=&scheduledDate=` from snapshots | `/step`   | golden tests green; the fatalError invariant covered by an explicit test (never `isRestDay:false` + null program) | pending |
+| 1.4 | Appetize stand: fork + CI workflow (simulator build, base-URL patch) + upload                                                                           | `/step`   | owner drives login → day → profile in the browser against a preview shim                                          | pending |
+
+## P2 — Accounts
+
+| #   | Step                                                                                                                              | Mechanism | Gate                                                                                                                                        | Status  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 2.1 | Users import script: ALL legacy rows → platform `User` + legacy-id map + hash carry-over (D-3); dry-run on the dump first         | `/step`   | dry-run report (created/matched/conflicts) owner-reviewed; import applied; sampled legacy users sign in through the shim with old passwords | pending |
+| 2.2 | Identity reconciliation for already-linked athletes (Individual links carry `athleteId ↔ legacyUserId`) — merge, don't duplicate | `/step`   | no duplicate persons: every existing platform athlete with a legacy link maps to ONE `User`                                                 | pending |
+
+## P3 — Rehearsal & cutover
+
+| #   | Step                                                                                                               | Mechanism           | Gate                                                                                   | Status  |
+| --- | ------------------------------------------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------- | ------- |
+| 3.1 | Prod-build rehearsal: LAN DNS-override + DNS-01 cert + local proxy → real App-Store build against the preview shim | owner ops + session | login → published day → profile pass on the REAL binary                                | pending |
+| 3.2 | Cutover: apex DNS → Vercel (routing design for apex + `/api/v1/*` + browser redirect to www decided here); monitor | owner ops + session | prod app works with every byte from Neon; error budget quiet for an agreed soak window | pending |
+| 3.3 | Decommission: Spring down (prod + `/dev-api`), FINAL `pg_dump`, VPS off                                            | owner ops           | final dump archived; VPS powered down; apex serves only our infra                      | pending |
+
+## P4 — Cleanup
+
+| #   | Step                                                                                                                                                | Mechanism | Gate                                                                                                                                         | Status  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 4.1 | Connector teardown: reconnect UX / token cipher / `MobileConnection` / legacy REST adapter — redesigned or deleted under the snapshot model (AS-5)  | `/step`   | no dead legacy-client code paths; env vars `LEGACY_MOBILE_API_BASE_URL` + `MOBILE_PUBLISH_ENCRYPTION_KEY` retired or repurposed deliberately | pending |
+| 4.2 | `mobile-publish` close-out as superseded: MP-4/8/9/10/12/15 closed "by decommission"; surviving UI carry-forwards (MP-24..27 class) re-homed (AS-4) | docs      | `mobile-publish` state/deferred updated; `initiatives/ACTIVE` pruned                                                                         | pending |
+| 4.3 | Archive the legacy repos + runbook update + memory/docs sweep                                                                                       | docs      | `docs/runbooks/mobile-publish-legacy-connector.md` superseded; domain-architecture memory updated                                            | pending |
+
+Open design details deferred to their step: publish-snapshot storage shape (1.3) · legacy-id map shape — column vs table (2.1) · which Vercel project takes the apex + redirect strategy (3.2) · `MobilePublishLink` survival as the publish-target config vs redesign (4.1) · XCUITest smoke adoption (AS-3).

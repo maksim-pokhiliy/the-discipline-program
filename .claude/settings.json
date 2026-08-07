@@ -21,17 +21,6 @@
         ],
         "matcher": "Edit|Write|MultiEdit"
       }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "node .claude/hooks/load-active-initiative.mjs",
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
     ]
   }
 }
