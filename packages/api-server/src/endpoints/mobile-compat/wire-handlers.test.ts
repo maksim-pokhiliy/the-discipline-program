@@ -85,6 +85,29 @@ describe("mobile compat signin wire handler", () => {
   });
 
   it.each([
+    ["a leading lone surrogate", String.fromCharCode(0xd800)],
+    ["a trailing lone surrogate", String.fromCharCode(0xdc00)],
+  ])("denies a username with %s, which Postgres cannot store", async (_label, surrogate) => {
+    const result = await post(JSON.stringify({ username: `athlete${surrogate}`, password: "x" }));
+
+    expect(result.status).toBe(403);
+    expect(result.body).toBe("");
+  });
+
+  it("denies a username longer than the legacy column can hold", async () => {
+    const result = await post(JSON.stringify({ username: "a".repeat(101), password: "x" }));
+
+    expect(result.status).toBe(403);
+    expect(result.body).toBe("");
+  });
+
+  it("passes a valid astral-plane emoji username through to the service", async () => {
+    const result = await post(JSON.stringify({ username: "\u{1F4AA}@tdp.local", password: "x" }));
+
+    expect(result.status).toBe(200);
+  });
+
+  it.each([
     ["no content-type", null],
     ["text/plain", "text/plain"],
     ["form-urlencoded", "application/x-www-form-urlencoded"],

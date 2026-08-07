@@ -5,7 +5,7 @@ import type { AuthenticatedHandler, RouteHandler } from "../types";
 
 import { getClientIp } from "./ip-utils";
 import type { RateLimitTierValue } from "./rate-limit-tiers";
-import type { RateLimitResult } from "./rate-limiter-port";
+import type { RateLimiterPort, RateLimitResult } from "./rate-limiter-port";
 import { getRateLimiter } from "./rate-limiter-registry";
 import {
   type CredentialIdentifierParse,
@@ -98,11 +98,46 @@ export const withAuthRateLimit =
     return response;
   };
 
+const DEFAULT_IDENTIFIER_KEY_PREFIX = "auth:";
+
 export type CredentialsRateLimitConfig = {
   ipTier: RateLimitTierValue;
   identifierTier: RateLimitTierValue;
   identifierFields: readonly string[];
   identifierParse?: CredentialIdentifierParse;
+  identifierKeyPrefix?: string;
+};
+
+const reportRateLimiterFault = (error: unknown): void => {
+  getMonitoring()?.captureException(error, {
+    tags: { component: "rate-limiter" },
+    level: "warning",
+  });
+};
+
+const enforceIdentifierLimit = async (
+  request: Request,
+  limiter: RateLimiterPort,
+  config: CredentialsRateLimitConfig,
+): Promise<void> => {
+  const identifier = await readCredentialIdentifier(
+    request,
+    config.identifierFields,
+    config.identifierParse,
+  );
+
+  if (!identifier) {
+    return;
+  }
+
+  const prefix = config.identifierKeyPrefix ?? DEFAULT_IDENTIFIER_KEY_PREFIX;
+  const identifierResult = await limiter.check(
+    `${prefix}${identifier}`,
+    config.identifierTier.limit,
+    config.identifierTier.windowMs,
+  );
+
+  denyIfExceeded(identifierResult);
 };
 
 export const withCredentialsRateLimit =
@@ -120,36 +155,23 @@ export const withCredentialsRateLimit =
       const ip = getClientIp(request);
 
       ipResult = await limiter.check(`ip:${ip}`, config.ipTier.limit, config.ipTier.windowMs);
-
-      const identifier = await readCredentialIdentifier(
-        request,
-        config.identifierFields,
-        config.identifierParse,
-      );
-
-      if (identifier) {
-        const identifierResult = await limiter.check(
-          `auth:${identifier}`,
-          config.identifierTier.limit,
-          config.identifierTier.windowMs,
-        );
-
-        denyIfExceeded(identifierResult);
-      }
     } catch (error) {
-      if (error instanceof TooManyRequestsError) {
-        throw error;
-      }
-
-      getMonitoring()?.captureException(error, {
-        tags: { component: "rate-limiter" },
-        level: "warning",
-      });
+      reportRateLimiterFault(error);
 
       return handler(request, context);
     }
 
     denyIfExceeded(ipResult);
+
+    try {
+      await enforceIdentifierLimit(request, limiter, config);
+    } catch (error) {
+      if (error instanceof TooManyRequestsError) {
+        throw error;
+      }
+
+      reportRateLimiterFault(error);
+    }
 
     const response = await handler(request, context);
 

@@ -1,3 +1,5 @@
+import { randomInt } from "node:crypto";
+
 import {
   type AthleteProfile,
   type CoachAthleteAssignment,
@@ -253,8 +255,11 @@ export const cleanup = async (...ids: { table: string; id: string }[]) => {
 
 export const cleanupRaw = rawPrisma;
 
-const RANDOM_LEGACY_ID_SPAN = 1_000_000;
-const RANDOM_LEGACY_ID_OFFSET = 100_000;
+const MIN_TEST_LEGACY_USER_ID = 100_000;
+const MAX_TEST_LEGACY_USER_ID = 2_000_000_000;
+
+export const mintTestLegacyUserId = (): number =>
+  randomInt(MIN_TEST_LEGACY_USER_ID, MAX_TEST_LEGACY_USER_ID);
 
 export const createTestLegacyIdentity = async (
   userId: string,
@@ -263,7 +268,7 @@ export const createTestLegacyIdentity = async (
   return rawPrisma.mobileLegacyIdentity.create({
     data: {
       userId,
-      legacyUserId: Math.floor(Math.random() * RANDOM_LEGACY_ID_SPAN) + RANDOM_LEGACY_ID_OFFSET,
+      legacyUserId: mintTestLegacyUserId(),
       legacyRoleId: 1,
       legacyPlanId: 1,
       legacyLevelId: 1,

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { TooManyRequestsError } from "@repo/errors";
+
 import { createNoopRateLimiter } from "../noop-adapter";
 import { RATE_LIMIT_TIER } from "../rate-limit-tiers";
 import type { RateLimitResult } from "../rate-limiter-port";
@@ -149,5 +151,82 @@ describe("withCredentialsRateLimit bucket keys", () => {
     await route(jsonRequest({ password: "x" }), context);
 
     expect(checks.map((c) => c.key)).toEqual(["ip:unknown"]);
+  });
+
+  it("namespaces its bucket so it never collides with the web login for the same identifier", async () => {
+    const shimRoute = withCredentialsRateLimit(handler, {
+      ipTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_IP,
+      identifierTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_ACCOUNT,
+      identifierFields: ["username"],
+      identifierParse: "json",
+      identifierKeyPrefix: "shim-auth:",
+    });
+
+    await shimRoute(jsonRequest({ username: "coach@example.com", password: "x" }), context);
+
+    const shimKeys = checks.map((c) => c.key);
+
+    checks.length = 0;
+
+    const webRoute = withAuthCredentialsRateLimit(handler, RATE_LIMIT_TIER.AUTH);
+
+    await webRoute(jsonRequest({ email: "coach@example.com", password: "x" }), context);
+
+    const webKeys = checks.map((c) => c.key);
+
+    expect(shimKeys).toContain("shim-auth:coach@example.com");
+    expect(webKeys).toContain("auth:coach@example.com");
+    expect(shimKeys.filter((key) => key.startsWith("shim-auth:"))).not.toEqual(
+      webKeys.filter((key) => key.startsWith("auth:")),
+    );
+    expect(shimKeys.some((key) => webKeys.includes(key) && key.startsWith("auth"))).toBe(false);
+  });
+
+  it("enforces the ip limit even when the identifier check throws (no fail-open bypass)", async () => {
+    setRateLimiter({
+      check: async (key) => {
+        if (key.startsWith("ip:")) {
+          return { allowed: false, limit: 1, remaining: 0, resetAt: Date.now() + 30_000 };
+        }
+
+        throw new Error("identifier limb exploded");
+      },
+    });
+
+    const guardedHandler = vi.fn(async () => new Response("ok", { status: 200 }));
+    const route = withCredentialsRateLimit(guardedHandler, {
+      ipTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_IP,
+      identifierTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_ACCOUNT,
+      identifierFields: ["username"],
+      identifierParse: "json",
+    });
+
+    await expect(
+      route(jsonRequest({ username: "victim@tdp.local", password: "x" }), context),
+    ).rejects.toThrow(TooManyRequestsError);
+    expect(guardedHandler).not.toHaveBeenCalled();
+  });
+
+  it("still serves the request when only the identifier limb throws and the ip limb allows", async () => {
+    setRateLimiter({
+      check: async (key) => {
+        if (key.startsWith("ip:")) {
+          return allow(RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_IP.limit);
+        }
+
+        throw new Error("identifier limb exploded");
+      },
+    });
+
+    const route = withCredentialsRateLimit(handler, {
+      ipTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_IP,
+      identifierTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_ACCOUNT,
+      identifierFields: ["username"],
+      identifierParse: "json",
+    });
+
+    const response = await route(jsonRequest({ username: "v@tdp.local", password: "x" }), context);
+
+    expect(response.status).toBe(200);
   });
 });

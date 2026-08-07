@@ -208,11 +208,12 @@ module.exports = {
         "that bypasses the soft-delete extension, so its delete() is a hard cascading delete " +
         "and its findUnique() sees soft-deleted rows. It is exported (./test-helpers) purely " +
         "so the platform-project golden suite can seed, since prisma-only-in-api-server " +
-        "forbids apps from importing @prisma/client directly. Test files in apps/* may reach " +
-        "it; production app code may not. In-package test-support helpers are unaffected.",
+        "forbids apps from importing @prisma/client directly. Test files may reach it; " +
+        "non-test code in any app or package may not. The api-server package itself is " +
+        "exempt — its own test-support helpers live here.",
       from: {
-        path: "^apps/",
-        pathNot: "(\\.(test|spec)\\.tsx?$|/__tests__/|/__fixtures__/)",
+        path: "^(apps|packages)/",
+        pathNot: "(\\.(test|spec)\\.tsx?$|/__tests__/|/__fixtures__/|^packages/api-server/)",
       },
       to: { path: "^packages/api-server/src/test/" },
     },

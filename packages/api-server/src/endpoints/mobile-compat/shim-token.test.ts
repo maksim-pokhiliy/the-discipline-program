@@ -1,6 +1,16 @@
+import type * as jose from "jose";
+import { errors as joseErrors, jwtVerify } from "jose";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { signMobileShimToken, verifyMobileShimToken } from "./shim-token";
+
+type JoseModule = typeof jose;
+
+vi.mock("jose", async (importOriginal) => {
+  const actual = await importOriginal<JoseModule>();
+
+  return { ...actual, jwtVerify: vi.fn(actual.jwtVerify) };
+});
 
 const CLAIMS = { sub: "cuid-1", legacyUserId: 1001, tokenVersion: 0 };
 
@@ -69,5 +79,21 @@ describe("mobile shim token", () => {
 
     expect(claims?.legacyUserId).toBe(42);
     expect(claims?.tokenVersion).toBe(7);
+  });
+
+  it("treats a jose verification error as a plain denial", async () => {
+    const token = await signMobileShimToken(CLAIMS);
+
+    vi.mocked(jwtVerify).mockRejectedValueOnce(new joseErrors.JWSSignatureVerificationFailed());
+
+    expect(await verifyMobileShimToken(token)).toBeNull();
+  });
+
+  it("rethrows a non-jose fault instead of turning it into a denial", async () => {
+    const token = await signMobileShimToken(CLAIMS);
+
+    vi.mocked(jwtVerify).mockRejectedValueOnce(new Error("crypto subsystem unavailable"));
+
+    await expect(verifyMobileShimToken(token)).rejects.toThrow("crypto subsystem unavailable");
   });
 });

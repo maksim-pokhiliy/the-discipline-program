@@ -1,4 +1,4 @@
-import { jwtVerify, SignJWT } from "jose";
+import { errors as joseErrors, jwtVerify, SignJWT } from "jose";
 import { z } from "zod";
 
 import { mobileShimEnv } from "@repo/env/mobile-shim";
@@ -40,7 +40,11 @@ export const verifyMobileShimToken = async (token: string): Promise<MobileShimCl
     const parsed = claimsSchema.safeParse(payload);
 
     return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof joseErrors.JOSEError) {
+      return null;
+    }
+
+    throw error;
   }
 };

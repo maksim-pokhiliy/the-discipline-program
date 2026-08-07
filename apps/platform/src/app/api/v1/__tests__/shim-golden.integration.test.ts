@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { getRateLimiter, setRateLimiter } from "@repo/api-routes";
+import type { RateLimiterPort } from "@repo/api-routes";
 import type * as ApiServerTestHelpers from "@repo/api-server/test-helpers";
 
 import { MOBILE_SHIM_SIGNIN_RATE_LIMIT } from "@app/lib/server/mobile-shim-rate-limit";
@@ -56,6 +58,17 @@ describe("mobile shim signin rate limit configuration", () => {
     expect(MOBILE_SHIM_SIGNIN_RATE_LIMIT.ipTier.limit).toBeGreaterThan(
       MOBILE_SHIM_SIGNIN_RATE_LIMIT.identifierTier.limit,
     );
+  });
+
+  it("namespaces its bucket away from the web login", () => {
+    expect(MOBILE_SHIM_SIGNIN_RATE_LIMIT.identifierKeyPrefix).toBe("shim-auth:");
+  });
+
+  it("wires the credentials rate limiter onto the signin route", () => {
+    const source = readFileSync(join(V1_ROOT, "auth/signin/route.ts"), "utf8");
+
+    expect(source).toMatch(/withCredentialsRateLimit\s*\(/);
+    expect(source).toContain("MOBILE_SHIM_SIGNIN_RATE_LIMIT");
   });
 });
 
@@ -323,5 +336,64 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
 
     expect(shim.status).toBe(legacy.status);
     expect(canonicalize(await shim.json())).toEqual(canonicalize(await legacy.json()));
+  });
+
+  it("runs the credentials rate limiter inside the mounted signin chain", async () => {
+    const previous = getRateLimiter();
+    const allowAll: RateLimiterPort = {
+      check: async (_key, limit) => ({
+        allowed: true,
+        limit,
+        remaining: limit,
+        resetAt: Date.now() + 60_000,
+      }),
+    };
+    const denying: RateLimiterPort = {
+      check: async (key, limit) => ({
+        allowed: !key.startsWith("shim-auth:"),
+        limit,
+        remaining: 0,
+        resetAt: Date.now() + 30_000,
+      }),
+    };
+
+    setRateLimiter(denying);
+
+    try {
+      const probe = await hitShimSignin(
+        JSON.stringify({
+          username: helpers.GOLDEN_ATHLETE.email,
+          password: helpers.GOLDEN_PASSWORD,
+        }),
+      );
+
+      expect(probe.status).toBe(429);
+    } finally {
+      setRateLimiter(previous ?? allowAll);
+    }
+  });
+
+  it("renders a mapping fault as 500, never the 403 that would sign the app out", async () => {
+    const user = await helpers.createTestUser({
+      email: `shim-catalog-miss-${crypto.randomUUID().slice(0, 8)}@test.local`,
+      password: helpers.GOLDEN_BCRYPT_HASH,
+    });
+
+    createdUserIds.push(user.id);
+
+    await helpers.createTestLegacyIdentity(user.id, {
+      legacyUserId: helpers.mintTestLegacyUserId(),
+      legacyRoleId: 77,
+      legacyPlanId: 88,
+      legacyLevelId: 2,
+      isEnabled: true,
+    });
+
+    const probe = await hitShimSignin(
+      JSON.stringify({ username: user.email, password: helpers.GOLDEN_PASSWORD }),
+    );
+
+    expect(probe.status).toBe(500);
+    expect(probe.status).not.toBe(403);
   });
 });

@@ -6,4 +6,5 @@ export const MOBILE_SHIM_SIGNIN_RATE_LIMIT: CredentialsRateLimitConfig = {
   identifierTier: RATE_LIMIT_TIER.MOBILE_SHIM_SIGNIN_ACCOUNT,
   identifierFields: ["username"],
   identifierParse: "json",
+  identifierKeyPrefix: "shim-auth:",
 };

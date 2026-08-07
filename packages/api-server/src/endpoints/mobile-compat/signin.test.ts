@@ -1,31 +1,40 @@
 import { afterAll, describe, expect, it } from "vitest";
 
 import { GOLDEN_BCRYPT_HASH, GOLDEN_PASSWORD } from "../../test/golden-fixture";
-import { cleanupRaw, createTestLegacyIdentity, createTestUser } from "../../test/helpers";
+import {
+  cleanupRaw,
+  createTestLegacyIdentity,
+  createTestUser,
+  mintTestLegacyUserId,
+} from "../../test/helpers";
 
 import { resolveMobileShimIdentity } from "./identity-resolver";
-import { signMobileShimToken } from "./shim-token";
+import { signMobileShimToken, verifyMobileShimToken } from "./shim-token";
 import { createSigninApi } from "./signin";
 
 const api = createSigninApi();
 
-type Seeded = { userId: string; email: string; legacyUserId: number };
+type Seeded = { userId: string; email: string; legacyUserId: number; tokenVersion: number };
 
 const createdUserIds: string[] = [];
+
+const DEFAULT_SEED_TOKEN_VERSION = 7;
 
 const seedUser = async (options: {
   isEnabled?: boolean;
   withIdentity?: boolean;
   legacyRoleId?: number;
   legacyPlanId?: number;
+  tokenVersion?: number;
 }): Promise<Seeded> => {
   const suffix = crypto.randomUUID().slice(0, 8);
   const email = `shim-${suffix}@test.local`;
-  const user = await createTestUser({ email, password: GOLDEN_BCRYPT_HASH });
+  const tokenVersion = options.tokenVersion ?? DEFAULT_SEED_TOKEN_VERSION;
+  const user = await createTestUser({ email, password: GOLDEN_BCRYPT_HASH, tokenVersion });
 
   createdUserIds.push(user.id);
 
-  const legacyUserId = Math.floor(Math.random() * 900_000) + 2_000_000;
+  const legacyUserId = mintTestLegacyUserId();
 
   if (options.withIdentity !== false) {
     await createTestLegacyIdentity(user.id, {
@@ -37,7 +46,7 @@ const seedUser = async (options: {
     });
   }
 
-  return { userId: user.id, email, legacyUserId };
+  return { userId: user.id, email, legacyUserId, tokenVersion };
 };
 
 describe("mobile shim signin", () => {
@@ -61,7 +70,26 @@ describe("mobile shim signin", () => {
 
     expect(result.payload.userId).toBe(seeded.legacyUserId);
     expect(typeof result.payload.userId).toBe("number");
-    expect(result.payload.accessToken).toEqual(expect.any(String));
+  });
+
+  it("mints a token that verifies and carries the subject, legacy id and token version", async () => {
+    const seeded = await seedUser({ tokenVersion: 4 });
+
+    const result = await api.signin({ username: seeded.email, password: GOLDEN_PASSWORD });
+
+    expect(result.kind).toBe("ok");
+
+    if (result.kind !== "ok") {
+      return;
+    }
+
+    const claims = await verifyMobileShimToken(result.payload.accessToken);
+
+    expect(claims).toEqual({
+      sub: seeded.userId,
+      legacyUserId: seeded.legacyUserId,
+      tokenVersion: 4,
+    });
   });
 
   it("resolves the catalog names from the legacy ids", async () => {
@@ -154,7 +182,7 @@ describe("mobile shim identity resolver", () => {
     const token = await signMobileShimToken({
       sub: seeded.userId,
       legacyUserId: seeded.legacyUserId,
-      tokenVersion: 0,
+      tokenVersion: seeded.tokenVersion,
     });
 
     expect(await resolveMobileShimIdentity(token)).toEqual({
@@ -174,7 +202,7 @@ describe("mobile shim identity resolver", () => {
     const token = await signMobileShimToken({
       sub: seeded.userId,
       legacyUserId: seeded.legacyUserId,
-      tokenVersion: 0,
+      tokenVersion: seeded.tokenVersion,
     });
 
     await cleanupRaw.user.update({
@@ -190,7 +218,7 @@ describe("mobile shim identity resolver", () => {
     const token = await signMobileShimToken({
       sub: seeded.userId,
       legacyUserId: seeded.legacyUserId,
-      tokenVersion: 0,
+      tokenVersion: seeded.tokenVersion,
     });
 
     await cleanupRaw.user.update({
@@ -206,7 +234,7 @@ describe("mobile shim identity resolver", () => {
     const token = await signMobileShimToken({
       sub: seeded.userId,
       legacyUserId: seeded.legacyUserId,
-      tokenVersion: 0,
+      tokenVersion: seeded.tokenVersion,
     });
 
     await cleanupRaw.mobileLegacyIdentity.update({
