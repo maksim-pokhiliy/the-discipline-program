@@ -1,12 +1,12 @@
 # apex-sunset — state (the board)
 
-**Updated:** 2026-08-07 — **Initiative FOUNDED.** Full recon done (3 parallel agents: legacy backend, iOS app, platform surface — distillate in `journal.md`); strategy ratified as D-1..D-5. Key facts a resuming session must not re-derive: the legacy DB holds ZERO athlete-generated data (users + catalogs + free-text program days only); the app is a read-only viewer hardcoded to the apex domain (DNS takeover = free repoint); the compat surface is 9 endpoints, contract already live-verified in `mobile-publish/legacy-contract.md`; the legacy has IDOR holes → retire FAST.
+**Updated:** 2026-08-07 (night) — **P0 CLOSED.** SSH access live (`ssh tdp-vps`), server recon done read-only, both databases dumped over SSH and restore-verified (counts exact vs live), backup cron verified alive (AS-6 closed). Key facts a resuming session must not re-derive: the legacy DB holds ZERO athlete-generated data (19 users, 640+321 program days, 4 catalogs); the app is a read-only viewer hardcoded to the apex domain (DNS takeover = free repoint); the compat surface is 9 endpoints, contract already live-verified in `mobile-publish/legacy-contract.md`; the legacy has IDOR holes AND an internet-reachable 5432 → retire FAST.
 
 ## Board
 
 | #   | Phase                        | Status     | Pointer                                      |
 | --- | ---------------------------- | ---------- | -------------------------------------------- |
-| P0  | Facts & safety net           | ⬜ pending | `plan.md` 0.1–0.5; ADR absorb-and-retire     |
+| P0  | Facts & safety net           | ✅ done    | `plan.md` 0.1–0.5 all ✅; journal 2026-08-07 |
 | P1  | The shim (`/api/v1/*`)       | ⬜ pending | D-1/D-4/D-5; `legacy-contract.md` = the spec |
 | P2  | Accounts (full users import) | ⬜ pending | D-3; dry-run on the P0 dump first            |
 | P3  | Rehearsal & cutover          | ⬜ pending | D-5 rehearsal; apex DNS → Vercel             |
@@ -14,7 +14,7 @@
 
 ## Next action
 
-**▶ P0 session half DONE (2026-08-07):** 0.1 clones current (`190d9fd` / `b780e61`, 0 behind) · 0.4 bcrypt compatible at library level (`bcryptjs.compare` takes `$2a/$2y/$2b`; real-hash proof rides P2.1) · 0.5 ADR-0043 + the `mobile-publish` successor note · 0.3 DNS half done (read-only Cloudflare MCP on Vladyslav's account; zone snapshot in `journal.md` — apex A `173.249.38.144` proxied is the ONLY VPS-pointing record; CF Worker route on `/api/v1/*` = new 3.2 cutover candidate). **Remaining, owner-side:** get the DUMP — fast path first: Vladyslav's daily Dropbox dump (AS-6 — ask for the folder/latest file, then verify: fresh date, both schemas, harness restore + row counts); SSH stays needed for the cutover-day snapshot and to confirm the cron lives. App Store Connect rides along — **AS-1 escalated: membership LAPSED (2026 not renewed), listing still live but delisting is a timer; $99 renewal = owner+Denys product call.** Vladyslav-facing process: owner's Trello workspace, owner-run board, Claude drafts the tickets (суть/требования/шаги/DoD). **Next build step (unblocked already): P1.1 (shim foundation) via `/step`; P2 waits on the verified dump.**
+**▶ P0 CLOSED (2026-08-07 night).** All five steps ✅ — see journal (SSH recon, dump + restore verification, AS-6 closed). Local assets a resuming session can use: dumps at `~/projects/contrib/tdp/dumps/2026-08-07/{prod,dev}.dump`; restored snapshot container `tdp-dump-verify` (PG 17.5-alpine, databases `prod_snap`/`dev_snap`) — the P2.1 dry-run playground. **Next: P1.1 (shim foundation) via `/step`** — `/api/v1` namespace + legacy bearer wrapper + `signin` + catalogs; golden tests against the docker harness (bump harness postgres 16→17-alpine while touching it). P2.1 (users import) is unblocked by the verified dump and can follow immediately after 1.1/1.2. Owner-side ride-alongs: **AS-1** ($99 membership renewal = owner+Denys product call) · the 5432-exposure ask to Vladyslav (bind to `127.0.0.1` — breaks nothing product-side; our charter forbids us touching the server) · Trello board setup when the owner creates the workspace.
 
 ## Open decisions awaiting ratification
 
@@ -31,3 +31,5 @@ AS-1 (App Store Connect access — future redesign + bus factor, NOT a cutover b
 - **Do NOT patch the legacy backend** (IDOR etc.) — it dies; and legacy prod stays inviolable until the final snapshot (charter Sacred).
 - `mobile-publish` is still ACTIVE in parallel until P4 closes it as superseded — don't double-book its MP- numbers; this initiative uses AS-.
 - The local legacy harness (`tdp/local/docker-compose.yml`, backend `localhost:8080/api/v1`, DB host 5433) is the golden-test target — recipe in `mobile-publish/journal.md`.
+- **Prod Postgres is 17.5; the harness compose pins `postgres:16-alpine`** — PG16 `pg_restore` cannot read PG17 custom-format dumps. Bump the harness image to `17-alpine` the first time a step touches it (P1.1). The restored prod snapshot lives in local container `tdp-dump-verify` (`prod_snap`/`dev_snap`).
+- Real prod `users` columns (drifted from `schema.sql`): `user_role_id`, `training_level_id`, `user_plan_id`, `is_enabled` — 8 of 19 users are disabled; the shim's auth + the P2.1 import must honor disabled semantics per the legacy contract.
