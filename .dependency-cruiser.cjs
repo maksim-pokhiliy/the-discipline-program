@@ -187,6 +187,20 @@ module.exports = {
     },
 
     {
+      name: "api-server-mobile-compat-no-cms-billing",
+      severity: "error",
+      comment:
+        "Mobile-compat serves the legacy iOS wire contract and is deliberately a " +
+        "self-contained, disposable surface: it dies wholesale when the app is " +
+        "redesigned. It legitimately reads IAM (credentials) and will read Coaching " +
+        "in step 1.3 (the publish snapshot behind GET /program), so those stay open. " +
+        "CMS and Billing have no business in a compat shim — deny them now, while the " +
+        "surface is small, rather than after someone reaches sideways.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/mobile-compat/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+    },
+
+    {
       name: "prisma-only-in-api-server",
       severity: "error",
       comment:

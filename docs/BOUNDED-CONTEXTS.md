@@ -42,6 +42,7 @@ The project already has a de-facto domain boundary — `schema.prisma` groups mo
 - **LMS** is the training surface — training plan metadata and athlete enrollments. Owned by `apps/platform`.
 - **Coaching** sits on top of LMS and IAM. Coaching owns coach-athlete relationships, notes, action items, and the coach dashboard read model.
 - **Billing** exists only in `schema.prisma` today. No contracts, no API, no UI. It is the one context where we still have a clean window to get the design right before any code is written against it.
+- **Mobile-compat** (supporting, added 2026-08-07 by apex-sunset P1.1) serves the legacy Spring wire contract under `/api/v1/*` so the unmodified App-Store iOS app can be repointed at this platform. It owns `MobileLegacyIdentity` (the legacy integer id ↔ `User` map) and the legacy catalogs as code constants. It reads IAM for credentials and will read Coaching in step 1.3 for the publish snapshot; `.dependency-cruiser.cjs` denies it CMS and Billing. Deliberately disposable — it is deleted wholesale when the app is redesigned, so nothing else should grow to depend on it.
 
 The rest of this document describes each context in detail: what it owns, which invariants protect it, which other contexts it depends on, and where it lives.
 
