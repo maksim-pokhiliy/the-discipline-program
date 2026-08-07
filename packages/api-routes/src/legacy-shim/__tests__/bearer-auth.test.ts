@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createMobileBearerAuth } from "../bearer-auth";
-import type { LegacyShimIdentity, LegacyShimResolution } from "../types";
+import type { LegacyShimHandler, LegacyShimIdentity, LegacyShimResolution } from "../types";
 
 const IDENTITY: LegacyShimIdentity = {
   userId: "cuid-1",
@@ -21,7 +21,7 @@ const denied: LegacyShimResolution = { kind: "denied" };
 
 describe("createMobileBearerAuth", () => {
   it("hands the resolved identity to the handler on success", async () => {
-    const handler = vi.fn(async () => new Response("ok", { status: 200 }));
+    const handler = vi.fn<LegacyShimHandler>(async () => new Response("ok", { status: 200 }));
     const route = createMobileBearerAuth(async () => authenticated)(handler);
 
     const response = await route(requestWith({ authorization: "tok" }), context);
