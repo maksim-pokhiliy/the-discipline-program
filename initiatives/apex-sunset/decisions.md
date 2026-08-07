@@ -8,13 +8,15 @@ This file is the SSOT for "why."
 
 ## Index
 
-| ID  | Topic                                                                      | Status   |
-| --- | -------------------------------------------------------------------------- | -------- |
-| D-1 | Absorb & retire via compat shim + domain takeover; zero Swift changes      | RATIFIED |
-| D-2 | The iOS app is a production surface, NOT legacy; redesign later, no sunset | RATIFIED |
-| D-3 | Users import: ALL rows, no activity filter; legacy integer id preserved    | RATIFIED |
-| D-4 | Publish becomes a snapshot in our DB; the shim serves snapshots            | RATIFIED |
-| D-5 | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal | RATIFIED |
+| ID  | Topic                                                                                  | Status   |
+| --- | -------------------------------------------------------------------------------------- | -------- |
+| D-1 | Absorb & retire via compat shim + domain takeover; zero Swift changes                  | RATIFIED |
+| D-2 | The iOS app is a production surface, NOT legacy; redesign later, no sunset             | RATIFIED |
+| D-3 | Users import: ALL rows, no activity filter; legacy integer id preserved                | RATIFIED |
+| D-4 | Publish becomes a snapshot in our DB; the shim serves snapshots                        | RATIFIED |
+| D-5 | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal             | RATIFIED |
+| D-6 | Legacy identity = separate `MobileLegacyIdentity` table; schema pulled forward to P1.1 | RATIFIED |
+| D-7 | Shim wire schemas live api-server-local — a stated ADR-0005 exception                  | RATIFIED |
 
 ---
 
@@ -56,3 +58,17 @@ This file is the SSOT for "why."
      Optional 4th: XCUITest smoke in CI (`deferred.md` AS-3).
 - **Rationale.** Golden tests catch more regressions than eyes; Appetize gives a literal "поднять экземпляр апки" from a Windows browser; the rehearsal proves the exact production binary against the shim before the irreversible-feeling DNS flip. After cutover, every phone running the app IS the e2e.
 - **Links.** iOS recon (build/signing facts); journal 2026-08-07.
+
+### D-6 — Legacy identity = a separate `MobileLegacyIdentity` table; the schema is pulled forward to P1.1
+
+- **Status:** RATIFIED (owner ratified the pull-forward at the P1.1 contour, 2026-08-08; shape ratified by the planner at the plan gate).
+- **Decision.** The legacy integer id + the legacy-only attributes live in a dedicated `MobileLegacyIdentity` table (1:1 FK → `User`, Cascade), NOT columns on `User`: `legacyUserId Int @unique`, `legacyRoleId`/`legacyPlanId`/`legacyLevelId Int` (all NOT NULL), `isEnabled Boolean @default(false)`, `firstName?`/`lastName?`. The map's SCHEMA is created at P1.1 because `signin` must emit `userId: Int` immediately; only its POPULATION + reconciliation stay at P2.1 (D-3). In prod the table is EMPTY until P2.1.
+- **Rationale.** Six-plus legacy-only attributes would pollute the core `User`; a dedicated table deletes cleanly at the future app redesign (ADR-0043 = absorb _and retire_). `legacyLevelId` is NOT NULL because the prod column is `NOT NULL DEFAULT 1` — the step prompt's suggested `Int?` modeled a state the source cannot produce and was superseded. `isEnabled` defaults false (fail-closed). This resolves the plan's deferred "id-map shape: column vs table" question in favor of a table.
+- **Links.** `plan.md` 1.1 + deferred design-tail; design.md D-5/D-6; D-3; journal 2026-08-08.
+
+### D-7 — Shim wire schemas live api-server-local — a stated ADR-0005 exception
+
+- **Status:** RATIFIED (planner, 2026-08-08; stated in PR #364's body).
+- **Decision.** The shim's request/response/params zod schemas live inside `endpoints/mobile-compat/` in `api-server`, NOT in `@repo/contracts`. The `jose` dep and the token + env modules also land in api-server (not `@repo/api-routes`), which keeps the whole compat surface in one deletable folder.
+- **Rationale.** ADR-0005 mandates all contract schemas in `@repo/contracts`, but that rule exists to SHARE schemas with TypeScript clients. The shim has no TS client — its consumer is the Swift app, over the wire — so the sharing benefit is nil, while the cost (a permanent legacy-shaped surface spread across `@repo/contracts`) is real. Self-containment serves the retire half of ADR-0043: the redesign deletes a directory, an exports entry, and a route folder. `api-routes` also has no `@repo/env` dependency today, so the bearer wrapper takes an injected resolver composed in the app rather than importing api-server (dep-cruiser `api-routes-no-api-server`).
+- **Links.** ADR-0005; design.md D-1/D-2; PR #364; journal 2026-08-08.
