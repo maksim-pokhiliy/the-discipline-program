@@ -55,6 +55,7 @@ export {
   RATE_LIMIT_TIER,
 } from "./rate-limit";
 export type {
+  CredentialIdentifierParse,
   CredentialsRateLimitConfig,
   RateLimiterPort,
   RateLimitResult,

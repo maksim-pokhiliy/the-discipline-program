@@ -119,6 +119,14 @@ describe("mobile shim signin", () => {
     });
   });
 
+  it("throws rather than denying when a legacy catalog id is not mapped", async () => {
+    const seeded = await seedUser({ legacyRoleId: 77, legacyPlanId: 88 });
+
+    await expect(
+      api.signin({ username: seeded.email, password: GOLDEN_PASSWORD }),
+    ).rejects.toThrow();
+  });
+
   it("denies a soft-deleted user", async () => {
     const seeded = await seedUser({});
 

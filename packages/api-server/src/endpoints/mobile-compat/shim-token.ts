@@ -33,8 +33,10 @@ export const signMobileShimToken = async (claims: MobileShimClaims): Promise<str
     .sign(getSigningKey());
 
 export const verifyMobileShimToken = async (token: string): Promise<MobileShimClaims | null> => {
+  const key = getSigningKey();
+
   try {
-    const { payload } = await jwtVerify(token, getSigningKey(), { algorithms: [ALGORITHM] });
+    const { payload } = await jwtVerify(token, key, { algorithms: [ALGORITHM] });
     const parsed = claimsSchema.safeParse(payload);
 
     return parsed.success ? parsed.data : null;

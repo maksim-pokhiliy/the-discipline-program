@@ -201,6 +201,23 @@ module.exports = {
     },
 
     {
+      name: "api-server-test-helpers-only-from-tests",
+      severity: "error",
+      comment:
+        "packages/api-server/src/test/ exports cleanupRaw — a RAW, un-extended PrismaClient " +
+        "that bypasses the soft-delete extension, so its delete() is a hard cascading delete " +
+        "and its findUnique() sees soft-deleted rows. It is exported (./test-helpers) purely " +
+        "so the platform-project golden suite can seed, since prisma-only-in-api-server " +
+        "forbids apps from importing @prisma/client directly. Test files in apps/* may reach " +
+        "it; production app code may not. In-package test-support helpers are unaffected.",
+      from: {
+        path: "^apps/",
+        pathNot: "(\\.(test|spec)\\.tsx?$|/__tests__/|/__fixtures__/)",
+      },
+      to: { path: "^packages/api-server/src/test/" },
+    },
+
+    {
       name: "prisma-only-in-api-server",
       severity: "error",
       comment:

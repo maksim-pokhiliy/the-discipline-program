@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,6 +27,17 @@ describe("api/v1 route mounting", () => {
       "/trainingLevel/all",
       "/userPlans",
     ]);
+  });
+
+  it.each([
+    ["auth/signin", "POST", "GET"],
+    ["trainingLevel/all", "GET", "POST"],
+    ["userPlans", "GET", "POST"],
+  ])("%s exports %s and not %s", (routePath, expectedVerb, forbiddenVerb) => {
+    const source = readFileSync(join(V1_ROOT, routePath, "route.ts"), "utf8");
+
+    expect(source).toMatch(new RegExp(`export const ${expectedVerb}\\b`));
+    expect(source).not.toMatch(new RegExp(`export const ${forbiddenVerb}\\b`));
   });
 });
 
@@ -124,10 +135,12 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
       });
 
       if (existing) {
-        await helpers.cleanupRaw.mobileLegacyIdentity.deleteMany({
-          where: { userId: existing.id },
-        });
-        await helpers.cleanupRaw.user.delete({ where: { id: existing.id } });
+        throw new Error(
+          `Refusing to run: ${fixture.email} already exists in the database this test is ` +
+            "pointed at. The golden seeds and then removes its own rows; deleting a row it " +
+            "did not create would cascade through real data. Check DATABASE_URL in " +
+            "apps/platform/.env.local, and remove the row by hand if it is a leftover.",
+        );
       }
 
       const user = await helpers.createTestUser({
@@ -150,6 +163,10 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
   });
 
   afterAll(async () => {
+    if (!helpers || createdUserIds.length === 0) {
+      return;
+    }
+
     await helpers.cleanupRaw.mobileLegacyIdentity.deleteMany({
       where: { userId: { in: createdUserIds } },
     });
@@ -185,7 +202,9 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
     const shimJson = JSON.parse(shim.body) as Record<string, unknown>;
     const legacyJson = JSON.parse(legacy.body) as Record<string, unknown>;
 
-    expect(shim.status).toBe(legacy.status);
+    expect(shim.status).toBe(200);
+    expect(legacy.status).toBe(200);
+    expect(shimJson.accessToken).toEqual(expect.any(String));
     expect(canonicalize({ ...shimJson, accessToken: null })).toEqual(
       canonicalize({ ...legacyJson, accessToken: null }),
     );
@@ -226,6 +245,44 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
     expectSameFailure(shim, legacy);
     expect(shim.status).not.toBe(400);
     expect(legacy.status).not.toBe(400);
+  });
+
+  it("matches the legacy failure for a username carrying a NUL byte", async () => {
+    const body = JSON.stringify({
+      username: `${helpers.GOLDEN_ATHLETE.email}${String.fromCharCode(0)}`,
+      password: helpers.GOLDEN_PASSWORD,
+    });
+    const shim = await hitShimSignin(body);
+    const legacy = await hitLegacySignin(body);
+
+    expectSameFailure(shim, legacy);
+    expect(shim.status).not.toBe(500);
+  });
+
+  it("matches the legacy refusal of a non-json content type", async () => {
+    const body = JSON.stringify({
+      username: helpers.GOLDEN_ATHLETE.email,
+      password: helpers.GOLDEN_PASSWORD,
+    });
+
+    const shimResponse = await signinRoute(
+      new Request("http://localhost:3001/api/v1/auth/signin", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body,
+      }),
+      routeContext,
+    );
+    const legacyResponse = await fetch(`${LEGACY_BASE}/auth/signin`, {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body,
+    });
+
+    expectSameFailure(
+      { status: shimResponse.status, body: await shimResponse.text() },
+      { status: legacyResponse.status, body: await legacyResponse.text() },
+    );
   });
 
   it("matches the legacy training level catalog, order included", async () => {

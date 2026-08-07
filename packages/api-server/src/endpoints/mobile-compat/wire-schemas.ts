@@ -1,8 +1,21 @@
 import { z } from "zod";
 
+const FIRST_PRINTABLE_CODE_POINT = 0x20;
+const DELETE_CODE_POINT = 0x7f;
+
+const isControlCharacter = (character: string): boolean => {
+  const codePoint = character.codePointAt(0) ?? FIRST_PRINTABLE_CODE_POINT;
+
+  return codePoint < FIRST_PRINTABLE_CODE_POINT || codePoint === DELETE_CODE_POINT;
+};
+
+const hasNoControlCharacters = (value: string): boolean => ![...value].some(isControlCharacter);
+
+const wireString = z.string().refine(hasNoControlCharacters);
+
 export const legacySigninRequestSchema = z.object({
-  username: z.string(),
-  password: z.string(),
+  username: wireString,
+  password: wireString,
 });
 
 export type LegacySigninRequest = z.infer<typeof legacySigninRequestSchema>;

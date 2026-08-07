@@ -11,4 +11,5 @@ export {
   withCredentialsRateLimit,
 } from "./with-rate-limit";
 export type { CredentialsRateLimitConfig } from "./with-rate-limit";
+export type { CredentialIdentifierParse } from "./read-credential-identifier";
 export { setRateLimiter, getRateLimiter, defaultRateLimiter } from "./rate-limiter-registry";

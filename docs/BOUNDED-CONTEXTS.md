@@ -337,6 +337,7 @@ Coaching   →   IAM, LMS
 CMS        →   IAM, Billing   (read-only)
 Billing    →   IAM
 Storage    →   (leaf supporting context)
+Mobile-compat → IAM, Coaching (planned, step 1.3)
 ```
 
 **Forbidden directions:**
@@ -347,6 +348,7 @@ Storage    →   (leaf supporting context)
 - `CMS → LMS`, `CMS → Coaching`.
 - `Billing → CMS`, `Billing → Coaching`.
 - `Storage → any domain`.
+- `Mobile-compat → CMS`, `Mobile-compat → Billing`. It reads IAM for credentials today and will read Coaching in step 1.3 for the publish snapshot; CMS and Billing have no business in a disposable compat shim. Enforced by `api-server-mobile-compat-no-cms-billing`.
 
 Every cross-context interaction is currently a read. Reads are preferable to writes because they do not require distributed transactions.
 

@@ -36,9 +36,19 @@ echo "==> bringing the harness up"
 docker compose -f "$COMPOSE_FILE" up -d --wait
 
 echo "==> applying legacy schema"
-psql_do </dev/null -c "SELECT 1" >/dev/null
-docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
-  <"$BACKEND_SRC/src/main/resources/schema.sql" >/dev/null 2>&1 || true
+# schema.sql is not idempotent: it re-CREATEs tables, so "already exists" is the expected
+# steady state. Anything else must surface rather than be swallowed.
+schema_log="$(mktemp)"
+if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+  <"$BACKEND_SRC/src/main/resources/schema.sql" >"$schema_log" 2>&1; then
+  if grep -qvE 'already exists|^$|^(CREATE|INSERT|SELECT|ALTER) ' "$schema_log"; then
+    echo "FAILED: applying schema.sql produced unexpected errors:" >&2
+    cat "$schema_log" >&2
+    rm -f "$schema_log"
+    exit 1
+  fi
+fi
+rm -f "$schema_log"
 
 echo "==> seeding catalogs to prod shape"
 psql_do -c "

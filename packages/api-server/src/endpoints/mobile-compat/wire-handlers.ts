@@ -14,13 +14,24 @@ export type MobileCompatRoutes = {
   userPlans: RouteHandler;
 };
 
+const JSON_CONTENT_TYPE = "application/json";
+
+const DENIED = { kind: "denied" } as const;
+
+const isJsonRequest = (request: Request): boolean =>
+  (request.headers.get("content-type") ?? "").includes(JSON_CONTENT_TYPE);
+
 export const createMobileCompatRoutes = (api: MobileCompatApi): MobileCompatRoutes => ({
   signin: async (request) => {
+    if (!isJsonRequest(request)) {
+      return renderLegacyShimOutcome(DENIED);
+    }
+
     const body = await readLegacyJsonBody(request);
     const parsed = legacySigninRequestSchema.safeParse(body);
 
     if (!parsed.success) {
-      return renderLegacyShimOutcome({ kind: "denied" });
+      return renderLegacyShimOutcome(DENIED);
     }
 
     return renderLegacyShimOutcome(await api.signin(parsed.data));

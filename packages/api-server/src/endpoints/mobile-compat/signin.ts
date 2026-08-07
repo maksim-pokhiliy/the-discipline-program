@@ -1,4 +1,6 @@
 import type { LegacyShimOutcome } from "@repo/api-routes/legacy-shim";
+import { InternalServerError } from "@repo/errors";
+import { logger } from "@repo/shared";
 
 import { prisma } from "../../db/client";
 import { iamAuthService } from "../iam/auth-service";
@@ -38,7 +40,13 @@ export const createSigninApi = (): SigninApi => ({
 
     const identity = user?.legacyIdentity;
 
-    if (!user || !identity || !identity.isEnabled) {
+    if (!identity) {
+      logger.warn("mobile_shim.signin.identity_missing", { userId: validated.id });
+
+      return DENIED;
+    }
+
+    if (!identity.isEnabled) {
       return DENIED;
     }
 
@@ -46,7 +54,10 @@ export const createSigninApi = (): SigninApi => ({
     const userPlan = findLegacyCatalogEntry(LEGACY_USER_PLANS, identity.legacyPlanId);
 
     if (!userRole || !userPlan) {
-      return DENIED;
+      throw new InternalServerError("Legacy catalog id is not mapped", {
+        legacyRoleId: identity.legacyRoleId,
+        legacyPlanId: identity.legacyPlanId,
+      });
     }
 
     const accessToken = await signMobileShimToken({

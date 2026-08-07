@@ -7,7 +7,10 @@ import { getClientIp } from "./ip-utils";
 import type { RateLimitTierValue } from "./rate-limit-tiers";
 import type { RateLimitResult } from "./rate-limiter-port";
 import { getRateLimiter } from "./rate-limiter-registry";
-import { readCredentialIdentifier } from "./read-credential-identifier";
+import {
+  type CredentialIdentifierParse,
+  readCredentialIdentifier,
+} from "./read-credential-identifier";
 
 const setRateLimitHeaders = (response: Response, result: RateLimitResult): void => {
   response.headers.set("X-RateLimit-Limit", String(result.limit));
@@ -99,6 +102,7 @@ export type CredentialsRateLimitConfig = {
   ipTier: RateLimitTierValue;
   identifierTier: RateLimitTierValue;
   identifierFields: readonly string[];
+  identifierParse?: CredentialIdentifierParse;
 };
 
 export const withCredentialsRateLimit =
@@ -117,7 +121,11 @@ export const withCredentialsRateLimit =
 
       ipResult = await limiter.check(`ip:${ip}`, config.ipTier.limit, config.ipTier.windowMs);
 
-      const identifier = await readCredentialIdentifier(request, config.identifierFields);
+      const identifier = await readCredentialIdentifier(
+        request,
+        config.identifierFields,
+        config.identifierParse,
+      );
 
       if (identifier) {
         const identifierResult = await limiter.check(

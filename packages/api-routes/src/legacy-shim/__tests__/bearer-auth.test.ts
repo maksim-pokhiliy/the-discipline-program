@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { getMonitoring, type MonitoringPort, setMonitoring } from "../../monitoring";
+import { getContext } from "../../request-context";
 import { createMobileBearerAuth } from "../bearer-auth";
 import type { LegacyShimHandler, LegacyShimIdentity, LegacyShimResolution } from "../types";
 
@@ -18,6 +20,49 @@ const requestWith = (headers: Record<string, string>): Request =>
 
 const authenticated: LegacyShimResolution = { kind: "authenticated", identity: IDENTITY };
 const denied: LegacyShimResolution = { kind: "denied" };
+
+const recordingMonitoring = (sink: Array<string | null>): MonitoringPort => ({
+  captureException: () => "",
+  captureMessage: () => "",
+  setUser: (user) => {
+    sink.push(user === null ? null : user.id);
+  },
+  setContext: () => undefined,
+  flush: async () => true,
+});
+
+describe("createMobileBearerAuth identity lifecycle", () => {
+  it("binds the identity for the duration of the handler and releases it after", async () => {
+    const seen: Array<string | null> = [];
+
+    setMonitoring(recordingMonitoring(seen));
+
+    const route = createMobileBearerAuth(async () => authenticated)(async () => {
+      seen.push(getContext()?.userId ?? "no-context");
+
+      return new Response("ok");
+    });
+
+    await route(requestWith({ authorization: "tok" }), context);
+
+    expect(seen).toEqual([IDENTITY.userId, IDENTITY.userId, null]);
+    expect(getMonitoring()).toBeDefined();
+  });
+
+  it("releases the identity even when the handler throws", async () => {
+    const released: Array<string | null> = [];
+
+    setMonitoring(recordingMonitoring(released));
+
+    const route = createMobileBearerAuth(async () => authenticated)(async () => {
+      throw new Error("boom");
+    });
+
+    await route(requestWith({ authorization: "tok" }), context);
+
+    expect(released).toEqual([IDENTITY.userId, null]);
+  });
+});
 
 describe("createMobileBearerAuth", () => {
   it("hands the resolved identity to the handler on success", async () => {
@@ -82,6 +127,17 @@ describe("createMobileBearerAuth", () => {
 
     expect(response.status).not.toBe(403);
     expect(response.status).toBeGreaterThanOrEqual(500);
+  });
+
+  it("strips the Bearer prefix case-insensitively, since the scheme is not case-sensitive", async () => {
+    const resolve = vi.fn(async () => authenticated);
+    const route = createMobileBearerAuth(resolve)(async () => new Response("ok"));
+
+    await route(requestWith({ authorization: "bearer tok.value" }), context);
+    await route(requestWith({ authorization: "BEARER tok.value" }), context);
+
+    expect(resolve).toHaveBeenNthCalledWith(1, "tok.value");
+    expect(resolve).toHaveBeenNthCalledWith(2, "tok.value");
   });
 
   it("passes a Bearer-prefixed token through to the resolver unprefixed", async () => {

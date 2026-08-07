@@ -2,7 +2,7 @@ import type { LegacyShimOutcome } from "./types";
 
 const LEGACY_DENIED_STATUS = 403;
 
-export const legacyShimOk = (payload: unknown): Response =>
+export const legacyShimOk = <TPayload>(payload: TPayload): Response =>
   new Response(JSON.stringify(payload), {
     status: 200,
     headers: { "content-type": "application/json" },

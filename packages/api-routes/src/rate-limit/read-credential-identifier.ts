@@ -1,5 +1,7 @@
 const DEFAULT_IDENTIFIER_FIELDS = ["email"] as const;
 
+export type CredentialIdentifierParse = "json" | "content-type";
+
 const normalizeIdentifier = (raw: string | null): string | null => {
   if (!raw) {
     return null;
@@ -58,12 +60,17 @@ const fromJsonBody = (body: string, fields: readonly string[]): string | null =>
 export const readCredentialIdentifier = async (
   request: Request,
   fields: readonly string[] = DEFAULT_IDENTIFIER_FIELDS,
+  parse: CredentialIdentifierParse = "content-type",
 ): Promise<string | null> => {
   try {
     const body = await request.clone().text();
 
     if (!body) {
       return null;
+    }
+
+    if (parse === "json") {
+      return fromJsonBody(body, fields);
     }
 
     const contentType = request.headers.get("content-type") ?? "";

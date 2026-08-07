@@ -40,6 +40,10 @@ export const resolveMobileShimIdentity = async (token: string): Promise<LegacySh
     return DENIED;
   }
 
+  if (identity.legacyUserId !== claims.legacyUserId) {
+    return DENIED;
+  }
+
   return {
     kind: "authenticated",
     identity: {

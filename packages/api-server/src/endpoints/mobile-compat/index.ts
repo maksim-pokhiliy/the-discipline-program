@@ -1,3 +1,5 @@
+import "../../instrumentation/ensure-di";
+
 import { createMobileCompatApi } from "./create-mobile-compat-api";
 import { createMobileCompatRoutes } from "./wire-handlers";
 
