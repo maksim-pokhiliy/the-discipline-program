@@ -36,19 +36,21 @@ echo "==> bringing the harness up"
 docker compose -f "$COMPOSE_FILE" up -d --wait
 
 echo "==> applying legacy schema"
-# schema.sql is not idempotent: it re-CREATEs tables, so "already exists" is the expected
-# steady state. Anything else must surface rather than be swallowed.
-schema_log="$(mktemp)"
-if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
-  <"$BACKEND_SRC/src/main/resources/schema.sql" >"$schema_log" 2>&1; then
-  if grep -qvE 'already exists|^$|^(CREATE|INSERT|SELECT|ALTER) ' "$schema_log"; then
-    echo "FAILED: applying schema.sql produced unexpected errors:" >&2
-    cat "$schema_log" >&2
-    rm -f "$schema_log"
+# Applied best-effort, and its exit status is deliberately not trusted: psql without
+# ON_ERROR_STOP returns 0 even when statements fail, and on any run after the first this
+# file legitimately errors — individual_programs lacks IF NOT EXISTS, and the three catalog
+# INSERTs collide with their own primary keys. Those errors ARE the steady state.
+# The postcondition is checked below instead, which is the thing that actually matters.
+docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+  <"$BACKEND_SRC/src/main/resources/schema.sql" >/dev/null 2>&1 || true
+
+echo "==> verifying schema postcondition"
+for table in training_levels user_roles user_plans users general_programs individual_programs; do
+  if ! psql_do -tAc "SELECT to_regclass('public.$table')" | grep -q "^$table$"; then
+    echo "FAILED: table '$table' is missing after applying schema.sql" >&2
     exit 1
   fi
-fi
-rm -f "$schema_log"
+done
 
 echo "==> seeding catalogs to prod shape"
 psql_do -c "
