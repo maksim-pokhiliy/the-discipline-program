@@ -13,3 +13,20 @@ Append-only. One entry per session/step.
 - **Corrections the owner made to the first strategy draft** (kept for the trail): the "monthly payment push" fear was defused (it's local, not server); "app as legacy / sunset trajectory" reframed per D-2; users inventory dropped per D-3.
 - **Founded** `initiatives/apex-sunset/` (charter, plan P0–P4, D-1..D-5, AS-1..AS-5), registered in `ACTIVE` alongside `post-uat` + `mobile-publish` (the latter closes as superseded at P4). Memory written: `mobile-app-is-product-not-legacy`.
 - **Next:** P0 (fetch clones · prod `pg_dump` · access inventory · bcrypt check · absorb-and-retire ADR).
+
+## 2026-08-07 (later) — Cloudflare access + DNS snapshot (P0.3, DNS half)
+
+- **Cloudflare MCP wired** per the official agent-setup prompt (`claude plugin marketplace add cloudflare/skills` + `claude plugin install cloudflare@cloudflare`), OAuth **read-only** (deliberate least-privilege — write comes point-in-time at P3 via a scoped DNS-edit token for acme + a re-auth or manual edit for the flip). Account = Vladyslav's (`b5eda73f…`), the owner has login access — "DNS control" of P0.3 is CONFIRMED hands-on.
+- **Zone snapshot** (`thedisciplineprogram.com`, id `57d049c3…`, Free plan, 10 records):
+  - **A @ → `173.249.38.144`, `proxied: true`** — the ONLY record pointing at the VPS; the whole legacy API (incl. `/dev-api`) rides this one apex A record, and it sits BEHIND the Cloudflare proxy (edge TLS is Cloudflare's already).
+  - `www` / `platform` / `admin` → unproxied CNAMEs to `*.vercel-dns-017.com` + three `_vercel` TXT verifications — the Vercel trio is untouched by the cutover.
+  - Mail is isolated on `send.*` (Resend via SES: MX + SPF + DKIM) — independent of the VPS; nothing to unwind.
+- **Consequences for P3:** the cutover is ONE record edit (apex A → Vercel; plus a `_vercel` TXT for apex verification). AND the `proxied: true` apex unlocks a better option than a raw DNS flip: a **Cloudflare Worker route on `thedisciplineprogram.com/api/v1/*` proxying to the shim** — instant, per-path, instantly revertible (disable the route), zero DNS propagation risk, mail/rest untouched. Recorded as a 3.2 design candidate (Free-plan Workers 100k req/day is plenty for the app's traffic). The VPS IP for SSH/pg_dump (P0.2/0.3 remainder) is `173.249.38.144` (Contabo GmbH, `vmi2710168.contaboserver.net`).
+
+## 2026-08-07 (later still) — P0 session half: 0.1 + 0.4 + 0.5 done
+
+- **0.1 clones fetched — both CURRENT:** backend HEAD `190d9fd` == `origin/master` (0 behind), iOS on `develop` `b780e61` (0 behind master). The recon and `legacy-contract.md` describe today's prod code; nothing shipped since the initiative's facts were gathered.
+- **0.4 bcrypt compatibility VERIFIED (library level):** the platform validates passwords with `bcryptjs.compare` (`endpoints/iam/auth-service.ts`); it accepts `$2a` (Spring `BCryptPasswordEncoder`), `$2y` (htpasswd), and `$2b` prefixes (prefix-substitution test — digest is identical across variants for ASCII passwords). Legacy hashes carry over as-is; cost is read from the hash, so legacy `$2a$10` verifies fine against our `BCRYPT_COST_FACTOR: 12` default (optional upgrade-on-login re-hash = a P2.1 detail). Final proof on REAL prod hashes stays inside the P2.1 gate (sampled sign-ins on the dump dry-run) as planned.
+- **0.5 ADR drafted + successor pointer placed:** `docs/adr/0043-absorb-and-retire-legacy-mobile-stack.md` (Accepted; supersedes the `mobile-publish` "legacy is sacred" half, keeps DB-inviolability + overwrite-guard until P3/P4) + the successor note in `mobile-publish/charter.md` Sacred.
+- **Process for Vladyslav ratified by the owner:** a Trello board in the OWNER's workspace (his account, new workspace; Vladyslav invited) — owner runs the board by hand, Claude drafts short tickets (суть / требования / шаги / DoD), so Vladyslav stays in the loop while our SSOT remains the initiative docs. Announce messages (to Vladyslav + to the shared chat, incl. "Contabo subscription ends after cutover") drafted this session.
+- **P0 remainder (owner-side):** VPS SSH access → `pg_dump` of both schemas (0.2/0.3) · App Store Connect access ride-along (AS-1).
