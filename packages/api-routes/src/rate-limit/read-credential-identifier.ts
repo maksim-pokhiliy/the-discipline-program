@@ -1,4 +1,6 @@
-const IDENTIFIER_FIELD = "email";
+const DEFAULT_IDENTIFIER_FIELDS = ["email"] as const;
+
+export type CredentialIdentifierParse = "json" | "content-type";
 
 const normalizeIdentifier = (raw: string | null): string | null => {
   if (!raw) {
@@ -10,15 +12,32 @@ const normalizeIdentifier = (raw: string | null): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
-const fromFormBody = (body: string): string | null => {
+const firstPresent = (
+  fields: readonly string[],
+  read: (field: string) => string | null,
+): string | null => {
+  for (const field of fields) {
+    const value = normalizeIdentifier(read(field));
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
+const fromFormBody = (body: string, fields: readonly string[]): string | null => {
   try {
-    return normalizeIdentifier(new URLSearchParams(body).get(IDENTIFIER_FIELD));
+    const params = new URLSearchParams(body);
+
+    return firstPresent(fields, (field) => params.get(field));
   } catch {
     return null;
   }
 };
 
-const fromJsonBody = (body: string): string | null => {
+const fromJsonBody = (body: string, fields: readonly string[]): string | null => {
   try {
     const parsed: unknown = JSON.parse(body);
 
@@ -26,15 +45,23 @@ const fromJsonBody = (body: string): string | null => {
       return null;
     }
 
-    const value = (parsed as Record<string, unknown>)[IDENTIFIER_FIELD];
+    const record = parsed as Record<string, unknown>;
 
-    return typeof value === "string" ? normalizeIdentifier(value) : null;
+    return firstPresent(fields, (field) => {
+      const value = record[field];
+
+      return typeof value === "string" ? value : null;
+    });
   } catch {
     return null;
   }
 };
 
-export const readCredentialIdentifier = async (request: Request): Promise<string | null> => {
+export const readCredentialIdentifier = async (
+  request: Request,
+  fields: readonly string[] = DEFAULT_IDENTIFIER_FIELDS,
+  parse: CredentialIdentifierParse = "content-type",
+): Promise<string | null> => {
   try {
     const body = await request.clone().text();
 
@@ -42,13 +69,17 @@ export const readCredentialIdentifier = async (request: Request): Promise<string
       return null;
     }
 
+    if (parse === "json") {
+      return fromJsonBody(body, fields);
+    }
+
     const contentType = request.headers.get("content-type") ?? "";
 
     if (contentType.includes("application/json")) {
-      return fromJsonBody(body);
+      return fromJsonBody(body, fields);
     }
 
-    return fromFormBody(body) ?? fromJsonBody(body);
+    return fromFormBody(body, fields) ?? fromJsonBody(body, fields);
   } catch {
     return null;
   }

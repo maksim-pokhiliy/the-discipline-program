@@ -1,3 +1,5 @@
+import "../../instrumentation/ensure-di";
+
 export {
   MS_PER_DAY,
   RETENTION_ACTION_ITEM_TTL_DAYS,

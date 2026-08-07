@@ -6,8 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 
-import { getMonitoring } from "./monitoring";
-import { updateContext } from "./request-context";
+import { bindIdentity, releaseIdentity } from "./identity-binding";
 import { withErrorHandling } from "./route-helpers";
 import type { AuthenticatedHandler, RouteHandler } from "./types";
 
@@ -21,15 +20,6 @@ const isRoleAllowed = (role: UserRole | null | undefined, allowed: AllowedRoles)
   }
 
   return role !== null && role !== undefined && allowed.includes(role);
-};
-
-const bindIdentity = (userId: string, role?: string): void => {
-  updateContext({ userId, ...(role && { role }) });
-  getMonitoring()?.setUser({ id: userId, ...(role && { role }) });
-};
-
-const releaseIdentity = (): void => {
-  getMonitoring()?.setUser(null);
 };
 
 const buildWrapper =

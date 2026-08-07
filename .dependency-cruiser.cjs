@@ -187,6 +187,38 @@ module.exports = {
     },
 
     {
+      name: "api-server-mobile-compat-no-cms-billing",
+      severity: "error",
+      comment:
+        "Mobile-compat serves the legacy iOS wire contract and is deliberately a " +
+        "self-contained, disposable surface: it dies wholesale when the app is " +
+        "redesigned. It legitimately reads IAM (credentials) and will read Coaching " +
+        "in step 1.3 (the publish snapshot behind GET /program), so those stay open. " +
+        "CMS and Billing have no business in a compat shim — deny them now, while the " +
+        "surface is small, rather than after someone reaches sideways.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/mobile-compat/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+    },
+
+    {
+      name: "api-server-test-helpers-only-from-tests",
+      severity: "error",
+      comment:
+        "packages/api-server/src/test/ exports cleanupRaw — a RAW, un-extended PrismaClient " +
+        "that bypasses the soft-delete extension, so its delete() is a hard cascading delete " +
+        "and its findUnique() sees soft-deleted rows. It is exported (./test-helpers) purely " +
+        "so the platform-project golden suite can seed, since prisma-only-in-api-server " +
+        "forbids apps from importing @prisma/client directly. Test files may reach it; " +
+        "non-test code in any app or package may not. The api-server package itself is " +
+        "exempt — its own test-support helpers live here.",
+      from: {
+        path: "^(apps|packages)/",
+        pathNot: "(\\.(test|spec)\\.tsx?$|/__tests__/|/__fixtures__/|^packages/api-server/)",
+      },
+      to: { path: "^packages/api-server/src/test/" },
+    },
+
+    {
       name: "prisma-only-in-api-server",
       severity: "error",
       comment:

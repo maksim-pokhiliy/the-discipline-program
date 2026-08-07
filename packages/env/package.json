@@ -10,6 +10,7 @@
     "./blob": "./src/blob.ts",
     "./email": "./src/email.ts",
     "./mobile-publish": "./src/mobile-publish.ts",
+    "./mobile-shim": "./src/mobile-shim.ts",
     "./rate-limit": "./src/rate-limit.ts",
     "./sentry": "./src/sentry.ts"
   },
