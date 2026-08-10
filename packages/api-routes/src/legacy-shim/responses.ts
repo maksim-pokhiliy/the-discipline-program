@@ -1,6 +1,10 @@
-import type { LegacyShimOutcome } from "./types";
+import type { LegacyShimOutcome, LegacyUserOutcome } from "./types";
 
 const LEGACY_DENIED_STATUS = 403;
+const LEGACY_OK_EMPTY_STATUS = 200;
+const LEGACY_BAD_REQUEST_STATUS = 400;
+const LEGACY_UNAUTHORIZED_STATUS = 401;
+const LEGACY_NOT_FOUND_STATUS = 404;
 
 export const legacyShimOk = (payload: unknown): Response =>
   new Response(JSON.stringify(payload), {
@@ -14,3 +18,32 @@ export const legacyShimDenied = (): Response =>
 export const renderLegacyShimOutcome = <TPayload>(
   outcome: LegacyShimOutcome<TPayload>,
 ): Response => (outcome.kind === "ok" ? legacyShimOk(outcome.payload) : legacyShimDenied());
+
+export const legacyShimOkEmpty = (): Response =>
+  new Response(null, { status: LEGACY_OK_EMPTY_STATUS });
+
+export const legacyShimBadRequest = (): Response =>
+  new Response(null, { status: LEGACY_BAD_REQUEST_STATUS });
+
+export const legacyShimUnauthorized = (): Response =>
+  new Response(null, { status: LEGACY_UNAUTHORIZED_STATUS });
+
+export const legacyShimNotFound = (): Response =>
+  new Response(null, { status: LEGACY_NOT_FOUND_STATUS });
+
+export const renderLegacyUserOutcome = <TPayload>(
+  outcome: LegacyUserOutcome<TPayload>,
+): Response => {
+  switch (outcome.kind) {
+    case "ok-json":
+      return legacyShimOk(outcome.payload);
+    case "ok-empty":
+      return legacyShimOkEmpty();
+    case "not-found":
+      return legacyShimNotFound();
+    case "unauthorized":
+      return legacyShimUnauthorized();
+    case "bad-request":
+      return legacyShimBadRequest();
+  }
+};

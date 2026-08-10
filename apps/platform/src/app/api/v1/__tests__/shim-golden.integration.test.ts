@@ -29,6 +29,9 @@ describe("api/v1 route mounting", () => {
     expect(collectRouteFiles(V1_ROOT).sort()).toEqual([
       "/auth/signin",
       "/trainingLevel/all",
+      "/user",
+      "/user/[id]",
+      "/user/changePassword",
       "/userPlans",
     ]);
   });
@@ -37,6 +40,9 @@ describe("api/v1 route mounting", () => {
     ["auth/signin", "POST", "GET"],
     ["trainingLevel/all", "GET", "POST"],
     ["userPlans", "GET", "POST"],
+    ["user/[id]", "GET", "POST"],
+    ["user", "PUT", "POST"],
+    ["user/changePassword", "PATCH", "POST"],
   ])("%s exports %s and not %s", (routePath, expectedVerb, forbiddenVerb) => {
     const source = readFileSync(join(V1_ROOT, routePath, "route.ts"), "utf8");
 
@@ -74,6 +80,26 @@ describe("mobile shim signin rate limit configuration", () => {
 
 const SHOULD_RUN = process.env.RUN_LEGACY_INTEGRATION === "1";
 const LEGACY_BASE = "http://localhost:8080/api/v1";
+const POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS = 20_000;
+
+type UserRouteFn = (
+  request: Request,
+  context: { params: Promise<Record<string, string> | undefined> },
+) => Promise<Response>;
+
+const GOLDEN_ATHLETE_PROFILE = {
+  id: 1001,
+  isEnabled: true,
+  username: "athlete@tdp.local",
+  userRole: { id: 1, name: "USER" },
+  userPlan: { id: 1, name: "General" },
+  trainingLevel: { id: 2, name: "Pro" },
+  firstName: "Golden",
+  lastName: "Athlete",
+  phoneNumber: "+1-555-0100",
+  dateOfBirth: "1990-05-01",
+  team: null,
+};
 
 type Probe = { status: number; body: string };
 
@@ -112,7 +138,12 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
   let signinRoute: (request: Request, context: typeof routeContext) => Promise<Response>;
   let trainingLevelsRoute: (request: Request, context: typeof routeContext) => Promise<Response>;
   let userPlansRoute: (request: Request, context: typeof routeContext) => Promise<Response>;
+  let getUserRoute: UserRouteFn;
+  let updateUserRoute: UserRouteFn;
+  let changePasswordRoute: UserRouteFn;
   let helpers: typeof ApiServerTestHelpers;
+  let athleteShimToken: string;
+  let athleteLegacyToken: string;
   const createdUserIds: string[] = [];
 
   const hitShimSignin = async (body: string): Promise<Probe> => {
@@ -145,19 +176,109 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
     expect(legacy.body).toBe("");
   };
 
+  const authHeaders = (token: string): Record<string, string> =>
+    token ? { Authorization: token } : {};
+
+  const shimTokenFor = async (email: string, password: string): Promise<string> => {
+    const probe = await hitShimSignin(JSON.stringify({ username: email, password }));
+
+    return (JSON.parse(probe.body) as { accessToken: string }).accessToken;
+  };
+
+  const legacyTokenFor = async (email: string, password: string): Promise<string> => {
+    const probe = await hitLegacySignin(JSON.stringify({ username: email, password }));
+
+    return (JSON.parse(probe.body) as { accessToken: string }).accessToken;
+  };
+
+  const hitShimGetUser = async (id: number, token: string): Promise<Probe> => {
+    const response = await getUserRoute(
+      new Request(`http://localhost:3001/api/v1/user/${id}`, { headers: authHeaders(token) }),
+      { params: Promise.resolve({ id: String(id) }) },
+    );
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const hitLegacyGetUser = async (id: number, token: string): Promise<Probe> => {
+    const response = await fetch(`${LEGACY_BASE}/user/${id}`, { headers: authHeaders(token) });
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const hitShimPutUser = async (body: string, token: string): Promise<Probe> => {
+    const response = await updateUserRoute(
+      new Request("http://localhost:3001/api/v1/user", {
+        method: "PUT",
+        headers: { "content-type": "application/json", ...authHeaders(token) },
+        body,
+      }),
+      routeContext,
+    );
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const hitLegacyPutUser = async (body: string, token: string): Promise<Probe> => {
+    const response = await fetch(`${LEGACY_BASE}/user`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", ...authHeaders(token) },
+      body,
+    });
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const hitShimChangePassword = async (body: string, token: string): Promise<Probe> => {
+    const response = await changePasswordRoute(
+      new Request("http://localhost:3001/api/v1/user/changePassword", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", ...authHeaders(token) },
+        body,
+      }),
+      routeContext,
+    );
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const hitLegacyChangePassword = async (body: string, token: string): Promise<Probe> => {
+    const response = await fetch(`${LEGACY_BASE}/user/changePassword`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", ...authHeaders(token) },
+      body,
+    });
+
+    return { status: response.status, body: await response.text() };
+  };
+
   beforeAll(async () => {
     loadPlatformEnv();
 
-    const [signinModule, levelsModule, plansModule, helpersModule] = await Promise.all([
+    const [
+      signinModule,
+      levelsModule,
+      plansModule,
+      getUserModule,
+      updateUserModule,
+      changePasswordModule,
+      helpersModule,
+    ] = await Promise.all([
       import("../auth/signin/route"),
       import("../trainingLevel/all/route"),
       import("../userPlans/route"),
+      import("../user/[id]/route"),
+      import("../user/route"),
+      import("../user/changePassword/route"),
       import("@repo/api-server/test-helpers"),
     ]);
 
     signinRoute = signinModule.POST;
     trainingLevelsRoute = levelsModule.GET;
     userPlansRoute = plansModule.GET;
+    getUserRoute = getUserModule.GET;
+    updateUserRoute = updateUserModule.PUT;
+    changePasswordRoute = changePasswordModule.PATCH;
     helpers = helpersModule;
 
     for (const fixture of helpers.GOLDEN_FIXTURE_USERS) {
@@ -191,7 +312,13 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
         lastName: fixture.lastName,
       });
     }
-  });
+
+    athleteShimToken = await shimTokenFor(helpers.GOLDEN_ATHLETE.email, helpers.GOLDEN_PASSWORD);
+    athleteLegacyToken = await legacyTokenFor(
+      helpers.GOLDEN_ATHLETE.email,
+      helpers.GOLDEN_PASSWORD,
+    );
+  }, POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS);
 
   afterAll(async () => {
     if (!helpers || createdUserIds.length === 0) {
@@ -395,5 +522,190 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
 
     expect(probe.status).toBe(500);
     expect(probe.status).not.toBe(403);
+  });
+
+  it(
+    "serves a byte-identical profile after an edit, shim and legacy alike",
+    { timeout: POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS },
+    async () => {
+      const body = JSON.stringify(GOLDEN_ATHLETE_PROFILE);
+      const [shimPut, legacyPut] = await Promise.all([
+        hitShimPutUser(body, athleteShimToken),
+        hitLegacyPutUser(body, athleteLegacyToken),
+      ]);
+
+      expect(shimPut.status).toBe(200);
+      expect(legacyPut.status).toBe(200);
+      expect(canonicalize(JSON.parse(shimPut.body))).toEqual(
+        canonicalize(JSON.parse(legacyPut.body)),
+      );
+
+      const [shimGet, legacyGet] = await Promise.all([
+        hitShimGetUser(1001, athleteShimToken),
+        hitLegacyGetUser(1001, athleteLegacyToken),
+      ]);
+
+      expect(shimGet.status).toBe(200);
+      expect(legacyGet.status).toBe(200);
+      expect(canonicalize(JSON.parse(shimGet.body))).toEqual(
+        canonicalize(JSON.parse(legacyGet.body)),
+      );
+      expect(canonicalize(JSON.parse(shimGet.body))).toEqual(canonicalize(GOLDEN_ATHLETE_PROFILE));
+    },
+  );
+
+  it("returns 404 for a profile id that is not the caller's, shim and legacy alike", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetUser(999999, athleteShimToken),
+      hitLegacyGetUser(999999, athleteLegacyToken),
+    ]);
+
+    expect(shim.status).toBe(404);
+    expect(legacy.status).toBe(404);
+  });
+
+  it("collapses a tokenless profile read to 403 on both, the sign-out signal", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetUser(1001, ""),
+      hitLegacyGetUser(1001, ""),
+    ]);
+
+    expect(shim.status).toBe(403);
+    expect(legacy.status).toBe(403);
+  });
+
+  it("rejects an edit whose body id is not the caller's with 404 on both", async () => {
+    const body = JSON.stringify({ ...GOLDEN_ATHLETE_PROFILE, id: 999999 });
+    const [shim, legacy] = await Promise.all([
+      hitShimPutUser(body, athleteShimToken),
+      hitLegacyPutUser(body, athleteLegacyToken),
+    ]);
+
+    expect(shim.status).toBe(404);
+    expect(legacy.status).toBe(404);
+  });
+
+  it(
+    "rejects a wrong old password with 401 on both, never the 403 sign-out",
+    { timeout: POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS },
+    async () => {
+      const body = JSON.stringify({
+        userId: 1001,
+        oldPassword: "WrongButLong123!",
+        newPassword: "NewPassw0rd!23",
+      });
+      const [shim, legacy] = await Promise.all([
+        hitShimChangePassword(body, athleteShimToken),
+        hitLegacyChangePassword(body, athleteLegacyToken),
+      ]);
+
+      expect(shim.status).toBe(401);
+      expect(shim.status).not.toBe(403);
+      expect(legacy.status).toBe(401);
+    },
+  );
+
+  it("rejects a reused password with 400 on both", async () => {
+    const body = JSON.stringify({
+      userId: 1001,
+      oldPassword: helpers.GOLDEN_PASSWORD,
+      newPassword: helpers.GOLDEN_PASSWORD,
+    });
+    const [shim, legacy] = await Promise.all([
+      hitShimChangePassword(body, athleteShimToken),
+      hitLegacyChangePassword(body, athleteLegacyToken),
+    ]);
+
+    expect(shim.status).toBe(400);
+    expect(legacy.status).toBe(400);
+  });
+
+  it("rejects a new password below the platform minimum with 400 on both", async () => {
+    const body = JSON.stringify({
+      userId: 1001,
+      oldPassword: helpers.GOLDEN_PASSWORD,
+      newPassword: "abc",
+    });
+    const [shim, legacy] = await Promise.all([
+      hitShimChangePassword(body, athleteShimToken),
+      hitLegacyChangePassword(body, athleteLegacyToken),
+    ]);
+
+    expect(shim.status).toBe(400);
+    expect(legacy.status).toBe(400);
+  });
+
+  it(
+    "changes the password end-to-end on the shim and re-authenticates with the new one",
+    { timeout: POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS },
+    async () => {
+      const email = `shim-chpw-golden-${crypto.randomUUID().slice(0, 8)}@test.local`;
+      const user = await helpers.createTestUser({ email, password: helpers.GOLDEN_BCRYPT_HASH });
+
+      createdUserIds.push(user.id);
+
+      const legacyUserId = helpers.mintTestLegacyUserId();
+
+      await helpers.createTestLegacyIdentity(user.id, {
+        legacyUserId,
+        legacyRoleId: 1,
+        legacyPlanId: 1,
+        legacyLevelId: 2,
+        isEnabled: true,
+      });
+
+      const token = await shimTokenFor(email, helpers.GOLDEN_PASSWORD);
+      const changed = await hitShimChangePassword(
+        JSON.stringify({
+          userId: legacyUserId,
+          oldPassword: helpers.GOLDEN_PASSWORD,
+          newPassword: "NewPassw0rd!23",
+        }),
+        token,
+      );
+
+      expect(changed.status).toBe(200);
+      expect(changed.body).toBe("");
+
+      const reauth = await hitShimSignin(
+        JSON.stringify({ username: email, password: "NewPassw0rd!23" }),
+      );
+      const stale = await hitShimSignin(
+        JSON.stringify({ username: email, password: helpers.GOLDEN_PASSWORD }),
+      );
+
+      expect(reauth.status).toBe(200);
+      expect(stale.status).toBe(403);
+    },
+  );
+
+  it("closes the legacy GET IDOR: a foreign profile is 404 on the shim but 200 on legacy", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetUser(1002, athleteShimToken),
+      hitLegacyGetUser(1002, athleteLegacyToken),
+    ]);
+
+    expect(shim.status).toBe(404);
+    expect(legacy.status).toBe(200);
+  });
+
+  it("refuses to edit a foreign profile: shim 404 with no write to the shared admin row", async () => {
+    const body = JSON.stringify({ ...GOLDEN_ATHLETE_PROFILE, id: 1002 });
+    const shim = await hitShimPutUser(body, athleteShimToken);
+
+    expect(shim.status).toBe(404);
+  });
+
+  it("requires a token for changePassword where legacy is permitAll", async () => {
+    const body = JSON.stringify({
+      userId: 1001,
+      oldPassword: "WrongButLong123!",
+      newPassword: "NewPassw0rd!23",
+    });
+    const shim = await hitShimChangePassword(body, "");
+    const legacy = await hitLegacyChangePassword(body, "");
+
+    expect(shim.status).toBe(403);
+    expect(legacy.status).toBe(401);
   });
 });
