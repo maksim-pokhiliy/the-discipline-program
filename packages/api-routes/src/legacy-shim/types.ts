@@ -21,3 +21,10 @@ export type LegacyShimHandler = (
 ) => Promise<Response>;
 
 export type LegacyShimOutcome<TPayload> = { kind: "ok"; payload: TPayload } | { kind: "denied" };
+
+export type LegacyUserOutcome<TPayload> =
+  | { kind: "ok-json"; payload: TPayload }
+  | { kind: "ok-empty" }
+  | { kind: "not-found" }
+  | { kind: "unauthorized" }
+  | { kind: "bad-request" };
