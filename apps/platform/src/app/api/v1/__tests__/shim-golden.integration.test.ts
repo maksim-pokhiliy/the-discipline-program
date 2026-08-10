@@ -313,13 +313,12 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
       });
     }
 
-    await helpers.cleanupRaw.$queryRaw`SELECT 1`;
     athleteShimToken = await shimTokenFor(helpers.GOLDEN_ATHLETE.email, helpers.GOLDEN_PASSWORD);
     athleteLegacyToken = await legacyTokenFor(
       helpers.GOLDEN_ATHLETE.email,
       helpers.GOLDEN_PASSWORD,
     );
-  });
+  }, POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS);
 
   afterAll(async () => {
     if (!helpers || createdUserIds.length === 0) {
@@ -697,20 +696,16 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
     expect(shim.status).toBe(404);
   });
 
-  it(
-    "requires a token for changePassword where legacy is permitAll",
-    { timeout: POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS },
-    async () => {
-      const body = JSON.stringify({
-        userId: 1001,
-        oldPassword: "WrongButLong123!",
-        newPassword: "NewPassw0rd!23",
-      });
-      const shim = await hitShimChangePassword(body, "");
-      const legacy = await hitLegacyChangePassword(body, "");
+  it("requires a token for changePassword where legacy is permitAll", async () => {
+    const body = JSON.stringify({
+      userId: 1001,
+      oldPassword: "WrongButLong123!",
+      newPassword: "NewPassw0rd!23",
+    });
+    const shim = await hitShimChangePassword(body, "");
+    const legacy = await hitLegacyChangePassword(body, "");
 
-      expect(shim.status).toBe(403);
-      expect(legacy.status).toBe(401);
-    },
-  );
+    expect(shim.status).toBe(403);
+    expect(legacy.status).toBe(401);
+  });
 });

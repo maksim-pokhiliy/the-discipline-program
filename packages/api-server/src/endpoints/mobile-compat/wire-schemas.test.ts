@@ -19,6 +19,12 @@ describe("isValidIsoDate", () => {
     expect(isValidIsoDate("2000-13-40")).toBe(false);
   });
 
+  it("rejects a calendar rollover the naive parser would silently shift", () => {
+    expect(isValidIsoDate("2000-02-30")).toBe(false);
+    expect(isValidIsoDate("2001-02-29")).toBe(false);
+    expect(isValidIsoDate("2000-04-31")).toBe(false);
+  });
+
   it("rejects a non-date string", () => {
     expect(isValidIsoDate("abc")).toBe(false);
   });
@@ -110,6 +116,25 @@ describe("updateUserRequestSchema", () => {
     expect(updateUserRequestSchema.safeParse({ id: 1001, dateOfBirth: "not-a-date" }).success).toBe(
       false,
     );
+  });
+
+  it("rejects a calendar-rollover date of birth", () => {
+    expect(updateUserRequestSchema.safeParse({ id: 1001, dateOfBirth: "2000-02-30" }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects a profile field carrying a NUL byte instead of letting it reach the database", () => {
+    expect(
+      updateUserRequestSchema.safeParse({ id: 1001, firstName: `A${String.fromCharCode(0)}B` })
+        .success,
+    ).toBe(false);
+  });
+
+  it("rejects an over-length profile field", () => {
+    expect(
+      updateUserRequestSchema.safeParse({ id: 1001, firstName: "a".repeat(256) }).success,
+    ).toBe(false);
   });
 });
 

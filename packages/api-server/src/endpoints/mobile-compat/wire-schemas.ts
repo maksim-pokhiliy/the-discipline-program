@@ -5,6 +5,7 @@ import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 const FIRST_PRINTABLE_CODE_POINT = 0x20;
 const DELETE_CODE_POINT = 0x7f;
 const MAX_USERNAME_LENGTH = 100;
+const MAX_PROFILE_FIELD_LENGTH = 255;
 const LONE_SURROGATE = /\p{Surrogate}/u;
 
 const isControlCharacter = (character: string): boolean => {
@@ -61,14 +62,20 @@ export const updateUserRequestSchema = z.object({
   id: z.number().int(),
   firstName: z
     .string()
+    .max(MAX_PROFILE_FIELD_LENGTH)
+    .refine(isPostgresStorable)
     .nullish()
     .transform((value) => value ?? null),
   lastName: z
     .string()
+    .max(MAX_PROFILE_FIELD_LENGTH)
+    .refine(isPostgresStorable)
     .nullish()
     .transform((value) => value ?? null),
   phoneNumber: z
     .string()
+    .max(MAX_PROFILE_FIELD_LENGTH)
+    .refine(isPostgresStorable)
     .nullish()
     .transform((value) => value ?? null),
   dateOfBirth: z

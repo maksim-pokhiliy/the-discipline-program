@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 
 import type { LegacyShimIdentity } from "@repo/api-routes/legacy-shim";
+import { InternalServerError } from "@repo/errors";
 
 import { GOLDEN_BCRYPT_HASH } from "../../test/golden-fixture";
 import {
@@ -86,7 +87,7 @@ describe("mobile shim get user", () => {
   it("throws a 500-path error rather than denying when a catalog id is unmapped", async () => {
     const { identity } = await seedAthlete({ legacyRoleId: 77 });
 
-    await expect(api.getUser(identity, identity.legacyUserId)).rejects.toThrow();
+    await expect(api.getUser(identity, identity.legacyUserId)).rejects.toThrow(InternalServerError);
   });
 
   it("returns not-found for a soft-deleted user instead of a stale read", async () => {
