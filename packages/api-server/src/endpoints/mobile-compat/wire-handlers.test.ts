@@ -1,18 +1,45 @@
 import { describe, expect, it } from "vitest";
 
+import type { LegacyShimIdentity } from "@repo/api-routes/legacy-shim";
+
 import type { MobileCompatApi } from "./create-mobile-compat-api";
 import { LEGACY_TRAINING_LEVELS, LEGACY_USER_PLANS } from "./legacy-catalogs";
 import { createMobileCompatRoutes } from "./wire-handlers";
+import type { LegacyUserDto } from "./wire-schemas";
 
 const context = { params: Promise.resolve(undefined) };
 
 const NUL = String.fromCharCode(0);
 
+const KNOWN_LEGACY_ID = 1001;
+
+const identity: LegacyShimIdentity = {
+  userId: "ckuser0000000000000000000",
+  legacyUserId: KNOWN_LEGACY_ID,
+  legacyRoleId: 1,
+  legacyPlanId: 1,
+  legacyLevelId: 2,
+};
+
+const userDto: LegacyUserDto = {
+  id: KNOWN_LEGACY_ID,
+  isEnabled: true,
+  username: "athlete@tdp.local",
+  userRole: { id: 1, name: "USER" },
+  userPlan: { id: 1, name: "General" },
+  trainingLevel: { id: 2, name: "Pro" },
+  firstName: "Denys",
+  lastName: "Sergeev",
+  phoneNumber: "+15551234567",
+  dateOfBirth: "1990-05-01",
+  team: null,
+};
+
 const api: MobileCompatApi = {
   signin: async () => ({
     kind: "ok",
     payload: {
-      userId: 1001,
+      userId: KNOWN_LEGACY_ID,
       accessToken: "token",
       userRole: { id: 1, name: "USER" },
       userPlan: { id: 1, name: "General" },
@@ -20,6 +47,13 @@ const api: MobileCompatApi = {
   }),
   listTrainingLevels: () => LEGACY_TRAINING_LEVELS,
   listUserPlans: () => LEGACY_USER_PLANS,
+  getUser: async (_identity, id) =>
+    id === KNOWN_LEGACY_ID ? { kind: "ok-json", payload: userDto } : { kind: "not-found" },
+  updateUser: async (_identity, input) => ({
+    kind: "ok-json",
+    payload: { ...userDto, id: input.id },
+  }),
+  changePassword: async () => ({ kind: "ok-empty" }),
 };
 
 const routes = createMobileCompatRoutes(api);
@@ -157,5 +191,111 @@ describe("mobile compat catalog wire handlers", () => {
       { id: 1, name: "General" },
       { id: 2, name: "Individual" },
     ]);
+  });
+});
+
+describe("mobile compat get user wire handler", () => {
+  const hitGetUser = (id: string): Promise<Response> =>
+    routes.getUser(
+      new Request(`http://localhost/api/v1/user/${id}`),
+      { params: Promise.resolve({ id }) },
+      identity,
+    );
+
+  it("renders an ok-json outcome as 200 with the dto", async () => {
+    const response = await hitGetUser(String(KNOWN_LEGACY_ID));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: KNOWN_LEGACY_ID,
+      username: "athlete@tdp.local",
+    });
+  });
+
+  it("renders a not-found outcome as 404", async () => {
+    expect((await hitGetUser("2002")).status).toBe(404);
+  });
+
+  it("rejects a non-numeric id with 404, never the 403 that signs the caller out", async () => {
+    const response = await hitGetUser("abc");
+
+    expect(response.status).toBe(404);
+    expect(response.status).not.toBe(403);
+  });
+});
+
+describe("mobile compat update user wire handler", () => {
+  const hitUpdateUser = (body: string): Promise<Response> =>
+    routes.updateUser(
+      new Request("http://localhost/api/v1/user", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body,
+      }),
+      context,
+      identity,
+    );
+
+  it("renders an ok-json outcome as 200 for a well-formed body", async () => {
+    const response = await hitUpdateUser(
+      JSON.stringify({
+        id: KNOWN_LEGACY_ID,
+        firstName: "A",
+        lastName: "B",
+        phoneNumber: "5",
+        dateOfBirth: "1990-05-01",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it.each([
+    ["malformed json", "not-json"],
+    ["json null", "null"],
+    ["a bad date of birth", JSON.stringify({ id: 1001, dateOfBirth: "not-a-date" })],
+    ["a missing id", JSON.stringify({ firstName: "A" })],
+  ])("rejects %s with 400, never 403", async (_label, body) => {
+    const response = await hitUpdateUser(body);
+
+    expect(response.status).toBe(400);
+    expect(response.status).not.toBe(403);
+  });
+});
+
+describe("mobile compat change password wire handler", () => {
+  const hitChangePassword = (body: string): Promise<Response> =>
+    routes.changePassword(
+      new Request("http://localhost/api/v1/user/changePassword", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body,
+      }),
+      context,
+      identity,
+    );
+
+  it("renders an ok-empty outcome as 200 with an empty body, never 204", async () => {
+    const response = await hitChangePassword(
+      JSON.stringify({
+        userId: KNOWN_LEGACY_ID,
+        oldPassword: "old",
+        newPassword: "NewPassw0rd!23",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.status).not.toBe(204);
+    expect(await response.text()).toBe("");
+  });
+
+  it.each([
+    ["malformed json", "not-json"],
+    ["a missing field", JSON.stringify({ userId: 1001, oldPassword: "x" })],
+  ])("rejects %s with 400, never 403", async (_label, body) => {
+    const response = await hitChangePassword(body);
+
+    expect(response.status).toBe(400);
+    expect(response.status).not.toBe(403);
   });
 });

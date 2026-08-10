@@ -1,17 +1,27 @@
 import {
+  type LegacyShimHandler,
   legacyShimOk,
   readLegacyJsonBody,
   renderLegacyShimOutcome,
+  renderLegacyUserOutcome,
 } from "@repo/api-routes/legacy-shim";
 import type { RouteHandler } from "@repo/api-routes/types";
 
 import type { MobileCompatApi } from "./create-mobile-compat-api";
-import { legacySigninRequestSchema } from "./wire-schemas";
+import {
+  changePasswordRequestSchema,
+  legacySigninRequestSchema,
+  updateUserRequestSchema,
+  userIdParamSchema,
+} from "./wire-schemas";
 
 export type MobileCompatRoutes = {
   signin: RouteHandler;
   trainingLevels: RouteHandler;
   userPlans: RouteHandler;
+  getUser: LegacyShimHandler;
+  updateUser: LegacyShimHandler;
+  changePassword: LegacyShimHandler;
 };
 
 const JSON_CONTENT_TYPE = "application/json";
@@ -43,4 +53,34 @@ export const createMobileCompatRoutes = (api: MobileCompatApi): MobileCompatRout
   trainingLevels: async () => legacyShimOk(api.listTrainingLevels()),
 
   userPlans: async () => legacyShimOk(api.listUserPlans()),
+
+  getUser: async (_request, context, identity) => {
+    const parsed = userIdParamSchema.safeParse(await context.params);
+
+    if (!parsed.success) {
+      return renderLegacyUserOutcome({ kind: "not-found" });
+    }
+
+    return renderLegacyUserOutcome(await api.getUser(identity, parsed.data.id));
+  },
+
+  updateUser: async (request, _context, identity) => {
+    const parsed = updateUserRequestSchema.safeParse(await readLegacyJsonBody(request));
+
+    if (!parsed.success) {
+      return renderLegacyUserOutcome({ kind: "bad-request" });
+    }
+
+    return renderLegacyUserOutcome(await api.updateUser(identity, parsed.data));
+  },
+
+  changePassword: async (request, _context, identity) => {
+    const parsed = changePasswordRequestSchema.safeParse(await readLegacyJsonBody(request));
+
+    if (!parsed.success) {
+      return renderLegacyUserOutcome({ kind: "bad-request" });
+    }
+
+    return renderLegacyUserOutcome(await api.changePassword(identity, parsed.data));
+  },
 });
