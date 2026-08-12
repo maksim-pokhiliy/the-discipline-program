@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getRateLimiter, setRateLimiter } from "@repo/api-routes";
 import type { RateLimiterPort } from "@repo/api-routes";
 import type * as ApiServerTestHelpers from "@repo/api-server/test-helpers";
+import type * as PublishedSnapshotHelpers from "@repo/api-server/test-helpers/published-snapshot";
 
 import { MOBILE_SHIM_SIGNIN_RATE_LIMIT } from "@app/lib/server/mobile-shim-rate-limit";
 
@@ -83,6 +84,7 @@ describe("mobile shim signin rate limit configuration", () => {
 const SHOULD_RUN = process.env.RUN_LEGACY_INTEGRATION === "1";
 const LEGACY_BASE = "http://localhost:8080/api/v1";
 const POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS = 20_000;
+const GOLDEN_SETUP_TIMEOUT_MS = 45_000;
 
 type UserRouteFn = (
   request: Request,
@@ -144,9 +146,14 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
   let updateUserRoute: UserRouteFn;
   let changePasswordRoute: UserRouteFn;
   let helpers: typeof ApiServerTestHelpers;
+  let snapshotHelpers: typeof PublishedSnapshotHelpers;
+  let getProgramRoute: (request: Request, context: typeof routeContext) => Promise<Response>;
   let athleteShimToken: string;
   let athleteLegacyToken: string;
+  let individualShimToken: string;
+  let individualLegacyToken: string;
   const createdUserIds: string[] = [];
+  const programSnapshots: PublishedSnapshotHelpers.TestPublishedSnapshot[] = [];
 
   const hitShimSignin = async (body: string): Promise<Probe> => {
     const response = await signinRoute(
@@ -254,6 +261,70 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
     return { status: response.status, body: await response.text() };
   };
 
+  const GENERAL_TRAINING_DATE = "2026-08-15";
+  const GENERAL_REST_DATE = "2026-08-16";
+  const INDIVIDUAL_DATE = "2026-08-17";
+  const NO_PROGRAM_DATE = "2026-08-18";
+
+  const GENERAL_TRAINING_PROGRAM = {
+    dayTrainings: [
+      {
+        trainingNumber: 1,
+        blocks: [{ name: "STRENGTH", exercises: ["5 sets:\n3 bench presses"] }],
+      },
+    ],
+  };
+  const INDIVIDUAL_TRAINING_PROGRAM = {
+    dayTrainings: [
+      { trainingNumber: 1, blocks: [{ name: "WOD", exercises: ["21-15-9 thrusters"] }] },
+    ],
+  };
+
+  const utcDate = (value: string): Date => new Date(`${value}T00:00:00.000Z`);
+
+  const hitShimGetProgram = async (
+    userId: number,
+    scheduledDate: string,
+    token: string,
+  ): Promise<Probe> => {
+    const response = await getProgramRoute(
+      new Request(
+        `http://localhost:3001/api/v1/program?userId=${userId}&scheduledDate=${scheduledDate}`,
+        { headers: authHeaders(token) },
+      ),
+      routeContext,
+    );
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const hitLegacyGetProgram = async (
+    userId: number,
+    scheduledDate: string,
+    token: string,
+  ): Promise<Probe> => {
+    const response = await fetch(
+      `${LEGACY_BASE}/program?userId=${userId}&scheduledDate=${scheduledDate}`,
+      { headers: authHeaders(token) },
+    );
+
+    return { status: response.status, body: await response.text() };
+  };
+
+  const seedLegacyProgram = async (path: string, body: unknown, token: string): Promise<number> => {
+    const response = await fetch(`${LEGACY_BASE}/${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", Authorization: token },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`legacy ${path} seed failed: ${response.status} ${await response.text()}`);
+    }
+
+    return (JSON.parse(await response.text()) as { id: number }).id;
+  };
+
   beforeAll(async () => {
     loadPlatformEnv();
 
@@ -264,7 +335,9 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
       getUserModule,
       updateUserModule,
       changePasswordModule,
+      programModule,
       helpersModule,
+      snapshotModule,
     ] = await Promise.all([
       import("../auth/signin/route"),
       import("../trainingLevel/all/route"),
@@ -272,7 +345,9 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
       import("../user/[id]/route"),
       import("../user/route"),
       import("../user/changePassword/route"),
+      import("../program/route"),
       import("@repo/api-server/test-helpers"),
+      import("@repo/api-server/test-helpers/published-snapshot"),
     ]);
 
     signinRoute = signinModule.POST;
@@ -281,7 +356,9 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
     getUserRoute = getUserModule.GET;
     updateUserRoute = updateUserModule.PUT;
     changePasswordRoute = changePasswordModule.PATCH;
+    getProgramRoute = programModule.GET;
     helpers = helpersModule;
+    snapshotHelpers = snapshotModule;
 
     for (const fixture of helpers.GOLDEN_FIXTURE_USERS) {
       const existing = await helpers.cleanupRaw.user.findUnique({
@@ -320,12 +397,100 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
       helpers.GOLDEN_ATHLETE.email,
       helpers.GOLDEN_PASSWORD,
     );
-  }, POOLED_NEON_BCRYPT_COLD_START_TIMEOUT_MS);
+    individualShimToken = await shimTokenFor(
+      helpers.GOLDEN_INDIVIDUAL.email,
+      helpers.GOLDEN_PASSWORD,
+    );
+    individualLegacyToken = await legacyTokenFor(
+      helpers.GOLDEN_INDIVIDUAL.email,
+      helpers.GOLDEN_PASSWORD,
+    );
+
+    const adminLegacyToken = await legacyTokenFor(
+      helpers.GOLDEN_ADMIN.email,
+      helpers.GOLDEN_PASSWORD,
+    );
+    const generalTrainingRowId = await seedLegacyProgram(
+      "generalProgram",
+      {
+        trainingLevel: { id: helpers.GOLDEN_ATHLETE.legacyLevelId },
+        scheduledDate: GENERAL_TRAINING_DATE,
+        isRestDay: false,
+        dailyProgram: GENERAL_TRAINING_PROGRAM,
+      },
+      adminLegacyToken,
+    );
+    const generalRestRowId = await seedLegacyProgram(
+      "generalProgram",
+      {
+        trainingLevel: { id: helpers.GOLDEN_ATHLETE.legacyLevelId },
+        scheduledDate: GENERAL_REST_DATE,
+        isRestDay: true,
+        dailyProgram: null,
+      },
+      adminLegacyToken,
+    );
+    const individualRowId = await seedLegacyProgram(
+      "individualProgram",
+      {
+        userId: helpers.GOLDEN_INDIVIDUAL.legacyUserId,
+        scheduledDate: INDIVIDUAL_DATE,
+        isRestDay: false,
+        dailyProgram: INDIVIDUAL_TRAINING_PROGRAM,
+      },
+      adminLegacyToken,
+    );
+
+    programSnapshots.push(
+      await snapshotHelpers.createTestPublishedSnapshot({
+        channel: "GENERAL",
+        legacyLevelId: helpers.GOLDEN_ATHLETE.legacyLevelId,
+        scheduledDate: utcDate(GENERAL_TRAINING_DATE),
+        legacyRowId: generalTrainingRowId,
+        isRestDay: false,
+        dailyProgram: GENERAL_TRAINING_PROGRAM,
+      }),
+      await snapshotHelpers.createTestPublishedSnapshot({
+        channel: "GENERAL",
+        legacyLevelId: helpers.GOLDEN_ATHLETE.legacyLevelId,
+        scheduledDate: utcDate(GENERAL_REST_DATE),
+        legacyRowId: generalRestRowId,
+        isRestDay: true,
+        dailyProgram: null,
+      }),
+      await snapshotHelpers.createTestPublishedSnapshot({
+        channel: "INDIVIDUAL",
+        legacyUserId: helpers.GOLDEN_INDIVIDUAL.legacyUserId,
+        scheduledDate: utcDate(INDIVIDUAL_DATE),
+        legacyRowId: individualRowId,
+        isRestDay: false,
+        dailyProgram: INDIVIDUAL_TRAINING_PROGRAM,
+      }),
+    );
+  }, GOLDEN_SETUP_TIMEOUT_MS);
 
   afterAll(async () => {
-    if (!helpers || createdUserIds.length === 0) {
+    if (!helpers) {
       return;
     }
+
+    await helpers.cleanupRaw.mobileConnection.deleteMany({
+      where: { id: { in: programSnapshots.map((snapshot) => snapshot.connectionId) } },
+    });
+    await helpers.cleanupRaw.trainingPlan.deleteMany({
+      where: { id: { in: programSnapshots.map((snapshot) => snapshot.planId) } },
+    });
+    await helpers.cleanupRaw.user.deleteMany({
+      where: {
+        id: {
+          in: programSnapshots.flatMap((snapshot) =>
+            snapshot.athleteUserId
+              ? [snapshot.coachUserId, snapshot.athleteUserId]
+              : [snapshot.coachUserId],
+          ),
+        },
+      },
+    });
 
     await helpers.cleanupRaw.mobileLegacyIdentity.deleteMany({
       where: { userId: { in: createdUserIds } },
@@ -709,5 +874,102 @@ describe.skipIf(!SHOULD_RUN)("mobile shim golden contract", () => {
 
     expect(shim.status).toBe(403);
     expect(legacy.status).toBe(401);
+  });
+
+  it("serves a byte-identical general training day, shim and legacy alike", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(
+        helpers.GOLDEN_ATHLETE.legacyUserId,
+        GENERAL_TRAINING_DATE,
+        athleteShimToken,
+      ),
+      hitLegacyGetProgram(
+        helpers.GOLDEN_ATHLETE.legacyUserId,
+        GENERAL_TRAINING_DATE,
+        athleteLegacyToken,
+      ),
+    ]);
+
+    expect(shim.status).toBe(200);
+    expect(legacy.status).toBe(200);
+    expect(canonicalize(JSON.parse(shim.body))).toEqual(canonicalize(JSON.parse(legacy.body)));
+  });
+
+  it("serves a byte-identical general rest day with a null dailyProgram, shim and legacy alike", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, GENERAL_REST_DATE, athleteShimToken),
+      hitLegacyGetProgram(
+        helpers.GOLDEN_ATHLETE.legacyUserId,
+        GENERAL_REST_DATE,
+        athleteLegacyToken,
+      ),
+    ]);
+
+    expect(shim.status).toBe(200);
+    expect(legacy.status).toBe(200);
+    expect(canonicalize(JSON.parse(shim.body))).toEqual(canonicalize(JSON.parse(legacy.body)));
+    expect(JSON.parse(shim.body)).toMatchObject({ isRestDay: true, dailyProgram: null });
+  });
+
+  it("serves a byte-identical individual day, shim and legacy alike", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(
+        helpers.GOLDEN_INDIVIDUAL.legacyUserId,
+        INDIVIDUAL_DATE,
+        individualShimToken,
+      ),
+      hitLegacyGetProgram(
+        helpers.GOLDEN_INDIVIDUAL.legacyUserId,
+        INDIVIDUAL_DATE,
+        individualLegacyToken,
+      ),
+    ]);
+
+    expect(shim.status).toBe(200);
+    expect(legacy.status).toBe(200);
+    expect(canonicalize(JSON.parse(shim.body))).toEqual(canonicalize(JSON.parse(legacy.body)));
+  });
+
+  it("returns 404 for a date with no program, shim and legacy alike", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, NO_PROGRAM_DATE, athleteShimToken),
+      hitLegacyGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, NO_PROGRAM_DATE, athleteLegacyToken),
+    ]);
+
+    expect(shim.status).toBe(404);
+    expect(legacy.status).toBe(404);
+  });
+
+  it("closes the program IDOR: a foreign athlete's program is 404 on the shim but 200 on legacy", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(helpers.GOLDEN_INDIVIDUAL.legacyUserId, INDIVIDUAL_DATE, athleteShimToken),
+      hitLegacyGetProgram(
+        helpers.GOLDEN_INDIVIDUAL.legacyUserId,
+        INDIVIDUAL_DATE,
+        athleteLegacyToken,
+      ),
+    ]);
+
+    expect(shim.status).toBe(404);
+    expect(legacy.status).toBe(200);
+  });
+
+  it("collapses a malformed scheduledDate to 403 empty on both, the sign-out signal", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, "not-a-date", athleteShimToken),
+      hitLegacyGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, "not-a-date", athleteLegacyToken),
+    ]);
+
+    expectSameFailure(shim, legacy);
+  });
+
+  it("collapses a tokenless program read to 403 on both", async () => {
+    const [shim, legacy] = await Promise.all([
+      hitShimGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, GENERAL_TRAINING_DATE, ""),
+      hitLegacyGetProgram(helpers.GOLDEN_ATHLETE.legacyUserId, GENERAL_TRAINING_DATE, ""),
+    ]);
+
+    expect(shim.status).toBe(403);
+    expect(legacy.status).toBe(403);
   });
 });
