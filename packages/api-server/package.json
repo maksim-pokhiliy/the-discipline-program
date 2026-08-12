@@ -15,7 +15,8 @@
     "./infrastructure/monitoring": "./src/infrastructure/monitoring/index.ts",
     "./idempotency": "./src/idempotency/index.ts",
     "./instrumentation": "./src/instrumentation/index.ts",
-    "./test-helpers": "./src/test/helpers.ts"
+    "./test-helpers": "./src/test/helpers.ts",
+    "./test-helpers/published-snapshot": "./src/test/published-snapshot.ts"
   },
   "scripts": {
     "test": "vitest run",
