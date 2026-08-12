@@ -138,8 +138,6 @@ export const programQuerySchema = z.object({
   scheduledDate: z.string().refine(isValidIsoDate),
 });
 
-export type ProgramQuery = z.infer<typeof programQuerySchema>;
-
 export type LegacyGeneralProgramDto = {
   id: number;
   scheduledDate: string;

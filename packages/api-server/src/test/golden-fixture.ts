@@ -1,3 +1,7 @@
+import { LEGACY_PLAN_INDIVIDUAL } from "../endpoints/mobile-compat/legacy-catalogs";
+
+export { LEGACY_PLAN_INDIVIDUAL };
+
 export const GOLDEN_PASSWORD = "Admin123!";
 
 export const GOLDEN_BCRYPT_HASH = "$2a$10$xGFVeUFmZ9fBD3ihEPQZt.bl85fgMvCX0kdxA71xYpPDT4f72oiAy";
@@ -5,7 +9,6 @@ export const GOLDEN_BCRYPT_HASH = "$2a$10$xGFVeUFmZ9fBD3ihEPQZt.bl85fgMvCX0kdxA7
 export const LEGACY_ROLE_USER = 1;
 export const LEGACY_ROLE_ADMIN = 2;
 export const LEGACY_PLAN_GENERAL = 1;
-export const LEGACY_PLAN_INDIVIDUAL = 2;
 export const LEGACY_LEVEL_SCALED = 1;
 export const LEGACY_LEVEL_PRO = 2;
 

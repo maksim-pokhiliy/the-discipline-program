@@ -71,7 +71,9 @@ describe("program-dto serializer", () => {
     expect(() => assembleGeneralProgramDto(row(), 999)).toThrow(InternalServerError);
   });
 
-  it("throws when a stored training-day dailyProgram is a corrupt blob", () => {
-    expect(() => assembleGeneralProgramDto(row({ dailyProgram: { garbage: true } }), 2)).toThrow();
+  it("throws an InternalServerError when a stored training-day dailyProgram is a corrupt blob", () => {
+    expect(() => assembleGeneralProgramDto(row({ dailyProgram: { garbage: true } }), 2)).toThrow(
+      InternalServerError,
+    );
   });
 });

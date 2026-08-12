@@ -36,7 +36,15 @@ const resolveContent = (row: ProgramSnapshotRow): ProgramContent => {
     });
   }
 
-  return { isRestDay: false, dailyProgram: legacyDailyProgramSchema.parse(row.dailyProgram) };
+  const parsed = legacyDailyProgramSchema.safeParse(row.dailyProgram);
+
+  if (!parsed.success) {
+    throw new InternalServerError("Published day snapshot has a corrupt dailyProgram", {
+      legacyRowId: row.legacyRowId,
+    });
+  }
+
+  return { isRestDay: false, dailyProgram: parsed.data };
 };
 
 const assembleBaseProgram = (row: ProgramSnapshotRow) => {
