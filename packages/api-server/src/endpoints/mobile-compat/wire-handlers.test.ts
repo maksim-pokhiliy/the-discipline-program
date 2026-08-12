@@ -5,13 +5,15 @@ import type { LegacyShimIdentity } from "@repo/api-routes/legacy-shim";
 import type { MobileCompatApi } from "./create-mobile-compat-api";
 import { LEGACY_TRAINING_LEVELS, LEGACY_USER_PLANS } from "./legacy-catalogs";
 import { createMobileCompatRoutes } from "./wire-handlers";
-import type { LegacyUserDto } from "./wire-schemas";
+import type { LegacyGeneralProgramDto, LegacyUserDto } from "./wire-schemas";
 
 const context = { params: Promise.resolve(undefined) };
 
 const NUL = String.fromCharCode(0);
 
 const KNOWN_LEGACY_ID = 1001;
+
+const KNOWN_DATE = "2026-08-15";
 
 const identity: LegacyShimIdentity = {
   userId: "ckuser0000000000000000000",
@@ -35,6 +37,16 @@ const userDto: LegacyUserDto = {
   team: null,
 };
 
+const generalProgramDto: LegacyGeneralProgramDto = {
+  id: 42,
+  scheduledDate: KNOWN_DATE,
+  trainingLevel: { id: 2, name: "Pro" },
+  isRestDay: false,
+  dailyProgram: {
+    dayTrainings: [{ trainingNumber: 1, blocks: [{ name: "STRENGTH", exercises: ["3 bench"] }] }],
+  },
+};
+
 const api: MobileCompatApi = {
   signin: async () => ({
     kind: "ok",
@@ -54,6 +66,10 @@ const api: MobileCompatApi = {
     payload: { ...userDto, id: input.id },
   }),
   changePassword: async () => ({ kind: "ok-empty" }),
+  getProgram: async (_identity, userId, scheduledDate) =>
+    userId === KNOWN_LEGACY_ID && scheduledDate === KNOWN_DATE
+      ? { kind: "ok-json", payload: generalProgramDto }
+      : { kind: "not-found" },
 };
 
 const routes = createMobileCompatRoutes(api);
@@ -298,4 +314,44 @@ describe("mobile compat change password wire handler", () => {
     expect(response.status).toBe(400);
     expect(response.status).not.toBe(403);
   });
+});
+
+describe("mobile compat get program wire handler", () => {
+  const hitGetProgram = (query: string): Promise<Response> =>
+    routes.getProgram(new Request(`http://localhost/api/v1/program${query}`), context, identity);
+
+  it("renders an ok-json outcome as 200 with the program dto", async () => {
+    const response = await hitGetProgram(`?userId=${KNOWN_LEGACY_ID}&scheduledDate=${KNOWN_DATE}`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/json");
+    expect(await response.json()).toMatchObject({ id: 42, isRestDay: false });
+  });
+
+  it("renders a not-found outcome as 404 for a date with no program", async () => {
+    expect(
+      (await hitGetProgram(`?userId=${KNOWN_LEGACY_ID}&scheduledDate=2099-01-01`)).status,
+    ).toBe(404);
+  });
+
+  it.each([
+    ["a missing userId", `?scheduledDate=${KNOWN_DATE}`],
+    ["a missing scheduledDate", `?userId=${KNOWN_LEGACY_ID}`],
+    ["both params missing", ""],
+    ["an empty userId", `?userId=&scheduledDate=${KNOWN_DATE}`],
+    ["a non-numeric userId", `?userId=abc&scheduledDate=${KNOWN_DATE}`],
+    ["a negative userId", `?userId=-5&scheduledDate=${KNOWN_DATE}`],
+    ["a malformed scheduledDate", `?userId=${KNOWN_LEGACY_ID}&scheduledDate=not-a-date`],
+    ["an out-of-range scheduledDate", `?userId=${KNOWN_LEGACY_ID}&scheduledDate=2026-13-40`],
+  ])(
+    "denies %s with a 403 empty body, never the shim's natural 400 or a business 404",
+    async (_label, query) => {
+      const response = await hitGetProgram(query);
+
+      expect(response.status).toBe(403);
+      expect(await response.text()).toBe("");
+      expect(response.status).not.toBe(400);
+      expect(response.status).not.toBe(404);
+    },
+  );
 });

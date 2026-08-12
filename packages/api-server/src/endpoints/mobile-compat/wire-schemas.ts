@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
+import { type LegacyDailyProgram } from "../../infrastructure/legacy-mobile";
+
 const FIRST_PRINTABLE_CODE_POINT = 0x20;
 const DELETE_CODE_POINT = 0x7f;
 const MAX_USERNAME_LENGTH = 100;
@@ -113,3 +115,45 @@ export type LegacyUserDto = {
   dateOfBirth: string | null;
   team: null;
 };
+
+export const legacyDailyProgramSchema = z.object({
+  dayTrainings: z.array(
+    z.object({
+      trainingNumber: z.number(),
+      blocks: z.array(
+        z.object({
+          name: z.string(),
+          exercises: z.array(z.string()),
+        }),
+      ),
+    }),
+  ),
+});
+
+export const programQuerySchema = z.object({
+  userId: z
+    .string()
+    .regex(/^\d+$/)
+    .transform((value) => Number.parseInt(value, 10)),
+  scheduledDate: z.string().refine(isValidIsoDate),
+});
+
+export type ProgramQuery = z.infer<typeof programQuerySchema>;
+
+export type LegacyGeneralProgramDto = {
+  id: number;
+  scheduledDate: string;
+  trainingLevel: LegacyCatalogRefDto;
+  isRestDay: boolean;
+  dailyProgram: LegacyDailyProgram | null;
+};
+
+export type LegacyIndividualProgramDto = {
+  id: number;
+  userId: number;
+  scheduledDate: string;
+  isRestDay: boolean;
+  dailyProgram: LegacyDailyProgram | null;
+};
+
+export type LegacyProgramDto = LegacyGeneralProgramDto | LegacyIndividualProgramDto;

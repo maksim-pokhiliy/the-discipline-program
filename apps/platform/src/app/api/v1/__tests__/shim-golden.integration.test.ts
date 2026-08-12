@@ -25,9 +25,10 @@ const collectRouteFiles = (dir: string, prefix = ""): string[] =>
   });
 
 describe("api/v1 route mounting", () => {
-  it("mounts exactly the three wire paths the iOS app calls, and nothing else", () => {
+  it("mounts exactly the wire paths the iOS app calls, and nothing else", () => {
     expect(collectRouteFiles(V1_ROOT).sort()).toEqual([
       "/auth/signin",
+      "/program",
       "/trainingLevel/all",
       "/user",
       "/user/[id]",
@@ -43,6 +44,7 @@ describe("api/v1 route mounting", () => {
     ["user/[id]", "GET", "POST"],
     ["user", "PUT", "POST"],
     ["user/changePassword", "PATCH", "POST"],
+    ["program", "GET", "POST"],
   ])("%s exports %s and not %s", (routePath, expectedVerb, forbiddenVerb) => {
     const source = readFileSync(join(V1_ROOT, routePath, "route.ts"), "utf8");
 

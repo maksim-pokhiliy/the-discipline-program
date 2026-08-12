@@ -7,10 +7,11 @@ import {
   legacyShimOk,
   legacyShimOkEmpty,
   legacyShimUnauthorized,
+  renderLegacyProgramOutcome,
   renderLegacyShimOutcome,
   renderLegacyUserOutcome,
 } from "../responses";
-import type { LegacyUserOutcome } from "../types";
+import type { LegacyProgramOutcome, LegacyUserOutcome } from "../types";
 
 describe("legacy shim responses", () => {
   it("renders a denial the way the legacy stack does: 403, no body, no content-type", async () => {
@@ -119,6 +120,34 @@ describe("renderLegacyUserOutcome", () => {
 
     for (const outcome of outcomes) {
       expect(renderLegacyUserOutcome(outcome).status).not.toBe(403);
+    }
+  });
+});
+
+describe("renderLegacyProgramOutcome", () => {
+  it("maps ok-json to a 200 json body", async () => {
+    const response = renderLegacyProgramOutcome({ kind: "ok-json", payload: { id: 1 } });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/json");
+    expect(await response.json()).toEqual({ id: 1 });
+  });
+
+  it("maps not-found to 404 with no body", async () => {
+    const response = renderLegacyProgramOutcome({ kind: "not-found" });
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toBe("");
+  });
+
+  it("never maps a program outcome to the 403 that signs the athlete out", () => {
+    const outcomes: LegacyProgramOutcome<{ id: number }>[] = [
+      { kind: "ok-json", payload: { id: 1 } },
+      { kind: "not-found" },
+    ];
+
+    for (const outcome of outcomes) {
+      expect(renderLegacyProgramOutcome(outcome).status).not.toBe(403);
     }
   });
 });

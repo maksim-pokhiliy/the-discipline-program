@@ -4,10 +4,12 @@ export { readLegacyJsonBody } from "./read-json-body";
 export {
   legacyShimDenied,
   legacyShimOk,
+  renderLegacyProgramOutcome,
   renderLegacyShimOutcome,
   renderLegacyUserOutcome,
 } from "./responses";
 export type {
+  LegacyProgramOutcome,
   LegacyShimHandler,
   LegacyShimIdentity,
   LegacyShimOutcome,
