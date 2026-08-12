@@ -1,4 +1,4 @@
-import type { LegacyShimOutcome, LegacyUserOutcome } from "./types";
+import type { LegacyProgramOutcome, LegacyShimOutcome, LegacyUserOutcome } from "./types";
 
 const LEGACY_DENIED_STATUS = 403;
 const LEGACY_OK_EMPTY_STATUS = 200;
@@ -45,5 +45,16 @@ export const renderLegacyUserOutcome = <TPayload>(
       return legacyShimUnauthorized();
     case "bad-request":
       return legacyShimBadRequest();
+  }
+};
+
+export const renderLegacyProgramOutcome = <TPayload>(
+  outcome: LegacyProgramOutcome<TPayload>,
+): Response => {
+  switch (outcome.kind) {
+    case "ok-json":
+      return legacyShimOk(outcome.payload);
+    case "not-found":
+      return legacyShimNotFound();
   }
 };

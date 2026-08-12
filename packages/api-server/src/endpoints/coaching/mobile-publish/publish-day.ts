@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import { type PublishDayResult } from "@repo/contracts/coaching/mobile-publish";
 import { type ExerciseById } from "@repo/contracts/lms/row-text";
 import { ConflictError } from "@repo/errors";
@@ -5,7 +7,7 @@ import { logger } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
 import { type LegacyDailyProgram } from "../../../infrastructure/legacy-mobile";
-import { contentHash } from "../../../utils";
+import { contentHash, toInputJson } from "../../../utils";
 
 import {
   type ChannelProgramOps,
@@ -82,7 +84,7 @@ const resolveRace = async (
   }
 
   if (decision.action === "skipped" && !isOwned) {
-    await recordPublishedDay(args, raced.id, hash);
+    await recordPublishedDay(args, raced, hash);
   }
 
   if (decision.action === "conflict") {
@@ -116,18 +118,29 @@ const postLegacyRow = async (
 
 const recordPublishedDay = async (
   args: PublishDayArgs,
-  legacyRowId: number,
+  legacyRow: LegacyProgramRow,
   hash: string,
 ): Promise<void> => {
+  const dailyProgram =
+    legacyRow.dailyProgram === null ? Prisma.DbNull : toInputJson(legacyRow.dailyProgram);
+
   await prisma.mobilePublishedDay.upsert({
     where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: args.absoluteDate } },
     create: {
       linkId: args.linkId,
       scheduledDate: args.absoluteDate,
-      legacyRowId,
+      legacyRowId: legacyRow.id,
       contentHash: hash,
+      isRestDay: legacyRow.isRestDay,
+      dailyProgram,
     },
-    update: { legacyRowId, contentHash: hash, publishedAt: new Date() },
+    update: {
+      legacyRowId: legacyRow.id,
+      contentHash: hash,
+      publishedAt: new Date(),
+      isRestDay: legacyRow.isRestDay,
+      dailyProgram,
+    },
   });
 };
 
@@ -183,7 +196,7 @@ export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult
 
   if (decision.write === "none") {
     if (decision.action === "skipped" && !isOwned && legacyRow !== null) {
-      await recordPublishedDay(args, legacyRow.id, hash);
+      await recordPublishedDay(args, legacyRow, hash);
     }
 
     return noWriteResult(args, decision, legacyRow?.id ?? null);
@@ -196,7 +209,7 @@ export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult
     return outcome;
   }
 
-  await recordPublishedDay(args, outcome.row.id, hash);
+  await recordPublishedDay(args, outcome.row, hash);
 
   logger.info("mobile.publish.day", {
     linkId: args.linkId,

@@ -1,3 +1,7 @@
+import { LEGACY_PLAN_INDIVIDUAL } from "../endpoints/mobile-compat/legacy-catalogs";
+
+export { LEGACY_PLAN_INDIVIDUAL };
+
 export const GOLDEN_PASSWORD = "Admin123!";
 
 export const GOLDEN_BCRYPT_HASH = "$2a$10$xGFVeUFmZ9fBD3ihEPQZt.bl85fgMvCX0kdxA71xYpPDT4f72oiAy";
@@ -52,10 +56,22 @@ export const GOLDEN_DISABLED: GoldenFixtureUser = {
   lastName: "Abled",
 };
 
+export const GOLDEN_INDIVIDUAL: GoldenFixtureUser = {
+  email: "individual@tdp.local",
+  legacyUserId: 1004,
+  legacyRoleId: LEGACY_ROLE_USER,
+  legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+  legacyLevelId: LEGACY_LEVEL_PRO,
+  isEnabled: true,
+  firstName: "Indi",
+  lastName: "Vidual",
+};
+
 export const GOLDEN_UNKNOWN_EMAIL = "ghost@tdp.local";
 
 export const GOLDEN_FIXTURE_USERS: readonly GoldenFixtureUser[] = [
   GOLDEN_ATHLETE,
   GOLDEN_ADMIN,
   GOLDEN_DISABLED,
+  GOLDEN_INDIVIDUAL,
 ];

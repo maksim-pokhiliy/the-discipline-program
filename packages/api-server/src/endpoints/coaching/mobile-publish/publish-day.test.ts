@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ChannelProgramOps, type LegacyProgramRow } from "./channel-program-ops";
@@ -198,5 +199,51 @@ describe("publishDay", () => {
     expect(result.action).toBe("created");
     expect(result.legacyRowId).toBe(999);
     expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("stores a rest day as Prisma.DbNull (SQL NULL) so the rest_xor_program CHECK accepts it", async () => {
+    const ops = makeFakeOps();
+
+    mocks.findUniqueMock.mockResolvedValue(null);
+    vi.mocked(ops.getProgram).mockResolvedValue(restLegacyRow());
+
+    await publishDay(baseArgs(ops, { overwriteUnowned: false }));
+
+    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+
+    const call = mocks.upsertMock.mock.calls[0]?.[0] as {
+      create: { isRestDay: boolean; dailyProgram: unknown; legacyRowId: number };
+      update: { isRestDay: boolean; dailyProgram: unknown };
+    };
+
+    expect(call.create.isRestDay).toBe(true);
+    expect(call.create.dailyProgram).toBe(Prisma.DbNull);
+    expect(call.create.dailyProgram).not.toBe(Prisma.JsonNull);
+    expect(call.create.legacyRowId).toBe(RACED_ROW_ID);
+    expect(call.update.isRestDay).toBe(true);
+    expect(call.update.dailyProgram).toBe(Prisma.DbNull);
+    expect(call.update.dailyProgram).not.toBe(Prisma.JsonNull);
+  });
+
+  it("stores a training day's dailyProgram json content on the ledger row", async () => {
+    const ops = makeFakeOps();
+
+    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
+    vi.mocked(ops.getProgram).mockResolvedValue(null);
+    vi.mocked(ops.createProgram).mockResolvedValue(nonRestLegacyRow());
+
+    await publishDay(baseArgs(ops));
+
+    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+
+    const call = mocks.upsertMock.mock.calls[0]?.[0] as {
+      create: { isRestDay: boolean; dailyProgram: unknown };
+      update: { isRestDay: boolean; dailyProgram: unknown };
+    };
+
+    expect(call.create.isRestDay).toBe(false);
+    expect(call.create.dailyProgram).toEqual({ dayTrainings: [] });
+    expect(call.update.isRestDay).toBe(false);
+    expect(call.update.dailyProgram).toEqual({ dayTrainings: [] });
   });
 });

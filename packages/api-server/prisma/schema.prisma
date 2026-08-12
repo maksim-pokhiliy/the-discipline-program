@@ -171,6 +171,8 @@ model MobilePublishLink {
   @@index([connectionId])
   @@index([planId])
   @@index([athleteId])
+  @@index([channel, legacyLevelId])
+  @@index([channel, legacyUserId])
   @@map("app_mobile_publish_links")
 }
 
@@ -181,6 +183,8 @@ model MobilePublishedDay {
   scheduledDate DateTime          @db.Date
   legacyRowId   Int
   contentHash   String
+  isRestDay     Boolean?
+  dailyProgram  Json?
   publishedAt   DateTime          @default(now())
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt

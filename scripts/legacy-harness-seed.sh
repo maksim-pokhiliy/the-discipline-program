@@ -76,9 +76,10 @@ psql_do -c "
   INSERT INTO users
     (id, is_enabled, username, password, user_role_id, user_plan_id, training_level_id, first_name, last_name)
   VALUES
-    (1001, true,  'athlete@tdp.local',  '$GOLDEN_BCRYPT_HASH', 1, 1, 2, 'Test', 'Athlete'),
-    (1002, true,  'admin@tdp.local',    '$GOLDEN_BCRYPT_HASH', 2, 1, 2, 'Root', 'Admin'),
-    (1003, false, 'disabled@tdp.local', '$GOLDEN_BCRYPT_HASH', 1, 1, 1, 'Dis',  'Abled')
+    (1001, true,  'athlete@tdp.local',    '$GOLDEN_BCRYPT_HASH', 1, 1, 2, 'Test', 'Athlete'),
+    (1002, true,  'admin@tdp.local',      '$GOLDEN_BCRYPT_HASH', 2, 1, 2, 'Root', 'Admin'),
+    (1003, false, 'disabled@tdp.local',   '$GOLDEN_BCRYPT_HASH', 1, 1, 1, 'Dis',  'Abled'),
+    (1004, true,  'individual@tdp.local', '$GOLDEN_BCRYPT_HASH', 1, 2, 2, 'Indi', 'Vidual')
   ON CONFLICT (id) DO UPDATE SET
     is_enabled        = EXCLUDED.is_enabled,
     username          = EXCLUDED.username,

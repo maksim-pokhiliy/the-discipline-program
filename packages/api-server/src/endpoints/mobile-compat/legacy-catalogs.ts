@@ -12,6 +12,8 @@ export const LEGACY_USER_PLANS: readonly LegacyCatalogEntry[] = [
   { id: 2, name: "Individual" },
 ];
 
+export const LEGACY_PLAN_INDIVIDUAL = 2;
+
 export const LEGACY_USER_ROLES: readonly LegacyCatalogEntry[] = [
   { id: 1, name: "USER" },
   { id: 2, name: "ADMIN" },

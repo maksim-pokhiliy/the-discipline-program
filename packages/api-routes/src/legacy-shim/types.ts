@@ -28,3 +28,7 @@ export type LegacyUserOutcome<TPayload> =
   | { kind: "not-found" }
   | { kind: "unauthorized" }
   | { kind: "bad-request" };
+
+export type LegacyProgramOutcome<TPayload> =
+  | { kind: "ok-json"; payload: TPayload }
+  | { kind: "not-found" };

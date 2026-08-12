@@ -2,6 +2,7 @@ import {
   type LegacyShimHandler,
   legacyShimOk,
   readLegacyJsonBody,
+  renderLegacyProgramOutcome,
   renderLegacyShimOutcome,
   renderLegacyUserOutcome,
 } from "@repo/api-routes/legacy-shim";
@@ -11,6 +12,7 @@ import type { MobileCompatApi } from "./create-mobile-compat-api";
 import {
   changePasswordRequestSchema,
   legacySigninRequestSchema,
+  programQuerySchema,
   updateUserRequestSchema,
   userIdParamSchema,
 } from "./wire-schemas";
@@ -22,6 +24,7 @@ export type MobileCompatRoutes = {
   getUser: LegacyShimHandler;
   updateUser: LegacyShimHandler;
   changePassword: LegacyShimHandler;
+  getProgram: LegacyShimHandler;
 };
 
 const JSON_CONTENT_TYPE = "application/json";
@@ -82,5 +85,21 @@ export const createMobileCompatRoutes = (api: MobileCompatApi): MobileCompatRout
     }
 
     return renderLegacyUserOutcome(await api.changePassword(identity, parsed.data));
+  },
+
+  getProgram: async (request, _context, identity) => {
+    const searchParams = new URL(request.url).searchParams;
+    const parsed = programQuerySchema.safeParse({
+      userId: searchParams.get("userId"),
+      scheduledDate: searchParams.get("scheduledDate"),
+    });
+
+    if (!parsed.success) {
+      return renderLegacyShimOutcome(DENIED);
+    }
+
+    return renderLegacyProgramOutcome(
+      await api.getProgram(identity, parsed.data.userId, parsed.data.scheduledDate),
+    );
   },
 });
