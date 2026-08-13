@@ -30,8 +30,6 @@
     "LOG_LEVEL",
     "CI",
     "RUN_LEGACY_INTEGRATION",
-    "RUN_SHIM_DEMO_CHECK",
-    "SHIM_DEMO_ATHLETE_PASSWORD",
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
     "RATE_LIMIT_TRUSTED_PROXY_HOPS",
@@ -56,7 +54,8 @@
       "dependsOn": ["^lint"]
     },
     "test": {
-      "cache": false
+      "cache": false,
+      "env": ["RUN_SHIM_DEMO_CHECK", "SHIM_DEMO_ATHLETE_PASSWORD"]
     }
   }
 }

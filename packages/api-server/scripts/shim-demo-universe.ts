@@ -1,7 +1,9 @@
-import { type PrismaClient, Role } from "@prisma/client";
+import { type Prisma, type PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
+
+import { LEGACY_PLAN_INDIVIDUAL } from "../src/endpoints/mobile-compat/legacy-catalogs";
 
 import { utcMidnight } from "./shim-demo-days";
 
@@ -15,11 +17,15 @@ const DEMO_ATHLETE_NAME = "Demo Athlete";
 const DEMO_FIRST_NAME = "Demo";
 const DEMO_LAST_NAME = "Athlete";
 const DEMO_LEGACY_ROLE_ID = 1;
-const DEMO_LEGACY_PLAN_ID = 2;
+const DEMO_LEGACY_PLAN_ID = LEGACY_PLAN_INDIVIDUAL;
 const DEMO_LEGACY_LEVEL_ID = 2;
 const DEMO_PHONE_NUMBER = "+1-555-0199";
 const DEMO_DATE_OF_BIRTH = "1992-03-11";
 const CONNECTION_EXPIRES_AT = "2099-01-01";
+const DEMO_COACH_BIO = "Synthetic account backing the Appetize compat stand.";
+const DEMO_CONNECTION_TOKEN = "shim-demo-stand-has-no-legacy-session";
+const DEMO_CONNECTION_LEGACY_USER_ID = "990000";
+const TRANSACTION_TIMEOUT_MS = 20_000;
 
 export type DemoUniverse = { planId: string; athleteId: string; linkId: string };
 
@@ -40,6 +46,67 @@ const assertUserShape = (email: string, row: UserShapeRow | null, expected: Role
   if (row.deletedAt !== null) {
     throw new Error(
       `${email} already exists but is soft-deleted. Restore or purge it by hand before re-seeding.`,
+    );
+  }
+};
+
+const assertCoachIsOurs = async (prisma: PrismaClient, coachId: string | null): Promise<void> => {
+  if (coachId === null) {
+    return;
+  }
+
+  const profile = await prisma.coachProfile.findUnique({
+    where: { userId: coachId },
+    select: { bio: true, mobileConnections: { select: { legacyUserName: true } } },
+  });
+
+  if (profile === null) {
+    throw new Error(
+      `${DEMO_COACH_EMAIL} exists as a COACH but has no coach profile. This script always ` +
+        "creates the pair together, so that row is not ours. Refusing to touch it.",
+    );
+  }
+
+  if (profile.bio !== DEMO_COACH_BIO) {
+    throw new Error(
+      `${DEMO_COACH_EMAIL} has a coach profile this script did not stamp (bio does not match ` +
+        "the synthetic marker). Refusing to mutate a real coach.",
+    );
+  }
+
+  const foreign = profile.mobileConnections.find(
+    (connection) => connection.legacyUserName !== DEMO_COACH_EMAIL,
+  );
+
+  if (foreign !== undefined) {
+    throw new Error(
+      `${DEMO_COACH_EMAIL} carries a real mobile connection (${foreign.legacyUserName}). ` +
+        "Refusing to touch a live legacy session.",
+    );
+  }
+};
+
+const hasLegacyIdentity = async (
+  prisma: PrismaClient,
+  athleteId: string | null,
+): Promise<boolean> => {
+  if (athleteId === null) {
+    return true;
+  }
+
+  const identity = await prisma.mobileLegacyIdentity.findUnique({
+    where: { userId: athleteId },
+    select: { id: true },
+  });
+
+  return identity !== null;
+};
+
+const assertAthleteIsOurs = (athleteId: string | null, hasIdentity: boolean): void => {
+  if (athleteId !== null && !hasIdentity) {
+    throw new Error(
+      `${DEMO_ATHLETE_EMAIL} exists but carries no legacy identity. This script always creates ` +
+        "the pair together, so that row is not ours. Refusing to overwrite its password.",
     );
   }
 };
@@ -80,12 +147,22 @@ const resolveLinkedPlanId = async (
   prisma: PrismaClient,
   coachId: string | null,
 ): Promise<string | null> => {
-  const link = await prisma.mobilePublishLink.findFirst({
+  const links = await prisma.mobilePublishLink.findMany({
     where: { channel: "INDIVIDUAL", legacyUserId: DEMO_LEGACY_USER_ID },
     select: { planId: true, plan: { select: { creatorId: true, name: true } } },
   });
 
-  if (link === null) {
+  if (links.length > 1) {
+    throw new Error(
+      `${links.length} INDIVIDUAL links carry legacyUserId ${DEMO_LEGACY_USER_ID}. ` +
+        "The shim resolves a day across all of them by publishedAt, so the stand would " +
+        "serve whichever won last. Reduce them to one by hand before re-seeding.",
+    );
+  }
+
+  const link = links.at(0);
+
+  if (link === undefined) {
     return null;
   }
 
@@ -100,7 +177,9 @@ const resolveLinkedPlanId = async (
   return link.planId;
 };
 
-const upsertCoachSide = async (prisma: PrismaClient): Promise<string> => {
+type CoachSide = { coachId: string; connectionId: string };
+
+const upsertCoachSide = async (prisma: Prisma.TransactionClient): Promise<CoachSide> => {
   const coach = await prisma.user.upsert({
     where: { email: DEMO_COACH_EMAIL },
     create: { email: DEMO_COACH_EMAIL, name: DEMO_COACH_NAME, role: Role.COACH },
@@ -109,7 +188,7 @@ const upsertCoachSide = async (prisma: PrismaClient): Promise<string> => {
   });
   const profile = await prisma.coachProfile.upsert({
     where: { userId: coach.id },
-    create: { userId: coach.id, bio: "Synthetic account backing the Appetize compat stand." },
+    create: { userId: coach.id, bio: DEMO_COACH_BIO },
     update: {},
     select: { id: true },
   });
@@ -117,21 +196,21 @@ const upsertCoachSide = async (prisma: PrismaClient): Promise<string> => {
     where: { coachProfileId: profile.id },
     create: {
       coachProfileId: profile.id,
-      encryptedToken: "shim-demo-stand-has-no-legacy-session",
-      legacyUserId: String(DEMO_LEGACY_USER_ID),
+      encryptedToken: DEMO_CONNECTION_TOKEN,
+      legacyUserId: DEMO_CONNECTION_LEGACY_USER_ID,
       legacyUserName: DEMO_COACH_EMAIL,
       legacyUserRole: "ADMIN",
       expiresAt: utcMidnight(CONNECTION_EXPIRES_AT),
     },
-    update: { expiresAt: utcMidnight(CONNECTION_EXPIRES_AT) },
+    update: {},
     select: { id: true },
   });
 
-  return connection.id;
+  return { coachId: coach.id, connectionId: connection.id };
 };
 
 const upsertPlan = async (
-  prisma: PrismaClient,
+  prisma: Prisma.TransactionClient,
   coachId: string,
   linkedPlanId: string | null,
 ): Promise<string> => {
@@ -160,8 +239,10 @@ const upsertPlan = async (
   return created.id;
 };
 
-const upsertAthlete = async (prisma: PrismaClient, password: string): Promise<string> => {
-  const passwordHash = await bcrypt.hash(password, AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
+const upsertAthlete = async (
+  prisma: Prisma.TransactionClient,
+  passwordHash: string,
+): Promise<string> => {
   const athlete = await prisma.user.upsert({
     where: { email: DEMO_ATHLETE_EMAIL },
     create: {
@@ -210,34 +291,42 @@ export const buildDemoUniverse = async (
 
   assertUserShape(DEMO_COACH_EMAIL, coachRow, Role.COACH);
   assertUserShape(DEMO_ATHLETE_EMAIL, athleteRow, Role.ATHLETE);
+  await assertCoachIsOurs(prisma, coachRow?.id ?? null);
+  assertAthleteIsOurs(
+    athleteRow?.id ?? null,
+    await hasLegacyIdentity(prisma, athleteRow?.id ?? null),
+  );
   await assertLegacyIdentityIsOurs(prisma, athleteRow?.id ?? null);
 
   const linkedPlanId = await resolveLinkedPlanId(prisma, coachRow?.id ?? null);
-  const connectionId = await upsertCoachSide(prisma);
-  const connection = await prisma.mobileConnection.findUniqueOrThrow({
-    where: { id: connectionId },
-    select: { coachProfile: { select: { userId: true } } },
-  });
-  const planId = await upsertPlan(prisma, connection.coachProfile.userId, linkedPlanId);
-  const athleteId = await upsertAthlete(prisma, password);
-  const link = await prisma.mobilePublishLink.upsert({
-    where: {
-      planId_channel_legacyUserId: {
-        planId,
-        channel: "INDIVIDUAL",
-        legacyUserId: DEMO_LEGACY_USER_ID,
-      },
-    },
-    create: {
-      connectionId,
-      planId,
-      channel: "INDIVIDUAL",
-      legacyUserId: DEMO_LEGACY_USER_ID,
-      athleteId,
-    },
-    update: { connectionId, athleteId },
-    select: { id: true },
-  });
+  const passwordHash = await bcrypt.hash(password, AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
 
-  return { planId, athleteId, linkId: link.id };
+  return prisma.$transaction(
+    async (tx) => {
+      const coachSide = await upsertCoachSide(tx);
+      const planId = await upsertPlan(tx, coachSide.coachId, linkedPlanId);
+      const athleteId = await upsertAthlete(tx, passwordHash);
+      const link = await tx.mobilePublishLink.upsert({
+        where: {
+          planId_channel_legacyUserId: {
+            planId,
+            channel: "INDIVIDUAL",
+            legacyUserId: DEMO_LEGACY_USER_ID,
+          },
+        },
+        create: {
+          connectionId: coachSide.connectionId,
+          planId,
+          channel: "INDIVIDUAL",
+          legacyUserId: DEMO_LEGACY_USER_ID,
+          athleteId,
+        },
+        update: { connectionId: coachSide.connectionId, athleteId },
+        select: { id: true },
+      });
+
+      return { planId, athleteId, linkId: link.id };
+    },
+    { timeout: TRANSACTION_TIMEOUT_MS },
+  );
 };

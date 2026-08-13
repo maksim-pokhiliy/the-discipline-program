@@ -10,7 +10,6 @@ const SHOULD_RUN = process.env.RUN_SHIM_DEMO_CHECK === "1";
 const DEMO_ATHLETE_EMAIL = "demo-athlete@thedisciplineprogram.com";
 const DEMO_LEGACY_USER_ID = 990001;
 const SETUP_TIMEOUT_MS = 45_000;
-const BCRYPT_COLD_START_TIMEOUT_MS = 20_000;
 
 const V1_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLATFORM_ROOT = join(V1_ROOT, "../../../..");
@@ -54,6 +53,7 @@ describe.skipIf(!SHOULD_RUN)("shim demo stand", () => {
   let getUserRoute: UserRouteFn;
   let helpers: typeof ApiServerTestHelpers;
   let accessToken: string;
+  let signinPayload: unknown;
   let trainingDate: string;
   let restDate: string;
 
@@ -149,27 +149,20 @@ describe.skipIf(!SHOULD_RUN)("shim demo stand", () => {
       throw new Error(`demo signin failed with ${probe.status}; re-run shim-demo-seed.`);
     }
 
-    accessToken = (JSON.parse(probe.body) as { accessToken: string }).accessToken;
+    signinPayload = JSON.parse(probe.body);
+    accessToken = (signinPayload as { accessToken: string }).accessToken;
 
     await discoverWindowDates();
   }, SETUP_TIMEOUT_MS);
 
-  it(
-    "signs the demo athlete in and reports the synthetic legacy id",
-    { timeout: BCRYPT_COLD_START_TIMEOUT_MS },
-    async () => {
-      const probe = await hitSignin(
-        JSON.stringify({ username: DEMO_ATHLETE_EMAIL, password: requireDemoPassword() }),
-      );
-
-      expect(probe.status).toBe(200);
-      expect(JSON.parse(probe.body)).toMatchObject({
-        userId: DEMO_LEGACY_USER_ID,
-        userRole: { id: 1, name: "USER" },
-        userPlan: { id: 2, name: "Individual" },
-      });
-    },
-  );
+  it("signs the demo athlete in and reports the synthetic legacy id", () => {
+    expect(signinPayload).toMatchObject({
+      userId: DEMO_LEGACY_USER_ID,
+      userRole: { id: 1, name: "USER" },
+      userPlan: { id: 2, name: "Individual" },
+    });
+    expect(accessToken).toEqual(expect.any(String));
+  });
 
   it("serves a training day whose exercise text carries that day's date", async () => {
     const probe = await hitGetProgram(trainingDate);

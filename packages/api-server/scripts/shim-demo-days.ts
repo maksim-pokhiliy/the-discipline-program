@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
 import type { LegacyDailyProgram } from "../src/infrastructure/legacy-mobile/port";
+import { MS_PER_DAY } from "../src/utils/date-helpers";
 import { contentHash } from "../src/utils/hash";
 import { toInputJson } from "../src/utils/to-input-json";
 
@@ -10,7 +11,6 @@ const DATE_ANCHOR = "2026-01-01";
 const LEGACY_ROW_ID_BASE = 990100;
 const REST_DAY_CYCLE = 4;
 const REST_DAY_REMAINDER = 3;
-const MS_PER_DAY = 86_400_000;
 
 type BlockTemplate = { name: string; exercises: string[] };
 
@@ -33,6 +33,12 @@ const shiftDays = (date: Date, days: number): Date => new Date(date.getTime() + 
 
 const daysSinceAnchor = (date: Date): number =>
   Math.round((date.getTime() - utcMidnight(DATE_ANCHOR).getTime()) / MS_PER_DAY);
+
+const positiveModulo = (value: number, divisor: number): number =>
+  ((value % divisor) + divisor) % divisor;
+
+const hashableOf = (isRestDay: boolean, dailyProgram: unknown): unknown =>
+  isRestDay ? { isRestDay: true } : { isRestDay: false, dailyProgram };
 
 const TRAINING_TEMPLATES: readonly (readonly BlockTemplate[])[][] = [
   [
@@ -84,7 +90,11 @@ const TRAINING_TEMPLATES: readonly (readonly BlockTemplate[])[][] = [
 ];
 
 const buildTrainings = (isoDate: string, variant: number): LegacyDailyProgram["dayTrainings"] => {
-  const template = TRAINING_TEMPLATES[variant % TRAINING_TEMPLATES.length] ?? [];
+  const template = TRAINING_TEMPLATES[positiveModulo(variant, TRAINING_TEMPLATES.length)];
+
+  if (template === undefined) {
+    throw new Error(`no training template for variant ${variant}`);
+  }
 
   return template.map((blocks, trainingIndex) => ({
     trainingNumber: trainingIndex + 1,
@@ -101,10 +111,8 @@ const buildTrainings = (isoDate: string, variant: number): LegacyDailyProgram["d
 const planDay = (date: Date): DayPlan => {
   const offset = daysSinceAnchor(date);
   const isoDate = toIsoDate(date);
-  const isRestDay = offset % REST_DAY_CYCLE === REST_DAY_REMAINDER;
-  const dailyProgram = isRestDay
-    ? null
-    : { dayTrainings: buildTrainings(isoDate, offset % TRAINING_TEMPLATES.length) };
+  const isRestDay = positiveModulo(offset, REST_DAY_CYCLE) === REST_DAY_REMAINDER;
+  const dailyProgram = isRestDay ? null : { dayTrainings: buildTrainings(isoDate, offset) };
 
   return {
     isoDate,
@@ -112,7 +120,7 @@ const planDay = (date: Date): DayPlan => {
     legacyRowId: LEGACY_ROW_ID_BASE + offset,
     isRestDay,
     dailyProgram,
-    hash: contentHash(isRestDay ? { isRestDay: true } : { isRestDay: false, dailyProgram }),
+    hash: contentHash(hashableOf(isRestDay, dailyProgram)),
   };
 };
 
@@ -123,6 +131,25 @@ export const planWindow = (runDate: Date): DayPlan[] => {
   return Array.from({ length: total }, (_, index) => planDay(shiftDays(start, index)));
 };
 
+type StoredDay = {
+  contentHash: string;
+  legacyRowId: number;
+  isRestDay: boolean | null;
+  dailyProgram: unknown;
+};
+
+const isRowCurrent = (stored: StoredDay, day: DayPlan): boolean => {
+  if (stored.contentHash !== day.hash) {
+    return false;
+  }
+
+  if (stored.legacyRowId !== day.legacyRowId || stored.isRestDay !== day.isRestDay) {
+    return false;
+  }
+
+  return contentHash(hashableOf(day.isRestDay, stored.dailyProgram)) === day.hash;
+};
+
 export const upsertDays = async (
   prisma: PrismaClient,
   linkId: string,
@@ -130,7 +157,13 @@ export const upsertDays = async (
 ): Promise<DayCounts> => {
   const existing = await prisma.mobilePublishedDay.findMany({
     where: { linkId, scheduledDate: { in: days.map((day) => day.scheduledDate) } },
-    select: { scheduledDate: true, contentHash: true },
+    select: {
+      scheduledDate: true,
+      contentHash: true,
+      legacyRowId: true,
+      isRestDay: true,
+      dailyProgram: true,
+    },
   });
   const byIsoDate = new Map(existing.map((row) => [toIsoDate(row.scheduledDate), row]));
   const counts: DayCounts = { created: 0, updated: 0, unchanged: 0 };
@@ -138,7 +171,7 @@ export const upsertDays = async (
   for (const day of days) {
     const current = byIsoDate.get(day.isoDate);
 
-    if (current !== undefined && current.contentHash === day.hash) {
+    if (current !== undefined && isRowCurrent(current, day)) {
       counts.unchanged += 1;
       continue;
     }

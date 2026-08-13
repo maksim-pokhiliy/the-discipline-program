@@ -62,12 +62,20 @@ athlete with a legacy identity, and 64 published days.
 
 The link is `INDIVIDUAL`, never `GENERAL`. The athlete's days are keyed to his own synthetic
 `legacyUserId`, so no real athlete can ever be served demo content. `990001` also sits outside the
-legacy `1..24` range, so the P2.1 import cannot collide with it.
+legacy `1..24` range, so the P2.1 import cannot collide with it. The published days' wire ids start
+at `990100` and are derived from the calendar date, which keeps them clear of real legacy row ids
+for the same reason.
 
-The script only ever adds or refreshes its own demo-keyed rows. It never deletes anything, and it
-aborts loudly rather than mutate a row it did not create — a `demo-*` user with an unexpected role,
-a soft-deleted one, a `legacyUserId 990001` claimed by someone else, or a publish link pointing at a
-plan the demo coach does not own.
+The script never deletes anything. Before its first write it runs a guard pass and aborts rather
+than mutate a row it did not create. It refuses when: a `demo-*` user carries an unexpected role or
+is soft-deleted; the demo coach's profile is not stamped with this script's marker bio, or carries
+a real mobile connection; the demo athlete exists without a legacy identity, or with a legacy id
+other than 990001; `legacyUserId 990001` is claimed by somebody else; more than one INDIVIDUAL link
+carries 990001; or the link it finds points at a plan the demo coach did not create.
+
+Two things it deliberately does rewrite on every run, both on rows the guards proved are ours: the
+athlete's password, and the legacy identity fields. `0 created / 0 updated` in the summary is a
+statement about published DAYS, not about those rows.
 
 Every property of a day is derived from the **absolute date**, not from the run date: whether it is
 a rest day, its content, and its wire `id`. A second run on a later day is therefore a genuine
@@ -82,10 +90,20 @@ SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
   pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
 ```
 
-Both variables are required and the script refuses to start without them; it never falls back to an
-ambient `.env`, because this repository carries several and the wrong one would be a production
-write. It prints the target host and database (credentials stripped) before touching anything —
-read that line before letting it proceed.
+A bare invocation is a **dry run**: it resolves the target, prints it, prints the window it would
+write, and touches nothing. Applying takes two more flags:
+
+```
+  --write --expect-host=<hostname>
+```
+
+`--expect-host` is not ceremony. Importing `@prisma/client` loads any `.env` sitting beside it, so
+`DATABASE_URL` can arrive from a file nobody named on the command line — and this repository
+carries three of them. Naming the host you expect is what makes the target deliberate; the script
+refuses to write when the resolved host differs. The dry run prints the exact flag to copy.
+
+`SHIM_DEMO_ATHLETE_PASSWORD` is held to the same 12..128 policy as every other password path in the
+project, and surrounding whitespace is rejected rather than silently hashed into the credential.
 
 ### Production
 
@@ -93,14 +111,21 @@ Pull the DSN transiently, use it, delete it. Never paste a production DSN into a
 longer than the command:
 
 ```
-cd apps/platform
-npx vercel env pull .env.production.local --environment=production
-cd ../../packages/api-server
-DATABASE_URL="$(node -e 'process.loadEnvFile("../../apps/platform/.env.production.local"); process.stdout.write(process.env.DATABASE_URL)')" \
+secrets="$(mktemp -d)"
+trap 'rm -rf "$secrets"' EXIT
+(cd apps/platform && npx vercel env pull "$secrets/prod.env" --environment=production)
+DATABASE_URL="$(env -u DATABASE_URL node -e "process.loadEnvFile('$secrets/prod.env'); process.stdout.write(process.env.DATABASE_URL)")" \
 SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
   pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
-rm ../../apps/platform/.env.production.local
 ```
+
+Read the target line, then repeat the command with `--write --expect-host=<the host it printed>`.
+
+`vercel env pull` writes **every** production secret, not just the DSN — the session key, the blob
+token, the mail key. Pull it to a temp directory outside the working tree with a `trap` that removes
+it, never into the repository. `env -u DATABASE_URL` matters too: `loadEnvFile` does not override a
+variable that is already exported, so without it a stale shell value would win over the file you
+just pulled.
 
 The password **must be identical on every run**. The script re-hashes and rewrites it each time, so
 running with a different value silently rotates the credential out from under whoever holds it.
@@ -109,12 +134,26 @@ The demo athlete signs in as `demo-athlete@thedisciplineprogram.com`. The passwo
 repository and never will be — both this repository and the iOS fork are public. It is held by the
 owner and the planner.
 
-Two rows are visible in the internal admin console after a production seed: the demo coach appears
-in the coach list and both demo users appear in the user list. That is deliberate. A demo row that
-lies about its own history — soft-deleted at birth to hide it — is worse than a visible one named
-`Demo Stand Coach`.
+The demo rows are visible in the internal admin console after a production seed: the demo coach in
+the coach list, both demo users in the user list, the demo plan in the plan library (admins and head
+coaches see every non-deleted plan), and both users inside the dashboard's user counts. That is
+deliberate. A demo row that lies about its own history — soft-deleted at birth to hide it — is worse
+than a visible one named `Demo Stand Coach`. Publishing from the demo plan is still blocked for
+everyone but the demo coach, who has no password and cannot sign in.
+
+Three standing constraints:
+
+- **Never create a mailbox or catch-all for `demo-coach@` or `demo-athlete@thedisciplineprogram.com`.**
+  Password reset mails a token to whoever receives that address, and consuming it sets a password on
+  a live account — the coach one carries the COACH role.
+- **Run the seed serially.** `TrainingPlan` has no unique key on (creator, name), so two operators
+  seeding at once would fork the universe into two plans and two links.
+- The window only ever grows. Days scheduled before an earlier run's window are never removed, so
+  "64 days" describes a fresh seed, not the steady state.
 
 ## Verifying the seed
+
+From the repository root:
 
 ```
 RUN_SHIM_DEMO_CHECK=1 SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
@@ -124,11 +163,16 @@ RUN_SHIM_DEMO_CHECK=1 SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
 The check is skipped unless `RUN_SHIM_DEMO_CHECK=1`, so it never runs in CI. It calls the real route
 handlers in process — no dev server — and finds its own dates by asking the database which of the
 seeded days are training and which are rest, so it validates the seed's output against the shim's
-actual read predicate rather than re-implementing the seed's rules. It reads `DATABASE_URL` and
-`MOBILE_SHIM_JWT_SECRET` from `apps/platform/.env.local`.
+actual read predicate rather than re-implementing the seed's rules. It takes `DATABASE_URL` and `MOBILE_SHIM_JWT_SECRET`
+from `apps/platform/.env.local` — but only for variables not already exported, since `loadEnvFile`
+never overrides the shell. Unset `DATABASE_URL` in the session before running it if you have been
+doing production work in the same shell, or you will verify a database you did not intend.
 
-For production, curl the three endpoints directly instead — the check harness is pointed by
-`.env.local` and should not be aimed at production.
+For production, curl the three endpoints directly rather than pointing this harness at it.
+
+The seed's date rules — window size, rest cadence, `legacyRowId` derivation, the per-day date stamp
+— are covered separately by `packages/api-server/scripts/shim-demo-days.test.ts`, which is a plain
+unit test with no database.
 
 ## Driving the stand
 
@@ -145,6 +189,9 @@ Expected first-run behaviour, so it does not read as a defect:
 - The Program tab renders one day per screen with previous/next navigation. Training days show a
   `Session date: <date>` line in the first block, so day navigation is visibly live. Rest days show
   `Today is the rest day`.
+- The User tab offers **Change Password**, and it works — the demo athlete can rotate its own
+  credential and lock everyone else out of the stand. Recover by re-seeding, which rewrites the
+  password from `SHIM_DEMO_ATHLETE_PASSWORD`.
 
 ## Budget
 
