@@ -17,6 +17,7 @@ This file is the SSOT for "why."
 | D-5 | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal             | RATIFIED |
 | D-6 | Legacy identity = separate `MobileLegacyIdentity` table; schema pulled forward to P1.1 | RATIFIED |
 | D-7 | Shim wire schemas live api-server-local — a stated ADR-0005 exception                  | RATIFIED |
+| D-8 | The Appetize stand targets PROD; a synthetic INDIVIDUAL demo universe lives in prod    | RATIFIED |
 
 ---
 
@@ -72,3 +73,10 @@ This file is the SSOT for "why."
 - **Decision.** The shim's request/response/params zod schemas live inside `endpoints/mobile-compat/` in `api-server`, NOT in `@repo/contracts`. The `jose` dep and the token + env modules also land in api-server (not `@repo/api-routes`), which keeps the whole compat surface in one deletable folder.
 - **Rationale.** ADR-0005 mandates all contract schemas in `@repo/contracts`, but that rule exists to SHARE schemas with TypeScript clients. The shim has no TS client — its consumer is the Swift app, over the wire — so the sharing benefit is nil, while the cost (a permanent legacy-shaped surface spread across `@repo/contracts`) is real. Self-containment serves the retire half of ADR-0043: the redesign deletes a directory, an exports entry, and a route folder. `api-routes` also has no `@repo/env` dependency today, so the bearer wrapper takes an injected resolver composed in the app rather than importing api-server (dep-cruiser `api-routes-no-api-server`).
 - **Links.** ADR-0005; design.md D-1/D-2; PR #364; journal 2026-08-08.
+
+### D-8 — The Appetize stand targets PROD; a synthetic INDIVIDUAL demo universe lives in prod
+
+- **Status:** RATIFIED (owner, 2026-08-14 — «1. ок 2. ок» on the P1.4 contour; plan.md's original "preview shim" wording superseded).
+- **Decision.** The stand's built-in default base URL is `https://platform.thedisciplineprogram.com` (prod), and the demo data the stand logs into is seeded in PROD Neon: a fully synthetic universe (demo coach + CoachProfile + dummy MobileConnection + ARCHIVED "Shim Stand Demo Plan" + INDIVIDUAL link + demo athlete `demo-athlete@thedisciplineprogram.com` with `MobileLegacyIdentity.legacyUserId 990001` + a rolling window of published days), created by the idempotent guarded script `packages/api-server/scripts/shim-demo-seed.ts` (dry-run default; `--write` requires `--expect-host` matched against the resolved host). The workflow keeps `base_url` as an input so a future custom-domain preview can be targeted without a Swift or workflow change.
+- **Rationale.** Vercel SSO protection is `all_except_custom_domains` on the platform project — every `*.vercel.app` preview URL demands an SSO the app cannot pass, so the prod custom domain is the ONLY reachable shim. Prod-targeting is also the higher-fidelity test (the stand exercises the exact byte path of the cutover) and makes the demo account a durable asset: the P3.1 prod-build rehearsal and post-cutover smokes log in as the same athlete. INDIVIDUAL channel is load-bearing: the athlete's days are keyed to his own synthetic `legacyUserId`, so no real athlete can ever be served demo content (a GENERAL link would leak demo days to every real athlete of that level after P2.1). `990001` sits outside the legacy id range 1..24, so the P2.1 import can never collide. Demo rows are deliberately VISIBLE and honestly named in the admin console (no deceptive soft-delete birth). Prod-data-inviolable is honored by construction: the script only ADDS its own demo-keyed rows, never touches an existing one, and aborts loudly on any foreign-row collision.
+- **Links.** journal 2026-08-14; `docs/runbooks/appetize-stand.md`; D-5 (the stand is its layer 2); memory `prod-test-accounts`.
