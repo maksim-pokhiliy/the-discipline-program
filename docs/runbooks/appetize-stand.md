@@ -95,7 +95,7 @@ a space:
 
 ```
 cd packages/api-server
-read -rs SHIM_DEMO_ATHLETE_PASSWORD && export SHIM_DEMO_ATHLETE_PASSWORD
+read -rs -p 'stand password: ' SHIM_DEMO_ATHLETE_PASSWORD < /dev/tty && export SHIM_DEMO_ATHLETE_PASSWORD
 DATABASE_URL='<dev neon dsn>' \
   pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
 ```
@@ -129,7 +129,7 @@ longer than the command. Read the password in first, then run everything from `(
 block — the parentheses are what make the cleanup real:
 
 ```
-read -rs SHIM_DEMO_ATHLETE_PASSWORD && export SHIM_DEMO_ATHLETE_PASSWORD
+read -rs -p 'stand password: ' SHIM_DEMO_ATHLETE_PASSWORD < /dev/tty && export SHIM_DEMO_ATHLETE_PASSWORD
 (
   secrets="$(mktemp -d)"
   trap 'rm -rf "$secrets"' EXIT
@@ -146,9 +146,9 @@ terminal. Worse, traps do not stack: paste the block a second time and the new t
 first, so the first temp directory is never removed at all. Inside `( … )` the trap belongs to the
 subshell — it fires the moment the block ends, and a re-run gets its own.
 
-`vercel env pull` writes **every** platform production secret, not just the DSN: the NextAuth
-secret, the shim JWT secret, the mobile-publish encryption key, the cron secret, the blob
-read-write token, the mail key, and the database URL. Pull it to a temp directory outside the
+`vercel env pull` writes **every** platform production secret, not just the DSN — including the
+NextAuth secret, the shim JWT secret, the mobile-publish encryption key, the cron secret, the
+blob read-write token, the mail key, and the database URL. Pull it to a temp directory outside the
 working tree, never into the repository. `vercel@59` is pinned on purpose — this is the most
 privileged command in this document, and an unpinned `npx vercel` runs whatever the registry serves
 that day. `env -u DATABASE_URL` matters too: `loadEnvFile` does not override a variable that is
@@ -207,7 +207,7 @@ Three standing constraints:
 From the repository root:
 
 ```
-read -rs SHIM_DEMO_ATHLETE_PASSWORD && export SHIM_DEMO_ATHLETE_PASSWORD
+read -rs -p 'stand password: ' SHIM_DEMO_ATHLETE_PASSWORD < /dev/tty && export SHIM_DEMO_ATHLETE_PASSWORD
 RUN_SHIM_DEMO_CHECK=1 pnpm exec vitest run --project platform shim-demo-stand
 ```
 
