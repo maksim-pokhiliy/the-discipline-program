@@ -14,7 +14,17 @@ import {
 const EXPECT_HOST_FLAG = "--expect-host=";
 
 const readFlag = (prefix: string): string | null => {
-  const arg = process.argv.find((candidate) => candidate.startsWith(prefix));
+  const matches = process.argv.filter((candidate) => candidate.startsWith(prefix));
+
+  if (matches.length > 1) {
+    throw new Error(
+      `state ${prefix}<value> exactly once. This run passed it ${matches.length} times and only ` +
+        "the first one would count; a corrected value appended after a stale one would be " +
+        "silently ignored.",
+    );
+  }
+
+  const [arg] = matches;
 
   return arg === undefined ? null : arg.slice(prefix.length);
 };
@@ -64,6 +74,16 @@ const parseTarget = (databaseUrl: string): URL => {
   }
 };
 
+const requireNamedHost = (target: URL): void => {
+  if (target.hostname === "") {
+    throw new Error(
+      "refusing to write: DATABASE_URL names no host, so there is nothing for --expect-host to " +
+        "verify. Prisma falls back to its local default for such a DSN, which would leave the " +
+        "guard attesting to a host that is not the one it connects to. Name the host in the DSN.",
+    );
+  }
+};
+
 const requireExpectedHost = (target: URL): void => {
   const expected = readFlag(EXPECT_HOST_FLAG);
 
@@ -72,6 +92,14 @@ const requireExpectedHost = (target: URL): void => {
       `--write requires ${EXPECT_HOST_FLAG}<hostname>. Importing @prisma/client loads any .env ` +
         "beside it, so DATABASE_URL can arrive from a file you did not name; stating the host " +
         `you expect is what makes the target deliberate. This run resolved ${target.hostname}.`,
+    );
+  }
+
+  if (expected === "") {
+    throw new Error(
+      `${EXPECT_HOST_FLAG} was passed with an empty value. An empty string states nothing about ` +
+        "which database you meant, so it cannot stand as a deliberate target. Write the hostname " +
+        `out. This run resolved ${target.hostname}.`,
     );
   }
 
@@ -115,8 +143,11 @@ const dryRun = (target: URL): void => {
   console.log(`window:         ${days.at(0)?.isoDate} .. ${days.at(-1)?.isoDate}`);
   console.log(`days:           ${days.length} total, ${restDays} rest`);
   console.log(
-    `\nRe-run with --write ${EXPECT_HOST_FLAG}${target.hostname} to apply, ` +
-      "after confirming that host is the database you meant.",
+    target.hostname === ""
+      ? "\nThis DSN names no host, so no --expect-host value could attest to it. Name the host " +
+          "in DATABASE_URL before re-running with --write."
+      : `\nRe-run with --write ${EXPECT_HOST_FLAG}${target.hostname} to apply, ` +
+          "after confirming that host is the database you meant.",
   );
 };
 
@@ -134,6 +165,7 @@ const main = async (): Promise<void> => {
     return;
   }
 
+  requireNamedHost(target);
   requireExpectedHost(target);
 
   const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
