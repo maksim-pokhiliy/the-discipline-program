@@ -5,7 +5,7 @@ export default defineConfig({
     name: "api-server",
     globals: true,
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/dist/**"],
     testTimeout: 30_000,
     hookTimeout: 30_000,

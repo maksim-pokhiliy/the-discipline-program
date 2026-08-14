@@ -54,7 +54,8 @@
       "dependsOn": ["^lint"]
     },
     "test": {
-      "cache": false
+      "cache": false,
+      "env": ["RUN_SHIM_DEMO_CHECK", "SHIM_DEMO_ATHLETE_PASSWORD"]
     }
   }
 }

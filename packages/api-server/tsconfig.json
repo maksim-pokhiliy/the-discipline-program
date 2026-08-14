@@ -7,5 +7,5 @@
   },
   "exclude": ["node_modules", "dist"],
   "extends": "@repo/typescript-config/base.json",
-  "include": ["src", "prisma"]
+  "include": ["src", "prisma", "scripts"]
 }
