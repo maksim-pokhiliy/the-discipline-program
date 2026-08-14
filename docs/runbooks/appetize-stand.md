@@ -73,9 +73,10 @@ a real mobile connection; the demo athlete exists without a legacy identity, or 
 other than 990001; `legacyUserId 990001` is claimed by somebody else; more than one INDIVIDUAL link
 carries 990001; or the link it finds points at a plan the demo coach did not create.
 
-Two things it deliberately does rewrite on every run, both on rows the guards proved are ours: the
-athlete's password, and the legacy identity fields. `0 created / 0 updated` in the summary is a
-statement about published DAYS, not about those rows.
+Three things it deliberately does rewrite on every run, all on rows the guards proved are ours: the
+athlete's password, the legacy identity fields, and the plan's status (back to `ARCHIVED` — see
+below). `0 created / 0 updated` in the summary is a statement about published DAYS, not about those
+rows.
 
 Rewriting the password also bumps the athlete's `tokenVersion`, the same way every other
 password-writing path in the project does. That revokes any shim token already issued, so **a
