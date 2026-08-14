@@ -124,43 +124,26 @@ project, and surrounding whitespace is rejected rather than silently hashed into
 
 ### Production
 
-Pull the DSN transiently, use it, delete it. Never paste a production DSN into a file that lives
-longer than the command. Read the password in first, then run everything from `(` to `)` as one
-block — the parentheses are what make the cleanup real:
+The production DSN comes from the repo-root `.env.prod` — an owner-held, gitignored file whose
+keys are `DATABASE_URL_PROD` (direct) and `DATABASE_URL_PROD_POOLER`. Use the direct one. Do NOT
+reach for `vercel env pull` here: the production `DATABASE_URL` is marked **Sensitive** in Vercel,
+so a pull writes the literal string `[SENSITIVE]` and the seed refuses it (verified fail-closed
+2026-08-14) — while still dumping every OTHER production secret to disk. Reading the single value
+straight out of `.env.prod` avoids both problems: nothing is ever copied anywhere.
 
 ```
 read -rs -p 'stand password: ' SHIM_DEMO_ATHLETE_PASSWORD < /dev/tty && export SHIM_DEMO_ATHLETE_PASSWORD
-(
-  secrets="$(mktemp -d)"
-  trap 'rm -rf "$secrets"' EXIT
-  (cd apps/platform && npx vercel@59 env pull "$secrets/prod.env" --environment=production)
-  node -e "process.loadEnvFile('$secrets/prod.env'); process.stdout.write('expected host: ' + new URL(process.env.DATABASE_URL).hostname + '\n')"
-  DATABASE_URL="$(env -u DATABASE_URL node -e "process.loadEnvFile('$secrets/prod.env'); process.stdout.write(process.env.DATABASE_URL)")" \
-    pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
-)
+DATABASE_URL="$(env -u DATABASE_URL_PROD node -e "process.loadEnvFile('.env.prod'); process.stdout.write(process.env.DATABASE_URL_PROD)")" \
+  pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
 ```
 
-The parentheses are not cosmetic. An `EXIT` trap fires when the shell that set it exits, so pasted
-bare into a terminal this block leaves every pulled production secret on disk until you close that
-terminal. Worse, traps do not stack: paste the block a second time and the new trap **replaces** the
-first, so the first temp directory is never removed at all. Inside `( … )` the trap belongs to the
-subshell — it fires the moment the block ends, and a re-run gets its own.
-
-`vercel env pull` writes **every** platform production secret, not just the DSN — including the
-NextAuth secret, the shim JWT secret, the mobile-publish encryption key, the cron secret, the
-blob read-write token, the mail key, and the database URL. Pull it to a temp directory outside the
-working tree, never into the repository. `vercel@59` is pinned on purpose — this is the most
-privileged command in this document, and an unpinned `npx vercel` runs whatever the registry serves
-that day. `env -u DATABASE_URL` matters too: `loadEnvFile` does not override a variable that is
-already exported, so without it a stale shell value would win over the file you just pulled.
-
-That `expected host:` line is the point of the extra `node -e`. It reads the hostname out of the
-file you just pulled, which is a different derivation path from the one the script takes to its own
-`target:` line. Compare the two: if they disagree, something other than `prod.env` supplied
-`DATABASE_URL`, which is the exact accident `--expect-host` exists to catch. Then re-run the whole
-block with `--write --expect-host=<that hostname>` appended to the `tsx` line, typing the hostname
-rather than copying the script's output. The alternative independent source is the `DATABASE_URL`
-entry in the Vercel dashboard.
+`env -u DATABASE_URL_PROD` matters: `loadEnvFile` does not override a variable that is already
+exported, so without it a stale shell value would silently win over the file. Check the dry run's
+`target:` line, then re-run with `--write --expect-host=<hostname>` appended — typing the hostname
+from your own record of the production database (the Neon console, or the Vercel dashboard's
+`DATABASE_URL` entry), never from the script's own `target:` output, and never from `.env.prod`
+itself (the DSN and its attestation must not share a source). Production hosts are the
+`ep-…neon.tech` DIRECT form, no `-pooler` infix, no port.
 
 The password **must be identical on every run**. The script re-hashes and rewrites it each time, so
 running with a different value silently rotates the credential out from under whoever holds it.
