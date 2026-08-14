@@ -146,8 +146,9 @@ const dryRun = (target: URL): void => {
     target.hostname === ""
       ? "\nThis DSN names no host, so no --expect-host value could attest to it. Name the host " +
           "in DATABASE_URL before re-running with --write."
-      : `\nRe-run with --write ${EXPECT_HOST_FLAG}${target.hostname} to apply, ` +
-          "after confirming that host is the database you meant.",
+      : `\nRe-run with --write ${EXPECT_HOST_FLAG}<hostname> to apply. Take that hostname from ` +
+          "your own record of the database you meant — not from the target line above, and " +
+          "without the port. A host this script derived and you copied back attests to nothing.",
   );
 };
 

@@ -1,4 +1,4 @@
-import { type Prisma, type PrismaClient, Role } from "@prisma/client";
+import { type Prisma, type PrismaClient, Role, TrainingPlanStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
@@ -23,6 +23,8 @@ const DEMO_PHONE_NUMBER = "+1-555-0199";
 const DEMO_DATE_OF_BIRTH = "1992-03-11";
 const CONNECTION_EXPIRES_AT = "2099-01-01";
 const DEMO_COACH_BIO = "Synthetic account backing the Appetize compat stand.";
+const DEMO_PLAN_DESCRIPTION =
+  "Synthetic plan backing the Appetize compat stand, not a real athlete plan.";
 const DEMO_CONNECTION_TOKEN = "shim-demo-stand-has-no-legacy-session";
 const DEMO_CONNECTION_LEGACY_USER_ID = "990000";
 const TRANSACTION_TIMEOUT_MS = 20_000;
@@ -214,16 +216,20 @@ const upsertPlan = async (
   coachId: string,
   linkedPlanId: string | null,
 ): Promise<string> => {
-  if (linkedPlanId !== null) {
-    return linkedPlanId;
-  }
-
-  const existing = await prisma.trainingPlan.findFirst({
-    where: { creatorId: coachId, name: DEMO_PLAN_NAME, deletedAt: null },
-    select: { id: true },
-  });
+  const existing =
+    linkedPlanId === null
+      ? await prisma.trainingPlan.findFirst({
+          where: { creatorId: coachId, name: DEMO_PLAN_NAME, deletedAt: null },
+          select: { id: true },
+        })
+      : { id: linkedPlanId };
 
   if (existing !== null) {
+    await prisma.trainingPlan.update({
+      where: { id: existing.id },
+      data: { status: TrainingPlanStatus.ARCHIVED },
+    });
+
     return existing.id;
   }
 
@@ -231,7 +237,8 @@ const upsertPlan = async (
     data: {
       creatorId: coachId,
       name: DEMO_PLAN_NAME,
-      description: "Synthetic plan backing the Appetize compat stand, not a real athlete plan.",
+      description: DEMO_PLAN_DESCRIPTION,
+      status: TrainingPlanStatus.ARCHIVED,
     },
     select: { id: true },
   });
@@ -251,7 +258,11 @@ const upsertAthlete = async (
       role: Role.ATHLETE,
       password: passwordHash,
     },
-    update: { name: DEMO_ATHLETE_NAME, password: passwordHash },
+    update: {
+      name: DEMO_ATHLETE_NAME,
+      password: passwordHash,
+      tokenVersion: { increment: 1 },
+    },
     select: { id: true },
   });
   const identity = {

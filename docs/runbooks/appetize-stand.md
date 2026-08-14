@@ -77,16 +77,25 @@ Two things it deliberately does rewrite on every run, both on rows the guards pr
 athlete's password, and the legacy identity fields. `0 created / 0 updated` in the summary is a
 statement about published DAYS, not about those rows.
 
+Rewriting the password also bumps the athlete's `tokenVersion`, the same way every other
+password-writing path in the project does. That revokes any shim token already issued, so **a
+re-seed signs the demo athlete out of the app** — expect to log in again on the stand afterwards.
+It is the point: a re-seed after a rotated password should not leave the old session alive.
+
 Every property of a day is derived from the **absolute date**, not from the run date: whether it is
 a rest day, its content, and its wire `id`. A second run on a later day is therefore a genuine
 no-op for the dates both windows share.
 
 ### Dev
 
+Read the password in rather than assigning it on the command line — an inline assignment lands in
+shell history, and `HISTCONTROL=ignoreboth` does not save you because the line does not begin with
+a space:
+
 ```
 cd packages/api-server
+read -rs SHIM_DEMO_ATHLETE_PASSWORD && export SHIM_DEMO_ATHLETE_PASSWORD
 DATABASE_URL='<dev neon dsn>' \
-SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
   pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
 ```
 
@@ -98,9 +107,16 @@ write, and touches nothing. Applying takes two more flags:
 ```
 
 `--expect-host` is not ceremony. Importing `@prisma/client` loads any `.env` sitting beside it, so
-`DATABASE_URL` can arrive from a file nobody named on the command line — and this repository
-carries three of them. Naming the host you expect is what makes the target deliberate; the script
-refuses to write when the resolved host differs. The dry run prints the exact flag to copy.
+`DATABASE_URL` can arrive from a file nobody named on the command line — this working tree carries
+eight `.env*` files, seven of them holding a `DATABASE_URL`, and only `.env.example` is tracked.
+Naming the host you expect is what makes the target deliberate; the script refuses to write when
+the resolved host differs.
+
+Two things about the value. It is a **hostname with no port**, because the guard compares
+`URL.hostname`: `db.example.com` matches, `db.example.com:5432` never will. And it has to come from
+somewhere other than the script — your own record of the database you meant, not the `target:` line
+the run just printed. A host the tool derived and you pasted straight back attests to nothing, so
+the dry run deliberately no longer offers one to copy.
 
 `SHIM_DEMO_ATHLETE_PASSWORD` is held to the same 12..128 policy as every other password path in the
 project, and surrounding whitespace is rejected rather than silently hashed into the credential.
@@ -108,24 +124,42 @@ project, and surrounding whitespace is rejected rather than silently hashed into
 ### Production
 
 Pull the DSN transiently, use it, delete it. Never paste a production DSN into a file that lives
-longer than the command:
+longer than the command. Read the password in first, then run everything from `(` to `)` as one
+block — the parentheses are what make the cleanup real:
 
 ```
-secrets="$(mktemp -d)"
-trap 'rm -rf "$secrets"' EXIT
-(cd apps/platform && npx vercel env pull "$secrets/prod.env" --environment=production)
-DATABASE_URL="$(env -u DATABASE_URL node -e "process.loadEnvFile('$secrets/prod.env'); process.stdout.write(process.env.DATABASE_URL)")" \
-SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
-  pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
+read -rs SHIM_DEMO_ATHLETE_PASSWORD && export SHIM_DEMO_ATHLETE_PASSWORD
+(
+  secrets="$(mktemp -d)"
+  trap 'rm -rf "$secrets"' EXIT
+  (cd apps/platform && npx vercel@59 env pull "$secrets/prod.env" --environment=production)
+  node -e "process.loadEnvFile('$secrets/prod.env'); process.stdout.write('expected host: ' + new URL(process.env.DATABASE_URL).hostname + '\n')"
+  DATABASE_URL="$(env -u DATABASE_URL node -e "process.loadEnvFile('$secrets/prod.env'); process.stdout.write(process.env.DATABASE_URL)")" \
+    pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts
+)
 ```
 
-Read the target line, then repeat the command with `--write --expect-host=<the host it printed>`.
+The parentheses are not cosmetic. An `EXIT` trap fires when the shell that set it exits, so pasted
+bare into a terminal this block leaves every pulled production secret on disk until you close that
+terminal. Worse, traps do not stack: paste the block a second time and the new trap **replaces** the
+first, so the first temp directory is never removed at all. Inside `( … )` the trap belongs to the
+subshell — it fires the moment the block ends, and a re-run gets its own.
 
-`vercel env pull` writes **every** production secret, not just the DSN — the session key, the blob
-token, the mail key. Pull it to a temp directory outside the working tree with a `trap` that removes
-it, never into the repository. `env -u DATABASE_URL` matters too: `loadEnvFile` does not override a
-variable that is already exported, so without it a stale shell value would win over the file you
-just pulled.
+`vercel env pull` writes **every** platform production secret, not just the DSN: the NextAuth
+secret, the shim JWT secret, the mobile-publish encryption key, the cron secret, the blob
+read-write token, the mail key, and the database URL. Pull it to a temp directory outside the
+working tree, never into the repository. `vercel@59` is pinned on purpose — this is the most
+privileged command in this document, and an unpinned `npx vercel` runs whatever the registry serves
+that day. `env -u DATABASE_URL` matters too: `loadEnvFile` does not override a variable that is
+already exported, so without it a stale shell value would win over the file you just pulled.
+
+That `expected host:` line is the point of the extra `node -e`. It reads the hostname out of the
+file you just pulled, which is a different derivation path from the one the script takes to its own
+`target:` line. Compare the two: if they disagree, something other than `prod.env` supplied
+`DATABASE_URL`, which is the exact accident `--expect-host` exists to catch. Then re-run the whole
+block with `--write --expect-host=<that hostname>` appended to the `tsx` line, typing the hostname
+rather than copying the script's output. The alternative independent source is the `DATABASE_URL`
+entry in the Vercel dashboard.
 
 The password **must be identical on every run**. The script re-hashes and rewrites it each time, so
 running with a different value silently rotates the credential out from under whoever holds it.
@@ -138,8 +172,24 @@ The demo rows are visible in the internal admin console after a production seed:
 the coach list, both demo users in the user list, the demo plan in the plan library (admins and head
 coaches see every non-deleted plan), and both users inside the dashboard's user counts. That is
 deliberate. A demo row that lies about its own history — soft-deleted at birth to hide it — is worse
-than a visible one named `Demo Stand Coach`. Publishing from the demo plan is still blocked for
-everyone but the demo coach, who has no password and cannot sign in.
+than a visible one named `Demo Stand Coach`.
+
+The demo plan is seeded **ARCHIVED**, and every re-seed puts it back to ARCHIVED so a plan left over
+from an earlier run converges too. Be precise about what that buys: archived blocks _editing_, so
+nobody — admins included — can add weeks, days, sessions or rows to it. It does **not** block
+publishing. Nothing in the publish path reads the plan's status; the only status check lives in
+`verifyPlanEditable`, which the LMS editing endpoints call and the mobile-publish endpoints do not.
+
+What actually keeps the stand's content honest is narrower, and worth stating plainly:
+
+- The demo coach owns the only publish link to the plan and holds no password, so it cannot sign in
+  to use it.
+- An admin or head coach **is** granted the plan by `assertPlanAccess` and could create a publish
+  link of their own against it. What they would publish is nothing: the plan carries no weeks and no
+  days. The 64 days the stand serves are written straight into `MobilePublishedDay` by the seed and
+  never pass through the plan's structure.
+- The shim's read path never joins the plan at all, which is why archiving it is invisible to the
+  athlete.
 
 Three standing constraints:
 
@@ -156,8 +206,8 @@ Three standing constraints:
 From the repository root:
 
 ```
-RUN_SHIM_DEMO_CHECK=1 SHIM_DEMO_ATHLETE_PASSWORD='<the stand password>' \
-  pnpm exec vitest run --project platform shim-demo-stand
+read -rs SHIM_DEMO_ATHLETE_PASSWORD && export SHIM_DEMO_ATHLETE_PASSWORD
+RUN_SHIM_DEMO_CHECK=1 pnpm exec vitest run --project platform shim-demo-stand
 ```
 
 The check is skipped unless `RUN_SHIM_DEMO_CHECK=1`, so it never runs in CI. It calls the real route
