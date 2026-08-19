@@ -1,11 +1,40 @@
 import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/iam/auth";
+import { logger } from "@repo/shared";
 
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 
+import { readBcryptCost } from "./bcrypt-cost";
+
 const DUMMY_BCRYPT_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
+
+const upgradeStoredHash = async (
+  userId: string,
+  storedHash: string,
+  plainPassword: string,
+): Promise<void> => {
+  const cost = readBcryptCost(storedHash);
+
+  if (cost === null || cost >= AUTH_CONSTANTS.BCRYPT_COST_FACTOR) {
+    return;
+  }
+
+  try {
+    const upgraded = await iamAuthService.hashPassword(plainPassword);
+
+    await prisma.user.updateMany({
+      where: { id: userId, password: storedHash },
+      data: { password: upgraded },
+    });
+  } catch (error: unknown) {
+    logger.warn("iam.auth.password_cost_upgrade_failed", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
 
 type ValidatedUser = {
   id: string;
@@ -76,6 +105,8 @@ export const iamAuthService = {
     if (!isValid) {
       return null;
     }
+
+    await upgradeStoredHash(user.id, user.password, safePassword);
 
     return {
       id: user.id,

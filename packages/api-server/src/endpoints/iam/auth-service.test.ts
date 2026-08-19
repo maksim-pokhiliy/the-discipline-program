@@ -1,11 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AUTH_CONSTANTS, UserRole } from "@repo/contracts/iam/auth";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { cleanup, createTestUser } from "../../test/helpers";
+import { GOLDEN_BCRYPT_HASH, GOLDEN_PASSWORD } from "../../test/golden-fixture";
+import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { iamAuthService } from "./auth-service";
+import { readBcryptCost } from "./bcrypt-cost";
 
 const TEST_PASSWORD = "secure-test-password-123";
 
@@ -99,6 +101,119 @@ describe("iamAuthService", () => {
       const result = await iamAuthService.validateUser(userWithPassword.email, longPassword);
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("validateUser — bcrypt cost upgrade (AS-7)", () => {
+    const created: string[] = [];
+
+    const userWithHash = async (password: string | null) => {
+      const user = await createTestUser({ password });
+
+      created.push(user.id);
+
+      return user;
+    };
+
+    const storedStateOf = async (id: string) =>
+      cleanupRaw.user.findUnique({ where: { id }, select: { password: true, tokenVersion: true } });
+
+    afterAll(async () => {
+      await cleanup(...created.map((id) => ({ table: "user", id })));
+    });
+
+    it("rewrites a legacy cost-10 credential at the platform cost on a successful login", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+
+      expect(readBcryptCost(GOLDEN_BCRYPT_HASH)).toBe(10);
+
+      const result = await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+      const stored = await storedStateOf(user.id);
+
+      expect(result).not.toBeNull();
+      expect(stored?.password).not.toBe(GOLDEN_BCRYPT_HASH);
+      expect(readBcryptCost(stored?.password ?? "")).toBe(AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
+    });
+
+    it("leaves the upgraded credential verifying the very same password", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+
+      await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      const stored = await storedStateOf(user.id);
+
+      expect(await iamAuthService.comparePassword(GOLDEN_PASSWORD, stored?.password ?? "")).toBe(
+        true,
+      );
+      expect(await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD)).not.toBeNull();
+    });
+
+    it("never bumps tokenVersion, so live sessions survive the rewrite", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+      const before = await storedStateOf(user.id);
+
+      await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      const after = await storedStateOf(user.id);
+
+      expect(after?.tokenVersion).toBe(before?.tokenVersion);
+    });
+
+    it("leaves a credential already at the platform cost untouched", async () => {
+      const hash = await iamAuthService.hashPassword(GOLDEN_PASSWORD);
+      const user = await userWithHash(hash);
+
+      await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      expect((await storedStateOf(user.id))?.password).toBe(hash);
+    });
+
+    it("does not rewrite anything when the password is wrong", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+
+      expect(await iamAuthService.validateUser(user.email, "not-the-password")).toBeNull();
+      expect((await storedStateOf(user.id))?.password).toBe(GOLDEN_BCRYPT_HASH);
+    });
+
+    it("does not rewrite anything on the over-length path", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+      const longPassword = "a".repeat(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH + 1);
+
+      expect(await iamAuthService.validateUser(user.email, longPassword)).toBeNull();
+      expect((await storedStateOf(user.id))?.password).toBe(GOLDEN_BCRYPT_HASH);
+    });
+
+    it("does not rewrite anything for a user that carries no credential", async () => {
+      const user = await userWithHash(null);
+
+      expect(await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD)).toBeNull();
+      expect((await storedStateOf(user.id))?.password).toBeNull();
+    });
+
+    it("still signs the user in when the rewrite itself fails", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+      const hashSpy = vi
+        .spyOn(iamAuthService, "hashPassword")
+        .mockRejectedValueOnce(new Error("bcrypt is having a bad day"));
+
+      const result = await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      expect(result).not.toBeNull();
+      expect((await storedStateOf(user.id))?.password).toBe(GOLDEN_BCRYPT_HASH);
+
+      hashSpy.mockRestore();
+    });
+
+    it("rewrites once and then stops, so repeated logins do not churn the row", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+
+      await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      const afterFirst = await storedStateOf(user.id);
+
+      await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      expect((await storedStateOf(user.id))?.password).toBe(afterFirst?.password);
     });
   });
 

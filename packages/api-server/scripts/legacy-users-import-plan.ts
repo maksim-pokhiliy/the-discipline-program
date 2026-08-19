@@ -1,3 +1,6 @@
+import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
+
+import { readBcryptCost } from "../src/endpoints/iam/bcrypt-cost";
 import {
   findLegacyCatalogEntry,
   LEGACY_TRAINING_LEVELS,
@@ -9,16 +12,9 @@ import { serializeLegacyDate } from "../src/endpoints/mobile-compat/legacy-date"
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
 
 export const ATHLETE_ROLE = "ATHLETE";
-export const PLATFORM_BCRYPT_COST = 12;
+export const PLATFORM_BCRYPT_COST = AUTH_CONSTANTS.BCRYPT_COST_FACTOR;
 
-const BCRYPT_HASH_PATTERN = /^\$2[aby]\$(\d{2})\$/;
-
-export const readBcryptCost = (hash: string): number | null => {
-  const match = BCRYPT_HASH_PATTERN.exec(hash);
-  const digits = match?.[1];
-
-  return digits === undefined ? null : Number(digits);
-};
+export { readBcryptCost };
 
 export type PlatformIdentity = {
   legacyUserId: number;
