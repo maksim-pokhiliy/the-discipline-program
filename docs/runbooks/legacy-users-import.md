@@ -164,6 +164,10 @@ removing that row from the export JSON and re-running — both are explicit and 
   written with the platform role `ATHLETE`.
 - `platform credential kept, legacy hash not written` — that person changed their password on the
   platform. The platform credential wins.
+- `matched platform user has no password of their own` — the legacy identity was hung on a platform
+  user who has never set a password (an invitation that was never completed). A matched user's
+  credential is never touched, so the legacy password is **not** carried across and that person
+  cannot sign in until they set one. Worth resolving by hand before cutover.
 - `stored identity missing from this export` — a legacy row that was imported before is gone from
   this dump. Nothing is deleted; decide by hand whether it should be.
 - `synthetic address, no usable credential` — the ratified junk account, imported disabled and with
