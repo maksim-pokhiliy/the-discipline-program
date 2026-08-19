@@ -38,6 +38,8 @@ const WARNING_LABELS = {
   "identity-target-drift": "stored identity sits on a different user than the evidence names",
   "synthetic-email-no-credential": "synthetic address, no usable credential",
   "matched-user-has-no-credential": "matched platform user has no password of their own",
+  "credential-differs-not-restored": "credential differs from the export and was NOT replaced",
+  "credential-restored": "platform credential REPLACED by the export hash",
   "legacy-team-dropped": "legacy team has nowhere to go",
 } satisfies Record<WarningKind, string>;
 
@@ -64,7 +66,9 @@ const describeRefresh = (action: Extract<ImportAction, { kind: "refresh" }>): st
           .map((change) => `${change.field} ${change.from} -> ${change.to}`)
           .join(", ");
   const credential =
-    action.passwordChange.kind === "restored" ? "; credential restored from the export" : "";
+    action.passwordChange.kind === "restored"
+      ? "; PLATFORM CREDENTIAL REPLACED by the export hash"
+      : "";
 
   return `${tag(action.row.legacyUserId)} ${action.userEmail}  ${changes}${credential}`;
 };
@@ -90,12 +94,15 @@ const summaryLine = (plan: ImportPlan): string => {
   const addressChanges = plan.warnings.filter(
     (warning) => warning.kind === "login-address-changes",
   ).length;
+  const credentialsReplaced = plan.warnings.filter(
+    (warning) => warning.kind === "credential-restored",
+  ).length;
 
   return (
     `create ${byKind(plan, "create").length} · attach ${attachments.length} ` +
     `(link ${linkCount} / address ${emailCount}) · refresh ${byKind(plan, "refresh").length} · ` +
-    `login-address changes ${addressChanges} · conflicts ${plan.conflicts.length} · ` +
-    `warnings ${plan.warnings.length}`
+    `login-address changes ${addressChanges} · credentials replaced ${credentialsReplaced} · ` +
+    `conflicts ${plan.conflicts.length} · warnings ${plan.warnings.length}`
   );
 };
 

@@ -7,6 +7,7 @@ import {
   type RunImportDeps,
   runImport,
   SOURCE_FLAG,
+  withHostWithheld,
 } from "./legacy-users-import";
 import type { ImportWriter } from "./legacy-users-import-apply";
 import type { PlatformSnapshot } from "./legacy-users-import-plan";
@@ -264,6 +265,27 @@ describe("runImport — apply", () => {
     await runImport(deps(writeArgv));
 
     expect(events.at(-1)).toBe("close");
+  });
+});
+
+describe("withHostWithheld", () => {
+  it("scrubs the resolved host out of a driver error before it reaches stdout", () => {
+    const prismaError = `Can't reach database server at \`${TARGET_HOST}:5432\``;
+
+    expect(withHostWithheld(prismaError, TARGET_HOST)).not.toContain(TARGET_HOST);
+    expect(withHostWithheld(prismaError, TARGET_HOST)).toContain("<host withheld>");
+  });
+
+  it("scrubs every occurrence, not only the first", () => {
+    const doubled = `${TARGET_HOST} and again ${TARGET_HOST}`;
+
+    expect(withHostWithheld(doubled, TARGET_HOST)).toBe(
+      "<host withheld> and again <host withheld>",
+    );
+  });
+
+  it("leaves a message alone when no host could be resolved", () => {
+    expect(withHostWithheld("something failed", "")).toBe("something failed");
   });
 });
 

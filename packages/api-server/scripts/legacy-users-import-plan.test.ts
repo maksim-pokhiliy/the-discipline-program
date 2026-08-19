@@ -188,32 +188,57 @@ describe("diffIdentity", () => {
 });
 
 describe("decidePasswordChange", () => {
-  it("restores the legacy hash over a stored cost-10 hash that has drifted", () => {
-    expect(decidePasswordChange(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH)).toEqual({
+  const RESTORE_ON = true;
+  const RESTORE_OFF = false;
+
+  it("replaces a drifted below-cost credential only when restore is explicitly enabled", () => {
+    expect(decidePasswordChange(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
       kind: "restored",
     });
   });
 
+  it("refuses to replace a drifted below-cost credential by default", () => {
+    expect(decidePasswordChange(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, RESTORE_OFF)).toEqual({
+      kind: "left-as-is",
+      reason: "restore-not-enabled",
+    });
+  });
+
   it("writes nothing when the stored hash already equals the source hash", () => {
-    expect(decidePasswordChange(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH)).toEqual({
+    expect(decidePasswordChange(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
       kind: "unchanged",
     });
   });
 
-  it("leaves a platform-managed cost-12 hash alone even when it differs", () => {
-    expect(decidePasswordChange(COST_12_HASH, GOLDEN_BCRYPT_HASH)).toEqual({ kind: "left-as-is" });
+  it("leaves a platform-managed cost-12 hash alone even with restore enabled", () => {
+    expect(decidePasswordChange(COST_12_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "platform-managed",
+    });
   });
 
   it("leaves an unreadable stored hash alone rather than guessing", () => {
-    expect(decidePasswordChange("garbage", GOLDEN_BCRYPT_HASH)).toEqual({ kind: "left-as-is" });
+    expect(decidePasswordChange("garbage", GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "platform-managed",
+    });
   });
 
   it("never hands a credential to a platform user that has none", () => {
-    expect(decidePasswordChange(null, GOLDEN_BCRYPT_HASH)).toEqual({ kind: "left-as-is" });
+    expect(decidePasswordChange(null, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "matched-user-has-none",
+    });
   });
 
   it("never nulls out a stored credential when the source withholds one", () => {
-    expect(decidePasswordChange(COST_12_HASH, null)).toEqual({ kind: "left-as-is" });
-    expect(decidePasswordChange(GOLDEN_BCRYPT_HASH, null)).toEqual({ kind: "left-as-is" });
+    expect(decidePasswordChange(COST_12_HASH, null, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "no-source-credential",
+    });
+    expect(decidePasswordChange(GOLDEN_BCRYPT_HASH, null, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "no-source-credential",
+    });
   });
 });

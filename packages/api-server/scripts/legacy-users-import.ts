@@ -12,9 +12,11 @@ import { type ImportReader, loadPlatformSnapshot } from "./legacy-users-import-s
 import { parseLegacySource } from "./legacy-users-import-source";
 import {
   hasFlag,
+  parseTarget,
   requireEnv,
   requireFlag,
   requireWriteTarget,
+  RESTORE_CREDENTIALS_FLAG,
   WRITE_FLAG,
 } from "./script-target-guard";
 
@@ -59,6 +61,9 @@ export type RunImportDeps = {
 
 export type RunImportResult = { lines: readonly string[]; hasConflicts: boolean };
 
+export const withHostWithheld = (message: string, hostname: string): string =>
+  hostname === "" ? message : message.replaceAll(hostname, "<host withheld>");
+
 export const readerFor = (client: Prisma.TransactionClient): ImportReader => ({
   mobileLegacyIdentity: {
     findMany: ({ where }) =>
@@ -79,7 +84,7 @@ export const readerFor = (client: Prisma.TransactionClient): ImportReader => ({
 export const writerFor = (client: Prisma.TransactionClient): ImportWriter => ({
   user: {
     create: ({ data, select }) => client.user.create({ data, select }),
-    update: ({ where, data }) => client.user.update({ where, data }),
+    update: ({ where, data: { password } }) => client.user.update({ where, data: { password } }),
   },
   mobileLegacyIdentity: {
     create: ({ data }) => client.mobileLegacyIdentity.create({ data }),
@@ -105,6 +110,7 @@ export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> =
   const sourcePath = requireFlag(deps.argv, SOURCE_FLAG);
   const isWriting = hasFlag(deps.argv, WRITE_FLAG);
   const databaseUrl = requireEnv(deps.env, "DATABASE_URL");
+  const isCredentialRestoreEnabled = hasFlag(deps.argv, RESTORE_CREDENTIALS_FLAG);
   const source = parseLegacySource(JSON.parse(deps.readSourceFile(sourcePath)));
 
   if (isWriting) {
@@ -116,7 +122,9 @@ export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> =
   try {
     if (!isWriting) {
       const plan = await session.read(async (reader) =>
-        classifyImport(source, await loadPlatformSnapshot(reader, source.rows)),
+        classifyImport(source, await loadPlatformSnapshot(reader, source.rows), {
+          isCredentialRestoreEnabled,
+        }),
       );
 
       return {
@@ -129,7 +137,9 @@ export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> =
 
     try {
       await session.write(async (reader, writer) => {
-        const planned = classifyImport(source, await loadPlatformSnapshot(reader, source.rows));
+        const planned = classifyImport(source, await loadPlatformSnapshot(reader, source.rows), {
+          isCredentialRestoreEnabled,
+        });
 
         attempted.plan = planned;
 
@@ -174,13 +184,25 @@ const main = async (): Promise<void> => {
   }
 };
 
+const parseTargetQuietly = (databaseUrl: string): string => {
+  try {
+    return parseTarget(databaseUrl).hostname;
+  } catch {
+    return "";
+  }
+};
+
 const entryPath = process.argv[1];
 const isDirectRun =
   entryPath !== undefined && resolve(entryPath) === fileURLToPath(import.meta.url);
 
 if (isDirectRun) {
   main().catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : String(error));
+    const raw = error instanceof Error ? error.message : String(error);
+    const databaseUrl = process.env.DATABASE_URL ?? "";
+    const hostname = databaseUrl === "" ? "" : parseTargetQuietly(databaseUrl);
+
+    console.error(withHostWithheld(raw, hostname));
     process.exitCode = 1;
   });
 }

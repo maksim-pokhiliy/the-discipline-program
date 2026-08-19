@@ -14,8 +14,19 @@ The script reads a **JSON export file**, never a second database, so no legacy D
 Its only connection is the platform DSN in `DATABASE_URL`, and writing to that requires
 `--write --expect-host=<hostname>`, checked against the host the DSN resolved to. All writes happen
 inside one transaction, and the whole run refuses if any row is in conflict — there is no partial
-apply and no override flag. The report never prints a password hash, a DSN, or the resolved
-hostname: a hostname the tool derived and you pasted straight back would attest to nothing.
+apply and no override flag. Nothing the script prints — report or error — contains a password hash
+or the resolved hostname: a hostname the tool derived and you pasted straight back would attest to
+nothing, so even driver errors have the host scrubbed out of them.
+
+Two guard details worth knowing. A DSN carrying a `host=` **query parameter** is refused outright
+under `--write`: Prisma honours that parameter over the host in the DSN authority, so
+`--expect-host` would otherwise attest to a host the run does not connect to. And the hostname
+comparison is case-insensitive, the way DNS is.
+
+**The script never replaces an existing platform password.** On a re-run it can _restore_ a
+credential it wrote itself, but only when you pass `--restore-credentials` explicitly; without that
+flag a differing credential is reported and left alone. Use the flag only when you know the legacy
+password changed since the last import and you mean to carry the new one across.
 
 ## 1. Produce the export
 
@@ -112,7 +123,7 @@ The summary line counts every class, including the address changes, so nothing h
 fold:
 
 ```
-create 19 · attach 0 (link 0 / address 0) · refresh 0 · login-address changes 0 · conflicts 0 · warnings 1
+create 19 · attach 0 (link 0 / address 0) · refresh 0 · login-address changes 0 · credentials replaced 0 · conflicts 0 · warnings 1
 ```
 
 - **CREATE** — a new platform user plus the identity. Shows the catalog ids, whether the account is
@@ -137,6 +148,8 @@ This is not a warning to skim. Before applying in production:
 
 - [ ] every athlete in this section is recorded, with their old and new address
 - [ ] each of them will be told their new app login before cutover
+- [ ] `credentials replaced 0` on the summary line, unless you deliberately passed
+      `--restore-credentials`
 
 ### Conflicts
 
@@ -164,6 +177,12 @@ removing that row from the export JSON and re-running — both are explicit and 
   written with the platform role `ATHLETE`.
 - `platform credential kept, legacy hash not written` — that person changed their password on the
   platform. The platform credential wins.
+- `credential differs from the export and was NOT replaced` — the stored credential looks
+  import-written but no longer matches the export. Nothing was changed. Re-run with
+  `--restore-credentials` only if you mean to carry the newer legacy password across.
+- `platform credential REPLACED by the export hash` — you passed `--restore-credentials` and this
+  person's stored password was overwritten. Check the `credentials replaced` count on the summary
+  line matches what you intended.
 - `matched platform user has no password of their own` — the legacy identity was hung on a platform
   user who has never set a password (an invitation that was never completed). A matched user's
   credential is never touched, so the legacy password is **not** carried across and that person

@@ -77,8 +77,12 @@ const emptySnapshot = (overrides: Partial<PlatformSnapshot> = {}): PlatformSnaps
   ...overrides,
 });
 
-const planFor = (rows: LegacySourceRow[], snapshot: PlatformSnapshot): ImportPlan =>
-  classifyImport(normalizeLegacySource(rows), snapshot);
+const planFor = (
+  rows: LegacySourceRow[],
+  snapshot: PlatformSnapshot,
+  isCredentialRestoreEnabled = false,
+): ImportPlan =>
+  classifyImport(normalizeLegacySource(rows), snapshot, { isCredentialRestoreEnabled });
 
 const storedIdentity = (overrides = {}) => ({
   legacyUserId: LEGACY_ID,
@@ -238,15 +242,15 @@ describe("applyImport — refresh", () => {
     });
   });
 
-  it("restores the export hash over a drifted cost-10 credential", async () => {
+  it("restores the export hash over a drifted cost-10 credential when asked to", async () => {
     const { writer, calls } = fakeWriter();
     const counts = await applyImport(
       writer,
-      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH)),
+      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH), true),
     );
 
     expect(counts.credentialsRestored).toBe(1);
-    expect(paths(calls)).toEqual(["identity.update", "user.update"]);
+    expect(paths(calls)).toEqual(["user.update"]);
     expect(argsAt(calls, "user.update")).toEqual({
       where: { id: "user_platform" },
       data: { password: GOLDEN_BCRYPT_HASH },
@@ -255,18 +259,32 @@ describe("applyImport — refresh", () => {
 
   it("leaves a platform-managed cost-12 credential untouched", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(writer, planFor([sourceRow()], snapshotWith(COST_12_HASH)));
+    const counts = await applyImport(
+      writer,
+      planFor([sourceRow()], snapshotWith(COST_12_HASH), true),
+    );
 
     expect(counts.credentialsRestored).toBe(0);
-    expect(paths(calls)).toEqual(["identity.update"]);
+    expect(paths(calls)).toEqual([]);
+  });
+
+  it("never replaces a drifted credential unless restore is explicitly enabled", async () => {
+    const { writer, calls } = fakeWriter();
+    const counts = await applyImport(
+      writer,
+      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH)),
+    );
+
+    expect(counts.credentialsRestored).toBe(0);
+    expect(paths(calls)).not.toContain("user.update");
   });
 
   it("never hands a credential to a platform user that has none", async () => {
     const { writer, calls } = fakeWriter();
 
-    await applyImport(writer, planFor([sourceRow()], snapshotWith(null)));
+    await applyImport(writer, planFor([sourceRow()], snapshotWith(null), true));
 
-    expect(paths(calls)).toEqual(["identity.update"]);
+    expect(paths(calls)).not.toContain("user.update");
   });
 
   it("is a no-op on a second run against state it already wrote", async () => {
@@ -275,7 +293,7 @@ describe("applyImport — refresh", () => {
     const counts = await applyImport(writer, plan);
 
     expect(counts).toEqual({ created: 0, attached: 0, refreshed: 1, credentialsRestored: 0 });
-    expect(argsAt(calls, "identity.update")).toMatchObject({ data: { legacyLevelId: 2 } });
+    expect(calls).toEqual([]);
     expect(plan.actions.at(0)).toMatchObject({ identityChanges: [] });
   });
 });

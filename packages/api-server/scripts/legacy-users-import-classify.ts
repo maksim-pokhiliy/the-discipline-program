@@ -7,6 +7,7 @@ import {
   rowWarnings,
 } from "./legacy-users-import-match";
 import {
+  type ClassifyOptions,
   describeUnmappedCatalogIds,
   type ImportAction,
   type ImportConflict,
@@ -96,6 +97,7 @@ const identitiesAbsentFromSource = (
 export const classifyImport = (
   source: ParsedLegacySource,
   snapshot: PlatformSnapshot,
+  options: ClassifyOptions = { isCredentialRestoreEnabled: false },
 ): ImportPlan => {
   const indexes = buildIndexes(snapshot);
   const conflicts: ImportConflict[] = source.defects.map(defectToConflict);
@@ -103,7 +105,10 @@ export const classifyImport = (
   const staged: ImportAction[] = [];
 
   const repeatedEmails = duplicatesOf(source.rows.map((row) => row.email));
-  const repeatedIds = duplicatesOf(source.rows.map((row) => row.legacyUserId));
+  const repeatedIds = duplicatesOf([
+    ...source.rows.map((row) => row.legacyUserId),
+    ...source.defects.map((defect) => defect.legacyUserId),
+  ]);
 
   for (const row of source.rows) {
     if (repeatedIds.has(row.legacyUserId)) {
@@ -179,7 +184,7 @@ export const classifyImport = (
       continue;
     }
 
-    const outcome = refreshOutcome(row, resolution.identity, indexes);
+    const outcome = refreshOutcome(row, resolution.identity, indexes, options);
 
     if ("conflict" in outcome) {
       conflicts.push(outcome.conflict);

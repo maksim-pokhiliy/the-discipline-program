@@ -80,7 +80,7 @@ describe("renderImportReport", () => {
     );
 
     expect(render(plan)).toContain(
-      "create 0 · attach 1 (link 1 / address 0) · refresh 0 · login-address changes 1 · conflicts 0 · warnings 1",
+      "create 0 · attach 1 (link 1 / address 0) · refresh 0 · login-address changes 1 · credentials replaced 0 · conflicts 0 · warnings 1",
     );
   });
 

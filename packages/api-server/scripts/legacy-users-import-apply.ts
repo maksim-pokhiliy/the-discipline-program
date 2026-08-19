@@ -106,10 +106,12 @@ export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promi
       continue;
     }
 
-    await writer.mobileLegacyIdentity.update({
-      where: { legacyUserId: action.row.legacyUserId },
-      data: mirrorOf(action.row),
-    });
+    if (action.identityChanges.length > 0) {
+      await writer.mobileLegacyIdentity.update({
+        where: { legacyUserId: action.row.legacyUserId },
+        data: mirrorOf(action.row),
+      });
+    }
 
     counts.refreshed += 1;
 

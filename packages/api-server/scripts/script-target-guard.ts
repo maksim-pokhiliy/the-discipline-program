@@ -1,5 +1,6 @@
 export const WRITE_FLAG = "--write";
 export const EXPECT_HOST_FLAG = "--expect-host=";
+export const RESTORE_CREDENTIALS_FLAG = "--restore-credentials";
 
 export const readFlag = (argv: readonly string[], prefix: string): string | null => {
   const matches = argv.filter((candidate) => candidate.startsWith(prefix));
@@ -68,7 +69,18 @@ export const parseTarget = (databaseUrl: string): URL => {
   }
 };
 
+export const HOST_QUERY_PARAM = "host";
+
 export const requireNamedHost = (target: URL): void => {
+  if (target.searchParams.has(HOST_QUERY_PARAM)) {
+    throw new Error(
+      `refusing to write: DATABASE_URL carries a ${HOST_QUERY_PARAM} query parameter, which ` +
+        `overrides the host in the DSN authority at connect time. ${EXPECT_HOST_FLAG} would then ` +
+        "attest to a host this run does not connect to. Remove the parameter and name the host " +
+        "in the DSN itself.",
+    );
+  }
+
   if (target.hostname === "") {
     throw new Error(
       `refusing to write: DATABASE_URL names no host, so there is nothing for ${EXPECT_HOST_FLAG}` +
@@ -97,7 +109,7 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
     );
   }
 
-  if (expected !== target.hostname) {
+  if (expected.toLowerCase() !== target.hostname.toLowerCase()) {
     throw new Error(
       `refusing to write: ${EXPECT_HOST_FLAG}${expected} does not match the host this run ` +
         "resolved from DATABASE_URL. The resolved host is deliberately not printed — a hostname " +

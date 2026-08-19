@@ -48,7 +48,18 @@ export type PlatformSnapshot = {
 
 export type FieldChange = { field: string; from: string; to: string };
 
-export type PasswordChange = { kind: "unchanged" } | { kind: "restored" } | { kind: "left-as-is" };
+export type PasswordLeftReason =
+  | "no-source-credential"
+  | "matched-user-has-none"
+  | "platform-managed"
+  | "restore-not-enabled";
+
+export type PasswordChange =
+  | { kind: "unchanged" }
+  | { kind: "restored" }
+  | { kind: "left-as-is"; reason: PasswordLeftReason };
+
+export type ClassifyOptions = { isCredentialRestoreEnabled: boolean };
 
 export type MatchedBy = "link" | "email";
 
@@ -91,6 +102,8 @@ export type WarningKind =
   | "identity-target-drift"
   | "synthetic-email-no-credential"
   | "matched-user-has-no-credential"
+  | "credential-differs-not-restored"
+  | "credential-restored"
   | "legacy-team-dropped";
 
 export type ImportConflict = { legacyUserId: number; reason: ConflictReason; detail: string };
@@ -143,9 +156,14 @@ export const diffIdentity = (
 export const decidePasswordChange = (
   storedHash: string | null,
   sourceHash: string | null,
+  isCredentialRestoreEnabled: boolean,
 ): PasswordChange => {
-  if (sourceHash === null || storedHash === null) {
-    return { kind: "left-as-is" };
+  if (sourceHash === null) {
+    return { kind: "left-as-is", reason: "no-source-credential" };
+  }
+
+  if (storedHash === null) {
+    return { kind: "left-as-is", reason: "matched-user-has-none" };
   }
 
   if (storedHash === sourceHash) {
@@ -154,7 +172,11 @@ export const decidePasswordChange = (
 
   const cost = readBcryptCost(storedHash);
 
-  return cost !== null && cost < PLATFORM_BCRYPT_COST
+  if (cost === null || cost >= PLATFORM_BCRYPT_COST) {
+    return { kind: "left-as-is", reason: "platform-managed" };
+  }
+
+  return isCredentialRestoreEnabled
     ? { kind: "restored" }
-    : { kind: "left-as-is" };
+    : { kind: "left-as-is", reason: "restore-not-enabled" };
 };

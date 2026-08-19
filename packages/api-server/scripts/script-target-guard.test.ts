@@ -142,6 +142,20 @@ describe("requireNamedHost", () => {
     expect(message).toContain("names no host");
     expect(message).toContain("refusing to write");
   });
+
+  it("refuses a DSN whose host query parameter would override the authority host", () => {
+    const decoyed = `${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432/platform?host=elsewhere.invalid`;
+    const message = messageOf(() => requireNamedHost(parseTarget(decoyed)));
+
+    expect(message).toContain("refusing to write");
+    expect(message).toContain("host query parameter");
+  });
+
+  it("accepts a DSN carrying unrelated query parameters", () => {
+    const withParams = `${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432/platform?sslmode=require&connect_timeout=10`;
+
+    expect(() => requireNamedHost(parseTarget(withParams))).not.toThrow();
+  });
 });
 
 describe("requireExpectedHost", () => {
@@ -184,6 +198,22 @@ describe("requireExpectedHost", () => {
         target,
       ),
     ).toThrow(/exactly once/);
+  });
+
+  it("compares hostnames case-insensitively, the way DNS does", () => {
+    expect(() =>
+      requireExpectedHost([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_HOST.toUpperCase()}`], target),
+    ).not.toThrow();
+  });
+});
+
+describe("requireWriteTarget — host query parameter", () => {
+  it("refuses a decoy authority host whose query parameter names the real target", () => {
+    const decoyed = `${SCHEME}//importer:${SECRET_PASSWORD}@decoy.invalid:5432/platform?host=${TARGET_HOST}`;
+
+    expect(() =>
+      requireWriteTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}decoy.invalid`], decoyed),
+    ).toThrow(/host query parameter/);
   });
 });
 

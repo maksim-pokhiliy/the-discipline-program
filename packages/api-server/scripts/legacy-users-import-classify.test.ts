@@ -63,8 +63,12 @@ const emptySnapshot = (overrides: Partial<PlatformSnapshot> = {}): PlatformSnaps
   ...overrides,
 });
 
-const classify = (rows: LegacySourceRow[], snapshot: PlatformSnapshot): ImportPlan =>
-  classifyImport(normalizeLegacySource(rows), snapshot);
+const classify = (
+  rows: LegacySourceRow[],
+  snapshot: PlatformSnapshot,
+  isCredentialRestoreEnabled = false,
+): ImportPlan =>
+  classifyImport(normalizeLegacySource(rows), snapshot, { isCredentialRestoreEnabled });
 
 const reasons = (plan: ImportPlan): string[] => plan.conflicts.map((conflict) => conflict.reason);
 const warningKinds = (plan: ImportPlan): string[] => plan.warnings.map((warning) => warning.kind);
@@ -432,12 +436,83 @@ describe("warnings", () => {
   });
 });
 
+describe("credential outcomes on a refresh", () => {
+  const refreshSnapshotWith = (password: string | null) =>
+    emptySnapshot({
+      identities: [storedIdentity()],
+      users: [platformUser({ identityLegacyUserId: LEGACY_ID, password })],
+    });
+
+  it("reports a credential-less matched user honestly instead of claiming one is managed", () => {
+    const plan = classify([sourceRow()], refreshSnapshotWith(null));
+
+    expect(warningKinds(plan)).toContain("matched-user-has-no-credential");
+    expect(warningKinds(plan)).not.toContain("password-left-as-is");
+  });
+
+  it("says plainly when a below-cost credential differs and was left alone", () => {
+    const plan = classify(
+      [sourceRow()],
+      refreshSnapshotWith("$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG"),
+    );
+
+    expect(warningKinds(plan)).toContain("credential-differs-not-restored");
+  });
+
+  it("warns loudly when it is about to replace a platform credential", () => {
+    const plan = classify(
+      [sourceRow()],
+      refreshSnapshotWith("$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG"),
+      true,
+    );
+
+    expect(warningKinds(plan)).toContain("credential-restored");
+  });
+
+  it("stays silent when the stored credential already matches the export", () => {
+    const plan = classify([sourceRow()], refreshSnapshotWith(GOLDEN_BCRYPT_HASH));
+
+    expect(warningKinds(plan)).not.toContain("credential-restored");
+    expect(warningKinds(plan)).not.toContain("password-left-as-is");
+  });
+});
+
+describe("duplicate detection across defect rows", () => {
+  it("does not stage an action for a legacy id that also appears as a defect row", () => {
+    const plan = classify(
+      [sourceRow({ id: 2, username: "root" }), sourceRow({ id: 2, username: "u2@tdp.local" })],
+      emptySnapshot(),
+    );
+
+    expect(plan.actions).toEqual([]);
+    expect(reasons(plan)).toContain("duplicate-legacy-id-in-source");
+  });
+});
+
 describe("the demo athlete", () => {
   it("is never touched, because its legacy id is outside the imported range", () => {
     const plan = classify([sourceRow()], emptySnapshot());
 
     expect(plan.actions.map((action) => action.row.legacyUserId)).toEqual([LEGACY_ID]);
     expect(plan.actions.map((action) => action.row.legacyUserId)).not.toContain(990001);
+  });
+
+  it("is defended by the identity check even when a source row shares its address", () => {
+    const plan = classify(
+      [sourceRow({ username: "demo-athlete@thedisciplineprogram.com" })],
+      emptySnapshot({
+        users: [
+          platformUser({
+            id: "user_demo",
+            email: "demo-athlete@thedisciplineprogram.com",
+            identityLegacyUserId: 990001,
+          }),
+        ],
+      }),
+    );
+
+    expect(reasons(plan)).toEqual(["matched-user-has-other-identity"]);
+    expect(plan.actions).toEqual([]);
   });
 });
 
@@ -454,6 +529,7 @@ describe("refresh detail", () => {
           }),
         ],
       }),
+      true,
     );
     const [action] = plan.actions;
 

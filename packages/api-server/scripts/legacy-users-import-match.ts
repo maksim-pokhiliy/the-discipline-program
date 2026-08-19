@@ -1,16 +1,19 @@
 import {
   ATHLETE_ROLE,
+  type ClassifyOptions,
   decidePasswordChange,
   diffIdentity,
   type ImportAction,
   type ImportConflict,
   type ImportWarning,
   type MatchedBy,
+  type PasswordChange,
   type PlatformIdentity,
   type PlatformSnapshot,
   type PlatformUser,
 } from "./legacy-users-import-plan";
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
+import { RESTORE_CREDENTIALS_FLAG } from "./script-target-guard";
 
 export type Indexes = {
   identityByLegacyId: Map<number, PlatformIdentity>;
@@ -190,10 +193,55 @@ const driftWarning = (
       };
 };
 
+const describeCredentialOutcome = (
+  row: NormalizedLegacyUser,
+  user: PlatformUser,
+  change: PasswordChange,
+): ImportWarning | null => {
+  if (change.kind === "unchanged") {
+    return null;
+  }
+
+  if (change.kind === "restored") {
+    return {
+      legacyUserId: row.legacyUserId,
+      kind: "credential-restored",
+      detail: `${user.email} had a legacy-written credential that no longer matches the export; it is being replaced by the export hash`,
+    };
+  }
+
+  if (change.reason === "matched-user-has-none") {
+    return {
+      legacyUserId: row.legacyUserId,
+      kind: "matched-user-has-no-credential",
+      detail: `${user.email} carries no platform password, and the legacy hash is not written to a matched user; this person cannot sign in until they set one`,
+    };
+  }
+
+  if (change.reason === "platform-managed") {
+    return {
+      legacyUserId: row.legacyUserId,
+      kind: "password-left-as-is",
+      detail: `${user.email} carries a platform-managed credential; the legacy hash is not written`,
+    };
+  }
+
+  if (change.reason === "restore-not-enabled") {
+    return {
+      legacyUserId: row.legacyUserId,
+      kind: "credential-differs-not-restored",
+      detail: `${user.email} carries a below-cost credential that differs from the export; re-run with ${RESTORE_CREDENTIALS_FLAG} if you mean to replace it`,
+    };
+  }
+
+  return null;
+};
+
 export const refreshOutcome = (
   row: NormalizedLegacyUser,
   identity: PlatformIdentity,
   indexes: Indexes,
+  options: ClassifyOptions,
 ): { action: ImportAction; warnings: ImportWarning[] } | { conflict: ImportConflict } => {
   const user = indexes.userById.get(identity.userId);
 
@@ -217,15 +265,16 @@ export const refreshOutcome = (
     };
   }
 
-  const passwordChange = decidePasswordChange(user.password, row.passwordHash);
+  const passwordChange = decidePasswordChange(
+    user.password,
+    row.passwordHash,
+    options.isCredentialRestoreEnabled,
+  );
   const warnings: ImportWarning[] = [];
+  const credentialWarning = describeCredentialOutcome(row, user, passwordChange);
 
-  if (passwordChange.kind === "left-as-is" && user.password !== row.passwordHash) {
-    warnings.push({
-      legacyUserId: row.legacyUserId,
-      kind: "password-left-as-is",
-      detail: `${user.email} carries a platform-managed credential; the legacy hash is not written`,
-    });
+  if (credentialWarning !== null) {
+    warnings.push(credentialWarning);
   }
 
   const drift = driftWarning(row, identity, indexes);
