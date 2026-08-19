@@ -142,7 +142,7 @@ export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> =
         throw error;
       }
 
-      return { lines: renderImportReport(refused, "applied"), hasConflicts: true };
+      return { lines: renderImportReport(refused, "refused"), hasConflicts: true };
     }
 
     const applied = attempted.plan;

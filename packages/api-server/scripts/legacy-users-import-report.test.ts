@@ -4,7 +4,11 @@ import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
 import type { ImportPlan, PlatformSnapshot } from "./legacy-users-import-plan";
-import { ADDRESS_CHANGE_HEADING, renderImportReport } from "./legacy-users-import-report";
+import {
+  ADDRESS_CHANGE_HEADING,
+  type ReportMode,
+  renderImportReport,
+} from "./legacy-users-import-report";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 
 const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
@@ -37,7 +41,7 @@ const emptySnapshot = (overrides: Partial<PlatformSnapshot> = {}): PlatformSnaps
 const planFor = (rows: LegacySourceRow[], snapshot: PlatformSnapshot): ImportPlan =>
   classifyImport(normalizeLegacySource(rows), snapshot);
 
-const render = (plan: ImportPlan, mode: "dry-run" | "applied" = "dry-run"): string =>
+const render = (plan: ImportPlan, mode: ReportMode = "dry-run"): string =>
   renderImportReport(plan, mode).join("\n");
 
 describe("renderImportReport", () => {
@@ -46,6 +50,15 @@ describe("renderImportReport", () => {
       "DRY RUN, nothing was written",
     );
     expect(render(planFor([sourceRow()], emptySnapshot()), "applied")).toContain("APPLIED");
+  });
+
+  it("heads a refused write as refused, never as applied", () => {
+    const plan = planFor([sourceRow({ training_level_id: 9 })], emptySnapshot());
+    const report = render(plan, "refused");
+
+    expect(report.split("\n").at(0)).toBe("legacy users import — REFUSED, nothing was written");
+    expect(report).not.toContain("— APPLIED");
+    expect(report).toContain("REFUSED: nothing was written");
   });
 
   it("counts every class on one summary line, including the address changes", () => {

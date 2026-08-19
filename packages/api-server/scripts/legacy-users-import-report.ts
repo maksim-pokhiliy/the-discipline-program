@@ -6,7 +6,13 @@ import type {
   WarningKind,
 } from "./legacy-users-import-plan";
 
-export type ReportMode = "dry-run" | "applied";
+export type ReportMode = "dry-run" | "applied" | "refused";
+
+const HEADERS = {
+  "dry-run": "legacy users import — DRY RUN, nothing was written",
+  applied: "legacy users import — APPLIED",
+  refused: "legacy users import — REFUSED, nothing was written",
+} satisfies Record<ReportMode, string>;
 
 export const ADDRESS_CHANGE_HEADING = "ACTION REQUIRED — login address changes";
 
@@ -96,9 +102,9 @@ const verdictLines = (plan: ImportPlan, mode: ReportMode): readonly string[] => 
   if (plan.conflicts.length > 0) {
     return [
       "",
-      mode === "applied"
-        ? "REFUSED: nothing was written. Every conflict above has to be resolved first."
-        : "REFUSED: this export would not be applied while any conflict above stands.",
+      mode === "dry-run"
+        ? "REFUSED: this export would not be applied while any conflict above stands."
+        : "REFUSED: nothing was written. Every conflict above has to be resolved first.",
       "Resolve a conflict by fixing the platform row, or by removing that row from the export and re-running.",
     ];
   }
@@ -119,9 +125,7 @@ export const renderImportReport = (plan: ImportPlan, mode: ReportMode): readonly
   const otherWarnings = plan.warnings.filter((warning) => warning.kind !== "login-address-changes");
 
   return [
-    mode === "applied"
-      ? "legacy users import — APPLIED"
-      : "legacy users import — DRY RUN, nothing was written",
+    HEADERS[mode],
     summaryLine(plan),
     ...section("CREATE", byKind(plan, "create").map(describeCreate)),
     ...section("ATTACH", byKind(plan, "attach").map(describeAttach)),
