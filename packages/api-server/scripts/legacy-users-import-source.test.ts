@@ -200,4 +200,8 @@ describe("parseLegacySource", () => {
   it("throws on a payload that is not an array of rows", () => {
     expect(() => parseLegacySource({ rows: [] })).toThrow();
   });
+
+  it("refuses an empty export, which almost always means the wrong source database", () => {
+    expect(() => parseLegacySource([])).toThrow(/holds no rows/);
+  });
 });

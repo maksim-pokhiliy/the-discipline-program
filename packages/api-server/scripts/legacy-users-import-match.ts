@@ -128,6 +128,14 @@ export const attachWarnings = (
     });
   }
 
+  if (user.password === null && row.passwordHash !== null) {
+    warnings.push({
+      legacyUserId: row.legacyUserId,
+      kind: "matched-user-has-no-credential",
+      detail: `${user.email} carries no platform password, and the legacy hash is not written to a matched user; this person cannot sign in until they set one`,
+    });
+  }
+
   if (matchedBy === "link" && user.email !== row.email) {
     warnings.push({
       legacyUserId: row.legacyUserId,

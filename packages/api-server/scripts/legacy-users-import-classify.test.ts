@@ -340,6 +340,21 @@ describe("warnings", () => {
     expect(warningKinds(plan)).not.toContain("login-address-changes");
   });
 
+  it("flags a matched user who has no password, since the legacy one is not carried over", () => {
+    const plan = classify(
+      [sourceRow()],
+      emptySnapshot({ users: [platformUser({ password: null })] }),
+    );
+
+    expect(warningKinds(plan)).toContain("matched-user-has-no-credential");
+  });
+
+  it("does not flag a matched user who already has a platform password", () => {
+    const plan = classify([sourceRow()], emptySnapshot({ users: [platformUser()] }));
+
+    expect(warningKinds(plan)).not.toContain("matched-user-has-no-credential");
+  });
+
   it("flags a matched user whose platform role is not athlete", () => {
     const plan = classify(
       [sourceRow()],

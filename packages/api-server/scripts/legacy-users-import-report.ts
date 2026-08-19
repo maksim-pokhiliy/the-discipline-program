@@ -37,6 +37,7 @@ const WARNING_LABELS = {
   "identity-absent-from-source": "stored identity missing from this export",
   "identity-target-drift": "stored identity sits on a different user than the evidence names",
   "synthetic-email-no-credential": "synthetic address, no usable credential",
+  "matched-user-has-no-credential": "matched platform user has no password of their own",
   "legacy-team-dropped": "legacy team has nowhere to go",
 } satisfies Record<WarningKind, string>;
 

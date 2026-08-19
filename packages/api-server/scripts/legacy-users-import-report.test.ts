@@ -226,12 +226,13 @@ describe("renderImportReport", () => {
         { legacyUserId: 15, kind: "identity-absent-from-source", detail: "d" },
         { legacyUserId: 16, kind: "identity-target-drift", detail: "d" },
         { legacyUserId: 17, kind: "synthetic-email-no-credential", detail: "d" },
+        { legacyUserId: 19, kind: "matched-user-has-no-credential", detail: "d" },
         { legacyUserId: 18, kind: "legacy-team-dropped", detail: "d" },
       ],
     };
     const report = render(plan);
 
-    for (const legacyUserId of Array.from({ length: 18 }, (_, index) => index + 1)) {
+    for (const legacyUserId of Array.from({ length: 19 }, (_, index) => index + 1)) {
       expect(report).toContain(`[${String(legacyUserId).padStart(6, " ")}]`);
     }
 

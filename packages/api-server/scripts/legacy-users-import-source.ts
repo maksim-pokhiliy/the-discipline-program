@@ -40,7 +40,9 @@ const legacySourceRowSchema = z
   })
   .strict();
 
-export const legacySourceSchema = z.array(legacySourceRowSchema);
+export const legacySourceSchema = z
+  .array(legacySourceRowSchema)
+  .min(1, "the export holds no rows; a run that imports nothing is almost always a wrong target");
 
 export type LegacySourceRow = z.infer<typeof legacySourceRowSchema>;
 

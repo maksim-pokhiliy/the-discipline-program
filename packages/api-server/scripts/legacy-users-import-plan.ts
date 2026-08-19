@@ -90,6 +90,7 @@ export type WarningKind =
   | "identity-absent-from-source"
   | "identity-target-drift"
   | "synthetic-email-no-credential"
+  | "matched-user-has-no-credential"
   | "legacy-team-dropped";
 
 export type ImportConflict = { legacyUserId: number; reason: ConflictReason; detail: string };
