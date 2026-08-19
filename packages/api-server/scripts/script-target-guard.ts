@@ -47,7 +47,7 @@ export const hasFlag = (argv: readonly string[], flag: string): boolean => {
   return matches.length === 1;
 };
 
-export const requireEnv = (env: NodeJS.ProcessEnv, name: string): string => {
+export const requireEnv = (env: Record<string, string | undefined>, name: string): string => {
   const value = env[name];
 
   if (value === undefined || value === "") {

@@ -6,13 +6,11 @@ import type {
 } from "./legacy-users-import-plan";
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
 
-export const INDIVIDUAL_CHANNEL = "INDIVIDUAL";
+export const INDIVIDUAL_CHANNEL = "INDIVIDUAL" as const;
 
-type IdentityRow = PlatformIdentity;
+export type LinkRow = { legacyUserId: number | null; athleteId: string | null };
 
-type LinkRow = { legacyUserId: number | null; athleteId: string | null };
-
-type UserRow = {
+export type UserRow = {
   id: string;
   email: string;
   role: string;
@@ -21,45 +19,24 @@ type UserRow = {
   legacyIdentity: { legacyUserId: number } | null;
 };
 
-export type ImportReader = {
-  mobileLegacyIdentity: {
-    findMany: (args: {
-      where: { legacyUserId: { gte: number; lte: number } };
-      select: Record<string, true>;
-    }) => Promise<IdentityRow[]>;
-  };
-  mobilePublishLink: {
-    findMany: (args: {
-      where: { channel: string; legacyUserId: { in: number[] }; NOT: { athleteId: null } };
-      select: { legacyUserId: true; athleteId: true };
-    }) => Promise<LinkRow[]>;
-  };
-  user: {
-    findMany: (args: {
-      where: { OR: [{ email: { in: string[] } }, { id: { in: string[] } }] };
-      select: {
-        id: true;
-        email: true;
-        role: true;
-        deletedAt: true;
-        password: true;
-        legacyIdentity: { select: { legacyUserId: true } };
-      };
-    }) => Promise<UserRow[]>;
+export type IdentityWhere = { where: { legacyUserId: { gte: number; lte: number } } };
+
+export type LinkWhere = {
+  where: {
+    channel: typeof INDIVIDUAL_CHANNEL;
+    legacyUserId: { in: number[] };
+    NOT: { athleteId: null };
   };
 };
 
-const IDENTITY_SELECT: Record<string, true> = {
-  legacyUserId: true,
-  userId: true,
-  legacyRoleId: true,
-  legacyPlanId: true,
-  legacyLevelId: true,
-  isEnabled: true,
-  firstName: true,
-  lastName: true,
-  phoneNumber: true,
-  dateOfBirth: true,
+export type UserWhere = {
+  where: { OR: [{ email: { in: string[] } }, { id: { in: string[] } }] };
+};
+
+export type ImportReader = {
+  mobileLegacyIdentity: { findMany: (args: IdentityWhere) => Promise<PlatformIdentity[]> };
+  mobilePublishLink: { findMany: (args: LinkWhere) => Promise<LinkRow[]> };
+  user: { findMany: (args: UserWhere) => Promise<UserRow[]> };
 };
 
 const EMPTY_SNAPSHOT: PlatformSnapshot = { identities: [], individualLinks: [], users: [] };
@@ -93,7 +70,6 @@ export const loadPlatformSnapshot = async (
 
   const identities = await reader.mobileLegacyIdentity.findMany({
     where: { legacyUserId: { gte: Math.min(...legacyIds), lte: Math.max(...legacyIds) } },
-    select: IDENTITY_SELECT,
   });
 
   const linkRows = await reader.mobilePublishLink.findMany({
@@ -102,7 +78,6 @@ export const loadPlatformSnapshot = async (
       legacyUserId: { in: legacyIds },
       NOT: { athleteId: null },
     },
-    select: { legacyUserId: true, athleteId: true },
   });
 
   const individualLinks = toIndividualLinks(linkRows);
@@ -116,14 +91,6 @@ export const loadPlatformSnapshot = async (
   const userRows = await reader.user.findMany({
     where: {
       OR: [{ email: { in: rows.map((row) => row.email) } }, { id: { in: relatedUserIds } }],
-    },
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      deletedAt: true,
-      password: true,
-      legacyIdentity: { select: { legacyUserId: true } },
     },
   });
 

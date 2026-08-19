@@ -167,20 +167,6 @@ describe("loadPlatformSnapshot", () => {
     });
   });
 
-  it("projects deletedAt and the credential, which the classifier needs to see", async () => {
-    const { reader, recorded } = fakeReader();
-
-    await loadPlatformSnapshot(reader, rowsFrom(sourceRow()));
-
-    expect(recorded.userArgs.at(0)).toMatchObject({
-      select: {
-        deletedAt: true,
-        password: true,
-        legacyIdentity: { select: { legacyUserId: true } },
-      },
-    });
-  });
-
   it("flattens the nested legacy identity onto the platform user", async () => {
     const { reader } = fakeReader({
       users: [

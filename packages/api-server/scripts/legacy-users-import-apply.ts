@@ -15,7 +15,12 @@ type IdentityMirror = {
 export type ImportWriter = {
   user: {
     create: (args: {
-      data: { email: string; name: string | null; password: string | null; role: string };
+      data: {
+        email: string;
+        name: string | null;
+        password: string | null;
+        role: typeof ATHLETE_ROLE;
+      };
       select: { id: true };
     }) => Promise<{ id: string }>;
     update: (args: { where: { id: string }; data: { password: string } }) => Promise<unknown>;
