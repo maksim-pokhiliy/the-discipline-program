@@ -218,7 +218,7 @@ const describeCredentialOutcome = (
     return {
       legacyUserId: row.legacyUserId,
       kind: "credential-restored",
-      detail: `${user.email} had a legacy-written credential that no longer matches the export; it is being replaced by the export hash`,
+      detail: `${user.email} carries a below-cost credential that no longer matches the export; it is being replaced by the export hash`,
     };
   }
 

@@ -29,10 +29,13 @@ to nothing. What it cannot fully withhold: a raw driver error can still carry th
 name and role**. Read driver errors on your own terminal and never paste one into a pull request,
 an issue, or any other public artifact.
 
-**The script never replaces an existing platform password.** On a re-run it can _restore_ a
-credential it wrote itself, but only when you pass `--restore-credentials` explicitly; without that
-flag a differing credential is reported and left alone. Use the flag only when you know the legacy
-password changed since the last import and you mean to carry the new one across.
+**The script never replaces an existing platform password unless you explicitly ask.** On a re-run
+it can overwrite a stored credential whose bcrypt **cost is below the platform factor** — that is a
+heuristic for "this credential predates the platform's own hashing", **not** knowledge of who wrote
+it; the script cannot tell an import-written hash from any other below-cost one. It does so only
+when you pass `--restore-credentials`; without that flag a differing credential is reported and
+left alone. Use the flag only when you know the legacy password changed since the last import and
+you mean to carry the new one across, and check the `credentials replaced` count afterwards.
 
 ## 1. Produce the export
 

@@ -120,11 +120,14 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
   }
 };
 
+const isKnownFlag = (arg: string, known: string): boolean =>
+  known.endsWith("=") ? arg.startsWith(known) : arg === known;
+
 export const rejectUnknownFlags = (argv: readonly string[], known: readonly string[]): void => {
   const unknown = argv
     .slice(2)
     .filter((arg) => arg.startsWith("--"))
-    .filter((arg) => !known.some((prefix) => arg === prefix || arg.startsWith(prefix)));
+    .filter((arg) => !known.some((candidate) => isKnownFlag(arg, candidate)));
 
   if (unknown.length > 0) {
     throw new Error(

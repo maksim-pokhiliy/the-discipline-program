@@ -123,6 +123,30 @@ describe("rejectUnknownFlags", () => {
     );
   });
 
+  it("refuses a boolean flag carrying a value, which the runner would silently ignore", () => {
+    expect(() => rejectUnknownFlags(["node", "script.ts", "--write=true"], KNOWN)).toThrow(
+      /unrecognised flag/,
+    );
+  });
+
+  it("refuses a boolean flag with trailing characters", () => {
+    expect(() => rejectUnknownFlags(["node", "script.ts", "--writex"], KNOWN)).toThrow(
+      /unrecognised flag/,
+    );
+    expect(() =>
+      rejectUnknownFlags(
+        ["node", "script.ts", "--restore-credentialsX"],
+        [...KNOWN, "--restore-credentials"],
+      ),
+    ).toThrow(/unrecognised flag/);
+  });
+
+  it("still accepts a value flag written with its equals sign", () => {
+    expect(() =>
+      rejectUnknownFlags(["node", "script.ts", "--expect-host=db.example.invalid"], KNOWN),
+    ).not.toThrow();
+  });
+
   it("ignores positional arguments and the node argv preamble", () => {
     expect(() =>
       rejectUnknownFlags(["node", "--experimental-x", "script.ts", "--write"], KNOWN),

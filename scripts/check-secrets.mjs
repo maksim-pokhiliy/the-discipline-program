@@ -85,9 +85,12 @@ for (const file of getStaged()) {
   }
 
   for (const { name, regex } of PATTERNS) {
-    const match = content.match(regex);
-    if (match && !isPlaceholder(match[0])) {
-      findings.push({ file, name, snippet: match[0].slice(0, 60) });
+    const everyMatch = new RegExp(regex.source, regex.flags.replace("g", "") + "g");
+    for (const match of content.matchAll(everyMatch)) {
+      if (!isPlaceholder(match[0])) {
+        findings.push({ file, name, snippet: match[0].slice(0, 60) });
+        break;
+      }
     }
   }
 }

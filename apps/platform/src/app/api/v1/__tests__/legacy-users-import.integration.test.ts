@@ -189,14 +189,20 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
   }, SETUP_TIMEOUT_MS);
 
   afterAll(async () => {
+    if (workDir !== undefined) {
+      rmSync(workDir, { recursive: true, force: true });
+    }
+
+    if (helpers === undefined) {
+      return;
+    }
+
     const identities = await helpers.cleanupRaw.mobileLegacyIdentity.findMany({
       where: { legacyUserId: { in: [enabledLegacyId, disabledLegacyId] } },
       select: { userId: true },
     });
 
     await helpers.cleanup(...identities.map((row) => ({ table: "user", id: row.userId })));
-
-    rmSync(workDir, { recursive: true, force: true });
   });
 
   it("creates both legacy accounts on the first apply", () => {
