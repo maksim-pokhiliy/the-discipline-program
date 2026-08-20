@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
-
 import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import {
@@ -9,7 +7,6 @@ import {
   describeUnmappedCatalogIds,
   diffIdentity,
   type PlatformIdentity,
-  PLATFORM_BCRYPT_COST,
   readBcryptCost,
 } from "./legacy-users-import-plan";
 import { normalizeLegacySource } from "./legacy-users-import-source";
@@ -43,12 +40,6 @@ const rowWith = (overrides: Record<string, unknown> = {}) => {
 
   return row;
 };
-
-describe("PLATFORM_BCRYPT_COST", () => {
-  it("tracks the constant every platform password write actually uses", () => {
-    expect(PLATFORM_BCRYPT_COST).toBe(AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
-  });
-});
 
 describe("readBcryptCost", () => {
   it("reads the cost factor out of a legacy 2a hash", () => {

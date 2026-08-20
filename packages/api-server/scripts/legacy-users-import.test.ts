@@ -8,6 +8,7 @@ import {
   runImport,
   SOURCE_FLAG,
   withHostWithheld,
+  writerFor,
 } from "./legacy-users-import";
 import type { ImportWriter } from "./legacy-users-import-apply";
 import type { PlatformSnapshot } from "./legacy-users-import-plan";
@@ -104,8 +105,10 @@ const harness = (
     },
   };
 
+  const opened: string[] = [];
   const openSession = (databaseUrl: string): ImportSession => {
-    events.push(`open:${databaseUrl === DSN ? "expected-dsn" : "other-dsn"}`);
+    opened.push(databaseUrl);
+    events.push("open");
 
     return {
       read: (use) => {
@@ -137,7 +140,7 @@ const harness = (
     openSession,
   });
 
-  return { deps, events, writes };
+  return { deps, events, writes, opened };
 };
 
 describe("runImport — dry run", () => {
@@ -246,13 +249,12 @@ describe("runImport — apply", () => {
     expect(result.lines.at(0)).toContain("APPLIED");
   });
 
-  it("connects with exactly the DSN the guard checked", async () => {
-    const { deps, events } = harness([sourceRow()]);
+  it("connects with exactly the DSN the guard checked, never a different one", async () => {
+    const { deps, opened } = harness([sourceRow()]);
 
     await runImport(deps(writeArgv));
 
-    expect(events).toContain("open:expected-dsn");
-    expect(events).not.toContain("open:other-dsn");
+    expect(opened).toEqual([DSN]);
   });
 
   it("refuses the whole run when any row conflicts, and still prints the report", async () => {
@@ -344,6 +346,48 @@ describe("runImport — credential restore flag", () => {
 
     expect(writes).toEqual([]);
     expect(withFlag.lines.join("\n")).toContain("credentials replaced 1");
+  });
+});
+
+describe("writerFor — credential swap", () => {
+  const fakeClient = (count: number) => {
+    const calls: unknown[] = [];
+    const client = {
+      user: {
+        updateMany: (args: unknown) => {
+          calls.push(args);
+
+          return Promise.resolve({ count });
+        },
+      },
+    };
+
+    return { client: client as unknown as Parameters<typeof writerFor>[0], calls };
+  };
+
+  it("conditions the swap on the stored hash the plan was built from", async () => {
+    const { client, calls } = fakeClient(1);
+
+    await writerFor(client).user.update({
+      where: { id: "user_1", password: "the-hash-the-plan-saw" },
+      data: { password: "the-replacement" },
+    });
+
+    expect(calls.at(0)).toEqual({
+      where: { id: "user_1", password: "the-hash-the-plan-saw" },
+      data: { password: "the-replacement" },
+    });
+  });
+
+  it("refuses when the stored credential changed under the plan", async () => {
+    const { client } = fakeClient(0);
+
+    await expect(
+      writerFor(client).user.update({
+        where: { id: "user_1", password: "a-stale-hash" },
+        data: { password: "the-replacement" },
+      }),
+    ).rejects.toThrow(/changed between the snapshot/);
   });
 });
 

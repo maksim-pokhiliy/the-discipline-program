@@ -15,6 +15,7 @@ const EXEMPT_SUBPATHS = new Set([
   "./infrastructure/monitoring",
   "./test-helpers",
   "./test-helpers/published-snapshot",
+  "./test-helpers/golden-fixture",
 ]);
 
 const manifestSchema = z.object({ exports: z.record(z.string()) });

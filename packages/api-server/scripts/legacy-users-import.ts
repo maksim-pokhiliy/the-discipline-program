@@ -11,11 +11,13 @@ import { renderImportReport } from "./legacy-users-import-report";
 import { type ImportReader, loadPlatformSnapshot } from "./legacy-users-import-snapshot";
 import { parseLegacySource } from "./legacy-users-import-source";
 import {
+  EXPECT_HOST_FLAG,
   hasFlag,
   parseTarget,
+  rejectUnknownFlags,
+  requireAttestedTarget,
   requireEnv,
   requireFlag,
-  requireAttestedTarget,
   RESTORE_CREDENTIALS_FLAG,
   WRITE_FLAG,
 } from "./script-target-guard";
@@ -83,7 +85,20 @@ export const readerFor = (client: Prisma.TransactionClient): ImportReader => ({
 export const writerFor = (client: Prisma.TransactionClient): ImportWriter => ({
   user: {
     create: ({ data, select }) => client.user.create({ data, select }),
-    update: ({ where, data: { password } }) => client.user.update({ where, data: { password } }),
+    update: async ({ where, data: { password } }) => {
+      const swapped = await client.user.updateMany({
+        where: { id: where.id, password: where.password },
+        data: { password },
+      });
+
+      if (swapped.count === 0) {
+        throw new Error(
+          "refusing to write: the stored credential changed between the snapshot this plan was " +
+            "built from and the write. Nothing was written; re-run so the report reflects the " +
+            "current state.",
+        );
+      }
+    },
   },
   mobileLegacyIdentity: {
     create: ({ data }) => client.mobileLegacyIdentity.create({ data }),
@@ -106,6 +121,13 @@ export const openPrismaSession = (databaseUrl: string): ImportSession => {
 };
 
 export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> => {
+  rejectUnknownFlags(deps.argv, [
+    SOURCE_FLAG,
+    WRITE_FLAG,
+    EXPECT_HOST_FLAG,
+    RESTORE_CREDENTIALS_FLAG,
+  ]);
+
   const sourcePath = requireFlag(deps.argv, SOURCE_FLAG);
   const isWriting = hasFlag(deps.argv, WRITE_FLAG);
   const databaseUrl = requireEnv(deps.env, "DATABASE_URL");

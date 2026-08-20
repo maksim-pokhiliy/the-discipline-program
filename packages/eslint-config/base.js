@@ -100,13 +100,6 @@ export const config = [
     },
   },
   {
-    ignores: [
-      "dist/**",
-      "node_modules/**",
-      ".next/**",
-      ".turbo/**",
-      "coverage/**",
-      ".legacy-import/**",
-    ],
+    ignores: ["dist/**", "node_modules/**", ".next/**", ".turbo/**", "coverage/**"],
   },
 ];

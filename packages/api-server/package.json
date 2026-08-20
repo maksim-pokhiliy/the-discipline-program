@@ -16,7 +16,8 @@
     "./idempotency": "./src/idempotency/index.ts",
     "./instrumentation": "./src/instrumentation/index.ts",
     "./test-helpers": "./src/test/helpers.ts",
-    "./test-helpers/published-snapshot": "./src/test/published-snapshot.ts"
+    "./test-helpers/published-snapshot": "./src/test/published-snapshot.ts",
+    "./test-helpers/golden-fixture": "./src/test/golden-fixture.ts"
   },
   "scripts": {
     "test": "vitest run",

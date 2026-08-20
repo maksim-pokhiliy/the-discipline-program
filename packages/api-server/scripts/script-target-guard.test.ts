@@ -5,6 +5,7 @@ import {
   hasFlag,
   parseTarget,
   readFlag,
+  rejectUnknownFlags,
   requireEnv,
   requireExpectedHost,
   requireFlag,
@@ -95,6 +96,37 @@ describe("hasFlag", () => {
 
   it("does not match a longer flag that starts with the same text", () => {
     expect(hasFlag(["--write-through"], WRITE_FLAG)).toBe(false);
+  });
+});
+
+describe("rejectUnknownFlags", () => {
+  const KNOWN = ["--source=", "--write", "--expect-host="];
+
+  it("accepts a command line made only of known flags", () => {
+    expect(() =>
+      rejectUnknownFlags(["node", "script.ts", "--source=/tmp/x", "--write"], KNOWN),
+    ).not.toThrow();
+  });
+
+  it("refuses a misspelled flag rather than silently ignoring it", () => {
+    const message = messageOf(() =>
+      rejectUnknownFlags(["node", "script.ts", "--sorce=/tmp/x"], KNOWN),
+    );
+
+    expect(message).toContain("unrecognised flag");
+    expect(message).toContain("--sorce=/tmp/x");
+  });
+
+  it("refuses a near-miss of a real flag, which is the dangerous case", () => {
+    expect(() => rejectUnknownFlags(["node", "script.ts", "--expect_host=x"], KNOWN)).toThrow(
+      /unrecognised flag/,
+    );
+  });
+
+  it("ignores positional arguments and the node argv preamble", () => {
+    expect(() =>
+      rejectUnknownFlags(["node", "--experimental-x", "script.ts", "--write"], KNOWN),
+    ).not.toThrow();
   });
 });
 

@@ -14,14 +14,20 @@ The script reads a **JSON export file**, never a second database, so no legacy D
 Its only connection is the platform DSN in `DATABASE_URL`, and writing to that requires
 `--write --expect-host=<hostname>`, checked against the host the DSN resolved to. All writes happen
 inside one transaction, and the whole run refuses if any row is in conflict — there is no partial
-apply and no override flag. Nothing the script prints — report or error — contains a password hash
-or the resolved hostname: a hostname the tool derived and you pasted straight back would attest to
-nothing, so even driver errors have the host scrubbed out of them.
+apply and no override flag.
 
-Two guard details worth knowing. A DSN carrying a `host=` **query parameter** is refused outright
-under `--write`: Prisma honours that parameter over the host in the DSN authority, so
-`--expect-host` would otherwise attest to a host the run does not connect to. And the hostname
-comparison is case-insensitive, the way DNS is.
+**`--expect-host` is required in a dry run too, not only for `--write`.** Importing
+`@prisma/client` loads any `.env` sitting beside it, so `DATABASE_URL` can arrive from a file
+nobody named on the command line — a bare dry run could otherwise read a database you never meant
+to open. A DSN carrying a `host=` **query parameter** is refused outright, because Prisma honours
+that parameter over the host in the DSN authority and `--expect-host` would then attest to a host
+the run does not connect to. The hostname comparison is case-insensitive, the way DNS is.
+
+What the script withholds: the **DSN password and the resolved hostname** never appear in anything
+it prints, report or error — a hostname the tool derived and you pasted straight back would attest
+to nothing. What it cannot fully withhold: a raw driver error can still carry the **port, database
+name and role**. Read driver errors on your own terminal and never paste one into a pull request,
+an issue, or any other public artifact.
 
 **The script never replaces an existing platform password.** On a re-run it can _restore_ a
 credential it wrote itself, but only when you pass `--restore-credentials` explicitly; without that
@@ -65,8 +71,8 @@ Then dry run, and apply:
 ```
 cd packages/api-server
 export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5546/platform_local"
-pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path to the export>
-pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --write --expect-host=127.0.0.1
+pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1
+pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1 --write
 ```
 
 Run it from `packages/api-server` with `pnpm exec`, not `pnpm --filter … exec`: the filter wrapper
@@ -79,10 +85,15 @@ The end-to-end probe (import → shim signin with the legacy password → `GET /
 `apps/platform/src/app/api/v1/__tests__/legacy-users-import.integration.test.ts` and is opt-in:
 
 ```
+cd <repo root>
 DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5546/platform_local" \
 RUN_LEGACY_IMPORT_CHECK=1 SKIP_ENV_VALIDATION=1 \
   pnpm exec vitest run --project platform src/app/api/v1/__tests__/legacy-users-import.integration.test.ts
 ```
+
+The `platform` vitest project only resolves from the repo root, not from `packages/api-server`.
+The probe **writes** to whatever `DATABASE_URL` names and derives its own `--expect-host` from that
+same DSN, so it refuses to start against anything but a loopback host.
 
 Do not run the golden suite against a database that still holds rehearsal rows — the golden fixture
 seeds legacy ids 1001..1004 and the same `@tdp.local` addresses, and the two collide. Clear the
@@ -98,14 +109,13 @@ the literal string `[SENSITIVE]` while still dumping every other production secr
 ```
 cd packages/api-server
 DATABASE_URL="$(env -u DATABASE_URL_PROD node -e "process.loadEnvFile('../../.env.prod'); process.stdout.write(process.env.DATABASE_URL_PROD)")" \
-  pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path to the export>
+  pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=<hostname>
 ```
 
 `env -u DATABASE_URL_PROD` matters: `loadEnvFile` does not override an already-exported variable, so
 without it a stale shell value silently wins over the file.
 
-Review the dry-run report, get the owner's sign-off, then append
-`--write --expect-host=<hostname>`. The hostname is the **host only, no port** (the guard compares
+Review the dry-run report, get the owner's sign-off, then append `--write`. The hostname is the **host only, no port** (the guard compares
 `URL.hostname`), taken from your own record of the production database — the Neon console or the
 Vercel dashboard entry — never from `.env.prod` itself, since the DSN and its attestation must not
 share a source, and never from the script's output, which deliberately offers none.
@@ -116,6 +126,17 @@ The export must be made from a **fresh dump taken the same day**, not from an ol
 Anyone who changed their password or their training level in the legacy app since the old dump
 would otherwise be imported stale. The order is: fresh SSH dump → restore → fresh export → dry run
 → owner sign-off → apply.
+
+### What CI does and does not cover
+
+Neither `RUN_LEGACY_IMPORT_CHECK` nor `RUN_LEGACY_INTEGRATION` runs in CI — both suites are
+`skipIf`-gated and skip by default, exactly as the Appetize stand's probe does. CI therefore proves
+the unit layers, types, lint and dependency boundaries, but **nothing about the script against a
+real database**. Only these local runs cover: the CLI end to end, a real Prisma transaction rolling
+back on conflict, the shim signing an imported athlete in with their legacy password,
+`GET /user/{id}` serving the mirrored profile, a legacy-disabled account being refused, the
+first-login credential upgrade, and the golden wire contract against the live legacy harness. Run
+them before any production apply.
 
 ## 4. Reading the report
 
@@ -156,6 +177,13 @@ This is not a warning to skim. Before applying in production:
 There is no `--allow-conflicts`. Resolve a conflict either by fixing the platform row, or by
 removing that row from the export JSON and re-running — both are explicit and leave a trail.
 
+`matched platform user is soft-deleted` has two shapes, and they resolve differently. If the person
+was **never imported** and simply exists as a removed platform user, dropping their row from the
+export is usually right — they left. If they were **already imported and then removed from the
+platform**, their legacy identity still points at the removed user, so removing the row from the
+export does not clear the conflict on the next run: restore that platform user, or delete the stale
+identity row deliberately, before re-running.
+
 | Conflict                                                                | What it means                                                                                          |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `username is not an email`                                              | the legacy username cannot become a platform address and has no ratified override                      |
@@ -175,8 +203,10 @@ removing that row from the export JSON and re-running — both are explicit and 
 - `matched platform user is not an athlete` — a coach or admin account also existed in the legacy
   app. The legacy role is mirrored but grants no platform privilege; imported users are always
   written with the platform role `ATHLETE`.
-- `platform credential kept, legacy hash not written` — that person changed their password on the
-  platform. The platform credential wins.
+- `platform credential kept, legacy hash not written` — the stored credential is at or above the
+  platform cost factor. That means it was **either changed on the platform or already upgraded by
+  this person's first successful login**; the script cannot tell those apart. Either way the
+  platform credential wins.
 - `credential differs from the export and was NOT replaced` — the stored credential looks
   import-written but no longer matches the export. Nothing was changed. Re-run with
   `--restore-credentials` only if you mean to carry the newer legacy password across.
@@ -189,9 +219,24 @@ removing that row from the export JSON and re-running — both are explicit and 
   cannot sign in until they set one. Worth resolving by hand before cutover.
 - `stored identity missing from this export` — a legacy row that was imported before is gone from
   this dump. Nothing is deleted; decide by hand whether it should be.
-- `synthetic address, no usable credential` — the ratified junk account, imported disabled and with
-  no password so nobody can sign in as it.
+- `synthetic address, no usable credential` — the ratified junk account (legacy id 17), imported
+  disabled and with a null password so nobody can sign in as it.
+
+  **Never create a mailbox for `legacy-admin@thedisciplineprogram.com`** — the same standing rule
+  that already covers the two demo-stand addresses. This one matters more than the others: the
+  address is published in a committed file in a public repository, and password reset gates only on
+  `deletedAt`, not on whether the account has a credential or is enabled. A reset mail would carry
+  a live token and turn an unreachable junk row into a working login. Its unreachability is a
+  mailbox-policy guarantee, not something the code enforces.
+
 - `legacy team has nowhere to go` — the identity table keeps no team.
+
+### Scale
+
+This is built for the legacy table's size — tens of rows, and comfortable to roughly ten thousand.
+It reads the whole export into memory, holds one transaction open for every write, and prints a
+line per row. Well beyond that the transaction timeout or the driver aborts the run, which is safe
+(nothing is written) but not graceful. Nothing about the legacy table is anywhere near that.
 
 ## 5. After applying
 

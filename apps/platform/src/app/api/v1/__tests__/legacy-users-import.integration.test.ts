@@ -8,16 +8,16 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type * as ApiServerTestHelpers from "@repo/api-server/test-helpers";
+import {
+  GOLDEN_BCRYPT_HASH,
+  GOLDEN_PASSWORD,
+  LEGACY_LEVEL_PRO,
+  LEGACY_PLAN_GENERAL,
+  LEGACY_ROLE_USER,
+} from "@repo/api-server/test-helpers/golden-fixture";
 
 const SHOULD_RUN = process.env.RUN_LEGACY_IMPORT_CHECK === "1";
 const SETUP_TIMEOUT_MS = 120_000;
-
-const GOLDEN_PASSWORD = "Admin123!";
-const GOLDEN_BCRYPT_HASH = "$2a$10$xGFVeUFmZ9fBD3ihEPQZt.bl85fgMvCX0kdxA71xYpPDT4f72oiAy";
-
-const LEGACY_LEVEL_PRO = 2;
-const LEGACY_PLAN_GENERAL = 1;
-const LEGACY_ROLE_USER = 1;
 
 const V1_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLATFORM_ROOT = join(V1_ROOT, "../../../..");
@@ -58,11 +58,23 @@ const loadPlatformEnv = (): void => {
   }
 };
 
-const requireDatabaseUrl = (): string => {
+const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+
+const requireLoopbackDatabaseUrl = (): string => {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (databaseUrl === undefined || databaseUrl === "") {
     throw new Error("DATABASE_URL is required to run the legacy import probe.");
+  }
+
+  const { hostname } = new URL(databaseUrl);
+
+  if (!LOOPBACK_HOSTS.has(hostname)) {
+    throw new Error(
+      `the legacy import probe WRITES to its target and derives --expect-host from the very DSN ` +
+        `it connects to, so it is only safe against a throwaway local database. This run resolved ` +
+        `${hostname}, which is not loopback. Point DATABASE_URL at a local container and re-run.`,
+    );
   }
 
   return databaseUrl;
@@ -122,7 +134,7 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
 
   beforeAll(async () => {
     loadPlatformEnv();
-    databaseUrl = requireDatabaseUrl();
+    databaseUrl = requireLoopbackDatabaseUrl();
 
     const [signinModule, userModule, helpersModule] = await Promise.all([
       import("../auth/signin/route"),

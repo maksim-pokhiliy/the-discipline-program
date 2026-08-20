@@ -12,8 +12,6 @@ import { serializeLegacyDate } from "../src/endpoints/mobile-compat/legacy-date"
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
 
 export const ATHLETE_ROLE = "ATHLETE";
-export const PLATFORM_BCRYPT_COST = AUTH_CONSTANTS.BCRYPT_COST_FACTOR;
-
 export { readBcryptCost };
 
 export const IDENTITY_MIRROR_FIELDS = [
@@ -181,7 +179,7 @@ export const decidePasswordChange = (
 
   const cost = readBcryptCost(storedHash);
 
-  if (cost === null || cost >= PLATFORM_BCRYPT_COST) {
+  if (cost === null || cost >= AUTH_CONSTANTS.BCRYPT_COST_FACTOR) {
     return { kind: "left-as-is", reason: "platform-managed" };
   }
 
