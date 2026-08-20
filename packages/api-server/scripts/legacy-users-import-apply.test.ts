@@ -146,7 +146,7 @@ describe("applyImport — create", () => {
         [
           sourceRow({
             phone_number: "",
-            date_of_birth: "1988-11-18",
+            date_of_birth: "1990-05-01",
             user_plan_id: 2,
             training_level_id: 4,
             is_enabled: false,
@@ -163,7 +163,7 @@ describe("applyImport — create", () => {
         legacyLevelId: 4,
         isEnabled: false,
         phoneNumber: "",
-        dateOfBirth: new Date("1988-11-18T00:00:00.000Z"),
+        dateOfBirth: new Date("1990-05-01T00:00:00.000Z"),
       },
     });
   });

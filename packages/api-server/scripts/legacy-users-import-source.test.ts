@@ -115,9 +115,9 @@ describe("normalizeLegacySource", () => {
   });
 
   it("parses the date of birth to UTC midnight, never to a device-local instant", () => {
-    const row = onlyRow(sourceRow({ date_of_birth: "1988-11-18" }));
+    const row = onlyRow(sourceRow({ date_of_birth: "1990-05-01" }));
 
-    expect(row.dateOfBirth?.toISOString()).toBe("1988-11-18T00:00:00.000Z");
+    expect(row.dateOfBirth?.toISOString()).toBe("1990-05-01T00:00:00.000Z");
   });
 
   it("keeps a null date of birth null", () => {

@@ -158,12 +158,12 @@ describe("diffIdentity", () => {
   it("compares dates as calendar days, not as instants", () => {
     const withDate: PlatformIdentity = {
       ...stored,
-      dateOfBirth: new Date("1988-11-18T00:00:00.000Z"),
+      dateOfBirth: new Date("1990-05-01T00:00:00.000Z"),
     };
 
-    expect(diffIdentity(withDate, rowWith({ date_of_birth: "1988-11-18" }))).toEqual([]);
-    expect(diffIdentity(withDate, rowWith({ date_of_birth: "1988-11-19" }))).toEqual([
-      { field: "dateOfBirth", from: "1988-11-18", to: "1988-11-19" },
+    expect(diffIdentity(withDate, rowWith({ date_of_birth: "1990-05-01" }))).toEqual([]);
+    expect(diffIdentity(withDate, rowWith({ date_of_birth: "1990-05-02" }))).toEqual([
+      { field: "dateOfBirth", from: "1990-05-01", to: "1990-05-02" },
     ]);
   });
 
