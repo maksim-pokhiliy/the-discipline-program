@@ -38,11 +38,23 @@ export const buildIndexes = (snapshot: PlatformSnapshot): Indexes => {
     athleteIdsByLegacyId.set(link.legacyUserId, athleteIds);
   }
 
+  const userByEmail = new Map<string, PlatformUser>();
+
+  for (const user of snapshot.users) {
+    const claimed = userByEmail.get(user.matchEmail);
+    const isBetterClaim =
+      claimed === undefined || (claimed.deletedAt !== null && user.deletedAt === null);
+
+    if (isBetterClaim) {
+      userByEmail.set(user.matchEmail, user);
+    }
+  }
+
   return {
     identityByLegacyId: new Map(snapshot.identities.map((row) => [row.legacyUserId, row])),
     athleteIdsByLegacyId,
     userById: new Map(snapshot.users.map((row) => [row.id, row])),
-    userByEmail: new Map(snapshot.users.map((row) => [row.email, row])),
+    userByEmail,
   };
 };
 

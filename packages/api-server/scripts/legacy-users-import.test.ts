@@ -13,7 +13,7 @@ import type { ImportWriter } from "./legacy-users-import-apply";
 import type { PlatformSnapshot } from "./legacy-users-import-plan";
 import type { ImportReader } from "./legacy-users-import-snapshot";
 import type { LegacySourceRow } from "./legacy-users-import-source";
-import { EXPECT_HOST_FLAG, WRITE_FLAG } from "./script-target-guard";
+import { EXPECT_HOST_FLAG, RESTORE_CREDENTIALS_FLAG, WRITE_FLAG } from "./script-target-guard";
 
 const SCHEME = "postgresql:";
 const TARGET_HOST = "db.example-target.invalid";
@@ -143,7 +143,9 @@ const harness = (
 describe("runImport — dry run", () => {
   it("is the default mode and never opens a write path", async () => {
     const { deps, events, writes } = harness([sourceRow()]);
-    const result = await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]));
+    const result = await runImport(
+      deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
+    );
 
     expect(events).toContain("read");
     expect(events).not.toContain("write");
@@ -153,7 +155,9 @@ describe("runImport — dry run", () => {
 
   it("reports no conflicts for a clean export", async () => {
     const { deps } = harness([sourceRow()]);
-    const result = await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]));
+    const result = await runImport(
+      deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
+    );
 
     expect(result.hasConflicts).toBe(false);
     expect(result.lines.join("\n")).toContain("CLEAN");
@@ -161,7 +165,9 @@ describe("runImport — dry run", () => {
 
   it("reports conflicts without writing anything", async () => {
     const { deps, writes } = harness([sourceRow({ training_level_id: 9 })]);
-    const result = await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]));
+    const result = await runImport(
+      deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
+    );
 
     expect(result.hasConflicts).toBe(true);
     expect(writes).toEqual([]);
@@ -170,7 +176,7 @@ describe("runImport — dry run", () => {
   it("closes the session even when the source is unusable", async () => {
     const { deps, events } = harness([sourceRow({ training_level_id: 2 })]);
 
-    await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]));
+    await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]));
 
     expect(events.at(-1)).toBe("close");
   });
@@ -178,7 +184,7 @@ describe("runImport — dry run", () => {
   it("reads the file named by the source flag", async () => {
     const { deps, events } = harness([sourceRow()]);
 
-    await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]));
+    await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]));
 
     expect(events).toContain(`readSource:${SOURCE_PATH}`);
   });
@@ -194,18 +200,21 @@ describe("runImport — guards", () => {
   it("requires DATABASE_URL", async () => {
     const { deps } = harness([sourceRow()], emptySnapshot(), {});
 
-    await expect(runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]))).rejects.toThrow(
-      /DATABASE_URL is required/,
-    );
+    await expect(
+      runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`])),
+    ).rejects.toThrow(/DATABASE_URL is required/);
   });
 
-  it("refuses to write without a stated host, and never opens a session", async () => {
+  it("refuses to run at all without a stated host, in a dry run as much as a write", async () => {
     const { deps, events } = harness([sourceRow()]);
 
-    await expect(runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, WRITE_FLAG]))).rejects.toThrow(
-      /requires --expect-host=/,
+    await expect(runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`]))).rejects.toThrow(
+      /--expect-host=<hostname> is required/,
     );
-    expect(events).toEqual([`readSource:${SOURCE_PATH}`]);
+    await expect(runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, WRITE_FLAG]))).rejects.toThrow(
+      /--expect-host=<hostname> is required/,
+    );
+    expect(events).toEqual([`readSource:${SOURCE_PATH}`, `readSource:${SOURCE_PATH}`]);
   });
 
   it("refuses to write when the stated host does not match", async () => {
@@ -215,7 +224,7 @@ describe("runImport — guards", () => {
       runImport(
         deps([`${SOURCE_FLAG}${SOURCE_PATH}`, WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`]),
       ),
-    ).rejects.toThrow(/refusing to write/);
+    ).rejects.toThrow(/refusing to run/);
     expect(writes).toEqual([]);
   });
 });
@@ -265,6 +274,76 @@ describe("runImport — apply", () => {
     await runImport(deps(writeArgv));
 
     expect(events.at(-1)).toBe("close");
+  });
+});
+
+describe("runImport — credential restore flag", () => {
+  const DRIFTED_COST_10 = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
+
+  const refreshSnapshot = (): PlatformSnapshot =>
+    emptySnapshot({
+      identities: [
+        {
+          legacyUserId: 20,
+          userId: "user_platform",
+          legacyRoleId: 1,
+          legacyPlanId: 1,
+          legacyLevelId: 2,
+          isEnabled: true,
+          firstName: null,
+          lastName: null,
+          phoneNumber: null,
+          dateOfBirth: null,
+        },
+      ],
+      users: [
+        {
+          id: "user_platform",
+          email: "athlete@tdp.local",
+          matchEmail: "athlete@tdp.local",
+          role: "ATHLETE",
+          deletedAt: null,
+          password: DRIFTED_COST_10,
+          identityLegacyUserId: 20,
+        },
+      ],
+    });
+
+  const writeArgv = [
+    `${SOURCE_FLAG}${SOURCE_PATH}`,
+    WRITE_FLAG,
+    `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+  ];
+
+  it("leaves the stored credential alone when the flag is absent", async () => {
+    const { deps, writes } = harness([sourceRow()], refreshSnapshot());
+    const result = await runImport(deps(writeArgv));
+
+    expect(writes).not.toContain("user.update");
+    expect(result.lines.join("\n")).toContain("credentials replaced 0");
+    expect(result.lines.join("\n")).toContain("--restore-credentials");
+  });
+
+  it("replaces the stored credential when the flag is present", async () => {
+    const { deps, writes } = harness([sourceRow()], refreshSnapshot());
+    const result = await runImport(deps([...writeArgv, RESTORE_CREDENTIALS_FLAG]));
+
+    expect(writes).toContain("user.update");
+    expect(result.lines.join("\n")).toContain("credentials replaced 1");
+  });
+
+  it("keeps the dry run honest about what the flag would do", async () => {
+    const { deps, writes } = harness([sourceRow()], refreshSnapshot());
+    const withFlag = await runImport(
+      deps([
+        `${SOURCE_FLAG}${SOURCE_PATH}`,
+        `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+        RESTORE_CREDENTIALS_FLAG,
+      ]),
+    );
+
+    expect(writes).toEqual([]);
+    expect(withFlag.lines.join("\n")).toContain("credentials replaced 1");
   });
 });
 

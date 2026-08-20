@@ -16,17 +16,24 @@ export const PLATFORM_BCRYPT_COST = AUTH_CONSTANTS.BCRYPT_COST_FACTOR;
 
 export { readBcryptCost };
 
-export type PlatformIdentity = {
+export const IDENTITY_MIRROR_FIELDS = [
+  "legacyRoleId",
+  "legacyPlanId",
+  "legacyLevelId",
+  "isEnabled",
+  "firstName",
+  "lastName",
+  "phoneNumber",
+  "dateOfBirth",
+] as const;
+
+export type IdentityMirrorField = (typeof IDENTITY_MIRROR_FIELDS)[number];
+
+export type IdentityMirror = Pick<NormalizedLegacyUser, IdentityMirrorField>;
+
+export type PlatformIdentity = IdentityMirror & {
   legacyUserId: number;
   userId: string;
-  legacyRoleId: number;
-  legacyPlanId: number;
-  legacyLevelId: number;
-  isEnabled: boolean;
-  firstName: string | null;
-  lastName: string | null;
-  phoneNumber: string | null;
-  dateOfBirth: Date | null;
 };
 
 export type PlatformIndividualLink = { legacyUserId: number; athleteId: string };
@@ -34,6 +41,7 @@ export type PlatformIndividualLink = { legacyUserId: number; athleteId: string }
 export type PlatformUser = {
   id: string;
   email: string;
+  matchEmail: string;
   role: string;
   deletedAt: Date | null;
   password: string | null;
@@ -56,7 +64,7 @@ export type PasswordLeftReason =
 
 export type PasswordChange =
   | { kind: "unchanged" }
-  | { kind: "restored" }
+  | { kind: "restored"; expectedStoredHash: string }
   | { kind: "left-as-is"; reason: PasswordLeftReason };
 
 export type ClassifyOptions = { isCredentialRestoreEnabled: boolean };
@@ -129,29 +137,30 @@ export const describeUnmappedCatalogIds = (row: NormalizedLegacyUser): string | 
     : unmapped.map(([label, id]) => `${label} id ${id} is not in the legacy catalog`).join("; ");
 };
 
-export const diffIdentity = (
-  current: PlatformIdentity,
-  row: NormalizedLegacyUser,
-): readonly FieldChange[] => {
-  const pairs: readonly [string, string, string][] = [
-    ["legacyRoleId", String(current.legacyRoleId), String(row.legacyRoleId)],
-    ["legacyPlanId", String(current.legacyPlanId), String(row.legacyPlanId)],
-    ["legacyLevelId", String(current.legacyLevelId), String(row.legacyLevelId)],
-    ["isEnabled", String(current.isEnabled), String(row.isEnabled)],
-    ["firstName", String(current.firstName), String(row.firstName)],
-    ["lastName", String(current.lastName), String(row.lastName)],
-    ["phoneNumber", String(current.phoneNumber), String(row.phoneNumber)],
-    [
-      "dateOfBirth",
-      String(serializeLegacyDate(current.dateOfBirth)),
-      String(serializeLegacyDate(row.dateOfBirth)),
-    ],
-  ];
+export const ABSENT_MIRROR_VALUE = "(none)";
 
-  return pairs
-    .filter(([, from, to]) => from !== to)
-    .map(([field, from, to]) => ({ field, from, to }));
+export const renderMirrorValue = (value: IdentityMirror[IdentityMirrorField]): string => {
+  if (value === null) {
+    return ABSENT_MIRROR_VALUE;
+  }
+
+  if (value instanceof Date) {
+    return serializeLegacyDate(value) ?? ABSENT_MIRROR_VALUE;
+  }
+
+  return typeof value === "string" ? JSON.stringify(value) : String(value);
 };
+
+export const diffIdentity = (
+  current: IdentityMirror,
+  row: IdentityMirror,
+): readonly FieldChange[] =>
+  IDENTITY_MIRROR_FIELDS.flatMap((field) => {
+    const from = renderMirrorValue(current[field]);
+    const to = renderMirrorValue(row[field]);
+
+    return from === to ? [] : [{ field, from, to }];
+  });
 
 export const decidePasswordChange = (
   storedHash: string | null,
@@ -177,6 +186,6 @@ export const decidePasswordChange = (
   }
 
   return isCredentialRestoreEnabled
-    ? { kind: "restored" }
+    ? { kind: "restored", expectedStoredHash: storedHash }
     : { kind: "left-as-is", reason: "restore-not-enabled" };
 };

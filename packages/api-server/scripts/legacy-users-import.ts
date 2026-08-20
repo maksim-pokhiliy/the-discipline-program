@@ -6,7 +6,7 @@ import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { applyImport, ImportConflictError, type ImportWriter } from "./legacy-users-import-apply";
 import { classifyImport } from "./legacy-users-import-classify";
-import type { ImportPlan } from "./legacy-users-import-plan";
+import type { ImportPlan, PlatformIdentity } from "./legacy-users-import-plan";
 import { renderImportReport } from "./legacy-users-import-report";
 import { type ImportReader, loadPlatformSnapshot } from "./legacy-users-import-snapshot";
 import { parseLegacySource } from "./legacy-users-import-source";
@@ -15,7 +15,7 @@ import {
   parseTarget,
   requireEnv,
   requireFlag,
-  requireWriteTarget,
+  requireAttestedTarget,
   RESTORE_CREDENTIALS_FLAG,
   WRITE_FLAG,
 } from "./script-target-guard";
@@ -35,7 +35,7 @@ const IDENTITY_SELECT = {
   lastName: true,
   phoneNumber: true,
   dateOfBirth: true,
-} as const;
+} as const satisfies Record<keyof PlatformIdentity, true>;
 
 const USER_SELECT = {
   id: true,
@@ -66,8 +66,7 @@ export const withHostWithheld = (message: string, hostname: string): string =>
 
 export const readerFor = (client: Prisma.TransactionClient): ImportReader => ({
   mobileLegacyIdentity: {
-    findMany: ({ where }) =>
-      client.mobileLegacyIdentity.findMany({ where, select: IDENTITY_SELECT }),
+    findMany: () => client.mobileLegacyIdentity.findMany({ select: IDENTITY_SELECT }),
   },
   mobilePublishLink: {
     findMany: ({ where }) =>
@@ -113,9 +112,7 @@ export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> =
   const isCredentialRestoreEnabled = hasFlag(deps.argv, RESTORE_CREDENTIALS_FLAG);
   const source = parseLegacySource(JSON.parse(deps.readSourceFile(sourcePath)));
 
-  if (isWriting) {
-    requireWriteTarget(deps.argv, databaseUrl);
-  }
+  requireAttestedTarget(deps.argv, databaseUrl);
 
   const session = deps.openSession(databaseUrl);
 

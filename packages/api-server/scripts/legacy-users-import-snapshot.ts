@@ -6,7 +6,14 @@ import type {
 } from "./legacy-users-import-plan";
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
 
-export const INDIVIDUAL_CHANNEL = "INDIVIDUAL" as const;
+export const INDIVIDUAL_CHANNEL = "INDIVIDUAL";
+
+export const SOFT_DELETED_EMAIL_SUFFIX = "_deleted_";
+
+const SOFT_DELETED_EMAIL_PATTERN = /_deleted_\d+$/;
+
+export const demangleSoftDeletedEmail = (email: string): string =>
+  email.replace(SOFT_DELETED_EMAIL_PATTERN, "");
 
 export type LinkRow = { legacyUserId: number | null; athleteId: string | null };
 
@@ -19,7 +26,10 @@ export type UserRow = {
   legacyIdentity: { legacyUserId: number } | null;
 };
 
-export type IdentityWhere = { where: { legacyUserId: { gte: number; lte: number } } };
+export type UserWhereClause =
+  | { email: { in: string[] } }
+  | { id: { in: string[] } }
+  | { email: { startsWith: string } };
 
 export type LinkWhere = {
   where: {
@@ -29,12 +39,10 @@ export type LinkWhere = {
   };
 };
 
-export type UserWhere = {
-  where: { OR: [{ email: { in: string[] } }, { id: { in: string[] } }] };
-};
+export type UserWhere = { where: { OR: UserWhereClause[] } };
 
 export type ImportReader = {
-  mobileLegacyIdentity: { findMany: (args: IdentityWhere) => Promise<PlatformIdentity[]> };
+  mobileLegacyIdentity: { findMany: () => Promise<PlatformIdentity[]> };
   mobilePublishLink: { findMany: (args: LinkWhere) => Promise<LinkRow[]> };
   user: { findMany: (args: UserWhere) => Promise<UserRow[]> };
 };
@@ -52,6 +60,7 @@ const toPlatformUsers = (rows: readonly UserRow[]): PlatformUser[] =>
   rows.map((row) => ({
     id: row.id,
     email: row.email,
+    matchEmail: demangleSoftDeletedEmail(row.email),
     role: row.role,
     deletedAt: row.deletedAt,
     password: row.password,
@@ -62,15 +71,14 @@ export const loadPlatformSnapshot = async (
   reader: ImportReader,
   rows: readonly NormalizedLegacyUser[],
 ): Promise<PlatformSnapshot> => {
-  const legacyIds = rows.map((row) => row.legacyUserId);
-
-  if (legacyIds.length === 0) {
+  if (rows.length === 0) {
     return EMPTY_SNAPSHOT;
   }
 
-  const identities = await reader.mobileLegacyIdentity.findMany({
-    where: { legacyUserId: { gte: Math.min(...legacyIds), lte: Math.max(...legacyIds) } },
-  });
+  const legacyIds = rows.map((row) => row.legacyUserId);
+  const emails = rows.map((row) => row.email);
+
+  const identities = await reader.mobileLegacyIdentity.findMany();
 
   const linkRows = await reader.mobilePublishLink.findMany({
     where: {
@@ -90,7 +98,13 @@ export const loadPlatformSnapshot = async (
 
   const userRows = await reader.user.findMany({
     where: {
-      OR: [{ email: { in: rows.map((row) => row.email) } }, { id: { in: relatedUserIds } }],
+      OR: [
+        { email: { in: emails } },
+        { id: { in: relatedUserIds } },
+        ...emails.map((email) => ({
+          email: { startsWith: `${email}${SOFT_DELETED_EMAIL_SUFFIX}` },
+        })),
+      ],
     },
   });
 

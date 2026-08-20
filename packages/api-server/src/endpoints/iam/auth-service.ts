@@ -24,10 +24,18 @@ const upgradeStoredHash = async (
   try {
     const upgraded = await iamAuthService.hashPassword(plainPassword);
 
-    await prisma.user.updateMany({
+    const rewritten = await prisma.user.updateMany({
       where: { id: userId, password: storedHash },
       data: { password: upgraded },
     });
+
+    if (rewritten.count > 0) {
+      logger.info("iam.auth.password_cost_upgraded", {
+        userId,
+        fromCost: cost,
+        toCost: AUTH_CONSTANTS.BCRYPT_COST_FACTOR,
+      });
+    }
   } catch (error: unknown) {
     logger.warn("iam.auth.password_cost_upgrade_failed", {
       userId,

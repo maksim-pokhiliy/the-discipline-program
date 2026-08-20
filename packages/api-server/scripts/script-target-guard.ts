@@ -74,7 +74,7 @@ export const HOST_QUERY_PARAM = "host";
 export const requireNamedHost = (target: URL): void => {
   if (target.searchParams.has(HOST_QUERY_PARAM)) {
     throw new Error(
-      `refusing to write: DATABASE_URL carries a ${HOST_QUERY_PARAM} query parameter, which ` +
+      `refusing to run: DATABASE_URL carries a ${HOST_QUERY_PARAM} query parameter, which ` +
         `overrides the host in the DSN authority at connect time. ${EXPECT_HOST_FLAG} would then ` +
         "attest to a host this run does not connect to. Remove the parameter and name the host " +
         "in the DSN itself.",
@@ -83,7 +83,7 @@ export const requireNamedHost = (target: URL): void => {
 
   if (target.hostname === "") {
     throw new Error(
-      `refusing to write: DATABASE_URL names no host, so there is nothing for ${EXPECT_HOST_FLAG}` +
+      `refusing to run: DATABASE_URL names no host, so there is nothing for ${EXPECT_HOST_FLAG}` +
         "to verify. Prisma falls back to its local default for such a DSN, which would leave the " +
         "guard attesting to a host that is not the one it connects to. Name the host in the DSN.",
     );
@@ -95,8 +95,9 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
 
   if (expected === null) {
     throw new Error(
-      `${WRITE_FLAG} requires ${EXPECT_HOST_FLAG}<hostname>. Importing @prisma/client loads any ` +
-        ".env beside it, so DATABASE_URL can arrive from a file you did not name; stating the " +
+      `${EXPECT_HOST_FLAG}<hostname> is required, in a dry run as well as a write. Importing ` +
+        "@prisma/client loads any .env beside it, so DATABASE_URL can arrive from a file you did " +
+        "not name and a bare dry run can read a database you never meant to touch; stating the " +
         "host you expect is what makes the target deliberate.",
     );
   }
@@ -111,7 +112,7 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
 
   if (expected.toLowerCase() !== target.hostname.toLowerCase()) {
     throw new Error(
-      `refusing to write: ${EXPECT_HOST_FLAG}${expected} does not match the host this run ` +
+      `refusing to run: ${EXPECT_HOST_FLAG}${expected} does not match the host this run ` +
         "resolved from DATABASE_URL. The resolved host is deliberately not printed — a hostname " +
         "this script derived and you copied back would attest to nothing. Compare it against " +
         "your own record of the database you meant.",
@@ -119,7 +120,7 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
   }
 };
 
-export const requireWriteTarget = (argv: readonly string[], databaseUrl: string): URL => {
+export const requireAttestedTarget = (argv: readonly string[], databaseUrl: string): URL => {
   const target = parseTarget(databaseUrl);
 
   requireNamedHost(target);

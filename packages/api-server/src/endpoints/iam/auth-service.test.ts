@@ -204,6 +204,24 @@ describe("iamAuthService", () => {
       hashSpy.mockRestore();
     });
 
+    it("does not clobber a credential that changed while the upgrade was being computed", async () => {
+      const user = await userWithHash(GOLDEN_BCRYPT_HASH);
+      const upgraded = await iamAuthService.hashPassword(GOLDEN_PASSWORD);
+      const concurrent = await iamAuthService.hashPassword("a-different-password-entirely");
+      const hashSpy = vi.spyOn(iamAuthService, "hashPassword").mockImplementationOnce(async () => {
+        await cleanupRaw.user.update({ where: { id: user.id }, data: { password: concurrent } });
+
+        return upgraded;
+      });
+
+      const result = await iamAuthService.validateUser(user.email, GOLDEN_PASSWORD);
+
+      expect(result).not.toBeNull();
+      expect((await storedStateOf(user.id))?.password).toBe(concurrent);
+
+      hashSpy.mockRestore();
+    });
+
     it("rewrites once and then stops, so repeated logins do not churn the row", async () => {
       const user = await userWithHash(GOLDEN_BCRYPT_HASH);
 

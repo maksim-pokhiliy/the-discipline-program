@@ -1,16 +1,5 @@
-import { ATHLETE_ROLE, type ImportPlan } from "./legacy-users-import-plan";
+import { ATHLETE_ROLE, type IdentityMirror, type ImportPlan } from "./legacy-users-import-plan";
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
-
-type IdentityMirror = {
-  legacyRoleId: number;
-  legacyPlanId: number;
-  legacyLevelId: number;
-  isEnabled: boolean;
-  firstName: string | null;
-  lastName: string | null;
-  phoneNumber: string | null;
-  dateOfBirth: Date | null;
-};
 
 export type ImportWriter = {
   user: {
@@ -23,7 +12,10 @@ export type ImportWriter = {
       };
       select: { id: true };
     }) => Promise<{ id: string }>;
-    update: (args: { where: { id: string }; data: { password: string } }) => Promise<unknown>;
+    update: (args: {
+      where: { id: string; password: string | null };
+      data: { password: string };
+    }) => Promise<unknown>;
   };
   mobileLegacyIdentity: {
     create: (args: {
@@ -117,7 +109,7 @@ export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promi
 
     if (action.passwordChange.kind === "restored" && action.row.passwordHash !== null) {
       await writer.user.update({
-        where: { id: action.userId },
+        where: { id: action.userId, password: action.passwordChange.expectedStoredHash },
         data: { password: action.row.passwordHash },
       });
 

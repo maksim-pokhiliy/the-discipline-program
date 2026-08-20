@@ -70,6 +70,7 @@ describe("renderImportReport", () => {
           {
             id: "user_linked",
             email: "new.address@platform.local",
+            matchEmail: "new.address@platform.local",
             role: "ATHLETE",
             deletedAt: null,
             password: COST_12_HASH,
@@ -93,6 +94,7 @@ describe("renderImportReport", () => {
           {
             id: "user_linked",
             email: "new.address@platform.local",
+            matchEmail: "new.address@platform.local",
             role: "ATHLETE",
             deletedAt: null,
             password: COST_12_HASH,
@@ -149,6 +151,7 @@ describe("renderImportReport", () => {
           {
             id: "user_platform",
             email: "athlete@tdp.local",
+            matchEmail: "athlete@tdp.local",
             role: "ATHLETE",
             deletedAt: null,
             password: GOLDEN_BCRYPT_HASH,
@@ -179,13 +182,18 @@ describe("renderImportReport", () => {
 
   it("never prints a password hash, a DSN or a hostname", () => {
     const plan = planFor(
-      [sourceRow(), sourceRow({ id: 17, username: "admin" }), sourceRow({ id: 22, team_id: 3 })],
+      [
+        sourceRow(),
+        sourceRow({ id: 17, username: "admin" }),
+        sourceRow({ id: 22, username: "third@tdp.local", team_id: 3 }),
+      ],
       emptySnapshot({
         individualLinks: [{ legacyUserId: 20, athleteId: "user_linked" }],
         users: [
           {
             id: "user_linked",
             email: "new.address@platform.local",
+            matchEmail: "new.address@platform.local",
             role: "COACH",
             deletedAt: null,
             password: COST_12_HASH,
@@ -196,6 +204,7 @@ describe("renderImportReport", () => {
     );
     const report = render(plan);
 
+    expect(report).toContain("third@tdp.local");
     expect(report).not.toContain(GOLDEN_BCRYPT_HASH);
     expect(report).not.toContain(COST_12_HASH);
     expect(report).not.toContain("$2a$");

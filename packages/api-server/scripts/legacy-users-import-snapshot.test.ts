@@ -44,8 +44,8 @@ const fakeReader = (
   const recorded: Recorded = { identityArgs: [], linkArgs: [], userArgs: [] };
   const reader = {
     mobileLegacyIdentity: {
-      findMany: (args: unknown) => {
-        recorded.identityArgs.push(args);
+      findMany: (...args: unknown[]) => {
+        recorded.identityArgs.push(args[0]);
 
         return Promise.resolve(seed.identities ?? []);
       },
@@ -96,30 +96,17 @@ describe("loadPlatformSnapshot", () => {
     expect(recorded).toEqual({ identityArgs: [], linkArgs: [], userArgs: [] });
   });
 
-  it("windows the identity read to the legacy id range the export spans", async () => {
-    const { reader, recorded } = fakeReader();
-
-    await loadPlatformSnapshot(
-      reader,
-      rowsFrom(sourceRow({ id: 3 }), sourceRow({ id: 24, username: "b@tdp.local" })),
-    );
-
-    expect(recorded.identityArgs.at(0)).toMatchObject({
-      where: { legacyUserId: { gte: 3, lte: 24 } },
+  it("reads every stored identity, so the absence audit is never blind to ids outside the export", async () => {
+    const { reader, recorded } = fakeReader({
+      identities: [identityRow(20, "user_twenty"), identityRow(DEMO_LEGACY_USER_ID, "user_demo")],
     });
-  });
+    const snapshot = await loadPlatformSnapshot(reader, rowsFrom(sourceRow({ id: 20 })));
 
-  it("leaves the demo athlete outside the window, so the import can never reach it", async () => {
-    const { reader, recorded } = fakeReader();
-
-    await loadPlatformSnapshot(
-      reader,
-      rowsFrom(sourceRow({ id: 1 }), sourceRow({ id: 24, username: "b@tdp.local" })),
-    );
-
-    const where = recorded.identityArgs.at(0) as { where: { legacyUserId: { lte: number } } };
-
-    expect(where.where.legacyUserId.lte).toBeLessThan(DEMO_LEGACY_USER_ID);
+    expect(recorded.identityArgs).toEqual([undefined]);
+    expect(snapshot.identities.map((identity) => identity.legacyUserId)).toEqual([
+      20,
+      DEMO_LEGACY_USER_ID,
+    ]);
   });
 
   it("reads only individual links that actually name an athlete", async () => {
@@ -162,9 +149,43 @@ describe("loadPlatformSnapshot", () => {
         OR: [
           { email: { in: ["athlete@tdp.local"] } },
           { id: { in: ["user_identity", "user_linked"] } },
+          { email: { startsWith: "athlete@tdp.local_deleted_" } },
         ],
       },
     });
+  });
+
+  it("also looks for the soft-deleted form of every export address", async () => {
+    const { reader, recorded } = fakeReader();
+
+    await loadPlatformSnapshot(
+      reader,
+      rowsFrom(sourceRow({ id: 20 }), sourceRow({ id: 21, username: "second@tdp.local" })),
+    );
+
+    const clauses = (recorded.userArgs.at(0) as { where: { OR: unknown[] } }).where.OR;
+
+    expect(clauses).toContainEqual({ email: { startsWith: "athlete@tdp.local_deleted_" } });
+    expect(clauses).toContainEqual({ email: { startsWith: "second@tdp.local_deleted_" } });
+  });
+
+  it("de-mangles a soft-deleted address so the classifier can still recognise it", async () => {
+    const { reader } = fakeReader({
+      users: [
+        {
+          id: "user_gone",
+          email: "athlete@tdp.local_deleted_1750000000000",
+          role: "ATHLETE",
+          deletedAt: new Date("2026-01-01T00:00:00.000Z"),
+          password: null,
+          legacyIdentity: null,
+        },
+      ],
+    });
+    const snapshot = await loadPlatformSnapshot(reader, rowsFrom(sourceRow()));
+
+    expect(snapshot.users.at(0)?.matchEmail).toBe("athlete@tdp.local");
+    expect(snapshot.users.at(0)?.email).toBe("athlete@tdp.local_deleted_1750000000000");
   });
 
   it("flattens the nested legacy identity onto the platform user", async () => {
@@ -186,6 +207,7 @@ describe("loadPlatformSnapshot", () => {
       {
         id: "user_platform",
         email: "athlete@tdp.local",
+        matchEmail: "athlete@tdp.local",
         role: "COACH",
         deletedAt: null,
         password: null,

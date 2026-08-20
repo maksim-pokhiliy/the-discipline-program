@@ -57,6 +57,26 @@ describe("legacySourceSchema", () => {
     expect(() => legacySourceSchema.parse([incomplete])).toThrow();
   });
 
+  it("rejects a password that is not a bcrypt hash, rather than importing a lockout", () => {
+    expect(() =>
+      legacySourceSchema.parse([sourceRow({ password: "plaintext-password" })]),
+    ).toThrow();
+    expect(() => legacySourceSchema.parse([sourceRow({ password: "" })])).toThrow();
+    expect(() => legacySourceSchema.parse([sourceRow({ password: "$2a$10$tooshort" })])).toThrow();
+  });
+
+  it("accepts every bcrypt variant prefix the legacy stack could have written", () => {
+    for (const prefix of ["$2a$", "$2b$", "$2y$"]) {
+      const hash = `${prefix}10${GOLDEN_BCRYPT_HASH.slice(6)}`;
+
+      expect(legacySourceSchema.parse([sourceRow({ password: hash })])).toHaveLength(1);
+    }
+  });
+
+  it("rejects a legacy id beyond what an int4 column can hold", () => {
+    expect(() => legacySourceSchema.parse([sourceRow({ id: 2_147_483_648 })])).toThrow();
+  });
+
   it("rejects a calendar-invalid date of birth", () => {
     expect(() => legacySourceSchema.parse([sourceRow({ date_of_birth: "2001-02-29" })])).toThrow();
   });

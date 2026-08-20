@@ -184,6 +184,7 @@ describe("applyImport — attach", () => {
       {
         id: "user_platform",
         email: "athlete@tdp.local",
+        matchEmail: "athlete@tdp.local",
         role: "ATHLETE",
         deletedAt: null,
         password: COST_12_HASH,
@@ -219,6 +220,7 @@ describe("applyImport — refresh", () => {
         {
           id: "user_platform",
           email: "athlete@tdp.local",
+          matchEmail: "athlete@tdp.local",
           role: "ATHLETE",
           deletedAt: null,
           password,
@@ -252,7 +254,7 @@ describe("applyImport — refresh", () => {
     expect(counts.credentialsRestored).toBe(1);
     expect(paths(calls)).toEqual(["user.update"]);
     expect(argsAt(calls, "user.update")).toEqual({
-      where: { id: "user_platform" },
+      where: { id: "user_platform", password: OTHER_COST_10_HASH },
       data: { password: GOLDEN_BCRYPT_HASH },
     });
   });
@@ -299,9 +301,20 @@ describe("applyImport — refresh", () => {
 });
 
 describe("applyImport — refusal", () => {
-  it("throws and writes nothing while any conflict stands", async () => {
+  it("throws and writes nothing while any conflict stands, even beside writable rows", async () => {
     const { writer, calls } = fakeWriter();
-    const plan = planFor([sourceRow({ training_level_id: 9 })], emptySnapshot());
+    const plan = planFor(
+      [
+        sourceRow({ id: 30, username: "good-a@tdp.local" }),
+        sourceRow({ id: 31, username: "good-b@tdp.local" }),
+        sourceRow({ id: 32, username: "bad@tdp.local", training_level_id: 9 }),
+        sourceRow({ id: 33, username: "good-c@tdp.local" }),
+      ],
+      emptySnapshot(),
+    );
+
+    expect(plan.actions).toHaveLength(3);
+    expect(plan.conflicts).toHaveLength(1);
 
     await expect(applyImport(writer, plan)).rejects.toBeInstanceOf(ImportConflictError);
     expect(calls).toEqual([]);

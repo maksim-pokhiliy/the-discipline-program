@@ -23,11 +23,19 @@ const USERNAME_OVERRIDES: ReadonlyMap<number, UsernameOverride> = new Map([
   ],
 ]);
 
+const BCRYPT_HASH_SHAPE = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+const MAX_INT4 = 2_147_483_647;
+
 const legacySourceRowSchema = z
   .object({
-    id: z.number().int().positive(),
+    id: z.number().int().positive().max(MAX_INT4),
     username: z.string().min(1),
-    password: z.string().min(1),
+    password: z
+      .string()
+      .regex(
+        BCRYPT_HASH_SHAPE,
+        "is not a bcrypt hash; importing it verbatim would lock the account out permanently",
+      ),
     user_role_id: z.number().int(),
     training_level_id: z.number().int(),
     first_name: z.string().nullable(),

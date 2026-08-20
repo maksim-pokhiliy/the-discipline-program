@@ -9,7 +9,7 @@ import {
   requireExpectedHost,
   requireFlag,
   requireNamedHost,
-  requireWriteTarget,
+  requireAttestedTarget,
   WRITE_FLAG,
 } from "./script-target-guard";
 
@@ -140,14 +140,14 @@ describe("requireNamedHost", () => {
     const message = messageOf(() => requireNamedHost(parseTarget(HOSTLESS_DSN)));
 
     expect(message).toContain("names no host");
-    expect(message).toContain("refusing to write");
+    expect(message).toContain("refusing to run");
   });
 
   it("refuses a DSN whose host query parameter would override the authority host", () => {
     const decoyed = `${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432/platform?host=elsewhere.invalid`;
     const message = messageOf(() => requireNamedHost(parseTarget(decoyed)));
 
-    expect(message).toContain("refusing to write");
+    expect(message).toContain("refusing to run");
     expect(message).toContain("host query parameter");
   });
 
@@ -170,7 +170,7 @@ describe("requireExpectedHost", () => {
   it("refuses when the flag is missing", () => {
     const message = messageOf(() => requireExpectedHost([WRITE_FLAG], target));
 
-    expect(message).toContain(`${WRITE_FLAG} requires ${EXPECT_HOST_FLAG}`);
+    expect(message).toContain(`${EXPECT_HOST_FLAG}<hostname> is required`);
     expectNoLeak(message);
   });
 
@@ -186,7 +186,7 @@ describe("requireExpectedHost", () => {
       requireExpectedHost([WRITE_FLAG, `${EXPECT_HOST_FLAG}db.somewhere-else.invalid`], target),
     );
 
-    expect(message).toContain("refusing to write");
+    expect(message).toContain("refusing to run");
     expect(message).toContain("db.somewhere-else.invalid");
     expectNoLeak(message);
   });
@@ -207,40 +207,40 @@ describe("requireExpectedHost", () => {
   });
 });
 
-describe("requireWriteTarget — host query parameter", () => {
+describe("requireAttestedTarget — host query parameter", () => {
   it("refuses a decoy authority host whose query parameter names the real target", () => {
     const decoyed = `${SCHEME}//importer:${SECRET_PASSWORD}@decoy.invalid:5432/platform?host=${TARGET_HOST}`;
 
     expect(() =>
-      requireWriteTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}decoy.invalid`], decoyed),
+      requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}decoy.invalid`], decoyed),
     ).toThrow(/host query parameter/);
   });
 });
 
-describe("requireWriteTarget", () => {
+describe("requireAttestedTarget", () => {
   it("returns the parsed target when every guard passes", () => {
-    const target = requireWriteTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_HOST}`], DSN);
+    const target = requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_HOST}`], DSN);
 
     expect(target.hostname).toBe(TARGET_HOST);
   });
 
   it("rejects a hostless DSN before it ever compares the stated host", () => {
     expect(() =>
-      requireWriteTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}localhost`], HOSTLESS_DSN),
+      requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}localhost`], HOSTLESS_DSN),
     ).toThrow(/names no host/);
   });
 
   it("rejects a mismatch even when the DSN is otherwise valid", () => {
-    expect(() => requireWriteTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`], DSN)).toThrow(
-      /refusing to write/,
-    );
+    expect(() =>
+      requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`], DSN),
+    ).toThrow(/refusing to run/);
   });
 
   it("leaks neither the DSN nor the resolved host on any rejection path", () => {
-    expectNoLeak(messageOf(() => requireWriteTarget([WRITE_FLAG], DSN)));
-    expectNoLeak(messageOf(() => requireWriteTarget([WRITE_FLAG, EXPECT_HOST_FLAG], DSN)));
+    expectNoLeak(messageOf(() => requireAttestedTarget([WRITE_FLAG], DSN)));
+    expectNoLeak(messageOf(() => requireAttestedTarget([WRITE_FLAG, EXPECT_HOST_FLAG], DSN)));
     expectNoLeak(
-      messageOf(() => requireWriteTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`], DSN)),
+      messageOf(() => requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`], DSN)),
     );
   });
 });

@@ -151,7 +151,15 @@ describe("diffIdentity", () => {
 
   it("treats an empty-string phone number as different from a null one", () => {
     expect(diffIdentity(stored, rowWith({ phone_number: "" }))).toEqual([
-      { field: "phoneNumber", from: "null", to: "" },
+      { field: "phoneNumber", from: "(none)", to: '""' },
+    ]);
+  });
+
+  it('does not confuse the literal string "null" with an absent value', () => {
+    const withLiteral = { ...stored, phoneNumber: "null" };
+
+    expect(diffIdentity(withLiteral, rowWith({ phone_number: null }))).toEqual([
+      { field: "phoneNumber", from: '"null"', to: "(none)" },
     ]);
   });
 
@@ -194,6 +202,7 @@ describe("decidePasswordChange", () => {
   it("replaces a drifted below-cost credential only when restore is explicitly enabled", () => {
     expect(decidePasswordChange(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
       kind: "restored",
+      expectedStoredHash: OTHER_COST_10_HASH,
     });
   });
 

@@ -9,6 +9,7 @@ import type {
   PlatformSnapshot,
   PlatformUser,
 } from "./legacy-users-import-plan";
+import { demangleSoftDeletedEmail } from "./legacy-users-import-snapshot";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 
 const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
@@ -32,15 +33,19 @@ const sourceRow = (overrides: Partial<LegacySourceRow> = {}): LegacySourceRow =>
   ...overrides,
 });
 
-const platformUser = (overrides: Partial<PlatformUser> = {}): PlatformUser => ({
-  id: "user_platform",
-  email: LEGACY_EMAIL,
-  role: "ATHLETE",
-  deletedAt: null,
-  password: COST_12_HASH,
-  identityLegacyUserId: null,
-  ...overrides,
-});
+const platformUser = (overrides: Partial<PlatformUser> = {}): PlatformUser => {
+  const base = {
+    id: "user_platform",
+    email: LEGACY_EMAIL,
+    role: "ATHLETE",
+    deletedAt: null,
+    password: COST_12_HASH,
+    identityLegacyUserId: null,
+    ...overrides,
+  };
+
+  return { ...base, matchEmail: overrides.matchEmail ?? demangleSoftDeletedEmail(base.email) };
+};
 
 const storedIdentity = (overrides: Partial<PlatformIdentity> = {}): PlatformIdentity => ({
   legacyUserId: LEGACY_ID,
@@ -293,6 +298,54 @@ describe("conflicts", () => {
   });
 });
 
+describe("soft-deleted platform users", () => {
+  const softDeleted = (email: string) =>
+    platformUser({
+      id: "user_gone",
+      email: `${email}_deleted_1750000000000`,
+      matchEmail: email,
+      deletedAt: new Date("2026-01-01T00:00:00.000Z"),
+    });
+
+  it("refuses to resurrect a soft-deleted platform user as a fresh create", () => {
+    const plan = classify([sourceRow()], emptySnapshot({ users: [softDeleted(LEGACY_EMAIL)] }));
+
+    expect(reasons(plan)).toEqual(["matched-user-soft-deleted"]);
+    expect(plan.actions).toEqual([]);
+  });
+
+  it("still attaches to the live user when a soft-deleted namesake also exists", () => {
+    const plan = classify(
+      [sourceRow()],
+      emptySnapshot({
+        users: [softDeleted(LEGACY_EMAIL), platformUser({ id: "user_live" })],
+      }),
+    );
+
+    expect(plan.conflicts).toEqual([]);
+    expect(plan.actions.at(0)).toMatchObject({ kind: "attach", userId: "user_live" });
+  });
+
+  it("refuses a refresh whose stored identity now sits on a soft-deleted user", () => {
+    const plan = classify(
+      [sourceRow()],
+      emptySnapshot({
+        identities: [storedIdentity()],
+        users: [
+          platformUser({
+            id: "user_platform",
+            deletedAt: new Date("2026-01-01T00:00:00.000Z"),
+            identityLegacyUserId: LEGACY_ID,
+          }),
+        ],
+      }),
+    );
+
+    expect(reasons(plan)).toEqual(["matched-user-soft-deleted"]);
+    expect(plan.actions).toEqual([]);
+  });
+});
+
 describe("AS-10 catalog validation", () => {
   it("refuses an out-of-range role, plan or level", () => {
     for (const overrides of [{ user_role_id: 3 }, { user_plan_id: 3 }, { training_level_id: 5 }]) {
@@ -541,6 +594,6 @@ describe("refresh detail", () => {
       "legacyLevelId",
       "isEnabled",
     ]);
-    expect(action.passwordChange).toEqual({ kind: "restored" });
+    expect(action.passwordChange).toMatchObject({ kind: "restored" });
   });
 });
