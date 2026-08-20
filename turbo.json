@@ -55,7 +55,7 @@
     },
     "test": {
       "cache": false,
-      "env": ["RUN_SHIM_DEMO_CHECK", "SHIM_DEMO_ATHLETE_PASSWORD"]
+      "env": ["RUN_SHIM_DEMO_CHECK", "SHIM_DEMO_ATHLETE_PASSWORD", "RUN_LEGACY_IMPORT_CHECK"]
     }
   }
 }

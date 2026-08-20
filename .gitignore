@@ -53,3 +53,6 @@ the-discipline-program-codebase-dump.txt
 *storybook.log
 storybook-static
 .serena/
+
+# Legacy users import: exports and reports carry real addresses and password hashes
+.legacy-import/

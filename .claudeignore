@@ -54,3 +54,6 @@ storybook-static/
 .audit/
 .cache/
 *.tsbuildinfo
+
+# legacy users import: exports and reports carry real addresses and password hashes
+.legacy-import/

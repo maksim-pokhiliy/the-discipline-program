@@ -6,12 +6,16 @@ const KNOWN_PLACEHOLDERS = [
   /postgres(?:ql)?:\/\/postgres:postgres@/,
   /postgres(?:ql)?:\/\/user:password@/,
   /postgres(?:ql)?:\/\/your_user:your_password@/,
+  /\$2a\$10\$xGFVeUFmZ9fBD3ihEPQZt\.bl85fgMvCX0kdxA71xYpPDT4f72oiAy/,
+  /\$2a\$12\$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI\/TRRjGi/,
+  /\$2a\$10\$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG/,
 ];
 
 const isPlaceholder = (sample) => KNOWN_PLACEHOLDERS.some((rx) => rx.test(sample));
 
 const PATTERNS = [
   { name: "Neon Postgres password", regex: /npg_[A-Za-z0-9]{16,}/ },
+  { name: "bcrypt password hash", regex: /\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}/ },
   { name: "Postgres URL with credentials", regex: /postgres(?:ql)?:\/\/[^\s:]+:[^\s@]+@/ },
   {
     name: "OpenAI / Anthropic-style API key",
@@ -81,9 +85,12 @@ for (const file of getStaged()) {
   }
 
   for (const { name, regex } of PATTERNS) {
-    const match = content.match(regex);
-    if (match && !isPlaceholder(match[0])) {
-      findings.push({ file, name, snippet: match[0].slice(0, 60) });
+    const everyMatch = new RegExp(regex.source, regex.flags.replace("g", "") + "g");
+    for (const match of content.matchAll(everyMatch)) {
+      if (!isPlaceholder(match[0])) {
+        findings.push({ file, name, snippet: match[0].slice(0, 60) });
+        break;
+      }
     }
   }
 }

@@ -4,6 +4,8 @@ import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
 import { type LegacyDailyProgram } from "../../infrastructure/legacy-mobile";
 
+import { isValidIsoDate, parseLegacyDate, serializeLegacyDate } from "./legacy-date";
+
 const FIRST_PRINTABLE_CODE_POINT = 0x20;
 const DELETE_CODE_POINT = 0x7f;
 const MAX_USERNAME_LENGTH = 100;
@@ -37,26 +39,7 @@ export type LegacyJwtDto = {
   userPlan: LegacyCatalogRefDto;
 };
 
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const ISO_DATE_LENGTH = 10;
-
-export const isValidIsoDate = (value: string): boolean => {
-  if (!ISO_DATE_PATTERN.test(value)) {
-    return false;
-  }
-
-  const parsed = new Date(`${value}T00:00:00.000Z`);
-
-  return (
-    !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, ISO_DATE_LENGTH) === value
-  );
-};
-
-export const serializeLegacyDate = (value: Date | null): string | null =>
-  value ? value.toISOString().slice(0, ISO_DATE_LENGTH) : null;
-
-export const parseLegacyDate = (value: string | null): Date | null =>
-  value ? new Date(`${value}T00:00:00.000Z`) : null;
+export { isValidIsoDate, parseLegacyDate, serializeLegacyDate };
 
 export const userIdParamSchema = z.object({ id: z.coerce.number().int() });
 
