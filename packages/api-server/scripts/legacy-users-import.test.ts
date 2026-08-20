@@ -7,6 +7,7 @@ import {
   type RunImportDeps,
   runImport,
   SOURCE_FLAG,
+  readerFor,
   withHostWithheld,
   writerFor,
 } from "./legacy-users-import";
@@ -346,6 +347,60 @@ describe("runImport — credential restore flag", () => {
 
     expect(writes).toEqual([]);
     expect(withFlag.lines.join("\n")).toContain("credentials replaced 1");
+  });
+});
+
+describe("readerFor — query shape", () => {
+  const fakeClient = () => {
+    const calls: Record<string, unknown> = {};
+    const client = {
+      mobileLegacyIdentity: {
+        findMany: (args: unknown) => {
+          calls.identity = args;
+
+          return Promise.resolve([]);
+        },
+      },
+      mobilePublishLink: {
+        findMany: (args: unknown) => {
+          calls.link = args;
+
+          return Promise.resolve([]);
+        },
+      },
+      user: {
+        findMany: (args: unknown) => {
+          calls.user = args;
+
+          return Promise.resolve([]);
+        },
+      },
+    };
+
+    return { client: client as unknown as Parameters<typeof readerFor>[0], calls };
+  };
+
+  it("reads identities with no filter at all, so the absence audit sees the whole table", async () => {
+    const { client, calls } = fakeClient();
+
+    await readerFor(client).mobileLegacyIdentity.findMany();
+
+    expect(calls.identity).not.toHaveProperty("where");
+  });
+
+  it("passes the caller's filter straight through for links and users", async () => {
+    const { client, calls } = fakeClient();
+    const linkWhere = {
+      channel: "INDIVIDUAL" as const,
+      legacyUserId: { in: [20] },
+      NOT: { athleteId: null },
+    };
+
+    await readerFor(client).mobilePublishLink.findMany({ where: linkWhere });
+    await readerFor(client).user.findMany({ where: { OR: [{ id: { in: ["u1"] } }] } });
+
+    expect(calls.link).toMatchObject({ where: linkWhere });
+    expect(calls.user).toMatchObject({ where: { OR: [{ id: { in: ["u1"] } }] } });
   });
 });
 
