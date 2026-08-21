@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+
 import {
   EXPECT_HOST_FLAG,
   EXPECT_PLAN_FLAG,
@@ -111,13 +113,29 @@ describe("rejectUnknownFlags", () => {
     ).not.toThrow();
   });
 
-  it("refuses a misspelled flag rather than silently ignoring it", () => {
+  it("refuses a misspelled flag rather than silently ignoring it, and names it", () => {
     const message = messageOf(() =>
       rejectUnknownFlags(["node", "script.ts", "--sorce=/tmp/x"], KNOWN),
     );
 
     expect(message).toContain("unrecognised flag");
-    expect(message).toContain("--sorce=/tmp/x");
+    expect(message).toContain("--sorce=");
+  });
+
+  it("names only the flag, never the value — a typo is where a credential lands", () => {
+    const message = messageOf(() =>
+      rejectUnknownFlags(["node", "script.ts", `--expect-pan=${GOLDEN_BCRYPT_HASH}`], KNOWN),
+    );
+
+    expect(message).toContain("--expect-pan=");
+    expect(message).not.toContain(GOLDEN_BCRYPT_HASH);
+    expect(message).not.toContain("$2a$");
+  });
+
+  it("names a misspelled boolean flag whole, having no value to withhold", () => {
+    const message = messageOf(() => rejectUnknownFlags(["node", "script.ts", "--wrote"], KNOWN));
+
+    expect(message).toContain("--wrote");
   });
 
   it("refuses a near-miss of a real flag, which is the dangerous case", () => {

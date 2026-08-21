@@ -102,18 +102,12 @@ const storedIdentity = (overrides = {}) => ({
 describe("applyImport — create", () => {
   it("writes one user and one identity", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
       planFor([sourceRow({ first_name: "Test", last_name: "Athlete" })], emptySnapshot()),
     );
 
-    expect(counts).toEqual({
-      created: 1,
-      attached: 0,
-      refreshed: 0,
-      credentialsRestored: 0,
-      markersBackfilled: 0,
-    });
     expect(paths(calls)).toEqual(["user.create", "identity.create"]);
   });
 
@@ -214,15 +208,9 @@ describe("applyImport — attach", () => {
 
   it("writes only the identity and never touches the platform user", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(writer, planFor([sourceRow()], matchedSnapshot));
 
-    expect(counts).toEqual({
-      created: 0,
-      attached: 1,
-      refreshed: 0,
-      credentialsRestored: 0,
-      markersBackfilled: 0,
-    });
+    await applyImport(writer, planFor([sourceRow()], matchedSnapshot));
+
     expect(paths(calls)).toEqual(["identity.create"]);
   });
 
@@ -266,7 +254,8 @@ describe("applyImport — refresh", () => {
 
   it("updates the identity mirror in place", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
       planFor(
         [sourceRow({ training_level_id: 4 })],
@@ -274,13 +263,6 @@ describe("applyImport — refresh", () => {
       ),
     );
 
-    expect(counts).toEqual({
-      created: 0,
-      attached: 0,
-      refreshed: 1,
-      credentialsRestored: 0,
-      markersBackfilled: 0,
-    });
     expect(paths(calls)).toEqual(["identity.update"]);
     expect(argsAt(calls, "identity.update")).toMatchObject({
       where: { legacyUserId: LEGACY_ID },
@@ -304,12 +286,9 @@ describe("applyImport — refresh", () => {
 
   it("records the marker for a credential it can see is the one it wrote", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
-      writer,
-      planFor([sourceRow()], snapshotWith(GOLDEN_BCRYPT_HASH)),
-    );
 
-    expect(counts.markersBackfilled).toBe(1);
+    await applyImport(writer, planFor([sourceRow()], snapshotWith(GOLDEN_BCRYPT_HASH)));
+
     expect(paths(calls)).toEqual(["identity.update"]);
     expect(argsAt(calls, "identity.update")).toMatchObject({
       where: { legacyUserId: LEGACY_ID },
@@ -319,12 +298,12 @@ describe("applyImport — refresh", () => {
 
   it("restores the export hash over a marked credential when asked to", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
       planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH), true),
     );
 
-    expect(counts.credentialsRestored).toBe(1);
     expect(paths(calls)).toEqual(["user.update", "identity.update"]);
     expect(argsAt(calls, "user.update")).toEqual({
       where: { id: "user_platform", password: OTHER_COST_10_HASH },
@@ -347,23 +326,20 @@ describe("applyImport — refresh", () => {
 
   it("leaves a credential no marker vouches for untouched, whatever its cost factor", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
-      writer,
-      planFor([sourceRow()], snapshotWith(COST_12_HASH), true),
-    );
 
-    expect(counts.credentialsRestored).toBe(0);
+    await applyImport(writer, planFor([sourceRow()], snapshotWith(COST_12_HASH), true));
+
     expect(paths(calls)).toEqual([]);
   });
 
   it("never replaces a marked credential unless restore is explicitly enabled", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
       planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH)),
     );
 
-    expect(counts.credentialsRestored).toBe(0);
     expect(paths(calls)).not.toContain("user.update");
   });
 
@@ -378,15 +354,9 @@ describe("applyImport — refresh", () => {
   it("is a no-op on a second run against state it already wrote", async () => {
     const { writer, calls } = fakeWriter();
     const plan = planFor([sourceRow()], snapshotWith(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH));
-    const counts = await applyImport(writer, plan);
 
-    expect(counts).toEqual({
-      created: 0,
-      attached: 0,
-      refreshed: 1,
-      credentialsRestored: 0,
-      markersBackfilled: 0,
-    });
+    await applyImport(writer, plan);
+
     expect(calls).toEqual([]);
     expect(plan.actions.at(0)).toMatchObject({ identityChanges: [] });
   });
@@ -424,20 +394,14 @@ describe("applyImport — refusal", () => {
 
   it("writes nothing at all when the plan is empty", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(writer, {
+
+    await applyImport(writer, {
       actions: [],
       conflicts: [],
       warnings: [],
       reconciliation: { linksChecked: 0, linksWithIdentity: 0, violations: 0 },
     });
 
-    expect(counts).toEqual({
-      created: 0,
-      attached: 0,
-      refreshed: 0,
-      credentialsRestored: 0,
-      markersBackfilled: 0,
-    });
     expect(calls).toEqual([]);
   });
 });

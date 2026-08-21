@@ -39,7 +39,7 @@ export const reconcileIdentityLinks = (snapshot: PlatformSnapshot): Reconciliati
     legacyUserId,
     reason: "link-and-identity-disagree" as const,
     detail:
-      `${athleteIds.size} individual publish link(s) name a platform user the stored legacy ` +
+      `individual publish links name ${athleteIds.size} platform user(s) the stored legacy ` +
       "identity does not; the app reads the identity, so one of the two is about the wrong person",
   }));
 

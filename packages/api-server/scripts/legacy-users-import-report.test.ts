@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
-import type { ImportPlan, PlatformSnapshot } from "./legacy-users-import-plan";
+import type {
+  ImportPlan,
+  PlatformIdentity,
+  PlatformSnapshot,
+  PlatformUser,
+} from "./legacy-users-import-plan";
 import {
   ADDRESS_CHANGE_HEADING,
   type ReportMode,
@@ -38,8 +43,41 @@ const emptySnapshot = (overrides: Partial<PlatformSnapshot> = {}): PlatformSnaps
   ...overrides,
 });
 
-const planFor = (rows: LegacySourceRow[], snapshot: PlatformSnapshot): ImportPlan =>
-  classifyImport(normalizeLegacySource(rows), snapshot);
+const identityRow = (overrides: Partial<PlatformIdentity> = {}): PlatformIdentity => ({
+  legacyUserId: 20,
+  userId: "user_platform",
+  importedPasswordHash: null,
+  legacyRoleId: 1,
+  legacyPlanId: 1,
+  legacyLevelId: 2,
+  isEnabled: true,
+  firstName: null,
+  lastName: null,
+  phoneNumber: null,
+  dateOfBirth: null,
+  ...overrides,
+});
+
+const userRow = (overrides: Partial<PlatformUser> = {}): PlatformUser => ({
+  id: "user_platform",
+  email: "athlete@tdp.local",
+  matchEmail: "athlete@tdp.local",
+  role: "ATHLETE",
+  deletedAt: null,
+  password: null,
+  identityLegacyUserId: 20,
+  ...overrides,
+});
+
+const refreshing = (identity: Partial<PlatformIdentity>, user: Partial<PlatformUser>) =>
+  emptySnapshot({ identities: [identityRow(identity)], users: [userRow(user)] });
+
+const planFor = (
+  rows: LegacySourceRow[],
+  snapshot: PlatformSnapshot,
+  isCredentialRestoreEnabled = false,
+): ImportPlan =>
+  classifyImport(normalizeLegacySource(rows), snapshot, { isCredentialRestoreEnabled });
 
 const render = (plan: ImportPlan, mode: ReportMode = "dry-run"): string =>
   renderImportReport(plan, mode).join("\n");
@@ -134,34 +172,7 @@ describe("renderImportReport", () => {
   it("spells out what a refresh would change", () => {
     const plan = planFor(
       [sourceRow({ training_level_id: 4 })],
-      emptySnapshot({
-        identities: [
-          {
-            legacyUserId: 20,
-            userId: "user_platform",
-            importedPasswordHash: GOLDEN_BCRYPT_HASH,
-            legacyRoleId: 1,
-            legacyPlanId: 1,
-            legacyLevelId: 2,
-            isEnabled: true,
-            firstName: null,
-            lastName: null,
-            phoneNumber: null,
-            dateOfBirth: null,
-          },
-        ],
-        users: [
-          {
-            id: "user_platform",
-            email: "athlete@tdp.local",
-            matchEmail: "athlete@tdp.local",
-            role: "ATHLETE",
-            deletedAt: null,
-            password: GOLDEN_BCRYPT_HASH,
-            identityLegacyUserId: 20,
-          },
-        ],
-      }),
+      refreshing({ importedPasswordHash: GOLDEN_BCRYPT_HASH }, { password: GOLDEN_BCRYPT_HASH }),
     );
 
     expect(render(plan)).toContain("legacyLevelId 2 -> 4");
@@ -259,36 +270,12 @@ describe("renderImportReport", () => {
     const plan = planFor(
       [sourceRow()],
       emptySnapshot({
-        identities: [
-          {
-            legacyUserId: 20,
-            userId: "user_platform",
-            importedPasswordHash: null,
-            legacyRoleId: 1,
-            legacyPlanId: 1,
-            legacyLevelId: 2,
-            isEnabled: true,
-            firstName: null,
-            lastName: null,
-            phoneNumber: null,
-            dateOfBirth: null,
-          },
-        ],
+        identities: [identityRow()],
         individualLinks: [
           { legacyUserId: 20, athleteId: "user_platform" },
           { legacyUserId: 77, athleteId: "user_unimported" },
         ],
-        users: [
-          {
-            id: "user_platform",
-            email: "athlete@tdp.local",
-            matchEmail: "athlete@tdp.local",
-            role: "ATHLETE",
-            deletedAt: null,
-            password: GOLDEN_BCRYPT_HASH,
-            identityLegacyUserId: 20,
-          },
-        ],
+        users: [userRow({ password: GOLDEN_BCRYPT_HASH })],
       }),
     );
 
@@ -325,37 +312,68 @@ describe("renderImportReport", () => {
     expect(report).not.toContain("CLEAN");
   });
 
+  it("counts the mirrored fields that moved, which is the fidelity claim itself", () => {
+    const drifted = planFor(
+      [sourceRow({ training_level_id: 4 })],
+      refreshing({ importedPasswordHash: GOLDEN_BCRYPT_HASH }, { password: GOLDEN_BCRYPT_HASH }),
+    );
+    const faithful = planFor(
+      [sourceRow()],
+      refreshing({ importedPasswordHash: GOLDEN_BCRYPT_HASH }, { password: GOLDEN_BCRYPT_HASH }),
+    );
+
+    expect(render(drifted)).toContain("mirror diffs 1");
+    expect(render(faithful)).toContain("mirror diffs 0");
+  });
+
+  it("counts the markers it recorded this run", () => {
+    const backfilling = planFor([sourceRow()], refreshing({}, { password: GOLDEN_BCRYPT_HASH }));
+    const nothingToRecord = planFor(
+      [sourceRow()],
+      refreshing({ importedPasswordHash: GOLDEN_BCRYPT_HASH }, { password: GOLDEN_BCRYPT_HASH }),
+    );
+
+    expect(render(backfilling)).toContain("markers backfilled 1");
+    expect(render(nothingToRecord)).toContain("markers backfilled 0");
+  });
+
+  it("never says a credential was replaced when it only recorded a marker", () => {
+    const report = render(planFor([sourceRow()], refreshing({}, { password: GOLDEN_BCRYPT_HASH })));
+
+    expect(report).toContain("now recorded as such");
+    expect(report).not.toContain("REPLACED");
+    expect(report).toContain("credentials replaced 0");
+  });
+
+  it("says REPLACED on the row whose credential it actually replaced", () => {
+    const restored = planFor(
+      [sourceRow()],
+      refreshing(
+        { importedPasswordHash: COST_12_HASH },
+        { password: COST_12_HASH, identityLegacyUserId: 20 },
+      ),
+      true,
+    );
+    const report = render(restored);
+
+    expect(report).toContain("STORED CREDENTIAL REPLACED by the export hash");
+    expect(report).not.toContain("now recorded as such");
+  });
+
+  it("does not invite a pin on a plan that can only be refused", () => {
+    const report = render(planFor([sourceRow({ training_level_id: 9 })], emptySnapshot()));
+
+    expect(report).toMatch(/plan digest [0-9a-f]{12} — do not pin this one/);
+    expect(report).not.toContain("pin it on the apply");
+  });
+
   it("names a link that contradicts a stored identity", () => {
     const plan = planFor(
       [sourceRow()],
       emptySnapshot({
-        identities: [
-          {
-            legacyUserId: 20,
-            userId: "user_identity",
-            importedPasswordHash: null,
-            legacyRoleId: 1,
-            legacyPlanId: 1,
-            legacyLevelId: 2,
-            isEnabled: true,
-            firstName: null,
-            lastName: null,
-            phoneNumber: null,
-            dateOfBirth: null,
-          },
-        ],
+        identities: [identityRow({ userId: "user_identity" })],
         individualLinks: [{ legacyUserId: 20, athleteId: "user_other" }],
-        users: [
-          {
-            id: "user_identity",
-            email: "athlete@tdp.local",
-            matchEmail: "athlete@tdp.local",
-            role: "ATHLETE",
-            deletedAt: null,
-            password: null,
-            identityLegacyUserId: 20,
-          },
-        ],
+        users: [userRow({ id: "user_identity" })],
       }),
     );
     const report = render(plan);
@@ -363,5 +381,28 @@ describe("renderImportReport", () => {
     expect(report).toContain("publish link and stored identity name different users");
     expect(report).toContain("violations 1");
     expect(report).toContain("REFUSED");
+  });
+
+  it("does not prescribe editing the export for a conflict the export cannot clear", () => {
+    const report = render(
+      planFor(
+        [sourceRow()],
+        emptySnapshot({
+          identities: [identityRow({ userId: "user_identity" })],
+          individualLinks: [{ legacyUserId: 20, athleteId: "user_other" }],
+          users: [userRow({ id: "user_identity" })],
+        }),
+      ),
+    );
+
+    expect(report).toContain("removing the row from the export changes nothing");
+    expect(report).toContain("Retarget or delete that publish link");
+  });
+
+  it("keeps the plain remedy for conflicts the export genuinely can clear", () => {
+    const report = render(planFor([sourceRow({ training_level_id: 9 })], emptySnapshot()));
+
+    expect(report).toContain("removing that row from the export and re-running");
+    expect(report).not.toContain("removing the row from the export changes nothing");
   });
 });

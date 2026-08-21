@@ -38,14 +38,6 @@ export type ImportWriter = {
   };
 };
 
-export type ApplyCounts = {
-  created: number;
-  attached: number;
-  refreshed: number;
-  credentialsRestored: number;
-  markersBackfilled: number;
-};
-
 export class ImportConflictError extends Error {
   constructor(public readonly conflictCount: number) {
     super(
@@ -74,12 +66,10 @@ const markerWriteOf = (outcome: CredentialOutcome): string | null => {
   return outcome.kind === "restored" ? outcome.nextHash : null;
 };
 
-type RefreshCounts = { credentialsRestored: number; markersBackfilled: number };
-
 const applyRefresh = async (
   writer: ImportWriter,
   action: Extract<ImportAction, { kind: "refresh" }>,
-): Promise<RefreshCounts> => {
+): Promise<void> => {
   const { credentialOutcome } = action;
   const markerWrite = markerWriteOf(credentialOutcome);
 
@@ -99,25 +89,12 @@ const applyRefresh = async (
           : { ...mirrorOf(action.row), importedPasswordHash: markerWrite },
     });
   }
-
-  return {
-    credentialsRestored: credentialOutcome.kind === "restored" ? 1 : 0,
-    markersBackfilled: credentialOutcome.kind === "marker-backfilled" ? 1 : 0,
-  };
 };
 
-export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promise<ApplyCounts> => {
+export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promise<void> => {
   if (plan.conflicts.length > 0) {
     throw new ImportConflictError(plan.conflicts.length);
   }
-
-  const counts: ApplyCounts = {
-    created: 0,
-    attached: 0,
-    refreshed: 0,
-    credentialsRestored: 0,
-    markersBackfilled: 0,
-  };
 
   for (const action of plan.actions) {
     if (action.kind === "create") {
@@ -140,8 +117,6 @@ export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promi
         },
       });
 
-      counts.created += 1;
-
       continue;
     }
 
@@ -155,17 +130,9 @@ export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promi
         },
       });
 
-      counts.attached += 1;
-
       continue;
     }
 
-    const refreshed = await applyRefresh(writer, action);
-
-    counts.refreshed += 1;
-    counts.credentialsRestored += refreshed.credentialsRestored;
-    counts.markersBackfilled += refreshed.markersBackfilled;
+    await applyRefresh(writer, action);
   }
-
-  return counts;
 };

@@ -49,7 +49,7 @@ describe("reconcileIdentityLinks", () => {
       {
         legacyUserId: 20,
         reason: "link-and-identity-disagree",
-        detail: expect.stringContaining("1 individual publish link(s)"),
+        detail: expect.stringContaining("name 1 platform user(s)"),
       },
     ]);
     expect(result.summary.violations).toBe(1);
@@ -93,7 +93,7 @@ describe("reconcileIdentityLinks", () => {
     );
 
     expect(result.conflicts).toHaveLength(1);
-    expect(result.conflicts.at(0)?.detail).toContain("2 individual publish link(s)");
+    expect(result.conflicts.at(0)?.detail).toContain("name 2 platform user(s)");
     expect(result.summary).toEqual({ linksChecked: 2, linksWithIdentity: 2, violations: 1 });
   });
 
@@ -109,7 +109,21 @@ describe("reconcileIdentityLinks", () => {
     );
 
     expect(result.conflicts).toHaveLength(1);
-    expect(result.conflicts.at(0)?.detail).toContain("1 individual publish link(s)");
+    expect(result.conflicts.at(0)?.detail).toContain("name 1 platform user(s)");
+  });
+
+  it("counts the platform users the links name, not the link rows, when they agree with each other", () => {
+    const result = reconcileIdentityLinks(
+      snapshot({
+        identities: [identity(20, "user_a")],
+        individualLinks: [
+          { legacyUserId: 20, athleteId: "user_b" },
+          { legacyUserId: 20, athleteId: "user_b" },
+        ],
+      }),
+    );
+
+    expect(result.conflicts.at(0)?.detail).toContain("name 1 platform user(s)");
   });
 
   it("has nothing to say about a platform with no individual links at all", () => {

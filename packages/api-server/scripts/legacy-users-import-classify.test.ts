@@ -10,7 +10,11 @@ import type {
   PlatformUser,
 } from "./legacy-users-import-plan";
 import { demangleSoftDeletedEmail } from "./legacy-users-import-snapshot";
-import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
+import {
+  LEGACY_ADMIN_SYNTHETIC_EMAIL,
+  type LegacySourceRow,
+  normalizeLegacySource,
+} from "./legacy-users-import-source";
 
 const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
 
@@ -550,6 +554,33 @@ describe("credential outcomes on a refresh", () => {
 
     expect(warningKinds(plan)).not.toContain("credential-restored");
     expect(warningKinds(plan)).not.toContain("password-left-as-is");
+  });
+
+  it("says nothing at all about a credential the export deliberately withholds", () => {
+    const plan = classify(
+      [sourceRow({ id: 17, username: "admin" })],
+      emptySnapshot({
+        identities: [storedIdentity({ legacyUserId: 17 })],
+        users: [
+          platformUser({
+            email: LEGACY_ADMIN_SYNTHETIC_EMAIL,
+            matchEmail: LEGACY_ADMIN_SYNTHETIC_EMAIL,
+            identityLegacyUserId: 17,
+            password: COST_12_HASH,
+          }),
+        ],
+      }),
+      true,
+    );
+
+    expect(plan.actions.at(0)).toMatchObject({
+      kind: "refresh",
+      credentialOutcome: { kind: "left-as-is", reason: "no-source-credential" },
+    });
+    expect(warningKinds(plan)).not.toContain("password-left-as-is");
+    expect(warningKinds(plan)).not.toContain("credential-differs-not-restored");
+    expect(warningKinds(plan)).not.toContain("credential-restored");
+    expect(warningKinds(plan)).not.toContain("matched-user-has-no-credential");
   });
 
   it("records the marker without a word of warning when it can see what it wrote", () => {

@@ -363,6 +363,17 @@ describe("runImport — plan pinning", () => {
     expect(writes).toEqual(["user.create", "identity.create"]);
   });
 
+  it("calls a dry run whose pin still matches exactly what it is, not stale", async () => {
+    const rows = [sourceRow()];
+    const { deps, writes } = harness(rows);
+    const result = await runImport(deps([...baseArgv, `${EXPECT_PLAN_FLAG}${digestFor(rows)}`]));
+
+    expect(result.isRefused).toBe(false);
+    expect(result.lines.at(0)).toContain("DRY RUN");
+    expect(result.lines.at(0)).not.toContain("the plan changed");
+    expect(writes).toEqual([]);
+  });
+
   it("checks a pin in a dry run too, and still writes nothing", async () => {
     const { deps, events, writes } = harness([sourceRow()]);
     const result = await runImport(

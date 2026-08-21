@@ -64,13 +64,15 @@ const withClaimCollisions = (
 
   const contested = [...claimedBy.entries()].filter(([, ids]) => ids.length > 1);
   const contestedIds = new Set(contested.map(([userId]) => userId));
-  const conflicts = contested.flatMap(([, ids]) =>
-    ids.map((legacyUserId) => ({
+  const conflicts = contested.flatMap(([, ids]) => {
+    const named = [...ids].sort((left, right) => left - right).join(", ");
+
+    return ids.map((legacyUserId) => ({
       legacyUserId,
       reason: "platform-user-claimed-twice" as const,
-      detail: `legacy ids ${ids.join(", ")} all resolve to one platform user, which can hold only one legacy identity`,
-    })),
-  );
+      detail: `legacy ids ${named} all resolve to one platform user, which can hold only one legacy identity`,
+    }));
+  });
 
   return {
     actions: actions.filter((action) => {

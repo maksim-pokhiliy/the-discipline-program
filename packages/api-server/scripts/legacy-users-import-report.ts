@@ -41,7 +41,7 @@ const WARNING_LABELS = {
   "password-left-as-is":
     "stored credential is not the one the import wrote; legacy hash not written",
   "identity-absent-from-source": "stored identity missing from this export",
-  "identity-target-drift": "stored identity sits on a different user than the evidence names",
+  "identity-target-drift": "the legacy address now belongs to a different platform user",
   "synthetic-email-no-credential": "synthetic address, no usable credential",
   "matched-user-has-no-credential": "matched platform user has no password of their own",
   "credential-differs-not-restored": "credential differs from the export and was NOT replaced",
@@ -129,8 +129,13 @@ const reconciliationLine = (plan: ImportPlan): string =>
 const digestLine = (plan: ImportPlan, mode: ReportMode): string => {
   const digest = planDigest(plan);
 
-  return mode === "applied"
-    ? `plan digest ${digest}`
+  if (mode === "applied") {
+    return `plan digest ${digest}`;
+  }
+
+  return plan.conflicts.length > 0
+    ? `plan digest ${digest} — do not pin this one; resolve the conflicts below, re-run the dry ` +
+        "run, and pin the digest that one prints"
     : `plan digest ${digest} — pin it on the apply with ${EXPECT_PLAN_FLAG}${digest}`;
 };
 
@@ -145,12 +150,24 @@ const verdictLines = (plan: ImportPlan, mode: ReportMode): readonly string[] => 
   }
 
   if (plan.conflicts.length > 0) {
+    const hasPlatformOnlyConflict = plan.conflicts.some(
+      (conflict) => conflict.reason === "link-and-identity-disagree",
+    );
+
     return [
       "",
       mode === "dry-run"
         ? "REFUSED: this export would not be applied while any conflict above stands."
         : "REFUSED: nothing was written. Every conflict above has to be resolved first.",
       "Resolve a conflict by fixing the platform row, or by removing that row from the export and re-running.",
+      ...(hasPlatformOnlyConflict
+        ? [
+            "One above is not of that kind: a publish link and a stored identity naming different " +
+              "people is computed from this database alone, so removing the row from the export " +
+              "changes nothing. Retarget or delete that publish link, or move the stored identity " +
+              "onto the person it belongs to, then re-run.",
+          ]
+        : []),
     ];
   }
 

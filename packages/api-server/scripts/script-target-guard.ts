@@ -128,16 +128,24 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
 const isKnownFlag = (arg: string, known: string): boolean =>
   known.endsWith("=") ? arg.startsWith(known) : arg === known;
 
+const flagNameOf = (arg: string): string => {
+  const separator = arg.indexOf("=");
+
+  return separator === -1 ? arg : arg.slice(0, separator + 1);
+};
+
 export const rejectUnknownFlags = (argv: readonly string[], known: readonly string[]): void => {
   const unknown = argv
     .slice(2)
     .filter((arg) => arg.startsWith("--"))
-    .filter((arg) => !known.some((candidate) => isKnownFlag(arg, candidate)));
+    .filter((arg) => !known.some((candidate) => isKnownFlag(arg, candidate)))
+    .map(flagNameOf);
 
   if (unknown.length > 0) {
     throw new Error(
       `unrecognised flag(s): ${unknown.join(", ")}. A misspelled flag would otherwise be ignored ` +
-        "and the run would quietly do something other than what you asked.",
+        "and the run would quietly do something other than what you asked. Only the flag name is " +
+        "printed back: a misspelled flag is exactly where a hash or a DSN lands by accident.",
     );
   }
 };

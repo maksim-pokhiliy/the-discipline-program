@@ -101,6 +101,41 @@ describe("planDigest — insensitivity", () => {
     expect(digestOf(rotated)).toBe(digestOf(THREE_ROWS));
   });
 
+  it("ignores row order through a conflict whose text names several rows at once", () => {
+    const first = sourceRow({ id: 21, username: "a@tdp.local" });
+    const second = sourceRow({ id: 22, username: "b@tdp.local" });
+    const contested = emptySnapshot({
+      individualLinks: [
+        { legacyUserId: 21, athleteId: "user_shared" },
+        { legacyUserId: 22, athleteId: "user_shared" },
+      ],
+      users: [platformUser({ id: "user_shared", email: "c@tdp.local", matchEmail: "c@tdp.local" })],
+    });
+    const claimed = planFor([first, second], contested);
+
+    expect(claimed.conflicts.map((conflict) => conflict.reason)).toEqual([
+      "platform-user-claimed-twice",
+      "platform-user-claimed-twice",
+    ]);
+    expect(digestOf([second, first], contested)).toBe(digestOf([first, second], contested));
+  });
+
+  it("ignores the order two conflicting rows arrive in", () => {
+    const first = sourceRow({ id: 21, username: "a@tdp.local", training_level_id: 9 });
+    const second = sourceRow({ id: 22, username: "b@tdp.local", user_plan_id: 9 });
+
+    expect(digestOf([second, first])).toBe(digestOf([first, second]));
+  });
+
+  it("ignores the order two warning-carrying rows arrive in", () => {
+    const first = sourceRow({ id: 21, username: "a@tdp.local", team_id: 3 });
+    const second = sourceRow({ id: 22, username: "b@tdp.local", team_id: 4 });
+    const plan = planFor([first, second]);
+
+    expect(plan.warnings).toHaveLength(2);
+    expect(digestOf([second, first])).toBe(digestOf([first, second]));
+  });
+
   it("ignores publish links that carry no legacy identity of their own", () => {
     const withExtraLinks = emptySnapshot({
       individualLinks: [{ legacyUserId: 987, athleteId: "user_unimported" }],
@@ -169,13 +204,39 @@ describe("canonicalizePlan", () => {
   });
 
   it("carries no credential material at all, only fingerprints of it", () => {
-    const canonical = canonicalizePlan(
-      planFor([sourceRow()], emptySnapshot({ users: [platformUser()] })),
-    );
-    const serialized = JSON.stringify(canonical);
+    const restoring = emptySnapshot({
+      identities: [storedIdentity({ importedPasswordHash: OTHER_COST_10_HASH })],
+      users: [platformUser({ password: OTHER_COST_10_HASH, identityLegacyUserId: LEGACY_ID })],
+    });
+    const backfilling = emptySnapshot({
+      identities: [storedIdentity()],
+      users: [platformUser({ password: GOLDEN_BCRYPT_HASH, identityLegacyUserId: LEGACY_ID })],
+    });
 
-    expect(serialized).not.toContain(GOLDEN_BCRYPT_HASH);
-    expect(serialized).not.toContain("$2a$");
+    for (const [snapshot, restore] of [
+      [emptySnapshot({ users: [platformUser()] }), false],
+      [restoring, true],
+      [backfilling, false],
+    ] as const) {
+      const plan = planFor([sourceRow()], snapshot, restore);
+      const serialized = JSON.stringify(canonicalizePlan(plan));
+
+      expect(serialized).not.toContain(GOLDEN_BCRYPT_HASH);
+      expect(serialized).not.toContain(OTHER_COST_10_HASH);
+      expect(serialized).not.toContain("$2a$");
+      expect(serialized).not.toContain("$2b$");
+    }
+  });
+
+  it("puts the restore decision's own hashes through the same fingerprinting", () => {
+    const restoring = emptySnapshot({
+      identities: [storedIdentity({ importedPasswordHash: OTHER_COST_10_HASH })],
+      users: [platformUser({ password: OTHER_COST_10_HASH, identityLegacyUserId: LEGACY_ID })],
+    });
+    const plan = planFor([sourceRow()], restoring, true);
+
+    expect(plan.actions.at(0)).toMatchObject({ credentialOutcome: { kind: "restored" } });
+    expect(JSON.stringify(canonicalizePlan(plan))).toContain("restored:");
   });
 
   it("still tells two different credentials apart through their fingerprints", () => {
