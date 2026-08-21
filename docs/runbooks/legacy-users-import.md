@@ -24,6 +24,14 @@ If the recomputed plan differs, the run refuses under its own heading, prints th
 would produce **now** with its own digest, and writes nothing. That is not a failure to work around:
 read the new report as you read the first one, and apply against the digest it prints.
 
+What the digest covers is the **set of writes and the decisions behind them**, keyed by the person
+each one is about — every action with its mirrored fields, every conflict, every warning. What it
+deliberately does not cover is presentation: a platform user's display address shown on an ATTACH or
+REFRESH line is not part of it, so renaming somebody's address on the platform between the review
+and the write does not move the digest by itself (it moves the digest only if it changes what gets
+written, for instance by changing which user a row matches). Nor do the reconciliation counts, so a
+coach publishing an unrelated plan in the meantime cannot refuse an apply whose writes are the same.
+
 **`--expect-host` is required in a dry run too, not only for `--write`.** Importing
 `@prisma/client` loads any `.env` sitting beside it, so `DATABASE_URL` can arrive from a file
 nobody named on the command line — a bare dry run could otherwise read a database you never meant
@@ -46,8 +54,11 @@ else is reported as `stored credential is not the one the import wrote` and left
 
 Consequences worth knowing:
 
-- An **attached** platform user never gets a marker: the import did not write their credential, so
-  it will never replace it. Same for legacy id 17, whose credential is deliberately withheld.
+- An **attached** platform user gets no marker at the moment of the attach: the import did not write
+  their credential, so it has nothing to record. (A _later_ refresh can still record one, if by then
+  their stored credential is byte-identical to the export hash — see the backfill below. The marker
+  is a statement about the credential, not about how the row was first matched.) Legacy id 17, whose
+  credential is deliberately withheld, likewise starts with none.
 - A person whose **first sign-in re-hashed** their imported password at the platform cost factor no
   longer matches their marker, so a restore declines for them. That is correct and accepted: they
   know their password, and a restore would only take it away.
@@ -55,6 +66,14 @@ Consequences worth knowing:
   (`markers backfilled` on the summary line). That is safe by inspection — the credential in the
   database is the export's own hash, so writing it down changes nothing about what a later restore
   would do. The import **never clears a marker.**
+
+That backfill leans on an invariant worth stating, because it is what makes "the stored credential
+equals the export hash" mean "the import wrote it": **every production path that sets
+`User.password` hashes a fresh plaintext with a fresh salt** — password reset, invite acceptance,
+the shim's `changePassword`, user creation, and the AS-7 upgrade-on-verify. None of them can
+coincidentally land on a hash from the legacy dump, because bcrypt salts differ per call. The import
+itself is the only writer that copies an existing hash in verbatim. If a raw-hash writer is ever
+added, this backfill needs revisiting before it does.
 
 Restore still needs `--restore-credentials`; without the flag a differing credential is reported and
 left alone. Use it only when you know the legacy password changed since the last import and you mean
@@ -222,9 +241,13 @@ plan digest 7f3a91c04e2b — pin it on the apply with --expect-plan=7f3a91c04e2b
   enablement or profile, and the REFRESH section names the fields.
 - **markers backfilled** — how many identities gained an `importedPasswordHash` this run because
   their stored credential was recognisably the export's own hash (see the safety model).
-- **RECONCILIATION** — individual publish links carrying a legacy id, how many of those legacy ids
-  have a stored identity to check against, and how many contradict it. Read the middle number: it
-  is how much of the gate was actually checkable.
+- **RECONCILIATION** — how many individual publish links carry a legacy id, how many of **those
+  links** name a legacy id that has a stored identity to check against, and how many legacy ids
+  came out contradicted. Read the middle number: it is how much of the gate was actually checkable,
+  and `violations 0` beside `matched to a stored identity 0` proves nothing at all. One athlete can
+  hold several links (one per plan), so the first two numbers count links while the third counts
+  people. If the line reads `not assessed`, no row in the export was readable, so the database was
+  never opened — the run refuses anyway, but nothing was checked.
 - **plan digest** — the fingerprint of this exact plan, and what `--write` must be given.
 
 - **CREATE** — a new platform user plus the identity. Shows the catalog ids, whether the account is
@@ -264,6 +287,17 @@ platform**, their legacy identity still points at the removed user, so removing 
 export does not clear the conflict on the next run: restore that platform user, or delete the stale
 identity row deliberately, before re-running.
 
+`publish link and stored identity name different users` **cannot be cleared from the export at
+all** — it is computed from this database alone, without reference to the dump, so deleting the row
+changes nothing and the next run reports it again. Two rows in our own tables disagree about which
+platform person a legacy id is: a `MobilePublishLink` says one, the `MobileLegacyIdentity` says
+another. The app reads the identity, so if the identity is the wrong one somebody is being served
+another athlete's training. Decide which of the two is right, then either **retarget or delete the
+publish link** (it is a publish target, and re-publishing recreates it) or **move the stored
+identity** onto the person it belongs to. This is reachable from ordinary product use — publishing
+to an individual athlete rewrites the link's `legacyUserId` without consulting the identity table —
+so it is worth resolving properly rather than papering over.
+
 | Conflict                                                                | What it means                                                                                          |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `username is not an email`                                              | the legacy username cannot become a platform address and has no ratified override                      |
@@ -295,10 +329,9 @@ identity row deliberately, before re-running.
 - `stored credential REPLACED by the export hash` — you passed `--restore-credentials` and this
   person's stored password was overwritten. Check the `credentials replaced` count on the summary
   line matches what you intended.
-- `stored identity sits on a different user than the evidence names` — the legacy **address** now
-  belongs to a different platform user than the identity hangs on. Nothing moves; the identity stays
-  where it is. (The same disagreement coming from a publish link is not a warning but a conflict —
-  see the table above.)
+- `the legacy address now belongs to a different platform user` — exactly that, and nothing moves:
+  the identity stays where it is. (The same disagreement coming from a publish link is not a warning
+  but a conflict — see the table above.)
 - `matched platform user has no password of their own` — the legacy identity was hung on a platform
   user who has never set a password (an invitation that was never completed). A matched user's
   credential is never touched, so the legacy password is **not** carried across and that person
