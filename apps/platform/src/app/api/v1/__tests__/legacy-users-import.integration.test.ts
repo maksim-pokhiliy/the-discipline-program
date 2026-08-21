@@ -303,6 +303,16 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
     expect(secondReport).toContain("no change");
   });
 
+  it("actually applied both times — a refusal must never read as a pass here", () => {
+    for (const report of [firstReport, secondReport]) {
+      expect(report.split("\n").at(0)).toBe("legacy users import — APPLIED");
+      expect(report).toContain("APPLIED: every action above was written in one transaction.");
+      expect(report).not.toContain("REFUSED");
+      expect(report).not.toContain("DRY RUN");
+      expect(report).not.toContain("the plan changed since the digest you pinned");
+    }
+  });
+
   it("records on the identity the very credential it wrote", async () => {
     const identity = await helpers.cleanupRaw.mobileLegacyIdentity.findUnique({
       where: { legacyUserId: enabledLegacyId },
