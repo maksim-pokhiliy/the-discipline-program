@@ -80,6 +80,30 @@ const requireLoopbackDatabaseUrl = (): string => {
   return databaseUrl;
 };
 
+const legacyRow = (id: number): LegacyRow => ({
+  id,
+  username: `probe-${id}@tdp.local`,
+  password: GOLDEN_BCRYPT_HASH,
+  user_role_id: LEGACY_ROLE_USER,
+  training_level_id: LEGACY_LEVEL_PRO,
+  first_name: null,
+  last_name: null,
+  phone_number: null,
+  date_of_birth: null,
+  team_id: null,
+  user_plan_id: LEGACY_PLAN_GENERAL,
+  is_enabled: true,
+});
+
+const stdoutOf = (error: unknown): string | null =>
+  typeof error === "object" &&
+  error !== null &&
+  "stdout" in error &&
+  typeof error.stdout === "string" &&
+  error.stdout !== ""
+    ? error.stdout
+    : null;
+
 describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
   let signinRoute: RouteFn;
   let getUserRoute: UserRouteFn;
@@ -89,24 +113,55 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
   let databaseUrl: string;
   let enabledLegacyId: number;
   let disabledLegacyId: number;
+  let strangerLegacyId: number;
+  let rows: LegacyRow[];
   let firstReport: string;
   let secondReport: string;
 
-  const runImportCli = (): string =>
-    execFileSync(
-      join(API_SERVER_ROOT, "node_modules/.bin/tsx"),
-      [
-        join(API_SERVER_ROOT, "scripts/legacy-users-import.ts"),
-        `--source=${sourcePath}`,
-        "--write",
-        `--expect-host=${new URL(databaseUrl).hostname}`,
-      ],
-      {
-        cwd: API_SERVER_ROOT,
-        encoding: "utf8",
-        env: { ...process.env, DATABASE_URL: databaseUrl },
-      },
-    );
+  const runImportCli = (args: readonly string[]): string => {
+    try {
+      return execFileSync(
+        join(API_SERVER_ROOT, "node_modules/.bin/tsx"),
+        [join(API_SERVER_ROOT, "scripts/legacy-users-import.ts"), ...args],
+        {
+          cwd: API_SERVER_ROOT,
+          encoding: "utf8",
+          env: { ...process.env, DATABASE_URL: databaseUrl },
+        },
+      );
+    } catch (error: unknown) {
+      const refusal = stdoutOf(error);
+
+      if (refusal === null) {
+        throw error;
+      }
+
+      return refusal;
+    }
+  };
+
+  const dryRun = (): string =>
+    runImportCli([`--source=${sourcePath}`, `--expect-host=${new URL(databaseUrl).hostname}`]);
+
+  const applyPinning = (digest: string): string =>
+    runImportCli([
+      `--source=${sourcePath}`,
+      "--write",
+      `--expect-host=${new URL(databaseUrl).hostname}`,
+      `--expect-plan=${digest}`,
+    ]);
+
+  const digestOf = (report: string): string => {
+    const digest = /plan digest ([0-9a-f]{12})/.exec(report)?.[1];
+
+    if (digest === undefined) {
+      throw new Error(`the report printed no plan digest:\n${report}`);
+    }
+
+    return digest;
+  };
+
+  const reviewThenApply = (): string => applyPinning(digestOf(dryRun()));
 
   const hitSignin = async (username: string, password: string): Promise<Probe> => {
     const response = await signinRoute(
@@ -148,44 +203,25 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
 
     enabledLegacyId = helpers.mintTestLegacyUserId();
     disabledLegacyId = enabledLegacyId + 1;
+    strangerLegacyId = enabledLegacyId + 2;
 
-    const rows: LegacyRow[] = [
+    rows = [
       {
-        id: enabledLegacyId,
-        username: `probe-${enabledLegacyId}@tdp.local`,
-        password: GOLDEN_BCRYPT_HASH,
-        user_role_id: LEGACY_ROLE_USER,
-        training_level_id: LEGACY_LEVEL_PRO,
+        ...legacyRow(enabledLegacyId),
         first_name: "Probe",
         last_name: "Athlete",
         phone_number: "",
         date_of_birth: "1990-05-04",
-        team_id: null,
-        user_plan_id: LEGACY_PLAN_GENERAL,
-        is_enabled: true,
       },
-      {
-        id: disabledLegacyId,
-        username: `probe-${disabledLegacyId}@tdp.local`,
-        password: GOLDEN_BCRYPT_HASH,
-        user_role_id: LEGACY_ROLE_USER,
-        training_level_id: LEGACY_LEVEL_PRO,
-        first_name: null,
-        last_name: null,
-        phone_number: null,
-        date_of_birth: null,
-        team_id: null,
-        user_plan_id: LEGACY_PLAN_GENERAL,
-        is_enabled: false,
-      },
+      { ...legacyRow(disabledLegacyId), is_enabled: false },
     ];
 
     workDir = mkdtempSync(join(tmpdir(), "legacy-import-probe-"));
     sourcePath = join(workDir, "users.json");
     writeFileSync(sourcePath, JSON.stringify(rows), "utf8");
 
-    firstReport = runImportCli();
-    secondReport = runImportCli();
+    firstReport = reviewThenApply();
+    secondReport = reviewThenApply();
   }, SETUP_TIMEOUT_MS);
 
   afterAll(async () => {
@@ -198,7 +234,7 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
     }
 
     const identities = await helpers.cleanupRaw.mobileLegacyIdentity.findMany({
-      where: { legacyUserId: { in: [enabledLegacyId, disabledLegacyId] } },
+      where: { legacyUserId: { in: [enabledLegacyId, disabledLegacyId, strangerLegacyId] } },
       select: { userId: true },
     });
 
@@ -265,6 +301,50 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
     expect(secondReport).toContain("create 0");
     expect(secondReport).toContain("refresh 2");
     expect(secondReport).toContain("no change");
+  });
+
+  it("records on the identity the very credential it wrote", async () => {
+    const identity = await helpers.cleanupRaw.mobileLegacyIdentity.findUnique({
+      where: { legacyUserId: enabledLegacyId },
+      select: { importedPasswordHash: true },
+    });
+
+    expect(identity?.importedPasswordHash).toBe(GOLDEN_BCRYPT_HASH);
+  });
+
+  it("has nothing left to backfill once it wrote the marker itself", () => {
+    expect(secondReport).toContain("markers backfilled 0");
+    expect(secondReport).toContain("credentials replaced 0");
+  });
+
+  it("reports the reconciliation it rests on, with nothing contradicting it", () => {
+    expect(secondReport).toMatch(
+      /RECONCILIATION individual links \d+ · matched to a stored identity \d+ · violations 0/,
+    );
+  });
+
+  it("refuses an apply whose plan moved since the digest, and writes nothing", async () => {
+    const stalePin = digestOf(dryRun());
+
+    writeFileSync(sourcePath, JSON.stringify([...rows, legacyRow(strangerLegacyId)]), "utf8");
+
+    const refusal = applyPinning(stalePin);
+
+    writeFileSync(sourcePath, JSON.stringify(rows), "utf8");
+
+    expect(refusal).toContain("the plan changed since the digest you pinned");
+    expect(refusal).toContain("REFUSED: nothing was written");
+
+    const stranger = await helpers.cleanupRaw.mobileLegacyIdentity.findUnique({
+      where: { legacyUserId: strangerLegacyId },
+      select: { userId: true },
+    });
+
+    expect(stranger).toBeNull();
+  });
+
+  it("applies again once the moved plan is re-reviewed under its own digest", () => {
+    expect(reviewThenApply()).toContain("APPLIED");
   });
 
   it("never prints a hash or a hostname in either report", () => {
