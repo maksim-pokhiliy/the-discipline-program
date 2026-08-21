@@ -34,7 +34,7 @@ export type UserWhereClause =
 export type LinkWhere = {
   where: {
     channel: typeof INDIVIDUAL_CHANNEL;
-    legacyUserId: { in: number[] };
+    legacyUserId: { not: null };
     NOT: { athleteId: null };
   };
 };
@@ -75,7 +75,7 @@ export const loadPlatformSnapshot = async (
     return EMPTY_SNAPSHOT;
   }
 
-  const legacyIds = rows.map((row) => row.legacyUserId);
+  const exportedLegacyIds = new Set(rows.map((row) => row.legacyUserId));
   const emails = rows.map((row) => row.email);
 
   const identities = await reader.mobileLegacyIdentity.findMany();
@@ -83,7 +83,7 @@ export const loadPlatformSnapshot = async (
   const linkRows = await reader.mobilePublishLink.findMany({
     where: {
       channel: INDIVIDUAL_CHANNEL,
-      legacyUserId: { in: legacyIds },
+      legacyUserId: { not: null },
       NOT: { athleteId: null },
     },
   });
@@ -92,7 +92,9 @@ export const loadPlatformSnapshot = async (
   const relatedUserIds = [
     ...new Set([
       ...identities.map((identity) => identity.userId),
-      ...individualLinks.map((link) => link.athleteId),
+      ...individualLinks
+        .filter((link) => exportedLegacyIds.has(link.legacyUserId))
+        .map((link) => link.athleteId),
     ]),
   ];
 

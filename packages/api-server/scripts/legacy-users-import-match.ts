@@ -1,13 +1,13 @@
 import {
   ATHLETE_ROLE,
   type ClassifyOptions,
-  decidePasswordChange,
+  type CredentialOutcome,
+  decideCredentialOutcome,
   diffIdentity,
   type ImportAction,
   type ImportConflict,
   type ImportWarning,
   type MatchedBy,
-  type PasswordChange,
   type PlatformIdentity,
   type PlatformSnapshot,
   type PlatformUser,
@@ -189,40 +189,36 @@ const driftWarning = (
   identity: PlatformIdentity,
   indexes: Indexes,
 ): ImportWarning | null => {
-  const linkedAthleteIds = indexes.athleteIdsByLegacyId.get(row.legacyUserId) ?? new Set<string>();
   const emailUserId = indexes.userByEmail.get(row.email)?.id;
-  const elsewhere = [...linkedAthleteIds, emailUserId].filter(
-    (candidate): candidate is string => candidate !== undefined && candidate !== identity.userId,
-  );
 
-  return elsewhere.length === 0
+  return emailUserId === undefined || emailUserId === identity.userId
     ? null
     : {
         legacyUserId: row.legacyUserId,
         kind: "identity-target-drift",
         detail:
-          "a publish link or the legacy address now names a different platform user; the stored identity is left where it is",
+          "the legacy address now names a different platform user; the stored identity is left where it is",
       };
 };
 
 const describeCredentialOutcome = (
   row: NormalizedLegacyUser,
   user: PlatformUser,
-  change: PasswordChange,
+  outcome: CredentialOutcome,
 ): ImportWarning | null => {
-  if (change.kind === "unchanged") {
+  if (outcome.kind === "unchanged" || outcome.kind === "marker-backfilled") {
     return null;
   }
 
-  if (change.kind === "restored") {
+  if (outcome.kind === "restored") {
     return {
       legacyUserId: row.legacyUserId,
       kind: "credential-restored",
-      detail: `${user.email} carries a below-cost credential that no longer matches the export; it is being replaced by the export hash`,
+      detail: `${user.email} still carries the credential this import wrote, and it no longer matches the export; it is being replaced by the export hash`,
     };
   }
 
-  if (change.reason === "matched-user-has-none") {
+  if (outcome.reason === "matched-user-has-none") {
     return {
       legacyUserId: row.legacyUserId,
       kind: "matched-user-has-no-credential",
@@ -230,19 +226,19 @@ const describeCredentialOutcome = (
     };
   }
 
-  if (change.reason === "platform-managed") {
+  if (outcome.reason === "not-import-written") {
     return {
       legacyUserId: row.legacyUserId,
       kind: "password-left-as-is",
-      detail: `${user.email} carries a platform-managed credential; the legacy hash is not written`,
+      detail: `${user.email} carries a credential this import did not write; the legacy hash is not written`,
     };
   }
 
-  if (change.reason === "restore-not-enabled") {
+  if (outcome.reason === "restore-not-enabled") {
     return {
       legacyUserId: row.legacyUserId,
       kind: "credential-differs-not-restored",
-      detail: `${user.email} carries a below-cost credential that differs from the export; re-run with ${RESTORE_CREDENTIALS_FLAG} if you mean to replace it`,
+      detail: `${user.email} still carries the credential this import wrote, and it differs from the export; re-run with ${RESTORE_CREDENTIALS_FLAG} if you mean to replace it`,
     };
   }
 
@@ -277,13 +273,14 @@ export const refreshOutcome = (
     };
   }
 
-  const passwordChange = decidePasswordChange(
-    user.password,
-    row.passwordHash,
-    options.isCredentialRestoreEnabled,
-  );
+  const credentialOutcome = decideCredentialOutcome({
+    storedHash: user.password,
+    sourceHash: row.passwordHash,
+    markerHash: identity.importedPasswordHash,
+    isCredentialRestoreEnabled: options.isCredentialRestoreEnabled,
+  });
   const warnings: ImportWarning[] = [];
-  const credentialWarning = describeCredentialOutcome(row, user, passwordChange);
+  const credentialWarning = describeCredentialOutcome(row, user, credentialOutcome);
 
   if (credentialWarning !== null) {
     warnings.push(credentialWarning);
@@ -302,7 +299,7 @@ export const refreshOutcome = (
       userId: identity.userId,
       userEmail: user.email,
       identityChanges: diffIdentity(identity, row),
-      passwordChange,
+      credentialOutcome,
     },
     warnings,
   };

@@ -1,6 +1,9 @@
 export const WRITE_FLAG = "--write";
 export const EXPECT_HOST_FLAG = "--expect-host=";
+export const EXPECT_PLAN_FLAG = "--expect-plan=";
 export const RESTORE_CREDENTIALS_FLAG = "--restore-credentials";
+
+const PLAN_DIGEST_PATTERN = /^[0-9a-f]{12}$/i;
 
 export const readFlag = (argv: readonly string[], prefix: string): string | null => {
   const matches = argv.filter((candidate) => candidate.startsWith(prefix));
@@ -135,6 +138,40 @@ export const rejectUnknownFlags = (argv: readonly string[], known: readonly stri
         "and the run would quietly do something other than what you asked.",
     );
   }
+};
+
+const parsePlanDigest = (value: string): string => {
+  if (!PLAN_DIGEST_PATTERN.test(value)) {
+    throw new Error(
+      `the value passed to ${EXPECT_PLAN_FLAG} is not a plan digest. A digest is the twelve ` +
+        "hexadecimal characters the report prints on its plan digest line; copy that value rather " +
+        "than composing one. What you passed is deliberately not printed back, in case a " +
+        "credential landed in the wrong argument.",
+    );
+  }
+
+  return value.toLowerCase();
+};
+
+export const readExpectedPlan = (argv: readonly string[]): string | null => {
+  const pinned = readFlag(argv, EXPECT_PLAN_FLAG);
+
+  return pinned === null ? null : parsePlanDigest(pinned);
+};
+
+export const requireExpectedPlan = (argv: readonly string[]): string => {
+  const pinned = readExpectedPlan(argv);
+
+  if (pinned === null) {
+    throw new Error(
+      `${EXPECT_PLAN_FLAG}<digest> is required to write. The apply re-reads this database and ` +
+        "re-decides inside its own transaction, so without a digest it would write whatever the " +
+        "plan has become rather than the plan you read and signed off. Run the dry run, review " +
+        "its report, and pass the digest it prints.",
+    );
+  }
+
+  return pinned;
 };
 
 export const requireAttestedTarget = (argv: readonly string[], databaseUrl: string): URL => {

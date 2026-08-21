@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXPECT_HOST_FLAG,
+  EXPECT_PLAN_FLAG,
   hasFlag,
   parseTarget,
+  readExpectedPlan,
   readFlag,
   rejectUnknownFlags,
   requireEnv,
   requireExpectedHost,
+  requireExpectedPlan,
   requireFlag,
   requireNamedHost,
   requireAttestedTarget,
@@ -297,6 +300,57 @@ describe("requireAttestedTarget", () => {
     expectNoLeak(messageOf(() => requireAttestedTarget([WRITE_FLAG, EXPECT_HOST_FLAG], DSN)));
     expectNoLeak(
       messageOf(() => requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`], DSN)),
+    );
+  });
+});
+
+describe("readExpectedPlan", () => {
+  const DIGEST = "7f3a91c04e2b";
+
+  it("returns null when no plan was pinned", () => {
+    expect(readExpectedPlan([WRITE_FLAG])).toBeNull();
+  });
+
+  it("reads a pinned digest", () => {
+    expect(readExpectedPlan([`${EXPECT_PLAN_FLAG}${DIGEST}`])).toBe(DIGEST);
+  });
+
+  it("lower-cases a digest so a pasted upper-case one still matches", () => {
+    expect(readExpectedPlan([`${EXPECT_PLAN_FLAG}${DIGEST.toUpperCase()}`])).toBe(DIGEST);
+  });
+
+  it("refuses anything that is not twelve hexadecimal characters", () => {
+    for (const value of ["", "abc", "7f3a91c04e2bff", "7f3a91c04e2g", "7f3a 91c04e2b"]) {
+      expect(() => readExpectedPlan([`${EXPECT_PLAN_FLAG}${value}`])).toThrow(
+        /is not a plan digest/,
+      );
+    }
+  });
+
+  it("never prints back the value it rejected, in case a credential landed there", () => {
+    const message = messageOf(() => readExpectedPlan([`${EXPECT_PLAN_FLAG}${DSN}`]));
+
+    expectNoLeak(message);
+  });
+
+  it("refuses a pin stated more than once rather than taking the first", () => {
+    expect(() =>
+      readExpectedPlan([`${EXPECT_PLAN_FLAG}${DIGEST}`, `${EXPECT_PLAN_FLAG}0123456789ab`]),
+    ).toThrow(/exactly once/);
+  });
+});
+
+describe("requireExpectedPlan", () => {
+  it("explains why a write cannot proceed unpinned", () => {
+    const message = messageOf(() => requireExpectedPlan([WRITE_FLAG]));
+
+    expect(message).toContain("--expect-plan=<digest> is required to write");
+    expect(message).toContain("re-decides inside its own transaction");
+  });
+
+  it("returns the digest when one is pinned", () => {
+    expect(requireExpectedPlan([WRITE_FLAG, `${EXPECT_PLAN_FLAG}7f3a91c04e2b`])).toBe(
+      "7f3a91c04e2b",
     );
   });
 });

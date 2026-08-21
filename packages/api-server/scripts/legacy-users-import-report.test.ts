@@ -81,7 +81,9 @@ describe("renderImportReport", () => {
     );
 
     expect(render(plan)).toContain(
-      "create 0 · attach 1 (link 1 / address 0) · refresh 0 · login-address changes 1 · credentials replaced 0 · conflicts 0 · warnings 1",
+      "create 0 · attach 1 (link 1 / address 0) · refresh 0 · mirror diffs 0 · " +
+        "login-address changes 1 · credentials replaced 0 · markers backfilled 0 · " +
+        "conflicts 0 · warnings 1",
     );
   });
 
@@ -137,6 +139,7 @@ describe("renderImportReport", () => {
           {
             legacyUserId: 20,
             userId: "user_platform",
+            importedPasswordHash: GOLDEN_BCRYPT_HASH,
             legacyRoleId: 1,
             legacyPlanId: 1,
             legacyLevelId: 2,
@@ -214,8 +217,10 @@ describe("renderImportReport", () => {
 
   it("labels every conflict reason and warning kind it can be handed", () => {
     const plan: ImportPlan = {
+      reconciliation: { linksChecked: 0, linksWithIdentity: 0, violations: 0 },
       actions: [],
       conflicts: [
+        { legacyUserId: 22, reason: "link-and-identity-disagree", detail: "d" },
         { legacyUserId: 1, reason: "username-not-an-email", detail: "d" },
         { legacyUserId: 2, reason: "override-source-mismatch", detail: "d" },
         { legacyUserId: 3, reason: "duplicate-email-in-source", detail: "d" },
@@ -243,10 +248,120 @@ describe("renderImportReport", () => {
     };
     const report = render(plan);
 
-    for (const legacyUserId of Array.from({ length: 21 }, (_, index) => index + 1)) {
+    for (const legacyUserId of Array.from({ length: 22 }, (_, index) => index + 1)) {
       expect(report).toContain(`[${String(legacyUserId).padStart(6, " ")}]`);
     }
 
     expect(report).not.toContain("undefined");
+  });
+
+  it("counts the reconciliation the gate rests on, including how much of it was checkable", () => {
+    const plan = planFor(
+      [sourceRow()],
+      emptySnapshot({
+        identities: [
+          {
+            legacyUserId: 20,
+            userId: "user_platform",
+            importedPasswordHash: null,
+            legacyRoleId: 1,
+            legacyPlanId: 1,
+            legacyLevelId: 2,
+            isEnabled: true,
+            firstName: null,
+            lastName: null,
+            phoneNumber: null,
+            dateOfBirth: null,
+          },
+        ],
+        individualLinks: [
+          { legacyUserId: 20, athleteId: "user_platform" },
+          { legacyUserId: 77, athleteId: "user_unimported" },
+        ],
+        users: [
+          {
+            id: "user_platform",
+            email: "athlete@tdp.local",
+            matchEmail: "athlete@tdp.local",
+            role: "ATHLETE",
+            deletedAt: null,
+            password: GOLDEN_BCRYPT_HASH,
+            identityLegacyUserId: 20,
+          },
+        ],
+      }),
+    );
+
+    expect(render(plan)).toContain(
+      "RECONCILIATION individual links 2 · matched to a stored identity 1 · violations 0",
+    );
+  });
+
+  it("prints a digest of the plan and tells the operator to pin it", () => {
+    const report = render(planFor([sourceRow()], emptySnapshot()));
+    const digest =
+      /plan digest ([0-9a-f]{12}) — pin it on the apply with --expect-plan=([0-9a-f]{12})/.exec(
+        report,
+      );
+
+    expect(digest?.[1]).toBe(digest?.[2]);
+  });
+
+  it("drops the pinning hint once the plan is applied, keeping the digest for the record", () => {
+    const report = render(planFor([sourceRow()], emptySnapshot()), "applied");
+
+    expect(report).toMatch(/plan digest [0-9a-f]{12}/);
+    expect(report).not.toContain("pin it on the apply");
+  });
+
+  it("heads a stale pin as its own refusal rather than as a conflict", () => {
+    const report = render(planFor([sourceRow()], emptySnapshot()), "stale-plan");
+
+    expect(report.split("\n").at(0)).toBe(
+      "legacy users import — REFUSED, the plan changed since the digest you pinned",
+    );
+    expect(report).toContain("REFUSED: nothing was written");
+    expect(report).toContain("re-run the apply with the digest printed above");
+    expect(report).not.toContain("CLEAN");
+  });
+
+  it("names a link that contradicts a stored identity", () => {
+    const plan = planFor(
+      [sourceRow()],
+      emptySnapshot({
+        identities: [
+          {
+            legacyUserId: 20,
+            userId: "user_identity",
+            importedPasswordHash: null,
+            legacyRoleId: 1,
+            legacyPlanId: 1,
+            legacyLevelId: 2,
+            isEnabled: true,
+            firstName: null,
+            lastName: null,
+            phoneNumber: null,
+            dateOfBirth: null,
+          },
+        ],
+        individualLinks: [{ legacyUserId: 20, athleteId: "user_other" }],
+        users: [
+          {
+            id: "user_identity",
+            email: "athlete@tdp.local",
+            matchEmail: "athlete@tdp.local",
+            role: "ATHLETE",
+            deletedAt: null,
+            password: null,
+            identityLegacyUserId: 20,
+          },
+        ],
+      }),
+    );
+    const report = render(plan);
+
+    expect(report).toContain("publish link and stored identity name different users");
+    expect(report).toContain("violations 1");
+    expect(report).toContain("REFUSED");
   });
 });

@@ -50,6 +50,7 @@ const platformUser = (overrides: Partial<PlatformUser> = {}): PlatformUser => {
 const storedIdentity = (overrides: Partial<PlatformIdentity> = {}): PlatformIdentity => ({
   legacyUserId: LEGACY_ID,
   userId: "user_platform",
+  importedPasswordHash: null,
   legacyRoleId: 1,
   legacyPlanId: 1,
   legacyLevelId: 2,
@@ -421,7 +422,7 @@ describe("warnings", () => {
     expect(warningKinds(plan)).toContain("matched-user-is-not-an-athlete");
   });
 
-  it("flags a refresh that leaves a platform-managed credential alone", () => {
+  it("flags a refresh that leaves a credential no marker vouches for alone", () => {
     const plan = classify(
       [sourceRow()],
       emptySnapshot({
@@ -445,12 +446,11 @@ describe("warnings", () => {
     expect(warningKinds(plan)).not.toContain("password-left-as-is");
   });
 
-  it("flags a stored identity that now sits on a different user than the link names", () => {
+  it("flags a stored identity the legacy address no longer names", () => {
     const plan = classify(
       [sourceRow()],
       emptySnapshot({
         identities: [storedIdentity({ userId: "user_identity" })],
-        individualLinks: [{ legacyUserId: LEGACY_ID, athleteId: "user_other" }],
         users: [
           platformUser({ id: "user_identity", email: "identity@platform.local" }),
           platformUser({ id: "user_other" }),
@@ -459,7 +459,25 @@ describe("warnings", () => {
     );
 
     expect(warningKinds(plan)).toContain("identity-target-drift");
+    expect(reasons(plan)).not.toContain("link-and-identity-disagree");
     expect(plan.actions.at(0)).toMatchObject({ kind: "refresh", userId: "user_identity" });
+  });
+
+  it("surfaces a link that names another user as a conflict and not as drift", () => {
+    const plan = classify(
+      [sourceRow()],
+      emptySnapshot({
+        identities: [storedIdentity({ userId: "user_identity" })],
+        individualLinks: [{ legacyUserId: LEGACY_ID, athleteId: "user_other" }],
+        users: [
+          platformUser({ id: "user_identity" }),
+          platformUser({ id: "user_other", email: "other@platform.local" }),
+        ],
+      }),
+    );
+
+    expect(reasons(plan)).toContain("link-and-identity-disagree");
+    expect(warningKinds(plan)).not.toContain("identity-target-drift");
   });
 
   it("flags the synthetic junk account as credential-less", () => {
@@ -490,9 +508,11 @@ describe("warnings", () => {
 });
 
 describe("credential outcomes on a refresh", () => {
-  const refreshSnapshotWith = (password: string | null) =>
+  const DRIFTED_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
+
+  const refreshSnapshotWith = (password: string | null, marker: string | null = null) =>
     emptySnapshot({
-      identities: [storedIdentity()],
+      identities: [storedIdentity({ importedPasswordHash: marker })],
       users: [platformUser({ identityLegacyUserId: LEGACY_ID, password })],
     });
 
@@ -503,30 +523,42 @@ describe("credential outcomes on a refresh", () => {
     expect(warningKinds(plan)).not.toContain("password-left-as-is");
   });
 
-  it("says plainly when a below-cost credential differs and was left alone", () => {
-    const plan = classify(
-      [sourceRow()],
-      refreshSnapshotWith("$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG"),
-    );
+  it("says plainly when the credential it wrote differs and was left alone", () => {
+    const plan = classify([sourceRow()], refreshSnapshotWith(DRIFTED_HASH, DRIFTED_HASH));
 
     expect(warningKinds(plan)).toContain("credential-differs-not-restored");
   });
 
-  it("warns loudly when it is about to replace a platform credential", () => {
-    const plan = classify(
-      [sourceRow()],
-      refreshSnapshotWith("$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG"),
-      true,
-    );
+  it("warns loudly when it is about to replace a stored credential", () => {
+    const plan = classify([sourceRow()], refreshSnapshotWith(DRIFTED_HASH, DRIFTED_HASH), true);
 
     expect(warningKinds(plan)).toContain("credential-restored");
   });
 
+  it("declines to restore over a credential it cannot prove it wrote", () => {
+    const plan = classify([sourceRow()], refreshSnapshotWith(DRIFTED_HASH), true);
+
+    expect(warningKinds(plan)).toContain("password-left-as-is");
+    expect(warningKinds(plan)).not.toContain("credential-restored");
+  });
+
   it("stays silent when the stored credential already matches the export", () => {
-    const plan = classify([sourceRow()], refreshSnapshotWith(GOLDEN_BCRYPT_HASH));
+    const plan = classify(
+      [sourceRow()],
+      refreshSnapshotWith(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH),
+    );
 
     expect(warningKinds(plan)).not.toContain("credential-restored");
     expect(warningKinds(plan)).not.toContain("password-left-as-is");
+  });
+
+  it("records the marker without a word of warning when it can see what it wrote", () => {
+    const plan = classify([sourceRow()], refreshSnapshotWith(GOLDEN_BCRYPT_HASH));
+
+    expect(plan.warnings).toEqual([]);
+    expect(plan.actions.at(0)).toMatchObject({
+      credentialOutcome: { kind: "marker-backfilled", markerHash: GOLDEN_BCRYPT_HASH },
+    });
   });
 });
 
@@ -571,16 +603,12 @@ describe("the demo athlete", () => {
 
 describe("refresh detail", () => {
   it("carries the mirror diff and a restore decision for an untouched legacy credential", () => {
+    const drifted = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
     const plan = classify(
       [sourceRow({ training_level_id: 4, is_enabled: false })],
       emptySnapshot({
-        identities: [storedIdentity()],
-        users: [
-          platformUser({
-            identityLegacyUserId: LEGACY_ID,
-            password: "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG",
-          }),
-        ],
+        identities: [storedIdentity({ importedPasswordHash: drifted })],
+        users: [platformUser({ identityLegacyUserId: LEGACY_ID, password: drifted })],
       }),
       true,
     );
@@ -594,6 +622,6 @@ describe("refresh detail", () => {
       "legacyLevelId",
       "isEnabled",
     ]);
-    expect(action.passwordChange).toMatchObject({ kind: "restored" });
+    expect(action.credentialOutcome).toMatchObject({ kind: "restored" });
   });
 });

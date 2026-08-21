@@ -15,6 +15,7 @@ import {
   type ImportWarning,
   type PlatformSnapshot,
 } from "./legacy-users-import-plan";
+import { reconcileIdentityLinks } from "./legacy-users-import-reconcile";
 import type { ParsedLegacySource, SourceDefect } from "./legacy-users-import-source";
 
 const duplicatesOf = <T>(values: readonly T[]): Set<T> => {
@@ -198,10 +199,12 @@ export const classifyImport = (
 
   const claims = withClaimCollisions(staged);
   const sourceIds = new Set(source.rows.map((row) => row.legacyUserId));
+  const reconciled = reconcileIdentityLinks(snapshot);
 
   return {
     actions: claims.actions,
-    conflicts: [...conflicts, ...claims.conflicts],
+    conflicts: [...conflicts, ...claims.conflicts, ...reconciled.conflicts],
     warnings: [...warnings, ...identitiesAbsentFromSource(snapshot, sourceIds)],
+    reconciliation: reconciled.summary,
   };
 };
