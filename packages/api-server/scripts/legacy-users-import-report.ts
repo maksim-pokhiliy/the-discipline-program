@@ -158,8 +158,8 @@ const verdictLines = (plan: ImportPlan, mode: ReportMode): readonly string[] => 
     "",
     mode === "applied"
       ? "APPLIED: every action above was written in one transaction."
-      : "CLEAN: re-run with --write --expect-host=<hostname> to apply. Take that hostname from " +
-        "your own record of the database you meant, never from this report.",
+      : "CLEAN: re-run with --write --expect-host=<hostname> and the plan digest above to apply. " +
+        "Take that hostname from your own record of the database you meant, never from this report.",
   ];
 };
 

@@ -179,7 +179,7 @@ describe("renderImportReport", () => {
     const report = render(planFor([sourceRow()], emptySnapshot()));
 
     expect(report).toContain("CLEAN");
-    expect(report).toContain("--write --expect-host=<hostname>");
+    expect(report).toContain("--write --expect-host=<hostname> and the plan digest above");
     expect(report).toContain("never from this report");
   });
 

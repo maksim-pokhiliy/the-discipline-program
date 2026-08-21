@@ -12,9 +12,17 @@ handed has no delete method at all.
 
 The script reads a **JSON export file**, never a second database, so no legacy DSN is ever handled.
 Its only connection is the platform DSN in `DATABASE_URL`, and writing to that requires
-`--write --expect-host=<hostname>`, checked against the host the DSN resolved to. All writes happen
-inside one transaction, and the whole run refuses if any row is in conflict — there is no partial
-apply and no override flag.
+`--write --expect-host=<hostname> --expect-plan=<digest>`, the host checked against the one the DSN
+resolved to and the digest against the plan you reviewed. All writes happen inside one transaction,
+and the whole run refuses if any row is in conflict — there is no partial apply and no override flag.
+
+**A write must name the plan you reviewed.** The apply re-reads the database and re-decides inside
+its own transaction, so the plan it would write is not necessarily the plan you signed off — someone
+publishing a plan, an athlete changing a password, or a second import run in between all change it.
+Every report prints a **plan digest**, and `--write` refuses without `--expect-plan=<that digest>`.
+If the recomputed plan differs, the run refuses under its own heading, prints the plan the database
+would produce **now** with its own digest, and writes nothing. That is not a failure to work around:
+read the new report as you read the first one, and apply against the digest it prints.
 
 **`--expect-host` is required in a dry run too, not only for `--write`.** Importing
 `@prisma/client` loads any `.env` sitting beside it, so `DATABASE_URL` can arrive from a file
@@ -29,13 +37,28 @@ to nothing. What it cannot fully withhold: a raw driver error can still carry th
 name and role**. Read driver errors on your own terminal and never paste one into a pull request,
 an issue, or any other public artifact.
 
-**The script never replaces an existing platform password unless you explicitly ask.** On a re-run
-it can overwrite a stored credential whose bcrypt **cost is below the platform factor** — that is a
-heuristic for "this credential predates the platform's own hashing", **not** knowledge of who wrote
-it; the script cannot tell an import-written hash from any other below-cost one. It does so only
-when you pass `--restore-credentials`; without that flag a differing credential is reported and
-left alone. Use the flag only when you know the legacy password changed since the last import and
-you mean to carry the new one across, and check the `credentials replaced` count afterwards.
+**The script never replaces an existing platform password unless you explicitly ask, and never one
+it cannot prove it wrote.** Each identity carries `importedPasswordHash`: the hash **this import
+last wrote** into that person's `User.password`, and nothing else. A restore happens only when that
+marker is set **and** the stored credential is still exactly what the marker records — meaning
+nobody has changed the password since — and then the new export hash is written to both. Anything
+else is reported as `stored credential is not the one the import wrote` and left alone.
+
+Consequences worth knowing:
+
+- An **attached** platform user never gets a marker: the import did not write their credential, so
+  it will never replace it. Same for legacy id 17, whose credential is deliberately withheld.
+- A person whose **first sign-in re-hashed** their imported password at the platform cost factor no
+  longer matches their marker, so a restore declines for them. That is correct and accepted: they
+  know their password, and a restore would only take it away.
+- A refresh whose stored credential **already equals the export hash** records the marker
+  (`markers backfilled` on the summary line). That is safe by inspection — the credential in the
+  database is the export's own hash, so writing it down changes nothing about what a later restore
+  would do. The import **never clears a marker.**
+
+Restore still needs `--restore-credentials`; without the flag a differing credential is reported and
+left alone. Use it only when you know the legacy password changed since the last import and you mean
+to carry the new one across, and check the `credentials replaced` count afterwards.
 
 ## 1. Produce the export
 
@@ -69,20 +92,23 @@ DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5546/platform_local" \
   pnpm --filter @repo/api-server exec prisma migrate deploy
 ```
 
-Then dry run, and apply:
+Then dry run, read the digest off the report, and apply against it:
 
 ```
 cd packages/api-server
 export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5546/platform_local"
 pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1
-pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1 --write
+pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1 \
+  --write --expect-plan=<the digest that dry run printed>
 ```
 
 Run it from `packages/api-server` with `pnpm exec`, not `pnpm --filter … exec`: the filter wrapper
 swallows the guard's refusal message and prints only its own exit-code noise.
 
 Re-running the apply is safe and is the idempotency check: the second run must report
-`create 0`, every row as a refresh, and `no change` on each.
+`create 0`, every row as a refresh, and `no change` on each. Take a fresh digest for it — the second
+apply is a different plan from the first, and pinning the first one is exactly what the guard exists
+to refuse.
 
 The end-to-end probe (import → shim signin with the legacy password → `GET /user/{id}`) lives at
 `apps/platform/src/app/api/v1/__tests__/legacy-users-import.integration.test.ts` and is opt-in:
@@ -118,17 +144,56 @@ DATABASE_URL="$(env -u DATABASE_URL_PROD node -e "process.loadEnvFile('../../.en
 `env -u DATABASE_URL_PROD` matters: `loadEnvFile` does not override an already-exported variable, so
 without it a stale shell value silently wins over the file.
 
-Review the dry-run report, get the owner's sign-off, then append `--write`. The hostname is the **host only, no port** (the guard compares
-`URL.hostname`), taken from your own record of the production database — the Neon console or the
-Vercel dashboard entry — never from `.env.prod` itself, since the DSN and its attestation must not
-share a source, and never from the script's output, which deliberately offers none.
+Review the dry-run report, get the owner's sign-off, then re-run it with `--write` **and the
+`--expect-plan=<digest>` printed on the report that was signed off**. The hostname is the **host
+only, no port** (the guard compares `URL.hostname`), taken from your own record of the production
+database — the Neon console or the Vercel dashboard entry — never from `.env.prod` itself, since the
+DSN and its attestation must not share a source, and never from the script's output, which
+deliberately offers none. The digest is the opposite: it exists to be copied out of the very report
+that was reviewed, and copying it from anywhere else defeats it.
+
+### Pre-cutover fidelity check
+
+Before cutover, one run proves the mirror is faithful and the identities and links agree. It is a
+**dry run** and writes nothing:
+
+fresh SSH dump → restore → fresh export → dry run against production. Expect, on the summary block:
+
+```
+create 0 · attach 0 (link 0 / address 0) · refresh 19 · mirror diffs 0 · … · conflicts 0
+RECONCILIATION individual links <n> · matched to a stored identity <m> · violations 0
+```
+
+- `refresh 19 · mirror diffs 0` — every legacy row is already mirrored, and not one mirrored field
+  differs from the dump. This is the plan/level fidelity `/program` routes on.
+- `violations 0` with a non-zero `matched to a stored identity` — every individual publish link that
+  names a legacy id points at the same platform user the identity does. `violations 0` alongside
+  `matched to a stored identity 0` proves nothing; read both numbers.
+- `conflicts 0` — nothing anywhere contradicts anything.
+
+That report **is** the gate artifact. Keep it (on your own machine — it holds real addresses).
 
 ### Apply-day freshness
 
 The export must be made from a **fresh dump taken the same day**, not from an older snapshot.
 Anyone who changed their password or their training level in the legacy app since the old dump
 would otherwise be imported stale. The order is: fresh SSH dump → restore → fresh export → dry run
-→ owner sign-off → apply.
+→ owner sign-off → apply with that dry run's digest.
+
+### Re-runs are a pre-cutover tool — after cutover they are not
+
+Before cutover the legacy app is the source of truth and the export is a faithful copy of it, so
+re-running is safe and is how drift gets corrected.
+
+**After cutover that stops being true.** The app writes back: `PUT /user` stores
+`firstName`, `lastName`, `phoneNumber` and `dateOfBirth` straight onto the legacy identity, and
+`changePassword` writes `User.password`. A `--write` re-run off a dump taken before cutover would
+overwrite an athlete's own edits with values they already replaced in the app.
+
+So: **do not re-run `--write` after cutover.** A dry run is always safe and stays useful for reading
+the reconciliation. If a post-cutover write is genuinely needed, it is a deliberate decision made
+with a specific reason, off an export you have checked row by row against what the app now holds —
+not a routine re-run.
 
 ### What CI does and does not cover
 
@@ -143,12 +208,24 @@ them before any production apply.
 
 ## 4. Reading the report
 
-The summary line counts every class, including the address changes, so nothing hides below the
-fold:
+The head of every report is three lines: the counts, the reconciliation, and the digest. Nothing
+hides below the fold.
 
 ```
-create 19 · attach 0 (link 0 / address 0) · refresh 0 · login-address changes 0 · credentials replaced 0 · conflicts 0 · warnings 1
+create 19 · attach 0 (link 0 / address 0) · refresh 0 · mirror diffs 0 · login-address changes 0 · credentials replaced 0 · markers backfilled 0 · conflicts 0 · warnings 1
+RECONCILIATION individual links 4 · matched to a stored identity 4 · violations 0
+plan digest 7f3a91c04e2b — pin it on the apply with --expect-plan=7f3a91c04e2b
 ```
+
+- **mirror diffs** — how many refreshed rows had at least one mirrored field move. Zero on a
+  faithful mirror; non-zero means the dump and the platform disagree about somebody's plan, level,
+  enablement or profile, and the REFRESH section names the fields.
+- **markers backfilled** — how many identities gained an `importedPasswordHash` this run because
+  their stored credential was recognisably the export's own hash (see the safety model).
+- **RECONCILIATION** — individual publish links carrying a legacy id, how many of those legacy ids
+  have a stored identity to check against, and how many contradict it. Read the middle number: it
+  is how much of the gate was actually checkable.
+- **plan digest** — the fingerprint of this exact plan, and what `--write` must be given.
 
 - **CREATE** — a new platform user plus the identity. Shows the catalog ids, whether the account is
   enabled, and whether a credential came across.
@@ -199,6 +276,7 @@ identity row deliberately, before re-running.
 | `matched platform user already carries another legacy id`               | one platform user cannot hold two legacy identities                                                    |
 | `two legacy rows claim one platform user`                               | same, seen from the other side                                                                         |
 | `the named platform user no longer exists`                              | a link or a stored identity points at nothing                                                          |
+| `publish link and stored identity name different users`                 | one legacy person is mapped two ways; the app reads the identity, so a link says somebody else         |
 
 ### Warnings worth knowing
 
@@ -206,16 +284,21 @@ identity row deliberately, before re-running.
 - `matched platform user is not an athlete` — a coach or admin account also existed in the legacy
   app. The legacy role is mirrored but grants no platform privilege; imported users are always
   written with the platform role `ATHLETE`.
-- `platform credential kept, legacy hash not written` — the stored credential is at or above the
-  platform cost factor. That means it was **either changed on the platform or already upgraded by
-  this person's first successful login**; the script cannot tell those apart. Either way the
-  platform credential wins.
-- `credential differs from the export and was NOT replaced` — the stored credential looks
-  import-written but no longer matches the export. Nothing was changed. Re-run with
+- `stored credential is not the one the import wrote; legacy hash not written` — the identity
+  carries no marker, or carries one the stored credential no longer matches. Either the import never
+  wrote this person's password (an attach), or it has changed since — on the platform, or by this
+  person's first successful login re-hashing it. The script does not guess which; it keeps its hands
+  off. The stored credential wins.
+- `credential differs from the export and was NOT replaced` — the stored credential **is** the one
+  this import wrote, and the export now holds a different one. Nothing was changed. Re-run with
   `--restore-credentials` only if you mean to carry the newer legacy password across.
-- `platform credential REPLACED by the export hash` — you passed `--restore-credentials` and this
+- `stored credential REPLACED by the export hash` — you passed `--restore-credentials` and this
   person's stored password was overwritten. Check the `credentials replaced` count on the summary
   line matches what you intended.
+- `stored identity sits on a different user than the evidence names` — the legacy **address** now
+  belongs to a different platform user than the identity hangs on. Nothing moves; the identity stays
+  where it is. (The same disagreement coming from a publish link is not a warning but a conflict —
+  see the table above.)
 - `matched platform user has no password of their own` — the legacy identity was hung on a platform
   user who has never set a password (an invitation that was never completed). A matched user's
   credential is never touched, so the legacy password is **not** carried across and that person
