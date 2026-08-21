@@ -195,20 +195,21 @@ model MobilePublishedDay {
 }
 
 model MobileLegacyIdentity {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  legacyUserId  Int       @unique
-  legacyRoleId  Int
-  legacyPlanId  Int
-  legacyLevelId Int
-  isEnabled     Boolean   @default(false)
-  firstName     String?
-  lastName      String?
-  phoneNumber   String?
-  dateOfBirth   DateTime? @db.Date
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  legacyUserId         Int       @unique
+  legacyRoleId         Int
+  legacyPlanId         Int
+  legacyLevelId        Int
+  isEnabled            Boolean   @default(false)
+  firstName            String?
+  lastName             String?
+  phoneNumber          String?
+  dateOfBirth          DateTime? @db.Date
+  importedPasswordHash String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@map("app_mobile_legacy_identities")
 }

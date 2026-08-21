@@ -1,4 +1,10 @@
-import { ATHLETE_ROLE, type IdentityMirror, type ImportPlan } from "./legacy-users-import-plan";
+import {
+  ATHLETE_ROLE,
+  type CredentialOutcome,
+  type IdentityMirror,
+  type ImportAction,
+  type ImportPlan,
+} from "./legacy-users-import-plan";
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
 
 export type ImportWriter = {
@@ -19,17 +25,17 @@ export type ImportWriter = {
   };
   mobileLegacyIdentity: {
     create: (args: {
-      data: IdentityMirror & { userId: string; legacyUserId: number };
+      data: IdentityMirror & {
+        userId: string;
+        legacyUserId: number;
+        importedPasswordHash: string | null;
+      };
     }) => Promise<unknown>;
-    update: (args: { where: { legacyUserId: number }; data: IdentityMirror }) => Promise<unknown>;
+    update: (args: {
+      where: { legacyUserId: number };
+      data: IdentityMirror & { importedPasswordHash?: string };
+    }) => Promise<unknown>;
   };
-};
-
-export type ApplyCounts = {
-  created: number;
-  attached: number;
-  refreshed: number;
-  credentialsRestored: number;
 };
 
 export class ImportConflictError extends Error {
@@ -52,12 +58,43 @@ const mirrorOf = (row: NormalizedLegacyUser): IdentityMirror => ({
   dateOfBirth: row.dateOfBirth,
 });
 
-export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promise<ApplyCounts> => {
+const markerWriteOf = (outcome: CredentialOutcome): string | null => {
+  if (outcome.kind === "marker-backfilled") {
+    return outcome.markerHash;
+  }
+
+  return outcome.kind === "restored" ? outcome.nextHash : null;
+};
+
+const applyRefresh = async (
+  writer: ImportWriter,
+  action: Extract<ImportAction, { kind: "refresh" }>,
+): Promise<void> => {
+  const { credentialOutcome } = action;
+  const markerWrite = markerWriteOf(credentialOutcome);
+
+  if (credentialOutcome.kind === "restored") {
+    await writer.user.update({
+      where: { id: action.userId, password: credentialOutcome.expectedStoredHash },
+      data: { password: credentialOutcome.nextHash },
+    });
+  }
+
+  if (action.identityChanges.length > 0 || markerWrite !== null) {
+    await writer.mobileLegacyIdentity.update({
+      where: { legacyUserId: action.row.legacyUserId },
+      data:
+        markerWrite === null
+          ? mirrorOf(action.row)
+          : { ...mirrorOf(action.row), importedPasswordHash: markerWrite },
+    });
+  }
+};
+
+export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promise<void> => {
   if (plan.conflicts.length > 0) {
     throw new ImportConflictError(plan.conflicts.length);
   }
-
-  const counts: ApplyCounts = { created: 0, attached: 0, refreshed: 0, credentialsRestored: 0 };
 
   for (const action of plan.actions) {
     if (action.kind === "create") {
@@ -75,11 +112,10 @@ export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promi
         data: {
           userId: created.id,
           legacyUserId: action.row.legacyUserId,
+          importedPasswordHash: action.row.passwordHash,
           ...mirrorOf(action.row),
         },
       });
-
-      counts.created += 1;
 
       continue;
     }
@@ -89,33 +125,14 @@ export const applyImport = async (writer: ImportWriter, plan: ImportPlan): Promi
         data: {
           userId: action.userId,
           legacyUserId: action.row.legacyUserId,
+          importedPasswordHash: null,
           ...mirrorOf(action.row),
         },
       });
 
-      counts.attached += 1;
-
       continue;
     }
 
-    if (action.identityChanges.length > 0) {
-      await writer.mobileLegacyIdentity.update({
-        where: { legacyUserId: action.row.legacyUserId },
-        data: mirrorOf(action.row),
-      });
-    }
-
-    counts.refreshed += 1;
-
-    if (action.passwordChange.kind === "restored" && action.row.passwordHash !== null) {
-      await writer.user.update({
-        where: { id: action.userId, password: action.passwordChange.expectedStoredHash },
-        data: { password: action.row.passwordHash },
-      });
-
-      counts.credentialsRestored += 1;
-    }
+    await applyRefresh(writer, action);
   }
-
-  return counts;
 };

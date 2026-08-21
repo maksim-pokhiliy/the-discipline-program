@@ -3,11 +3,10 @@ import { describe, expect, it } from "vitest";
 import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import {
-  decidePasswordChange,
+  decideCredentialOutcome,
   describeUnmappedCatalogIds,
   diffIdentity,
   type PlatformIdentity,
-  readBcryptCost,
 } from "./legacy-users-import-plan";
 import { normalizeLegacySource } from "./legacy-users-import-source";
 
@@ -40,27 +39,6 @@ const rowWith = (overrides: Record<string, unknown> = {}) => {
 
   return row;
 };
-
-describe("readBcryptCost", () => {
-  it("reads the cost factor out of a legacy 2a hash", () => {
-    expect(readBcryptCost(GOLDEN_BCRYPT_HASH)).toBe(10);
-  });
-
-  it("reads the cost factor out of a platform hash", () => {
-    expect(readBcryptCost(COST_12_HASH)).toBe(12);
-  });
-
-  it("accepts every bcrypt variant prefix", () => {
-    expect(readBcryptCost("$2b$11$0123456789012345678901")).toBe(11);
-    expect(readBcryptCost("$2y$08$0123456789012345678901")).toBe(8);
-  });
-
-  it("returns null for anything that is not a bcrypt hash", () => {
-    expect(readBcryptCost("not-a-hash")).toBeNull();
-    expect(readBcryptCost("")).toBeNull();
-    expect(readBcryptCost("$2a$xx$0123456789012345678901")).toBeNull();
-  });
-});
 
 describe("describeUnmappedCatalogIds", () => {
   it("accepts every id the legacy catalogs actually list", () => {
@@ -108,6 +86,7 @@ describe("diffIdentity", () => {
   const stored: PlatformIdentity = {
     legacyUserId: 42,
     userId: "user_42",
+    importedPasswordHash: null,
     legacyRoleId: 1,
     legacyPlanId: 1,
     legacyLevelId: 2,
@@ -186,59 +165,95 @@ describe("diffIdentity", () => {
   });
 });
 
-describe("decidePasswordChange", () => {
+describe("decideCredentialOutcome", () => {
   const RESTORE_ON = true;
   const RESTORE_OFF = false;
 
-  it("replaces a drifted below-cost credential only when restore is explicitly enabled", () => {
-    expect(decidePasswordChange(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
-      kind: "restored",
-      expectedStoredHash: OTHER_COST_10_HASH,
-    });
-  });
+  const decide = (
+    storedHash: string | null,
+    sourceHash: string | null,
+    markerHash: string | null,
+    isCredentialRestoreEnabled = RESTORE_OFF,
+  ) => decideCredentialOutcome({ storedHash, sourceHash, markerHash, isCredentialRestoreEnabled });
 
-  it("refuses to replace a drifted below-cost credential by default", () => {
-    expect(decidePasswordChange(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, RESTORE_OFF)).toEqual({
+  it("never nulls out a stored credential when the source withholds one", () => {
+    expect(decide(COST_12_HASH, null, COST_12_HASH, RESTORE_ON)).toEqual({
       kind: "left-as-is",
-      reason: "restore-not-enabled",
-    });
-  });
-
-  it("writes nothing when the stored hash already equals the source hash", () => {
-    expect(decidePasswordChange(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
-      kind: "unchanged",
-    });
-  });
-
-  it("leaves a platform-managed cost-12 hash alone even with restore enabled", () => {
-    expect(decidePasswordChange(COST_12_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
-      kind: "left-as-is",
-      reason: "platform-managed",
-    });
-  });
-
-  it("leaves an unreadable stored hash alone rather than guessing", () => {
-    expect(decidePasswordChange("garbage", GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
-      kind: "left-as-is",
-      reason: "platform-managed",
+      reason: "no-source-credential",
     });
   });
 
   it("never hands a credential to a platform user that has none", () => {
-    expect(decidePasswordChange(null, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
+    expect(decide(null, GOLDEN_BCRYPT_HASH, null, RESTORE_ON)).toEqual({
       kind: "left-as-is",
       reason: "matched-user-has-none",
     });
   });
 
-  it("never nulls out a stored credential when the source withholds one", () => {
-    expect(decidePasswordChange(COST_12_HASH, null, RESTORE_ON)).toEqual({
-      kind: "left-as-is",
-      reason: "no-source-credential",
+  it("records the marker when the stored credential already is the export hash", () => {
+    expect(decide(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH, null)).toEqual({
+      kind: "marker-backfilled",
+      markerHash: GOLDEN_BCRYPT_HASH,
     });
-    expect(decidePasswordChange(GOLDEN_BCRYPT_HASH, null, RESTORE_ON)).toEqual({
+  });
+
+  it("writes nothing when the marker already records the credential in place", () => {
+    expect(decide(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH)).toEqual({
+      kind: "unchanged",
+    });
+  });
+
+  it("leaves a marker that disagrees with a credential the export happens to match", () => {
+    expect(decide(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH)).toEqual({
+      kind: "unchanged",
+    });
+  });
+
+  it("declines to touch a credential no marker vouches for", () => {
+    expect(decide(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, null, RESTORE_ON)).toEqual({
       kind: "left-as-is",
-      reason: "no-source-credential",
+      reason: "not-import-written",
+    });
+  });
+
+  it("declines when the credential moved away from the one this import wrote", () => {
+    expect(decide(COST_12_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "not-import-written",
+    });
+  });
+
+  it("declines for an athlete whose first sign-in re-hashed the credential this import wrote", () => {
+    expect(decide(COST_12_HASH, GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH, RESTORE_ON)).toEqual({
+      kind: "left-as-is",
+      reason: "not-import-written",
+    });
+  });
+
+  it("refuses to replace even a marked credential by default", () => {
+    expect(decide(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH, RESTORE_OFF)).toEqual(
+      { kind: "left-as-is", reason: "restore-not-enabled" },
+    );
+  });
+
+  it("replaces a marked credential, and the marker with it, when restore is enabled", () => {
+    expect(decide(OTHER_COST_10_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH, RESTORE_ON)).toEqual({
+      kind: "restored",
+      expectedStoredHash: OTHER_COST_10_HASH,
+      nextHash: GOLDEN_BCRYPT_HASH,
+    });
+  });
+
+  it("reads no meaning at all out of the bcrypt cost factor", () => {
+    expect(decide(COST_12_HASH, GOLDEN_BCRYPT_HASH, COST_12_HASH, RESTORE_ON)).toEqual({
+      kind: "restored",
+      expectedStoredHash: COST_12_HASH,
+      nextHash: GOLDEN_BCRYPT_HASH,
+    });
+    expect(decide("garbage", GOLDEN_BCRYPT_HASH, "garbage", RESTORE_ON)).toEqual({
+      kind: "restored",
+      expectedStoredHash: "garbage",
+      nextHash: GOLDEN_BCRYPT_HASH,
     });
   });
 });

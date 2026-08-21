@@ -12,10 +12,17 @@ import {
   writerFor,
 } from "./legacy-users-import";
 import type { ImportWriter } from "./legacy-users-import-apply";
+import { classifyImport } from "./legacy-users-import-classify";
+import { planDigest } from "./legacy-users-import-digest";
 import type { PlatformSnapshot } from "./legacy-users-import-plan";
 import type { ImportReader } from "./legacy-users-import-snapshot";
-import type { LegacySourceRow } from "./legacy-users-import-source";
-import { EXPECT_HOST_FLAG, RESTORE_CREDENTIALS_FLAG, WRITE_FLAG } from "./script-target-guard";
+import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
+import {
+  EXPECT_HOST_FLAG,
+  EXPECT_PLAN_FLAG,
+  RESTORE_CREDENTIALS_FLAG,
+  WRITE_FLAG,
+} from "./script-target-guard";
 
 const SCHEME = "postgresql:";
 const TARGET_HOST = "db.example-target.invalid";
@@ -71,6 +78,23 @@ const readerOf = (snapshot: PlatformSnapshot): ImportReader => ({
       ),
   },
 });
+
+const digestFor = (
+  rows: LegacySourceRow[],
+  snapshot: PlatformSnapshot = emptySnapshot(),
+  isCredentialRestoreEnabled = false,
+): string =>
+  planDigest(classifyImport(normalizeLegacySource(rows), snapshot, { isCredentialRestoreEnabled }));
+
+const printedDigest = (lines: readonly string[]): string => {
+  const printed = /plan digest ([0-9a-f]{12})/.exec(lines.join("\n"))?.[1];
+
+  if (printed === undefined) {
+    throw new Error("the report printed no plan digest");
+  }
+
+  return printed;
+};
 
 const harness = (
   rows: LegacySourceRow[],
@@ -163,7 +187,7 @@ describe("runImport — dry run", () => {
       deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
     );
 
-    expect(result.hasConflicts).toBe(false);
+    expect(result.isRefused).toBe(false);
     expect(result.lines.join("\n")).toContain("CLEAN");
   });
 
@@ -173,7 +197,7 @@ describe("runImport — dry run", () => {
       deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
     );
 
-    expect(result.hasConflicts).toBe(true);
+    expect(result.isRefused).toBe(true);
     expect(writes).toEqual([]);
   });
 
@@ -234,49 +258,183 @@ describe("runImport — guards", () => {
 });
 
 describe("runImport — apply", () => {
-  const writeArgv = [
+  const writeArgvPinning = (digest: string) => [
     `${SOURCE_FLAG}${SOURCE_PATH}`,
     WRITE_FLAG,
     `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+    `${EXPECT_PLAN_FLAG}${digest}`,
   ];
 
   it("writes inside the session and reports the applied plan", async () => {
-    const { deps, events, writes } = harness([sourceRow()]);
-    const result = await runImport(deps(writeArgv));
+    const rows = [sourceRow()];
+    const { deps, events, writes } = harness(rows);
+    const result = await runImport(deps(writeArgvPinning(digestFor(rows))));
 
     expect(events).toContain("write");
     expect(writes).toEqual(["user.create", "identity.create"]);
-    expect(result.hasConflicts).toBe(false);
+    expect(result.isRefused).toBe(false);
     expect(result.lines.at(0)).toContain("APPLIED");
   });
 
   it("connects with exactly the DSN the guard checked, never a different one", async () => {
-    const { deps, opened } = harness([sourceRow()]);
+    const rows = [sourceRow()];
+    const { deps, opened } = harness(rows);
 
-    await runImport(deps(writeArgv));
+    await runImport(deps(writeArgvPinning(digestFor(rows))));
 
     expect(opened).toEqual([DSN]);
   });
 
   it("refuses the whole run when any row conflicts, and still prints the report", async () => {
-    const { deps, writes } = harness([
+    const rows = [
       sourceRow({ id: 20 }),
       sourceRow({ id: 21, username: "b@tdp.local", user_plan_id: 9 }),
-    ]);
-    const result = await runImport(deps(writeArgv));
+    ];
+    const { deps, writes } = harness(rows);
+    const result = await runImport(deps(writeArgvPinning(digestFor(rows))));
 
-    expect(result.hasConflicts).toBe(true);
+    expect(result.isRefused).toBe(true);
     expect(result.lines.join("\n")).toContain("REFUSED: nothing was written");
     expect(result.lines.join("\n")).toContain("legacy catalog id out of range");
     expect(writes).toEqual([]);
   });
 
   it("closes the session after a refused apply", async () => {
-    const { deps, events } = harness([sourceRow({ user_plan_id: 9 })]);
+    const rows = [sourceRow({ user_plan_id: 9 })];
+    const { deps, events } = harness(rows);
 
-    await runImport(deps(writeArgv));
+    await runImport(deps(writeArgvPinning(digestFor(rows))));
 
     expect(events.at(-1)).toBe("close");
+  });
+});
+
+describe("runImport — plan pinning", () => {
+  const baseArgv = [`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`];
+  const A_VALID_LOOKING_DIGEST = "0123456789ab";
+
+  it("refuses to write at all without a pinned plan", async () => {
+    const { deps, events, writes } = harness([sourceRow()]);
+
+    await expect(runImport(deps([...baseArgv, WRITE_FLAG]))).rejects.toThrow(
+      /--expect-plan=<digest> is required to write/,
+    );
+    expect(events).not.toContain("write");
+    expect(writes).toEqual([]);
+  });
+
+  it("refuses a value that is not a digest, without printing it back", async () => {
+    const { deps } = harness([sourceRow()]);
+    const pastedByAccident = "s3cr3t-pasted-into-the-wrong-argument";
+    const argv = [...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}${pastedByAccident}`];
+
+    await expect(runImport(deps(argv))).rejects.toThrow(/is not a plan digest/);
+    await expect(runImport(deps(argv))).rejects.not.toThrow(new RegExp(pastedByAccident));
+  });
+
+  it("refuses a digest of the wrong length rather than comparing a prefix", async () => {
+    const { deps } = harness([sourceRow()]);
+
+    await expect(
+      runImport(deps([...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}0123456789abcdef`])),
+    ).rejects.toThrow(/is not a plan digest/);
+  });
+
+  it("writes nothing when the plan moved under the pin", async () => {
+    const { deps, events, writes } = harness([sourceRow()]);
+    const result = await runImport(
+      deps([...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}${A_VALID_LOOKING_DIGEST}`]),
+    );
+
+    expect(events).toContain("write");
+    expect(writes).toEqual([]);
+    expect(result.isRefused).toBe(true);
+    expect(result.lines.at(0)).toContain("the plan changed since the digest you pinned");
+  });
+
+  it("reads a pinned digest case-insensitively, the way it is pasted", async () => {
+    const rows = [sourceRow()];
+    const { deps, writes } = harness(rows);
+    const result = await runImport(
+      deps([...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}${digestFor(rows).toUpperCase()}`]),
+    );
+
+    expect(result.isRefused).toBe(false);
+    expect(writes).toEqual(["user.create", "identity.create"]);
+  });
+
+  it("calls a dry run whose pin still matches exactly what it is, not stale", async () => {
+    const rows = [sourceRow()];
+    const { deps, writes } = harness(rows);
+    const result = await runImport(deps([...baseArgv, `${EXPECT_PLAN_FLAG}${digestFor(rows)}`]));
+
+    expect(result.isRefused).toBe(false);
+    expect(result.lines.at(0)).toContain("DRY RUN");
+    expect(result.lines.at(0)).not.toContain("the plan changed");
+    expect(writes).toEqual([]);
+  });
+
+  it("checks a pin in a dry run too, and still writes nothing", async () => {
+    const { deps, events, writes } = harness([sourceRow()]);
+    const result = await runImport(
+      deps([...baseArgv, `${EXPECT_PLAN_FLAG}${A_VALID_LOOKING_DIGEST}`]),
+    );
+
+    expect(events).not.toContain("write");
+    expect(writes).toEqual([]);
+    expect(result.isRefused).toBe(true);
+    expect(result.lines.at(0)).toContain("the plan changed since the digest you pinned");
+  });
+
+  it("applies the very digest its own dry run printed", async () => {
+    const rows = [sourceRow()];
+    const { deps, writes } = harness(rows);
+    const dryRun = await runImport(deps(baseArgv));
+    const applied = await runImport(
+      deps([...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}${printedDigest(dryRun.lines)}`]),
+    );
+
+    expect(applied.lines.at(0)).toContain("APPLIED");
+    expect(writes).toEqual(["user.create", "identity.create"]);
+  });
+
+  it("refuses the apply when the export changed between the review and the write", async () => {
+    const reviewed = await runImport(harness([sourceRow()]).deps(baseArgv));
+    const { deps, writes } = harness([sourceRow({ training_level_id: 4 })]);
+    const applied = await runImport(
+      deps([...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}${printedDigest(reviewed.lines)}`]),
+    );
+
+    expect(applied.isRefused).toBe(true);
+    expect(writes).toEqual([]);
+  });
+
+  it("refuses the apply when the database moved between the review and the write", async () => {
+    const rows = [sourceRow()];
+    const reviewed = await runImport(harness(rows).deps(baseArgv));
+    const { deps, writes } = harness(
+      rows,
+      emptySnapshot({
+        users: [
+          {
+            id: "user_platform",
+            email: "athlete@tdp.local",
+            matchEmail: "athlete@tdp.local",
+            role: "ATHLETE",
+            deletedAt: null,
+            password: null,
+            identityLegacyUserId: null,
+          },
+        ],
+      }),
+    );
+    const applied = await runImport(
+      deps([...baseArgv, WRITE_FLAG, `${EXPECT_PLAN_FLAG}${printedDigest(reviewed.lines)}`]),
+    );
+
+    expect(applied.isRefused).toBe(true);
+    expect(applied.lines.at(0)).toContain("the plan changed since the digest you pinned");
+    expect(writes).toEqual([]);
   });
 });
 
@@ -289,6 +447,7 @@ describe("runImport — credential restore flag", () => {
         {
           legacyUserId: 20,
           userId: "user_platform",
+          importedPasswordHash: DRIFTED_COST_10,
           legacyRoleId: 1,
           legacyPlanId: 1,
           legacyLevelId: 2,
@@ -312,15 +471,16 @@ describe("runImport — credential restore flag", () => {
       ],
     });
 
-  const writeArgv = [
+  const writeArgvPinning = (isCredentialRestoreEnabled: boolean) => [
     `${SOURCE_FLAG}${SOURCE_PATH}`,
     WRITE_FLAG,
     `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+    `${EXPECT_PLAN_FLAG}${digestFor([sourceRow()], refreshSnapshot(), isCredentialRestoreEnabled)}`,
   ];
 
   it("leaves the stored credential alone when the flag is absent", async () => {
     const { deps, writes } = harness([sourceRow()], refreshSnapshot());
-    const result = await runImport(deps(writeArgv));
+    const result = await runImport(deps(writeArgvPinning(false)));
 
     expect(writes).not.toContain("user.update");
     expect(result.lines.join("\n")).toContain("credentials replaced 0");
@@ -329,10 +489,18 @@ describe("runImport — credential restore flag", () => {
 
   it("replaces the stored credential when the flag is present", async () => {
     const { deps, writes } = harness([sourceRow()], refreshSnapshot());
-    const result = await runImport(deps([...writeArgv, RESTORE_CREDENTIALS_FLAG]));
+    const result = await runImport(deps([...writeArgvPinning(true), RESTORE_CREDENTIALS_FLAG]));
 
     expect(writes).toContain("user.update");
     expect(result.lines.join("\n")).toContain("credentials replaced 1");
+  });
+
+  it("refuses a digest pinned without the flag when the flag is then passed", async () => {
+    const { deps, writes } = harness([sourceRow()], refreshSnapshot());
+    const result = await runImport(deps([...writeArgvPinning(false), RESTORE_CREDENTIALS_FLAG]));
+
+    expect(result.isRefused).toBe(true);
+    expect(writes).toEqual([]);
   });
 
   it("keeps the dry run honest about what the flag would do", async () => {
@@ -392,7 +560,7 @@ describe("readerFor — query shape", () => {
     const { client, calls } = fakeClient();
     const linkWhere = {
       channel: "INDIVIDUAL" as const,
-      legacyUserId: { in: [20] },
+      legacyUserId: { not: null },
       NOT: { athleteId: null },
     };
 

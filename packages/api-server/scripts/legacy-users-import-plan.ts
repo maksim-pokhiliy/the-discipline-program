@@ -1,6 +1,3 @@
-import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
-
-import { readBcryptCost } from "../src/endpoints/iam/bcrypt-cost";
 import {
   findLegacyCatalogEntry,
   LEGACY_TRAINING_LEVELS,
@@ -12,7 +9,6 @@ import { serializeLegacyDate } from "../src/endpoints/mobile-compat/legacy-date"
 import type { NormalizedLegacyUser } from "./legacy-users-import-source";
 
 export const ATHLETE_ROLE = "ATHLETE";
-export { readBcryptCost };
 
 export const IDENTITY_MIRROR_FIELDS = [
   "legacyRoleId",
@@ -32,6 +28,7 @@ export type IdentityMirror = Pick<NormalizedLegacyUser, IdentityMirrorField>;
 export type PlatformIdentity = IdentityMirror & {
   legacyUserId: number;
   userId: string;
+  importedPasswordHash: string | null;
 };
 
 export type PlatformIndividualLink = { legacyUserId: number; athleteId: string };
@@ -54,16 +51,17 @@ export type PlatformSnapshot = {
 
 export type FieldChange = { field: string; from: string; to: string };
 
-export type PasswordLeftReason =
+export type CredentialLeftReason =
   | "no-source-credential"
   | "matched-user-has-none"
-  | "platform-managed"
+  | "not-import-written"
   | "restore-not-enabled";
 
-export type PasswordChange =
+export type CredentialOutcome =
   | { kind: "unchanged" }
-  | { kind: "restored"; expectedStoredHash: string }
-  | { kind: "left-as-is"; reason: PasswordLeftReason };
+  | { kind: "marker-backfilled"; markerHash: string }
+  | { kind: "restored"; expectedStoredHash: string; nextHash: string }
+  | { kind: "left-as-is"; reason: CredentialLeftReason };
 
 export type ClassifyOptions = { isCredentialRestoreEnabled: boolean };
 
@@ -84,7 +82,7 @@ export type ImportAction =
       userId: string;
       userEmail: string;
       identityChanges: readonly FieldChange[];
-      passwordChange: PasswordChange;
+      credentialOutcome: CredentialOutcome;
     };
 
 export type ConflictReason =
@@ -98,7 +96,8 @@ export type ConflictReason =
   | "matched-user-soft-deleted"
   | "matched-user-has-other-identity"
   | "platform-user-claimed-twice"
-  | "identity-user-missing";
+  | "identity-user-missing"
+  | "link-and-identity-disagree";
 
 export type WarningKind =
   | "login-address-changes"
@@ -116,10 +115,17 @@ export type ImportConflict = { legacyUserId: number; reason: ConflictReason; det
 
 export type ImportWarning = { legacyUserId: number; kind: WarningKind; detail: string };
 
+export type ReconciliationSummary = {
+  linksChecked: number;
+  linksWithIdentity: number;
+  violations: number;
+};
+
 export type ImportPlan = {
   actions: readonly ImportAction[];
   conflicts: readonly ImportConflict[];
   warnings: readonly ImportWarning[];
+  reconciliation: ReconciliationSummary | null;
 };
 
 export const describeUnmappedCatalogIds = (row: NormalizedLegacyUser): string | null => {
@@ -160,11 +166,19 @@ export const diffIdentity = (
     return from === to ? [] : [{ field, from, to }];
   });
 
-export const decidePasswordChange = (
-  storedHash: string | null,
-  sourceHash: string | null,
-  isCredentialRestoreEnabled: boolean,
-): PasswordChange => {
+export type CredentialInputs = {
+  storedHash: string | null;
+  sourceHash: string | null;
+  markerHash: string | null;
+  isCredentialRestoreEnabled: boolean;
+};
+
+export const decideCredentialOutcome = ({
+  storedHash,
+  sourceHash,
+  markerHash,
+  isCredentialRestoreEnabled,
+}: CredentialInputs): CredentialOutcome => {
   if (sourceHash === null) {
     return { kind: "left-as-is", reason: "no-source-credential" };
   }
@@ -174,16 +188,16 @@ export const decidePasswordChange = (
   }
 
   if (storedHash === sourceHash) {
-    return { kind: "unchanged" };
+    return markerHash === null
+      ? { kind: "marker-backfilled", markerHash: sourceHash }
+      : { kind: "unchanged" };
   }
 
-  const cost = readBcryptCost(storedHash);
-
-  if (cost === null || cost >= AUTH_CONSTANTS.BCRYPT_COST_FACTOR) {
-    return { kind: "left-as-is", reason: "platform-managed" };
+  if (markerHash !== storedHash) {
+    return { kind: "left-as-is", reason: "not-import-written" };
   }
 
   return isCredentialRestoreEnabled
-    ? { kind: "restored", expectedStoredHash: storedHash }
+    ? { kind: "restored", expectedStoredHash: storedHash, nextHash: sourceHash }
     : { kind: "left-as-is", reason: "restore-not-enabled" };
 };

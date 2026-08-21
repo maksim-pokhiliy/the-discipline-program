@@ -17,6 +17,7 @@ type Recorded = { identityArgs: unknown[]; linkArgs: unknown[]; userArgs: unknow
 const identityRow = (legacyUserId: number, userId: string): PlatformIdentity => ({
   legacyUserId,
   userId,
+  importedPasswordHash: null,
   legacyRoleId: 1,
   legacyPlanId: 1,
   legacyLevelId: 2,
@@ -109,7 +110,7 @@ describe("loadPlatformSnapshot", () => {
     ]);
   });
 
-  it("reads only individual links that actually name an athlete", async () => {
+  it("reads every individual link that names both a legacy id and an athlete", async () => {
     const { reader, recorded } = fakeReader();
 
     await loadPlatformSnapshot(reader, rowsFrom(sourceRow()));
@@ -117,10 +118,41 @@ describe("loadPlatformSnapshot", () => {
     expect(recorded.linkArgs.at(0)).toMatchObject({
       where: {
         channel: INDIVIDUAL_CHANNEL,
-        legacyUserId: { in: [20] },
+        legacyUserId: { not: null },
         NOT: { athleteId: null },
       },
     });
+  });
+
+  it("keeps links outside the export, so the reconciliation is not blind to them", async () => {
+    const { reader } = fakeReader({
+      links: [
+        { legacyUserId: 20, athleteId: "user_linked" },
+        { legacyUserId: 77, athleteId: "user_unimported" },
+      ],
+    });
+    const snapshot = await loadPlatformSnapshot(reader, rowsFrom(sourceRow()));
+
+    expect(snapshot.individualLinks).toEqual([
+      { legacyUserId: 20, athleteId: "user_linked" },
+      { legacyUserId: 77, athleteId: "user_unimported" },
+    ]);
+  });
+
+  it("still resolves users only for the links this export is about", async () => {
+    const { reader, recorded } = fakeReader({
+      links: [
+        { legacyUserId: 20, athleteId: "user_linked" },
+        { legacyUserId: 77, athleteId: "user_unimported" },
+      ],
+    });
+
+    await loadPlatformSnapshot(reader, rowsFrom(sourceRow()));
+
+    const where = (recorded.userArgs.at(0) as { where: { OR: unknown[] } }).where;
+
+    expect(where.OR).toContainEqual({ id: { in: ["user_linked"] } });
+    expect(JSON.stringify(where)).not.toContain("user_unimported");
   });
 
   it("drops link rows whose columns are null despite the filter", async () => {

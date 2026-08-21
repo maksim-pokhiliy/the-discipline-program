@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+
 import {
   EXPECT_HOST_FLAG,
+  EXPECT_PLAN_FLAG,
   hasFlag,
   parseTarget,
+  readExpectedPlan,
   readFlag,
   rejectUnknownFlags,
   requireEnv,
   requireExpectedHost,
+  requireExpectedPlan,
   requireFlag,
   requireNamedHost,
   requireAttestedTarget,
@@ -108,13 +113,29 @@ describe("rejectUnknownFlags", () => {
     ).not.toThrow();
   });
 
-  it("refuses a misspelled flag rather than silently ignoring it", () => {
+  it("refuses a misspelled flag rather than silently ignoring it, and names it", () => {
     const message = messageOf(() =>
       rejectUnknownFlags(["node", "script.ts", "--sorce=/tmp/x"], KNOWN),
     );
 
     expect(message).toContain("unrecognised flag");
-    expect(message).toContain("--sorce=/tmp/x");
+    expect(message).toContain("--sorce=");
+  });
+
+  it("names only the flag, never the value — a typo is where a credential lands", () => {
+    const message = messageOf(() =>
+      rejectUnknownFlags(["node", "script.ts", `--expect-pan=${GOLDEN_BCRYPT_HASH}`], KNOWN),
+    );
+
+    expect(message).toContain("--expect-pan=");
+    expect(message).not.toContain(GOLDEN_BCRYPT_HASH);
+    expect(message).not.toContain("$2a$");
+  });
+
+  it("names a misspelled boolean flag whole, having no value to withhold", () => {
+    const message = messageOf(() => rejectUnknownFlags(["node", "script.ts", "--wrote"], KNOWN));
+
+    expect(message).toContain("--wrote");
   });
 
   it("refuses a near-miss of a real flag, which is the dangerous case", () => {
@@ -297,6 +318,57 @@ describe("requireAttestedTarget", () => {
     expectNoLeak(messageOf(() => requireAttestedTarget([WRITE_FLAG, EXPECT_HOST_FLAG], DSN)));
     expectNoLeak(
       messageOf(() => requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}wrong.invalid`], DSN)),
+    );
+  });
+});
+
+describe("readExpectedPlan", () => {
+  const DIGEST = "7f3a91c04e2b";
+
+  it("returns null when no plan was pinned", () => {
+    expect(readExpectedPlan([WRITE_FLAG])).toBeNull();
+  });
+
+  it("reads a pinned digest", () => {
+    expect(readExpectedPlan([`${EXPECT_PLAN_FLAG}${DIGEST}`])).toBe(DIGEST);
+  });
+
+  it("lower-cases a digest so a pasted upper-case one still matches", () => {
+    expect(readExpectedPlan([`${EXPECT_PLAN_FLAG}${DIGEST.toUpperCase()}`])).toBe(DIGEST);
+  });
+
+  it("refuses anything that is not twelve hexadecimal characters", () => {
+    for (const value of ["", "abc", "7f3a91c04e2bff", "7f3a91c04e2g", "7f3a 91c04e2b"]) {
+      expect(() => readExpectedPlan([`${EXPECT_PLAN_FLAG}${value}`])).toThrow(
+        /is not a plan digest/,
+      );
+    }
+  });
+
+  it("never prints back the value it rejected, in case a credential landed there", () => {
+    const message = messageOf(() => readExpectedPlan([`${EXPECT_PLAN_FLAG}${DSN}`]));
+
+    expectNoLeak(message);
+  });
+
+  it("refuses a pin stated more than once rather than taking the first", () => {
+    expect(() =>
+      readExpectedPlan([`${EXPECT_PLAN_FLAG}${DIGEST}`, `${EXPECT_PLAN_FLAG}0123456789ab`]),
+    ).toThrow(/exactly once/);
+  });
+});
+
+describe("requireExpectedPlan", () => {
+  it("explains why a write cannot proceed unpinned", () => {
+    const message = messageOf(() => requireExpectedPlan([WRITE_FLAG]));
+
+    expect(message).toContain("--expect-plan=<digest> is required to write");
+    expect(message).toContain("re-decides inside its own transaction");
+  });
+
+  it("returns the digest when one is pinned", () => {
+    expect(requireExpectedPlan([WRITE_FLAG, `${EXPECT_PLAN_FLAG}7f3a91c04e2b`])).toBe(
+      "7f3a91c04e2b",
     );
   });
 });

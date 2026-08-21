@@ -6,17 +6,21 @@ import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { applyImport, ImportConflictError, type ImportWriter } from "./legacy-users-import-apply";
 import { classifyImport } from "./legacy-users-import-classify";
-import type { ImportPlan, PlatformIdentity } from "./legacy-users-import-plan";
+import { planDigest, PlanDigestMismatchError } from "./legacy-users-import-digest";
+import type { ClassifyOptions, ImportPlan, PlatformIdentity } from "./legacy-users-import-plan";
 import { renderImportReport } from "./legacy-users-import-report";
 import { type ImportReader, loadPlatformSnapshot } from "./legacy-users-import-snapshot";
-import { parseLegacySource } from "./legacy-users-import-source";
+import { type ParsedLegacySource, parseLegacySource } from "./legacy-users-import-source";
 import {
   EXPECT_HOST_FLAG,
+  EXPECT_PLAN_FLAG,
   hasFlag,
   parseTarget,
+  readExpectedPlan,
   rejectUnknownFlags,
   requireAttestedTarget,
   requireEnv,
+  requireExpectedPlan,
   requireFlag,
   RESTORE_CREDENTIALS_FLAG,
   WRITE_FLAG,
@@ -29,6 +33,7 @@ export const TRANSACTION_MAX_WAIT_MS = 15_000;
 const IDENTITY_SELECT = {
   legacyUserId: true,
   userId: true,
+  importedPasswordHash: true,
   legacyRoleId: true,
   legacyPlanId: true,
   legacyLevelId: true,
@@ -61,7 +66,13 @@ export type RunImportDeps = {
   openSession: (databaseUrl: string) => ImportSession;
 };
 
-export type RunImportResult = { lines: readonly string[]; hasConflicts: boolean };
+export type RunImportResult = { lines: readonly string[]; isRefused: boolean };
+
+type PlanInputs = { source: ParsedLegacySource; options: ClassifyOptions };
+
+type RunMode =
+  | { kind: "dry-run"; pinnedDigest: string | null }
+  | { kind: "apply"; pinnedDigest: string };
 
 export const withHostWithheld = (message: string, hostname: string): string =>
   hostname === "" ? message : message.replaceAll(hostname, "<host withheld>");
@@ -120,67 +131,104 @@ export const openPrismaSession = (databaseUrl: string): ImportSession => {
   };
 };
 
+const buildPlan = async (reader: ImportReader, inputs: PlanInputs): Promise<ImportPlan> =>
+  classifyImport(
+    inputs.source,
+    await loadPlatformSnapshot(reader, inputs.source.rows),
+    inputs.options,
+  );
+
+const resolveMode = (argv: readonly string[]): RunMode =>
+  hasFlag(argv, WRITE_FLAG)
+    ? { kind: "apply", pinnedDigest: requireExpectedPlan(argv) }
+    : { kind: "dry-run", pinnedDigest: readExpectedPlan(argv) };
+
+const runDryRun = async (
+  session: ImportSession,
+  inputs: PlanInputs,
+  pinnedDigest: string | null,
+): Promise<RunImportResult> => {
+  const plan = await session.read((reader) => buildPlan(reader, inputs));
+  const isStale = pinnedDigest !== null && planDigest(plan) !== pinnedDigest;
+
+  return {
+    lines: renderImportReport(plan, isStale ? "stale-plan" : "dry-run"),
+    isRefused: isStale || plan.conflicts.length > 0,
+  };
+};
+
+const runApply = async (
+  session: ImportSession,
+  inputs: PlanInputs,
+  pinnedDigest: string,
+): Promise<RunImportResult> => {
+  const attempted: { plan: ImportPlan | null } = { plan: null };
+
+  try {
+    await session.write(async (reader, writer) => {
+      const planned = await buildPlan(reader, inputs);
+
+      attempted.plan = planned;
+
+      const recomputed = planDigest(planned);
+
+      if (recomputed !== pinnedDigest) {
+        throw new PlanDigestMismatchError(pinnedDigest, recomputed);
+      }
+
+      await applyImport(writer, planned);
+    });
+  } catch (error: unknown) {
+    const refused = attempted.plan;
+
+    if (refused === null) {
+      throw error;
+    }
+
+    if (error instanceof PlanDigestMismatchError) {
+      return { lines: renderImportReport(refused, "stale-plan"), isRefused: true };
+    }
+
+    if (error instanceof ImportConflictError) {
+      return { lines: renderImportReport(refused, "refused"), isRefused: true };
+    }
+
+    throw error;
+  }
+
+  const applied = attempted.plan;
+
+  if (applied === null) {
+    throw new Error("the transaction returned without producing a plan");
+  }
+
+  return { lines: renderImportReport(applied, "applied"), isRefused: false };
+};
+
 export const runImport = async (deps: RunImportDeps): Promise<RunImportResult> => {
   rejectUnknownFlags(deps.argv, [
     SOURCE_FLAG,
     WRITE_FLAG,
     EXPECT_HOST_FLAG,
+    EXPECT_PLAN_FLAG,
     RESTORE_CREDENTIALS_FLAG,
   ]);
 
   const sourcePath = requireFlag(deps.argv, SOURCE_FLAG);
-  const isWriting = hasFlag(deps.argv, WRITE_FLAG);
   const databaseUrl = requireEnv(deps.env, "DATABASE_URL");
   const isCredentialRestoreEnabled = hasFlag(deps.argv, RESTORE_CREDENTIALS_FLAG);
   const source = parseLegacySource(JSON.parse(deps.readSourceFile(sourcePath)));
 
   requireAttestedTarget(deps.argv, databaseUrl);
 
+  const mode = resolveMode(deps.argv);
+  const inputs: PlanInputs = { source, options: { isCredentialRestoreEnabled } };
   const session = deps.openSession(databaseUrl);
 
   try {
-    if (!isWriting) {
-      const plan = await session.read(async (reader) =>
-        classifyImport(source, await loadPlatformSnapshot(reader, source.rows), {
-          isCredentialRestoreEnabled,
-        }),
-      );
-
-      return {
-        lines: renderImportReport(plan, "dry-run"),
-        hasConflicts: plan.conflicts.length > 0,
-      };
-    }
-
-    const attempted: { plan: ImportPlan | null } = { plan: null };
-
-    try {
-      await session.write(async (reader, writer) => {
-        const planned = classifyImport(source, await loadPlatformSnapshot(reader, source.rows), {
-          isCredentialRestoreEnabled,
-        });
-
-        attempted.plan = planned;
-
-        await applyImport(writer, planned);
-      });
-    } catch (error: unknown) {
-      const refused = attempted.plan;
-
-      if (!(error instanceof ImportConflictError) || refused === null) {
-        throw error;
-      }
-
-      return { lines: renderImportReport(refused, "refused"), hasConflicts: true };
-    }
-
-    const applied = attempted.plan;
-
-    if (applied === null) {
-      throw new Error("the transaction returned without producing a plan");
-    }
-
-    return { lines: renderImportReport(applied, "applied"), hasConflicts: false };
+    return mode.kind === "apply"
+      ? await runApply(session, inputs, mode.pinnedDigest)
+      : await runDryRun(session, inputs, mode.pinnedDigest);
   } finally {
     await session.close();
   }
@@ -198,7 +246,7 @@ const main = async (): Promise<void> => {
     console.log(line);
   }
 
-  if (result.hasConflicts) {
+  if (result.isRefused) {
     process.exitCode = 1;
   }
 };

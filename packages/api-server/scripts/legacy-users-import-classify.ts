@@ -15,6 +15,7 @@ import {
   type ImportWarning,
   type PlatformSnapshot,
 } from "./legacy-users-import-plan";
+import { reconcileIdentityLinks } from "./legacy-users-import-reconcile";
 import type { ParsedLegacySource, SourceDefect } from "./legacy-users-import-source";
 
 const duplicatesOf = <T>(values: readonly T[]): Set<T> => {
@@ -63,13 +64,15 @@ const withClaimCollisions = (
 
   const contested = [...claimedBy.entries()].filter(([, ids]) => ids.length > 1);
   const contestedIds = new Set(contested.map(([userId]) => userId));
-  const conflicts = contested.flatMap(([, ids]) =>
-    ids.map((legacyUserId) => ({
+  const conflicts = contested.flatMap(([, ids]) => {
+    const named = [...ids].sort((left, right) => left - right).join(", ");
+
+    return ids.map((legacyUserId) => ({
       legacyUserId,
       reason: "platform-user-claimed-twice" as const,
-      detail: `legacy ids ${ids.join(", ")} all resolve to one platform user, which can hold only one legacy identity`,
-    })),
-  );
+      detail: `legacy ids ${named} all resolve to one platform user, which can hold only one legacy identity`,
+    }));
+  });
 
   return {
     actions: actions.filter((action) => {
@@ -198,10 +201,12 @@ export const classifyImport = (
 
   const claims = withClaimCollisions(staged);
   const sourceIds = new Set(source.rows.map((row) => row.legacyUserId));
+  const reconciled = source.rows.length === 0 ? null : reconcileIdentityLinks(snapshot);
 
   return {
     actions: claims.actions,
-    conflicts: [...conflicts, ...claims.conflicts],
+    conflicts: [...conflicts, ...claims.conflicts, ...(reconciled?.conflicts ?? [])],
     warnings: [...warnings, ...identitiesAbsentFromSource(snapshot, sourceIds)],
+    reconciliation: reconciled?.summary ?? null,
   };
 };

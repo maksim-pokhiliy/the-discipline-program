@@ -87,6 +87,7 @@ const planFor = (
 const storedIdentity = (overrides = {}) => ({
   legacyUserId: LEGACY_ID,
   userId: "user_platform",
+  importedPasswordHash: null,
   legacyRoleId: 1,
   legacyPlanId: 1,
   legacyLevelId: 2,
@@ -101,13 +102,23 @@ const storedIdentity = (overrides = {}) => ({
 describe("applyImport — create", () => {
   it("writes one user and one identity", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
       planFor([sourceRow({ first_name: "Test", last_name: "Athlete" })], emptySnapshot()),
     );
 
-    expect(counts).toEqual({ created: 1, attached: 0, refreshed: 0, credentialsRestored: 0 });
     expect(paths(calls)).toEqual(["user.create", "identity.create"]);
+  });
+
+  it("records the credential it wrote on the identity it created", async () => {
+    const { writer, calls } = fakeWriter();
+
+    await applyImport(writer, planFor([sourceRow()], emptySnapshot()));
+
+    expect(argsAt(calls, "identity.create")).toMatchObject({
+      data: { importedPasswordHash: GOLDEN_BCRYPT_HASH },
+    });
   });
 
   it("carries the legacy hash into the new user byte for byte", async () => {
@@ -174,7 +185,9 @@ describe("applyImport — create", () => {
     await applyImport(writer, planFor([sourceRow({ id: 17, username: "admin" })], emptySnapshot()));
 
     expect(argsAt(calls, "user.create")).toMatchObject({ data: { password: null } });
-    expect(argsAt(calls, "identity.create")).toMatchObject({ data: { isEnabled: false } });
+    expect(argsAt(calls, "identity.create")).toMatchObject({
+      data: { isEnabled: false, importedPasswordHash: null },
+    });
   });
 });
 
@@ -195,9 +208,9 @@ describe("applyImport — attach", () => {
 
   it("writes only the identity and never touches the platform user", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(writer, planFor([sourceRow()], matchedSnapshot));
 
-    expect(counts).toEqual({ created: 0, attached: 1, refreshed: 0, credentialsRestored: 0 });
+    await applyImport(writer, planFor([sourceRow()], matchedSnapshot));
+
     expect(paths(calls)).toEqual(["identity.create"]);
   });
 
@@ -210,12 +223,22 @@ describe("applyImport — attach", () => {
       data: { userId: "user_platform", legacyUserId: LEGACY_ID },
     });
   });
+
+  it("claims no credential provenance for a user whose password it never wrote", async () => {
+    const { writer, calls } = fakeWriter();
+
+    await applyImport(writer, planFor([sourceRow()], matchedSnapshot));
+
+    expect(argsAt(calls, "identity.create")).toMatchObject({
+      data: { importedPasswordHash: null },
+    });
+  });
 });
 
 describe("applyImport — refresh", () => {
-  const snapshotWith = (password: string | null) =>
+  const snapshotWith = (password: string | null, marker: string | null = null) =>
     emptySnapshot({
-      identities: [storedIdentity()],
+      identities: [storedIdentity({ importedPasswordHash: marker })],
       users: [
         {
           id: "user_platform",
@@ -231,12 +254,15 @@ describe("applyImport — refresh", () => {
 
   it("updates the identity mirror in place", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
-      planFor([sourceRow({ training_level_id: 4 })], snapshotWith(GOLDEN_BCRYPT_HASH)),
+      planFor(
+        [sourceRow({ training_level_id: 4 })],
+        snapshotWith(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH),
+      ),
     );
 
-    expect(counts).toEqual({ created: 0, attached: 0, refreshed: 1, credentialsRestored: 0 });
     expect(paths(calls)).toEqual(["identity.update"]);
     expect(argsAt(calls, "identity.update")).toMatchObject({
       where: { legacyUserId: LEGACY_ID },
@@ -244,40 +270,76 @@ describe("applyImport — refresh", () => {
     });
   });
 
-  it("restores the export hash over a drifted cost-10 credential when asked to", async () => {
+  it("leaves the marker alone on a mirror-only update", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
-      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH), true),
+      planFor(
+        [sourceRow({ training_level_id: 4 })],
+        snapshotWith(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH),
+      ),
     );
 
-    expect(counts.credentialsRestored).toBe(1);
-    expect(paths(calls)).toEqual(["user.update"]);
+    expect(argsAt(calls, "identity.update").data).not.toHaveProperty("importedPasswordHash");
+  });
+
+  it("records the marker for a credential it can see is the one it wrote", async () => {
+    const { writer, calls } = fakeWriter();
+
+    await applyImport(writer, planFor([sourceRow()], snapshotWith(GOLDEN_BCRYPT_HASH)));
+
+    expect(paths(calls)).toEqual(["identity.update"]);
+    expect(argsAt(calls, "identity.update")).toMatchObject({
+      where: { legacyUserId: LEGACY_ID },
+      data: { importedPasswordHash: GOLDEN_BCRYPT_HASH },
+    });
+  });
+
+  it("restores the export hash over a marked credential when asked to", async () => {
+    const { writer, calls } = fakeWriter();
+
+    await applyImport(
+      writer,
+      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH), true),
+    );
+
+    expect(paths(calls)).toEqual(["user.update", "identity.update"]);
     expect(argsAt(calls, "user.update")).toEqual({
       where: { id: "user_platform", password: OTHER_COST_10_HASH },
       data: { password: GOLDEN_BCRYPT_HASH },
     });
   });
 
-  it("leaves a platform-managed cost-12 credential untouched", async () => {
+  it("moves the marker onto the credential it just restored", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
-      planFor([sourceRow()], snapshotWith(COST_12_HASH), true),
+      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH), true),
     );
 
-    expect(counts.credentialsRestored).toBe(0);
+    expect(argsAt(calls, "identity.update")).toMatchObject({
+      data: { importedPasswordHash: GOLDEN_BCRYPT_HASH },
+    });
+  });
+
+  it("leaves a credential no marker vouches for untouched, whatever its cost factor", async () => {
+    const { writer, calls } = fakeWriter();
+
+    await applyImport(writer, planFor([sourceRow()], snapshotWith(COST_12_HASH), true));
+
     expect(paths(calls)).toEqual([]);
   });
 
-  it("never replaces a drifted credential unless restore is explicitly enabled", async () => {
+  it("never replaces a marked credential unless restore is explicitly enabled", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(
+
+    await applyImport(
       writer,
-      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH)),
+      planFor([sourceRow()], snapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH)),
     );
 
-    expect(counts.credentialsRestored).toBe(0);
     expect(paths(calls)).not.toContain("user.update");
   });
 
@@ -291,10 +353,10 @@ describe("applyImport — refresh", () => {
 
   it("is a no-op on a second run against state it already wrote", async () => {
     const { writer, calls } = fakeWriter();
-    const plan = planFor([sourceRow()], snapshotWith(GOLDEN_BCRYPT_HASH));
-    const counts = await applyImport(writer, plan);
+    const plan = planFor([sourceRow()], snapshotWith(GOLDEN_BCRYPT_HASH, GOLDEN_BCRYPT_HASH));
 
-    expect(counts).toEqual({ created: 0, attached: 0, refreshed: 1, credentialsRestored: 0 });
+    await applyImport(writer, plan);
+
     expect(calls).toEqual([]);
     expect(plan.actions.at(0)).toMatchObject({ identityChanges: [] });
   });
@@ -332,9 +394,14 @@ describe("applyImport — refusal", () => {
 
   it("writes nothing at all when the plan is empty", async () => {
     const { writer, calls } = fakeWriter();
-    const counts = await applyImport(writer, { actions: [], conflicts: [], warnings: [] });
 
-    expect(counts).toEqual({ created: 0, attached: 0, refreshed: 0, credentialsRestored: 0 });
+    await applyImport(writer, {
+      actions: [],
+      conflicts: [],
+      warnings: [],
+      reconciliation: { linksChecked: 0, linksWithIdentity: 0, violations: 0 },
+    });
+
     expect(calls).toEqual([]);
   });
 });
