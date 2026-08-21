@@ -11,8 +11,7 @@ import {
   type ImportWarning,
   renderMirrorValue,
 } from "./legacy-users-import-plan";
-
-export const PLAN_DIGEST_LENGTH = 12;
+import { PLAN_DIGEST_LENGTH } from "./script-target-guard";
 
 const CREDENTIAL_FINGERPRINT_LENGTH = 16;
 

@@ -66,7 +66,7 @@ const mirrorOf = (row: NormalizedLegacyUser): IdentityMirror => ({
   dateOfBirth: row.dateOfBirth,
 });
 
-export const markerWriteOf = (outcome: CredentialOutcome): string | null => {
+const markerWriteOf = (outcome: CredentialOutcome): string | null => {
   if (outcome.kind === "marker-backfilled") {
     return outcome.markerHash;
   }

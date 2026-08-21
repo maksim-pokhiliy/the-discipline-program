@@ -3,7 +3,9 @@ export const EXPECT_HOST_FLAG = "--expect-host=";
 export const EXPECT_PLAN_FLAG = "--expect-plan=";
 export const RESTORE_CREDENTIALS_FLAG = "--restore-credentials";
 
-const PLAN_DIGEST_PATTERN = /^[0-9a-f]{12}$/i;
+export const PLAN_DIGEST_LENGTH = 12;
+
+const PLAN_DIGEST_PATTERN = new RegExp(`^[0-9a-f]{${String(PLAN_DIGEST_LENGTH)}}$`, "i");
 
 export const readFlag = (argv: readonly string[], prefix: string): string | null => {
   const matches = argv.filter((candidate) => candidate.startsWith(prefix));
