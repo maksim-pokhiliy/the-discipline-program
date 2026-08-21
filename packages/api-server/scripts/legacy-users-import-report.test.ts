@@ -360,6 +360,19 @@ describe("renderImportReport", () => {
     expect(report).not.toContain("now recorded as such");
   });
 
+  it("says the reconciliation was never assessed rather than reporting a clean nothing", () => {
+    const unreadable = planFor([sourceRow({ username: "not-an-address" })], emptySnapshot());
+
+    expect(unreadable.actions).toEqual([]);
+    expect(unreadable.reconciliation).toBeNull();
+
+    const report = render(unreadable);
+
+    expect(report).toContain("RECONCILIATION not assessed");
+    expect(report).toContain("the database was never consulted");
+    expect(report).not.toContain("violations 0");
+  });
+
   it("does not invite a pin on a plan that can only be refused", () => {
     const report = render(planFor([sourceRow({ training_level_id: 9 })], emptySnapshot()));
 

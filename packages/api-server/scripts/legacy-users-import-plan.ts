@@ -125,7 +125,7 @@ export type ImportPlan = {
   actions: readonly ImportAction[];
   conflicts: readonly ImportConflict[];
   warnings: readonly ImportWarning[];
-  reconciliation: ReconciliationSummary;
+  reconciliation: ReconciliationSummary | null;
 };
 
 export const describeUnmappedCatalogIds = (row: NormalizedLegacyUser): string | null => {

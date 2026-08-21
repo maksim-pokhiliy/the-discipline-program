@@ -201,12 +201,12 @@ export const classifyImport = (
 
   const claims = withClaimCollisions(staged);
   const sourceIds = new Set(source.rows.map((row) => row.legacyUserId));
-  const reconciled = reconcileIdentityLinks(snapshot);
+  const reconciled = source.rows.length === 0 ? null : reconcileIdentityLinks(snapshot);
 
   return {
     actions: claims.actions,
-    conflicts: [...conflicts, ...claims.conflicts, ...reconciled.conflicts],
+    conflicts: [...conflicts, ...claims.conflicts, ...(reconciled?.conflicts ?? [])],
     warnings: [...warnings, ...identitiesAbsentFromSource(snapshot, sourceIds)],
-    reconciliation: reconciled.summary,
+    reconciliation: reconciled?.summary ?? null,
   };
 };

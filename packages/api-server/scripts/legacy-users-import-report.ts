@@ -121,10 +121,16 @@ const summaryLine = (plan: ImportPlan): string => {
   );
 };
 
-const reconciliationLine = (plan: ImportPlan): string =>
-  `RECONCILIATION individual links ${plan.reconciliation.linksChecked} · ` +
-  `matched to a stored identity ${plan.reconciliation.linksWithIdentity} · ` +
-  `violations ${plan.reconciliation.violations}`;
+const reconciliationLine = (plan: ImportPlan): string => {
+  const { reconciliation } = plan;
+
+  return reconciliation === null
+    ? "RECONCILIATION not assessed — no row in this export could be read, so the database was " +
+        "never consulted"
+    : `RECONCILIATION individual links ${reconciliation.linksChecked} · ` +
+        `matched to a stored identity ${reconciliation.linksWithIdentity} · ` +
+        `violations ${reconciliation.violations}`;
+};
 
 const digestLine = (plan: ImportPlan, mode: ReportMode): string => {
   const digest = planDigest(plan);
