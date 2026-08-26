@@ -71,7 +71,7 @@ const requireLoopbackDatabaseUrl = (): string => {
 
   if (!LOOPBACK_HOSTS.has(hostname)) {
     throw new Error(
-      `the legacy import probe WRITES to its target and derives --expect-host from the very DSN ` +
+      `the legacy import probe WRITES to its target and derives its attestation from the very DSN ` +
         `it connects to, so it is only safe against a throwaway local database. This run resolved ` +
         `${hostname}, which is not loopback. Point DATABASE_URL at a local container and re-run.`,
     );
@@ -118,6 +118,16 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
   let firstReport: string;
   let secondReport: string;
 
+  const attestationFor = (dsn: string): string[] => {
+    const target = new URL(dsn);
+    const authority = target.port === "" ? target.hostname : `${target.hostname}:${target.port}`;
+
+    return [
+      `--expect-host=${authority}`,
+      `--expect-database=${target.pathname.replace(/^\//, "")}`,
+    ];
+  };
+
   const runImportCli = (args: readonly string[]): string => {
     try {
       return execFileSync(
@@ -141,13 +151,13 @@ describe.skipIf(!SHOULD_RUN)("legacy users import vertical", () => {
   };
 
   const dryRun = (): string =>
-    runImportCli([`--source=${sourcePath}`, `--expect-host=${new URL(databaseUrl).hostname}`]);
+    runImportCli([`--source=${sourcePath}`, ...attestationFor(databaseUrl)]);
 
   const applyPinning = (digest: string): string =>
     runImportCli([
       `--source=${sourcePath}`,
       "--write",
-      `--expect-host=${new URL(databaseUrl).hostname}`,
+      ...attestationFor(databaseUrl),
       `--expect-plan=${digest}`,
     ]);
 

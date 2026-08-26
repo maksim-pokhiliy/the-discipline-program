@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import {
+  EXPECT_DATABASE_FLAG,
   EXPECT_HOST_FLAG,
   EXPECT_PLAN_FLAG,
   hasFlag,
@@ -11,6 +12,7 @@ import {
   readFlag,
   rejectUnknownFlags,
   requireEnv,
+  requireExpectedDatabase,
   requireExpectedHost,
   requireExpectedPlan,
   requireFlag,
@@ -22,6 +24,8 @@ import {
 const SCHEME = "postgresql:";
 const SECRET_PASSWORD = "sup3r-s3cret-passw0rd";
 const TARGET_HOST = "db.example-target.invalid";
+const TARGET_AUTHORITY = `${TARGET_HOST}:5432`;
+const TARGET_DATABASE = "platform";
 const DSN = `${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432/platform`;
 const HOSTLESS_DSN = `${SCHEME}///platform`;
 
@@ -168,10 +172,17 @@ describe("rejectUnknownFlags", () => {
     ).not.toThrow();
   });
 
-  it("ignores positional arguments and the node argv preamble", () => {
-    expect(() =>
-      rejectUnknownFlags(["node", "--experimental-x", "script.ts", "--write"], KNOWN),
-    ).not.toThrow();
+  it("ignores the node argv preamble, however it was invoked", () => {
+    expect(() => rejectUnknownFlags(["node", "--experimental-x", "--write"], KNOWN)).not.toThrow();
+  });
+
+  it("refuses a bare argument, without printing what it was", () => {
+    const message = messageOf(() =>
+      rejectUnknownFlags(["node", "script.ts", "/home/me/secret-export.json"], KNOWN),
+    );
+
+    expect(message).toContain("flags only");
+    expect(message).not.toContain("secret-export");
   });
 });
 
@@ -240,7 +251,7 @@ describe("requireExpectedHost", () => {
 
   it("accepts a stated host that matches the DSN", () => {
     expect(() =>
-      requireExpectedHost([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_HOST}`], target),
+      requireExpectedHost([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`], target),
     ).not.toThrow();
   });
 
@@ -279,8 +290,85 @@ describe("requireExpectedHost", () => {
 
   it("compares hostnames case-insensitively, the way DNS does", () => {
     expect(() =>
-      requireExpectedHost([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_HOST.toUpperCase()}`], target),
+      requireExpectedHost(
+        [WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY.toUpperCase()}`],
+        target,
+      ),
     ).not.toThrow();
+  });
+});
+
+describe("requireExpectedDatabase", () => {
+  const target = new URL(DSN);
+
+  it("accepts a stated database that matches the DSN", () => {
+    expect(() =>
+      requireExpectedDatabase([`${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`], target),
+    ).not.toThrow();
+  });
+
+  it("refuses when the flag is missing, in a dry run as well as a write", () => {
+    expect(messageOf(() => requireExpectedDatabase([], target))).toContain(
+      `${EXPECT_DATABASE_FLAG}<name> is required`,
+    );
+  });
+
+  it("refuses an empty value rather than reading it as a choice", () => {
+    expect(messageOf(() => requireExpectedDatabase([EXPECT_DATABASE_FLAG], target))).toContain(
+      "empty value",
+    );
+  });
+
+  it("refuses two databases on one host that differ only by name", () => {
+    const rehearsal = new URL(
+      `${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432/platform_local`,
+    );
+    const message = messageOf(() =>
+      requireExpectedDatabase([`${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`], rehearsal),
+    );
+
+    expect(message).toContain("does not match the database");
+    expect(message).not.toContain("platform_local");
+    expect(message).not.toContain(SECRET_PASSWORD);
+  });
+
+  it("refuses a DSN that names no database at all", () => {
+    const nameless = new URL(`${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432`);
+
+    expect(
+      messageOf(() => requireExpectedDatabase([`${EXPECT_DATABASE_FLAG}x`], nameless)),
+    ).toContain("names no database");
+  });
+});
+
+describe("requireExpectedHost — the port is part of the target", () => {
+  const target = new URL(DSN);
+
+  it("refuses a bare hostname when the DSN names a port", () => {
+    const message = messageOf(() =>
+      requireExpectedHost([`${EXPECT_HOST_FLAG}${TARGET_HOST}`], target),
+    );
+
+    expect(message).toContain("does not match the host");
+    expect(message).not.toContain(SECRET_PASSWORD);
+  });
+
+  it("accepts a bare hostname when the DSN names no port", () => {
+    const portless = new URL(`${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}/platform`);
+
+    expect(() =>
+      requireExpectedHost([`${EXPECT_HOST_FLAG}${TARGET_HOST}`], portless),
+    ).not.toThrow();
+  });
+});
+
+describe("requireNamedHost — the host query parameter", () => {
+  it.each(["host", "HOST", "Host"])("refuses a %s query parameter whatever its case", (name) => {
+    const decoy = new URL(
+      `${SCHEME}//importer:${SECRET_PASSWORD}@${TARGET_HOST}:5432/platform?${name}=/var/run/postgresql`,
+    );
+
+    expect(messageOf(() => requireNamedHost(decoy))).toContain("query parameter");
   });
 });
 
@@ -296,7 +384,14 @@ describe("requireAttestedTarget — host query parameter", () => {
 
 describe("requireAttestedTarget", () => {
   it("returns the parsed target when every guard passes", () => {
-    const target = requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_HOST}`], DSN);
+    const target = requireAttestedTarget(
+      [
+        WRITE_FLAG,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+      ],
+      DSN,
+    );
 
     expect(target.hostname).toBe(TARGET_HOST);
   });

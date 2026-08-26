@@ -6,6 +6,7 @@ export type AppPasswordSubject = {
   row: NormalizedLegacyUser;
   user: PlatformUser | undefined;
   markerHash: string | null;
+  matchedBy?: MatchedBy;
 };
 
 export const isAppPasswordPlatformChosen = ({
@@ -44,7 +45,7 @@ export const appPasswordChangeFor = (
   return {
     legacyUserId: row.legacyUserId,
     userEmail: user.email,
-    matchedBy: reconstructMatchedBy(row, user.id, indexes),
+    matchedBy: subject.matchedBy ?? reconstructMatchedBy(row, user.id, indexes),
     isEnabled: row.isEnabled,
   };
 };

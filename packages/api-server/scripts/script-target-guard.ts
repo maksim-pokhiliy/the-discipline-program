@@ -3,6 +3,7 @@ import { contentHash } from "../src/utils/hash";
 export const WRITE_FLAG = "--write";
 export const EXPECT_HOST_FLAG = "--expect-host=";
 export const EXPECT_PLAN_FLAG = "--expect-plan=";
+export const EXPECT_DATABASE_FLAG = "--expect-database=";
 export const RESTORE_CREDENTIALS_FLAG = "--restore-credentials";
 
 export const PLAN_DIGEST_LENGTH = 12;
@@ -78,8 +79,16 @@ export const parseTarget = (databaseUrl: string): URL => {
 
 export const HOST_QUERY_PARAM = "host";
 
+const hasHostQueryParam = (target: URL): boolean =>
+  [...target.searchParams.keys()].some((name) => name.toLowerCase() === HOST_QUERY_PARAM);
+
+export const authorityOf = (target: URL): string =>
+  target.port === "" ? target.hostname : `${target.hostname}:${target.port}`;
+
+export const databaseNameOf = (target: URL): string => target.pathname.replace(/^\//, "");
+
 export const requireNamedHost = (target: URL): void => {
-  if (target.searchParams.has(HOST_QUERY_PARAM)) {
+  if (hasHostQueryParam(target)) {
     throw new Error(
       `refusing to run: DATABASE_URL carries a ${HOST_QUERY_PARAM} query parameter, which ` +
         `overrides the host in the DSN authority at connect time. ${EXPECT_HOST_FLAG} would then ` +
@@ -117,12 +126,50 @@ export const requireExpectedHost = (argv: readonly string[], target: URL): void 
     );
   }
 
-  if (expected.toLowerCase() !== target.hostname.toLowerCase()) {
+  if (expected.toLowerCase() !== authorityOf(target).toLowerCase()) {
     throw new Error(
       `refusing to run: ${EXPECT_HOST_FLAG}${expected} does not match the host this run ` +
         "resolved from DATABASE_URL. The resolved host is deliberately not printed — a hostname " +
         "this script derived and you copied back would attest to nothing. Compare it against " +
-        "your own record of the database you meant.",
+        "your own record of the database you meant. If that DSN names a port, the flag has to " +
+        "name it too, as host:port: two databases on one host differ by nothing else.",
+    );
+  }
+};
+
+export const requireExpectedDatabase = (argv: readonly string[], target: URL): void => {
+  const expected = readFlag(argv, EXPECT_DATABASE_FLAG);
+  const actual = databaseNameOf(target);
+
+  if (expected === null) {
+    throw new Error(
+      `${EXPECT_DATABASE_FLAG}<name> is required, in a dry run as well as a write. A host attests ` +
+        "to a server, not to a database: a rehearsal database and the real one sit on the same " +
+        "host and differ only by the name at the end of the DSN, so the host alone cannot make " +
+        "the target deliberate.",
+    );
+  }
+
+  if (expected === "") {
+    throw new Error(
+      `${EXPECT_DATABASE_FLAG} was passed with an empty value. An empty string states nothing ` +
+        "about which database you meant, so it cannot stand as a deliberate target. Write the " +
+        "name out.",
+    );
+  }
+
+  if (actual === "") {
+    throw new Error(
+      `refusing to run: DATABASE_URL names no database, so there is nothing for ` +
+        `${EXPECT_DATABASE_FLAG} to verify. Name the database in the DSN.`,
+    );
+  }
+
+  if (expected !== actual) {
+    throw new Error(
+      `refusing to run: ${EXPECT_DATABASE_FLAG}${expected} does not match the database this run ` +
+        "resolved from DATABASE_URL. The resolved name is deliberately not printed, for the same " +
+        "reason the host is not. Compare it against your own record of the database you meant.",
     );
   }
 };
@@ -137,6 +184,16 @@ const flagNameOf = (arg: string): string => {
 };
 
 export const rejectUnknownFlags = (argv: readonly string[], known: readonly string[]): void => {
+  const positional = argv.slice(2).filter((arg) => !arg.startsWith("--"));
+
+  if (positional.length > 0) {
+    throw new Error(
+      `this script takes flags only, and ${String(positional.length)} bare argument(s) were ` +
+        "passed. A value that lost its flag name is exactly how a path lands where a hostname " +
+        "was meant; what was passed is deliberately not printed back.",
+    );
+  }
+
   const unknown = argv
     .slice(2)
     .filter((arg) => arg.startsWith("--"))
@@ -191,6 +248,7 @@ export const requireAttestedTarget = (argv: readonly string[], databaseUrl: stri
 
   requireNamedHost(target);
   requireExpectedHost(argv, target);
+  requireExpectedDatabase(argv, target);
 
   return target;
 };

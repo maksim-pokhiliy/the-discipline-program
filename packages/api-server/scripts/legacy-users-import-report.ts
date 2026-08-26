@@ -9,6 +9,7 @@ import type {
   MatchedBy,
   WarningKind,
 } from "./legacy-users-import-plan";
+import { section } from "./script-cli";
 import { EXPECT_PLAN_FLAG } from "./script-target-guard";
 
 export type ReportMode = "dry-run" | "applied" | "refused" | "stale-plan";
@@ -99,9 +100,6 @@ const describeRefresh = (action: Extract<ImportAction, { kind: "refresh" }>): st
 
   return `${tag(action.row.legacyUserId)} ${action.userEmail}  ${changes}${CREDENTIAL_NOTES[action.credentialOutcome.kind]}`;
 };
-
-const section = (heading: string, lines: readonly string[]): readonly string[] =>
-  lines.length === 0 ? [] : ["", heading, ...lines.map((line) => `  ${line}`)];
 
 const byKind = <K extends ImportAction["kind"]>(
   plan: ImportPlan,

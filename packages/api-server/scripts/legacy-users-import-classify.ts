@@ -19,21 +19,7 @@ import {
 } from "./legacy-users-import-plan";
 import { reconcileIdentityLinks } from "./legacy-users-import-reconcile";
 import type { ParsedLegacySource, SourceDefect } from "./legacy-users-import-source";
-
-const duplicatesOf = <T>(values: readonly T[]): Set<T> => {
-  const seen = new Set<T>();
-  const repeated = new Set<T>();
-
-  for (const value of values) {
-    if (seen.has(value)) {
-      repeated.add(value);
-    }
-
-    seen.add(value);
-  }
-
-  return repeated;
-};
+import { duplicatesOf } from "./script-cli";
 
 const defectToConflict = (defect: SourceDefect): ImportConflict =>
   defect.kind === "username-not-an-email"
@@ -192,7 +178,12 @@ export const classifyImport = (
         userEmail: resolution.user.email,
         matchedBy: resolution.matchedBy,
       });
-      noteAppPasswordChange(resolution.user.id, { row, user: resolution.user, markerHash: null });
+      noteAppPasswordChange(resolution.user.id, {
+        row,
+        user: resolution.user,
+        markerHash: null,
+        matchedBy: resolution.matchedBy,
+      });
       warnings.push(...attachWarnings(row, resolution.user, resolution.matchedBy));
       warnings.push(...rowWarnings(row));
 
@@ -236,6 +227,7 @@ export const classifyImport = (
     reconciliation: reconciled?.summary ?? null,
     appPasswordChanges: [...appPasswordChanges]
       .filter(([userId]) => appliedUserIds.has(userId))
-      .map(([, change]) => change),
+      .map(([, change]) => change)
+      .sort((left, right) => left.legacyUserId - right.legacyUserId),
   };
 };
