@@ -396,6 +396,30 @@ describe("requireAttestedTarget", () => {
     expect(target.hostname).toBe(TARGET_HOST);
   });
 
+  it("refuses when the database is not attested, so the composed guard cannot skip it", () => {
+    const message = messageOf(() =>
+      requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`], DSN),
+    );
+
+    expect(message).toContain(`${EXPECT_DATABASE_FLAG}<name> is required`);
+  });
+
+  it("refuses a database that is not the one the DSN names, host notwithstanding", () => {
+    const message = messageOf(() =>
+      requireAttestedTarget(
+        [
+          WRITE_FLAG,
+          `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+          `${EXPECT_DATABASE_FLAG}platform_local`,
+        ],
+        DSN,
+      ),
+    );
+
+    expect(message).toContain("does not match the database");
+    expect(message).not.toContain(SECRET_PASSWORD);
+  });
+
   it("rejects a hostless DSN before it ever compares the stated host", () => {
     expect(() =>
       requireAttestedTarget([WRITE_FLAG, `${EXPECT_HOST_FLAG}localhost`], HOSTLESS_DSN),
