@@ -1,17 +1,22 @@
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import vercelConfig from "../../vercel.json";
-
+const APEX_HOST_PATTERN = "^thedisciplineprogram\\.com$";
 const APEX_HOST = "thedisciplineprogram.com";
 const WWW_ORIGIN = "https://www.thedisciplineprogram.com";
 const SHIM_PREFIX = "api/v1";
-const SECURITY_HEADER_KEYS = [
-  "Strict-Transport-Security",
-  "X-Content-Type-Options",
-  "Referrer-Policy",
-  "X-XSS-Protection",
-  "Permissions-Policy",
+const APPS = ["admin", "marketing", "platform"];
+const PER_APP_KEYS = ["crons", "redirects"];
+
+const SECURITY_HEADERS = [
+  ["Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload"],
+  ["X-Content-Type-Options", "nosniff"],
+  ["Referrer-Policy", "strict-origin-when-cross-origin"],
+  ["X-XSS-Protection", "0"],
+  ["Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()"],
 ];
 
 const hostConditionSchema = z.object({ type: z.literal("host"), value: z.string() }).strict();
@@ -32,15 +37,48 @@ const headerRuleSchema = z
   })
   .strict();
 
-const vercelConfigSchema = z
-  .object({
-    headers: z.array(headerRuleSchema),
-    redirects: z.array(redirectSchema),
-    regions: z.array(z.string()),
-  })
+const sharedConfigSchema = z.object({
+  headers: z.array(headerRuleSchema),
+  regions: z.array(z.string()),
+});
+
+const platformConfigSchema = sharedConfigSchema
+  .extend({ redirects: z.array(redirectSchema) })
   .strict();
 
-const config = vercelConfigSchema.parse(vercelConfig);
+const repoRoot = (): string => {
+  let candidate = process.cwd();
+
+  while (!existsSync(join(candidate, "apps/platform/vercel.json"))) {
+    const parent = dirname(candidate);
+
+    if (parent === candidate) {
+      throw new Error(
+        "this test compares the three per-app vercel.json files and could not find the repository " +
+          "root above the working directory; run it through the root vitest runner",
+      );
+    }
+
+    candidate = parent;
+  }
+
+  return candidate;
+};
+
+const rawConfigOf = (app: string): Record<string, unknown> => {
+  const parsed: unknown = JSON.parse(
+    readFileSync(join(repoRoot(), "apps", app, "vercel.json"), "utf8"),
+  );
+
+  return z.record(z.unknown()).parse(parsed);
+};
+
+const sharedBlockOf = (app: string): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(rawConfigOf(app)).filter(([key]) => !PER_APP_KEYS.includes(key)),
+  );
+
+const config = platformConfigSchema.parse(rawConfigOf("platform"));
 
 const PARAM_SOURCE_PATTERN = /^\/:path\((.*)\)$/;
 
@@ -73,25 +111,54 @@ const exclusionRegexOf = (source: string): RegExp => {
 
 const captureOf = (path: string): string => path.slice(1);
 
-describe("apps/platform vercel.json", () => {
-  it("keeps the five security headers on every path", () => {
-    const [rule, ...rest] = config.headers;
+describe("the three vercel.json files", () => {
+  it("carry byte-identical shared configuration once the per-app keys are removed", () => {
+    const [reference, ...others] = APPS.map(sharedBlockOf);
+
+    for (const other of others) {
+      expect(other).toEqual(reference);
+    }
+  });
+
+  it("keep the per-app keys where they belong and nowhere else", () => {
+    expect(Object.keys(rawConfigOf("admin"))).toContain("crons");
+    expect(Object.keys(rawConfigOf("platform"))).toContain("redirects");
+    expect(Object.keys(rawConfigOf("marketing"))).toEqual(["headers", "regions"]);
+    expect(Object.keys(rawConfigOf("admin"))).not.toContain("redirects");
+    expect(Object.keys(rawConfigOf("platform"))).not.toContain("crons");
+  });
+
+  it.each(APPS)("serves the five security headers on every path of %s", (app) => {
+    const parsed = sharedConfigSchema.parse(rawConfigOf(app));
+    const [rule, ...rest] = parsed.headers;
 
     expect(rest).toHaveLength(0);
     expect(rule?.source).toBe("/(.*)");
-    expect(rule?.headers.map((header) => header.key)).toEqual(SECURITY_HEADER_KEYS);
+    expect(rule?.headers.map((header) => [header.key, header.value])).toEqual(SECURITY_HEADERS);
   });
+});
 
-  it("redirects only when the request arrives on the apex host", () => {
+describe("the platform apex redirect", () => {
+  it("matches the apex and nothing under it, anchored and escaped", () => {
     const [condition] = apexRedirectOf().has;
 
-    expect(condition).toEqual({ type: "host", value: APEX_HOST });
+    expect(condition).toEqual({ type: "host", value: APEX_HOST_PATTERN });
   });
 
-  it("names the apex as a bare hostname, since the platform lowercases it and strips the port", () => {
+  it.each([
+    [APEX_HOST, true],
+    [`${APEX_HOST}:443`, true],
+    [`platform.${APEX_HOST}`, false],
+    [`www.${APEX_HOST}`, false],
+    ["thedisciplineprogramXcom", false],
+    [`evil-${APEX_HOST}`, false],
+  ])("is correct for %s whether or not the edge anchors the value", (host, isMatch) => {
     const [condition] = apexRedirectOf().has;
+    const value = condition?.value ?? "";
+    const withoutPort = host.split(":", 1)[0] ?? "";
 
-    expect(condition?.value).not.toMatch(/[/:]/);
+    expect(new RegExp(value).test(withoutPort)).toBe(isMatch);
+    expect(new RegExp(`^${value}$`).test(withoutPort)).toBe(isMatch);
   });
 
   it("sends the matched path to the same path on www, permanently", () => {

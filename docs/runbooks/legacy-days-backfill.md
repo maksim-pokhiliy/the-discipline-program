@@ -23,11 +23,14 @@ later. Every row published since the content column landed carries its content n
 
 The script reads a **JSON export file**, never a second database, so no legacy DSN is ever handled.
 Its only connection is the platform DSN in `DATABASE_URL`, and writing to that requires
-`--write --expect-host=<hostname> --expect-plan=<digest>`, the host checked against the one the DSN
-resolved to and the digest against the plan you reviewed. All writes happen inside one transaction,
+`--write --expect-host=<hostname> --expect-database=<name> --expect-plan=<digest>`, the host and the
+database checked against the ones the DSN resolved to and the digest against the plan you reviewed. All writes happen inside one transaction,
 and the whole run refuses if anything is in conflict — there is no partial apply and no override flag.
-This is the users import's model, reused module for module; `--expect-host` is required in a dry run
-too, and a DSN carrying a `host=` query parameter is refused outright, for the reasons written up in
+This is the users import's model, reused module for module. `--expect-host` and `--expect-database`
+are both required in a dry run too -- a host attests to a _server_, and a rehearsal database sits on
+the same host as the one you meant, differing only by the name at the end of the DSN; if the DSN
+names a port, the host flag must name it too. A `host=` query parameter in the DSN is refused
+whatever its case, and a DSN carrying a `host=` query parameter is refused outright, for the reasons written up in
 `legacy-users-import.md`.
 
 **"It only ever fills nulls" is enforced twice.** The read asks only for rows whose `isRestDay` is
@@ -93,8 +96,10 @@ then:
 ```
 cd packages/api-server
 export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5547/platform_local"
-pnpm exec tsx scripts/legacy-days-backfill.ts --source=<absolute path> --expect-host=127.0.0.1
-pnpm exec tsx scripts/legacy-days-backfill.ts --source=<absolute path> --expect-host=127.0.0.1 \
+pnpm exec tsx scripts/legacy-days-backfill.ts --source=<absolute path> \
+  --expect-host=127.0.0.1:5547 --expect-database=platform_local
+pnpm exec tsx scripts/legacy-days-backfill.ts --source=<absolute path> \
+  --expect-host=127.0.0.1:5547 --expect-database=platform_local \
   --write --expect-plan=<the digest that dry run printed>
 ```
 
@@ -114,7 +119,8 @@ Same shape as the users import, and the production DSN comes from the same owner
 ```
 cd packages/api-server
 DATABASE_URL="$(env -u DATABASE_URL_PROD node -e "process.loadEnvFile('../../.env.prod'); process.stdout.write(process.env.DATABASE_URL_PROD)")" \
-  pnpm exec tsx scripts/legacy-days-backfill.ts --source=<absolute path> --expect-host=<hostname>
+  pnpm exec tsx scripts/legacy-days-backfill.ts --source=<absolute path> \
+    --expect-host=<hostname> --expect-database=<database>
 ```
 
 Review the dry run, then re-run with `--write` and the `--expect-plan=<digest>` that report printed.
@@ -127,8 +133,9 @@ Expect, on the summary line, something close to:
 fill <n> · fill-from-newer-row <m> · missing-in-legacy <k> · already-filled (skipped) 120 · conflicts 0
 ```
 
-with `n + m + k = 134`. `already-filled (skipped)` is the cross-check: 254 rows total, 134 targets,
-so 120 rows the run never considered.
+with `n + m + k = 134` **when `conflicts 0`** -- a target that ends in a conflict is counted in none
+of the three, so the three only add up on a clean run. `already-filled (skipped)` is the independent
+cross-check: 254 rows total, 134 targets, so 120 rows the run never considered.
 
 ### The export must come from the FINAL dump
 

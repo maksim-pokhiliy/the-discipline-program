@@ -12,8 +12,8 @@ handed has no delete method at all.
 
 The script reads a **JSON export file**, never a second database, so no legacy DSN is ever handled.
 Its only connection is the platform DSN in `DATABASE_URL`, and writing to that requires
-`--write --expect-host=<hostname> --expect-plan=<digest>`, the host checked against the one the DSN
-resolved to and the digest against the plan you reviewed. All writes happen inside one transaction,
+`--write --expect-host=<hostname> --expect-database=<name> --expect-plan=<digest>`, the host and the
+database checked against the ones the DSN resolved to and the digest against the plan you reviewed. All writes happen inside one transaction,
 and the whole run refuses if any row is in conflict — there is no partial apply and no override flag.
 
 **A write must name the plan you reviewed.** The apply re-reads the database and re-decides inside
@@ -32,7 +32,7 @@ and the write does not move the digest by itself (it moves the digest only if it
 written, for instance by changing which user a row matches). Nor do the reconciliation counts, so a
 coach publishing an unrelated plan in the meantime cannot refuse an apply whose writes are the same.
 
-**`--expect-host` is required in a dry run too, not only for `--write`.** Importing
+**`--expect-host` and `--expect-database` are required in a dry run too, not only for `--write`.** Importing
 `@prisma/client` loads any `.env` sitting beside it, so `DATABASE_URL` can arrive from a file
 nobody named on the command line — a bare dry run could otherwise read a database you never meant
 to open. A DSN carrying a `host=` **query parameter** is refused outright, because Prisma honours
@@ -139,8 +139,10 @@ Then dry run, read the digest off the report, and apply against it:
 ```
 cd packages/api-server
 export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5546/platform_local"
-pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1
-pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=127.0.0.1 \
+pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> \
+  --expect-host=127.0.0.1:5546 --expect-database=platform_local
+pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> \
+  --expect-host=127.0.0.1:5546 --expect-database=platform_local \
   --write --expect-plan=<the digest that dry run printed>
 ```
 
@@ -163,8 +165,8 @@ RUN_LEGACY_IMPORT_CHECK=1 SKIP_ENV_VALIDATION=1 \
 ```
 
 The `platform` vitest project only resolves from the repo root, not from `packages/api-server`.
-The probe **writes** to whatever `DATABASE_URL` names and derives its own `--expect-host` from that
-same DSN, so it refuses to start against anything but a loopback host.
+The probe **writes** to whatever `DATABASE_URL` names and derives its own `--expect-host` and
+`--expect-database` from that same DSN, so it refuses to start against anything but a loopback host.
 
 Do not run the golden suite against a database that still holds rehearsal rows — the golden fixture
 seeds legacy ids 1001..1004 and the same `@tdp.local` addresses, and the two collide. Clear the
@@ -180,16 +182,18 @@ the literal string `[SENSITIVE]` while still dumping every other production secr
 ```
 cd packages/api-server
 DATABASE_URL="$(env -u DATABASE_URL_PROD node -e "process.loadEnvFile('../../.env.prod'); process.stdout.write(process.env.DATABASE_URL_PROD)")" \
-  pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> --expect-host=<hostname>
+  pnpm exec tsx scripts/legacy-users-import.ts --source=<absolute path> \
+    --expect-host=<hostname> --expect-database=<database>
 ```
 
 `env -u DATABASE_URL_PROD` matters: `loadEnvFile` does not override an already-exported variable, so
 without it a stale shell value silently wins over the file.
 
 Review the dry-run report, get the owner's sign-off, then re-run it with `--write` **and the
-`--expect-plan=<digest>` printed on the report that was signed off**. The hostname is the **host
-only, no port** (the guard compares `URL.hostname`), taken from your own record of the production
-database — the Neon console or the Vercel dashboard entry — never from `.env.prod` itself, since the
+`--expect-plan=<digest>` printed on the report that was signed off**. The hostname carries a port only if the DSN does -- Neon
+production DSNs do not, so it is the bare host there, while a local rehearsal on `127.0.0.1:5546`
+must name the port. The database is the name at the end of the DSN. Both come from your own record
+of the production database — the Neon console or the Vercel dashboard entry — never from `.env.prod` itself, since the
 DSN and its attestation must not share a source, and never from the script's output, which
 deliberately offers none. The digest is the opposite: it exists to be copied out of the very report
 that was reviewed, and copying it from anywhere else defeats it.
@@ -213,7 +217,15 @@ RECONCILIATION individual links <n> · matched to a stored identity <m> · viola
   `matched to a stored identity 0` proves nothing; read both numbers.
 - `conflicts 0` — nothing anywhere contradicts anything.
 
-Then work the two owner-action blocks before applying:
+**The final pre-cutover apply runs WITH `--restore-credentials`.** Every other run in this runbook
+does not, and the reason that flips exactly here is worth stating: a restore only ever touches a row
+whose marker still matches the stored credential, which means the import wrote it and nobody has
+changed it since. For those rows the legacy hash in a same-day dump **is** the password that athlete
+is using in the app right now. Carrying it across is what keeps their login working through the
+flip; leaving it is what would break it if they changed their password in the legacy app since the
+last import. Rows the import does not own are untouched by the flag, as always.
+
+Then work the owner-action blocks before applying:
 
 - [ ] every athlete under `ACTION REQUIRED — app password changes` has been told that from the
       cutover their app password is their **website** password, and that the way to reset it is the
@@ -221,6 +233,9 @@ Then work the two owner-action blocks before applying:
       in at all until the legacy row is enabled
 - [ ] every athlete carrying `matched platform user has no password of their own` has been dealt
       with by hand -- they have no credential on either side and cannot sign in until they set one
+- [ ] if the apply was run **without** `--restore-credentials`, every athlete carrying
+      `credential differs from the export and was NOT replaced` has been told their app password is
+      the older one the import wrote, not the one they last set in the legacy app
 
 At the cutover dry run expect `app-password changes 7` — the seven athletes attached at P2.1
 (legacy ids 1, 3, 9, 18, 22, 23, 24), one of whom (id 9) is disabled in the shim.

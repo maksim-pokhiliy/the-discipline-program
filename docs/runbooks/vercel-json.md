@@ -52,8 +52,10 @@ node -e 'const s=p=>{const c=require(`./apps/${p}/vercel.json`);delete c.crons;d
 A plain `diff` of two whole files is **not** the check any more: admin carries `crons` and platform
 carries `redirects`, so a whole-file diff is expected to be non-empty and tells you nothing.
 
-The five headers are additionally asserted for the platform app by
-`apps/platform/src/__tests__/vercel-config.test.ts`, which runs in CI.
+`apps/platform/src/__tests__/vercel-config.test.ts` asserts the same invariant in CI, and asserts
+more than the recipe does: it reads all three files, compares the shared block after removing the
+per-app keys, and checks every header's **value**, not just its name -- an `HSTS max-age=0`
+downgrade fails the suite. The recipe above stays for reading a drift by hand.
 
 ## The platform apex redirect
 
@@ -76,12 +78,18 @@ disagrees with its SNI. Everything else on the apex belongs to the marketing sit
 
 Things that are true about this rule and worth not rediscovering:
 
-- The `has` value is matched **anchored** (`^value$`) against the lowercased host with the port
-  stripped, so `platform.thedisciplineprogram.com` and `www.thedisciplineprogram.com` do **not**
-  match. Without that anchoring the rule would redirect the product's own domain to the marketing
-  site. Keep the value a bare hostname -- no scheme, no port, no trailing slash -- and do not escape
-  the dots: the documented form is a plain hostname, and an escaped value would silently match
-  nothing if the edge ever treats it as a literal.
+- **The `has` value is a regular expression, and it is written escaped and anchored on purpose.**
+  Next's own `matchHas` wraps it as `^value$`, but this file is executed by the Vercel edge, whose
+  documentation describes `has.value` as a regex without promising anchoring, and whose CLI wraps
+  equality conditions as `^…$` itself rather than relying on the matcher. An unanchored
+  `thedisciplineprogram.com` would therefore be a substring match under one reading and an exact one
+  under the other -- and a substring match would catch `platform.thedisciplineprogram.com`, sending
+  the entire product to the marketing site while `/api/v1` kept working.
+  `^thedisciplineprogram\.com$` is correct under **both** readings: it matches the apex, with or
+  without a port (the host is lowercased and the port stripped before matching), and matches neither
+  `platform.` nor `www.` nor `evil-thedisciplineprogram.com`. This cannot be verified offline --
+  `vercel dev` does not evaluate `has` at all -- so the deploy that first ships this rule is followed
+  by the live check below.
 - The source pattern matches the root (`/` captures an empty parameter, and the destination renders
   it back as `/`), so no separate rule for `/` is needed.
 - `/api/v1`, `/api/v1/` and anything below stay on the platform. `/api/v1x` and `/api/v2/...` do
@@ -92,8 +100,27 @@ Things that are true about this rule and worth not rediscovering:
 - Do **not** configure a domain-level redirect on the apex in the Vercel dashboard instead. That
   redirects every path, including `/api/v1`, which is the one thing the apex exists to serve.
 
-The path semantics above are asserted by the config test; the live behaviour on the real edge is a
-checklist item in `apex-cutover.md`, verified with `curl -k --resolve` before DNS moves.
+- **A 308 from the apex carries none of the five security headers.** The redirect route is terminal
+  and is evaluated before the headers route, so the response that leaves the edge is a bare redirect.
+  This is accepted: nothing but the redirect lives on the apex for a browser, the destination on
+  `www` serves its own headers, and `/api/v1`, which is not redirected, keeps them.
+
+The path semantics and the anchoring above are asserted by the config test, which also compares all
+three files. The live behaviour on the real edge is not offline-checkable, so it is checked twice:
+
+**Immediately after the deploy that first ships this rule** -- before the apex exists as a domain,
+while `platform.` is live and would be the casualty of an unanchored match:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://platform.thedisciplineprogram.com/
+curl -sS -o /dev/null -w '%{http_code}\n' https://platform.thedisciplineprogram.com/api/v1/trainingLevel/all
+```
+
+Both must be `200`. A `308` on either means the host condition is matching as a substring; revert the
+deploy.
+
+**Before DNS moves at the cutover**, with `curl -k --resolve` against the Vercel address --
+a checklist item in `apex-cutover.md`.
 
 ## CSP
 

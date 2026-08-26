@@ -28,6 +28,19 @@ not from what the dashboard is assumed to look like.
       including `/api/v1`, which is the one thing the apex exists to serve.
 - [ ] Note the A-record target Vercel gives for the apex; the flip in step 5 uses it.
 
+### 2a. Immediately after the deploy that ships the redirect
+
+Before the apex is a domain at all, and while `platform.` is live, prove the host condition is not
+matching as a substring:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://platform.thedisciplineprogram.com/
+curl -sS -o /dev/null -w '%{http_code}\n' https://platform.thedisciplineprogram.com/api/v1/trainingLevel/all
+```
+
+- [ ] both answer `200`. A `308` on either means the rule is catching the product's own domain --
+      revert the deploy before doing anything else.
+
 ### 2. Prove the routing before any DNS moves
 
 With the domain added but DNS still pointing at the VPS, address the Vercel edge directly and give it
@@ -71,7 +84,7 @@ published to for the day.
       `legacy-users-import.md` §"Pre-cutover fidelity check" are ticked
 - [ ] Users import: pinned apply, `conflicts 0`
 - [ ] Days backfill: dry run against production — expect `fill + fill-from-newer-row +
-  missing-in-legacy = 134` and `already-filled (skipped) 120`
+missing-in-legacy = 134` and `already-filled (skipped) 120`
 - [ ] Days backfill: pinned apply, `conflicts 0`
 - [ ] Re-run both dry runs: the users import reports every row as a refresh with `no change`, and the
       backfill reports `fill 0 · fill-from-newer-row 0`
@@ -104,6 +117,11 @@ On a real device, on cellular data (not the office network, which may still hold
 
 - [ ] Watch Sentry and the Vercel logs for the first hours: 403s on `/api/v1/*` are sign-outs and are
       the signal that matters
+- [ ] **Leave `LEGACY_MOBILE_API_BASE_URL` and `MOBILE_PUBLISH_ENCRYPTION_KEY` set in Vercel.**
+      `/api/v1/program` still module-initialises `@repo/env/mobile-publish`: `program-dto.ts` imports
+      the `infrastructure/legacy-mobile` barrel, which pulls the REST adapter, which reads them. They
+      stop being required only when P4.1 removes that edge -- unsetting them at decommission would
+      500 the shim's busiest route.
 - [ ] Keep the VPS up for the agreed soak window
 - [ ] Only then move to P3.3
 
