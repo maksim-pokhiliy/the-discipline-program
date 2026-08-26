@@ -14,31 +14,44 @@ const PROGRAM = {
   dayTrainings: [{ trainingNumber: 1, blocks: [{ name: "WARM-UP", exercises: ["200 m row"] }] }],
 };
 
-type Call = { path: string; args: unknown };
+type UpdateArgs = Parameters<BackfillWriter["mobilePublishedDay"]["updateMany"]>[0];
 
-const fakeWriter = (counts: number[] = []) => {
+type Call = { path: string; args: UpdateArgs };
+
+type ForbiddenWrites = Record<
+  "update" | "create" | "createMany" | "upsert" | "delete" | "deleteMany",
+  () => never
+>;
+
+const fakeWriter = (
+  counts: number[] = [],
+): {
+  writer: BackfillWriter & { mobilePublishedDay: ForbiddenWrites };
+  calls: Call[];
+} => {
   const calls: Call[] = [];
-  const forbid = (path: string) => () => {
+  const forbid = (path: string) => (): never => {
     throw new Error(`apply reached for ${path}, which it must never do`);
   };
 
-  const writer = {
-    mobilePublishedDay: {
-      updateMany: (args: unknown) => {
-        calls.push({ path: "day.updateMany", args });
+  return {
+    writer: {
+      mobilePublishedDay: {
+        updateMany: (args) => {
+          calls.push({ path: "day.updateMany", args });
 
-        return Promise.resolve({ count: counts[calls.length - 1] ?? 1 });
+          return Promise.resolve({ count: counts[calls.length - 1] ?? 1 });
+        },
+        update: forbid("day.update"),
+        create: forbid("day.create"),
+        createMany: forbid("day.createMany"),
+        upsert: forbid("day.upsert"),
+        delete: forbid("day.delete"),
+        deleteMany: forbid("day.deleteMany"),
       },
-      update: forbid("day.update"),
-      create: forbid("day.create"),
-      createMany: forbid("day.createMany"),
-      upsert: forbid("day.upsert"),
-      delete: forbid("day.delete"),
-      deleteMany: forbid("day.deleteMany"),
     },
+    calls,
   };
-
-  return { writer: writer as unknown as BackfillWriter, calls };
 };
 
 const target = (overrides: Partial<BackfillTarget> = {}): BackfillTarget => ({
@@ -67,14 +80,14 @@ const planOf = (overrides: Partial<BackfillPlan> = {}): BackfillPlan => ({
   ...overrides,
 });
 
-const argsAt = (calls: Call[], index: number): Record<string, unknown> => {
+const argsAt = (calls: Call[], index: number): Call["args"] => {
   const call = calls[index];
 
   if (call === undefined) {
     throw new Error(`no call was recorded at index ${String(index)}`);
   }
 
-  return call.args as Record<string, unknown>;
+  return call.args;
 };
 
 describe("updateFor", () => {

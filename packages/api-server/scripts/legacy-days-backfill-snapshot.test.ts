@@ -84,6 +84,18 @@ describe("toBackfillTarget", () => {
   });
 });
 
+describe("toBackfillTarget — an unknown channel", () => {
+  it("refuses rather than treating it as a general link", () => {
+    expect(() =>
+      toBackfillTarget(
+        ledgerRow({
+          link: { channel: "TEAM", legacyLevelId: 2, legacyUserId: null, plan: { name: "P" } },
+        }),
+      ),
+    ).toThrow("no matching rule");
+  });
+});
+
 describe("loadBackfillSnapshot", () => {
   it("asks only for rows that carry no content, and counts the ones that do", async () => {
     const seen: unknown[] = [];

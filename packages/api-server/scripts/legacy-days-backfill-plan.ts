@@ -36,6 +36,7 @@ export type BackfillAction = {
 export type BackfillConflictReason =
   | "link-missing-channel-id"
   | "duplicate-legacy-row"
+  | "legacy-row-older-than-ledger"
   | "rest-day-carries-a-program"
   | "training-day-carries-no-program"
   | "program-body-is-not-the-wire-shape"

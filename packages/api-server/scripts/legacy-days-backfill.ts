@@ -1,6 +1,4 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { type Prisma, PrismaClient } from "@prisma/client";
 
@@ -16,11 +14,12 @@ import type { BackfillPlan } from "./legacy-days-backfill-plan";
 import { renderBackfillReport } from "./legacy-days-backfill-report";
 import { type BackfillReader, loadBackfillSnapshot } from "./legacy-days-backfill-snapshot";
 import { type ParsedLegacyDays, parseLegacyDays } from "./legacy-days-backfill-source";
+import { closeQuietly, isEntryPoint, runScriptCli } from "./script-cli";
 import {
+  EXPECT_DATABASE_FLAG,
   EXPECT_HOST_FLAG,
   EXPECT_PLAN_FLAG,
   hasFlag,
-  parseTarget,
   PlanDigestMismatchError,
   readExpectedPlan,
   rejectUnknownFlags,
@@ -67,9 +66,6 @@ export type RunBackfillResult = { lines: readonly string[]; isRefused: boolean }
 type RunMode =
   | { kind: "dry-run"; pinnedDigest: string | null }
   | { kind: "apply"; pinnedDigest: string };
-
-export const withHostWithheld = (message: string, hostname: string): string =>
-  hostname === "" ? message : message.replaceAll(hostname, "<host withheld>");
 
 export const readerFor = (client: Prisma.TransactionClient): BackfillReader => ({
   mobilePublishedDay: {
@@ -172,7 +168,13 @@ const runApply = async (
 };
 
 export const runBackfill = async (deps: RunBackfillDeps): Promise<RunBackfillResult> => {
-  rejectUnknownFlags(deps.argv, [SOURCE_FLAG, WRITE_FLAG, EXPECT_HOST_FLAG, EXPECT_PLAN_FLAG]);
+  rejectUnknownFlags(deps.argv, [
+    SOURCE_FLAG,
+    WRITE_FLAG,
+    EXPECT_HOST_FLAG,
+    EXPECT_DATABASE_FLAG,
+    EXPECT_PLAN_FLAG,
+  ]);
 
   const sourcePath = requireFlag(deps.argv, SOURCE_FLAG);
   const databaseUrl = requireEnv(deps.env, "DATABASE_URL");
@@ -188,46 +190,28 @@ export const runBackfill = async (deps: RunBackfillDeps): Promise<RunBackfillRes
       ? await runApply(session, source, mode.pinnedDigest)
       : await runDryRun(session, source, mode.pinnedDigest);
   } finally {
-    await session.close();
+    await closeQuietly(() => session.close());
   }
 };
 
-const main = async (): Promise<void> => {
-  const result = await runBackfill({
-    argv: process.argv,
+if (isEntryPoint(process.argv[1], import.meta.url)) {
+  void runScriptCli({
+    run: () =>
+      runBackfill({
+        argv: process.argv,
+        env: process.env,
+        readSourceFile: (path) => readFileSync(path, "utf8"),
+        openSession: openPrismaSession,
+      }),
     env: process.env,
-    readSourceFile: (path) => readFileSync(path, "utf8"),
-    openSession: openPrismaSession,
-  });
-
-  for (const line of result.lines) {
-    console.log(line);
-  }
-
-  if (result.isRefused) {
-    process.exitCode = 1;
-  }
-};
-
-const parseTargetQuietly = (databaseUrl: string): string => {
-  try {
-    return parseTarget(databaseUrl).hostname;
-  } catch {
-    return "";
-  }
-};
-
-const entryPath = process.argv[1];
-const isDirectRun =
-  entryPath !== undefined && resolve(entryPath) === fileURLToPath(import.meta.url);
-
-if (isDirectRun) {
-  main().catch((error: unknown) => {
-    const raw = error instanceof Error ? error.message : String(error);
-    const databaseUrl = process.env.DATABASE_URL ?? "";
-    const hostname = databaseUrl === "" ? "" : parseTargetQuietly(databaseUrl);
-
-    console.error(withHostWithheld(raw, hostname));
-    process.exitCode = 1;
+    writeLine: (line) => {
+      console.log(line);
+    },
+    writeError: (line) => {
+      console.error(line);
+    },
+    fail: () => {
+      process.exitCode = 1;
+    },
   });
 }

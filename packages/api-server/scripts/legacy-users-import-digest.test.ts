@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
 import { canonicalizePlan, planDigest } from "./legacy-users-import-digest";
@@ -8,7 +8,6 @@ import type { ImportPlan, PlatformSnapshot } from "./legacy-users-import-plan";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 import { PLAN_DIGEST_LENGTH } from "./script-target-guard";
 
-const OTHER_COST_10_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
 const LEGACY_ID = 20;
 
 const sourceRow = (overrides: Partial<LegacySourceRow> = {}): LegacySourceRow => ({

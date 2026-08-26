@@ -9,6 +9,7 @@ import {
   type BackfillWarningKind,
   describeDay,
 } from "./legacy-days-backfill-plan";
+import { section } from "./script-cli";
 import { EXPECT_PLAN_FLAG } from "./script-target-guard";
 
 export type BackfillReportMode = "dry-run" | "applied" | "refused" | "stale-plan";
@@ -28,6 +29,7 @@ const ACTION_HEADINGS = {
 const CONFLICT_LABELS = {
   "link-missing-channel-id": "publish link carries no legacy id for its channel",
   "duplicate-legacy-row": "several legacy rows sit on one day",
+  "legacy-row-older-than-ledger": "the legacy row is older than the one the ledger points at",
   "rest-day-carries-a-program": "export row is a rest day carrying a program",
   "training-day-carries-no-program": "export row is a training day carrying no program",
   "program-body-is-not-the-wire-shape": "export row's program is not the shape the app is served",
@@ -38,9 +40,6 @@ const CONFLICT_LABELS = {
 const WARNING_LABELS = {
   "missing-in-legacy": "no legacy day to fill this one from",
 } satisfies Record<BackfillWarningKind, string>;
-
-const section = (heading: string, lines: readonly string[]): readonly string[] =>
-  lines.length === 0 ? [] : ["", heading, ...lines.map((line) => `  ${line}`)];
 
 const byKind = (plan: BackfillPlan, kind: BackfillActionKind): BackfillAction[] =>
   plan.actions.filter((action) => action.kind === kind);
@@ -62,10 +61,13 @@ const describeWarning = (warning: BackfillWarning): string =>
   `${warning.subject}${onPlan(warning.planName)}  ${WARNING_LABELS[warning.kind]}: ` +
   warning.detail;
 
+const byWarningKind = (plan: BackfillPlan, kind: BackfillWarningKind): BackfillWarning[] =>
+  plan.warnings.filter((warning) => warning.kind === kind);
+
 const summaryLine = (plan: BackfillPlan): string =>
   `fill ${String(byKind(plan, "fill").length)} · ` +
   `fill-from-newer-row ${String(byKind(plan, "fill-from-newer-row").length)} · ` +
-  `missing-in-legacy ${String(plan.warnings.length)} · ` +
+  `missing-in-legacy ${String(byWarningKind(plan, "missing-in-legacy").length)} · ` +
   `already-filled (skipped) ${String(plan.alreadyFilled)} · ` +
   `conflicts ${String(plan.conflicts.length)}`;
 
@@ -74,6 +76,13 @@ const digestLine = (plan: BackfillPlan, mode: BackfillReportMode): string => {
 
   if (mode === "applied") {
     return `plan digest ${digest}`;
+  }
+
+  if (mode === "refused") {
+    return (
+      `plan digest ${digest} — do not pin this one; it is the plan this run refused, not one to ` +
+      "apply"
+    );
   }
 
   return plan.conflicts.length > 0
@@ -103,12 +112,32 @@ const verdictLines = (plan: BackfillPlan, mode: BackfillReportMode): readonly st
     ];
   }
 
+  if (mode === "refused") {
+    return [
+      "",
+      "REFUSED: nothing was written. A day this plan meant to fill was no longer empty by the " +
+        "time the write reached it, so the run stopped rather than overwrite content somebody " +
+        "published in between.",
+      "Do not pin the digest above: the plan it describes is not the one this database would " +
+        "produce now. Run the dry run again and read it from the top.",
+    ];
+  }
+
+  if (mode === "applied") {
+    return [
+      "",
+      plan.actions.length === 0
+        ? "APPLIED: nothing to fill — every content-less day this export could reach was already " +
+          "filled, and no row was touched."
+        : "APPLIED: every day above was filled in one transaction.",
+    ];
+  }
+
   return [
     "",
-    mode === "applied"
-      ? "APPLIED: every day above was filled in one transaction."
-      : "CLEAN: re-run with --write --expect-host=<hostname> and the plan digest above to apply. " +
-        "Take that hostname from your own record of the database you meant, never from this report.",
+    "CLEAN: re-run with --write --expect-host=<hostname> --expect-database=<name> and the plan " +
+      "digest above to apply. Take the host and the database from your own record of the one you " +
+      "meant, never from this report.",
   ];
 };
 
@@ -124,7 +153,7 @@ export const renderBackfillReport = (
     ACTION_HEADINGS["fill-from-newer-row"],
     byKind(plan, "fill-from-newer-row").map(describeAction),
   ),
-  ...section("MISSING IN LEGACY", plan.warnings.map(describeWarning)),
+  ...section("MISSING IN LEGACY", byWarningKind(plan, "missing-in-legacy").map(describeWarning)),
   ...section("CONFLICTS", plan.conflicts.map(describeConflict)),
   ...verdictLines(plan, mode),
 ];

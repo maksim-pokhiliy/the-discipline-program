@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { COST_12_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
 import type {
@@ -15,8 +15,6 @@ import {
   type LegacySourceRow,
   normalizeLegacySource,
 } from "./legacy-users-import-source";
-
-const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
 
 const LEGACY_ID = 20;
 const LEGACY_EMAIL = "athlete@tdp.local";
@@ -512,8 +510,6 @@ describe("warnings", () => {
 });
 
 describe("credential outcomes on a refresh", () => {
-  const DRIFTED_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
-
   const refreshSnapshotWith = (password: string | null, marker: string | null = null) =>
     emptySnapshot({
       identities: [storedIdentity({ importedPasswordHash: marker })],
@@ -528,19 +524,26 @@ describe("credential outcomes on a refresh", () => {
   });
 
   it("says plainly when the credential it wrote differs and was left alone", () => {
-    const plan = classify([sourceRow()], refreshSnapshotWith(DRIFTED_HASH, DRIFTED_HASH));
+    const plan = classify(
+      [sourceRow()],
+      refreshSnapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH),
+    );
 
     expect(warningKinds(plan)).toContain("credential-differs-not-restored");
   });
 
   it("warns loudly when it is about to replace a stored credential", () => {
-    const plan = classify([sourceRow()], refreshSnapshotWith(DRIFTED_HASH, DRIFTED_HASH), true);
+    const plan = classify(
+      [sourceRow()],
+      refreshSnapshotWith(OTHER_COST_10_HASH, OTHER_COST_10_HASH),
+      true,
+    );
 
     expect(warningKinds(plan)).toContain("credential-restored");
   });
 
   it("declines to restore over a credential it cannot prove it wrote", () => {
-    const plan = classify([sourceRow()], refreshSnapshotWith(DRIFTED_HASH), true);
+    const plan = classify([sourceRow()], refreshSnapshotWith(OTHER_COST_10_HASH), true);
 
     expect(warningKinds(plan)).toContain("password-left-as-is");
     expect(warningKinds(plan)).not.toContain("credential-restored");
@@ -634,12 +637,11 @@ describe("the demo athlete", () => {
 
 describe("refresh detail", () => {
   it("carries the mirror diff and a restore decision for an untouched legacy credential", () => {
-    const drifted = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
     const plan = classify(
       [sourceRow({ training_level_id: 4, is_enabled: false })],
       emptySnapshot({
-        identities: [storedIdentity({ importedPasswordHash: drifted })],
-        users: [platformUser({ identityLegacyUserId: LEGACY_ID, password: drifted })],
+        identities: [storedIdentity({ importedPasswordHash: OTHER_COST_10_HASH })],
+        users: [platformUser({ identityLegacyUserId: LEGACY_ID, password: OTHER_COST_10_HASH })],
       }),
       true,
     );

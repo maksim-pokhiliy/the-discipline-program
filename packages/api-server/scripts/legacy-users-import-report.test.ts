@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { COST_12_HASH, GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
 import type {
@@ -17,7 +17,6 @@ import {
 } from "./legacy-users-import-report";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 
-const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
 const HOSTNAME = "db.example-target.invalid";
 const DSN = `${"postgresql:"}//importer:hunter2@${HOSTNAME}:5432/platform`;
 

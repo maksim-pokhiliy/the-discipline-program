@@ -132,6 +132,25 @@ describe("classifyBackfill", () => {
     expect(plan.conflicts[0]?.planName).toBe("Winter Cycle");
   });
 
+  it("refuses a legacy row older than the one the ledger already points at", () => {
+    const plan = classifyBackfill(
+      parseLegacyDays({ general: [generalRow({ id: 4 })], individual: [] }),
+      snapshotOf([generalTarget({ legacyRowId: 11 })]),
+    );
+
+    expect(plan.actions).toEqual([]);
+    expect(plan.conflicts.map((conflict) => conflict.reason)).toEqual([
+      "legacy-row-older-than-ledger",
+    ]);
+    expect(plan.conflicts[0]?.detail).toContain("older than");
+  });
+
+  it("still fills when the legacy row id is the one the ledger names", () => {
+    const plan = classifyBackfill(sourceOf(), snapshotOf([generalTarget({ legacyRowId: 11 })]));
+
+    expect(plan.actions.map((action) => action.kind)).toEqual(["fill"]);
+  });
+
   it("refuses to guess when two legacy rows sit on one day", () => {
     const plan = classifyBackfill(
       parseLegacyDays({

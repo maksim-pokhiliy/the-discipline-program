@@ -35,8 +35,21 @@ export type BackfillSnapshot = {
   alreadyFilled: number;
 };
 
-const toChannel = (channel: string): PublishChannel =>
-  channel === INDIVIDUAL_CHANNEL ? INDIVIDUAL_CHANNEL : GENERAL_CHANNEL;
+const toChannel = (channel: string): PublishChannel => {
+  if (channel === INDIVIDUAL_CHANNEL) {
+    return INDIVIDUAL_CHANNEL;
+  }
+
+  if (channel === GENERAL_CHANNEL) {
+    return GENERAL_CHANNEL;
+  }
+
+  throw new Error(
+    `refusing to run: a publish link carries the channel ${channel}, which this backfill has no ` +
+      "matching rule for. A channel it cannot match is a channel it must not guess at; nothing " +
+      "was written.",
+  );
+};
 
 const legacyTargetIdOf = (row: LedgerRow, channel: PublishChannel): number | null =>
   channel === INDIVIDUAL_CHANNEL ? row.link.legacyUserId : row.link.legacyLevelId;

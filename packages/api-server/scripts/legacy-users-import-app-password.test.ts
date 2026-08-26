@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { COST_12_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH } from "../src/test/golden-fixture";
 
 import {
   appPasswordChangeFor,
@@ -17,8 +17,6 @@ import {
   normalizeLegacySource,
 } from "./legacy-users-import-source";
 
-const PLATFORM_CHOSEN_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
-const RE_HASHED = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
 const LEGACY_ID = 20;
 const LEGACY_ADDRESS = "athlete@tdp.local";
 const PLATFORM_USER_ID = "user_platform";
@@ -45,7 +43,7 @@ const platformUser = (overrides: Partial<PlatformUser> = {}): PlatformUser => ({
   matchEmail: LEGACY_ADDRESS,
   role: "ATHLETE",
   deletedAt: null,
-  password: PLATFORM_CHOSEN_HASH,
+  password: OTHER_COST_10_HASH,
   identityLegacyUserId: null,
   ...overrides,
 });
@@ -111,7 +109,10 @@ describe("isAppPasswordPlatformChosen", () => {
   it("does not hold when a marker is set but no longer matches, since that is unknowable", () => {
     expect(
       isAppPasswordPlatformChosen(
-        subjectOf({ user: platformUser({ password: RE_HASHED }), markerHash: GOLDEN_BCRYPT_HASH }),
+        subjectOf({
+          user: platformUser({ password: COST_12_HASH }),
+          markerHash: GOLDEN_BCRYPT_HASH,
+        }),
       ),
     ).toBe(false);
   });
@@ -206,7 +207,7 @@ describe("classifyImport app password changes", () => {
     const plan = planFor(
       [sourceRow()],
       emptySnapshot({
-        users: [platformUser({ password: RE_HASHED })],
+        users: [platformUser({ password: COST_12_HASH })],
         identities: [
           {
             legacyUserId: LEGACY_ID,

@@ -10,6 +10,7 @@ import {
   LEGACY_TABLES,
   type LegacyProgramTable,
 } from "./legacy-days-backfill-plan";
+import { duplicatesOf } from "./script-cli";
 
 const MAX_INT4 = 2_147_483_647;
 
@@ -125,7 +126,7 @@ const normalizeRow = (
         ...shared,
         legacyTargetId,
         scheduledDate: row.scheduled_date,
-        isRestDay: true,
+        isRestDay: row.is_rest_day,
         dailyProgram: null,
       },
     };
@@ -148,27 +149,12 @@ const normalizeRow = (
   };
 };
 
-const duplicateIdsOf = (rows: readonly { id: number }[]): Set<number> => {
-  const seen = new Set<number>();
-  const repeated = new Set<number>();
-
-  for (const row of rows) {
-    if (seen.has(row.id)) {
-      repeated.add(row.id);
-    }
-
-    seen.add(row.id);
-  }
-
-  return repeated;
-};
-
 const normalizeTable = <TRow extends RawRow>(
   table: LegacyProgramTable,
   rows: readonly TRow[],
   targetIdOf: (row: TRow) => number,
 ): ParsedLegacyDays => {
-  const repeated = duplicateIdsOf(rows);
+  const repeated = duplicatesOf(rows.map((row) => row.id));
   const normalized: NormalizedLegacyDay[] = [];
   const defects: LegacyDaysDefect[] = [];
 

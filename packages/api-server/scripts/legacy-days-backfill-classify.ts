@@ -42,6 +42,20 @@ const indexLegacyDays = (
   return byKey;
 };
 
+const olderRowConflict = (
+  target: BackfillTarget,
+  legacy: NormalizedLegacyDay,
+): BackfillConflict => ({
+  subject: describeDay(target),
+  planName: target.planName,
+  reason: "legacy-row-older-than-ledger",
+  detail:
+    `the legacy row on this day is ${String(legacy.legacyRowId)}, older than the ` +
+    `${String(target.legacyRowId)} the ledger already points at, so it cannot be the ` +
+    "re-publish that replaced it; something is out of order and a backfill may not guess which " +
+    "of the two the athlete saw",
+});
+
 const actionFor = (target: BackfillTarget, legacy: NormalizedLegacyDay): BackfillAction => ({
   kind: legacy.legacyRowId === target.legacyRowId ? "fill" : "fill-from-newer-row",
   target,
@@ -119,6 +133,12 @@ export const classifyBackfill = (
 
     if (candidates.length > 1) {
       conflicts.push(duplicateConflict(target, candidates));
+
+      continue;
+    }
+
+    if (legacy.legacyRowId < target.legacyRowId) {
+      conflicts.push(olderRowConflict(target, legacy));
 
       continue;
     }

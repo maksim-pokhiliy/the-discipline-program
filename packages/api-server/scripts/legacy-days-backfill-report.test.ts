@@ -51,6 +51,7 @@ const render = (plan: BackfillPlan, mode: BackfillReportMode = "dry-run"): strin
 const ALL_CONFLICT_REASONS: BackfillConflictReason[] = [
   "link-missing-channel-id",
   "duplicate-legacy-row",
+  "legacy-row-older-than-ledger",
   "rest-day-carries-a-program",
   "training-day-carries-no-program",
   "program-body-is-not-the-wire-shape",
@@ -167,6 +168,30 @@ describe("renderBackfillReport", () => {
         "refused",
       ),
     ).toContain("Every conflict above has to be resolved first");
+  });
+
+  it("says nothing was filled rather than claiming days were, on an empty applied plan", () => {
+    const report = render(planOf({ actions: [] }), "applied");
+
+    expect(report).toContain("nothing to fill");
+    expect(report).not.toContain("every day above was filled");
+  });
+
+  it("counts missing days by their kind, not by the size of the warning list", () => {
+    const report = render(
+      planOf({
+        warnings: [
+          {
+            subject: "GENERAL level 2 · 2026-07-05",
+            planName: "Winter Cycle",
+            kind: "missing-in-legacy",
+            detail: "d",
+          },
+        ],
+      }),
+    );
+
+    expect(report).toContain("missing-in-legacy 1 ·");
   });
 
   it("never prints a host or a DSN, because it is never handed one", () => {
