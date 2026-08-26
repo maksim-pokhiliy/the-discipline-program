@@ -115,6 +115,13 @@ export type ImportConflict = { legacyUserId: number; reason: ConflictReason; det
 
 export type ImportWarning = { legacyUserId: number; kind: WarningKind; detail: string };
 
+export type AppPasswordChange = {
+  legacyUserId: number;
+  userEmail: string;
+  matchedBy: MatchedBy | null;
+  isEnabled: boolean;
+};
+
 export type ReconciliationSummary = {
   linksChecked: number;
   linksWithIdentity: number;
@@ -126,6 +133,7 @@ export type ImportPlan = {
   conflicts: readonly ImportConflict[];
   warnings: readonly ImportWarning[];
   reconciliation: ReconciliationSummary | null;
+  appPasswordChanges: readonly AppPasswordChange[];
 };
 
 export const describeUnmappedCatalogIds = (row: NormalizedLegacyUser): string | null => {

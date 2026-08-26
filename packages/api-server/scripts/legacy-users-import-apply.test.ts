@@ -400,6 +400,7 @@ describe("applyImport — refusal", () => {
       conflicts: [],
       warnings: [],
       reconciliation: { linksChecked: 0, linksWithIdentity: 0, violations: 0 },
+      appPasswordChanges: [],
     });
 
     expect(calls).toEqual([]);

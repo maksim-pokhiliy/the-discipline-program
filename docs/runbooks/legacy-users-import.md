@@ -79,6 +79,29 @@ Restore still needs `--restore-credentials`; without the flag a differing creden
 left alone. Use it only when you know the legacy password changed since the last import and you mean
 to carry the new one across, and check the `credentials replaced` count afterwards.
 
+### The consequence of the platform credential winning
+
+Keeping the platform credential is the right call and it has a cost somebody has to be told about.
+An athlete who accepted a platform invitation and typed their own password there now has **two**
+passwords for the same account: the legacy one their phone remembers, and the platform one they use
+on the web. The shim checks the platform one. So the moment the app starts talking to us, their
+legacy app password stops working and **their app password becomes their website password**.
+
+The report names exactly those people under `ACTION REQUIRED — app password changes`. A row is
+listed when the export carries a credential, the person has a platform credential of their own, it
+is not the export's hash, and the identity carries **no marker** -- the marker being absent is what
+makes "the import never wrote this credential, so the person chose it" a fact rather than a guess.
+
+Rows whose marker **is** set but no longer matches are deliberately **not** listed. That state has
+two causes the script cannot tell apart -- the first-login re-hash, which keeps the same password, or
+a real change since -- so it keeps its existing `stored credential is not the one the import wrote`
+warning and claims nothing.
+
+The list is derived, not written: it changes nothing this run does, so it does **not** enter the plan
+digest. The digest pins what will be written. The list can only go stale in the safe direction --
+this script is the only writer of the marker anywhere in the codebase, and somebody changing their
+website password in between only keeps them on the list.
+
 ## 1. Produce the export
 
 `row_to_json` is what the script's schema expects, and the schema is **strict** — an added or
@@ -190,7 +213,23 @@ RECONCILIATION individual links <n> · matched to a stored identity <m> · viola
   `matched to a stored identity 0` proves nothing; read both numbers.
 - `conflicts 0` — nothing anywhere contradicts anything.
 
+Then work the two owner-action blocks before applying:
+
+- [ ] every athlete under `ACTION REQUIRED — app password changes` has been told that from the
+      cutover their app password is their **website** password, and that the way to reset it is the
+      website's "Forgot password"; any of them reported as `shim DISABLED` is noted as unable to sign
+      in at all until the legacy row is enabled
+- [ ] every athlete carrying `matched platform user has no password of their own` has been dealt
+      with by hand -- they have no credential on either side and cannot sign in until they set one
+
+At the cutover dry run expect `app-password changes 7` — the seven athletes attached at P2.1
+(legacy ids 1, 3, 9, 18, 22, 23, 24), one of whom (id 9) is disabled in the shim.
+
 That report **is** the gate artifact. Keep it (on your own machine — it holds real addresses).
+
+The published-day backfill (`legacy-days-backfill.md`) runs in the same window, off the same fresh
+dump. Order does not matter between the two — they touch different tables — but both belong on the
+cutover checklist in `apex-cutover.md`, and both want the FINAL dump.
 
 ### Apply-day freshness
 
@@ -231,7 +270,7 @@ The head of every report is three lines: the counts, the reconciliation, and the
 hides below the fold.
 
 ```
-create 19 · attach 0 (link 0 / address 0) · refresh 0 · mirror diffs 0 · login-address changes 0 · credentials replaced 0 · markers backfilled 0 · conflicts 0 · warnings 1
+create 19 · attach 0 (link 0 / address 0) · refresh 0 · mirror diffs 0 · login-address changes 0 · app-password changes 0 · credentials replaced 0 · markers backfilled 0 · conflicts 0 · warnings 1
 RECONCILIATION individual links 4 · matched to a stored identity 4 · violations 0
 plan digest 7f3a91c04e2b — pin it on the apply with --expect-plan=7f3a91c04e2b
 ```
@@ -258,6 +297,7 @@ plan digest 7f3a91c04e2b — pin it on the apply with --expect-plan=7f3a91c04e2b
 - **REFRESH** — the identity already existed and its mirrored fields are being brought back in line
   with the export. This is what keeps the training plan and level faithful.
 - **ACTION REQUIRED — login address changes** — see below.
+- **ACTION REQUIRED — app password changes** — see below.
 - **CONFLICTS** — nothing is written while any of these stand.
 - **WARNINGS** — worth reading, but not blocking.
 
@@ -274,6 +314,25 @@ This is not a warning to skim. Before applying in production:
 - [ ] each of them will be told their new app login before cutover
 - [ ] `credentials replaced 0` on the summary line, unless you deliberately passed
       `--restore-credentials`
+
+### ACTION REQUIRED — app password changes
+
+Each line names one athlete whose app password will be their platform password from the cutover:
+
+```
+[     3] name@example.com  matched by link  shim enabled  — from the cutover their app password is this platform password
+```
+
+- **matched by link / address** — how this legacy row was first tied to that platform person,
+  reconstructed from the publish links and the addresses in the database, not from this run's action.
+  On every run after the first these rows come back as REFRESH, which says nothing about how they
+  were matched, so the report works it out again. `an unrecorded route` means neither a link nor the
+  address points there any more; the identity still does, and it is still the same person.
+- **shim enabled / DISABLED** — what the identity will hold after this run, which is what the shim
+  gates sign-in on. A `shim DISABLED` athlete cannot sign in at all, password notwithstanding.
+
+The count on the summary line is `app-password changes`. Read the section, not the count: the count
+tells you how many people to talk to, the section tells you who.
 
 ### Conflicts
 

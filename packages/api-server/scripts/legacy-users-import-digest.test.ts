@@ -92,6 +92,46 @@ describe("planDigest — shape", () => {
   });
 });
 
+describe("planDigest — the app password section is outside the pin", () => {
+  const PINNED_ATTACH_DIGEST = "7239ddd29d56";
+  const PINNED_CREATE_DIGEST = "8818b3a1dd7f";
+
+  const attachSnapshot = emptySnapshot({
+    individualLinks: [{ legacyUserId: LEGACY_ID, athleteId: "user_linked" }],
+    users: [
+      platformUser({
+        id: "user_linked",
+        email: "athlete@tdp.local",
+        matchEmail: "athlete@tdp.local",
+        password: OTHER_COST_10_HASH,
+      }),
+    ],
+  });
+
+  it("still produces the digests it produced before the section existed", () => {
+    const attachPlan = planFor([sourceRow()], attachSnapshot);
+
+    expect(attachPlan.appPasswordChanges).toHaveLength(1);
+    expect(planDigest(attachPlan)).toBe(PINNED_ATTACH_DIGEST);
+    expect(digestOf([sourceRow()])).toBe(PINNED_CREATE_DIGEST);
+  });
+
+  it("does not move when only the app password changes differ", () => {
+    const plan = planFor([sourceRow()], attachSnapshot);
+    const withoutSection: ImportPlan = { ...plan, appPasswordChanges: [] };
+
+    expect(planDigest(withoutSection)).toBe(planDigest(plan));
+  });
+
+  it("canonicalises the writes and the reasons behind them, and nothing else", () => {
+    expect(Object.keys(canonicalizePlan(planFor([sourceRow()], attachSnapshot))).sort()).toEqual([
+      "actions",
+      "conflicts",
+      "warnings",
+    ]);
+  });
+});
+
 describe("planDigest — insensitivity", () => {
   it("ignores the order rows happen to sit in inside the export", () => {
     const reversed = [...THREE_ROWS].reverse();
