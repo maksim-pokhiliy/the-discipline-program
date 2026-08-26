@@ -1,3 +1,5 @@
+import { contentHash } from "../src/utils/hash";
+
 export const WRITE_FLAG = "--write";
 export const EXPECT_HOST_FLAG = "--expect-host=";
 export const EXPECT_PLAN_FLAG = "--expect-plan=";
@@ -192,3 +194,20 @@ export const requireAttestedTarget = (argv: readonly string[], databaseUrl: stri
 
   return target;
 };
+
+export const shortPlanDigest = (canonicalPlan: unknown): string =>
+  contentHash(canonicalPlan).slice(0, PLAN_DIGEST_LENGTH);
+
+export class PlanDigestMismatchError extends Error {
+  constructor(
+    public readonly pinned: string,
+    public readonly recomputed: string,
+  ) {
+    super(
+      `refusing to write: this run builds a plan with digest ${recomputed}, not the ${pinned} ` +
+        "that was pinned. Nothing was written. The database moved between the dry run and this " +
+        "apply, so the plan below is not the one that was reviewed.",
+    );
+    this.name = "PlanDigestMismatchError";
+  }
+}

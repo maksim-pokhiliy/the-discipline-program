@@ -1,4 +1,4 @@
-import { contentHash, sha256Hex } from "../src/utils/hash";
+import { sha256Hex } from "../src/utils/hash";
 
 import {
   type CredentialOutcome,
@@ -11,7 +11,7 @@ import {
   type ImportWarning,
   renderMirrorValue,
 } from "./legacy-users-import-plan";
-import { PLAN_DIGEST_LENGTH } from "./script-target-guard";
+import { shortPlanDigest } from "./script-target-guard";
 
 const CREDENTIAL_FINGERPRINT_LENGTH = 16;
 
@@ -75,19 +75,6 @@ export const canonicalizePlan = (plan: ImportPlan): CanonicalPlan => ({
   warnings: plan.warnings.map(canonicalWarning).sort(),
 });
 
-export const planDigest = (plan: ImportPlan): string =>
-  contentHash(canonicalizePlan(plan)).slice(0, PLAN_DIGEST_LENGTH);
+export { PlanDigestMismatchError } from "./script-target-guard";
 
-export class PlanDigestMismatchError extends Error {
-  constructor(
-    public readonly pinned: string,
-    public readonly recomputed: string,
-  ) {
-    super(
-      `refusing to write: this run builds a plan with digest ${recomputed}, not the ${pinned} ` +
-        "that was pinned. Nothing was written. The database moved between the dry run and this " +
-        "apply, so the plan below is not the one that was reviewed.",
-    );
-    this.name = "PlanDigestMismatchError";
-  }
-}
+export const planDigest = (plan: ImportPlan): string => shortPlanDigest(canonicalizePlan(plan));
