@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { toInputJson } from "../src/utils";
+import { toInputJson } from "../src/utils/to-input-json";
 
 import { type BackfillAction, type BackfillPlan, describeDay } from "./legacy-days-backfill-plan";
 

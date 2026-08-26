@@ -1,5 +1,5 @@
-import { type LegacyDailyProgram } from "../../../infrastructure/legacy-mobile";
-import { contentHash } from "../../../utils";
+import type { LegacyDailyProgram } from "../../../infrastructure/legacy-mobile";
+import { contentHash } from "../../../utils/hash";
 
 export type Hashable =
   | { isRestDay: true }
