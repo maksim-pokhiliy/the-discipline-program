@@ -20,15 +20,7 @@ not from what the dashboard is assumed to look like.
 
 ## The sequence
 
-### 1. Add the apex to the platform project _(dashboard)_
-
-- [ ] Add `thedisciplineprogram.com` as a domain on the **platform** Vercel project.
-- [ ] Add the `_vercel` TXT record Vercel asks for, and wait for it to verify.
-- [ ] Do **not** configure a domain-level redirect on it in the dashboard. That redirects every path
-      including `/api/v1`, which is the one thing the apex exists to serve.
-- [ ] Note the A-record target Vercel gives for the apex; the flip in step 5 uses it.
-
-### 2a. Immediately after the deploy that ships the redirect
+### 1. Immediately after the deploy that ships the redirect
 
 Before the apex is a domain at all, and while `platform.` is live, prove the host condition is not
 matching as a substring:
@@ -41,7 +33,15 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://platform.thedisciplineprogram.
 - [ ] both answer `200`. A `308` on either means the rule is catching the product's own domain --
       revert the deploy before doing anything else.
 
-### 2. Prove the routing before any DNS moves
+### 2. Add the apex to the platform project _(dashboard)_
+
+- [ ] Add `thedisciplineprogram.com` as a domain on the **platform** Vercel project.
+- [ ] Add the `_vercel` TXT record Vercel asks for, and wait for it to verify.
+- [ ] Do **not** configure a domain-level redirect on it in the dashboard. That redirects every path
+      including `/api/v1`, which is the one thing the apex exists to serve.
+- [ ] Note the A-record target Vercel gives for the apex; the flip in step 6 uses it.
+
+### 3. Prove the routing before any DNS moves
 
 With the domain added but DNS still pointing at the VPS, address the Vercel edge directly and give it
 the apex `Host` and SNI by hand:
@@ -65,12 +65,12 @@ The third one is the check that matters most: it proves the redirect is not swal
 `/api/v1/...` answers 308, stop — the `source` pattern in `apps/platform/vercel.json` is wrong and
 nothing else in this runbook should be attempted.
 
-### 3. Shorten the TTL _(dashboard)_
+### 4. Shorten the TTL _(dashboard)_
 
 - [ ] Drop the apex A record's TTL to 60 s and wait out the old TTL before flipping. This is what
-      makes step 8's rollback take a minute rather than an afternoon.
+      makes the rollback below take a minute rather than an afternoon.
 
-### 4. Final data sync
+### 5. Final data sync
 
 Both runs come off **one fresh, same-day dump**, taken after the legacy app has stopped being
 published to for the day.
@@ -89,21 +89,21 @@ missing-in-legacy = 134` and `already-filled (skipped) 120`
 - [ ] Re-run both dry runs: the users import reports every row as a refresh with `no change`, and the
       backfill reports `fill 0 · fill-from-newer-row 0`
 
-### 5. Flip the DNS _(dashboard)_
+### 6. Flip the DNS _(dashboard)_
 
-- [ ] Apex A record → the Vercel address from step 1
+- [ ] Apex A record → the Vercel address from step 2
 - [ ] Proxy **off** (DNS-only). A proxied record puts Cloudflare between the app and the edge, which
       is a second TLS terminator nobody has tested against this app.
 - [ ] Leave the VPS running. It is the rollback.
 
-### 6. Certificate
+### 7. Certificate
 
 - [ ] Wait for Vercel to issue the apex certificate. `/.well-known` is reserved by the platform and
       cannot be redirected, so the catch-all in `vercel.json` does not interfere with issuance.
-- [ ] Repeat the three curl checks from step 2 **without** `--resolve` and **without** `-k`, so they
+- [ ] Repeat the three curl checks from step 3 **without** `--resolve` and **without** `-k`, so they
       go through real DNS and a real certificate.
 
-### 7. Phone smoke
+### 8. Phone smoke
 
 On a real device, on cellular data (not the office network, which may still hold a DNS cache):
 
@@ -113,7 +113,7 @@ On a real device, on cellular data (not the office network, which may still hold
 - [ ] One of the backfilled dates renders a day rather than an empty screen
 - [ ] A date in the `missing-in-legacy` list renders as empty, which is expected and correct
 
-### 8. Soak, then decommission
+### 9. Soak, then decommission
 
 - [ ] Watch Sentry and the Vercel logs for the first hours: 403s on `/api/v1/*` are sign-outs and are
       the signal that matters
@@ -131,7 +131,7 @@ At any point before the VPS is decommissioned:
 
 - [ ] Apex A record → the VPS address, proxy on as it was
 - [ ] With the TTL at 60 s this is a minute, not an afternoon
-- [ ] The data written in step 4 stays. It has to: the imports are additive, the backfill only ever
+- [ ] The data written in step 5 stays. It has to: the imports are additive, the backfill only ever
       filled empty rows, and the legacy backend never reads either table.
 
 ## What this runbook does not decide
