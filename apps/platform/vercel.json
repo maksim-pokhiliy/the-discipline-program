@@ -26,5 +26,13 @@
       "source": "/(.*)"
     }
   ],
+  "redirects": [
+    {
+      "destination": "https://www.thedisciplineprogram.com/:path*",
+      "has": [{ "type": "host", "value": "^thedisciplineprogram\\.com$" }],
+      "permanent": true,
+      "source": "/:path((?!api/v1(?:/|$)).*)"
+    }
+  ],
   "regions": ["fra1"]
 }

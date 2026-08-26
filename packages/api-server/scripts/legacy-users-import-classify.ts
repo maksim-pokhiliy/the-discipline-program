@@ -1,3 +1,4 @@
+import { appPasswordChangeFor, type AppPasswordSubject } from "./legacy-users-import-app-password";
 import {
   attachConflict,
   attachWarnings,
@@ -7,6 +8,7 @@ import {
   rowWarnings,
 } from "./legacy-users-import-match";
 import {
+  type AppPasswordChange,
   type ClassifyOptions,
   describeUnmappedCatalogIds,
   type ImportAction,
@@ -17,21 +19,7 @@ import {
 } from "./legacy-users-import-plan";
 import { reconcileIdentityLinks } from "./legacy-users-import-reconcile";
 import type { ParsedLegacySource, SourceDefect } from "./legacy-users-import-source";
-
-const duplicatesOf = <T>(values: readonly T[]): Set<T> => {
-  const seen = new Set<T>();
-  const repeated = new Set<T>();
-
-  for (const value of values) {
-    if (seen.has(value)) {
-      repeated.add(value);
-    }
-
-    seen.add(value);
-  }
-
-  return repeated;
-};
+import { duplicatesOf } from "./script-cli";
 
 const defectToConflict = (defect: SourceDefect): ImportConflict =>
   defect.kind === "username-not-an-email"
@@ -106,6 +94,15 @@ export const classifyImport = (
   const conflicts: ImportConflict[] = source.defects.map(defectToConflict);
   const warnings: ImportWarning[] = [];
   const staged: ImportAction[] = [];
+  const appPasswordChanges = new Map<string, AppPasswordChange>();
+
+  const noteAppPasswordChange = (userId: string, subject: AppPasswordSubject): void => {
+    const change = appPasswordChangeFor(subject, indexes);
+
+    if (change !== null) {
+      appPasswordChanges.set(userId, change);
+    }
+  };
 
   const repeatedEmails = duplicatesOf(source.rows.map((row) => row.email));
   const repeatedIds = duplicatesOf([
@@ -181,13 +178,20 @@ export const classifyImport = (
         userEmail: resolution.user.email,
         matchedBy: resolution.matchedBy,
       });
+      noteAppPasswordChange(resolution.user.id, {
+        row,
+        user: resolution.user,
+        markerHash: null,
+        matchedBy: resolution.matchedBy,
+      });
       warnings.push(...attachWarnings(row, resolution.user, resolution.matchedBy));
       warnings.push(...rowWarnings(row));
 
       continue;
     }
 
-    const outcome = refreshOutcome(row, resolution.identity, indexes, options);
+    const { identity } = resolution;
+    const outcome = refreshOutcome(row, identity, indexes, options);
 
     if ("conflict" in outcome) {
       conflicts.push(outcome.conflict);
@@ -196,6 +200,11 @@ export const classifyImport = (
     }
 
     staged.push(outcome.action);
+    noteAppPasswordChange(identity.userId, {
+      row,
+      user: indexes.userById.get(identity.userId),
+      markerHash: identity.importedPasswordHash,
+    });
     warnings.push(...outcome.warnings, ...rowWarnings(row));
   }
 
@@ -203,10 +212,22 @@ export const classifyImport = (
   const sourceIds = new Set(source.rows.map((row) => row.legacyUserId));
   const reconciled = source.rows.length === 0 ? null : reconcileIdentityLinks(snapshot);
 
+  const appliedUserIds = new Set(
+    claims.actions.flatMap((action) => {
+      const userId = targetUserIdOf(action);
+
+      return userId === null ? [] : [userId];
+    }),
+  );
+
   return {
     actions: claims.actions,
     conflicts: [...conflicts, ...claims.conflicts, ...(reconciled?.conflicts ?? [])],
     warnings: [...warnings, ...identitiesAbsentFromSource(snapshot, sourceIds)],
     reconciliation: reconciled?.summary ?? null,
+    appPasswordChanges: [...appPasswordChanges]
+      .filter(([userId]) => appliedUserIds.has(userId))
+      .map(([, change]) => change)
+      .sort((left, right) => left.legacyUserId - right.legacyUserId),
   };
 };

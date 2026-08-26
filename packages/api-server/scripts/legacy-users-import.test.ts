@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH } from "../src/test/golden-fixture";
 
 import {
   type ImportSession,
@@ -8,7 +8,6 @@ import {
   runImport,
   SOURCE_FLAG,
   readerFor,
-  withHostWithheld,
   writerFor,
 } from "./legacy-users-import";
 import type { ImportWriter } from "./legacy-users-import-apply";
@@ -17,7 +16,9 @@ import { planDigest } from "./legacy-users-import-digest";
 import type { PlatformSnapshot } from "./legacy-users-import-plan";
 import type { ImportReader } from "./legacy-users-import-snapshot";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
+import { withHostWithheld } from "./script-cli";
 import {
+  EXPECT_DATABASE_FLAG,
   EXPECT_HOST_FLAG,
   EXPECT_PLAN_FLAG,
   RESTORE_CREDENTIALS_FLAG,
@@ -26,6 +27,8 @@ import {
 
 const SCHEME = "postgresql:";
 const TARGET_HOST = "db.example-target.invalid";
+const TARGET_AUTHORITY = `${TARGET_HOST}:5432`;
+const TARGET_DATABASE = "platform";
 const DSN = `${SCHEME}//importer:hunter2@${TARGET_HOST}:5432/platform`;
 const SOURCE_PATH = "/tmp/legacy-users.json";
 
@@ -172,7 +175,11 @@ describe("runImport — dry run", () => {
   it("is the default mode and never opens a write path", async () => {
     const { deps, events, writes } = harness([sourceRow()]);
     const result = await runImport(
-      deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
+      deps([
+        `${SOURCE_FLAG}${SOURCE_PATH}`,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+      ]),
     );
 
     expect(events).toContain("read");
@@ -184,7 +191,11 @@ describe("runImport — dry run", () => {
   it("reports no conflicts for a clean export", async () => {
     const { deps } = harness([sourceRow()]);
     const result = await runImport(
-      deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
+      deps([
+        `${SOURCE_FLAG}${SOURCE_PATH}`,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+      ]),
     );
 
     expect(result.isRefused).toBe(false);
@@ -194,7 +205,11 @@ describe("runImport — dry run", () => {
   it("reports conflicts without writing anything", async () => {
     const { deps, writes } = harness([sourceRow({ training_level_id: 9 })]);
     const result = await runImport(
-      deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]),
+      deps([
+        `${SOURCE_FLAG}${SOURCE_PATH}`,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+      ]),
     );
 
     expect(result.isRefused).toBe(true);
@@ -204,7 +219,13 @@ describe("runImport — dry run", () => {
   it("closes the session even when the source is unusable", async () => {
     const { deps, events } = harness([sourceRow({ training_level_id: 2 })]);
 
-    await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]));
+    await runImport(
+      deps([
+        `${SOURCE_FLAG}${SOURCE_PATH}`,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+      ]),
+    );
 
     expect(events.at(-1)).toBe("close");
   });
@@ -212,7 +233,13 @@ describe("runImport — dry run", () => {
   it("reads the file named by the source flag", async () => {
     const { deps, events } = harness([sourceRow()]);
 
-    await runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`]));
+    await runImport(
+      deps([
+        `${SOURCE_FLAG}${SOURCE_PATH}`,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+      ]),
+    );
 
     expect(events).toContain(`readSource:${SOURCE_PATH}`);
   });
@@ -229,7 +256,13 @@ describe("runImport — guards", () => {
     const { deps } = harness([sourceRow()], emptySnapshot(), {});
 
     await expect(
-      runImport(deps([`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`])),
+      runImport(
+        deps([
+          `${SOURCE_FLAG}${SOURCE_PATH}`,
+          `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+          `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+        ]),
+      ),
     ).rejects.toThrow(/DATABASE_URL is required/);
   });
 
@@ -261,7 +294,8 @@ describe("runImport — apply", () => {
   const writeArgvPinning = (digest: string) => [
     `${SOURCE_FLAG}${SOURCE_PATH}`,
     WRITE_FLAG,
-    `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+    `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+    `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
     `${EXPECT_PLAN_FLAG}${digest}`,
   ];
 
@@ -310,7 +344,11 @@ describe("runImport — apply", () => {
 });
 
 describe("runImport — plan pinning", () => {
-  const baseArgv = [`${SOURCE_FLAG}${SOURCE_PATH}`, `${EXPECT_HOST_FLAG}${TARGET_HOST}`];
+  const baseArgv = [
+    `${SOURCE_FLAG}${SOURCE_PATH}`,
+    `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+    `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
+  ];
   const A_VALID_LOOKING_DIGEST = "0123456789ab";
 
   it("refuses to write at all without a pinned plan", async () => {
@@ -439,15 +477,13 @@ describe("runImport — plan pinning", () => {
 });
 
 describe("runImport — credential restore flag", () => {
-  const DRIFTED_COST_10 = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
-
   const refreshSnapshot = (): PlatformSnapshot =>
     emptySnapshot({
       identities: [
         {
           legacyUserId: 20,
           userId: "user_platform",
-          importedPasswordHash: DRIFTED_COST_10,
+          importedPasswordHash: OTHER_COST_10_HASH,
           legacyRoleId: 1,
           legacyPlanId: 1,
           legacyLevelId: 2,
@@ -465,7 +501,7 @@ describe("runImport — credential restore flag", () => {
           matchEmail: "athlete@tdp.local",
           role: "ATHLETE",
           deletedAt: null,
-          password: DRIFTED_COST_10,
+          password: OTHER_COST_10_HASH,
           identityLegacyUserId: 20,
         },
       ],
@@ -474,7 +510,8 @@ describe("runImport — credential restore flag", () => {
   const writeArgvPinning = (isCredentialRestoreEnabled: boolean) => [
     `${SOURCE_FLAG}${SOURCE_PATH}`,
     WRITE_FLAG,
-    `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+    `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+    `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
     `${EXPECT_PLAN_FLAG}${digestFor([sourceRow()], refreshSnapshot(), isCredentialRestoreEnabled)}`,
   ];
 
@@ -508,7 +545,8 @@ describe("runImport — credential restore flag", () => {
     const withFlag = await runImport(
       deps([
         `${SOURCE_FLAG}${SOURCE_PATH}`,
-        `${EXPECT_HOST_FLAG}${TARGET_HOST}`,
+        `${EXPECT_HOST_FLAG}${TARGET_AUTHORITY}`,
+        `${EXPECT_DATABASE_FLAG}${TARGET_DATABASE}`,
         RESTORE_CREDENTIALS_FLAG,
       ]),
     );

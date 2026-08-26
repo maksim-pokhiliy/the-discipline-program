@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { COST_12_HASH, GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH } from "../src/test/golden-fixture";
 
 import { applyImport, ImportConflictError, type ImportWriter } from "./legacy-users-import-apply";
 import { classifyImport } from "./legacy-users-import-classify";
 import type { ImportPlan, PlatformSnapshot } from "./legacy-users-import-plan";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 
-const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
-const OTHER_COST_10_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
 const LEGACY_ID = 20;
 
 type Call = { path: string; args: unknown };
@@ -400,6 +398,7 @@ describe("applyImport — refusal", () => {
       conflicts: [],
       warnings: [],
       reconciliation: { linksChecked: 0, linksWithIdentity: 0, violations: 0 },
+      appPasswordChanges: [],
     });
 
     expect(calls).toEqual([]);

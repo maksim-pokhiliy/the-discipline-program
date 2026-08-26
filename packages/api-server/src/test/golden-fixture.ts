@@ -6,6 +6,10 @@ export const GOLDEN_PASSWORD = "Admin123!";
 
 export const GOLDEN_BCRYPT_HASH = "$2a$10$xGFVeUFmZ9fBD3ihEPQZt.bl85fgMvCX0kdxA71xYpPDT4f72oiAy";
 
+export const OTHER_COST_10_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
+
+export const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
+
 export const LEGACY_ROLE_USER = 1;
 export const LEGACY_ROLE_ADMIN = 2;
 export const LEGACY_PLAN_GENERAL = 1;

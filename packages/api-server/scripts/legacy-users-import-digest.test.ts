@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { GOLDEN_BCRYPT_HASH, OTHER_COST_10_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
 import { canonicalizePlan, planDigest } from "./legacy-users-import-digest";
@@ -8,7 +8,6 @@ import type { ImportPlan, PlatformSnapshot } from "./legacy-users-import-plan";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 import { PLAN_DIGEST_LENGTH } from "./script-target-guard";
 
-const OTHER_COST_10_HASH = "$2a$10$abcdefghijklmnopqrstuuMz3Zk1H4bY9xW2vC5nQ8fT7sR6pL0dG";
 const LEGACY_ID = 20;
 
 const sourceRow = (overrides: Partial<LegacySourceRow> = {}): LegacySourceRow => ({
@@ -89,6 +88,46 @@ describe("planDigest — shape", () => {
 
   it("is stable across runs over the same plan", () => {
     expect(digestOf([sourceRow()])).toBe(digestOf([sourceRow()]));
+  });
+});
+
+describe("planDigest — the app password section is outside the pin", () => {
+  const PINNED_ATTACH_DIGEST = "7239ddd29d56";
+  const PINNED_CREATE_DIGEST = "8818b3a1dd7f";
+
+  const attachSnapshot = emptySnapshot({
+    individualLinks: [{ legacyUserId: LEGACY_ID, athleteId: "user_linked" }],
+    users: [
+      platformUser({
+        id: "user_linked",
+        email: "athlete@tdp.local",
+        matchEmail: "athlete@tdp.local",
+        password: OTHER_COST_10_HASH,
+      }),
+    ],
+  });
+
+  it("still produces the digests it produced before the section existed", () => {
+    const attachPlan = planFor([sourceRow()], attachSnapshot);
+
+    expect(attachPlan.appPasswordChanges).toHaveLength(1);
+    expect(planDigest(attachPlan)).toBe(PINNED_ATTACH_DIGEST);
+    expect(digestOf([sourceRow()])).toBe(PINNED_CREATE_DIGEST);
+  });
+
+  it("does not move when only the app password changes differ", () => {
+    const plan = planFor([sourceRow()], attachSnapshot);
+    const withoutSection: ImportPlan = { ...plan, appPasswordChanges: [] };
+
+    expect(planDigest(withoutSection)).toBe(planDigest(plan));
+  });
+
+  it("canonicalises the writes and the reasons behind them, and nothing else", () => {
+    expect(Object.keys(canonicalizePlan(planFor([sourceRow()], attachSnapshot))).sort()).toEqual([
+      "actions",
+      "conflicts",
+      "warnings",
+    ]);
   });
 });
 

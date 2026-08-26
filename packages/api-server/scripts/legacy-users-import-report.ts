@@ -1,12 +1,15 @@
 import { planDigest } from "./legacy-users-import-digest";
 import type {
+  AppPasswordChange,
   ConflictReason,
   CredentialOutcome,
   ImportAction,
   ImportPlan,
   ImportWarning,
+  MatchedBy,
   WarningKind,
 } from "./legacy-users-import-plan";
+import { section } from "./script-cli";
 import { EXPECT_PLAN_FLAG } from "./script-target-guard";
 
 export type ReportMode = "dry-run" | "applied" | "refused" | "stale-plan";
@@ -19,6 +22,8 @@ const HEADERS = {
 } satisfies Record<ReportMode, string>;
 
 export const ADDRESS_CHANGE_HEADING = "ACTION REQUIRED — login address changes";
+
+export const APP_PASSWORD_CHANGE_HEADING = "ACTION REQUIRED — app password changes";
 
 const CONFLICT_LABELS = {
   "username-not-an-email": "username is not an email",
@@ -49,7 +54,21 @@ const WARNING_LABELS = {
   "legacy-team-dropped": "legacy team has nowhere to go",
 } satisfies Record<WarningKind, string>;
 
+const MATCH_LABELS = { link: "link", email: "address" } satisfies Record<MatchedBy, string>;
+
+const UNRECORDED_MATCH = "an unrecorded route";
+
 const tag = (legacyUserId: number): string => `[${String(legacyUserId).padStart(6, " ")}]`;
+
+const describeAppPasswordChange = (change: AppPasswordChange): string => {
+  const matchedBy = change.matchedBy === null ? UNRECORDED_MATCH : MATCH_LABELS[change.matchedBy];
+  const shim = change.isEnabled ? "shim enabled" : "shim DISABLED";
+
+  return (
+    `${tag(change.legacyUserId)} ${change.userEmail}  matched by ${matchedBy}  ${shim}  ` +
+    "— from the cutover their app password is this platform password"
+  );
+};
 
 const describeCreate = (action: Extract<ImportAction, { kind: "create" }>): string => {
   const { row } = action;
@@ -82,9 +101,6 @@ const describeRefresh = (action: Extract<ImportAction, { kind: "refresh" }>): st
   return `${tag(action.row.legacyUserId)} ${action.userEmail}  ${changes}${CREDENTIAL_NOTES[action.credentialOutcome.kind]}`;
 };
 
-const section = (heading: string, lines: readonly string[]): readonly string[] =>
-  lines.length === 0 ? [] : ["", heading, ...lines.map((line) => `  ${line}`)];
-
 const byKind = <K extends ImportAction["kind"]>(
   plan: ImportPlan,
   kind: K,
@@ -116,6 +132,7 @@ const summaryLine = (plan: ImportPlan): string => {
     `create ${byKind(plan, "create").length} · attach ${attachments.length} ` +
     `(link ${linkCount} / address ${emailCount}) · refresh ${refreshes.length} · ` +
     `mirror diffs ${mirrorDiffs} · login-address changes ${addressChanges} · ` +
+    `app-password changes ${plan.appPasswordChanges.length} · ` +
     `credentials replaced ${credentialsReplaced} · markers backfilled ${markersBackfilled} · ` +
     `conflicts ${plan.conflicts.length} · warnings ${plan.warnings.length}`
   );
@@ -206,6 +223,7 @@ export const renderImportReport = (plan: ImportPlan, mode: ReportMode): readonly
         (warning) => `${tag(warning.legacyUserId)} ${warning.detail} — warn this athlete`,
       ),
     ),
+    ...section(APP_PASSWORD_CHANGE_HEADING, plan.appPasswordChanges.map(describeAppPasswordChange)),
     ...section(
       "CONFLICTS",
       plan.conflicts.map(

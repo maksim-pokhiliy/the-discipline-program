@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
+import { COST_12_HASH, GOLDEN_BCRYPT_HASH } from "../src/test/golden-fixture";
 
 import { classifyImport } from "./legacy-users-import-classify";
 import type {
@@ -11,12 +11,12 @@ import type {
 } from "./legacy-users-import-plan";
 import {
   ADDRESS_CHANGE_HEADING,
+  APP_PASSWORD_CHANGE_HEADING,
   type ReportMode,
   renderImportReport,
 } from "./legacy-users-import-report";
 import { type LegacySourceRow, normalizeLegacySource } from "./legacy-users-import-source";
 
-const COST_12_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
 const HOSTNAME = "db.example-target.invalid";
 const DSN = `${"postgresql:"}//importer:hunter2@${HOSTNAME}:5432/platform`;
 
@@ -120,8 +120,8 @@ describe("renderImportReport", () => {
 
     expect(render(plan)).toContain(
       "create 0 · attach 1 (link 1 / address 0) · refresh 0 · mirror diffs 0 · " +
-        "login-address changes 1 · credentials replaced 0 · markers backfilled 0 · " +
-        "conflicts 0 · warnings 1",
+        "login-address changes 1 · app-password changes 1 · credentials replaced 0 · " +
+        "markers backfilled 0 · conflicts 0 · warnings 1",
     );
   });
 
@@ -151,6 +151,64 @@ describe("renderImportReport", () => {
 
   it("omits the address-change heading when no login moves", () => {
     expect(render(planFor([sourceRow()], emptySnapshot()))).not.toContain(ADDRESS_CHANGE_HEADING);
+  });
+
+  it("gives the app password changes their own heading, with how the row was matched", () => {
+    const report = render(
+      planFor(
+        [sourceRow()],
+        emptySnapshot({
+          users: [
+            {
+              id: "user_platform",
+              email: "athlete@tdp.local",
+              matchEmail: "athlete@tdp.local",
+              role: "ATHLETE",
+              deletedAt: null,
+              password: COST_12_HASH,
+              identityLegacyUserId: null,
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(report).toContain(APP_PASSWORD_CHANGE_HEADING);
+    expect(report).toContain("matched by address");
+    expect(report).toContain("shim enabled");
+    expect(report).toContain("from the cutover their app password is this platform password");
+    expect(report).not.toContain(COST_12_HASH);
+  });
+
+  it("says so plainly when such an athlete is disabled in the shim", () => {
+    const report = render(
+      planFor(
+        [sourceRow({ is_enabled: false })],
+        emptySnapshot({
+          individualLinks: [{ legacyUserId: 20, athleteId: "user_linked" }],
+          users: [
+            {
+              id: "user_linked",
+              email: "athlete@tdp.local",
+              matchEmail: "athlete@tdp.local",
+              role: "ATHLETE",
+              deletedAt: null,
+              password: COST_12_HASH,
+              identityLegacyUserId: null,
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(report).toContain("matched by link");
+    expect(report).toContain("shim DISABLED");
+  });
+
+  it("omits the app-password heading when every credential is the import's own", () => {
+    expect(render(planFor([sourceRow()], emptySnapshot()))).not.toContain(
+      APP_PASSWORD_CHANGE_HEADING,
+    );
   });
 
   it("lists a created row with its catalog ids and enablement", () => {
@@ -229,6 +287,7 @@ describe("renderImportReport", () => {
   it("labels every conflict reason and warning kind it can be handed", () => {
     const plan: ImportPlan = {
       reconciliation: { linksChecked: 0, linksWithIdentity: 0, violations: 0 },
+      appPasswordChanges: [],
       actions: [],
       conflicts: [
         { legacyUserId: 22, reason: "link-and-identity-disagree", detail: "d" },
