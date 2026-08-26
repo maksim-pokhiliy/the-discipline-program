@@ -6,14 +6,14 @@ import { ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
-import { type LegacyDailyProgram } from "../../../infrastructure/legacy-mobile";
-import { contentHash, toInputJson } from "../../../utils";
+import { toInputJson } from "../../../utils";
 
 import {
   type ChannelProgramOps,
   type LegacyProgramRow,
   type LegacyProgramWriteBody,
 } from "./channel-program-ops";
+import { dayContentHash, toHashable } from "./day-content-hash";
 import { type MobilePublishDayPayload } from "./day-include";
 import {
   decidePublishAction,
@@ -24,8 +24,6 @@ import { type LegacyDailyProgramResult, projectDay } from "./projection/project-
 
 type WriteOutcome = { row: LegacyProgramRow; action: PublishAction };
 
-type Hashable = { isRestDay: true } | { isRestDay: false; dailyProgram: LegacyDailyProgram | null };
-
 export type PublishDayArgs = {
   ops: ChannelProgramOps;
   linkId: string;
@@ -35,9 +33,6 @@ export type PublishDayArgs = {
   exerciseById: ExerciseById;
   overwriteUnowned: boolean;
 };
-
-const toHashable = (isRestDay: boolean, dailyProgram: LegacyDailyProgram | null): Hashable =>
-  isRestDay ? { isRestDay: true } : { isRestDay: false, dailyProgram };
 
 const toWriteBody = (
   scheduledDate: string,
@@ -75,7 +70,7 @@ const resolveRace = async (
   const decision = decidePublishAction({
     isOwned,
     hasLegacyRow: true,
-    contentMatches: hash === contentHash(toHashable(raced.isRestDay, raced.dailyProgram)),
+    contentMatches: hash === dayContentHash(toHashable(raced.isRestDay, raced.dailyProgram)),
     overwriteUnowned: args.overwriteUnowned,
   });
 
@@ -176,7 +171,7 @@ const executeWrite = (
 
 export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult> => {
   const projected = projectDay(args.day, args.exerciseById);
-  const hash = contentHash(projected);
+  const hash = dayContentHash(projected);
 
   const existingRecord = await prisma.mobilePublishedDay.findUnique({
     where: { linkId_scheduledDate: { linkId: args.linkId, scheduledDate: args.absoluteDate } },
@@ -190,7 +185,7 @@ export const publishDay = async (args: PublishDayArgs): Promise<PublishDayResult
     hasLegacyRow: legacyRow !== null,
     contentMatches:
       legacyRow !== null &&
-      hash === contentHash(toHashable(legacyRow.isRestDay, legacyRow.dailyProgram)),
+      hash === dayContentHash(toHashable(legacyRow.isRestDay, legacyRow.dailyProgram)),
     overwriteUnowned: args.overwriteUnowned,
   });
 
