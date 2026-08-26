@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { isValidIsoDate } from "../src/endpoints/mobile-compat/legacy-date";
+import { legacyDailyProgramSchema } from "../src/endpoints/mobile-compat/wire-schemas";
 import type { LegacyDailyProgram } from "../src/infrastructure/legacy-mobile";
 import { stableStringify } from "../src/utils/hash";
 
@@ -11,15 +12,6 @@ import {
 } from "./legacy-days-backfill-plan";
 
 const MAX_INT4 = 2_147_483_647;
-
-export const backfillDailyProgramSchema = z.object({
-  dayTrainings: z.array(
-    z.object({
-      trainingNumber: z.number(),
-      blocks: z.array(z.object({ name: z.string(), exercises: z.array(z.string()) })),
-    }),
-  ),
-});
 
 const programBodySchema = z.union([z.null(), z.record(z.unknown())]);
 
@@ -75,7 +67,7 @@ type RawRow = { id: number; scheduled_date: string; is_rest_day: boolean; daily_
 const readProgramBody = (
   body: unknown,
 ): { program: LegacyDailyProgram } | { reason: BackfillConflictReason; detail: string } => {
-  const parsed = backfillDailyProgramSchema.safeParse(body);
+  const parsed = legacyDailyProgramSchema.safeParse(body);
 
   if (!parsed.success) {
     return {

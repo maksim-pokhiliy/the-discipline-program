@@ -3,12 +3,15 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
-
-import { legacyDailyProgramSchema } from "../src/endpoints/mobile-compat/wire-schemas";
-
-import { backfillDailyProgramSchema } from "./legacy-days-backfill-source";
+import { z } from "zod";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+const WORKSPACE_ROOT = join(PACKAGE_ROOT, "..");
+
+const WORKSPACE_SCOPE = "@repo/";
+
+const ENV_SCOPE = "@repo/env";
 
 const ENTRY = join(PACKAGE_ROOT, "scripts/legacy-days-backfill.ts");
 
@@ -26,10 +29,28 @@ const RUNTIME_PACKAGES = [
   "zod",
 ];
 
-const resolveModule = (fromFile: string, specifier: string): string | null => {
-  const base = resolve(dirname(fromFile), specifier);
+const asFile = (base: string): string | null =>
+  [`${base}.ts`, join(base, "index.ts")].find((candidate) => existsSync(candidate)) ?? null;
 
-  return [`${base}.ts`, join(base, "index.ts")].find((candidate) => existsSync(candidate)) ?? null;
+const resolveRelative = (fromFile: string, specifier: string): string | null =>
+  asFile(resolve(dirname(fromFile), specifier));
+
+const exportsSchema = z.object({ exports: z.record(z.string()) });
+
+const resolveWorkspace = (specifier: string): string | null => {
+  const [scope, name, ...rest] = specifier.split("/");
+  const packageRoot = join(WORKSPACE_ROOT, name ?? "");
+  const manifestPath = join(packageRoot, "package.json");
+
+  if (scope !== "@repo" || !existsSync(manifestPath)) {
+    return null;
+  }
+
+  const subpath = rest.length === 0 ? "." : `./${rest.join("/")}`;
+  const target = exportsSchema.safeParse(JSON.parse(readFileSync(manifestPath, "utf8")));
+  const entry = target.success ? target.data.exports[subpath] : undefined;
+
+  return entry === undefined ? null : asFile(join(packageRoot, entry.replace(/\.tsx?$/, "")));
 };
 
 type Graph = { files: Set<string>; packages: Set<string>; unresolved: string[] };
@@ -52,21 +73,37 @@ const walk = (file: string, graph: Graph): Graph => {
   ];
 
   for (const specifier of specifiers) {
-    if (!specifier.startsWith(".")) {
+    if (specifier.startsWith(ENV_SCOPE)) {
       graph.packages.add(specifier);
 
       continue;
     }
 
-    const target = resolveModule(file, specifier);
+    if (specifier.startsWith(".")) {
+      const target = resolveRelative(file, specifier);
 
-    if (target === null) {
-      graph.unresolved.push(`${file} -> ${specifier}`);
+      if (target === null) {
+        graph.unresolved.push(`${file} -> ${specifier}`);
+
+        continue;
+      }
+
+      walk(target, graph);
 
       continue;
     }
 
-    walk(target, graph);
+    const workspaceTarget = specifier.startsWith(WORKSPACE_SCOPE)
+      ? resolveWorkspace(specifier)
+      : null;
+
+    if (workspaceTarget === null) {
+      graph.packages.add(specifier);
+
+      continue;
+    }
+
+    walk(workspaceTarget, graph);
   }
 
   return graph;
@@ -90,73 +127,19 @@ describe("the days backfill boots with nothing but a DATABASE_URL", () => {
     expect(reached).toEqual([]);
   });
 
+  it("follows workspace packages rather than stopping at their names", () => {
+    const reached = [...runtimeGraph().files].filter((file) =>
+      file.includes(join(WORKSPACE_ROOT, "contracts")),
+    );
+
+    expect(reached.length).toBeGreaterThan(0);
+  });
+
   it("imports no package beyond the ones an operator CLI needs", () => {
     const unexpected = [...runtimeGraph().packages].filter(
       (name) => !RUNTIME_PACKAGES.includes(name),
     );
 
     expect(unexpected).toEqual([]);
-  });
-});
-
-const PROGRAM_SHAPES: readonly [string, unknown][] = [
-  [
-    "a training day",
-    { dayTrainings: [{ trainingNumber: 1, blocks: [{ name: "A", exercises: ["x"] }] }] },
-  ],
-  ["a day with no trainings", { dayTrainings: [] }],
-  ["a training with no blocks", { dayTrainings: [{ trainingNumber: 1, blocks: [] }] }],
-  [
-    "a block with no exercises",
-    { dayTrainings: [{ trainingNumber: 1, blocks: [{ name: "A", exercises: [] }] }] },
-  ],
-  [
-    "several trainings",
-    {
-      dayTrainings: [
-        { trainingNumber: 1, blocks: [{ name: "A", exercises: ["x"] }] },
-        { trainingNumber: 2, blocks: [{ name: "B", exercises: ["y", "z"] }] },
-      ],
-    },
-  ],
-  ["a fractional training number", { dayTrainings: [{ trainingNumber: 1.5, blocks: [] }] }],
-  ["no dayTrainings at all", {}],
-  ["dayTrainings that is not a list", { dayTrainings: "one" }],
-  ["a training with no number", { dayTrainings: [{ blocks: [] }] }],
-  [
-    "a numeric training number as a string",
-    { dayTrainings: [{ trainingNumber: "1", blocks: [] }] },
-  ],
-  ["a block with no name", { dayTrainings: [{ trainingNumber: 1, blocks: [{ exercises: [] }] }] }],
-  [
-    "exercises that are not strings",
-    {
-      dayTrainings: [{ trainingNumber: 1, blocks: [{ name: "A", exercises: [1] }] }],
-    },
-  ],
-  [
-    "an extra field on a block",
-    {
-      dayTrainings: [
-        { trainingNumber: 1, blocks: [{ name: "A", exercises: ["x"], note: "kept" }] },
-      ],
-    },
-  ],
-  ["an extra field at the top", { dayTrainings: [], version: 2 }],
-  ["null", null],
-  ["a list", []],
-  ["a string", "not a program"],
-];
-
-describe("the backfill's program schema and the one the shim serves through", () => {
-  it.each(PROGRAM_SHAPES)("agree on %s", (_name, body) => {
-    const shim = legacyDailyProgramSchema.safeParse(body);
-    const backfill = backfillDailyProgramSchema.safeParse(body);
-
-    expect(backfill.success).toBe(shim.success);
-
-    if (shim.success && backfill.success) {
-      expect(backfill.data).toEqual(shim.data);
-    }
   });
 });

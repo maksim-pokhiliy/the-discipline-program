@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
-import { type LegacyDailyProgram } from "../../infrastructure/legacy-mobile";
+import type { LegacyDailyProgram } from "../../infrastructure/legacy-mobile";
 
 import { isValidIsoDate, parseLegacyDate, serializeLegacyDate } from "./legacy-date";
 
