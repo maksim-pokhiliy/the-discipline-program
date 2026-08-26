@@ -8,16 +8,17 @@ This file is the SSOT for "why."
 
 ## Index
 
-| ID  | Topic                                                                                  | Status   |
-| --- | -------------------------------------------------------------------------------------- | -------- |
-| D-1 | Absorb & retire via compat shim + domain takeover; zero Swift changes                  | RATIFIED |
-| D-2 | The iOS app is a production surface, NOT legacy; redesign later, no sunset             | RATIFIED |
-| D-3 | Users import: ALL rows, no activity filter; legacy integer id preserved                | RATIFIED |
-| D-4 | Publish becomes a snapshot in our DB; the shim serves snapshots                        | RATIFIED |
-| D-5 | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal             | RATIFIED |
-| D-6 | Legacy identity = separate `MobileLegacyIdentity` table; schema pulled forward to P1.1 | RATIFIED |
-| D-7 | Shim wire schemas live api-server-local — a stated ADR-0005 exception                  | RATIFIED |
-| D-8 | The Appetize stand targets PROD; a synthetic INDIVIDUAL demo universe lives in prod    | RATIFIED |
+| ID  | Topic                                                                                   | Status   |
+| --- | --------------------------------------------------------------------------------------- | -------- |
+| D-1 | Absorb & retire via compat shim + domain takeover; zero Swift changes                   | RATIFIED |
+| D-2 | The iOS app is a production surface, NOT legacy; redesign later, no sunset              | RATIFIED |
+| D-3 | Users import: ALL rows, no activity filter; legacy integer id preserved                 | RATIFIED |
+| D-4 | Publish becomes a snapshot in our DB; the shim serves snapshots                         | RATIFIED |
+| D-5 | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal              | RATIFIED |
+| D-6 | Legacy identity = separate `MobileLegacyIdentity` table; schema pulled forward to P1.1  | RATIFIED |
+| D-7 | Shim wire schemas live api-server-local — a stated ADR-0005 exception                   | RATIFIED |
+| D-8 | The Appetize stand targets PROD; a synthetic INDIVIDUAL demo universe lives in prod     | RATIFIED |
+| D-9 | Cutover mechanism: apex DNS → Vercel as a platform custom domain (no Cloudflare Worker) | RATIFIED |
 
 ---
 
@@ -80,3 +81,10 @@ This file is the SSOT for "why."
 - **Decision.** The stand's built-in default base URL is `https://platform.thedisciplineprogram.com` (prod), and the demo data the stand logs into is seeded in PROD Neon: a fully synthetic universe (demo coach + CoachProfile + dummy MobileConnection + ARCHIVED "Shim Stand Demo Plan" + INDIVIDUAL link + demo athlete `demo-athlete@thedisciplineprogram.com` with `MobileLegacyIdentity.legacyUserId 990001` + a rolling window of published days), created by the idempotent guarded script `packages/api-server/scripts/shim-demo-seed.ts` (dry-run default; `--write` requires `--expect-host` matched against the resolved host). The workflow keeps `base_url` as an input so a future custom-domain preview can be targeted without a Swift or workflow change.
 - **Rationale.** Vercel SSO protection is `all_except_custom_domains` on the platform project — every `*.vercel.app` preview URL demands an SSO the app cannot pass, so the prod custom domain is the ONLY reachable shim. Prod-targeting is also the higher-fidelity test (the stand exercises the exact byte path of the cutover) and makes the demo account a durable asset: the P3.1 prod-build rehearsal and post-cutover smokes log in as the same athlete. INDIVIDUAL channel is load-bearing: the athlete's days are keyed to his own synthetic `legacyUserId`, so no real athlete can ever be served demo content (a GENERAL link would leak demo days to every real athlete of that level after P2.1). `990001` sits outside the legacy id range 1..24, so the P2.1 import can never collide. Demo rows are deliberately VISIBLE and honestly named in the admin console (no deceptive soft-delete birth). Prod-data-inviolable is honored by construction: the script only ADDS its own demo-keyed rows, never touches an existing one, and aborts loudly on any foreign-row collision.
 - **Links.** journal 2026-08-14; `docs/runbooks/appetize-stand.md`; D-5 (the stand is its layer 2); memory `prod-test-accounts`.
+
+### D-9 — Cutover mechanism: apex DNS → Vercel as a platform custom domain (no Cloudflare Worker)
+
+- **Status:** RATIFIED (owner, 2026-08-26 — "ОК" on the planner's recommendation).
+- **Decision.** At P3.2 the apex `thedisciplineprogram.com` becomes a custom domain of the platform Vercel project (Vercel issues the cert); the Cloudflare A record moves from the VPS (proxied) to Vercel (unproxied, like `www`/`platform`/`admin`), so Cloudflare stays DNS-only. Every non-`/api/v1` path on the apex 308-redirects to `www` (marketing) from `apps/platform/vercel.json`; `/api/v1/*` is served by the shim on the same host. Rollback = the A record back to the VPS with proxying on (TTL lowered to 60 s beforehand). Not chosen: a Cloudflare Worker route on `/api/v1/*` proxying to `platform.…`.
+- **Rationale.** (1) The Vercel edge refuses a request whose Host differs from the SNI (403, proven at P3.1), so in the DNS-flip design the apex MUST be a Vercel custom domain — a Worker would instead rewrite Host itself, as the rehearsal proxy did. (2) The Worker would be a permanently running production component inside Vladyslav's Cloudflare account (the owner has full-rights access, but not ownership — billing, removal), i.e. a bus-factor dependency this initiative exists to retire. (3) P3.3 switches the VPS off, after which the apex has to move anyway — the Worker route is a second cutover, not an alternative to one. (4) The bare apex serves an empty 200 on the VPS today, so the www redirect loses nothing. The Worker's genuine advantages — per-path scope and instant revert — are bought instead by the 60 s TTL and by staging the Vercel domain + redirect BEFORE the flip (3.2a) and checking the routing live against the Vercel IP before DNS moves.
+- **Links.** journal 2026-08-07-later (the original two-option analysis), journal 2026-08-25 (Host≠SNI), plan 3.2a/3.2b, `docs/runbooks/apex-cutover.md` (3.2a deliverable).
