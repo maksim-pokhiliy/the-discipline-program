@@ -1,6 +1,6 @@
 # post-uat — triage (the UAT feedback corpus, grounded in code 2026-07-27)
 
-**Sources:** the Telegram UAT thread 2026-06-27 → 2026-07-26 (Denys, Tetiana, athletes' relayed feedback), 10 screenshots, one FB message, the 16.07 prod incident write-up (owner). **Method:** 6 parallel read-only recon agents over the monorepo + git history; every root cause below is verified against source, not inferred. **How to use:** each item carries an STR (steps to reproduce) for the owner's browser pass and a "verify after" check for post-merge confirmation. Registry + statuses: `plan.md`. **Owner feedback round 27.07 folded in:** PU-01 design-check answered (→ D-6), PU-03 reframed (switch worked, feedback was invisible), PU-06 two-account workaround (→ D-2 ratified), PU-12/PU-13 scope expanded, PU-16 closed, PU-17 added.
+**Sources:** the Telegram UAT thread 2026-06-27 → 2026-07-26 (Denys, Tetiana, athletes' relayed feedback), 10 screenshots, one FB message, the 16.07 prod incident write-up (owner). **Method:** 6 parallel read-only recon agents over the monorepo + git history; every root cause below is verified against source, not inferred. **How to use:** each item carries an STR (steps to reproduce) for the owner's browser pass and a "verify after" check for post-merge confirmation. Registry + statuses: `plan.md`. **Owner feedback round 27.07 folded in:** PU-01 design-check answered (→ D-6), PU-03 reframed (switch worked, feedback was invisible), PU-06 two-account workaround (→ D-2 ratified), PU-12/PU-13 scope expanded, PU-16 closed, PU-17 added. **Registry re-swept 2026-08-31** against the owner's full raw dump (27.06 → 19.08): the one post-window item (19.08) became PU-18; everything else was already registered.
 
 ---
 
@@ -203,8 +203,18 @@ Resolved by the owner: Denys had simply not published the plan — one publish c
 
 ---
 
+## PU-18 · BUG · platform/athlete-session — coach-set rest never renders for the athlete (19.08, post-window)
+
+**Ask.** «Когда расписываю план… Там в блоках ставлю отдых… но его не отображает… Отут відпочинок є між раундами? Бо виходить шо закінчуєш на ехо байку і починаєш знову з нього» (Denys, 19.08 — after the registry window; screenshot: a 6-rounds STRENGTH ENDURANCE schema whose last row is Echo Bike, so the next round appears to start straight off it).
+
+**Root cause (confirmed).** The athlete session renderer drops BOTH rest carriers while every other layer handles them. The contract ships them: `rowViewSchema.rest: restSpecSchema.nullable()` (`packages/contracts/src/entities/lms/session-detail/session-detail.schema.ts:89`) and the schema-level `composition` that holds inter-round rest (`:106`); the builder maps both (`build-session-detail.ts:112` `rest: row.rest`, `:145` `composition`). The athlete module reads `composition` only for the shape badge («6 ROUNDS» — `schema-shape-badge.tsx`) and never mentions `rest` at all (`grep -rn rest apps/platform/src/modules/athlete-session` → zero hits; `schema-row.tsx`, 146 lines, renders reps/load/notes only). The coach-side chip DOES render (`plan-detail/components/row-summary-chips.tsx:53-54`) — which is why the coach is sure he set it — and the mobile projection carries rest into the app too (`mobile-publish/projection/format-legacy-schema.ts:162` row summary, `:211` `composition?.rest`), so the drop is platform-athlete-surface-only. Rest spec shape: `{ duration: { value, unit, rangeMax? } }` (`_shared/cap-spec.ts:14`).
+
+**Fix sketch.** Render both carriers on the athlete surface, reusing the coach chip language: (a) per-row rest → a rest line/chip after the row's load line in `schema-row.tsx`, formatted as `row-summary-chips` does; (b) composition rest (inter-round) → alongside the shape badge or as a schema-card footer line ("Rest 2:00 between rounds"). No server change, no contract change — **S**. Converges with PU-12: the guided-execution timer consumes exactly these rest values, so the rendering lands first and the timer builds on it.
+
+**STR.** As the coach, set a row rest and an inter-round rest on a rounds schema → publish → open the day as the athlete on the platform: neither rest is visible (19.08 screenshot). **Verify after.** Both rests render on the athlete session; the coach chip and the athlete line show the same value; the mobile projection output unchanged.
+
 ## Non-items (dispositioned)
 
-- **Legacy iOS app rejects platform creds** — by design (separate auth domain); unification = MP-NORTH-STAR. Explain to testers, no code.
+- **Legacy iOS app rejects platform creds** — WAS by design (separate auth domains). `apex-sunset` delivers the unification: after the P3.2b cutover the app authenticates against the platform — for the 7 attach athletes the platform password becomes the app password (apex-sunset AS-22). No post-uat code.
 - **Live social content on the site** — content production (Denys), not code. Revisit only if an embed feature is explicitly requested.
 - **TikTok link 18.07** — DROPPED (owner 27.07): accidental paste, unrelated to the project.
