@@ -4,9 +4,16 @@ Moving `thedisciplineprogram.com` off the legacy VPS and onto Vercel, so that th
 athlete's pocket starts talking to the shim instead of the Spring backend. This is the flip the whole
 apex-sunset initiative exists for.
 
-**Status: skeleton.** Everything below marked _(dashboard)_ is a step the owner performs in the
-Vercel or Cloudflare UI and confirms on the day; the shape is written from what has been verified,
-not from what the dashboard is assumed to look like.
+**Status: EXECUTED 2026-09-17.** The flip is live; the checklist below is kept as the record and
+for the rollback path. What execution taught, kept here for the next domain move: (1) the apex was
+already a domain of the MARKETING project as a www-redirect pair — it had to be REMOVED there first;
+(2) the Add-Domain form's default-checked «Redirect apex domains to www (recommended)» converts the
+add into a MOVE of `www` — uncheck it, the redirect lives in `vercel.json`; (3) Vercel asks for a
+CNAME (`…vercel-dns-017.com`), not an A record — Cloudflare flattens it on the apex; (4) step 4's
+TTL lowering is impossible on a proxied record without unproxying first (a TLS risk on the origin) —
+the one-move flip with the NEW record at TTL 60 costs at most ~5 minutes of propagation instead;
+(5) the final apply ran WITHOUT `--restore-credentials` — no `credential-differs` warning existed,
+so there was nothing to restore and the pinned plan is identical either way.
 
 ## What is already true before the day
 
