@@ -2,6 +2,11 @@
 
 Operational notes for the Connector push-projection that publishes platform plans into the legacy mobile (Spring) backend. The legacy upstream is **frozen and external** (Vladyslav's Spring Boot 3 backend feeding the App-Store iOS app); we are a pure ADMIN client of it and cannot change it. That makes a handful of failure modes the operator's problem rather than something we can fix in code. See the port doc at [`packages/api-server/src/infrastructure/legacy-mobile/README.md`](../../packages/api-server/src/infrastructure/legacy-mobile/README.md) and `initiatives/mobile-publish/` for the why.
 
+> **Status (2026-09-17): the app no longer reads the legacy backend.** The apex cutover moved every
+> installed copy of the iOS app onto this platform; the connector's push is now a write nobody
+> reads, kept only until P4.1 deletes the whole edge (ADR-0043). A failed push no longer affects
+> athletes — this runbook stays operational only for that residual dual-write.
+
 The five endpoints live under `apps/platform/src/app/api/platform/mobile/*` (connections, training-levels, links, publish), all `withCoachAuth`-gated.
 
 ## Token expiry → reconnect

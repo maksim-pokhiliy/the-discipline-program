@@ -7,6 +7,9 @@ Script: `packages/api-server/scripts/legacy-days-backfill.ts`. Dry run by defaul
 more flags. It never creates a row, never deletes one, and never touches a row that already carries
 content — the writer it is handed has no `create`, `upsert` or `delete` method at all.
 
+> **Executed against production on 2026-09-17**: `fill 134 · conflicts 0`, pin held, idempotent
+> re-run `fill 0 · skipped 303`. The runbook stays for the recipe and the safety model.
+
 ## Why this exists
 
 Until the publish path started storing the rendered day alongside the pointer to it, a published day

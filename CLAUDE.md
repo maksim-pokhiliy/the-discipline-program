@@ -15,7 +15,7 @@
 
 ### packages/
 
-- `api-server` — Prisma 6 owner (schema + client); root db-scripts уходят сюда через `--filter @repo/api-server`
+- `api-server` — Prisma 6 owner (schema + client); root db-scripts уходят сюда через `--filter @repo/api-server`; плюс mobile-compat шим `/api/v1/*` — с 2026-09-17 apex-домен обслуживает App-Store iOS app отсюда (ADR-0043)
 - `api-client`, `api-routes`, `contracts`, `query` (TanStack wrappers)
 - `auth` (next-auth 4), `env` (@t3-oss/env-nextjs), `errors`
 - `mui` (theme), `ui` (components), `shared`

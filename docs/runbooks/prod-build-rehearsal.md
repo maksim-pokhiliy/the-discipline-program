@@ -135,7 +135,7 @@ Then:
    container): Let's Encrypt reuses the pending authorization, so the SAME TXT value is
    requested and the record already in place validates immediately.
 6. The TXT record can be deleted right away. The cert (90 days) is kept on the operator
-   machine until P3.2 completes, then discarded — the cutover uses a Vercel-issued cert.
+   machine until P3.2 completed (it did, 2026-09-17), then discarded — the cutover used a Vercel-issued cert.
 
 ## 2 — Firewall (admin PowerShell, once)
 
@@ -230,6 +230,6 @@ powershell -ExecutionPolicy Bypass -File <repo>\docs\runbooks\prod-build-rehears
 ```
 
 Phone DNS back to Automatic (step 6.7) BEFORE stopping the responder, or the phone loses
-name resolution on that Wi-Fi. Keep `~/projects/contrib/tdp/rehearsal/` until P3.2
-completes, then delete it (the cert key with it). The stand must never be port-forwarded
+name resolution on that Wi-Fi. P3.2 completed on 2026-09-17 — `~/projects/contrib/tdp/rehearsal/`
+can be deleted (the cert key with it). The stand must never be port-forwarded
 beyond the LAN.

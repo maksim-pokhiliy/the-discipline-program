@@ -200,6 +200,8 @@ that was reviewed, and copying it from anywhere else defeats it.
 
 ### Pre-cutover fidelity check
 
+> Executed for the cutover on 2026-09-17 (`refresh 19 · mirror diffs 0 · violations 0 · conflicts 0`). The section stays as the recipe and for any future audit read.
+
 Before cutover, one run proves the mirror is faithful and the identities and links agree. It is a
 **dry run** and writes nothing:
 
@@ -217,7 +219,7 @@ RECONCILIATION individual links <n> · matched to a stored identity <m> · viola
   `matched to a stored identity 0` proves nothing; read both numbers.
 - `conflicts 0` — nothing anywhere contradicts anything.
 
-**The final pre-cutover apply runs WITH `--restore-credentials`.** Every other run in this runbook
+**The final pre-cutover apply runs WITH `--restore-credentials`** — unless the dry run shows no `credential-differs` warning at all, in which case there is nothing to restore and the flag changes nothing (the 2026-09-17 apply ran without it for exactly that reason). Every other run in this runbook
 does not, and the reason that flips exactly here is worth stating: a restore only ever touches a row
 whose marker still matches the stored credential, which means the import wrote it and nobody has
 changed it since. For those rows the legacy hash in a same-day dump **is** the password that athlete
@@ -254,6 +256,8 @@ would otherwise be imported stale. The order is: fresh SSH dump → restore → 
 → owner sign-off → apply with that dry run's digest.
 
 ### Re-runs are a pre-cutover tool — after cutover they are not
+
+> In effect since 2026-09-17.
 
 Before cutover the legacy app is the source of truth and the export is a faithful copy of it, so
 re-running is safe and is how drift gets corrected.

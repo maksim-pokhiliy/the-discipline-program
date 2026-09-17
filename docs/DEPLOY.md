@@ -4,13 +4,24 @@
 
 The monorepo deploys **three independent Vercel projects** from a single git repository:
 
-| App              | Purpose                                        | Route prefix      | Auth                     | DB access              |
-| ---------------- | ---------------------------------------------- | ----------------- | ------------------------ | ---------------------- |
-| `apps/admin`     | Business panel + Marketing CMS (desktop-first) | `/api/admin/*`    | NextAuth (ADMIN role)    | via `@repo/api-server` |
-| `apps/marketing` | Public landing pages                           | `/api/public/*`   | None                     | via `@repo/api-server` |
-| `apps/platform`  | Coach + Athlete experience (mobile-first)      | `/api/platform/*` | NextAuth (COACH/ATHLETE) | via `@repo/api-server` |
+| App              | Purpose                                                  | Route prefix                    | Auth                                               | DB access              |
+| ---------------- | -------------------------------------------------------- | ------------------------------- | -------------------------------------------------- | ---------------------- |
+| `apps/admin`     | Business panel + Marketing CMS (desktop-first)           | `/api/admin/*`                  | NextAuth (ADMIN role)                              | via `@repo/api-server` |
+| `apps/marketing` | Public landing pages                                     | `/api/public/*`                 | None                                               | via `@repo/api-server` |
+| `apps/platform`  | Coach + Athlete experience (mobile-first) + the iOS shim | `/api/platform/*` + `/api/v1/*` | NextAuth (COACH/ATHLETE); `/api/v1` its own bearer | via `@repo/api-server` |
 
 All three apps share a single PostgreSQL database (Neon) and a single Vercel Blob store.
+
+### Domains (since the apex cutover, 2026-09-17)
+
+| Domain                              | Project   | Notes                                                                                                           |
+| ----------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
+| `www.thedisciplineprogram.com`      | marketing | the public site                                                                                                 |
+| `platform.thedisciplineprogram.com` | platform  | coach + athlete web                                                                                             |
+| `thedisciplineprogram.com` (apex)   | platform  | `/api/v1/*` serves the App-Store iOS app; every other path 308-redirects to `www` (`apps/platform/vercel.json`) |
+| `admin.thedisciplineprogram.com`    | admin     | internal console                                                                                                |
+
+Cloudflare is DNS-only for all four records (the apex is a flattened CNAME to Vercel, unproxied). The legacy VPS serves nothing and stays up only as the rollback until P3.3 decommissions it.
 
 ## Failure domains
 
@@ -22,7 +33,7 @@ Each app is a separate Vercel deployment with its own URL, build, and runtime. A
 | **Blob storage down**           | Image uploads fail. Existing images may still render from CDN cache.                                                                                                      | Admin (upload), all (image rendering) |
 | **Admin deploy broken**         | CMS management unavailable. Marketing and Platform continue serving.                                                                                                      | Admin only                            |
 | **Marketing deploy broken**     | Public site down. Admin and Platform unaffected.                                                                                                                          | Marketing only                        |
-| **Platform deploy broken**      | Athlete/Coach experience down. Admin and Marketing unaffected.                                                                                                            | Platform only                         |
+| **Platform deploy broken**      | Athlete/Coach experience down AND the App-Store iOS app down (the apex `/api/v1/*` is served by this project). Admin and Marketing unaffected.                            | Platform only                         |
 | **`@repo/api-server` bug**      | Depends on which endpoint is affected. A broken mapper in CMS affects Admin + Marketing but not Platform. A broken LMS mapper affects Platform + Admin but not Marketing. | Context-scoped                        |
 | **NextAuth misconfiguration**   | Admin and Platform lose auth. Marketing is unaffected (no auth).                                                                                                          | Admin + Platform                      |
 | **Prisma schema drift**         | If a breaking `prisma migrate` migration is deployed, all apps are affected.                                                                                              | All apps                              |
