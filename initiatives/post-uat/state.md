@@ -47,7 +47,7 @@
 | W4    | Reach & notify (PU-09/10/11) → PU-17 templates   | fully unblocked (links received 27.07)                                        |
 | W5    | Athlete session screen v2 (PU-12)                | scoped; design-first, likely spin-off                                         |
 | W6    | Profiling v2 (PU-13, absorbs PU-05)              | scoped; design-first, sacred-VO gate                                          |
-| W7    | Subscriptions charter (PU-14)                    | scope set by owner 27.07; charter at W7                                       |
+| W7    | Subscriptions charter (PU-14)                    | ✅ chartered 2026-09-23 → `initiatives/storefront-billing/` (ADR-0044)        |
 
 ## Next action
 
