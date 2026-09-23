@@ -216,6 +216,8 @@ The rest of this document describes each context in detail: what it owns, which 
 
 **Responsibility:** What users pay for, how much they pay, and the record of those payments. Billing exists only in `schema.prisma` today — no contracts, no API, no UI.
 
+> **Change in flight — ADR-0044 / `initiatives/storefront-billing/` (2026-09-23).** Monobank replaces the implicit Stripe fingerprint; a subscription becomes per `(user, product)`; a product binds 1..N training plans with a JOIN / COPY delivery; access is resolved per enrollment through `authz/`. The rows below describe the pre-W0 schema and are updated with that migration.
+
 ### Aggregates and entities
 
 | Aggregate / entity            | Prisma model   | Role                                                                                                  |
@@ -250,7 +252,7 @@ The rest of this document describes each context in detail: what it owns, which 
 ### Dependencies
 
 - **Billing → IAM:** every `Subscription` and `Transaction` keys off `userId`.
-- **Billing → external (Stripe):** implicit. ADR 0014 backfills this as the de-facto payment provider decision.
+- **Billing → external (Monobank):** ADR-0044 (supersedes the implicit Stripe decision of ADR 0014).
 
 ---
 
@@ -304,11 +306,11 @@ The Prisma model does not split. The contracts and the API do.
 
 ## 8. Cross-context invariants
 
-| Invariant                       | Enforced where                                                              | Status                |
-| ------------------------------- | --------------------------------------------------------------------------- | --------------------- |
-| **Access = Subscription State** | Planned: Billing `SubscriptionStatus` gates every LMS / Coaching read.      | Not implemented.      |
-| **Money is Integer**            | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money. | Enforced schema-wide. |
-| **Singleton Subscription**      | `Subscription.userId @unique`. ADR 0008.                                    | Enforced at the DB.   |
+| Invariant                       | Enforced where                                                              | Status                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Access = Subscription State** | Planned: Billing `SubscriptionStatus` gates every LMS / Coaching read.      | Scheduled: `initiatives/storefront-billing/` P1 — one gate in `authz/` (ADR-0044).    |
+| **Money is Integer**            | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money. | Enforced schema-wide.                                                                 |
+| **Singleton Subscription**      | `Subscription.userId @unique`. ADR 0008.                                    | SUPERSEDED by ADR-0044 (per product); retired by the storefront-billing W0 migration. |
 
 ### Per-aggregate DB-enforced invariants
 

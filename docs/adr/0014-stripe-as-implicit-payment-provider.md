@@ -1,6 +1,6 @@
 # 0014. Stripe as the implicit payment provider (retroactive)
 
-- **Status:** Accepted (retroactive — the decision exists in the schema, not yet in the code)
+- **Status:** Superseded by ADR-0044 (2026-09-23 — Monobank is the provider; the Stripe columns are retired by the storefront-billing W0 migration)
 - **Date:** 2026-04-10
 - **Tags:** `billing`, `payments`, `vendor-dependency`, `retroactive`
 

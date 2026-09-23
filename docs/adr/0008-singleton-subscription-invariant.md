@@ -1,6 +1,6 @@
 # 0008. Singleton subscription invariant enforced at the database
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0044 (2026-09-23 — subscriptions are per product; `userId @unique` is retired by the storefront-billing W0 migration)
 - **Date:** 2026-04-10
 - **Tags:** `invariants`, `billing`, `domain-model`
 
