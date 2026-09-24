@@ -6,17 +6,17 @@ Prior: **FOUNDED 2026-09-23.** Two days of dialogue distilled: the Apple-vs-Mono
 
 ## Board
 
-| #   | Phase           | Status     | Pointer                                                                                                  |
-| --- | --------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
-| P0  | Foundation      | 🔵 active  | 0.1 ✅ (this PR) · 0.2 spike next · 0.3 migration · 0.4 `uk` pages · 0.5 env/port/adapter · target 02.10 |
-| P1  | Core            | ⬜ pending | D-3 must be RATIFIED first (0.2) · target 09.10                                                          |
-| P2  | Athlete         | ⬜ pending | target 16.10                                                                                             |
-| P3  | Coach & admin   | ⬜ pending | target 23.10                                                                                             |
-| P4  | Launch + cohort | ⬜ pending | gated by SB-5 (prod token) + SB-4 (requisites → acquiring approval) · target ~28.10                      |
+| #   | Phase           | Status     | Pointer                                                                                                                     |
+| --- | --------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| P0  | Foundation      | 🔵 active  | **0.0 local Docker stack next** · 0.1 ✅ · 0.2 spike · 0.3 migration · 0.4 `uk` pages · 0.5 env/port/adapter · target 02.10 |
+| P1  | Core            | ⬜ pending | D-3 must be RATIFIED first (0.2) · target 09.10                                                                             |
+| P2  | Athlete         | ⬜ pending | target 16.10                                                                                                                |
+| P3  | Coach & admin   | ⬜ pending | target 23.10                                                                                                                |
+| P4  | Launch + cohort | ⬜ pending | gated by SB-5 (prod token) + SB-4 (requisites → acquiring approval) · target ~28.10                                         |
 
 ## Next action
 
-**▶ 0.2 Mono spike + 0.3 migration corpus (2026-09-24).** Owner: get a TEST token at `api.monobank.ua` (any mono client; no business account needed) and put it in the platform preview env as `MONOBANK_MERCHANT_TOKEN`; read/download the SB-1 pages in a browser and drop them in the scratchpad. Planner: write the 0.2 spike script (invoice → pay → webhook → tokenize → MIT charge → `subscription/create`), fold the payloads into `monobank-notes.md`, ratify D-3, then write the 0.3 corpus + executor prompt from `domain-model.md` (run the planner-discipline (h) trace on the new uniques before locking it). 0.4 and 0.5 can run as parallel executors once 0.3's schema is merged (0.4 does not depend on it at all).
+**▶ P0.0 local Docker stack FIRST (owner call 2026-09-24: every test runs against a local stack, never dev Neon) — planner hands-on in the session right after the compaction, as a manual-session step like apex-sunset P0.x (infra scaffolding wants tight run-verify loops on this WSL box; the compose file, env wiring, task targets and runbook still land through a PR the owner checks). Then 0.2 Mono spike against that stack (webhooks via a `cloudflared` tunnel) + 0.3 migration corpus.** Original 0.2/0.3 handoff: Owner: get a TEST token at `api.monobank.ua` (any mono client; no business account needed) and put it in the platform preview env as `MONOBANK_MERCHANT_TOKEN`; read/download the SB-1 pages in a browser and drop them in the scratchpad. Planner: write the 0.2 spike script (invoice → pay → webhook → tokenize → MIT charge → `subscription/create`), fold the payloads into `monobank-notes.md`, ratify D-3, then write the 0.3 corpus + executor prompt from `domain-model.md` (run the planner-discipline (h) trace on the new uniques before locking it). 0.4 and 0.5 can run as parallel executors once 0.3's schema is merged (0.4 does not depend on it at all).
 
 ## Open decisions awaiting ratification
 
