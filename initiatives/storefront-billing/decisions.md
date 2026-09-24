@@ -22,6 +22,7 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 | D-10 | Fiscal basket in every invoice payload from day one; the fiscalization switch is Denys's      | RATIFIED |
 | D-11 | Coach-side defaults (12 items sent to Denys 2026-09-23) stand unless he objects               | RATIFIED |
 | D-12 | Ukrainian buyer-facing pages + an offer/requisites page are an acquiring precondition         | RATIFIED |
+| D-13 | Trial = a zero-price 3-day product (provider `FREE`) bound COPY to a trial template plan      | RATIFIED |
 
 ---
 
@@ -97,9 +98,10 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 
 ### D-11 — Coach-side defaults stand unless Denys objects
 
-- **Status:** RATIFIED as defaults (sent to Denys 2026-09-23 15:43; answers, when they arrive, are journaled and any deviation becomes a D-amendment).
+- **Status:** RATIFIED as defaults (sent to Denys 2026-09-23 15:43) — **answered by Denys 2026-09-24**; the amendments below are the ratified values.
 - **Decision (the 12).** (1) prices in UAH per product · (2) period 4 weeks, charge date floats with the period · (3) auto-renew AND one-off on every product, same price · (4) grace 3 days after a failed charge, email at once + a reminder, then closed · (5) cancel = self-serve, access to period end, no refund · (6) a personal product COPIES whatever plan it is bound to — template or empty · (7) no bundles at launch: one product = one plan · (8) comp access: nobody except the coach's own account; others by a dated head-coach grant · (9) cohort: free until X = launch + 4 weeks · (10) no trial · (11) billing emails and screens in English like the platform · (12) a closed athlete keeps profile and records; only the program is walled.
-- **Links.** journal 2026-09-23 (verbatim message).
+- **Denys's answers (2026-09-24) — amendments.** Q1 UAH ✓ · Q2 4 weeks ✓ · Q3 both forms ✓ · **Q4 grace = 2 days** (his «1–2 достаточно»; we take the upper bound so one reminder cycle fits) · Q5 no refunds ✓ («не видел, чтобы кто-то возвращал») · **Q6 personal products are PER STYLE** — «PRO соревновательный», «PRO для души», «Func BB style» — each its own storefront product bound COPY to its own template plan (D-4 unchanged; the coach still edits the copy afterwards) · Q7 no bundles ✓ · Q8 comps ✓ · Q9 X = launch + 4 weeks ✓ · **Q10 trial = yes**, as a 3-day introductory template («скачал, посмотрел, пощупал») → D-13 · Q11 English ✓ (SB-10 closed) · **Q12 clarified**: a closed athlete (stopped paying, or a one-off period ended) sees NO program at all — neither past nor future days — until they pay again; profile and records stay. Denys's question «есть смысл оставлять видимость старых программ, или это гемор?» is answered: no visibility, and it is the default of the gate, not extra work.
+- **Links.** journal 2026-09-23 (verbatim message) · journal 2026-09-24 (answers).
 
 ### D-12 — Ukrainian buyer-facing pages + an offer/requisites page are an acquiring precondition
 
@@ -107,3 +109,10 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 - **Decision.** Before Denys applies for internet acquiring, the marketing site gets a Ukrainian version of the pages a buyer touches (storefront, checkout entry, contacts, about/offer) plus an offer/requisites page (ФОП ПІБ, ІПН, address, contacts, service description, payment and refund terms). The blog stays English. The requisites are the only content waiting on Denys (SB-4); the mechanism is built without them.
 - **Rationale.** mono's connection checklist: «є українська версія сайту · є інформація про компанію, наприклад розділ "Про нас" або оферта · є контакти, чат або форма для зв'язку · товари мають фото, опис і ціну».
 - **Links.** `monobank-notes.md` §Connecting a FOP; plan 0.4.
+
+### D-13 — Trial = a zero-price 3-day product (provider `FREE`) bound COPY to a trial template plan
+
+- **Status:** RATIFIED (Denys 2026-09-24, Q10: «можно будет создать пробный / ознакомительный шаблон… на три дня»; owner-planner mapping onto the model).
+- **Decision.** A trial is not a subscription status and not a provider feature: it is an ordinary storefront product with a zero price, a 3-day period, `autoRenew = false`, and a COPY binding to a trial template plan Denys keeps in DRAFT. A zero-price purchase skips the payment provider entirely: the subscription is created `ACTIVE` with `provider = FREE` and `currentPeriodEnd = now + 3 days`, the enrollment side effects run as for any purchase, and the athlete lands on the web timetable. Expiry closes access like a one-off period. One trial per account by the `(userId, productId)` uniqueness; repeat trials on fresh emails are accepted as Denys's call. Web-only until the App-Store listing returns (SB-12).
+- **Rationale.** `SubscriptionStatus.TRIAL` was removed because a trial modelled as a status leaks into every FSM branch; as a product it costs one enum value and one branch in the purchase path, and Denys can create, price and retire trials from the admin without a developer — the storefront stays fully his.
+- **Links.** D-4, D-5, D-11 Q10; `domain-model.md` §4 (FREE); plan 1.2 / 3.1.

@@ -1,6 +1,8 @@
 # storefront-billing — state (the board)
 
-**Updated:** 2026-09-23 — **FOUNDED.** Two days of dialogue distilled: the Apple-vs-Mono debate settled by facts (every athlete is in Ukraine; 1.3% vs 15%; `4w` periods; no App Store listing), the domain model ratified by the owner («модель заходит»): subscription per product, product↔plan bindings with JOIN / COPY delivery, prices = amount + period + auto-renew, access resolved per enrollment in `authz/`, no pause, cash replaced by one-off periods, MANUAL only for comps and the cohort grant. Denys got two question packs (coach-side defaults D-11; FOP-side: he has NO mono business account yet, his accountant does not know the РРО nuance, all athletes are Ukrainian) and the P0–P4 dates. ADR-0044 drafted (supersedes ADR-0008 + ADR-0014). Work on the code starts 2026-09-24.
+**Updated:** 2026-09-24 — **Denys answered the coach-side pack** (D-11 amended: grace 2 days, personal products per style, trial as a zero-price product → D-13, closed = no program visibility; SB-10 closed = English). Separately he could not sign into the App-Store app after the AS-22 notice — his app credential is his OLD legacy login + app password (id 2 was a CREATE row on a different address than his coach account), so the website password does not apply; answered in chat, nothing to change in code. Vercel runtime logs (Hobby, 1 h retention) could not confirm his failure mode.
+
+Prior: **FOUNDED 2026-09-23.** Two days of dialogue distilled: the Apple-vs-Mono debate settled by facts (every athlete is in Ukraine; 1.3% vs 15%; `4w` periods; no App Store listing), the domain model ratified by the owner («модель заходит»): subscription per product, product↔plan bindings with JOIN / COPY delivery, prices = amount + period + auto-renew, access resolved per enrollment in `authz/`, no pause, cash replaced by one-off periods, MANUAL only for comps and the cohort grant. Denys got two question packs (coach-side defaults D-11; FOP-side: he has NO mono business account yet, his accountant does not know the РРО nuance, all athletes are Ukrainian) and the P0–P4 dates. ADR-0044 drafted (supersedes ADR-0008 + ADR-0014). Work on the code starts 2026-09-24.
 
 ## Board
 
@@ -22,7 +24,7 @@
 
 ## Live carry-forwards
 
-SB-1 (browser-only Mono docs + skill archive) · SB-2 (FOP terminal currency) · SB-3 (РРО — Denys) · SB-4 (requisites — Denys) · SB-5 (prod token — Denys) · SB-7 (roster projection, 3.2) · SB-8 (retire Stripe shapes, 0.3) · SB-9 (tax consequence — owner) · SB-10 (email language, before 1.3) · SB-11 (iOS athletes have no enrollment, 4.1) · SB-12 (newcomers + the app, rides on AS-1) · SB-13 (apex-sunset decommission runs in parallel, separate PRs).
+SB-1 (browser-only Mono docs + skill archive) · SB-2 (FOP terminal currency) · SB-3 (РРО — Denys) · SB-4 (requisites — Denys) · SB-5 (prod token — Denys) · SB-7 (roster projection, 3.2) · SB-8 (retire Stripe shapes, 0.3) · SB-9 (tax consequence — owner) · SB-11 (iOS athletes have no enrollment, 4.1) · SB-12 (newcomers + the app, rides on AS-1) · SB-13 (apex-sunset decommission runs in parallel, separate PRs).
 
 ## Gotchas a resuming session must know
 
