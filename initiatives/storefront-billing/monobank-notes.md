@@ -29,6 +29,19 @@ What the planner verified against mono's public docs before founding the initiat
 - «API може працювати в режимі тестового середовища. Для цього потрібно використовувати токен із https://api.monobank.ua/» — «доступне всім клієнтам банку» (no business account needed).
 - Any card number that passes Luhn, any expiry/CVV; a real card is accepted but no financial authorization happens. Apple Pay / Google Pay do not show with a test token. Subscription support in test mode: unverified (SB-1).
 
+## 0.2 spike — verified in test mode (2026-09-25)
+
+Tool: `initiatives/storefront-billing/spike/mono-spike.mjs` (no dependencies; token from `apps/platform/.env.local` in-process, never printed; every request/response pair lands in the gitignored `spike/captures/`). Everything below is a captured response, not a reading of the docs.
+
+- **Token / test mode.** The personal token from `api.monobank.ua` («Токен фізичної особи та ФОП») IS the test-mode acquiring token: `GET /api/merchant/details` → `{ merchantId: "test_7qr44168CQ", merchantName: "Test Caption", edrpou: "4242424242" }`. `GET /api/merchant/pubkey` → `{ key: <base64 PEM> }`, an EC P-256 key (`prime256v1`), saved as `spike/captures/pubkey.pem`.
+- **Invoice + tokenization.** `POST invoice/create` with `saveCardData: { saveCard: true, walletId }` → `{ invoiceId, pageUrl }` (`pay.monobank.ua/<invoiceId>`). After the customer pays, `GET invoice/status` → `status: "success"`, `payMethod: "pan"`, `finalAmount`, `walletData: { walletId, cardToken, status: "created", maskedPan, paymentSystem }`, `paymentInfo: { rrn, approvalCode, tranId, terminal, bank, paymentSystem, country, fee, paymentMethod, maskedPan }`. `GET wallet?walletId` → `{ wallet: [{ cardToken, maskedPan, country }] }`.
+- **Merchant-initiated charge on the token (the D-3 (b) mechanism).** `POST wallet/payment { cardToken, amount, ccy: 980, initiationKind: "merchant", merchantPaymInfo, paymentType: "debit" }` → **synchronous 200** `{ invoiceId, status: "success", amount, ccy, createdDate, modifiedDate }`; the charge is an ordinary invoice afterwards (`payMethod: "wallet"`). Three charges on one token in a row, the last two after the native subscription that shared the token was cancelled — the token is independent of any subscription. `initiationKind: "client"` instead returns `{ invoiceId, tdsUrl, status: "processing" }` — the customer must pass 3DS (`pay.monobank.ua/fake-tds/…` in test).
+- **Refund.** `POST invoice/cancel { invoiceId }` → `{ status: "success", createdDate, modifiedDate }`; the invoice then reads `status: "reversed"` with a `cancelList[]`.
+- **Native subscription (the D-3 (a) mechanism).** `POST subscription/create { amount, ccy, interval: "4w", redirectUrl }` → `{ subscriptionId, pageUrl }` (`pay.monobank.ua/subscription/<id>`). Status before payment: `pending` with `summary: { totalPaid, totalFailed }`; after payment: `active`, `startDate`, `nextChargeDate` = `startDate` + exactly 28 days, `walletData` (mono keyed the card to the wallet the invoice had tokenized — same `cardToken`). `POST subscription/edit { subscriptionId, action: "cancel" }` → `{}`; status → `cancelled`, `endDate`, `cancellationDesc: "cancellation"`.
+- **Subscription lists want RFC 3339 datetimes.** `GET subscription/payments?subscriptionId&dateFrom&dateTo` and `GET subscription/list?dateFrom&dateTo` accept `2026-09-24T00:00:00Z`; a plain date or unix seconds → 400 `invalid date format`, missing → 400 `invalid 'dateFrom'`. payments → `{ payments: [{ amount, status, ccy, chargedAt }], pagination: { totalItems, itemsPerPage: 20, currentPage, totalPages } }` (`totalItems` said 0 for one payment — do not trust the count); list → `{ list: [{ subscriptionId, amount, interval, created, startDate?, nextChargeDate, endDate?, status }], pagination }`.
+- **Not reachable in test mode (yet).** A declined charge: `amount: 100000000` is rejected at validation (`invalid 'amount'`), no decline trigger found. Webhooks (`webHookUrl` on invoices and `wallet/payment`, `webHookUrls` on subscriptions): need the public receiver — `mono-spike.mjs webhook:listen` behind the SB-14 named tunnel.
+- **Cleanup.** The unpaid second-round pair was removed: `POST invoice/remove { invoiceId }` → `{ status: "success" }` and the invoice reads `status: "expired"` afterwards; `POST subscription/remove { subscriptionId }` (pre-payment only) → `{}` and the subscription reads `status: "removed"`. What remains on the test merchant: one tokenized card, two successful and one reversed merchant-initiated invoices, one cancelled native subscription.
+
 ## Fees, settlement, cards
 
 - 1.3% on Ukrainian cards, 2% on foreign cards (POS / tap-to-phone: 1.3% on foreign too). «Наступного дня переказуємо гроші на бізнес-рахунок.»
@@ -52,8 +65,9 @@ What the planner verified against mono's public docs before founding the initiat
 2. `subscription/status` response schema + the status enum; `subscription/payments` and `subscription/list` schemas.
 3. What a recurring-charge webhook looks like; what happens on a declined renewal (retries? how many? status?).
 4. Can the client cancel a subscription from the mono app? Does a webhook fire?
-5. Does the test token cover `subscription/*` and `wallet/payment`?
-6. The "Skill для AI-агентів" archive (SKILL.md + 6 server samples) — download via the button on `/api-docs/acquiring/dev/ai-tools/docs--ai-skills`; drop it into the session scratchpad.
+5. ~~Does the test token cover `subscription/*` and `wallet/payment`?~~ Yes — verified 2026-09-25 (see the spike section).
+6. How to simulate a declined charge in test mode (a test card / amount that fails)? Nothing found by probing; needed for the P1.3 dunning path.
+7. The "Skill для AI-агентів" archive (SKILL.md + 6 server samples) — download via the button on `/api-docs/acquiring/dev/ai-tools/docs--ai-skills`; drop it into the session scratchpad.
 
 ## Sources
 
