@@ -110,14 +110,21 @@ server on 3001 needs a public HTTPS address. `cloudflared` (installed 2026-09-25
   **It does not work from the owner's network:** `api.trycloudflare.com` times out on TCP (both
   IPv4 and IPv6, verified 2026-09-25) while `api.cloudflare.com` and the tunnel edge
   (`region1.v2.argotunnel.com:7844`) answer normally. Try it on another network; do not debug it.
-- **Named tunnel** — a stable hostname on the `thedisciplineprogram.com` zone, which lives in
-  Vladyslav's Cloudflare account (`b5eda73f…`, Free plan); the owner's login is a member. One-time,
-  in a browser session: `cloudflared tunnel login` (pick that zone) →
-  `cloudflared tunnel create tdp-local` →
-  `cloudflared tunnel route dns tdp-local mono-dev.thedisciplineprogram.com`. Then, whenever the
-  spike or a webhook test runs: `cloudflared tunnel run --url http://localhost:3001 tdp-local`.
-  The webhook URL Mono gets is `https://mono-dev.thedisciplineprogram.com/<the route 1.2 defines>`.
-  Delete the DNS route and the tunnel when the initiative closes.
+- **Named tunnel (created 2026-09-25)** — `tdp-local`, id `d05202b4-77ef-4c24-8454-239e88c82314`, routed to
+  `mono-dev.thedisciplineprogram.com` (a CNAME on the `thedisciplineprogram.com` zone in Vladyslav's Cloudflare
+  account). The origin certificate and the tunnel credentials live in `~/.cloudflared/` on the owner's box
+  and are never committed. Run it whenever a provider must reach this machine:
+
+  ```bash
+  task stack:tunnel                     # platform dev server: https://mono-dev.thedisciplineprogram.com -> localhost:3001
+  task stack:tunnel TDP_TUNNEL_PORT=3999  # the spike's webhook receiver (mono-spike.mjs webhook:listen)
+  ```
+
+  Verified end to end the same day: a probe through the hostname reached a local receiver, and mono's webhooks
+  arrived with a valid `x-sign`. `cloudflared` warns about ICMP proxy permissions on WSL; ignore it. To recreate
+  from scratch: `cloudflared tunnel login` (browser, pick that zone) → `cloudflared tunnel create tdp-local` →
+  `cloudflared tunnel route dns tdp-local mono-dev.thedisciplineprogram.com`. Delete the DNS route and the
+  tunnel when the initiative closes.
 
 `NEXTAUTH_URL` stays `http://localhost:3001` — webhooks carry no session, and Next's
 `allowedDevOrigins` only concerns browser asset requests, not server-to-server POSTs.

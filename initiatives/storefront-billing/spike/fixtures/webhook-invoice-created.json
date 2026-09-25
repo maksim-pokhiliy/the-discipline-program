@@ -1,0 +1,23 @@
+{
+  "body": {
+    "amount": 100,
+    "ccy": 980,
+    "createdDate": "2026-09-25T11:23:56Z",
+    "destination": "Storefront billing spike",
+    "invoiceId": "260925ukRrMaiFq8o2F",
+    "modifiedDate": "2026-09-25T11:23:56Z",
+    "reference": "spike-webhook-expire-2",
+    "status": "created"
+  },
+  "capturedAt": "2026-09-25T11:23:57.189Z",
+  "headers": {
+    "content-length": "230",
+    "content-type": "application/json",
+    "user-agent": "Go-http-client/1.1",
+    "x-sign": "MEQCIHqKseNRy+S1x011Op9aIHg6AkduXlrwemIDomce5O3FAiB4jrE+8kwAtuGC1EwgBtMV7MzOcXGvx+8Js/vH8paUyw=="
+  },
+  "method": "POST",
+  "note": "Captured 2026-09-25 from mono's test merchant through the named tunnel; x-sign verified over the raw body bytes with monobank-test-pubkey.pem (ECDSA P-256, SHA-256). Verify the raw bytes, never re-serialized JSON.",
+  "rawBody": "{\"invoiceId\":\"260925ukRrMaiFq8o2F\",\"status\":\"created\",\"amount\":100,\"ccy\":980,\"createdDate\":\"2026-09-25T11:23:56Z\",\"modifiedDate\":\"2026-09-25T11:23:56Z\",\"reference\":\"spike-webhook-expire-2\",\"destination\":\"Storefront billing spike\"}",
+  "verified": true
+}

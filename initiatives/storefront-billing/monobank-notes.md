@@ -22,7 +22,7 @@ What the planner verified against mono's public docs before founding the initiat
 
 - Header `x-sign`: ECDSA over SHA-256 of the raw request body; verify with the base64-decoded PEM public key from `/api/merchant/pubkey` (cache it; rotate on verification failure).
 - Delivery: «If the third-party server does not respond with HTTP 200 OK status, the acquiring backend retries the attempt up to three times.» → the route must be idempotent (invoice id + status + modified date as the event key) and answer 200 fast; heavy work after the ledger write.
-- Example payload: `{ invoiceId, status, amount, ccy, createdDate, reference }` (+ `walletData` when a card was tokenized). Recurring-charge and subscription-status webhooks: shape NOT verified (SB-1, spike 0.2).
+- Example payload: `{ invoiceId, status, amount, ccy, createdDate, reference }` (+ `walletData` when a card was tokenized). **Verified 2026-09-25 through the named tunnel (`spike/fixtures/`):** transport is a `POST` with `Content-Type: application/json` from `Go-http-client/1.1`; `x-sign` is a base64 ECDSA signature (P-256 key from `GET /api/merchant/pubkey`, SHA-256) over the RAW body bytes — verify the bytes as received, never a re-serialized object (`crypto.createVerify("SHA256").update(rawBody).verify(pem, Buffer.from(xSign, "base64"))`). Events seen: `invoice/create` with `webHookUrl` fires a `created` webhook at once; a merchant-initiated `wallet/payment` with `webHookUrl` fires TWO webhooks ~50 ms apart — `processing` (`finalAmount: 0`) then `success` (with `paymentInfo`, `payMethod: "wallet"`) — so the handler must be order-tolerant (status precedence by `modifiedDate`, never regress `success` to `processing`); a recurring charge's webhook is the plain invoice shape, no subscription wrapper. NOT seen: no webhook when an unpaid invoice expires (60 s validity, listened 130 s; `invoice/status` polled `expired`) — expiry is detected by polling/reconciliation. Native-subscription webhooks (`webHookUrls`) were not exercised: not our path after D-3.
 
 ## Test environment
 
@@ -64,9 +64,9 @@ Tool: `initiatives/storefront-billing/spike/mono-spike.mjs` (no dependencies; to
 
 ## Open items (SB-1) — read in a browser, then fold here
 
-1. `webHookUrls` nested fields on `subscription/create`.
+1. ~~`webHookUrls` nested fields on `subscription/create`.~~ Moot after D-3 (b); reopen only if native subscriptions return.
 2. `subscription/status` response schema + the status enum; `subscription/payments` and `subscription/list` schemas.
-3. What a recurring-charge webhook looks like; what happens on a declined renewal (retries? how many? status?).
+3. ~~What a recurring-charge webhook looks like~~ (answered 2026-09-25: the plain invoice shape, `processing` then `success`, fixtures in `spike/fixtures/`); what happens on a declined merchant-initiated charge is still unknown (see 6).
 4. Can the client cancel a subscription from the mono app? Does a webhook fire?
 5. ~~Does the test token cover `subscription/*` and `wallet/payment`?~~ Yes — verified 2026-09-25 (see the spike section).
 6. How to simulate a declined charge in test mode (a test card / amount that fails)? Nothing found by probing; needed for the P1.3 dunning path.
