@@ -5,10 +5,10 @@ The model the owner ratified on 2026-09-23 («модель заходит»), wr
 ## 1. Entities (Prisma sketch, names indicative)
 
 ```prisma
-enum BillingProvider { MONOBANK  MANUAL }            // APPLE reserved (ADR-0044)
+enum BillingProvider { MONOBANK  MANUAL  FREE }      // FREE = zero-price products (the D-13 trial); APPLE reserved (ADR-0044)
 enum PlanDelivery    { JOIN  COPY }                   // D-4
 enum PeriodUnit      { DAY  WEEK  MONTH  YEAR }       // maps 1:1 to mono `interval` `{n}{d|w|m|y}`
-enum SubscriptionStatus { ACTIVE  PAST_DUE  CANCELED  EXPIRED }   // TRIAL removed (no trials, D-11 Q10)
+enum SubscriptionStatus { ACTIVE  PAST_DUE  CANCELED  EXPIRED }   // TRIAL removed — a trial is a zero-price FREE product, not a status (D-13)
 enum TransactionKind { INITIAL  RENEWAL  ONE_OFF  REFUND }
 
 model Product     { …existing CMS facet… ; plans ProductPlan[] ; prices Price[] }   // stripeProductId removed
@@ -46,7 +46,7 @@ CANCELED | EXPIRED ──(new purchase of the same product)──► ACTIVE (sam
 MANUAL: created ACTIVE with currentPeriodEnd = the grant's end; expires like a one-off.
 ```
 
-Access window = `currentPeriodEnd` (+ grace while PAST_DUE). Grace default 3 days (D-11 Q4).
+Access window = `currentPeriodEnd` (+ grace while PAST_DUE). Grace = 2 days (D-11 Q4, Denys 2026-09-24).
 
 ## 3. Access resolution (D-7) — the only cross-context door
 
@@ -63,6 +63,8 @@ Callers: `plan-timetable` (per enrollment: CLOSED enrollments render as a wall e
 **Auto-renew (autoRenew = true).** Checkout → invoice (or `subscription/create`, per D-3) with the fiscal basket → mono page → `success` webhook → `Transaction(INITIAL)` → `Subscription ACTIVE` (period = price period from the payment date) → side effects (§5) → emails. Each period: renewal charge per D-3 → `RENEWAL` transaction → period rolls; declined → `PAST_DUE` + email + grace.
 
 **One-off period (autoRenew = false).** Same first leg, no card stored; `Subscription ACTIVE` with `currentPeriodEnd = paid + period`; reminder email 3 days before the end with a renew link; at the end → `EXPIRED` → wall with the same renew link.
+
+**FREE (zero price, D-13).** Checkout on a zero-price product skips the provider: `Subscription(FREE, ACTIVE, autoRenew = false, currentPeriodEnd = now + period)` is created at once, side effects (§5) run, the athlete lands on the timetable; expiry closes access like a one-off. No card, no invoice, no email beyond the invite for a newcomer.
 
 **MANUAL.** Head coach / admin action "grant access until <date>" → `Subscription(MANUAL, ACTIVE, currentPeriodEnd = date)` + enrollment if missing. No charge, no email unless asked.
 
