@@ -1,0 +1,2 @@
+CREATE DATABASE tdp_test;
+CREATE DATABASE tdp_shadow;

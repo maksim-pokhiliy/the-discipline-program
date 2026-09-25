@@ -1,5 +1,12 @@
 version: "3"
 
+vars:
+  TDP_DB_PORT: "5432"
+  TDP_DB_URL: "postgres://postgres:postgres@localhost:{{.TDP_DB_PORT}}/tdp"
+  TDP_TEST_DB_URL: "postgres://postgres:postgres@localhost:{{.TDP_DB_PORT}}/tdp_test"
+  TDP_SHADOW_DB_URL: "postgres://postgres:postgres@localhost:{{.TDP_DB_PORT}}/tdp_shadow"
+  TDP_DEMO_PASSWORD: "demo-athlete-12345"
+
 tasks:
   clean:
     desc: "Remove node_modules, .turbo, .next, dist"
@@ -91,6 +98,72 @@ tasks:
     desc: "Seed the database with baseline data"
     cmds:
       - pnpm db:seed
+
+  stack:up:
+    desc: "Start the local Postgres stack (docker compose) and wait until it is healthy"
+    env:
+      TDP_DB_PORT: "{{.TDP_DB_PORT}}"
+    cmds:
+      - docker compose up -d --wait
+
+  stack:down:
+    desc: "Stop the local stack; the data volume is kept"
+    cmds:
+      - docker compose down
+
+  stack:reset:
+    desc: "Recreate the local stack from scratch: drop the volume, apply every migration, seed"
+    env:
+      TDP_DB_PORT: "{{.TDP_DB_PORT}}"
+    cmds:
+      - docker compose down -v
+      - docker compose up -d --wait
+      - task: stack:migrate
+      - task: stack:seed
+
+  stack:migrate:
+    desc: "Apply pending migrations to the local dev and test databases (no seed)"
+    cmds:
+      - DATABASE_URL={{.TDP_DB_URL}} pnpm db:deploy
+      - DATABASE_URL={{.TDP_TEST_DB_URL}} pnpm db:deploy
+
+  stack:seed:
+    desc: "Seed the local dev database (wipes domain data; recreates dev-coach + dev-admin)"
+    cmds:
+      - DATABASE_URL={{.TDP_DB_URL}} pnpm db:seed
+
+  stack:demo:
+    desc: "Seed the demo universe (demo coach + athlete, plan, published days) into the local dev database"
+    cmds:
+      - DATABASE_URL={{.TDP_DB_URL}} SHIM_DEMO_ATHLETE_PASSWORD={{.TDP_DEMO_PASSWORD}} pnpm --filter @repo/api-server exec tsx scripts/shim-demo-seed.ts --write --expect-host=localhost
+
+  stack:psql:
+    desc: "Open psql on the local dev database"
+    interactive: true
+    cmds:
+      - docker compose exec db psql -U postgres -d tdp
+
+  stack:logs:
+    desc: "Tail the local Postgres logs"
+    cmds:
+      - docker compose logs -f db
+
+  stack:env:
+    desc: "Print the env lines that point Prisma and the apps at the local stack"
+    silent: true
+    cmds:
+      - echo 'DATABASE_URL="{{.TDP_DB_URL}}"'
+      - echo 'SHADOW_DATABASE_URL="{{.TDP_SHADOW_DB_URL}}"'
+
+  stack:tunnel:
+    desc: "Expose the platform dev server (3001) through a Cloudflare quick tunnel for provider webhooks"
+    cmds:
+      - cloudflared tunnel --url http://localhost:3001
+
+  test:api:
+    desc: "Run the api-server integration suite against the local test database (serial)"
+    cmds:
+      - DATABASE_URL={{.TDP_TEST_DB_URL}} pnpm --filter @repo/api-server test
 
   dep:check:
     desc: "Validate dependency boundaries (bounded-context rules)"

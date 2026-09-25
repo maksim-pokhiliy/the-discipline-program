@@ -85,8 +85,7 @@ decisions (#2 Stripe PK, #3 soft-delete writes, #4 raw test client,
 - **Negative:** every schema change now needs a migration file
   (`pnpm db:migrate --name <x>`) — a step `db push` did not require. Authoring new
   migrations locally with `migrate dev` needs a shadow database, now wired via
-  `shadowDatabaseUrl = env("SHADOW_DATABASE_URL")` (point it at a separate empty
-  Neon branch; see `.env.example`). The baseline + password-reset migrations were
+  `shadowDatabaseUrl = env("SHADOW_DATABASE_URL")` (since 2026-09-25 the local stack provides `tdp_shadow`; see `docs/runbooks/local-stack.md`). The baseline + password-reset migrations were
   authored via `migrate diff`, which needs no shadow.
 - **Neutral / runbook:**
   - One-time, per existing database (production **and** dev): run

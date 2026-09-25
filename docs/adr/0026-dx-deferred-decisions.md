@@ -13,7 +13,7 @@ A DX audit assessed process maturity. Several items from the original audit were
 
 The following DX improvements are deferred. Each has a **trigger**.
 
-**Docker Compose for local development.** Currently relies on external Neon DB + manual env vars. A `docker-compose.yml` with local Postgres would make onboarding a `git clone → pnpm install → pnpm dev` experience. **Trigger:** second developer onboards to the project.
+**Docker Compose for local development.** Currently relies on external Neon DB + manual env vars. A `docker-compose.yml` with local Postgres would make onboarding a `git clone → pnpm install → pnpm dev` experience. **Trigger:** second developer onboards to the project. **Resolved 2026-09-25** — `docker-compose.yml` + `docs/runbooks/local-stack.md` landed under storefront-billing D-14 (every test run targets a local stack, never dev Neon); the trigger fired for isolation, not headcount.
 
 **CONTRIBUTING.md.** Coding standards live in `CLAUDE.md`, architecture in `docs/BOUNDED-CONTEXTS.md`, deployment in `docs/DEPLOY.md`, decisions in `docs/adr/`. A dedicated contributor guide would consolidate the "how to work here" narrative. **Trigger:** second contributor, or first external contribution.
 
