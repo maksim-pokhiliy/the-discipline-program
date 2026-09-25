@@ -1,0 +1,37 @@
+{
+  "body": {
+    "amount": 100,
+    "ccy": 980,
+    "createdDate": "2026-09-25T11:23:28Z",
+    "destination": "Storefront billing spike",
+    "finalAmount": 100,
+    "invoiceId": "2609254jRCJHF2jM5rb3",
+    "modifiedDate": "2026-09-25T11:23:28Z",
+    "payMethod": "wallet",
+    "paymentInfo": {
+      "approvalCode": "648983",
+      "bank": "Test bank",
+      "country": "804",
+      "fee": 1,
+      "maskedPan": "42424242******42",
+      "paymentMethod": "wallet",
+      "paymentSystem": "visa",
+      "rrn": "072921085744",
+      "terminal": "MI000000",
+      "tranId": "425740078634"
+    },
+    "reference": "spike-webhook-mit",
+    "status": "success"
+  },
+  "capturedAt": "2026-09-25T11:23:29.765Z",
+  "headers": {
+    "content-length": "495",
+    "content-type": "application/json",
+    "user-agent": "Go-http-client/1.1",
+    "x-sign": "MEQCIAUeGRaBXGqdLZlcbxzRK8utlMELaQoO6xqBeHoO6D/AAiAdpo1mlwKVlp+mhEesB17RrYn1ZaHY1/Yo5H+N6mqqTA=="
+  },
+  "method": "POST",
+  "note": "Captured 2026-09-25 from mono's test merchant through the named tunnel; x-sign verified over the raw body bytes with monobank-test-pubkey.pem (ECDSA P-256, SHA-256). Verify the raw bytes, never re-serialized JSON.",
+  "rawBody": "{\"invoiceId\":\"2609254jRCJHF2jM5rb3\",\"status\":\"success\",\"payMethod\":\"wallet\",\"amount\":100,\"ccy\":980,\"finalAmount\":100,\"createdDate\":\"2026-09-25T11:23:28Z\",\"modifiedDate\":\"2026-09-25T11:23:28Z\",\"reference\":\"spike-webhook-mit\",\"destination\":\"Storefront billing spike\",\"paymentInfo\":{\"rrn\":\"072921085744\",\"approvalCode\":\"648983\",\"tranId\":\"425740078634\",\"terminal\":\"MI000000\",\"bank\":\"Test bank\",\"paymentSystem\":\"visa\",\"country\":\"804\",\"fee\":1,\"paymentMethod\":\"wallet\",\"maskedPan\":\"42424242******42\"}}\n",
+  "verified": true
+}

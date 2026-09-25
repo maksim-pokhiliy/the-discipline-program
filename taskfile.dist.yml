@@ -6,6 +6,7 @@ vars:
   TDP_TEST_DB_URL: "postgres://postgres:postgres@localhost:{{.TDP_DB_PORT}}/tdp_test"
   TDP_SHADOW_DB_URL: "postgres://postgres:postgres@localhost:{{.TDP_DB_PORT}}/tdp_shadow"
   TDP_DEMO_PASSWORD: "demo-athlete-12345"
+  TDP_TUNNEL_PORT: "3001"
 
 tasks:
   clean:
@@ -156,9 +157,9 @@ tasks:
       - echo 'SHADOW_DATABASE_URL="{{.TDP_SHADOW_DB_URL}}"'
 
   stack:tunnel:
-    desc: "Expose the platform dev server (3001) through a Cloudflare quick tunnel for provider webhooks"
+    desc: "Expose a local port (default 3001) at https://mono-dev.thedisciplineprogram.com through the named Cloudflare tunnel"
     cmds:
-      - cloudflared tunnel --url http://localhost:3001
+      - cloudflared tunnel run --url http://localhost:{{.TDP_TUNNEL_PORT}} tdp-local
 
   test:api:
     desc: "Run the api-server integration suite against the local test database (serial)"
