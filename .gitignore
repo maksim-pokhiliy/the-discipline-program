@@ -56,3 +56,6 @@ storybook-static
 
 # Legacy users import: exports and reports carry real addresses and password hashes
 .legacy-import/
+
+# storefront-billing 0.2 spike: raw Mono request/response captures (test mode, still not for git)
+initiatives/storefront-billing/spike/captures/
