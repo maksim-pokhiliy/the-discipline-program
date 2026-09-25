@@ -1,0 +1,24 @@
+name: tdp-platform
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: tdp-platform-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tdp
+    ports:
+      - "127.0.0.1:${TDP_DB_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tdp"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+
+volumes:
+  db-data:

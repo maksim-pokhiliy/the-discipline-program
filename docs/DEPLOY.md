@@ -168,8 +168,9 @@ All three apps serve identical security headers via `vercel.json` (added in 1.5.
 
 ```bash
 pnpm install          # Install all dependencies + generate Prisma client
+task stack:up         # Local Postgres 17 (docker compose) — the target of dev servers, tests and migration rehearsals
 pnpm dev              # Start all three apps in dev mode (Turbo parallel)
 pnpm --filter admin dev    # Start only admin
 ```
 
-Each app needs a `.env.local` file. See the "Required variables" table above for what each app needs. The `packages/api-server/.env` file must contain `DATABASE_URL` for Prisma CLI commands.
+Each app needs a `.env.local` file. See the "Required variables" table above for what each app needs. The `packages/api-server/.env` file must contain `DATABASE_URL` for Prisma CLI commands. Point every `DATABASE_URL` at the local stack (`task stack:env` prints the lines; `docs/runbooks/local-stack.md`) — Neon URLs belong to Vercel environments.
