@@ -68,3 +68,17 @@ Append-only. One entry per session/step.
 - **Refusals by the harness, all left standing:** the design subagent's attempt to write a proofs script (modification of a shared resource). Nothing was routed around it; D-19 removes the cause.
 - **Found on the way.** `TDP_DB_PORT=5433 task …` from the P0.0 runbook never overrode the port: a Taskfile variable outranks the environment. The runbook now shows the working form. The storefront's dev Neon previews need W0 applied by hand; it is on the owner checklist of the delivery PR. SB-18 opened (hryvnia renders as `UAH` in `en-US`).
 - **Still open:** D-18.
+
+## 2026-09-28 (evening) — P0.3 internal review: the owner's triage
+
+- **The report.** Six commits on `feat/storefront-billing-w0-schema`, 40 files. Candidates before any cut: correctness 25, security 25, quality 30, breaker 14; reported 12 / 8 / 12 / 14; 33 findings after dedupe and 4 refuted claims; the refuters checked 24 (19 confirmed, 3 partly, 2 refuted). No finder applied a cap, the candidates fell to verification, so there is no hidden tail. Verdict request-changes: no defect on a runtime path, the weight is in tests that prove less than they claim and in three false sentences in the documents.
+- **Planner checks before the gate.** The branch carries no initiative file; the committed migration differs from the rehearsed one by the CHECK line only; RF-1, RF-4 and RF-6 read at the source and confirmed. A probe in a throwaway container: with `SET LOCAL lock_timeout` as the first statement a blocked apply returned in 2.8 s with `55P03`, left nothing behind, and applied after `migrate resolve --rolled-back`.
+- **The ruling** (owner, verbatim: «ок, делаем всё по твоим рекомендациям»):
+  - **fix-now** — RF-1, RF-2, RF-4a, RF-5, RF-8, RF-10, RF-11, RF-14, RF-16, RF-26, RF-27, RF-28 as the executor recommended; RF-6 and RF-19 moved there by the planner (a partial price update resets currency and period — refuse instead; the lock timeout is one line and a stalled production is worse than a failed dispatch).
+  - **carry-forward** — RF-3, RF-18 and the procedural half of RF-19 → `docs/runbooks/db-migrate-dispatch.md` (written the same day); RF-4b → SB-19 (0.5, reopens D-17); RF-12 → SB-18 (0.4); RF-15 → done with the ADR amendments below; RF-17 → SB-21, RF-20 → SB-22, RF-24 → SB-23 (all 0.3b); RF-22 → the D-14 amendment and the runbook; SEC-001's residue → SB-24 (3.1); RF-33 → SB-20 (a `/fix` before 0.5; the executor had it as defer, the planner scheduled it because the suite that fails is the shared one).
+  - **defer** — RF-7, RF-9, RF-13, RF-21, RF-29, RF-30, RF-31, the marketing test project → SB-25.
+  - **drop** — RF-23 (a commit that does not compile alone; the repository squash-merges), RF-25 (no mapper unit test; every mapper mutant dies in the endpoint tests — a departure from the letter of ADR-0023, accepted), RF-32 (the CHECK turns into a 500 only when the contract is bypassed), RF-28b (one literal repeated in two packages).
+  - **Ratified:** the two lines outside the fence, `subscriptionId: null` in two test fixtures of LMS and Coaching, forced by the new row type.
+  - **The round closes after the fix-now set.** No internal re-review; the independent reviewer sees the result.
+- **D-18 RATIFIED (b)** by the same ruling. ADR-0044 and the status line of ADR-0014 now say that W0 has two halves. D-14 amended: dev Neon is the preview database and gets every migration by hand. D-17 marked for a revisit at 0.5.
+- **Next:** the fix round, then the PR.
