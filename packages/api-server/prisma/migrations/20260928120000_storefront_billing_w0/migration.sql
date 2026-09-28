@@ -1,3 +1,6 @@
+-- SetLockTimeout
+SET LOCAL lock_timeout = '5s';
+
 -- AssertBillingRowsConvertible
 DO $$
 DECLARE
