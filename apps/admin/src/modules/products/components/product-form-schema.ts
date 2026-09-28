@@ -1,18 +1,17 @@
 import { z } from "zod";
 
-import { createProductPriceSchema, PRODUCT_CONSTANTS } from "@repo/contracts/cms/product";
+import {
+  createProductPriceSchema,
+  createProductSchema,
+  PRODUCT_CONSTANTS,
+} from "@repo/contracts/cms/product";
+import { centsToAmount } from "@repo/shared";
 
-const productFormPriceSchema = createProductPriceSchema
-  .omit({ amountCents: true })
-  .extend({ amount: z.number().min(0) });
+const productFormPriceSchema = createProductPriceSchema.omit({ amountCents: true }).extend({
+  amount: z.number().min(0).max(centsToAmount(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS)),
+});
 
-export const productFormSchema = z.object({
-  title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
-  slug: z.string().regex(/^[a-z0-9-]+$/),
-  description: z.string().min(1),
-  features: z.array(z.string()),
-  isFeatured: z.boolean(),
-  isActive: z.boolean(),
+export const productFormSchema = createProductSchema.extend({
   price: productFormPriceSchema.optional(),
 });
 

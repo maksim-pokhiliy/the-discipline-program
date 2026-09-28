@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  InputAdornment,
-  MenuItem,
-  Stack,
-  TextField,
-} from "@mui/material";
+import { InputAdornment, MenuItem, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { ProductCurrency } from "@repo/contracts/cms/product";
@@ -18,9 +9,8 @@ import { PERIOD_CONSTANTS, PERIOD_UNIT_LABELS, PeriodUnit } from "@repo/contract
 import { FormCard } from "@app/lib/components/form-card";
 
 import { getCurrencySymbol } from "./get-currency-symbol";
+import { ProductAutoRenewField } from "./product-auto-renew-field";
 import { type ProductFormData } from "./product-form-schema";
-
-const AUTO_RENEW_HINT = "When off, this price is sold only as a one-off paid period.";
 
 type ProductPricingCardProps = {
   isLoading: boolean;
@@ -126,26 +116,7 @@ export const ProductPricingCard = ({ isLoading }: ProductPricingCardProps) => {
           />
         </Stack>
 
-        <Controller
-          name="price.autoRenew"
-          control={control}
-          render={({ field, fieldState }) => (
-            <FormControl error={!!fieldState.error} variant="standard">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={field.value}
-                    onChange={(event) => field.onChange(event.target.checked)}
-                    disabled={isLoading}
-                  />
-                }
-                label="Offer auto-renew"
-              />
-
-              <FormHelperText>{fieldState.error?.message ?? AUTO_RENEW_HINT}</FormHelperText>
-            </FormControl>
-          )}
-        />
+        <ProductAutoRenewField isLoading={isLoading} />
       </Stack>
     </FormCard>
   );
