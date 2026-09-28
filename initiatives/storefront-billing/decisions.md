@@ -8,21 +8,26 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 
 ## Index
 
-| ID   | Topic                                                                                         | Status   |
-| ---- | --------------------------------------------------------------------------------------------- | -------- |
-| D-1  | Monobank is the provider; the billing core is provider-agnostic (ADR-0044)                    | RATIFIED |
-| D-2  | Subscription per PRODUCT, not per user; product binds 1..N plans; enrollment carries the sub  | RATIFIED |
-| D-3  | Recurring mechanism: Mono native subscriptions vs own scheduler + tokenized MIT charges       | OPEN     |
-| D-4  | Delivery lives on the product↔plan binding: JOIN or COPY; plans have no "kind"               | RATIFIED |
-| D-5  | Two purchase forms per price (auto-renew, one-off period); cash is not a flow; MANUAL = comps | RATIFIED |
-| D-6  | No pause                                                                                      | RATIFIED |
-| D-7  | Access is resolved per enrollment in `authz/`; a lapse never edits the enrollment             | RATIFIED |
-| D-8  | iOS soft wall = a synthetic program DTO with text, no link; sign-in stays open                | RATIFIED |
-| D-9  | Cohort rollout: launch-day MANUAL grant until date X (default launch + 4 weeks)               | RATIFIED |
-| D-10 | Fiscal basket in every invoice payload from day one; the fiscalization switch is Denys's      | RATIFIED |
-| D-11 | Coach-side defaults (12 items sent to Denys 2026-09-23) stand unless he objects               | RATIFIED |
-| D-12 | Ukrainian buyer-facing pages + an offer/requisites page are an acquiring precondition         | RATIFIED |
-| D-13 | Trial = a zero-price 3-day product (provider `FREE`) bound COPY to a trial template plan      | RATIFIED |
+| ID   | Topic                                                                                           | Status   |
+| ---- | ----------------------------------------------------------------------------------------------- | -------- |
+| D-1  | Monobank is the provider; the billing core is provider-agnostic (ADR-0044)                      | RATIFIED |
+| D-2  | Subscription per PRODUCT, not per user; product binds 1..N plans; enrollment carries the sub    | RATIFIED |
+| D-3  | Recurring mechanism: own scheduler + merchant-initiated charges on the tokenized card (b)       | RATIFIED |
+| D-4  | Delivery lives on the product↔plan binding: JOIN or COPY; plans have no "kind"                 | RATIFIED |
+| D-5  | Two purchase forms per price (auto-renew, one-off period); cash is not a flow; MANUAL = comps   | RATIFIED |
+| D-6  | No pause                                                                                        | RATIFIED |
+| D-7  | Access is resolved per enrollment in `authz/`; a lapse never edits the enrollment               | RATIFIED |
+| D-8  | iOS soft wall = a synthetic program DTO with text, no link; sign-in stays open                  | RATIFIED |
+| D-9  | Cohort rollout: launch-day MANUAL grant until date X (default launch + 4 weeks)                 | RATIFIED |
+| D-10 | Fiscal basket in every invoice payload from day one; the fiscalization switch is Denys's        | RATIFIED |
+| D-11 | Coach-side defaults (12 items sent to Denys 2026-09-23) stand unless he objects                 | RATIFIED |
+| D-12 | Ukrainian buyer-facing pages + an offer/requisites page are an acquiring precondition           | RATIFIED |
+| D-13 | Trial = a zero-price 3-day product (provider `FREE`) bound COPY to a trial template plan        | RATIFIED |
+| D-14 | Every local run targets the Docker stack; dev Neon is a read-only reference                     | RATIFIED |
+| D-15 | `Price.autoRenew` = the auto-renew form is offered; `Subscription.autoRenew` = the buyer's form | RATIFIED |
+| D-16 | The W0 migration refuses rather than guesses; a production-snapshot rehearsal gates the merge   | RATIFIED |
+| D-17 | No `walletId` column, plain `cardToken`, nullable `priceId` with a CHECK for non-MANUAL         | RATIFIED |
+| D-18 | W0 ships as expand (0.3) then contract (0.3b); production apply is dispatched before merge      | OPEN     |
 
 ---
 
@@ -126,3 +131,34 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 - **Decision.** `docker-compose.yml` (project `tdp-platform`, `postgres:17-alpine`, `127.0.0.1:5432`, 512 MB) with three databases: `tdp` for the dev servers and manual tests, `tdp_test` for the api-server suite, `tdp_shadow` for `prisma migrate dev`. `task stack:*` and `task test:api` pass `DATABASE_URL` on the command line, so a task can never drift to whatever `.env` holds (Prisma's dotenv and `process.loadEnvFile` never override an exported variable). The env files carry the local URLs with the Neon dev line commented above them; `.env.example`, README, DEPLOY, ADR-0026 and ADR-0042 point at `docs/runbooks/local-stack.md`. Postgres 17 rather than CI's 16: production Neon is 17.5 and migration rehearsals restore production dumps into the stack, which PG16 `pg_restore` cannot read; CI's 16 stays as the floor (SB-15).
 - **Rationale.** Billing work rehearses paths that mutate rows — declined renewals, grace expiry, cohort grants, webhook replays — and dev Neon is shared with preview deploys and already known for pooler flakes and idle drops. Locally the suite runs in 2 min 32 s instead of about ten minutes, which changes how often it gets run.
 - **Links.** plan 0.0; `docs/runbooks/local-stack.md`; deferred SB-14, SB-15; journal 2026-09-25.
+
+### D-15 — `Price.autoRenew` is the offer, `Subscription.autoRenew` is the choice
+
+- **Status:** RATIFIED (owner 2026-09-28, contour of step 0.3 — «по 2 и 3 ок»).
+- **Decision.** `Price.autoRenew = true` means the auto-renewing form is offered for this price, so checkout offers both forms of D-5; `false` means the price is sold only as a one-off paid period (the D-13 trial, the self-paced programs of D-4). `Subscription.autoRenew` records which form the buyer chose.
+- **Rationale.** The ratified sketch carries the same boolean on both models, and ADR-0044 §4 says every price is sold both ways while D-13 and D-4 describe prices that are not. Read as "offer" on the price and "choice" on the subscription, all four texts agree, and the admin gets one checkbox instead of a second price type.
+- **Links.** `domain-model.md` §1, §4; ADR-0044 §4; D-4, D-5, D-13; `step-0.3-prompt.md`.
+
+### D-16 — The W0 migration refuses rather than guesses
+
+- **Status:** RATIFIED (owner 2026-09-28, with the 0.3 contour).
+- **Decision.** The first statement of `storefront_billing_w0` is a guard that raises when the database holds a `ONE_TIME` price, any subscription row or any transaction row; `MONTHLY` and `YEARLY` prices convert to `1 MONTH` and `1 YEAR` with `autoRenew = true`, and the currency of an existing row is never touched. A rehearsal on a clone of a production snapshot is a merge gate.
+- **Rationale.** A one-time price has no period, and a Stripe-era subscription or transaction has no provider: any conversion would be an invention written into production. Production on 2026-09-28 holds 4 products, 4 active `MONTHLY` / `USD` prices, no Stripe ids, no subscriptions and no transactions, so the guard passes today and protects against a row added before the apply.
+- **Verified mechanics (Prisma 6.1.0, Postgres 17.10).** A migration file without transaction-control statements applies atomically; a `RAISE EXCEPTION` surfaces verbatim in `migrate deploy`; an explicit `BEGIN; … COMMIT;` around the file masks the error, and the inner pair Prisma emits around an enum swap commits everything before it. The migration therefore carries no transaction control at all.
+- **Links.** charter "Sacred"; `docs/runbooks/local-stack.md`; `step-0.3-prompt.md`; journal 2026-09-28.
+
+### D-17 — No `walletId` column, plain `cardToken`, nullable `priceId`
+
+- **Status:** RATIFIED (planner ruling inside the owner-approved contour, 2026-09-28).
+- **Decision.** The wallet id sent to Monobank is the platform `userId`, so no column stores it. `Subscription.cardToken` is plain text. `Subscription.priceId` is nullable, and a CHECK constraint keeps it mandatory for every provider except `MANUAL`. `Transaction` is unique on `(provider, providerTxId, kind)` instead of `providerTxId` alone.
+- **Rationale.** A stored wallet id can only drift from the user it belongs to. The card token is a bearer scoped to our merchant token; encrypting it with a sibling environment key in the same process adds no boundary. A comp or a cohort grant has no price, and a fake price reference would corrupt the answer to "what did they pay". A Monobank refund lives on the original invoice id, so the refund row shares `providerTxId` with the payment it reverses.
+- **Links.** D-3, D-9; `monobank-notes.md` §0.2 spike; `step-0.3-prompt.md`.
+
+### D-18 — W0 ships as expand (0.3) then contract (0.3b)
+
+- **Status:** OPEN — proposed by the planner 2026-09-28; the 0.3 prompt is written against it; the owner rules before the 0.3 merge.
+- **Fork.** (a) One destructive migration in the 0.3 PR, as the approved contour said. (b) Step 0.3 expands and converts and keeps `app_products.stripeProductId`, `app_prices.interval`, `app_prices.stripePriceId` and the `PriceInterval` type, dead but declared; the production apply is dispatched on the PR branch before the merge (`gh workflow run db-migrate.yml --ref <branch>`); step 0.3b drops the dead columns once 0.3 is live.
+- **Proposal.** (b).
+- **Rationale.** A merge starts the Vercel builds and `db-migrate.yml` at the same moment and nothing orders them. Prisma selects columns by name, so under (a) either the old code meets a schema without the columns it selects, or the new code meets a schema without the columns it needs, on the public storefront and in the admin. The window is minutes when both pipelines are healthy and unbounded when the migration fails or waits. Under (b) the old code never notices the expand, and a failed apply happens before any code ships. The cost is one six-statement PR.
+- **If the owner picks (a).** The drops of 0.3b fold into the 0.3 migration before the merge; nothing built under (b) is wasted.
+- **Links.** `.github/workflows/db-migrate.yml`; plan 0.3 / 0.3b; `step-0.3-prompt.md`.
