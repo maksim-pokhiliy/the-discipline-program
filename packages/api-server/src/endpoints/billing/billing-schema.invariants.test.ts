@@ -1,4 +1,11 @@
-import { BillingProvider, PlanDelivery, TransactionKind } from "@prisma/client";
+import {
+  BillingProvider,
+  Currency,
+  PlanDelivery,
+  SubscriptionStatus,
+  TransactionKind,
+  TransactionStatus,
+} from "@prisma/client";
 import { afterAll, describe, expect, it } from "vitest";
 
 import { PERIOD_CONSTANTS } from "@repo/contracts/common";
@@ -34,15 +41,25 @@ afterAll(async () => {
 });
 
 describe("app_subscriptions_userId_productId_key", () => {
-  it("refuses a second subscription of a buyer to the same product", async () => {
+  it("refuses a second subscription of a buyer to the same product, whatever its terms", async () => {
     const buyer = await createTrackedBuyer(ids);
     const product = await createTrackedProduct(ids);
+    const price = await createTestPrice(product.id);
 
-    await createTestSubscription(buyer.id, product.id);
+    await createTestSubscription(buyer.id, product.id, {
+      provider: BillingProvider.MANUAL,
+      status: SubscriptionStatus.ACTIVE,
+      autoRenew: false,
+    });
 
-    await expect(createTestSubscription(buyer.id, product.id)).rejects.toMatchObject(
-      UNIQUE_VIOLATION,
-    );
+    await expect(
+      createTestSubscription(buyer.id, product.id, {
+        provider: BillingProvider.MONOBANK,
+        priceId: price.id,
+        status: SubscriptionStatus.PAST_DUE,
+        autoRenew: true,
+      }),
+    ).rejects.toMatchObject(UNIQUE_VIOLATION);
 
     const pairCount = await cleanupRaw.subscription.count({
       where: { userId: buyer.id, productId: product.id },
@@ -165,14 +182,23 @@ describe(PERIOD_COUNT_CHECK, () => {
 });
 
 describe("app_transactions_provider_providerTxId_kind_key", () => {
-  it("refuses a second INITIAL of the same provider transaction", async () => {
+  it("refuses a second INITIAL of the same provider transaction, whatever its details", async () => {
     const buyer = await createTrackedBuyer(ids);
-    const initial = await createTestTransaction(buyer.id, { kind: TransactionKind.INITIAL });
+    const otherBuyer = await createTrackedBuyer(ids);
+    const initial = await createTestTransaction(buyer.id, {
+      kind: TransactionKind.INITIAL,
+      status: TransactionStatus.SUCCEEDED,
+      amountCents: 120_000,
+      currency: Currency.UAH,
+    });
 
     await expect(
-      createTestTransaction(buyer.id, {
+      createTestTransaction(otherBuyer.id, {
         providerTxId: initial.providerTxId,
         kind: TransactionKind.INITIAL,
+        status: TransactionStatus.FAILED,
+        amountCents: 5_000,
+        currency: Currency.USD,
       }),
     ).rejects.toMatchObject(UNIQUE_VIOLATION);
 
