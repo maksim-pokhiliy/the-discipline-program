@@ -17,7 +17,7 @@ The product price is the only billing shape with a live consumer, and the admin 
 - `BillingWebhookEvent` is the inbound ledger, unique on `(provider, eventKey)`.
 - `PlanEnrollment.subscriptionId` points at the subscription behind an enrollment; null means coach-granted access.
 
-Three columns and one enum of the previous schema are still declared and dead until step 0.3b; BOUNDED-CONTEXTS section 5 names them. Nothing here reads or writes them.
+Three columns and one enum of the previous schema stay in the database until step 0.3b; BOUNDED-CONTEXTS section 5 names them. The three fields are still declared in `schema.prisma` but carry `@ignore`, so no query the generated client builds selects or writes them, and the columns can leave in 0.3b without breaking a read.
 
 ## What lands here, step by step
 

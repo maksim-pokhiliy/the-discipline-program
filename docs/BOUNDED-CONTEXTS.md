@@ -220,7 +220,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 **Responsibility:** What users pay for, how much they pay, and the record of those payments. The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. Its W0 schema is in place (migration `20260928120000_storefront_billing_w0`); no billing endpoint, billing contract or billing UI exists yet. D-numbers from here on refer to `initiatives/storefront-billing/decisions.md`.
 
-> **Dead until step 0.3b (D-18).** W0 expands now and contracts later. `app_products.stripeProductId`, `app_prices.interval`, `app_prices.stripePriceId` and the `PriceInterval` enum are dead: no application code uses them, and they stay in the database and in `schema.prisma` only because the code running in production when W0 is applied still selects them. Step 0.3b drops them once W0 is live. The tables below leave them out.
+> **Dead until step 0.3b (D-18).** W0 expands now and contracts later. `app_products.stripeProductId`, `app_prices.interval`, `app_prices.stripePriceId` and the `PriceInterval` enum stay in the database because the code running in production when W0 is applied still selects them. They stay declared in `schema.prisma` with `@ignore` on the three fields, so no query the generated client builds selects or writes them: a price created by the new code gets `interval = 'MONTHLY'` from the column default. Step 0.3b drops the columns and the enum once W0 is live, and the `@ignore` fields with them. The tables below leave them out.
 
 ### Aggregates and entities
 
@@ -320,7 +320,7 @@ This is enforced mechanically by the dep-cruiser rule `api-server-storage-is-lea
 - Reading the marketing storefront → CMS.
 - Reading the billing catalog → Billing.
 
-The Prisma model does not split. The contracts and the API do, with one exception until the billing admin ships in step 3.1: the admin product form writes the product's single active price through the CMS endpoint `endpoints/cms/product/admin.ts`, using the price shape of `@repo/contracts/cms/product`. Nothing writes `stripeProductId` (dead until step 0.3b, §5).
+The Prisma model does not split. The contracts and the API do, with one exception until the billing admin ships in step 3.1: the admin product form writes the product's single active price through the CMS endpoint `endpoints/cms/product/admin.ts`, using the price shape of `@repo/contracts/cms/product`. No query selects or writes `stripeProductId`: the field carries `@ignore` until step 0.3b drops the column (§5).
 
 ---
 

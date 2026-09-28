@@ -236,7 +236,7 @@ model Product {
   title           String
   description     String
   features        String[]
-  stripeProductId String?        @unique
+  stripeProductId String?        @unique @ignore
   isFeatured      Boolean        @default(false)
   isActive        Boolean        @default(true)
   prices          Price[]
@@ -277,8 +277,8 @@ model Price {
   periodCount   Int            @default(4)
   periodUnit    PeriodUnit     @default(WEEK)
   autoRenew     Boolean        @default(true)
-  interval      PriceInterval  @default(MONTHLY)
-  stripePriceId String?        @unique
+  interval      PriceInterval  @default(MONTHLY) @ignore
+  stripePriceId String?        @unique @ignore
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
