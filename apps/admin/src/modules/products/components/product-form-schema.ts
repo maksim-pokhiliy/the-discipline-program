@@ -1,15 +1,13 @@
 import { z } from "zod";
 
-import { PriceInterval, ProductCurrency } from "@repo/contracts/cms/product";
+import { createProductPriceSchema, PRODUCT_CONSTANTS } from "@repo/contracts/cms/product";
 
-const productFormPriceSchema = z.object({
-  amount: z.number().min(0),
-  currency: z.nativeEnum(ProductCurrency).default(ProductCurrency.USD),
-  interval: z.nativeEnum(PriceInterval).default(PriceInterval.MONTHLY),
-});
+const productFormPriceSchema = createProductPriceSchema
+  .omit({ amountCents: true })
+  .extend({ amount: z.number().min(0) });
 
 export const productFormSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   description: z.string().min(1),
   features: z.array(z.string()),

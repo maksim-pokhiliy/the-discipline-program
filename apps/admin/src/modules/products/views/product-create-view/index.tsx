@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
+import { PRODUCT_PRICE_DEFAULTS } from "@repo/contracts/cms/product";
 import { FormView } from "@repo/ui";
 
 import { useCreateProduct } from "@app/lib/hooks";
@@ -29,6 +30,7 @@ export const ProductCreateView = () => {
       features: [],
       isFeatured: false,
       isActive: true,
+      price: { ...PRODUCT_PRICE_DEFAULTS },
     },
   });
 

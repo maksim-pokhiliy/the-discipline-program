@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
-import { type Product } from "@repo/contracts/cms/product";
+import { PRODUCT_PRICE_DEFAULTS, type Product } from "@repo/contracts/cms/product";
 import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
@@ -41,9 +41,11 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => 
         ? {
             amount: centsToAmount(activePrice.amountCents),
             currency: activePrice.currency,
-            interval: activePrice.interval,
+            periodCount: activePrice.periodCount,
+            periodUnit: activePrice.periodUnit,
+            autoRenew: activePrice.autoRenew,
           }
-        : undefined,
+        : { ...PRODUCT_PRICE_DEFAULTS },
     },
   });
 

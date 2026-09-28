@@ -9,8 +9,9 @@ import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/mater
 import Link from "next/link";
 
 import { type Product } from "@repo/contracts/cms/product";
+import { formatPeriod } from "@repo/contracts/common";
 import { useDeleteConfirmation } from "@repo/query";
-import { formatPrice } from "@repo/shared";
+import { DEFAULT_LOCALE, formatPrice } from "@repo/shared";
 import {
   ConfirmationModal,
   DataTable,
@@ -29,7 +30,9 @@ const getDisplayPrice = (product: Product): string => {
     return "No price";
   }
 
-  return formatPrice(activePrice.amountCents, activePrice.currency);
+  const amount = formatPrice(activePrice.amountCents, activePrice.currency);
+
+  return `${amount}/${formatPeriod(activePrice, DEFAULT_LOCALE)}`;
 };
 
 const filters: DataTableFilter<Product>[] = [
