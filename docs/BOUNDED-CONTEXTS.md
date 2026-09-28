@@ -41,7 +41,7 @@ The project already has a de-facto domain boundary — `schema.prisma` groups mo
 - **CMS** is the marketing surface — landing page content, blog posts, reviews, contact-form inbox. Mostly read on `apps/marketing`, mostly written on `apps/admin`.
 - **LMS** is the training surface — training plan metadata and athlete enrollments. Owned by `apps/platform`.
 - **Coaching** sits on top of LMS and IAM. Coaching owns coach-athlete relationships, notes, action items, and the coach dashboard read model.
-- **Billing** exists only in `schema.prisma` today. No contracts, no API, no UI. It is the one context where we still have a clean window to get the design right before any code is written against it.
+- **Billing** has its W0 schema in place (ADR-0044, migration `20260928120000_storefront_billing_w0`) but no billing endpoints yet. Its one live surface is the product price, which the admin edits and the storefront renders through CMS (§7).
 - **Mobile-compat** (supporting, added 2026-08-07 by apex-sunset P1.1) serves the legacy Spring wire contract under `/api/v1/*` — and since the 2026-09-17 apex cutover the unmodified App-Store iOS app IS served by it at `thedisciplineprogram.com/api/v1/*`. It owns `MobileLegacyIdentity` (the legacy integer id ↔ `User` map) and the legacy catalogs as code constants. It reads IAM for credentials and Coaching for the publish snapshot; `.dependency-cruiser.cjs` denies it CMS and Billing. Deliberately disposable — it is deleted wholesale when the app is redesigned, so nothing else should grow to depend on it.
 
 The rest of this document describes each context in detail: what it owns, which invariants protect it, which other contexts it depends on, and where it lives.
@@ -90,14 +90,14 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Aggregates and entities
 
-| Aggregate / entity              | Prisma model                 | Role                                                                                                                             |
-| ------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `MarketingPage` (root)          | `MarketingPage`              | A static landing page — home, about, blog, contact, faq, storefront. Keyed by slug.                                              |
-| `MarketingPageSection`          | `MarketingPageSection`       | Child entity of `MarketingPage`. Each page has a fixed list of section keys; the section payload is typed `Json`.                |
-| `MarketingBlogPost` (root)      | `MarketingBlogPost`          | One blog article. Has publish/feature flags, category, tags, precomputed read time.                                              |
-| `MarketingReview` (root)        | `MarketingReview`            | A customer review shown on the home page and storefront.                                                                         |
-| `MarketingContactSubmission`    | `MarketingContactSubmission` | An inbound contact form submission. Append-only from public POST, triaged from admin.                                            |
-| **`Product` (marketing facet)** | `Product`                    | **Shared with Billing.** The marketing facet uses slug, title, description, features, cover image, isFeatured, isActive. See §6. |
+| Aggregate / entity              | Prisma model                 | Role                                                                                                                |
+| ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `MarketingPage` (root)          | `MarketingPage`              | A static landing page — home, about, blog, contact, faq, storefront. Keyed by slug.                                 |
+| `MarketingPageSection`          | `MarketingPageSection`       | Child entity of `MarketingPage`. Each page has a fixed list of section keys; the section payload is typed `Json`.   |
+| `MarketingBlogPost` (root)      | `MarketingBlogPost`          | One blog article. Has publish/feature flags, category, tags, precomputed read time.                                 |
+| `MarketingReview` (root)        | `MarketingReview`            | A customer review shown on the home page and storefront.                                                            |
+| `MarketingContactSubmission`    | `MarketingContactSubmission` | An inbound contact form submission. Append-only from public POST, triaged from admin.                               |
+| **`Product` (marketing facet)** | `Product`                    | **Shared with Billing.** The marketing facet uses slug, title, description, features, isFeatured, isActive. See §7. |
 
 ### Value objects
 
@@ -124,7 +124,7 @@ The rest of this document describes each context in detail: what it owns, which 
 ### Dependencies
 
 - **CMS → IAM:** admin authoring side requires authenticated admin session.
-- **CMS → Billing:** CMS reads `Product` and `Price` to render the storefront and to populate the contact-form program dropdown. See §6.
+- **CMS → Billing:** CMS reads `Product` and `Price` to render the storefront and to populate the contact-form program dropdown. See §7.
 
 ---
 
@@ -162,7 +162,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 - **LMS → IAM:** every LMS aggregate references `User.id`.
 - **LMS → Coaching:** plan ownership is by `User`; LMS does not know about action items or coach dashboards.
-- **LMS ⇄ Billing:** future. There is currently no `Product.trainingPlanId` linkage.
+- **LMS ⇄ Billing:** `ProductPlan` binds products to plans, and `PlanEnrollment.subscriptionId` points at the Billing `Subscription` behind an enrollment (null means coach-granted access). LMS code reads neither: the access gate in `authz/` is the only reader of billing state outside Billing (storefront-billing D-7).
 
 ---
 
@@ -214,45 +214,60 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ## 5. Billing — Products, Prices, Subscriptions, Transactions
 
-**Responsibility:** What users pay for, how much they pay, and the record of those payments. Billing exists only in `schema.prisma` today — no contracts, no API, no UI.
+**Responsibility:** What users pay for, how much they pay, and the record of those payments. The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. Its W0 schema is in place (migration `20260928120000_storefront_billing_w0`); no billing endpoint, billing contract or billing UI exists yet. D-numbers from here on refer to `initiatives/storefront-billing/decisions.md`.
 
-> **Change in flight — ADR-0044 / `initiatives/storefront-billing/` (2026-09-23).** Monobank replaces the implicit Stripe fingerprint; a subscription becomes per `(user, product)`; a product binds 1..N training plans with a JOIN / COPY delivery; access is resolved per enrollment through `authz/`. The rows below describe the pre-W0 schema and are updated with that migration.
+> **Dead until step 0.3b (D-18).** W0 expands now and contracts later. `app_products.stripeProductId`, `app_prices.interval`, `app_prices.stripePriceId` and the `PriceInterval` enum are dead: no application code uses them, and they stay in the database and in `schema.prisma` only because the code running in production when W0 is applied still selects them. Step 0.3b drops them once W0 is live. The tables below leave them out.
 
 ### Aggregates and entities
 
-| Aggregate / entity            | Prisma model   | Role                                                                                                  |
-| ----------------------------- | -------------- | ----------------------------------------------------------------------------------------------------- |
-| **`Product` (billing facet)** | `Product`      | **Shared with CMS.** The billing facet uses `stripeProductId`, `isActive`, and the `prices` relation. |
-| `Price`                       | `Price`        | A price line item on a product — amount in cents, currency, interval.                                 |
-| `Subscription` (root)         | `Subscription` | A user's current subscription state. **Singleton per user.**                                          |
-| `Transaction`                 | `Transaction`  | An append-only payment attempt record. Keyed by provider transaction ID.                              |
+| Aggregate / entity            | Prisma model          | Role                                                                                                                                                                                                                                                                        |
+| ----------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`Product` (billing facet)** | `Product`             | **Shared with CMS.** The billing facet is `isActive` plus three relations: `prices`, `plans` (the plan bindings) and `subscriptions`. See §7.                                                                                                                               |
+| `ProductPlan`                 | `ProductPlan`         | Binds a product to a training plan with a `delivery`: `JOIN` enrolls the buyer into that plan, `COPY` clones the plan for the buyer and enrolls them into the copy (D-4). A product binds one or more plans.                                                                |
+| `Price`                       | `Price`               | An offer on a product: `amountCents`, `currency`, a period (`periodCount` + `periodUnit`) and `autoRenew`. `Price.autoRenew` means the auto-renewing form is offered besides the one-off paid period; `false` sells the price as a one-off period only (D-15).              |
+| `Subscription` (root)         | `Subscription`        | One user's access to one product: one row per `(userId, productId)` (D-2), with its `provider`, `status`, current period and grace, cancel and end dates. `Subscription.autoRenew` is the form the buyer chose (D-15). `priceId` is empty only for a `MANUAL` grant (D-17). |
+| `Transaction`                 | `Transaction`         | An append-only record of one payment event with the provider; `kind` says whether it is the initial charge, a renewal, a one-off period or a refund. Keyed by `(provider, providerTxId, kind)` and by `idempotencyKey`.                                                     |
+| `BillingWebhookEvent`         | `BillingWebhookEvent` | The ledger of inbound provider webhooks, keyed by `(provider, eventKey)`. An event is recorded before it is processed, so a repeated delivery hits the key.                                                                                                                 |
 
 ### Value objects
 
 - `Currency` (`USD | EUR | UAH`).
-- `PriceInterval` (`MONTHLY | YEARLY | ONE_TIME`).
-- `SubscriptionStatus` (`TRIAL | ACTIVE | PAST_DUE | CANCELED`).
+- `PeriodUnit` (`DAY | WEEK | MONTH | YEAR`). With `periodCount` (1 to 365) it makes up a price's period; the contract twin is `Period` / `periodSchema` in `@repo/contracts/common`, rendered by `formatPeriod`.
+- `BillingProvider` (`MONOBANK | MANUAL | FREE`). `MANUAL` is a comp or the cohort grant (D-5, D-9); `FREE` covers zero-price products such as the 3-day trial, whose checkout skips the payment provider (D-13).
+- `PlanDelivery` (`JOIN | COPY`).
+- `SubscriptionStatus` (`ACTIVE | PAST_DUE | CANCELED | EXPIRED`). A trial is a zero-price `FREE` product, not a status (D-13).
+- `TransactionKind` (`INITIAL | RENEWAL | ONE_OFF | REFUND`).
 - `TransactionStatus` (`PENDING | SUCCEEDED | FAILED`).
 - `amountCents: Int` — the "Money is Integer" invariant.
 
 ### Invariants
 
-- **Singleton subscription per user.** `Subscription.userId @unique`.
-- **Provider transaction ID is unique.** `Transaction.providerTxId @unique`.
+- **One subscription per user and product.** `@@unique([userId, productId])` (D-2). Buying the same product again reuses the row: the status moves in place and `Transaction` rows keep the history.
+- **A price unless the provider is `MANUAL`.** CHECK `app_subscriptions_price_required_check`: `"provider" = 'MANUAL' OR "priceId" IS NOT NULL` (D-17).
+- **A period is 1 to 365 units long.** CHECK `app_prices_period_count_check`: `"periodCount" BETWEEN 1 AND 365`, the same bounds as `PERIOD_CONSTANTS` in the contract.
+- **Price defaults have one source.** The column defaults (`UAH`, 4 weeks, auto-renew offered) equal `PRODUCT_PRICE_DEFAULTS` in `@repo/contracts/cms/product`, and a test in `endpoints/cms/product/admin.test.ts` keeps them equal.
+- **One transaction per provider transaction and kind.** `@@unique([provider, providerTxId, kind])`: a Monobank refund lives on the invoice id of the payment it reverses (D-17).
 - **Idempotency key is unique.** `Transaction.idempotencyKey @unique` and `NOT NULL`.
+- **One webhook event per provider and event key.** `BillingWebhookEvent` `@@unique([provider, eventKey])`.
+- **A plan binds to a product once.** `ProductPlan` `@@unique([productId, planId])`; the same plan may sit under several products.
+- **Our own subscription id.** `Subscription.id` is a cuid; the provider's subscription id, when there is one, lives in `providerSubscriptionId @unique`.
+- **Billing history pins the catalog.** `Subscription.productId` and `Subscription.priceId` are `ON DELETE RESTRICT`, so a product or a price with subscriptions cannot be hard-deleted. The admin product delete is a soft delete and never reaches this constraint.
+- **Deleting a subscription never deletes an enrollment.** `PlanEnrollment.subscriptionId` is `ON DELETE SET NULL`, indexed but not unique: one subscription feeds every enrollment its product creates.
+- **The card token stays on the server.** `Subscription.cardToken` is plain text: it is a bearer scoped to our merchant token, and encrypting it with a sibling environment key would add no boundary (D-17). It never leaves the server: no contract carries it and no log line prints it. There is no wallet column either, because the wallet id sent to Monobank is the platform `userId`.
 - **Money is integer.** All monetary amounts are `Int` in cents/kopeks.
 
 ### Where it lives today
 
-- **DB:** `Product`, `Price`, `Subscription`, `Transaction`, plus the four supporting enums.
-- **Contracts:** `packages/contracts/src/entities/cms/product/` covers the marketing facet only. `packages/contracts/src/entities/billing/` is a placeholder.
-- **API — `api-server`:** nothing.
-- **Consumer apps:** stubs only.
+- **DB:** `Product` (billing facet), `ProductPlan`, `Price`, `Subscription`, `Transaction`, `BillingWebhookEvent`, the `PlanEnrollment.subscriptionId` column, and the enums above. Migration `20260928120000_storefront_billing_w0` laid them; its two CHECKs are hand-written SQL because Prisma cannot declare them. `packages/api-server/src/endpoints/billing/billing-schema.invariants.test.ts` proves each constraint against a real database.
+- **Contracts:** the price shape lives in `packages/contracts/src/entities/cms/product/`, the period value object (`PeriodUnit`, `periodSchema`, `formatPeriod`) in `packages/contracts/src/common/`. `packages/contracts/src/entities/billing/` is a placeholder until step 0.5.
+- **API — `api-server`:** no billing endpoint yet. The admin product form writes the active price through `endpoints/cms/product/admin.ts` (§7). The payment port in `infrastructure/payment/` is still a vendor-neutral hosted-checkout scaffold; step 0.5 reshapes it around the Monobank adapter.
+- **Consumer apps:** the price only, through CMS: `apps/admin` (product form, list, dashboard activity) and `apps/marketing` (storefront card and modal).
 
 ### Dependencies
 
 - **Billing → IAM:** every `Subscription` and `Transaction` keys off `userId`.
-- **Billing → external (Monobank):** ADR-0044 (supersedes the implicit Stripe decision of ADR 0014).
+- **Billing → LMS:** `ProductPlan` references `TrainingPlan`, and `PlanEnrollment.subscriptionId` references `Subscription`. From step 1.2 a purchase enrolls the buyer (`JOIN`) or clones the plan and enrolls them into the copy (`COPY`). LMS code stays Billing-blind; the access gate lives in `authz/` (D-7).
+- **Billing → external (Monobank):** through the payment port. ADR-0044 (supersedes the implicit Stripe decision of ADR 0014).
 
 ---
 
@@ -289,44 +304,49 @@ This is enforced mechanically by the dep-cruiser rule `api-server-storage-is-lea
 
 ## 7. Shared entities: the Product model
 
-`Product` is the only entity in the repo that lives in two contexts simultaneously. The table holds both marketing fields and billing fields.
+`Product` is the only entity in the repo that lives in two contexts simultaneously. The table holds both marketing fields and billing fields, and the billing facet adds three relations: prices, plan bindings and subscriptions.
 
 **How to decide which context owns a read or a write.** The rule is: **does the operation affect money?** If yes, it is Billing. If no, it is CMS.
 
 - Writing `title` or `features` → CMS.
-- Writing `stripeProductId` or creating a `Price` → Billing.
+- Creating or editing a `Price` (amount, currency, period, auto-renew offer) → Billing.
+- Binding a training plan to a product (`ProductPlan` and its delivery) → Billing.
 - Writing `isFeatured` → CMS.
 - Writing `isActive` → Billing.
 - Reading the marketing storefront → CMS.
 - Reading the billing catalog → Billing.
 
-The Prisma model does not split. The contracts and the API do.
+The Prisma model does not split. The contracts and the API do, with one exception until the billing admin ships in step 3.1: the admin product form writes the product's single active price through the CMS endpoint `endpoints/cms/product/admin.ts`, using the price shape of `@repo/contracts/cms/product`. Nothing writes `stripeProductId` (dead until step 0.3b, §5).
 
 ---
 
 ## 8. Cross-context invariants
 
-| Invariant                       | Enforced where                                                              | Status                                                                                |
-| ------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| **Access = Subscription State** | Planned: Billing `SubscriptionStatus` gates every LMS / Coaching read.      | Scheduled: `initiatives/storefront-billing/` P1 — one gate in `authz/` (ADR-0044).    |
-| **Money is Integer**            | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money. | Enforced schema-wide.                                                                 |
-| **Singleton Subscription**      | `Subscription.userId @unique`. ADR 0008.                                    | SUPERSEDED by ADR-0044 (per product); retired by the storefront-billing W0 migration. |
+| Invariant                                | Enforced where                                                                                                                                                                                                                                                                                       | Status                                                                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Access = Subscription State**          | Planned: `resolveEnrollmentAccess` in `authz/` turns the subscription behind each enrollment into open or closed for the athlete reads (web timetable, session detail and access, the iOS shim). An enrollment without a subscription is coach-granted and open; coaches and admins are never gated. | Scheduled: storefront-billing step 1.1 (ADR-0044, D-7). W0 added `PlanEnrollment.subscriptionId`; nothing reads it yet. |
+| **Money is Integer**                     | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money.                                                                                                                                                                                                                          | Enforced schema-wide.                                                                                                   |
+| **Enrollment outlives its subscription** | `PlanEnrollment.subscriptionId` → `Subscription` is `ON DELETE SET NULL`, indexed but not unique: one subscription feeds every enrollment its product creates.                                                                                                                                       | Enforced at the DB since W0.                                                                                            |
+| **Subscription per Product**             | `Subscription` is unique on `(userId, productId)` (D-2). It replaced the per-user key of ADR 0008.                                                                                                                                                                                                   | Enforced at the DB since W0; ADR-0008 superseded by ADR-0044.                                                           |
 
 ### Per-aggregate DB-enforced invariants
 
-| Aggregate            | Invariant                                 | Constraint                                                              |
-| -------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-| User                 | One user per email                        | `email @unique`                                                         |
-| Subscription         | One subscription per user (singleton)     | `userId @unique`                                                        |
-| MarketingPageSection | One section per page+section-name pair    | `@@unique([pageSlug, section])`                                         |
-| Product              | One product per slug                      | `slug @unique`                                                          |
-| Product              | One product per Stripe product ID         | `stripeProductId @unique`                                               |
-| Price                | One price per Stripe price ID             | `stripePriceId @unique`                                                 |
-| Transaction          | One transaction per provider TX ID        | `providerTxId @unique`                                                  |
-| Transaction          | One transaction per idempotency key       | `idempotencyKey @unique`                                                |
-| MarketingBlogPost    | One post per slug                         | `slug @unique`                                                          |
-| MarketingPage        | One page per slug                         | `slug @unique`                                                          |
-| PlanEnrollment       | One active enrollment per (plan, athlete) | partial unique index on `(planId, athleteId) WHERE "deletedAt" IS NULL` |
+| Aggregate            | Invariant                                            | Constraint                                                              |
+| -------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
+| User                 | One user per email                                   | `email @unique`                                                         |
+| Subscription         | One subscription per (user, product)                 | `@@unique([userId, productId])`                                         |
+| Subscription         | One subscription per provider subscription ID        | `providerSubscriptionId @unique`                                        |
+| Subscription         | A price unless the provider is `MANUAL`              | CHECK `app_subscriptions_price_required_check`                          |
+| MarketingPageSection | One section per page+section-name pair               | `@@unique([pageSlug, section])`                                         |
+| Product              | One product per slug                                 | `slug @unique`                                                          |
+| ProductPlan          | One binding per (product, plan)                      | `@@unique([productId, planId])`                                         |
+| Price                | A period of 1 to 365 units                           | CHECK `app_prices_period_count_check`                                   |
+| Transaction          | One transaction per (provider, provider TX ID, kind) | `@@unique([provider, providerTxId, kind])`                              |
+| Transaction          | One transaction per idempotency key                  | `idempotencyKey @unique`                                                |
+| BillingWebhookEvent  | One event per (provider, event key)                  | `@@unique([provider, eventKey])`                                        |
+| MarketingBlogPost    | One post per slug                                    | `slug @unique`                                                          |
+| MarketingPage        | One page per slug                                    | `slug @unique`                                                          |
+| PlanEnrollment       | One active enrollment per (plan, athlete)            | partial unique index on `(planId, athleteId) WHERE "deletedAt" IS NULL` |
 
 ---
 
@@ -336,8 +356,8 @@ The Prisma model does not split. The contracts and the API do.
 IAM        →   (leaf)
 LMS        →   IAM
 Coaching   →   IAM, LMS
-CMS        →   IAM, Billing   (read-only)
-Billing    →   IAM
+CMS        →   IAM, Billing   (read-only, except the product form's price write, §7)
+Billing    →   IAM, LMS
 Storage    →   (leaf supporting context)
 Mobile-compat → IAM, Coaching (planned, step 1.3)
 ```
@@ -352,27 +372,32 @@ Mobile-compat → IAM, Coaching (planned, step 1.3)
 - `Storage → any domain`.
 - `Mobile-compat → CMS`, `Mobile-compat → Billing`. It reads IAM for credentials today and will read Coaching in step 1.3 for the publish snapshot; CMS and Billing have no business in a disposable compat shim. Enforced by `api-server-mobile-compat-no-cms-billing`.
 
-Every cross-context interaction is currently a read. Reads are preferable to writes because they do not require distributed transactions.
+The foreign key from `PlanEnrollment.subscriptionId` into Billing does not open `LMS → Billing` for code: LMS code never reads the column, only the access gate in `authz/` does (D-7).
+
+Every cross-context interaction is currently a read, apart from the product form's price write (§7). Reads are preferable to writes because they do not require distributed transactions.
 
 ---
 
 ## 10. Ubiquitous language — domain glossary
 
-| Term                | Context     | Definition                                                                                                                                | Not to be confused with                                                              |
-| ------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **User**            | IAM         | The identity record. Every person in the system is a User with a `Role`.                                                                  | Athlete, Coach — those are role-specific profiles attached to a User                 |
-| **Athlete**         | Coaching    | A User with an `AthleteProfile`.                                                                                                          | User — Athlete is a role, User is the identity                                       |
-| **Coach**           | Coaching    | A User with a `CoachProfile`.                                                                                                             | Admin — Admin manages the business, Coach manages athletes                           |
-| **TrainingPlan**    | LMS         | Coach-owned plan metadata with a lifecycle (DRAFT → ACTIVE → ARCHIVED).                                                                   | Product — Product is the billing wrapper around a TrainingPlan                       |
-| **PlanEnrollment**  | LMS         | Active/paused/removed link between an athlete and a training plan.                                                                        | CoachAthleteAssignment — that one binds coach to athlete                             |
-| **Product**         | Billing/CMS | The public-facing purchasable item on the marketing site. Has prices, features, and a slug.                                               | TrainingPlan — Product is what athletes buy, TrainingPlan is internal coach metadata |
-| **Price**           | Billing     | A specific monetary offer for a Product (amount in cents, currency, interval).                                                            | —                                                                                    |
-| **Subscription**    | Billing     | A recurring payment relationship: one User, one Price. Singleton per user.                                                                | —                                                                                    |
-| **Transaction**     | Billing     | A single payment event (PENDING → SUCCEEDED / FAILED).                                                                                    | —                                                                                    |
-| **CoachActionItem** | Coaching    | A system-generated task about an athlete (health report, missed-workouts slot).                                                           | CoachNote — ActionItem is structured and has status, Note is free-text               |
-| **CoachNote**       | Coaching    | Free-text note a coach writes about an athlete. No status, no lifecycle.                                                                  | CoachActionItem — Note is observation, ActionItem is action                          |
-| **MarketingPage**   | CMS         | A page on the public site (home, about, pricing). Content stored as JSON sections.                                                        | —                                                                                    |
-| **Program**         | —           | **Not a term in the codebase.** Marketing copy may say "program" loosely. Do not use "Program" in code — use Product (billing/marketing). | TrainingPlan, Product                                                                |
+| Term                    | Context     | Definition                                                                                                                                                                                   | Not to be confused with                                                                                       |
+| ----------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **User**                | IAM         | The identity record. Every person in the system is a User with a `Role`.                                                                                                                     | Athlete, Coach — those are role-specific profiles attached to a User                                          |
+| **Athlete**             | Coaching    | A User with an `AthleteProfile`.                                                                                                                                                             | User — Athlete is a role, User is the identity                                                                |
+| **Coach**               | Coaching    | A User with a `CoachProfile`.                                                                                                                                                                | Admin — Admin manages the business, Coach manages athletes                                                    |
+| **TrainingPlan**        | LMS         | Coach-owned plan metadata with a lifecycle (DRAFT → ACTIVE → ARCHIVED).                                                                                                                      | Product — what an athlete buys; it binds one or more TrainingPlans through ProductPlan                        |
+| **PlanEnrollment**      | LMS         | Active/paused/removed link between an athlete and a training plan.                                                                                                                           | CoachAthleteAssignment — that one binds coach to athlete                                                      |
+| **Product**             | Billing/CMS | The public-facing purchasable item on the marketing site. Has a slug, features, prices, and one or more bound TrainingPlans.                                                                 | TrainingPlan — Product is what athletes buy, TrainingPlan is internal coach metadata                          |
+| **ProductPlan**         | Billing     | The binding of a Product to a TrainingPlan. Its delivery says what a purchase does: JOIN enrolls the buyer into the plan, COPY clones the plan for the buyer and enrolls them into the copy. | PlanEnrollment — the binding says what a purchase does, the enrollment is what it did                         |
+| **Price**               | Billing     | A specific monetary offer for a Product: amount in cents, currency, a Period, and whether the auto-renewing form is offered (`autoRenew`).                                                   | Subscription — `Price.autoRenew` is the offer, `Subscription.autoRenew` is the buyer's choice                 |
+| **Period**              | Billing     | The length of time one price buys: a count from 1 to 365 of days, weeks, months or years. New prices default to 4 weeks.                                                                     | `PriceInterval` — the dead enum that step 0.3b drops                                                          |
+| **Subscription**        | Billing     | One User's paid or granted access to one Product: one row per (User, Product), with a provider and a status (ACTIVE, PAST_DUE, CANCELED, EXPIRED) that changes in place.                     | PlanEnrollment — the enrollment is the athlete's place on a plan; the subscription decides whether it is open |
+| **Transaction**         | Billing     | A single payment event with the provider: an initial charge, a renewal, a one-off period or a refund (PENDING → SUCCEEDED / FAILED).                                                         | BillingWebhookEvent — the provider's notification, not the payment itself                                     |
+| **BillingWebhookEvent** | Billing     | An inbound provider webhook, recorded before it is processed. One row per (provider, eventKey), so a repeated delivery is recognized as already received.                                    | RequestIdempotency — that one dedupes client requests by `Idempotency-Key`                                    |
+| **CoachActionItem**     | Coaching    | A system-generated task about an athlete (health report, missed-workouts slot).                                                                                                              | CoachNote — ActionItem is structured and has status, Note is free-text                                        |
+| **CoachNote**           | Coaching    | Free-text note a coach writes about an athlete. No status, no lifecycle.                                                                                                                     | CoachActionItem — Note is observation, ActionItem is action                                                   |
+| **MarketingPage**       | CMS         | A page on the public site (home, about, pricing). Content stored as JSON sections.                                                                                                           | —                                                                                                             |
+| **Program**             | —           | **Not a term in the codebase.** Marketing copy may say "program" loosely. Do not use "Program" in code — use Product (billing/marketing).                                                    | TrainingPlan, Product                                                                                         |
 
 ---
 
@@ -387,7 +412,9 @@ Every cross-context interaction is currently a read. Reads are preferable to wri
 
 - `docs/adr/0005-contracts-first-with-zod.md` — the contract-first discipline this context map reinforces.
 - `docs/adr/0007-prisma-client-isolated-in-api-server.md` — the rule that puts all Prisma code in one package.
-- `docs/adr/0008-singleton-subscription-invariant.md` — the canonical example of a context-owned invariant enforced at the DB.
+- `docs/adr/0008-singleton-subscription-invariant.md` — superseded by ADR-0044. It was the canonical example of a context-owned invariant enforced at the DB; W0 retired the per-user key it recorded (§8).
 - `docs/adr/0010-bff-via-http-loopback-for-rsc.md` — the reason context-to-context reads go over HTTP today.
+- `docs/adr/0044-monobank-provider-and-subscription-per-product.md` — the Billing model §5 describes: Monobank behind a payment port, a subscription per product, products bound to training plans.
+- `initiatives/storefront-billing/decisions.md` — the storefront-billing decisions (D-2 to D-18) cited from §3 on.
 - `CLAUDE.md` section "Global Invariants" — the codified system laws referenced throughout §8.
 - `packages/api-server/prisma/schema.prisma` — the physical data reality every context projects from.

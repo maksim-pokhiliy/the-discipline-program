@@ -1,28 +1,41 @@
-# Billing endpoints — placeholder
+# Billing endpoints
 
-This directory is part of the bounded-context endpoint layout established in `docs/BOUNDED-CONTEXTS.md` (section 5). The Billing context exists in `packages/api-server/prisma/schema.prisma` (`Product`, `Price`, `Subscription`, `Transaction`) but **no billing endpoints have been written yet**.
+This directory is the Billing context's place in the endpoint layout of `docs/BOUNDED-CONTEXTS.md` (section 5). The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. The W0 schema is in place (migration `20260928120000_storefront_billing_w0`), but **no billing endpoint has been written yet**.
 
-The folder is kept empty so that:
+## What is here today
 
-- The five-context endpoint layout (`cms/`, `lms/`, `coaching/`, `iam/`, `billing/`) is complete and future readers see Billing as a recognized context, not a forgotten afterthought.
-- When Billing endpoints land, they go here — `price/`, `subscription/`, `transaction/`, `webhook/`, and eventually a billing facet for `product/`. No naming or location debate at that point.
+`billing-schema.invariants.test.ts` proves the W0 constraints against a real database, each with the refused case and its legal neighbour: `(userId, productId)` on subscriptions, the two CHECKs (a price for every provider except `MANUAL`, a period of 1 to 365 units), `(provider, providerTxId, kind)` on transactions, `(provider, eventKey)` on webhook events, `(productId, planId)` on plan bindings, an enrollment keeping its row when its subscription is deleted, and the `Restrict` from a subscription to its product. The fixtures live in `src/test/billing-helpers.ts`.
 
-## What goes here when the time comes
+The product price is the only billing shape with a live consumer, and the admin product form still writes it through `endpoints/cms/product/admin.ts` until the billing admin of step 3.1.
 
-Per BOUNDED-CONTEXTS.md §5 and §10, the target endpoints are:
+## The shapes
 
-- `subscription/` — create/read/cancel subscription flows.
-- `transaction/` — transaction record reads (append-only, created via webhook).
-- `webhook/stripe.ts` — inbound webhook handler with signature verification, idempotency via `providerTxId`, and transactional enrollment creation (see the `Purchase = Immediate Value` cross-context invariant).
-- `product-billing/` — the commercial facet of `Product` (Stripe product ID, prices, active state). The CMS facet lives in `endpoints/cms/product/`.
+- `ProductPlan` binds a product to a training plan with a `delivery`: `JOIN` enrolls the buyer into that plan, `COPY` clones the plan for the buyer and enrolls them into the copy.
+- `Price` is `amountCents` + `currency` + `periodCount` / `periodUnit` + `autoRenew`, where `autoRenew` means the auto-renewing form is offered besides the one-off paid period.
+- `Subscription` is one row per `(userId, productId)`. `provider` is `MONOBANK`, `MANUAL` or `FREE`; `status` is `ACTIVE`, `PAST_DUE`, `CANCELED` or `EXPIRED` and changes in place; `autoRenew` is the form the buyer chose; `priceId` is null only for a `MANUAL` grant. The `id` is our own cuid, and the provider's id, when there is one, is `providerSubscriptionId`.
+- `Transaction` is unique on `idempotencyKey` and on `(provider, providerTxId, kind)`. The kind is part of the key because a refund shares the invoice id of the payment it reverses.
+- `BillingWebhookEvent` is the inbound ledger, unique on `(provider, eventKey)`.
+- `PlanEnrollment.subscriptionId` points at the subscription behind an enrollment; null means coach-granted access.
 
-## Pre-conditions before writing billing code
+Three columns and one enum of the previous schema are still declared and dead until step 0.3b; BOUNDED-CONTEXTS section 5 names them. Nothing here reads or writes them.
 
-Tracked in ADR 0018 (security deferrals) and ADR 0019 (database strategy):
+## What lands here, step by step
 
-- Webhook signature verification and rate limiting must exist as infrastructure.
-- `authz/guards.ts` or a future `authz/policies/` module must have a billing-aware access policy (subscription state gates platform access).
+Step numbers follow `initiatives/storefront-billing/plan.md`. Route handlers stay in the apps; this folder holds the logic they call.
 
-Already in place: `Transaction.idempotencyKey` is `String @unique` NOT NULL in the schema; `wrapHandler` / `wrapAuthHandler` from `@repo/api-routes/idempotency` accept `Idempotency-Key` on every mutation factory call site (see ADR 0036).
+- **0.5, payment port and adapter.** Not in this folder. The reshaped `PaymentPort` and the one Monobank adapter (HTTP calls and webhook signature verification) live in `src/infrastructure/payment/`, configured from `packages/env/src/monobank.ts`. Endpoints here will receive the port through a factory, the same DI seam `endpoints/storage/` uses.
+- **1.1, the subscription state machine** and the first endpoints: start a purchase, cancel, my subscriptions.
+- **1.2, the webhook path.** Record the event in `BillingWebhookEvent` first (a duplicate key means it was already received), write the `Transaction`, drive the state machine, then run the purchase side effects: `JOIN` enrolls, `COPY` clones and enrolls, a newcomer gets a pending account and an invite. A zero-price `FREE` purchase skips the provider.
+- **1.3, renewals, grace and reconciliation.** Charge the stored card when a period ends, move a failed renewal to `PAST_DUE` and an expired grace to `EXPIRED`, and repair a missed webhook from the provider's status.
+- **3.1 and 3.2, admin and coach.** Plan bindings, prices, the user billing panel and `MANUAL` grants; the payment state the coach roster reads through a billing-owned endpoint.
+
+The access gate is not here. `resolveEnrollmentAccess` goes to `src/authz/` in step 1.1 and is the only reader of subscription state outside Billing; LMS, Coaching and the mobile-compat shim stay Billing-blind (`.dependency-cruiser.cjs`).
+
+## Rules for the code that lands here
+
+- `Subscription.cardToken` never leaves the server and is never logged: no mapper copies it into a contract, no response carries it, and no log line or error message prints it. It is stored as plain text because it only works together with our merchant token.
+- The wallet id sent to Monobank is the platform `userId`; there is no wallet column.
+- The admin product delete is a soft delete (`src/db/client.ts`), so it never meets the `Restrict` from `Subscription.productId`. Step 3.1 decides what deleting a product with subscriptions means.
+- Every mutation takes an `Idempotency-Key` through the route factories (ADR 0036), and money stays integer cents.
 
 **Do not put non-Billing endpoints here.** CMS, LMS, Coaching, and IAM each have their own folder.
