@@ -3,8 +3,9 @@
 import CheckIcon from "@mui/icons-material/Check";
 import { Button, Grid, Stack, Typography } from "@mui/material";
 
-import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/cms/product";
-import { formatPrice } from "@repo/shared";
+import { type Product } from "@repo/contracts/cms/product";
+import { formatPeriod } from "@repo/contracts/common";
+import { DEFAULT_LOCALE, formatPrice } from "@repo/shared";
 import { BaseModal } from "@repo/ui";
 
 type ProductModalProps = {
@@ -34,7 +35,7 @@ export const ProductModal = ({
   const displayPrice = activePrice
     ? formatPrice(activePrice.amountCents, activePrice.currency)
     : freeLabel;
-  const displayInterval = activePrice ? PRICE_INTERVAL_LABELS[activePrice.interval] : null;
+  const displayPeriod = activePrice ? formatPeriod(activePrice, DEFAULT_LOCALE) : null;
 
   return (
     <BaseModal
@@ -59,9 +60,9 @@ export const ProductModal = ({
             {displayPrice}
           </Typography>
 
-          {displayInterval && (
+          {displayPeriod && (
             <Typography variant="h4" color="text.secondary">
-              /{displayInterval}
+              /{displayPeriod}
             </Typography>
           )}
         </Stack>

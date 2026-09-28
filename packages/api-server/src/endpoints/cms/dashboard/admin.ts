@@ -1,7 +1,4 @@
-import type {
-  Currency as PrismaCurrency,
-  PriceInterval as PrismaPriceInterval,
-} from "@prisma/client";
+import { type Price as PrismaPrice } from "@prisma/client";
 
 import { ContactStatus } from "@repo/contracts/cms/contact";
 import {
@@ -11,16 +8,11 @@ import {
   type DashboardData,
   type UserStats,
 } from "@repo/contracts/cms/dashboard";
-import { ProductCurrency } from "@repo/contracts/cms/product";
-import { centsToAmount } from "@repo/shared";
+import { formatPeriod } from "@repo/contracts/common";
+import { centsToAmount, DEFAULT_LOCALE } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
-import {
-  BLOG_CATEGORY_MAP,
-  CONTACT_STATUS_TO_PRISMA_MAP,
-  CURRENCY_MAP,
-  PRICE_INTERVAL_MAP,
-} from "../../../mappers/cms";
+import { BLOG_CATEGORY_MAP, CONTACT_STATUS_TO_PRISMA_MAP, mapToPrice } from "../../../mappers/cms";
 
 export const cmsDashboardAdminApi = {
   getDashboardData: async (): Promise<DashboardData> => {
@@ -113,6 +105,19 @@ const getUserStats = async (): Promise<UserStats> => {
   return { total, newThisMonth };
 };
 
+const formatPriceSubtitle = (prices: PrismaPrice[]): string => {
+  const row = prices.at(0);
+
+  if (!row) {
+    return "No price set";
+  }
+
+  const price = mapToPrice(row);
+  const amount = centsToAmount(price.amountCents).toFixed(0);
+
+  return `${amount} ${price.currency}/${formatPeriod(price, DEFAULT_LOCALE)}`;
+};
+
 const getRecentActivity = async (): Promise<ActivityItem[]> => {
   const take = 5;
 
@@ -139,27 +144,6 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
       include: { prices: { where: { isActive: true }, take: 1 } },
     }),
   ]);
-
-  const formatPriceSubtitle = (
-    prices: {
-      amountCents: number;
-      currency: PrismaCurrency;
-      interval: PrismaPriceInterval;
-    }[],
-  ): string => {
-    const p = prices.at(0);
-
-    if (!p) {
-      return "No price set";
-    }
-
-    const currency = CURRENCY_MAP[p.currency] ?? ProductCurrency.USD;
-    const interval = PRICE_INTERVAL_MAP[p.interval] ?? null;
-    const amount = centsToAmount(p.amountCents).toFixed(0);
-    const suffix = interval ? `/${interval}` : "";
-
-    return `${amount} ${currency}${suffix}`;
-  };
 
   const activities: ActivityItem[] = [
     ...reviews.map((r) => ({

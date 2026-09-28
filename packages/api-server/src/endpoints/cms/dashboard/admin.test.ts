@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DashboardActivityType } from "@repo/contracts/cms/dashboard";
+import { ProductCurrency } from "@repo/contracts/cms/product";
+import { PeriodUnit } from "@repo/contracts/common";
 import { UserRole } from "@repo/contracts/iam/auth";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
@@ -170,6 +172,64 @@ describe("cmsDashboardAdminApi", () => {
         expect(item.href).toBeDefined();
         expect(Object.values(DashboardActivityType)).toContain(item.type);
       }
+    });
+  });
+
+  describe("product activity subtitle", () => {
+    let monthlyId: string;
+    let fourWeeksId: string;
+    let unpricedId: string;
+    let data: Awaited<ReturnType<typeof cmsDashboardAdminApi.getDashboardData>>;
+
+    const subtitleOf = (id: string) => data.recentActivity.find((a) => a.id === id)?.subtitle;
+
+    beforeAll(async () => {
+      const monthly = await createTestProduct({
+        prices: {
+          create: {
+            amountCents: 9900,
+            currency: ProductCurrency.USD,
+            periodCount: 1,
+            periodUnit: PeriodUnit.MONTH,
+          },
+        },
+      });
+
+      toCleanup.push({ table: "product", id: monthly.id });
+      monthlyId = monthly.id;
+
+      const fourWeeks = await createTestProduct({
+        prices: {
+          create: {
+            amountCents: 120000,
+            currency: ProductCurrency.UAH,
+            periodCount: 4,
+            periodUnit: PeriodUnit.WEEK,
+          },
+        },
+      });
+
+      toCleanup.push({ table: "product", id: fourWeeks.id });
+      fourWeeksId = fourWeeks.id;
+
+      const unpriced = await createTestProduct();
+
+      toCleanup.push({ table: "product", id: unpriced.id });
+      unpricedId = unpriced.id;
+
+      data = await cmsDashboardAdminApi.getDashboardData();
+    });
+
+    it("renders a one-month price as the amount, the currency and the unit word", () => {
+      expect(subtitleOf(monthlyId)).toBe("99 USD/month");
+    });
+
+    it("renders a four-week price with its count", () => {
+      expect(subtitleOf(fourWeeksId)).toBe("1200 UAH/4 weeks");
+    });
+
+    it("keeps the no-price subtitle for a product without an active price", () => {
+      expect(subtitleOf(unpricedId)).toBe("No price set");
     });
   });
 

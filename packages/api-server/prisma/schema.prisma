@@ -25,7 +25,7 @@ model User {
   deletedAt                DateTime?
   athleteProfile           AthleteProfile?
   coachProfile             CoachProfile?
-  subscription             Subscription?
+  subscriptions            Subscription[]
   transactions             Transaction[]
   trainingPlansCreated     TrainingPlan[]           @relation("PlanCreator")
   coachNotes               CoachNote[]
@@ -231,17 +231,19 @@ enum ProfileAxisBinding {
 }
 
 model Product {
-  id              String    @id @default(cuid())
-  slug            String    @unique
+  id              String         @id @default(cuid())
+  slug            String         @unique
   title           String
   description     String
   features        String[]
-  stripeProductId String?   @unique
-  isFeatured      Boolean   @default(false)
-  isActive        Boolean   @default(true)
+  stripeProductId String?        @unique @ignore
+  isFeatured      Boolean        @default(false)
+  isActive        Boolean        @default(true)
   prices          Price[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  plans           ProductPlan[]
+  subscriptions   Subscription[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   deletedAt       DateTime?
 
   @@index([createdAt, title])
@@ -251,14 +253,32 @@ model Product {
   @@map("app_products")
 }
 
+model ProductPlan {
+  id        String       @id @default(cuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  delivery  PlanDelivery
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([productId, planId])
+  @@index([planId])
+  @@map("app_product_plans")
+}
+
 model Price {
   id            String         @id @default(cuid())
   productId     String
   product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   amountCents   Int
-  currency      Currency       @default(USD)
-  interval      PriceInterval  @default(MONTHLY)
-  stripePriceId String?        @unique
+  currency      Currency       @default(UAH)
+  periodCount   Int            @default(4)
+  periodUnit    PeriodUnit     @default(WEEK)
+  autoRenew     Boolean        @default(true)
+  interval      PriceInterval  @default(MONTHLY) @ignore
+  stripePriceId String?        @unique @ignore
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
@@ -279,22 +299,32 @@ enum PriceInterval {
 }
 
 model Subscription {
-  id                 String             @id
-  userId             String             @unique
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  priceId            String
-  price              Price              @relation(fields: [priceId], references: [id], onDelete: Restrict)
-  status             SubscriptionStatus
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  graceEndsAt        DateTime?
-  canceledAt         DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  transactions       Transaction[]
+  id                     String             @id @default(cuid())
+  userId                 String
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId              String
+  product                Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  priceId                String?
+  price                  Price?             @relation(fields: [priceId], references: [id], onDelete: Restrict)
+  provider               BillingProvider
+  providerSubscriptionId String?            @unique
+  cardToken              String?
+  status                 SubscriptionStatus
+  autoRenew              Boolean
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  graceEndsAt            DateTime?
+  canceledAt             DateTime?
+  endedAt                DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  transactions           Transaction[]
+  enrollments            PlanEnrollment[]
 
+  @@unique([userId, productId])
   @@index([createdAt])
-  @@index([status])
+  @@index([status, currentPeriodEnd])
+  @@index([productId])
   @@index([priceId])
   @@map("app_subscriptions")
 }
@@ -305,18 +335,63 @@ model Transaction {
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId String?
   subscription   Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  provider       BillingProvider
+  kind           TransactionKind
   amountCents    Int
   currency       Currency
   status         TransactionStatus
-  providerTxId   String            @unique
+  providerTxId   String
   idempotencyKey String            @unique
+  periodStart    DateTime?
+  periodEnd      DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
+  @@unique([provider, providerTxId, kind])
   @@index([createdAt])
   @@index([userId, status])
   @@index([subscriptionId])
   @@map("app_transactions")
+}
+
+model BillingWebhookEvent {
+  id          String          @id @default(cuid())
+  provider    BillingProvider
+  eventKey    String
+  payload     Json
+  receivedAt  DateTime        @default(now())
+  processedAt DateTime?
+  error       String?
+
+  @@unique([provider, eventKey])
+  @@index([receivedAt])
+  @@index([processedAt])
+  @@map("app_billing_webhook_events")
+}
+
+enum BillingProvider {
+  MONOBANK
+  MANUAL
+  FREE
+}
+
+enum PlanDelivery {
+  JOIN
+  COPY
+}
+
+enum PeriodUnit {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
+enum TransactionKind {
+  INITIAL
+  RENEWAL
+  ONE_OFF
+  REFUND
 }
 
 model RequestIdempotency {
@@ -338,10 +413,10 @@ model RequestIdempotency {
 }
 
 enum SubscriptionStatus {
-  TRIAL
   ACTIVE
   PAST_DUE
   CANCELED
+  EXPIRED
 }
 
 enum TransactionStatus {
@@ -375,6 +450,7 @@ model TrainingPlan {
   enrollments        PlanEnrollment[]
   weeks              Week[]
   mobilePublishLinks MobilePublishLink[]
+  productPlans       ProductPlan[]
 
   @@index([creatorId])
   @@index([status])
@@ -394,6 +470,8 @@ model PlanEnrollment {
   status                 EnrollmentStatus @default(ACTIVE)
   statusChangedAt        DateTime         @default(now())
   hidePastBeforeBoarding Boolean          @default(false)
+  subscriptionId         String?
+  subscription           Subscription?    @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
   deletedAt              DateTime?
@@ -402,6 +480,7 @@ model PlanEnrollment {
   @@index([athleteId, status])
   @@index([enrolledById])
   @@index([deletedAt])
+  @@index([subscriptionId])
   @@map("lms_plan_enrollments")
 }
 

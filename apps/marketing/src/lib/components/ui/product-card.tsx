@@ -15,8 +15,9 @@ import {
   type CardProps,
 } from "@mui/material";
 
-import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/cms/product";
-import { formatPrice } from "@repo/shared";
+import { type Product } from "@repo/contracts/cms/product";
+import { formatPeriod } from "@repo/contracts/common";
+import { DEFAULT_LOCALE, formatPrice } from "@repo/shared";
 
 type ProductCardProps = {
   product: Product;
@@ -70,7 +71,7 @@ export const ProductCard = ({
                   ),
                 })}
               >
-                /{PRICE_INTERVAL_LABELS[activePrice.interval]}
+                /{formatPeriod(activePrice, DEFAULT_LOCALE)}
               </Typography>
             )}
           </Stack>

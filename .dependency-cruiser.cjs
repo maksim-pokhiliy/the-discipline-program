@@ -164,7 +164,7 @@ module.exports = {
       name: "api-server-billing-no-cms-coaching",
       severity: "error",
       comment:
-        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM + LMS (planned Product→TrainingPlan link, not yet a column) " +
+        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM + LMS (Product→TrainingPlan through ProductPlan) " +
         "only. Billing must not read marketing content or coach state. The single allowed " +
         "cross-context write Billing → LMS (PlanEnrollment on purchase success, see §8 " +
         "'Purchase = Immediate Value') stays inside LMS — it does not require Coaching or " +

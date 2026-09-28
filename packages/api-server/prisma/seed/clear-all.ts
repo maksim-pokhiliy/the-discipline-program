@@ -1,6 +1,10 @@
 import { type PrismaClient } from "@prisma/client";
 
 export const clearAll = async (db: PrismaClient): Promise<void> => {
+  await db.billingWebhookEvent.deleteMany();
+  await db.transaction.deleteMany();
+  await db.subscription.deleteMany();
+  await db.productPlan.deleteMany();
   await db.planEnrollment.deleteMany();
   await db.coachNote.deleteMany();
   await db.coachActionItem.deleteMany();

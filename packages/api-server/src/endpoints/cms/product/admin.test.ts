@@ -1,23 +1,43 @@
 import { afterAll, describe, expect, it } from "vitest";
+import { type z } from "zod";
 
-import { PriceInterval, ProductCurrency } from "@repo/contracts/cms/product";
+import {
+  createProductRequestSchema,
+  PRODUCT_PRICE_DEFAULTS,
+  ProductCurrency,
+  updateProductRequestSchema,
+} from "@repo/contracts/cms/product";
+import { PeriodUnit } from "@repo/contracts/common";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
-import { cleanup, createTestProduct } from "../../../test/helpers";
+import { mapToPrice } from "../../../mappers/cms";
+import { cleanup, cleanupRaw, createTestProduct } from "../../../test/helpers";
 
 import { cmsProductAdminApi } from "./admin";
 
 const createSlug = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 
-const baseProductData = (overrides: Record<string, unknown> = {}) => ({
-  title: "Test Product",
-  slug: createSlug(),
-  description: "Test product description",
-  features: ["feature-1", "feature-2"],
-  isFeatured: false,
-  isActive: true,
-  ...overrides,
-});
+const createInput = (overrides: Partial<z.input<typeof createProductRequestSchema>> = {}) =>
+  createProductRequestSchema.parse({
+    title: "Test Product",
+    slug: createSlug(),
+    description: "Test product description",
+    features: ["feature-1", "feature-2"],
+    isFeatured: false,
+    isActive: true,
+    ...overrides,
+  });
+
+const updateInput = (input: z.input<typeof updateProductRequestSchema>) =>
+  updateProductRequestSchema.parse(input);
+
+const TRIAL_PRICE = {
+  amountCents: 0,
+  currency: ProductCurrency.UAH,
+  periodCount: 3,
+  periodUnit: PeriodUnit.DAY,
+  autoRenew: false,
+};
 
 describe("cmsProductAdminApi", () => {
   const toCleanup: { table: string; id: string }[] = [];
@@ -85,7 +105,7 @@ describe("cmsProductAdminApi", () => {
 
   describe("create", () => {
     it("creates a product without price", async () => {
-      const input = baseProductData();
+      const input = createInput();
       const product = await cmsProductAdminApi.create(input);
 
       toCleanup.push({ table: "product", id: product.id });
@@ -99,13 +119,15 @@ describe("cmsProductAdminApi", () => {
       expect(product.prices).toEqual([]);
     });
 
-    it("creates a product with price", async () => {
+    it("creates a product with a price and its period", async () => {
       const product = await cmsProductAdminApi.create(
-        baseProductData({
+        createInput({
           price: {
             amountCents: 9900,
             currency: ProductCurrency.USD,
-            interval: PriceInterval.MONTHLY,
+            periodCount: 1,
+            periodUnit: PeriodUnit.MONTH,
+            autoRenew: true,
           },
         }),
       );
@@ -113,50 +135,67 @@ describe("cmsProductAdminApi", () => {
       toCleanup.push({ table: "product", id: product.id });
 
       expect(product.prices).toHaveLength(1);
-      expect(product.prices[0]?.amountCents).toBe(9900);
-      expect(product.prices[0]?.currency).toBe(ProductCurrency.USD);
-      expect(product.prices[0]?.interval).toBe(PriceInterval.MONTHLY);
-      expect(product.prices[0]?.isActive).toBe(true);
+      expect(product.prices[0]).toMatchObject({
+        amountCents: 9900,
+        currency: ProductCurrency.USD,
+        periodCount: 1,
+        periodUnit: PeriodUnit.MONTH,
+        autoRenew: true,
+        isActive: true,
+      });
     });
 
-    it("uses default currency and interval when not specified", async () => {
+    it("uses the contract price defaults", async () => {
       const product = await cmsProductAdminApi.create(
-        baseProductData({
-          price: { amountCents: 5000 },
-        }),
+        createInput({ price: { amountCents: 5000 } }),
       );
 
       toCleanup.push({ table: "product", id: product.id });
 
       expect(product.prices).toHaveLength(1);
-      expect(product.prices[0]?.currency).toBe(ProductCurrency.USD);
-      expect(product.prices[0]?.interval).toBe(PriceInterval.MONTHLY);
+      expect(product.prices[0]).toMatchObject({ amountCents: 5000, ...PRODUCT_PRICE_DEFAULTS });
     });
 
     it("throws ConflictError on duplicate slug", async () => {
       const slug = createSlug();
 
-      const first = await cmsProductAdminApi.create(baseProductData({ slug }));
+      const first = await cmsProductAdminApi.create(createInput({ slug }));
 
       toCleanup.push({ table: "product", id: first.id });
 
-      await expect(cmsProductAdminApi.create(baseProductData({ slug }))).rejects.toThrow(
-        ConflictError,
-      );
+      await expect(cmsProductAdminApi.create(createInput({ slug }))).rejects.toThrow(ConflictError);
+    });
+  });
+
+  describe("price column defaults", () => {
+    it("equal PRODUCT_PRICE_DEFAULTS for a row the database fills itself", async () => {
+      const product = await createTestProduct();
+      const priceId = crypto.randomUUID();
+
+      toCleanup.push({ table: "product", id: product.id });
+
+      await cleanupRaw.$executeRaw`INSERT INTO "app_prices" ("id", "productId", "amountCents") VALUES (${priceId}, ${product.id}, 100)`;
+
+      const row = await cleanupRaw.price.findUniqueOrThrow({ where: { id: priceId } });
+
+      expect(mapToPrice(row)).toMatchObject(PRODUCT_PRICE_DEFAULTS);
     });
   });
 
   describe("update", () => {
     it("updates product fields", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData());
+      const product = await cmsProductAdminApi.create(createInput());
 
       toCleanup.push({ table: "product", id: product.id });
 
-      const updated = await cmsProductAdminApi.update(product.id, {
-        title: "Updated Title",
-        description: "Updated description",
-        features: ["new-feature"],
-      });
+      const updated = await cmsProductAdminApi.update(
+        product.id,
+        updateInput({
+          title: "Updated Title",
+          description: "Updated description",
+          features: ["new-feature"],
+        }),
+      );
 
       expect(updated.title).toBe("Updated Title");
       expect(updated.description).toBe("Updated description");
@@ -164,60 +203,68 @@ describe("cmsProductAdminApi", () => {
       expect(updated.id).toBe(product.id);
     });
 
-    it("adds price to product without price", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData());
+    it("adds a price to a product without one", async () => {
+      const product = await cmsProductAdminApi.create(createInput());
 
       toCleanup.push({ table: "product", id: product.id });
 
       expect(product.prices).toHaveLength(0);
 
-      const updated = await cmsProductAdminApi.update(product.id, {
-        price: {
-          amountCents: 1999,
-          currency: ProductCurrency.EUR,
-          interval: PriceInterval.YEARLY,
-        },
-      });
+      const updated = await cmsProductAdminApi.update(
+        product.id,
+        updateInput({
+          price: {
+            amountCents: 1999,
+            currency: ProductCurrency.EUR,
+            periodCount: 1,
+            periodUnit: PeriodUnit.YEAR,
+            autoRenew: true,
+          },
+        }),
+      );
 
       expect(updated.prices).toHaveLength(1);
-      expect(updated.prices[0]?.amountCents).toBe(1999);
-      expect(updated.prices[0]?.currency).toBe(ProductCurrency.EUR);
-      expect(updated.prices[0]?.interval).toBe(PriceInterval.YEARLY);
+      expect(updated.prices[0]).toMatchObject({
+        amountCents: 1999,
+        currency: ProductCurrency.EUR,
+        periodCount: 1,
+        periodUnit: PeriodUnit.YEAR,
+        autoRenew: true,
+      });
     });
 
-    it("updates existing price", async () => {
+    it("updates the active price in place", async () => {
       const product = await cmsProductAdminApi.create(
-        baseProductData({
-          price: { amountCents: 1000 },
-        }),
+        createInput({ price: { amountCents: 1000 } }),
       );
 
       toCleanup.push({ table: "product", id: product.id });
 
-      const updated = await cmsProductAdminApi.update(product.id, {
-        price: {
-          amountCents: 2500,
-          currency: ProductCurrency.UAH,
-          interval: PriceInterval.ONE_TIME,
-        },
-      });
+      const originalPriceId = product.prices[0]?.id;
+
+      expect(originalPriceId).toBeDefined();
+
+      const updated = await cmsProductAdminApi.update(
+        product.id,
+        updateInput({ price: TRIAL_PRICE }),
+      );
 
       expect(updated.prices).toHaveLength(1);
-      expect(updated.prices[0]?.amountCents).toBe(2500);
-      expect(updated.prices[0]?.currency).toBe(ProductCurrency.UAH);
-      expect(updated.prices[0]?.interval).toBe(PriceInterval.ONE_TIME);
+      expect(updated.prices[0]?.id).toBe(originalPriceId);
+      expect(updated.prices[0]).toMatchObject(TRIAL_PRICE);
+      expect(await cleanupRaw.price.count({ where: { productId: product.id } })).toBe(1);
     });
 
     it("throws NotFoundError for non-existent id", async () => {
       await expect(
-        cmsProductAdminApi.update("clxxxxxxxxxxxxxxxxxxxxxxxxx", { title: "Nope" }),
+        cmsProductAdminApi.update("clxxxxxxxxxxxxxxxxxxxxxxxxx", updateInput({ title: "Nope" })),
       ).rejects.toThrow(NotFoundError);
     });
   });
 
   describe("delete", () => {
     it("soft-deletes a product", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData());
+      const product = await cmsProductAdminApi.create(createInput());
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -227,7 +274,7 @@ describe("cmsProductAdminApi", () => {
     });
 
     it("deleted product is invisible in getAll", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData());
+      const product = await cmsProductAdminApi.create(createInput());
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -248,13 +295,13 @@ describe("cmsProductAdminApi", () => {
     it("slug is freed after soft-delete for reuse", async () => {
       const slug = createSlug();
 
-      const first = await cmsProductAdminApi.create(baseProductData({ slug }));
+      const first = await cmsProductAdminApi.create(createInput({ slug }));
 
       toCleanup.push({ table: "product", id: first.id });
 
       await cmsProductAdminApi.delete(first.id);
 
-      const second = await cmsProductAdminApi.create(baseProductData({ slug }));
+      const second = await cmsProductAdminApi.create(createInput({ slug }));
 
       toCleanup.push({ table: "product", id: second.id });
 
@@ -264,7 +311,7 @@ describe("cmsProductAdminApi", () => {
 
   describe("toggleStatus", () => {
     it("flips isActive from true to false", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData({ isActive: true }));
+      const product = await cmsProductAdminApi.create(createInput({ isActive: true }));
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -274,7 +321,7 @@ describe("cmsProductAdminApi", () => {
     });
 
     it("flips isActive from false to true", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData({ isActive: false }));
+      const product = await cmsProductAdminApi.create(createInput({ isActive: false }));
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -292,7 +339,7 @@ describe("cmsProductAdminApi", () => {
 
   describe("toggleFeatured", () => {
     it("toggle ON sets isFeatured to true", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData({ isFeatured: false }));
+      const product = await cmsProductAdminApi.create(createInput({ isFeatured: false }));
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -302,7 +349,7 @@ describe("cmsProductAdminApi", () => {
     });
 
     it("toggle OFF sets isFeatured to false", async () => {
-      const product = await cmsProductAdminApi.create(baseProductData({ isFeatured: true }));
+      const product = await cmsProductAdminApi.create(createInput({ isFeatured: true }));
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -312,11 +359,11 @@ describe("cmsProductAdminApi", () => {
     });
 
     it("toggle ON unfeatures all other products", async () => {
-      const existing = await cmsProductAdminApi.create(baseProductData({ isFeatured: true }));
+      const existing = await cmsProductAdminApi.create(createInput({ isFeatured: true }));
 
       toCleanup.push({ table: "product", id: existing.id });
 
-      const target = await cmsProductAdminApi.create(baseProductData({ isFeatured: false }));
+      const target = await cmsProductAdminApi.create(createInput({ isFeatured: false }));
 
       toCleanup.push({ table: "product", id: target.id });
 
@@ -330,11 +377,11 @@ describe("cmsProductAdminApi", () => {
     });
 
     it("toggle OFF keeps others unchanged", async () => {
-      const other = await cmsProductAdminApi.create(baseProductData({ isFeatured: false }));
+      const other = await cmsProductAdminApi.create(createInput({ isFeatured: false }));
 
       toCleanup.push({ table: "product", id: other.id });
 
-      const target = await cmsProductAdminApi.create(baseProductData({ isFeatured: true }));
+      const target = await cmsProductAdminApi.create(createInput({ isFeatured: true }));
 
       toCleanup.push({ table: "product", id: target.id });
 

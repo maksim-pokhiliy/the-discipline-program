@@ -3,8 +3,6 @@ import {
   type CreateProductData,
   type Product,
   type UpdateProductData,
-  ProductCurrency,
-  PriceInterval,
 } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../../db/client";
@@ -13,6 +11,16 @@ import { findOrThrow, handlePrismaError } from "../../../utils";
 import { toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
 const includeWithPrices = { prices: { where: { isActive: true } } } as const;
+
+type PriceTerms = NonNullable<CreateProductData["price"]>;
+
+const buildPriceData = (price: PriceTerms): PriceTerms => ({
+  amountCents: price.amountCents,
+  currency: price.currency,
+  periodCount: price.periodCount,
+  periodUnit: price.periodUnit,
+  autoRenew: price.autoRenew,
+});
 
 export const cmsProductAdminApi = {
   getAll: async (): Promise<Product[]> => {
@@ -46,15 +54,7 @@ export const cmsProductAdminApi = {
       const product = await prisma.product.create({
         data: {
           ...productData,
-          ...(price && {
-            prices: {
-              create: {
-                amountCents: price.amountCents,
-                currency: price.currency ?? ProductCurrency.USD,
-                interval: price.interval ?? PriceInterval.MONTHLY,
-              },
-            },
-          }),
+          ...(price && { prices: { create: buildPriceData(price) } }),
         },
         include: includeWithPrices,
       });
@@ -78,21 +78,10 @@ export const cmsProductAdminApi = {
           if (existingPrice) {
             await tx.price.update({
               where: { id: existingPrice.id },
-              data: {
-                amountCents: price.amountCents,
-                currency: price.currency,
-                interval: price.interval,
-              },
+              data: buildPriceData(price),
             });
           } else {
-            await tx.price.create({
-              data: {
-                productId: id,
-                amountCents: price.amountCents,
-                currency: price.currency ?? ProductCurrency.USD,
-                interval: price.interval ?? PriceInterval.MONTHLY,
-              },
-            });
+            await tx.price.create({ data: { productId: id, ...buildPriceData(price) } });
           }
         }
 

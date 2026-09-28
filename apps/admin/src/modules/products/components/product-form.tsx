@@ -1,23 +1,15 @@
 "use client";
 
-import {
-  Checkbox,
-  FormControlLabel,
-  Grid,
-  InputAdornment,
-  MenuItem,
-  Stack,
-  TextField,
-} from "@mui/material";
+import { Checkbox, FormControlLabel, Grid, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { ProductCurrency, PriceInterval, PRICE_INTERVAL_LABELS } from "@repo/contracts/cms/product";
 import { TagsInput } from "@repo/ui";
 
 import { FormCard } from "@app/lib/components/form-card";
 import { useAutoSlug } from "@app/lib/hooks";
 
 import { type ProductFormData } from "./product-form-schema";
+import { ProductPricingCard } from "./product-pricing-card";
 
 type ProductFormProps = {
   isLoading?: boolean;
@@ -131,76 +123,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
             </Stack>
           </FormCard>
 
-          <FormCard title="Pricing">
-            <Stack spacing={3}>
-              <TextField
-                label="Price"
-                type="number"
-                placeholder="0"
-                variant="outlined"
-                fullWidth
-                disabled={isLoading}
-                error={!!errors.price?.amount}
-                helperText={errors.price?.amount?.message}
-                slotProps={{
-                  input: {
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  },
-                }}
-                {...register("price.amount", {
-                  valueAsNumber: true,
-                })}
-              />
-
-              <Controller
-                name="price.currency"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <TextField
-                    {...field}
-                    select
-                    label="Currency"
-                    variant="outlined"
-                    fullWidth
-                    disabled={isLoading}
-                    error={!!fieldState.error}
-                    helperText={fieldState.error?.message}
-                    value={field.value || ProductCurrency.USD}
-                  >
-                    {Object.values(ProductCurrency).map((currency) => (
-                      <MenuItem key={currency} value={currency}>
-                        {currency}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-
-              <Controller
-                name="price.interval"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <TextField
-                    {...field}
-                    select
-                    label="Billing Interval"
-                    variant="outlined"
-                    fullWidth
-                    disabled={isLoading}
-                    error={!!fieldState.error}
-                    helperText={fieldState.error?.message}
-                    value={field.value || PriceInterval.MONTHLY}
-                  >
-                    {Object.values(PriceInterval).map((interval) => (
-                      <MenuItem key={interval} value={interval}>
-                        {PRICE_INTERVAL_LABELS[interval]}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-            </Stack>
-          </FormCard>
+          <ProductPricingCard isLoading={isLoading} />
 
           <FormCard title="URL Settings">
             <Controller

@@ -1,6 +1,6 @@
 # 0019. Database strategy — deferred decisions
 
-- **Status:** Partially superseded by ADR-0042 (decisions #1 and #5 — migration adoption — superseded 2026-06-21; #2/#3/#4/#6 still in force)
+- **Status:** Partially superseded by ADR-0042 (decisions #1 and #5 — migration adoption — superseded 2026-06-21) and ADR-0044 (decision #2 — the external subscription id — retired by migration `20260928120000_storefront_billing_w0`); #3/#4/#6 still in force
 - **Date:** 2026-04-13
 - **Deciders:** Lead Architect
 - **Tags:** `database`, `prisma`, `migrations`, `soft-delete`
@@ -21,6 +21,8 @@ The project uses `prisma db push` exclusively. There is no `prisma/migrations/` 
 **Action:** Run `prisma migrate dev --name init` to create the baseline migration, switch all scripts from `db:push` to `prisma migrate deploy`, add `migrations/` to version control.
 
 ### 2. `Subscription.id` uses external Stripe ID as primary key
+
+> **Retired by ADR-0044 and migration `20260928120000_storefront_billing_w0`:** `Subscription.id` is now a cuid of our own (`@default(cuid())`), and the provider's id lives in `providerSubscriptionId`. The decision below is kept as history.
 
 `Subscription.id String @id` has no `@default(cuid())`. This is intentional — the ID comes from Stripe (`sub_xxx`). The subscription is created by a Stripe webhook, not by application code. Using the Stripe ID as PK avoids a mapping table and simplifies webhook reconciliation.
 

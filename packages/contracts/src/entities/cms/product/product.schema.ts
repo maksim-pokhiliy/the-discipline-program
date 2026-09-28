@@ -1,12 +1,25 @@
 import { z } from "zod";
 
-import { PRODUCT_CONSTANTS, PriceInterval, ProductCurrency } from "./product.constants";
+import { periodSchema } from "../../../common";
+
+import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS, ProductCurrency } from "./product.constants";
+
+const priceAmountCentsSchema = z
+  .number()
+  .int()
+  .nonnegative()
+  .max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS);
+
+const priceTermsShape = {
+  amountCents: priceAmountCentsSchema,
+  currency: z.nativeEnum(ProductCurrency),
+  ...periodSchema.shape,
+  autoRenew: z.boolean(),
+};
 
 export const priceSchema = z.object({
   id: z.string().cuid(),
-  amountCents: z.number().int().nonnegative().max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS),
-  currency: z.nativeEnum(ProductCurrency),
-  interval: z.nativeEnum(PriceInterval),
+  ...priceTermsShape,
   isActive: z.boolean(),
 });
 
@@ -26,11 +39,17 @@ export const productSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const createProductPriceSchema = z.object({
-  amountCents: z.number().int().nonnegative().max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS),
-  currency: z.nativeEnum(ProductCurrency).default(ProductCurrency.USD),
-  interval: z.nativeEnum(PriceInterval).default(PriceInterval.MONTHLY),
-});
+export const createProductPriceSchema = z
+  .object({
+    amountCents: priceTermsShape.amountCents,
+    currency: priceTermsShape.currency.default(PRODUCT_PRICE_DEFAULTS.currency),
+    periodCount: priceTermsShape.periodCount.default(PRODUCT_PRICE_DEFAULTS.periodCount),
+    periodUnit: priceTermsShape.periodUnit.default(PRODUCT_PRICE_DEFAULTS.periodUnit),
+    autoRenew: priceTermsShape.autoRenew.default(PRODUCT_PRICE_DEFAULTS.autoRenew),
+  })
+  .strict();
+
+export const updateProductPriceSchema = z.object(priceTermsShape).strict();
 
 export const createProductSchema = z.object({
   title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
@@ -45,4 +64,6 @@ export const createProductSchema = z.object({
   price: createProductPriceSchema.optional(),
 });
 
-export const updateProductSchema = createProductSchema.partial();
+export const updateProductSchema = createProductSchema
+  .extend({ price: updateProductPriceSchema.optional() })
+  .partial();
