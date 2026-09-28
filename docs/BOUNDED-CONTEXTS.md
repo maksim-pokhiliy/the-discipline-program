@@ -166,7 +166,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 - **LMS → IAM:** every LMS aggregate references `User.id`.
 - **LMS → Coaching:** plan ownership is by `User`; LMS does not know about action items or coach dashboards.
-- **LMS ⇄ Billing:** `ProductPlan` binds products to plans, and `PlanEnrollment.subscriptionId` points at the Billing `Subscription` behind an enrollment (null means coach-granted access). LMS code reads neither: the access gate in `authz/` is the only reader of billing state outside Billing (storefront-billing D-7).
+- **LMS ⇄ Billing:** `ProductPlan` binds products to plans, and `PlanEnrollment.subscriptionId` points at the Billing `Subscription` behind an enrollment (null means coach-granted access). The column comes back with every enrollment row LMS fetches, but no LMS or Coaching logic branches on it; from step 1.1 the access gate in `authz/` interprets it (storefront-billing D-7).
 
 ---
 
@@ -270,7 +270,7 @@ The rest of this document describes each context in detail: what it owns, which 
 ### Dependencies
 
 - **Billing → IAM:** every `Subscription` and `Transaction` keys off `userId`.
-- **Billing → LMS:** `ProductPlan` references `TrainingPlan`, and `PlanEnrollment.subscriptionId` references `Subscription`. From step 1.2 a purchase enrolls the buyer (`JOIN`) or clones the plan and enrolls them into the copy (`COPY`). LMS code stays Billing-blind; the access gate lives in `authz/` (D-7).
+- **Billing → LMS:** `ProductPlan` references `TrainingPlan`, and `PlanEnrollment.subscriptionId` references `Subscription`. From step 1.2 a purchase enrolls the buyer (`JOIN`) or clones the plan and enrolls them into the copy (`COPY`). LMS code stays Billing-blind by convention: the column is fetched with every enrollment row, no LMS or Coaching logic branches on it, and from step 1.1 the access gate in `authz/` interprets it (D-7).
 - **Billing → external (Monobank):** through the payment port. ADR-0044 (supersedes the implicit Stripe decision of ADR 0014).
 
 ---
@@ -326,12 +326,12 @@ The Prisma model does not split. The contracts and the API do, with one exceptio
 
 ## 8. Cross-context invariants
 
-| Invariant                                | Enforced where                                                                                                                                                                                                                                                                                       | Status                                                                                                                  |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Access = Subscription State**          | Planned: `resolveEnrollmentAccess` in `authz/` turns the subscription behind each enrollment into open or closed for the athlete reads (web timetable, session detail and access, the iOS shim). An enrollment without a subscription is coach-granted and open; coaches and admins are never gated. | Scheduled: storefront-billing step 1.1 (ADR-0044, D-7). W0 added `PlanEnrollment.subscriptionId`; nothing reads it yet. |
-| **Money is Integer**                     | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money.                                                                                                                                                                                                                          | Enforced schema-wide.                                                                                                   |
-| **Enrollment outlives its subscription** | `PlanEnrollment.subscriptionId` → `Subscription` is `ON DELETE SET NULL`, indexed but not unique: one subscription feeds every enrollment its product creates.                                                                                                                                       | Enforced at the DB since W0.                                                                                            |
-| **Subscription per Product**             | `Subscription` is unique on `(userId, productId)` (D-2). It replaced the per-user key of ADR 0008.                                                                                                                                                                                                   | Enforced at the DB since W0; ADR-0008 superseded by ADR-0044.                                                           |
+| Invariant                                | Enforced where                                                                                                                                                                                                                                                                                       | Status                                                                                                                                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Access = Subscription State**          | Planned: `resolveEnrollmentAccess` in `authz/` turns the subscription behind each enrollment into open or closed for the athlete reads (web timetable, session detail and access, the iOS shim). An enrollment without a subscription is coach-granted and open; coaches and admins are never gated. | Scheduled: storefront-billing step 1.1 (ADR-0044, D-7). W0 added `PlanEnrollment.subscriptionId`; it is fetched with every enrollment row, but nothing branches on it yet. |
+| **Money is Integer**                     | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money.                                                                                                                                                                                                                          | Enforced schema-wide.                                                                                                                                                      |
+| **Enrollment outlives its subscription** | `PlanEnrollment.subscriptionId` → `Subscription` is `ON DELETE SET NULL`, indexed but not unique: one subscription feeds every enrollment its product creates.                                                                                                                                       | Enforced at the DB since W0.                                                                                                                                               |
+| **Subscription per Product**             | `Subscription` is unique on `(userId, productId)` (D-2). It replaced the per-user key of ADR 0008.                                                                                                                                                                                                   | Enforced at the DB since W0; ADR-0008 superseded by ADR-0044.                                                                                                              |
 
 ### Per-aggregate DB-enforced invariants
 
@@ -363,7 +363,7 @@ Coaching   →   IAM, LMS
 CMS        →   IAM, Billing   (read-only, except the product form's price write, §7)
 Billing    →   IAM, LMS
 Storage    →   (leaf supporting context)
-Mobile-compat → IAM, Coaching (planned, step 1.3)
+Mobile-compat → IAM, Coaching
 ```
 
 **Forbidden directions:**
@@ -374,9 +374,9 @@ Mobile-compat → IAM, Coaching (planned, step 1.3)
 - `CMS → LMS`, `CMS → Coaching`.
 - `Billing → CMS`, `Billing → Coaching`.
 - `Storage → any domain`.
-- `Mobile-compat → CMS`, `Mobile-compat → Billing`. It reads IAM for credentials today and will read Coaching in step 1.3 for the publish snapshot; CMS and Billing have no business in a disposable compat shim. Enforced by `api-server-mobile-compat-no-cms-billing`.
+- `Mobile-compat → CMS`, `Mobile-compat → Billing`. It reads IAM for credentials and Coaching for the publish snapshot; CMS and Billing have no business in a disposable compat shim. Enforced by `api-server-mobile-compat-no-cms-billing`.
 
-The foreign key from `PlanEnrollment.subscriptionId` into Billing does not open `LMS → Billing` for code: LMS code never reads the column, only the access gate in `authz/` does (D-7).
+The foreign key from `PlanEnrollment.subscriptionId` into Billing does not open `LMS → Billing` for code: the column is fetched with every enrollment row, no LMS or Coaching logic branches on it, and from step 1.1 the access gate in `authz/` interprets it (D-7).
 
 Every cross-context interaction is currently a read, apart from the product form's price write (§7). Reads are preferable to writes because they do not require distributed transactions.
 
