@@ -27,7 +27,7 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 | D-15 | `Price.autoRenew` = the auto-renew form is offered; `Subscription.autoRenew` = the buyer's form | RATIFIED |
 | D-16 | The W0 migration refuses rather than guesses; a production-snapshot rehearsal gates the merge   | RATIFIED |
 | D-17 | No `walletId` column, plain `cardToken`, nullable `priceId` with a CHECK for non-MANUAL         | RATIFIED |
-| D-18 | W0 ships as expand (0.3) then contract (0.3b); production apply is dispatched before merge      | OPEN     |
+| D-18 | W0 ships as expand (0.3) then contract (0.3b); production apply is dispatched before merge      | RATIFIED |
 | D-19 | While a migration is authored, the executor's databases live in a throwaway container           | RATIFIED |
 
 ---
@@ -131,6 +131,7 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 - **Status:** RATIFIED (owner 2026-09-24 — «нужно будет развернуть локальный стек в докере, чтобы вся тестовая работа происходила против локального стека»; built and verified 2026-09-25).
 - **Decision.** `docker-compose.yml` (project `tdp-platform`, `postgres:17-alpine`, `127.0.0.1:5432`, 512 MB) with three databases: `tdp` for the dev servers and manual tests, `tdp_test` for the api-server suite, `tdp_shadow` for `prisma migrate dev`. `task stack:*` and `task test:api` pass `DATABASE_URL` on the command line, so a task can never drift to whatever `.env` holds (Prisma's dotenv and `process.loadEnvFile` never override an exported variable). The env files carry the local URLs with the Neon dev line commented above them; `.env.example`, README, DEPLOY, ADR-0026 and ADR-0042 point at `docs/runbooks/local-stack.md`. Postgres 17 rather than CI's 16: production Neon is 17.5 and migration rehearsals restore production dumps into the stack, which PG16 `pg_restore` cannot read; CI's 16 stays as the floor (SB-15).
 - **Rationale.** Billing work rehearses paths that mutate rows — declined renewals, grace expiry, cohort grants, webhook replays — and dev Neon is shared with preview deploys and already known for pooler flakes and idle drops. Locally the suite runs in 2 min 32 s instead of about ten minutes, which changes how often it gets run.
+- **Amendment (2026-09-28, 0.3 review RF-22).** "Read-only reference" describes local work only: no dev server, test run or rehearsal targets dev Neon. Dev Neon stays the database of the Vercel previews and receives every migration by hand after the production apply, because nothing applies it there automatically (`docs/runbooks/db-migrate-dispatch.md`, "After the deploy").
 - **Links.** plan 0.0; `docs/runbooks/local-stack.md`; deferred SB-14, SB-15; journal 2026-09-25.
 
 ### D-15 — `Price.autoRenew` is the offer, `Subscription.autoRenew` is the choice
@@ -153,16 +154,17 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 - **Status:** RATIFIED (planner ruling inside the owner-approved contour, 2026-09-28).
 - **Decision.** The wallet id sent to Monobank is the platform `userId`, so no column stores it. `Subscription.cardToken` is plain text. `Subscription.priceId` is nullable, and a CHECK constraint keeps it mandatory for every provider except `MANUAL`. `Transaction` is unique on `(provider, providerTxId, kind)` instead of `providerTxId` alone.
 - **Rationale.** A stored wallet id can only drift from the user it belongs to. The card token is a bearer scoped to our merchant token; encrypting it with a sibling environment key in the same process adds no boundary. A comp or a cohort grant has no price, and a fake price reference would corrupt the answer to "what did they pay". A Monobank refund lives on the original invoice id, so the refund row shares `providerTxId` with the payment it reverses.
+- **Revisit at 0.5 (0.3 review RF-4b, SB-19).** The rationale weighed theft of the stored value and missed the log path: Postgres prints the failing row in the detail of a CHECK or NOT NULL violation, and that text reaches Prisma's error message, the application log and the server log. The same token sits in the raw webhook body the ledger stores. The column stays text either way, so nothing in W0 changes; the owner decides at 0.5 between encryption at rest, redaction, or both.
 - **Links.** D-3, D-9; `monobank-notes.md` §0.2 spike; `step-0.3-prompt.md`.
 
 ### D-18 — W0 ships as expand (0.3) then contract (0.3b)
 
-- **Status:** OPEN — proposed by the planner 2026-09-28; the 0.3 prompt is written against it; the owner rules before the 0.3 merge.
+- **Status:** RATIFIED (b) — owner 2026-09-28, at the triage gate of the 0.3 internal review: «ок, делаем всё по твоим рекомендациям».
 - **Fork.** (a) One destructive migration in the 0.3 PR, as the approved contour said. (b) Step 0.3 expands and converts and keeps `app_products.stripeProductId`, `app_prices.interval`, `app_prices.stripePriceId` and the `PriceInterval` type, dead but declared; the production apply is dispatched on the PR branch before the merge (`gh workflow run db-migrate.yml --ref <branch>`); step 0.3b drops the dead columns once 0.3 is live.
-- **Proposal.** (b).
+- **Decision.** (b).
 - **Rationale.** A merge starts the Vercel builds and `db-migrate.yml` at the same moment and nothing orders them. Prisma selects columns by name, so under (a) either the old code meets a schema without the columns it selects, or the new code meets a schema without the columns it needs, on the public storefront and in the admin. The window is minutes when both pipelines are healthy and unbounded when the migration fails or waits. Under (b) the old code never notices the expand, and a failed apply happens before any code ships. The cost is one six-statement PR.
-- **If the owner picks (a).** The drops of 0.3b fold into the 0.3 migration before the merge; nothing built under (b) is wasted.
-- **Links.** `.github/workflows/db-migrate.yml`; plan 0.3 / 0.3b; `step-0.3-prompt.md`.
+- **The price of (b), named by the 0.3 review (RF-3).** In the window between the dispatch and the deploy the old code does not fail, it writes: a price created or edited there lands beside the defaults of the new columns and no error says so. The cure is procedural — the catalog is frozen for the window and a consistency query runs before the merge and after the deploy (`docs/runbooks/db-migrate-dispatch.md`). A trigger or a dual write would be a bridge, and the initiative builds none.
+- **Links.** `.github/workflows/db-migrate.yml`; `docs/runbooks/db-migrate-dispatch.md`; plan 0.3 / 0.3b; `step-0.3-prompt.md`; ADR-0044 (amended 2026-09-28).
 
 ### D-19 — While a migration is authored, the executor's databases live in a throwaway container
 
