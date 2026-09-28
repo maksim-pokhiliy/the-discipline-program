@@ -1,3 +1,5 @@
+import { PeriodUnit } from "../../../common";
+
 export const PRODUCT_CONSTANTS = {
   MAX_TITLE_LENGTH: 200,
   MAX_SLUG_LENGTH: 200,
@@ -11,17 +13,12 @@ export enum ProductCurrency {
   UAH = "UAH",
 }
 
-export enum PriceInterval {
-  MONTHLY = "MONTHLY",
-  YEARLY = "YEARLY",
-  ONE_TIME = "ONE_TIME",
-}
-
-export const PRICE_INTERVAL_LABELS: Record<PriceInterval, string> = {
-  [PriceInterval.MONTHLY]: "month",
-  [PriceInterval.YEARLY]: "year",
-  [PriceInterval.ONE_TIME]: "one-time",
-};
+export const PRODUCT_PRICE_DEFAULTS = {
+  currency: ProductCurrency.UAH,
+  periodCount: 4,
+  periodUnit: PeriodUnit.WEEK,
+  autoRenew: true,
+} as const;
 
 export enum ProductToggleField {
   IS_ACTIVE = "isActive",

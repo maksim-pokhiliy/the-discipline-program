@@ -2,12 +2,13 @@ import {
   ContactSubmissionStatus as PrismaContactSubmissionStatus,
   type Currency as PrismaCurrency,
   MarketingBlogCategory as PrismaMarketingBlogCategory,
-  type PriceInterval as PrismaPriceInterval,
+  type PeriodUnit as PrismaPeriodUnit,
 } from "@prisma/client";
 
 import { BlogCategory } from "@repo/contracts/cms/blog";
 import { ContactStatus } from "@repo/contracts/cms/contact";
-import { PriceInterval, ProductCurrency } from "@repo/contracts/cms/product";
+import { ProductCurrency } from "@repo/contracts/cms/product";
+import { PeriodUnit } from "@repo/contracts/common";
 
 export const CURRENCY_MAP: Record<PrismaCurrency, ProductCurrency> = {
   USD: ProductCurrency.USD,
@@ -15,10 +16,11 @@ export const CURRENCY_MAP: Record<PrismaCurrency, ProductCurrency> = {
   UAH: ProductCurrency.UAH,
 };
 
-export const PRICE_INTERVAL_MAP: Record<PrismaPriceInterval, PriceInterval> = {
-  MONTHLY: PriceInterval.MONTHLY,
-  YEARLY: PriceInterval.YEARLY,
-  ONE_TIME: PriceInterval.ONE_TIME,
+export const PERIOD_UNIT_MAP: Record<PrismaPeriodUnit, PeriodUnit> = {
+  DAY: PeriodUnit.DAY,
+  WEEK: PeriodUnit.WEEK,
+  MONTH: PeriodUnit.MONTH,
+  YEAR: PeriodUnit.YEAR,
 };
 
 export const BLOG_CATEGORY_MAP: Record<PrismaMarketingBlogCategory, BlogCategory> = {

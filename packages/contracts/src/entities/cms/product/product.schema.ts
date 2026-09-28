@@ -1,12 +1,21 @@
 import { z } from "zod";
 
-import { PRODUCT_CONSTANTS, PriceInterval, ProductCurrency } from "./product.constants";
+import { periodSchema } from "../../../common";
+
+import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS, ProductCurrency } from "./product.constants";
+
+const priceAmountCentsSchema = z
+  .number()
+  .int()
+  .nonnegative()
+  .max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS);
 
 export const priceSchema = z.object({
   id: z.string().cuid(),
-  amountCents: z.number().int().nonnegative().max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS),
+  amountCents: priceAmountCentsSchema,
   currency: z.nativeEnum(ProductCurrency),
-  interval: z.nativeEnum(PriceInterval),
+  ...periodSchema.shape,
+  autoRenew: z.boolean(),
   isActive: z.boolean(),
 });
 
@@ -26,11 +35,15 @@ export const productSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const createProductPriceSchema = z.object({
-  amountCents: z.number().int().nonnegative().max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS),
-  currency: z.nativeEnum(ProductCurrency).default(ProductCurrency.USD),
-  interval: z.nativeEnum(PriceInterval).default(PriceInterval.MONTHLY),
-});
+export const createProductPriceSchema = z
+  .object({
+    amountCents: priceAmountCentsSchema,
+    currency: z.nativeEnum(ProductCurrency).default(PRODUCT_PRICE_DEFAULTS.currency),
+    periodCount: periodSchema.shape.periodCount.default(PRODUCT_PRICE_DEFAULTS.periodCount),
+    periodUnit: periodSchema.shape.periodUnit.default(PRODUCT_PRICE_DEFAULTS.periodUnit),
+    autoRenew: z.boolean().default(PRODUCT_PRICE_DEFAULTS.autoRenew),
+  })
+  .strict();
 
 export const createProductSchema = z.object({
   title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
