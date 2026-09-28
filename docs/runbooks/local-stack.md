@@ -82,22 +82,54 @@ value to `task stack:env` and every other `stack:*` task. The compose file reads
 describes is no longer needed. Afterwards run `task stack:migrate` so `tdp_test` carries the new
 migration too, or the next `task test:api` fails on the schema gap.
 
+`migrate dev` is interactive and stops on a data-loss warning. A migration that needs hand-written
+SQL (a guard, a data conversion) starts from the non-interactive diff instead:
+
+```bash
+pnpm --filter @repo/api-server exec prisma migrate diff \
+  --from-migrations prisma/migrations \
+  --to-schema-datamodel prisma/schema.prisma \
+  --shadow-database-url postgres://postgres:postgres@localhost:5432/tdp_shadow \
+  --script
+```
+
+On a tree whose migrations match its schema the command prints only
+`CREATE EXTENSION IF NOT EXISTS "citext";` — a known artefact of `0_init`. Delete that line from a
+generated migration.
+
+How Prisma applies a file (probed 2026-09-28, Prisma 6.1.0, Postgres 17):
+
+- A file without transaction-control statements applies atomically; a failing statement leaves
+  only the failed `_prisma_migrations` row.
+- A `RAISE EXCEPTION` inside a `DO` block reaches the `migrate deploy` output verbatim, so a guard
+  can say what it found.
+- An explicit `BEGIN; … COMMIT;` around the file masks the real error, and the pair Prisma emits
+  around an enum swap commits everything before it. Remove every `BEGIN` and `COMMIT` by hand.
+- A failed migration blocks later applies until `prisma migrate resolve --rolled-back <name>`.
+
 ## Rehearsing against a production snapshot
 
 The container's own client tools are PG17, so a Neon dump and its restore stay inside one version:
 
 ```bash
-# dump — read-only on production; use the DIRECT (non-pooler) URL from .env.prod, never the pooler
-docker compose exec -T db pg_dump "<production direct url>" -Fc > ~/tdp-prod-$(date +%F).dump
+# dump — read-only on production; the DIRECT (non-pooler) URL is read from .env.prod in-process,
+# so it reaches neither the screen nor the shell history
+PGURL="$(env -u DATABASE_URL_PROD node -e "process.loadEnvFile('.env.prod'); process.stdout.write(process.env.DATABASE_URL_PROD)")" \
+  docker compose exec -T -e PGURL db sh -c 'pg_dump "$PGURL" -Fc --no-owner --no-privileges' \
+  > ~/tdp-prod-$(date +%F).dump
+chmod 600 ~/tdp-prod-$(date +%F).dump
 # restore into a fourth database in the same container
 docker compose exec -T db createdb -U postgres prod_snap
 docker compose exec -T db pg_restore -U postgres -d prod_snap --no-owner --no-privileges < ~/tdp-prod-$(date +%F).dump
-# rehearse the pending migration against the snapshot
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/prod_snap pnpm db:deploy
+# rehearse the pending migration on a CLONE, so the snapshot stays reusable
+docker compose exec -T db createdb -U postgres -T prod_snap rehearsal
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/rehearsal pnpm db:deploy
+docker compose exec -T db dropdb -U postgres rehearsal
 ```
 
-Drop it with `docker compose exec -T db dropdb -U postgres prod_snap` when done. The dump holds real
-athlete data: it stays on this machine, and it is never the `DATABASE_URL` of a dev server.
+Drop the snapshot with `docker compose exec -T db dropdb -U postgres prod_snap` when done. The dump
+holds real athlete data: it stays on this machine, and it is never the `DATABASE_URL` of a dev server
+or a test run.
 
 ## Provider webhooks from the internet (Monobank, storefront-billing 0.2+)
 
