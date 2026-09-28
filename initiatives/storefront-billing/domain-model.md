@@ -11,28 +11,28 @@ enum PeriodUnit      { DAY  WEEK  MONTH  YEAR }       // maps 1:1 to mono `inter
 enum SubscriptionStatus { ACTIVE  PAST_DUE  CANCELED  EXPIRED }   // TRIAL removed — a trial is a zero-price FREE product, not a status (D-13)
 enum TransactionKind { INITIAL  RENEWAL  ONE_OFF  REFUND }
 
-model Product     { …existing CMS facet… ; plans ProductPlan[] ; prices Price[] }   // stripeProductId removed
+model Product     { …existing CMS facet… ; plans ProductPlan[] ; prices Price[] }   // stripeProductId leaves in 0.3b (D-18)
 model ProductPlan { id ; productId ; planId ; delivery PlanDelivery ; @@unique([productId, planId]) }
 model Price       { id ; productId ; amountCents Int ; currency Currency @default(UAH) ;
-                    periodCount Int ; periodUnit PeriodUnit ; autoRenew Boolean ; isActive Boolean }   // stripePriceId + PriceInterval removed
+                    periodCount Int ; periodUnit PeriodUnit ; autoRenew Boolean ; isActive Boolean }   // periodCount 1..365 (CHECK); autoRenew = the auto-renew form is offered (D-15); stripePriceId + PriceInterval leave in 0.3b
 model Subscription {
   id                     String @id @default(cuid())          // was an external Stripe id (ADR-0014) — now ours
-  userId ; productId ; priceId
+  userId ; productId ; priceId?                                // nullable: a MANUAL grant has no price; CHECK keeps it mandatory for every other provider (D-17)
   provider               BillingProvider
   providerSubscriptionId String? @unique                       // mono subscriptionId on the native path (D-3)
-  cardToken              String?                               // mono wallet token on the MIT path (D-3) — _(step: at-rest handling)_
+  cardToken              String?                               // mono card token on the MIT path (D-3); plain text; the wallet id is the platform userId, no column (D-17)
   status                 SubscriptionStatus
-  autoRenew              Boolean
+  autoRenew              Boolean                               // the form the buyer chose (D-15)
   currentPeriodStart ; currentPeriodEnd
   graceEndsAt DateTime? ; canceledAt DateTime? ; endedAt DateTime?
   @@unique([userId, productId])                                // D-2 — replaces userId @unique (ADR-0008)
 }
 model PlanEnrollment { …existing… ; subscriptionId String? ; subscription Subscription? @relation(onDelete: SetNull) }
-model Transaction  { …existing… ; provider BillingProvider ; kind TransactionKind ; periodStart? ; periodEnd? }   // providerTxId = mono invoiceId
-model BillingWebhookEvent { id ; provider ; eventKey String @unique ; payload Json ; receivedAt ; processedAt? ; error? }   // idempotency ledger for inbound webhooks (RequestIdempotency is for client keys)
+model Transaction  { …existing… ; provider BillingProvider ; kind TransactionKind ; periodStart? ; periodEnd? ; @@unique([provider, providerTxId, kind]) }   // providerTxId = mono invoiceId; a refund lives on the original invoice id (D-17)
+model BillingWebhookEvent { id ; provider ; eventKey String ; payload Json ; receivedAt ; processedAt? ; error? ; @@unique([provider, eventKey]) }   // idempotency ledger for inbound webhooks (RequestIdempotency is for client keys)
 ```
 
-_(step 0.3)_: exact indexes, the mutation-invariant trace on `@@unique([userId, productId])` (planner-discipline (h)), whether `PlanEnrollment.subscriptionId` gets a partial unique.
+Decided in step 0.3 (`step-0.3-prompt.md`, D-15..D-18): the exact indexes; the mutation-invariant trace (no unique here sits on an ordered column; the purchase path upserts and retries on P2002 / P2034); `PlanEnrollment.subscriptionId` is an index, never a unique — a product with two plans feeds two enrollments from one subscription.
 
 ## 2. Subscription FSM
 

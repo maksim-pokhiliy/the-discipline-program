@@ -58,3 +58,13 @@ Append-only. One entry per session/step.
 - **Planner rulings** (D-17): no `walletId` column, plain `cardToken`, nullable `priceId` with a CHECK for every provider but `MANUAL`, `Transaction` unique on `(provider, providerTxId, kind)`. New carry-forwards: SB-16 (a sold price is immutable, 3.1), SB-17 (zero-price presentation, 2.2).
 - **Housekeeping.** The decisions index carried D-3 as OPEN and had no D-14 row; fixed. SB-14 and SB-15 rows lacked their status cell; fixed.
 - **Next:** the executor's plan gate.
+
+## 2026-09-28 (later) — P0.3 plan gate
+
+- **The executor's plan** (`step-executor`, opus, capped): 15 tasks, 36 files, 5 commits, one PR. Its Scope Check fired on the size and it recommended against a split; one PR stands.
+- **Planner rehearsal of the proposed migration** on a clone of `prod_snap` (the file as proposed, sha256 `3c4bb4275bec5b8f…`, applied in one transaction): 179 ms; 42 of 42 pre-existing tables digest-identical on their pre-existing columns; tables 43 → 45; 4 of 4 prices at `1 / MONTH / autoRenew true`, `USD`, amount total unchanged; 0 of 15 enrollments carry a `subscriptionId`; both new tables empty; the three indexes the migration drops are plain indexes in production, not constraints. The clone was dropped.
+- **Rulings (planner).** The migration is accepted with one change: `app_prices_period_count_check` becomes `BETWEEN 1 AND 365`, the bound the contract validates, because the storefront route validates every product on render and a row the contract rejects would turn the public page into a 500. `.strict()` on the request price schema only: a stale admin tab posting `interval` gets a 400 instead of silently turning a monthly price into four weeks. `formatPeriod` lives in contracts with a required locale. The Pricing card is its own component. The grep gate is scoped to code. Prisma-style action headers stay in the migration file. D-19: the executor's databases live in a throwaway container, the production rehearsal is the planner's.
+- **Fence extension granted:** one line, the `comment` string of a dep-cruiser rule that still calls the product-plan link "planned" (behaviour-neutral, the owner's standing inline-fix rule).
+- **Refusals by the harness, all left standing:** the design subagent's attempt to write a proofs script (modification of a shared resource). Nothing was routed around it; D-19 removes the cause.
+- **Found on the way.** `TDP_DB_PORT=5433 task …` from the P0.0 runbook never overrode the port: a Taskfile variable outranks the environment. The runbook now shows the working form. The storefront's dev Neon previews need W0 applied by hand; it is on the owner checklist of the delivery PR. SB-18 opened (hryvnia renders as `UAH` in `en-US`).
+- **Still open:** D-18.
