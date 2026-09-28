@@ -1,11 +1,20 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
+
+import { createProductRequestSchema, ProductCurrency } from "@repo/contracts/cms/product";
+import { PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
-import { expectPricing } from "../../products.fixtures";
+import {
+  clickButton,
+  expectPricing,
+  makeProduct,
+  pickOption,
+  typeInto,
+} from "../../products.fixtures";
 
 const createProductMock: Mock = vi.fn();
 
@@ -24,25 +33,26 @@ vi.mock("@app/lib/hooks", async () => {
 
 const { ProductCreateView } = await import("./index");
 
-const pickOption = async (label: string, option: string): Promise<void> => {
-  fireEvent.mouseDown(screen.getByRole("combobox", { name: label }));
-  fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: option }));
+const PRODUCT = makeProduct([]);
 
-  await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
-};
+const CREATE_LABEL = "Create Product";
 
-const typeInto = (label: string, value: string): void => {
-  fireEvent.change(screen.getByLabelText(label), { target: { value } });
-};
+const REFUSED_PERIOD_LENGTHS: [string, string][] = [
+  ["0", "Number must be greater than or equal to 1"],
+  ["366", "Number must be less than or equal to 365"],
+];
 
 const fillProduct = (amount: string): void => {
-  typeInto("Product Title", "Strength Mastery");
-  typeInto("Description", "Twelve weeks of barbell strength work.");
+  typeInto("Product Title", PRODUCT.title);
+  typeInto("Description", PRODUCT.description);
   typeInto("Price", amount);
 };
 
-const submit = (): void => {
-  fireEvent.click(screen.getByRole("button", { name: "Create Product" }));
+const expectRefusedWith = async (message: string): Promise<void> => {
+  clickButton(CREATE_LABEL);
+
+  expect(await screen.findByText(message)).toBeInTheDocument();
+  expect(createProductMock).not.toHaveBeenCalled();
 };
 
 afterEach(() => {
@@ -98,38 +108,54 @@ describe("ProductCreateView pricing", () => {
     expect(checkbox).toBeChecked();
   });
 
-  it("submits every price term with numbers where numbers belong", async () => {
+  it("submits a payload the create request schema accepts, with every price term", async () => {
     render(<ProductCreateView />);
 
-    fillProduct("12.5");
+    fillProduct("19.99");
     typeInto("Period length", "3");
     await pickOption("Period unit", "days");
     await pickOption("Currency", "EUR");
     fireEvent.click(screen.getByRole("checkbox", { name: "Offer auto-renew" }));
-    submit();
+    clickButton(CREATE_LABEL);
 
     await waitFor(() => expect(createProductMock).toHaveBeenCalledTimes(1));
 
-    expect(createProductMock.mock.calls[0]?.[0]).toMatchObject({
-      price: {
-        amountCents: 1250,
-        currency: "EUR",
-        periodCount: 3,
-        periodUnit: "DAY",
-        autoRenew: false,
-      },
+    const payload = createProductRequestSchema.parse(createProductMock.mock.calls[0]?.[0]);
+
+    expect(payload.price).toEqual({
+      amountCents: 1999,
+      currency: ProductCurrency.EUR,
+      periodCount: 3,
+      periodUnit: PeriodUnit.DAY,
+      autoRenew: false,
     });
+  });
+
+  it.each(REFUSED_PERIOD_LENGTHS)(
+    "refuses a period length of %s on the field itself",
+    async (periodLength, message) => {
+      render(<ProductCreateView />);
+
+      fillProduct("10");
+      typeInto("Period length", periodLength);
+
+      await expectRefusedWith(message);
+    },
+  );
+
+  it("refuses a negative amount on the field itself", async () => {
+    render(<ProductCreateView />);
+
+    fillProduct("-5");
+
+    await expectRefusedWith("Number must be greater than or equal to 0");
   });
 
   it("refuses an amount above the contract maximum on the field itself", async () => {
     render(<ProductCreateView />);
 
     fillProduct("1000000");
-    submit();
 
-    expect(
-      await screen.findByText("Number must be less than or equal to 999999.99"),
-    ).toBeInTheDocument();
-    expect(createProductMock).not.toHaveBeenCalled();
+    await expectRefusedWith("Number must be less than or equal to 999999.99");
   });
 });

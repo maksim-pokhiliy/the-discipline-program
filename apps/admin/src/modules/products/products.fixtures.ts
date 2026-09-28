@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { expect } from "vitest";
 
 import { type Price, type Product, ProductCurrency } from "@repo/contracts/cms/product";
@@ -49,4 +49,19 @@ export const expectPricing = (expected: ExpectedPricing): void => {
     }),
   ).toBeInTheDocument();
   expect(screen.getByText(expected.symbol)).toBeInTheDocument();
+};
+
+export const pickOption = async (label: string, option: string): Promise<void> => {
+  fireEvent.mouseDown(screen.getByRole("combobox", { name: label }));
+  fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: option }));
+
+  await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
+};
+
+export const typeInto = (label: string, value: string): void => {
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
+};
+
+export const clickButton = (name: string): void => {
+  fireEvent.click(screen.getByRole("button", { name }));
 };
