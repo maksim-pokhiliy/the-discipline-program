@@ -10,12 +10,16 @@ const priceAmountCentsSchema = z
   .nonnegative()
   .max(PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS);
 
-export const priceSchema = z.object({
-  id: z.string().cuid(),
+const priceTermsShape = {
   amountCents: priceAmountCentsSchema,
   currency: z.nativeEnum(ProductCurrency),
   ...periodSchema.shape,
   autoRenew: z.boolean(),
+};
+
+export const priceSchema = z.object({
+  id: z.string().cuid(),
+  ...priceTermsShape,
   isActive: z.boolean(),
 });
 
@@ -37,13 +41,15 @@ export const productSchema = z.object({
 
 export const createProductPriceSchema = z
   .object({
-    amountCents: priceAmountCentsSchema,
-    currency: z.nativeEnum(ProductCurrency).default(PRODUCT_PRICE_DEFAULTS.currency),
-    periodCount: periodSchema.shape.periodCount.default(PRODUCT_PRICE_DEFAULTS.periodCount),
-    periodUnit: periodSchema.shape.periodUnit.default(PRODUCT_PRICE_DEFAULTS.periodUnit),
-    autoRenew: z.boolean().default(PRODUCT_PRICE_DEFAULTS.autoRenew),
+    amountCents: priceTermsShape.amountCents,
+    currency: priceTermsShape.currency.default(PRODUCT_PRICE_DEFAULTS.currency),
+    periodCount: priceTermsShape.periodCount.default(PRODUCT_PRICE_DEFAULTS.periodCount),
+    periodUnit: priceTermsShape.periodUnit.default(PRODUCT_PRICE_DEFAULTS.periodUnit),
+    autoRenew: priceTermsShape.autoRenew.default(PRODUCT_PRICE_DEFAULTS.autoRenew),
   })
   .strict();
+
+export const updateProductPriceSchema = z.object(priceTermsShape).strict();
 
 export const createProductSchema = z.object({
   title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
@@ -58,4 +64,6 @@ export const createProductSchema = z.object({
   price: createProductPriceSchema.optional(),
 });
 
-export const updateProductSchema = createProductSchema.partial();
+export const updateProductSchema = createProductSchema
+  .extend({ price: updateProductPriceSchema.optional() })
+  .partial();

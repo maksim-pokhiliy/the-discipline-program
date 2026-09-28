@@ -168,14 +168,15 @@ describe("cmsProductAdminApi", () => {
   });
 
   describe("price column defaults", () => {
-    it("equal PRODUCT_PRICE_DEFAULTS for a row written without terms", async () => {
+    it("equal PRODUCT_PRICE_DEFAULTS for a row the database fills itself", async () => {
       const product = await createTestProduct();
+      const priceId = crypto.randomUUID();
 
       toCleanup.push({ table: "product", id: product.id });
 
-      const row = await cleanupRaw.price.create({
-        data: { productId: product.id, amountCents: 100 },
-      });
+      await cleanupRaw.$executeRaw`INSERT INTO "app_prices" ("id", "productId", "amountCents") VALUES (${priceId}, ${product.id}, 100)`;
+
+      const row = await cleanupRaw.price.findUniqueOrThrow({ where: { id: priceId } });
 
       expect(mapToPrice(row)).toMatchObject(PRODUCT_PRICE_DEFAULTS);
     });

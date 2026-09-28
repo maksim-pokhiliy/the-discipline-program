@@ -67,11 +67,12 @@ describe("updateProductSchema", () => {
     ).toBe(false);
   });
 
-  it("fills the omitted terms of a present price from PRODUCT_PRICE_DEFAULTS", () => {
-    expect(updateProductSchema.parse({ price: { amountCents: 100 } }).price).toEqual({
-      amountCents: 100,
-      ...PRODUCT_PRICE_DEFAULTS,
-    });
+  it("refuses a price with any term missing instead of filling it from the defaults", () => {
+    expect(updateProductSchema.safeParse({ price: { amountCents: 100 } }).success).toBe(false);
+  });
+
+  it("keeps a complete price exactly as sent", () => {
+    expect(updateProductSchema.parse({ price: TRIAL_PRICE }).price).toEqual(TRIAL_PRICE);
   });
 
   it("leaves an absent price absent", () => {
@@ -84,6 +85,17 @@ describe("priceSchema", () => {
     expect(priceSchema.safeParse({ id: PRICE_ID, isActive: true, ...TRIAL_PRICE }).success).toBe(
       true,
     );
+  });
+
+  it("strips an unknown key instead of refusing the response", () => {
+    const parsed = priceSchema.parse({
+      id: PRICE_ID,
+      isActive: true,
+      ...TRIAL_PRICE,
+      interval: "MONTHLY",
+    });
+
+    expect(parsed).toEqual({ id: PRICE_ID, isActive: true, ...TRIAL_PRICE });
   });
 
   it("rejects the legacy interval shape", () => {
