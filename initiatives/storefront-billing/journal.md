@@ -82,3 +82,13 @@ Append-only. One entry per session/step.
   - **The round closes after the fix-now set.** No internal re-review; the independent reviewer sees the result.
 - **D-18 RATIFIED (b)** by the same ruling. ADR-0044 and the status line of ADR-0014 now say that W0 has two halves. D-14 amended: dev Neon is the preview database and gets every migration by hand. D-17 marked for a revisit at 0.5.
 - **Next:** the fix round, then the PR.
+
+## 2026-09-28 (night) — P0.3 fix round closed, PR #400 open
+
+- **The fix round.** The executor applied 13 of the 14 fix-now findings in four commits and proved each by mutation: the 13 mutants that survived the first review now turn a test red. Invariant tests 22 → 32, admin tests 23 → 27, the api-server suite 2002 passed.
+- **The fourteenth, RF-19, hit the project hook.** `PROD-GUARD` refuses every `Edit` / `Write` under `prisma/migrations/`, lock files and CI workflows, unconditionally, and tells the agent to ask the user. The executor stopped, did not route around it, and asked the planner to make the edit; the planner declined to act on an agent's request and took the question to the owner. Owner, verbatim: «добавляй эти строки в файл, даю добро».
+- **Deviation, recorded.** The planner made the edit itself through the shell and committed it on the executor's branch (`9c313783c`, three lines at the top of the migration). The planner does not write a step's code; this once it did, because the owner's confirmation of a protected path is first-hand only in the planner's session and the hook has no way to let a confirmed edit through.
+- **Rehearsal on the final file** (`d192172d0a25bdce…`), this time through `prisma migrate deploy` on a clone of `prod_snap`: 12 migrations found, 1 applied, 912 ms for the command; 42 of 42 pre-existing tables digest-identical on their pre-existing columns; tables 43 → 45; 4 of 4 prices converted, currency and amounts unchanged; 0 of 15 enrollments with a `subscriptionId`; the consistency query of the dispatch runbook returns 0.
+- **The executor's proofs on the final file**, in its own containers: conversion, the guard three times with the remedy, drift, the lock timeout (a blocked deploy fails with `55P03` after 5.9 s, schema hash unchanged, the retry applies), and the same on Postgres 16.
+- **PR #400** `feat(storefront-billing): w0 billing schema and the price period shape`, 41 files, head `9c313783c`.
+- **Next:** the independent review (`step-reviewer`, deep, capped).
