@@ -18,7 +18,7 @@ Prior: **FOUNDED 2026-09-23.** Two days of dialogue distilled: the Apple-vs-Mono
 
 ## Next action
 
-**▶ P0.3 plan gate (planner triage).** The executor (`step-executor`, model opus, capped: one internal subagent at a time) runs `initiatives/storefront-billing/step-0.3-prompt.md` on `feat/storefront-billing-w0-schema` and stops at its plan gate with the full migration SQL. Planner: triage the gate (owner only for product, money, data or fence questions), then the internal review's triage gate goes to the owner, then the PR, the independent reviewer, planner verification (battery + the four migration proofs re-run on a fresh clone of `prod_snap`), the owner's browser pass. Merge procedure under D-18: dispatch `db-migrate.yml` on the PR branch, confirm production still serves the storefront and the admin products page on the old code, merge, smoke, then 0.3b. Parallel and unblocked: 0.4 (`uk` pages, no schema dependency).
+**▶ P0.3 implementation (executor), then the internal review's triage gate (owner).** The plan gate is answered (journal 2026-09-28, later): the migration accepted with the period CHECK widened to the contract bound, `.strict()` on the request price schema, D-19 (the executor works in a throwaway container; the production rehearsal is the planner's and is already green on the proposed file). Next stops: the executor's internal review report → the owner rules the buckets → PR → independent reviewer → planner verification (battery, the rehearsal re-run on the final file, W0 applied to the shared stack) → the owner's browser pass. Merge procedure under D-18: dispatch `db-migrate.yml` on the PR branch, confirm production still serves the storefront and the admin products page on the old code, merge, smoke, then 0.3b. Parallel and unblocked: 0.4 (`uk` pages, no schema dependency).
 
 ## Open decisions awaiting ratification
 
@@ -26,7 +26,7 @@ Prior: **FOUNDED 2026-09-23.** Two days of dialogue distilled: the Apple-vs-Mono
 
 ## Live carry-forwards
 
-SB-1 (browser-only Mono docs + skill archive) · SB-2 (FOP terminal currency) · SB-3 (РРО — Denys) · SB-4 (requisites — Denys) · SB-5 (prod token — Denys) · SB-7 (roster projection, 3.2) · SB-8 (retire Stripe shapes, 0.3) · SB-9 (tax consequence — owner) · SB-11 (iOS athletes have no enrollment, 4.1) · SB-12 (newcomers + the app, rides on AS-1) · SB-13 (apex-sunset decommission runs in parallel, separate PRs) · SB-15 (CI Postgres 16 → 17 bump) · SB-16 (a sold price is immutable, 3.1) · SB-17 (zero-price presentation on the storefront, 2.2).
+SB-1 (browser-only Mono docs + skill archive) · SB-2 (FOP terminal currency) · SB-3 (РРО — Denys) · SB-4 (requisites — Denys) · SB-5 (prod token — Denys) · SB-7 (roster projection, 3.2) · SB-8 (retire Stripe shapes, 0.3) · SB-9 (tax consequence — owner) · SB-11 (iOS athletes have no enrollment, 4.1) · SB-12 (newcomers + the app, rides on AS-1) · SB-13 (apex-sunset decommission runs in parallel, separate PRs) · SB-15 (CI Postgres 16 → 17 bump) · SB-16 (a sold price is immutable, 3.1) · SB-17 (zero-price presentation on the storefront, 2.2) · SB-18 (hryvnia display in `en-US`, 0.4).
 
 ## Gotchas a resuming session must know
 

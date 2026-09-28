@@ -28,6 +28,7 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 | D-16 | The W0 migration refuses rather than guesses; a production-snapshot rehearsal gates the merge   | RATIFIED |
 | D-17 | No `walletId` column, plain `cardToken`, nullable `priceId` with a CHECK for non-MANUAL         | RATIFIED |
 | D-18 | W0 ships as expand (0.3) then contract (0.3b); production apply is dispatched before merge      | OPEN     |
+| D-19 | While a migration is authored, the executor's databases live in a throwaway container           | RATIFIED |
 
 ---
 
@@ -162,3 +163,11 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 - **Rationale.** A merge starts the Vercel builds and `db-migrate.yml` at the same moment and nothing orders them. Prisma selects columns by name, so under (a) either the old code meets a schema without the columns it selects, or the new code meets a schema without the columns it needs, on the public storefront and in the admin. The window is minutes when both pipelines are healthy and unbounded when the migration fails or waits. Under (b) the old code never notices the expand, and a failed apply happens before any code ships. The cost is one six-statement PR.
 - **If the owner picks (a).** The drops of 0.3b fold into the 0.3 migration before the merge; nothing built under (b) is wasted.
 - **Links.** `.github/workflows/db-migrate.yml`; plan 0.3 / 0.3b; `step-0.3-prompt.md`.
+
+### D-19 — While a migration is authored, the executor's databases live in a throwaway container
+
+- **Status:** RATIFIED (planner ruling at the 0.3 plan gate, 2026-09-28; refines D-14).
+- **Decision.** An executor that authors or iterates on a migration runs every database command — migrate, the suite, the scratch proofs — against its own throwaway Postgres container (`postgres:17-alpine`, 512 MB, a free port, the stack's init directory mounted so `tdp` / `tdp_test` / `tdp_shadow` exist). The shared stack receives the migration once, in its final form, from the planner before the owner's browser pass. The rehearsal on a clone of `prod_snap` is the planner's; the executor never opens the snapshot.
+- **Rationale.** The stack is shared with the owner's parallel sessions. A migration that changes between review rounds leaves a checksum mismatch in `tdp` and `tdp_test`, and the only cure is a reset that wipes the owner's local data. The auto-mode classifier refused the executor's first attempt at a proofs script as a modification of a shared resource; the refusal was right about the risk.
+- **Mechanics.** Task targets take the port as a variable after the task name (`task stack:migrate TDP_DB_PORT=<port>`); the environment-prefix form does not override a Taskfile variable.
+- **Links.** D-14; `docs/runbooks/local-stack.md`; journal 2026-09-28 (plan gate).

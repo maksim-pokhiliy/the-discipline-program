@@ -73,8 +73,10 @@ both refuse to override a variable that is already exported, so a task can never
 Measured 2026-09-25 on the owner's WSL box: `task test:api` = 168 files / 1966 tests in 2 min 32 s.
 The same suite took about ten minutes against dev Neon.
 
-A port clash (`5432` already bound) is solved by `TDP_DB_PORT=5433 task stack:up`; pass the same
-value to `task stack:env` and every other `stack:*` task. The compose file reads it as well.
+A port clash (`5432` already bound) is solved by `task stack:up TDP_DB_PORT=5433`; pass the same
+value to `task stack:env` and every other `stack:*` task, and to `task test:api`. The variable goes
+AFTER the task name: a Taskfile variable outranks the environment, so `TDP_DB_PORT=5433 task …`
+silently keeps 5432 (verified 2026-09-28). The compose file receives the value from the task.
 
 ## Authoring a migration
 
@@ -163,7 +165,7 @@ server on 3001 needs a public HTTPS address. `cloudflared` (installed 2026-09-25
 
 ## Troubleshooting
 
-- **`docker compose up` fails to bind 5432** — something else owns the port; use `TDP_DB_PORT`.
+- **`docker compose up` fails to bind 5432** — something else owns the port; use `task stack:up TDP_DB_PORT=<port>`.
 - **Port 3002 answers a Django server** — that is another project's dev server on this box, not
   admin; run admin on a free port for the session: `pnpm --filter admin exec next dev --port 3012`.
 - **Image pull fails with `docker-credential-desktop.exe not found`** — Docker Desktop's credential
