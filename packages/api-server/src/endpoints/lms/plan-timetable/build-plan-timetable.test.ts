@@ -84,6 +84,7 @@ const makeEnrollment = (options: EnrollmentOptions): TimetableEnrollment => {
     status: EnrollmentStatus.ACTIVE,
     statusChangedAt: EPOCH,
     hidePastBeforeBoarding: options.hidePastBeforeBoarding ?? false,
+    subscriptionId: null,
     createdAt: EPOCH,
     updatedAt: EPOCH,
     deletedAt: null,

@@ -67,6 +67,7 @@ export const makeEnrollment = (input: EnrollmentInput): WindowedEnrollment => {
     status: input.status ?? EnrollmentStatus.ACTIVE,
     statusChangedAt: EPOCH,
     hidePastBeforeBoarding: false,
+    subscriptionId: null,
     createdAt: EPOCH,
     updatedAt: EPOCH,
     deletedAt: null,
