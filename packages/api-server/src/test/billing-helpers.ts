@@ -123,7 +123,7 @@ export const createTestProductPlan = async (
     },
   });
 
-export const createTestWebhookEvent = async (
+const createTestWebhookEvent = async (
   overrides: Partial<Prisma.BillingWebhookEventUncheckedCreateInput> = {},
 ): Promise<BillingWebhookEvent> =>
   cleanupRaw.billingWebhookEvent.create({
@@ -155,13 +155,14 @@ export const createTrackedBuyer = (ids: BillingFixtureIds): Promise<User> =>
 export const createTrackedProduct = (ids: BillingFixtureIds): Promise<Product> =>
   trackFixture(ids.productIds, createTestProduct());
 
-export const createTrackedPlanCreator = async (ids: BillingFixtureIds): Promise<User> => {
+const createPlanCreator = async (): Promise<User> => {
   const { user } = await createTestCoach();
-
-  ids.planCreatorIds.push(user.id);
 
   return user;
 };
+
+export const createTrackedPlanCreator = (ids: BillingFixtureIds): Promise<User> =>
+  trackFixture(ids.planCreatorIds, createPlanCreator());
 
 export const createTrackedPlan = (
   ids: BillingFixtureIds,

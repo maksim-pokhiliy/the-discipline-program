@@ -63,6 +63,51 @@ describe("app_subscriptions_userId_productId_key", () => {
 
     expect(buyerCount).toBe(2);
   });
+
+  it("accepts a second buyer on the same product", async () => {
+    const firstBuyer = await createTrackedBuyer(ids);
+    const secondBuyer = await createTrackedBuyer(ids);
+    const product = await createTrackedProduct(ids);
+
+    await createTestSubscription(firstBuyer.id, product.id);
+    await createTestSubscription(secondBuyer.id, product.id);
+
+    const productCount = await cleanupRaw.subscription.count({ where: { productId: product.id } });
+
+    expect(productCount).toBe(2);
+  });
+});
+
+describe("app_subscriptions_providerSubscriptionId_key", () => {
+  it("refuses a second subscription with the same provider subscription id", async () => {
+    const providerSubscriptionId = `test-provider-subscription-${crypto.randomUUID()}`;
+    const buyer = await createTrackedBuyer(ids);
+    const firstProduct = await createTrackedProduct(ids);
+    const secondProduct = await createTrackedProduct(ids);
+
+    await createTestSubscription(buyer.id, firstProduct.id, { providerSubscriptionId });
+
+    await expect(
+      createTestSubscription(buyer.id, secondProduct.id, { providerSubscriptionId }),
+    ).rejects.toMatchObject(UNIQUE_VIOLATION);
+
+    const idCount = await cleanupRaw.subscription.count({ where: { providerSubscriptionId } });
+
+    expect(idCount).toBe(1);
+  });
+
+  it("accepts any number of subscriptions without a provider subscription id", async () => {
+    const buyer = await createTrackedBuyer(ids);
+    const firstProduct = await createTrackedProduct(ids);
+    const secondProduct = await createTrackedProduct(ids);
+
+    await createTestSubscription(buyer.id, firstProduct.id, { providerSubscriptionId: null });
+    await createTestSubscription(buyer.id, secondProduct.id, { providerSubscriptionId: null });
+
+    const buyerCount = await cleanupRaw.subscription.count({ where: { userId: buyer.id } });
+
+    expect(buyerCount).toBe(2);
+  });
 });
 
 describe(PRICE_REQUIRED_CHECK, () => {
@@ -149,6 +194,36 @@ describe("app_transactions_provider_providerTxId_kind_key", () => {
       }),
     ).resolves.toMatchObject({ providerTxId: initial.providerTxId, kind: TransactionKind.REFUND });
   });
+
+  it("accepts the same provider transaction and kind under another provider", async () => {
+    const buyer = await createTrackedBuyer(ids);
+    const initial = await createTestTransaction(buyer.id, {
+      provider: BillingProvider.MONOBANK,
+      kind: TransactionKind.INITIAL,
+    });
+
+    await expect(
+      createTestTransaction(buyer.id, {
+        provider: BillingProvider.MANUAL,
+        providerTxId: initial.providerTxId,
+        kind: TransactionKind.INITIAL,
+      }),
+    ).resolves.toMatchObject({
+      provider: BillingProvider.MANUAL,
+      providerTxId: initial.providerTxId,
+    });
+  });
+
+  it("accepts two INITIALs of different provider transactions under one provider", async () => {
+    const buyer = await createTrackedBuyer(ids);
+
+    await createTestTransaction(buyer.id, { kind: TransactionKind.INITIAL });
+    await createTestTransaction(buyer.id, { kind: TransactionKind.INITIAL });
+
+    const buyerCount = await cleanupRaw.transaction.count({ where: { userId: buyer.id } });
+
+    expect(buyerCount).toBe(2);
+  });
 });
 
 describe("app_billing_webhook_events_provider_eventKey_key", () => {
@@ -178,6 +253,17 @@ describe("app_billing_webhook_events_provider_eventKey_key", () => {
         eventKey: event.eventKey,
       }),
     ).resolves.toMatchObject({ provider: BillingProvider.MANUAL, eventKey: event.eventKey });
+  });
+
+  it("accepts a second key under the same provider", async () => {
+    const first = await createTrackedWebhookEvent(ids, { provider: BillingProvider.MONOBANK });
+    const second = await createTrackedWebhookEvent(ids, { provider: BillingProvider.MONOBANK });
+
+    const keyCount = await cleanupRaw.billingWebhookEvent.count({
+      where: { id: { in: [first.id, second.id] } },
+    });
+
+    expect(keyCount).toBe(2);
   });
 });
 
@@ -210,6 +296,38 @@ describe("app_product_plans_productId_planId_key", () => {
     const bindingCount = await cleanupRaw.productPlan.count({ where: { planId: plan.id } });
 
     expect(bindingCount).toBe(2);
+  });
+
+  it("accepts two plans under one product", async () => {
+    const creator = await createTrackedPlanCreator(ids);
+    const firstPlan = await createTrackedPlan(ids, creator.id);
+    const secondPlan = await createTrackedPlan(ids, creator.id);
+    const product = await createTrackedProduct(ids);
+
+    await createTestProductPlan(product.id, firstPlan.id);
+    await createTestProductPlan(product.id, secondPlan.id);
+
+    const bindingCount = await cleanupRaw.productPlan.count({ where: { productId: product.id } });
+
+    expect(bindingCount).toBe(2);
+  });
+});
+
+describe("app_product_plans_planId_fkey", () => {
+  it("removes the bindings of a hard-deleted plan and keeps the product", async () => {
+    const creator = await createTrackedPlanCreator(ids);
+    const plan = await createTrackedPlan(ids, creator.id);
+    const product = await createTrackedProduct(ids);
+
+    await createTestProductPlan(product.id, plan.id);
+
+    await cleanupRaw.trainingPlan.delete({ where: { id: plan.id } });
+
+    const bindingCount = await cleanupRaw.productPlan.count({ where: { planId: plan.id } });
+    const productCount = await cleanupRaw.product.count({ where: { id: product.id } });
+
+    expect(bindingCount).toBe(0);
+    expect(productCount).toBe(1);
   });
 });
 
@@ -286,5 +404,37 @@ describe("app_subscriptions_productId_fkey", () => {
     const productCount = await cleanupRaw.product.count({ where: { id: product.id } });
 
     expect(productCount).toBe(0);
+  });
+});
+
+describe("app_subscriptions_priceId_fkey", () => {
+  it("refuses a hard delete of a price that a subscription references", async () => {
+    const buyer = await createTrackedBuyer(ids);
+    const product = await createTrackedProduct(ids);
+    const price = await createTestPrice(product.id);
+
+    await createTestSubscription(buyer.id, product.id, {
+      provider: BillingProvider.MONOBANK,
+      priceId: price.id,
+    });
+
+    await expect(cleanupRaw.price.delete({ where: { id: price.id } })).rejects.toMatchObject(
+      FOREIGN_KEY_VIOLATION,
+    );
+
+    const priceCount = await cleanupRaw.price.count({ where: { id: price.id } });
+
+    expect(priceCount).toBe(1);
+  });
+
+  it("hard-deletes a price without subscriptions", async () => {
+    const product = await createTrackedProduct(ids);
+    const price = await createTestPrice(product.id);
+
+    await cleanupRaw.price.delete({ where: { id: price.id } });
+
+    const priceCount = await cleanupRaw.price.count({ where: { id: price.id } });
+
+    expect(priceCount).toBe(0);
   });
 });
