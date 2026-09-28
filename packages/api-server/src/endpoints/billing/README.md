@@ -4,7 +4,7 @@ This directory is the Billing context's place in the endpoint layout of `docs/BO
 
 ## What is here today
 
-`billing-schema.invariants.test.ts` proves the W0 constraints against a real database, each with the refused case and its legal neighbour: `(userId, productId)` on subscriptions, the two CHECKs (a price for every provider except `MANUAL`, a period of 1 to 365 units), `(provider, providerTxId, kind)` on transactions, `(provider, eventKey)` on webhook events, `(productId, planId)` on plan bindings, an enrollment keeping its row when its subscription is deleted, and the `Restrict` from a subscription to its product. The fixtures live in `src/test/billing-helpers.ts`.
+`billing-schema.invariants.test.ts` proves the W0 constraints against a real database, each with the refused case and a legal neighbour for every column of a composite key: `(userId, productId)` and `providerSubscriptionId` on subscriptions, the two CHECKs (a price for every provider except `MANUAL`, a period of 1 to 365 units), `(provider, providerTxId, kind)` on transactions, `(provider, eventKey)` on webhook events, `(productId, planId)` on plan bindings and their cascade from a deleted plan, an enrollment keeping its row when its subscription is deleted, and the `Restrict` from a subscription to its product and to its price. The fixtures live in `src/test/billing-helpers.ts`.
 
 The product price is the only billing shape with a live consumer, and the admin product form still writes it through `endpoints/cms/product/admin.ts` until the billing admin of step 3.1.
 
@@ -29,11 +29,11 @@ Step numbers follow `initiatives/storefront-billing/plan.md`. Route handlers sta
 - **1.3, renewals, grace and reconciliation.** Charge the stored card when a period ends, move a failed renewal to `PAST_DUE` and an expired grace to `EXPIRED`, and repair a missed webhook from the provider's status.
 - **3.1 and 3.2, admin and coach.** Plan bindings, prices, the user billing panel and `MANUAL` grants; the payment state the coach roster reads through a billing-owned endpoint.
 
-The access gate is not here. `resolveEnrollmentAccess` goes to `src/authz/` in step 1.1 and is the only reader of subscription state outside Billing; LMS, Coaching and the mobile-compat shim stay Billing-blind (`.dependency-cruiser.cjs`).
+The access gate is not here. `resolveEnrollmentAccess` goes to `src/authz/` in step 1.1 and is the only reader of subscription state outside Billing; LMS, Coaching and the mobile-compat shim stay Billing-blind by convention (D-7): `.dependency-cruiser.cjs` stops them importing Billing code, but nothing stops a Prisma read of `PlanEnrollment.subscriptionId`, so reviews hold that line.
 
 ## Rules for the code that lands here
 
-- `Subscription.cardToken` never leaves the server and is never logged: no mapper copies it into a contract, no response carries it, and no log line or error message prints it. It is stored as plain text because it only works together with our merchant token.
+- `Subscription.cardToken` never enters a contract, a mapper or an API response. It can appear in the text of a database error, because Postgres prints the failing row when a constraint refuses it, and from there in logs. It is stored as plain text for now, because it only works together with our merchant token; how it is protected at rest and in logs is decided at step 0.5.
 - The wallet id sent to Monobank is the platform `userId`; there is no wallet column.
 - The admin product delete is a soft delete (`src/db/client.ts`), so it never meets the `Restrict` from `Subscription.productId`. Step 3.1 decides what deleting a product with subscriptions means.
 - Every mutation takes an `Idempotency-Key` through the route factories (ADR 0036), and money stays integer cents.

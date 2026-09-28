@@ -27,9 +27,13 @@ The project already has a de-facto domain boundary — `schema.prisma` groups mo
       │         │  │        │  │dashb.) │  │         │
       └────┬────┘  └───┬────┘  └───┬────┘  └────┬────┘
            │           ▲           │            │
-           │           │           │            │
-           │           └───────────┘            │
-           │     Coaching reads LMS state       │
+           │           ├───────────┘            │
+           │           │ Coaching reads LMS     │
+           │           │ state                  │
+           │           │                        │
+           │           └────────────────────────┤
+           │      Billing binds products to     │
+           │      plans and links enrollments   │
            │                                    │
            └────────► Product is a shared  ◄────┘
                        entity with two
@@ -245,7 +249,7 @@ The rest of this document describes each context in detail: what it owns, which 
 - **One subscription per user and product.** `@@unique([userId, productId])` (D-2). Buying the same product again reuses the row: the status moves in place and `Transaction` rows keep the history.
 - **A price unless the provider is `MANUAL`.** CHECK `app_subscriptions_price_required_check`: `"provider" = 'MANUAL' OR "priceId" IS NOT NULL` (D-17).
 - **A period is 1 to 365 units long.** CHECK `app_prices_period_count_check`: `"periodCount" BETWEEN 1 AND 365`, the same bounds as `PERIOD_CONSTANTS` in the contract.
-- **Price defaults have one source.** The column defaults (`UAH`, 4 weeks, auto-renew offered) equal `PRODUCT_PRICE_DEFAULTS` in `@repo/contracts/cms/product`, and a test in `endpoints/cms/product/admin.test.ts` keeps them equal.
+- **Price defaults have one source.** The column defaults (`UAH`, 4 weeks, auto-renew offered) equal `PRODUCT_PRICE_DEFAULTS` in `@repo/contracts/cms/product`; a test in `endpoints/cms/product/admin.test.ts` inserts a price the database fills itself and compares it with the constant. Only a create falls back to the defaults: an update must send all five price terms, so it can never reset a stored currency or period.
 - **One transaction per provider transaction and kind.** `@@unique([provider, providerTxId, kind])`: a Monobank refund lives on the invoice id of the payment it reverses (D-17).
 - **Idempotency key is unique.** `Transaction.idempotencyKey @unique` and `NOT NULL`.
 - **One webhook event per provider and event key.** `BillingWebhookEvent` `@@unique([provider, eventKey])`.
@@ -253,7 +257,7 @@ The rest of this document describes each context in detail: what it owns, which 
 - **Our own subscription id.** `Subscription.id` is a cuid; the provider's subscription id, when there is one, lives in `providerSubscriptionId @unique`.
 - **Billing history pins the catalog.** `Subscription.productId` and `Subscription.priceId` are `ON DELETE RESTRICT`, so a product or a price with subscriptions cannot be hard-deleted. The admin product delete is a soft delete and never reaches this constraint.
 - **Deleting a subscription never deletes an enrollment.** `PlanEnrollment.subscriptionId` is `ON DELETE SET NULL`, indexed but not unique: one subscription feeds every enrollment its product creates.
-- **The card token stays on the server.** `Subscription.cardToken` is plain text: it is a bearer scoped to our merchant token, and encrypting it with a sibling environment key would add no boundary (D-17). It never leaves the server: no contract carries it and no log line prints it. There is no wallet column either, because the wallet id sent to Monobank is the platform `userId`.
+- **The card token stays on the server.** `Subscription.cardToken` is plain text: it is a bearer scoped to our merchant token, and encrypting it with a sibling environment key would add no boundary (D-17). It never enters a contract, a mapper or an API response. It can appear in the text of a database error, because Postgres prints the failing row when a constraint refuses it, and from there in logs; how the token is protected at rest and in logs is decided at step 0.5. There is no wallet column either, because the wallet id sent to Monobank is the platform `userId`.
 - **Money is integer.** All monetary amounts are `Int` in cents/kopeks.
 
 ### Where it lives today
@@ -416,5 +420,4 @@ Every cross-context interaction is currently a read, apart from the product form
 - `docs/adr/0010-bff-via-http-loopback-for-rsc.md` — the reason context-to-context reads go over HTTP today.
 - `docs/adr/0044-monobank-provider-and-subscription-per-product.md` — the Billing model §5 describes: Monobank behind a payment port, a subscription per product, products bound to training plans.
 - `initiatives/storefront-billing/decisions.md` — the storefront-billing decisions (D-2 to D-18) cited from §3 on.
-- `CLAUDE.md` section "Global Invariants" — the codified system laws referenced throughout §8.
 - `packages/api-server/prisma/schema.prisma` — the physical data reality every context projects from.
