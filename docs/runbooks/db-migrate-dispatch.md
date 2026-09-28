@@ -29,9 +29,11 @@ CONTRACT, which runs once the expand is live (see the last section).
 
 - No `BEGIN` and no `COMMIT` anywhere in the file; Prisma applies it atomically by itself
   (`local-stack.md`, "Authoring a migration").
-- The first statement is `SET LOCAL lock_timeout = '5s';`. A migration that cannot get its locks
-  then fails fast and atomically instead of queueing every read of the table behind itself.
-  Probed 2026-09-28: a blocked apply returned in under 3 s with `55P03`, left nothing behind, and
+- The first statement is `SET LOCAL lock_timeout = '5s';`. It bounds every single lock wait of the
+  migration to five seconds. A migration that cannot get a lock gives up after that wait with
+  `55P03` and leaves nothing behind. While it waits, reads of that table queue behind it, for at
+  most the same five seconds per wait; the timeout bounds each wait, not their sum. Measured
+  2026-09-28 on the W0 file: a blocked apply failed after 5.9 s, the schema was unchanged, and it
   applied cleanly after `migrate resolve --rolled-back`.
 - A guard that refuses data the conversion was not written for comes right after it.
 
@@ -93,17 +95,27 @@ Then merge. The workflow run the merge triggers finds nothing to apply.
   automated migration: `DATABASE_URL=<dev direct url> pnpm db:deploy`.
 - The catalog freeze ends.
 
-A code rollback after an expand is safe for reads: the old code finds every column it knows. Rows
-the new code has written since carry defaults in the old columns, so check what the old code
-would show for them before rolling back.
+A code rollback after an expand is safe for reads: the old code finds every column it knows. It is
+not safe for writes. The old code knows nothing of the new columns, so whatever it writes lands
+beside their defaults, exactly as in the window before the merge. A rollback therefore freezes the
+catalog again until the roll-forward, and the consistency check is repeated after it. Rows the new
+code has written since carry defaults in the old columns, so check what the old code would show
+for them before rolling back.
 
 ## The contract step
 
 Dropping what the expand left behind is a separate PR with its own migration. Before it:
 
 - the expand is live and its browser checklist passed on production;
-- no deployment that still reads the old columns is serving;
+- no deployment that still reads the old columns is serving. A field that is merely unused is
+  still read: Prisma names every declared column in its default selection and writes static
+  defaults itself. The expand PR therefore marks the fields that will go with `@ignore`, which
+  takes them out of the generated client without a migration, and proves it by running the tests
+  of every reader against a database where the columns are already dropped;
 - the old columns hold nothing the new ones do not explain. The step names the query.
+
+The contract PR removes the fields from `schema.prisma` and drops the columns, and its migration
+is dispatched before its merge like any other.
 
 ## storefront-billing 0.3 (W0 expand) and 0.3b (W0 contract)
 
