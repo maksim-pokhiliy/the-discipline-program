@@ -63,20 +63,61 @@ the hash on every run.
 | `task stack:reset`   | drops the volume and rebuilds everything from the migration history     |
 | `task stack:psql`    | psql on `tdp`                                                           |
 | `task stack:logs`    | tails Postgres                                                          |
-| `task test:api`      | the api-server suite against `tdp_test`                                 |
+| `task test:api`      | the api-server suite against `tdp_test` (serial, about 2.5 min)         |
+| `task test`          | the whole root suite; passes `tdp_test` to the api-server files as well |
 
 Every task passes `DATABASE_URL` on the command line. Prisma's dotenv and `process.loadEnvFile`
 both refuse to override a variable that is already exported, so a task can never drift to whatever
 `.env` holds — the `Environment variables loaded from .env` notice Prisma prints is informational.
 `packages/api-server/.env.test` is read by nothing.
 
-Measured 2026-09-25 on the owner's WSL box: `task test:api` = 168 files / 1966 tests in 2 min 32 s.
-The same suite took about ten minutes against dev Neon.
+Measured 2026-09-29 on the owner's WSL box: `task test:api` = 173 files / 2090 tests in about 2 min 30 s
+(2 min 08 s before the residue guard of SB-20). The same suite took about ten minutes against dev Neon.
 
 A port clash (`5432` already bound) is solved by `task stack:up TDP_DB_PORT=5433`; pass the same
 value to `task stack:env` and every other `stack:*` task, and to `task test:api`. The variable goes
 AFTER the task name: a Taskfile variable outranks the environment, so `TDP_DB_PORT=5433 task …`
 silently keeps 5432 (verified 2026-09-28). The compose file receives the value from the task.
+
+## Writing an api-server test
+
+The suite runs one file at a time, each in its own process, against the database `DATABASE_URL`
+names. Since SB-20 (storefront-billing, PR #404, 2026-09-29) it passes twice on one database and in
+any file order, and after a run every table holds what it held before. `src/test/setup.ts` keeps it
+that way; these are the rules it enforces.
+
+- **The target must be a test database.** The setup refuses to run unless `DATABASE_URL` uses the
+  postgres scheme, carries no `host` parameter, names a loopback host, exactly one path segment and
+  a database called `test` or ending in `_test`; the refusal says what to run instead and prints no
+  part of the URL. `task test:api`, `task test`, `task test:watch` and `task test:coverage` pass
+  `tdp_test`; a bare `pnpm test` or `pnpm --filter @repo/api-server test` takes the URL of
+  `packages/api-server/.env`, which is the dev database, and is refused before a single statement
+  reaches it.
+- **A file leaves no rows behind.** The setup counts the rows of every table of the client's
+  schema before the file is collected and again after its last hook, and fails the file that grew
+  a table; the message names the table with both counts. Rows written at module scope or in a
+  `describe` body count. A shrink does not fail the file, so a test may remove rows it did not
+  create. Cleanups returned from a `beforeAll` and file-scoped fixtures run before the count. The
+  guard does not run for a file whose every test is skipped (SB-33).
+- **`cleanup(...)` deletes in reverse argument order.** List a parent before its children (the
+  user, then its plans), so that the child goes first. The helper logs a refused delete and goes
+  on; the census then names the table.
+- **The two marketing page tables** (`marketing_pages`, `marketing_page_sections`) belong to the
+  protocol of `src/endpoints/cms/pages/__fixtures__/marketing-pages-state.ts`: capture in
+  `beforeAll`, clear, seed through `seedSectionsWithOverrides`, restore the capture in `afterAll`.
+  The restore rewrites every column and verifies itself.
+- **One user holds the head-coach role.** A test that needs a head coach calls
+  `takeHeadCoachSlot()` before it creates one and `releaseHeadCoachSlotAfter(slot, teardown)` for
+  its teardown, demoting its own head coach first inside the teardown. The setup also fails a file
+  after which the holders of the slot (id and `updatedAt`) differ from before.
+- **One run per database at a time.** Two concurrent runs corrupt each other's captures and fight
+  over the head-coach slot (SB-30).
+- **Every file opens the database**, the pure unit files included: the stack must be up, and the
+  baseline costs about 0.12 s per file. A locked table fails the file at import after 5 s.
+- **An interrupted run skips every teardown** (vitest runs no `afterAll` on Ctrl-C). A run
+  interrupted inside a cms file leaves the two marketing page tables cleared; `tdp_test` holds
+  nothing of value, so recreate it: `dropdb`, `createdb`, `task stack:migrate` (with
+  `TDP_DB_PORT=<port>` after the task name for another port).
 
 ## Authoring a migration
 
@@ -177,3 +218,6 @@ server on 3001 needs a public HTTPS address. `cloudflared` (installed 2026-09-25
   the one that keeps data.
 - **A dev server still talks to Neon after the env change** — Next reads `.env.local` at boot;
   restart it.
+- **`refusing to run the api-server tests: DATABASE_URL …`** — the suite accepts a test database
+  only; run `task test:api` or `task test`, or export a `DATABASE_URL` that names a loopback host,
+  one path segment and a database called `test` or ending in `_test`.
