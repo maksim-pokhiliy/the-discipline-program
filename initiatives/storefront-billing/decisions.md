@@ -29,6 +29,7 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 | D-17 | No `walletId` column, plain `cardToken`, nullable `priceId` with a CHECK for non-MANUAL         | RATIFIED |
 | D-18 | W0 ships as expand (0.3) then contract (0.3b); production apply is dispatched before merge      | RATIFIED |
 | D-19 | While a migration is authored, the executor's databases live in a throwaway container           | RATIFIED |
+| D-20 | `cardToken`: ciphertext under its own key, redacted from the ledger, never in stored error text | RATIFIED |
 
 ---
 
@@ -174,3 +175,11 @@ cross-initiative architecture calls go to `docs/adr/` (ADR-0044 is this initiati
 - **Rationale.** The stack is shared with the owner's parallel sessions. A migration that changes between review rounds leaves a checksum mismatch in `tdp` and `tdp_test`, and the only cure is a reset that wipes the owner's local data. The auto-mode classifier refused the executor's first attempt at a proofs script as a modification of a shared resource; the refusal was right about the risk.
 - **Mechanics.** Task targets take the port as a variable after the task name (`task stack:migrate TDP_DB_PORT=<port>`); the environment-prefix form does not override a Taskfile variable.
 - **Links.** D-14; `docs/runbooks/local-stack.md`; journal 2026-09-28 (plan gate).
+
+### D-20 — `cardToken`: ciphertext under its own key, redacted from the ledger, never in stored error text
+
+- **Status:** RATIFIED (owner 2026-09-29, contour of step 0.5 — «ок по всем рекомендациям»); amends D-17, closes the question SB-19 reopened.
+- **Decision.** `Subscription.cardToken` stores AES-256-GCM ciphertext produced by the token cipher keyed by `BILLING_ENCRYPTION_KEY` — a key of its own, never `MOBILE_PUBLISH_ENCRYPTION_KEY`; the token is decrypted only in the process that charges or forgets the card. The webhook ledger stores the body with `walletData.cardToken` replaced by a fixed marker, and only after the signature was verified on the raw bytes: the stored copy is for audit, never for re-verification, and a replayed ledger event never writes `cardToken`. `BillingWebhookEvent.error` and every log line carry our own message and codes, never the text of a Prisma or Postgres error. The column stays `String?`. Step 0.5 lays the key, the generalized cipher and the billing instance; step 1.2 applies the redaction and the error rule at the ledger write.
+- **Rationale.** D-17's argument stands: the token is a bearer scoped to our merchant token, so the stored value alone charges nothing. What D-17 missed is the log path (0.3 review RF-4b): Postgres prints the failing row in the detail of a constraint violation, that text reaches Prisma's message, Sentry and the Vercel logs, and a dump or a local restore (`prod_snap`) carries the column too. With ciphertext in the column every one of those surfaces carries a value that is useless without a second secret from a different store; the redaction covers the raw webhook body the ledger keeps, and the error rule covers the one place the row text could still be written on purpose. The cost is one environment variable and a call on write and on read.
+- **Consequences.** `BILLING_ENCRYPTION_KEY` in the platform Vercel project and in the local env files before 1.1 (SB-39); no key rotation story, as for the mobile-publish key — a change of key re-encrypts every stored token by a script. `walletData.maskedPan` is not a secret and may be stored.
+- **Links.** D-17; deferred SB-19, SB-39; `step-0.5-prompt.md`; `packages/api-server/src/endpoints/billing/README.md`.
