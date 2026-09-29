@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
-import { encrypt } from "../../../utils/token-cipher";
 
 import { createAthletesApi } from "./athletes";
+import { encryptLegacyToken } from "./legacy-token-cipher";
 
 const RAW_TOKEN = "raw-legacy-access-token-value";
 const COACH_PROFILE_ID = "clcoach000000000000000000";
@@ -48,7 +48,7 @@ describe("createAthletesApi.listIndividualAthletes", () => {
     mocks.findUniqueMock.mockReset();
     mocks.resolveCoachIdMock.mockReset();
     mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
-    mocks.findUniqueMock.mockResolvedValue({ encryptedToken: encrypt(RAW_TOKEN) });
+    mocks.findUniqueMock.mockResolvedValue({ encryptedToken: encryptLegacyToken(RAW_TOKEN) });
   });
 
   it("decrypts the stored token and returns the legacy athletes for a connected coach", async () => {

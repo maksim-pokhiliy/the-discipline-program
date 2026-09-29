@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
-import { decrypt } from "../../../utils/token-cipher";
 
 import { createConnectionsApi } from "./connections";
+import { decryptLegacyToken } from "./legacy-token-cipher";
 
 const RAW_TOKEN = "raw-legacy-access-token-value";
 const COACH_PROFILE_ID = "clcoach000000000000000000";
@@ -76,7 +76,7 @@ describe("createConnectionsApi.connect", () => {
 
     expect(persisted).not.toBe(RAW_TOKEN);
     expect(persisted).not.toContain(RAW_TOKEN);
-    expect(decrypt(persisted)).toBe(RAW_TOKEN);
+    expect(decryptLegacyToken(persisted)).toBe(RAW_TOKEN);
   });
 
   it("returns a DTO with no token field (G2 security invariant)", async () => {

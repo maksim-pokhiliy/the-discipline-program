@@ -9,8 +9,8 @@ import { prisma } from "../../../db/client";
 import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
 import { mapToMobileConnection } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
-import { encrypt } from "../../../utils/token-cipher";
 
+import { encryptLegacyToken } from "./legacy-token-cipher";
 import { deriveTokenExpiry } from "./token-expiry";
 
 export type ConnectionsApi = {
@@ -22,7 +22,7 @@ export const createConnectionsApi = (legacyClient: LegacyMobileClientPort): Conn
   connect: async (userId, data) => {
     const coachProfileId = await resolveCoachId(userId);
     const signin = await legacyClient.signin(data.email, data.password);
-    const encryptedToken = encrypt(signin.accessToken);
+    const encryptedToken = encryptLegacyToken(signin.accessToken);
     const expiresAt = deriveTokenExpiry(signin.accessToken, new Date());
 
     const connectionData = {
