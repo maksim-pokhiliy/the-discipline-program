@@ -15,8 +15,9 @@ import {} from /* coaching entities */ "@repo/contracts/coaching/coach-profile";
 
 Subpath taxonomy:
 
-- `common` — shared primitives (pagination cursor, ID brand, error response shape).
+- `common` — shared primitives (the API error response shape, id params, image URLs, money, time zones) and the value objects CMS and Billing share: `Currency` and the period (`PeriodUnit`, `periodSchema`, `formatPeriod`).
 - `cms/<entity>` — CMS context: `blog`, `contact`, `dashboard`, `pages`, `product`, `review`.
+- `billing/<entity>` — billing context: `subscription`, `transaction`, `product-plan`.
 - `lms/<entity>` — LMS context: `block`, `plan-enrollment`, `session`, `training-plan`, `week`, `one-rm-record`, `performed-session`, `benchmark-result`, `plan-timetable` (athlete-facing read projection). Shared primitives (e.g. `dayOfWeekSchema`, `intensitySchema`, `timeCapSchema`, `resultSchema`) live under `lms/_shared`.
 - `coaching/<entity>` — coaching context: profiles, athletes lists, invites, notes, dashboards.
 - `iam/<entity>` — identity + role contracts.
