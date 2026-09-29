@@ -52,14 +52,14 @@ describe("coachingCoachNoteApi", () => {
     await cleanup(
       { table: "coachAthleteAssignment", id: assignmentAId },
       { table: "coachAthleteAssignment", id: assignmentBId },
-      { table: "trainingPlan", id: planA.id },
-      { table: "trainingPlan", id: planB.id },
       { table: "coachProfile", id: coachA.profile.id },
       { table: "coachProfile", id: coachB.profile.id },
       { table: "user", id: coachA.user.id },
       { table: "user", id: coachB.user.id },
       { table: "user", id: athlete.id },
       { table: "user", id: unrelatedUser.id },
+      { table: "trainingPlan", id: planA.id },
+      { table: "trainingPlan", id: planB.id },
     );
   });
 

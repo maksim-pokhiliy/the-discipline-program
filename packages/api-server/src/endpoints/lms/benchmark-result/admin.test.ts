@@ -54,10 +54,10 @@ const addBenchmarkSchemaWithRow = async (
     schemaId: schema.id,
     exerciseId: exercise.id,
     toCleanup: [
+      { table: "exercise", id: exercise.id },
       { table: "schemaRow", id: row.id },
       { table: "schema", id: schema.id },
       { table: "block", id: block.id },
-      { table: "exercise", id: exercise.id },
     ],
   };
 };
@@ -292,7 +292,7 @@ describe("lmsBenchmarkResultApi.logBenchmarkResult", () => {
             where: { userId: scenario.athlete.id, exerciseId: loadBenchmark.exerciseId },
           })
           .catch(() => {});
-        await cleanup(...percentage.toCleanup, ...loadBenchmark.toCleanup);
+        await cleanup(...loadBenchmark.toCleanup, ...percentage.toCleanup);
       }
     });
   });

@@ -106,6 +106,8 @@ describe("cmsContactAdminApi", () => {
     it("deletes a submission", async () => {
       const submission = await createTestContactSubmission();
 
+      toCleanup.push({ table: "marketingContactSubmission", id: submission.id });
+
       await cmsContactAdminApi.deleteContact(submission.id);
 
       await expect(cmsContactAdminApi.getContactById(submission.id)).rejects.toThrow(NotFoundError);

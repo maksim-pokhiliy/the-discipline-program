@@ -68,9 +68,6 @@ describe("platform guards", () => {
 
   afterAll(async () => {
     await cleanup(
-      { table: "coachAthleteAssignment", id: assignmentId },
-      { table: "trainingPlan", id: plan.id },
-      { table: "trainingPlan", id: otherPlan.id },
       { table: "coachProfile", id: coach.profile.id },
       { table: "coachProfile", id: otherCoach.profile.id },
       { table: "user", id: coach.user.id },
@@ -79,6 +76,9 @@ describe("platform guards", () => {
       { table: "user", id: athleteUser.id },
       { table: "user", id: nonAssignedUser.id },
       { table: "user", id: headCoachUser.id },
+      { table: "coachAthleteAssignment", id: assignmentId },
+      { table: "trainingPlan", id: plan.id },
+      { table: "trainingPlan", id: otherPlan.id },
     );
   });
 
