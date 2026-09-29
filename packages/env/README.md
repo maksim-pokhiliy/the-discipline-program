@@ -12,6 +12,9 @@ import "@repo/env/email"; // Resend / email-provider keys
 import "@repo/env/rate-limit"; // UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
 import "@repo/env/sentry"; // NEXT_PUBLIC_SENTRY_DSN, SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
 import "@repo/env/mobile-publish"; // MOBILE_PUBLISH_ENCRYPTION_KEY, LEGACY_MOBILE_API_BASE_URL
+import "@repo/env/mobile-shim"; // MOBILE_SHIM_JWT_SECRET
+import "@repo/env/monobank"; // MONOBANK_API_URL, MONOBANK_MERCHANT_TOKEN, MONOBANK_WEBHOOK_PUBLIC_KEY
+import "@repo/env/billing"; // BILLING_ENCRYPTION_KEY
 ```
 
 Side-effect imports validate at module load. The `base` validator additionally re-exports `baseEnv` for code that needs typed access (`import { baseEnv } from "@repo/env/base"`).
@@ -27,6 +30,9 @@ src/
   rate-limit.ts  Upstash Redis — apps that gate writes
   sentry.ts      Sentry DSN + build-time tokens
   mobile-publish.ts  Legacy mobile connector — encryption key + legacy API base URL (platform)
+  mobile-shim.ts     Mobile compat shim — JWT secret for the iOS bearer token (platform)
+  monobank.ts    Monobank acquiring — API URL, merchant token, optional pinned webhook key (platform, read from 1.1)
+  billing.ts     Card-token cipher key (platform, read from 1.1)
 ```
 
 ## Conventions
