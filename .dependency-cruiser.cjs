@@ -201,6 +201,18 @@ module.exports = {
     },
 
     {
+      name: "api-server-payment-vendor-is-private",
+      severity: "error",
+      comment:
+        "ADR-0044 / storefront-billing D-1: exactly one adapter speaks Monobank. The " +
+        "infrastructure/payment/monobank-* files (transport, wire schemas, signature, adapter) " +
+        "are private to infrastructure/payment/; consumers import the port types and " +
+        "defaultPayment from the directory's index.ts.",
+      from: { pathNot: "^packages/api-server/src/infrastructure/payment/" },
+      to: { path: "^packages/api-server/src/infrastructure/payment/monobank" },
+    },
+
+    {
       name: "api-server-test-helpers-only-from-tests",
       severity: "error",
       comment:
