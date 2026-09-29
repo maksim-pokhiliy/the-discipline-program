@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import { UserRole } from "@repo/contracts/iam/auth";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
-import { releaseHeadCoachSlot, takeHeadCoachSlot } from "../../../test/head-coach-slot";
+import { releaseHeadCoachSlotAfter, takeHeadCoachSlot } from "../../../test/head-coach-slot";
 import { cleanupRaw, createTestUser } from "../../../test/helpers";
 
 import { cmsLeadInboundApi } from "./lead-inbound";
@@ -58,10 +58,15 @@ describe("cmsLeadInboundApi.createLead", () => {
   it("invokes the head-coach notify with the lead context", async () => {
     sendSpy.mockClear();
 
+    const headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
     const headCoachSlot = await takeHeadCoachSlot();
-    const headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
     try {
+      await cleanupRaw.user.update({
+        where: { id: headCoach.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      });
+
       const item = await cmsLeadInboundApi.createLead({
         contact: "tg:@notify",
         program: "strength-base",
@@ -73,8 +78,9 @@ describe("cmsLeadInboundApi.createLead", () => {
         expect.objectContaining({ program: "strength-base", contact: expect.any(String) }),
       );
     } finally {
-      await cleanupRaw.user.delete({ where: { id: headCoach.id } }).catch(() => {});
-      await releaseHeadCoachSlot(headCoachSlot);
+      await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+        await cleanupRaw.user.delete({ where: { id: headCoach.id } }).catch(() => {});
+      });
     }
   });
 

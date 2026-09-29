@@ -1,28 +1,33 @@
-import { afterAll, beforeAll, expect } from "vitest";
+import { aroundAll, expect } from "vitest";
+
+import { baseEnv } from "@repo/env/base";
 
 import { prisma } from "../db/client";
 
-import { findHeadCoachIds } from "./head-coach-slot";
-import { describeGrownTables, takeTableCensus, type TableCensus } from "./table-census";
+import { findHeadCoachHolders } from "./head-coach-slot";
+import { findTablesGrownSince, takeTableCensus } from "./table-census";
+import { assertTestDatabaseTarget } from "./test-database-target";
 
-let censusBeforeFile: TableCensus;
-let headCoachesBeforeFile: string[];
+assertTestDatabaseTarget(baseEnv.DATABASE_URL);
+assertTestDatabaseTarget(process.env.DATABASE_URL);
 
-beforeAll(async () => {
-  censusBeforeFile = await takeTableCensus();
-  headCoachesBeforeFile = await findHeadCoachIds();
-});
+const censusBeforeFile = await takeTableCensus();
+const headCoachHoldersBeforeFile = await findHeadCoachHolders();
 
-afterAll(async () => {
+aroundAll(async (runSuite) => {
   try {
-    expect(
-      describeGrownTables(censusBeforeFile, await takeTableCensus()),
-      "tables that hold more rows after this test file than before it",
-    ).toEqual([]);
-    expect(await findHeadCoachIds(), "the head-coach slot changed hands in this test file").toEqual(
-      headCoachesBeforeFile,
-    );
+    await runSuite();
   } finally {
-    await prisma.$disconnect();
+    try {
+      expect(
+        {
+          grownTables: await findTablesGrownSince(censusBeforeFile),
+          headCoachHolders: await findHeadCoachHolders(),
+        },
+        "the rows this test file left behind and the head-coach holders (id and updatedAt) it changed",
+      ).toEqual({ grownTables: [], headCoachHolders: headCoachHoldersBeforeFile });
+    } finally {
+      await prisma.$disconnect();
+    }
   }
 });

@@ -1,5 +1,5 @@
 import {
-  releaseHeadCoachSlot,
+  releaseHeadCoachSlotAfter,
   takeHeadCoachSlot,
   type HeadCoachSlot,
 } from "../../../test/head-coach-slot";
@@ -52,33 +52,44 @@ export const setupCloneSuite = async (): Promise<CloneSuiteContext> => {
   const headCoach = await createTestCoach();
   const headCoachSlot = await takeHeadCoachSlot();
 
-  await cleanupRaw.user.update({ where: { id: headCoach.user.id }, data: { role: "HEAD_COACH" } });
+  try {
+    await cleanupRaw.user.update({
+      where: { id: headCoach.user.id },
+      data: { role: "HEAD_COACH" },
+    });
 
-  const activePlan = await createTestPlan(owner.user.id, { status: "ACTIVE" });
-  const archivedPlan = await createTestPlan(owner.user.id, { status: "ARCHIVED" });
-  const exercise = await createTestExercise();
+    const activePlan = await createTestPlan(owner.user.id, { status: "ACTIVE" });
+    const archivedPlan = await createTestPlan(owner.user.id, { status: "ARCHIVED" });
+    const exercise = await createTestExercise();
 
-  const catalog: CloneFixtureCatalog = {
-    exerciseId: exercise.id,
-    modifierAId: await createModifier("Clone Modifier A"),
-    modifierBId: await createModifier("Clone Modifier B"),
-    dayLabelId: await createLabel("Clone Day Label", ["DAY"]),
-    sessionLabelId: await createLabel("Clone Session Label", ["SESSION"]),
-    blockLabelId: await createLabel("Clone Block Label", ["BLOCK"]),
-  };
+    const catalog: CloneFixtureCatalog = {
+      exerciseId: exercise.id,
+      modifierAId: await createModifier("Clone Modifier A"),
+      modifierBId: await createModifier("Clone Modifier B"),
+      dayLabelId: await createLabel("Clone Day Label", ["DAY"]),
+      sessionLabelId: await createLabel("Clone Session Label", ["SESSION"]),
+      blockLabelId: await createLabel("Clone Block Label", ["BLOCK"]),
+    };
 
-  return {
-    owner,
-    otherCoach,
-    headCoach,
-    headCoachSlot,
-    activePlanId: activePlan.id,
-    archivedPlanId: archivedPlan.id,
-    catalog,
-  };
+    return {
+      owner,
+      otherCoach,
+      headCoach,
+      headCoachSlot,
+      activePlanId: activePlan.id,
+      archivedPlanId: archivedPlan.id,
+      catalog,
+    };
+  } catch (error) {
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({ where: { id: headCoach.user.id }, data: { role: "COACH" } });
+    });
+
+    throw error;
+  }
 };
 
-export const teardownCloneSuite = async (context: CloneSuiteContext): Promise<void> => {
+const deleteCloneSuiteRows = async (context: CloneSuiteContext): Promise<void> => {
   const planIds = [context.activePlanId, context.archivedPlanId];
   const scope = { schema: { block: { session: { day: { week: { planId: { in: planIds } } } } } } };
 
@@ -145,6 +156,12 @@ export const teardownCloneSuite = async (context: CloneSuiteContext): Promise<vo
       },
     })
     .catch(() => {});
+};
 
-  await releaseHeadCoachSlot(context.headCoachSlot);
+export const teardownCloneSuite = async (context: CloneSuiteContext | undefined): Promise<void> => {
+  if (context === undefined) {
+    return;
+  }
+
+  await releaseHeadCoachSlotAfter(context.headCoachSlot, () => deleteCloneSuiteRows(context));
 };

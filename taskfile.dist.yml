@@ -58,7 +58,7 @@ tasks:
   test:
     desc: "Run unit/integration tests (Vitest)"
     cmds:
-      - pnpm test
+      - DATABASE_URL={{.TDP_TEST_DB_URL}} pnpm test
 
   test:watch:
     desc: "Run unit/integration tests in watch mode"

@@ -5,7 +5,7 @@ import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import {
-  releaseHeadCoachSlot,
+  releaseHeadCoachSlotAfter,
   takeHeadCoachSlot,
   type HeadCoachSlot,
 } from "../../test/head-coach-slot";
@@ -19,7 +19,7 @@ describe("iamUserAdminApi — actor must be ADMIN for role-mutation paths", () =
   let athleteActor: Awaited<ReturnType<typeof createTestUser>>;
   let targetUser: Awaited<ReturnType<typeof createTestUser>>;
   let targetAdmin: Awaited<ReturnType<typeof createTestUser>>;
-  let headCoachSlot: HeadCoachSlot;
+  let headCoachSlot: HeadCoachSlot | undefined;
 
   beforeAll(async () => {
     headCoachSlot = await takeHeadCoachSlot();
@@ -32,15 +32,19 @@ describe("iamUserAdminApi — actor must be ADMIN for role-mutation paths", () =
   });
 
   afterAll(async () => {
-    await cleanup(
-      { table: "user", id: headCoachActor.id },
-      { table: "user", id: coachActor.id },
-      { table: "user", id: athleteActor.id },
-      { table: "user", id: targetUser.id },
-      { table: "user", id: targetAdmin.id },
-    );
-
-    await releaseHeadCoachSlot(headCoachSlot);
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({
+        where: { id: headCoachActor.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+      await cleanup(
+        { table: "user", id: headCoachActor.id },
+        { table: "user", id: coachActor.id },
+        { table: "user", id: athleteActor.id },
+        { table: "user", id: targetUser.id },
+        { table: "user", id: targetAdmin.id },
+      );
+    });
   });
 
   describe("updateUser", () => {

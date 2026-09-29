@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-import { prisma } from "../db/client";
+import { cleanupRaw } from "./helpers";
+
+const REQUIRED_TABLES = ["_prisma_migrations", "users"];
 
 const tableCensusSchema = z.array(
   z
@@ -13,9 +15,22 @@ const tableCensusSchema = z.array(
 
 export type TableCensus = ReadonlyMap<string, number>;
 
-export const takeTableCensus = async (): Promise<TableCensus> => {
-  const rows = tableCensusSchema.parse(
-    await prisma.$queryRaw`
+export const parseTableCensus = (rows: unknown): TableCensus => {
+  const census = new Map(tableCensusSchema.parse(rows).map((row) => [row.tableName, row.rowCount]));
+  const missingTables = REQUIRED_TABLES.filter((table) => !census.has(table));
+
+  if (missingTables.length > 0) {
+    throw new Error(
+      `the table census misses ${missingTables.join(", ")}, so it does not see the application tables`,
+    );
+  }
+
+  return census;
+};
+
+export const takeTableCensus = async (): Promise<TableCensus> =>
+  parseTableCensus(
+    await cleanupRaw.$queryRaw`
       SELECT
         table_name::text AS "tableName",
         (xpath(
@@ -33,10 +48,10 @@ export const takeTableCensus = async (): Promise<TableCensus> => {
     `,
   );
 
-  return new Map(rows.map((row) => [row.tableName, row.rowCount]));
-};
-
 export const describeGrownTables = (before: TableCensus, after: TableCensus): string[] =>
   [...after]
     .filter(([table, count]) => count > (before.get(table) ?? 0))
     .map(([table, count]) => `${table}: ${before.get(table) ?? 0} -> ${count}`);
+
+export const findTablesGrownSince = async (before: TableCensus): Promise<string[]> =>
+  describeGrownTables(before, await takeTableCensus());

@@ -8,15 +8,12 @@ type HeadCoachHolder = { id: string; updatedAt: Date };
 
 export type HeadCoachSlot = { previousHolders: HeadCoachHolder[] };
 
-const findHeadCoachHolders = (): Promise<HeadCoachHolder[]> =>
+export const findHeadCoachHolders = (): Promise<HeadCoachHolder[]> =>
   cleanupRaw.user.findMany({
     where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
     select: { id: true, updatedAt: true },
     orderBy: { id: "asc" },
   });
-
-export const findHeadCoachIds = async (): Promise<string[]> =>
-  (await findHeadCoachHolders()).map((holder) => holder.id);
 
 export const takeHeadCoachSlot = async (): Promise<HeadCoachSlot> => {
   const previousHolders = await findHeadCoachHolders();
@@ -35,5 +32,18 @@ export const releaseHeadCoachSlot = async ({ previousHolders }: HeadCoachSlot): 
       where: { id },
       data: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH], updatedAt },
     });
+  }
+};
+
+export const releaseHeadCoachSlotAfter = async (
+  slot: HeadCoachSlot | undefined,
+  teardown: () => Promise<unknown>,
+): Promise<void> => {
+  try {
+    await teardown();
+  } finally {
+    if (slot !== undefined) {
+      await releaseHeadCoachSlot(slot);
+    }
   }
 };

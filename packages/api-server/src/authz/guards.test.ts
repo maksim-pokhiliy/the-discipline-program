@@ -6,7 +6,7 @@ import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
 import {
-  releaseHeadCoachSlot,
+  releaseHeadCoachSlotAfter,
   takeHeadCoachSlot,
   type HeadCoachSlot,
 } from "../test/head-coach-slot";
@@ -39,7 +39,7 @@ describe("platform guards", () => {
   let assignmentId: string;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherPlan: Awaited<ReturnType<typeof createTestPlan>>;
-  let headCoachSlot: HeadCoachSlot;
+  let headCoachSlot: HeadCoachSlot | undefined;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -63,21 +63,25 @@ describe("platform guards", () => {
   });
 
   afterAll(async () => {
-    await cleanup(
-      { table: "coachProfile", id: coach.profile.id },
-      { table: "coachProfile", id: otherCoach.profile.id },
-      { table: "user", id: coach.user.id },
-      { table: "user", id: otherCoach.user.id },
-      { table: "user", id: regularUser.id },
-      { table: "user", id: athleteUser.id },
-      { table: "user", id: nonAssignedUser.id },
-      { table: "user", id: headCoachUser.id },
-      { table: "coachAthleteAssignment", id: assignmentId },
-      { table: "trainingPlan", id: plan.id },
-      { table: "trainingPlan", id: otherPlan.id },
-    );
-
-    await releaseHeadCoachSlot(headCoachSlot);
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({
+        where: { id: headCoachUser.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+      await cleanup(
+        { table: "coachProfile", id: coach.profile.id },
+        { table: "coachProfile", id: otherCoach.profile.id },
+        { table: "user", id: coach.user.id },
+        { table: "user", id: otherCoach.user.id },
+        { table: "user", id: regularUser.id },
+        { table: "user", id: athleteUser.id },
+        { table: "user", id: nonAssignedUser.id },
+        { table: "user", id: headCoachUser.id },
+        { table: "coachAthleteAssignment", id: assignmentId },
+        { table: "trainingPlan", id: plan.id },
+        { table: "trainingPlan", id: otherPlan.id },
+      );
+    });
   });
 
   describe("resolveCoachId", () => {

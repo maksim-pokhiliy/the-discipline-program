@@ -4,10 +4,14 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { ConflictError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { releaseHeadCoachSlot, takeHeadCoachSlot } from "../../test/head-coach-slot";
+import { releaseHeadCoachSlotAfter, takeHeadCoachSlot } from "../../test/head-coach-slot";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { iamUserAdminApi } from "./users-admin";
+
+const setRole = async (userId: string, role: UserRole): Promise<void> => {
+  await cleanupRaw.user.update({ where: { id: userId }, data: { role: ROLE_TO_PRISMA_MAP[role] } });
+};
 
 describe("iamUserAdminApi — HEAD_COACH single-occupancy", () => {
   let adminUser: Awaited<ReturnType<typeof createTestUser>>;
@@ -21,41 +25,41 @@ describe("iamUserAdminApi — HEAD_COACH single-occupancy", () => {
   });
 
   it("throws ConflictError when setting HEAD_COACH if another HEAD_COACH already exists", async () => {
-    const headCoachSlot = await takeHeadCoachSlot();
-    const headCoachA = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
+    const headCoachA = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
     const userB = await createTestUser();
+    const headCoachSlot = await takeHeadCoachSlot();
 
     try {
+      await setRole(headCoachA.id, UserRole.HEAD_COACH);
+
       await expect(
         iamUserAdminApi.updateRole(adminUser.id, userB.id, { role: UserRole.HEAD_COACH }),
       ).rejects.toThrow(ConflictError);
     } finally {
-      await cleanupRaw.user.update({
-        where: { id: headCoachA.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+        await setRole(headCoachA.id, UserRole.COACH);
+        await cleanup({ table: "user", id: headCoachA.id }, { table: "user", id: userB.id });
       });
-      await cleanup({ table: "user", id: headCoachA.id }, { table: "user", id: userB.id });
-      await releaseHeadCoachSlot(headCoachSlot);
     }
   });
 
   it("allows idempotent self-update when user is already HEAD_COACH", async () => {
+    const headCoachA = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
     const headCoachSlot = await takeHeadCoachSlot();
-    const headCoachA = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
     try {
+      await setRole(headCoachA.id, UserRole.HEAD_COACH);
+
       const updated = await iamUserAdminApi.updateRole(adminUser.id, headCoachA.id, {
         role: UserRole.HEAD_COACH,
       });
 
       expect(updated.role).toBe(UserRole.HEAD_COACH);
     } finally {
-      await cleanupRaw.user.update({
-        where: { id: headCoachA.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+        await setRole(headCoachA.id, UserRole.COACH);
+        await cleanup({ table: "user", id: headCoachA.id });
       });
-      await cleanup({ table: "user", id: headCoachA.id });
-      await releaseHeadCoachSlot(headCoachSlot);
     }
   });
 
@@ -70,12 +74,10 @@ describe("iamUserAdminApi — HEAD_COACH single-occupancy", () => {
 
       expect(updated.role).toBe(UserRole.HEAD_COACH);
     } finally {
-      await cleanupRaw.user.update({
-        where: { id: userB.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] },
+      await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+        await setRole(userB.id, UserRole.ATHLETE);
+        await cleanup({ table: "user", id: userB.id });
       });
-      await cleanup({ table: "user", id: userB.id });
-      await releaseHeadCoachSlot(headCoachSlot);
     }
   });
 });

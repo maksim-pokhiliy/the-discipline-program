@@ -10,7 +10,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import {
-  releaseHeadCoachSlot,
+  releaseHeadCoachSlotAfter,
   takeHeadCoachSlot,
   type HeadCoachSlot,
 } from "../../test/head-coach-slot";
@@ -235,7 +235,7 @@ describe("profileAxisPlatformApi", () => {
   let coach: Awaited<ReturnType<typeof createTestUser>>;
   let headCoach: Awaited<ReturnType<typeof createTestUser>>;
   let admin: Awaited<ReturnType<typeof createTestUser>>;
-  let headCoachSlot: HeadCoachSlot;
+  let headCoachSlot: HeadCoachSlot | undefined;
 
   beforeAll(async () => {
     athlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
@@ -252,14 +252,18 @@ describe("profileAxisPlatformApi", () => {
   });
 
   afterAll(async () => {
-    await cleanup(
-      { table: "user", id: athlete.id },
-      { table: "user", id: coach.id },
-      { table: "user", id: headCoach.id },
-      { table: "user", id: admin.id },
-    );
-
-    await releaseHeadCoachSlot(headCoachSlot);
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({
+        where: { id: headCoach.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+      await cleanup(
+        { table: "user", id: athlete.id },
+        { table: "user", id: coach.id },
+        { table: "user", id: headCoach.id },
+        { table: "user", id: admin.id },
+      );
+    });
   });
 
   describe("list role-gate (Must-Test 1)", () => {
