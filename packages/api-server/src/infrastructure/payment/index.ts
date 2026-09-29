@@ -1,6 +1,14 @@
 export type {
-  CreateCheckoutInput,
-  CreateCheckoutResult,
+  BasketLine,
+  ChargeOutcome,
+  ChargeStoredCardInput,
+  CreatePurchaseInput,
+  CreatePurchaseResult,
+  PaidWith,
   PaymentPort,
-  VerifyWebhookInput,
+  PurchaseState,
+  PurchaseStatus,
+  SignedWebhook,
+  StoredCard,
+  StoredCardStatus,
 } from "./port";
