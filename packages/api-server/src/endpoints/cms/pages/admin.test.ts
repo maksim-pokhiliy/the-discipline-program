@@ -6,11 +6,11 @@ import { NotFoundError } from "@repo/errors";
 import { cleanupRaw } from "../../../test/helpers";
 
 import {
-  captureMarketingState,
-  clearMarketingState,
-  restoreMarketingState,
-  type MarketingState,
-} from "./__fixtures__/marketing-state";
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "./__fixtures__/marketing-pages-state";
 import { cmsPagesAdminApi } from "./admin";
 
 const heroSectionData = {
@@ -21,13 +21,23 @@ const heroSectionData = {
   backgroundImage: "/test.jpg",
 };
 
+const REVERSED_SECTION_ID_PREFIX = "reversed-about-section-";
+
+const readStoredSeo = (
+  pageId: string,
+): Promise<{ seoTitle: string | null; seoDesc: string | null }> =>
+  cleanupRaw.marketingPage.findUniqueOrThrow({
+    where: { id: pageId },
+    select: { seoTitle: true, seoDesc: true },
+  });
+
 describe("cmsPagesAdminApi", () => {
-  let snapshot: MarketingState;
+  let snapshot: MarketingPagesState;
   let testPageId: string;
 
   beforeAll(async () => {
-    snapshot = await captureMarketingState();
-    await clearMarketingState();
+    snapshot = await captureMarketingPagesState();
+    await clearMarketingPagesState();
 
     const page = await cleanupRaw.marketingPage.create({
       data: { slug: PageSlug.HOME, title: "Test Home Page" },
@@ -37,7 +47,7 @@ describe("cmsPagesAdminApi", () => {
   });
 
   afterAll(async () => {
-    await restoreMarketingState(snapshot);
+    await restoreMarketingPagesState(snapshot);
   });
 
   describe("getPages", () => {
@@ -71,6 +81,28 @@ describe("cmsPagesAdminApi", () => {
         NotFoundError,
       );
     });
+
+    it("returns the sections in the canonical order whatever order the rows were stored in", async () => {
+      const canonicalOrder = Object.values(PAGE_SECTIONS_MAP.about);
+
+      await cleanupRaw.marketingPage.upsert({
+        where: { slug: PageSlug.ABOUT },
+        create: { slug: PageSlug.ABOUT, title: "About" },
+        update: {},
+      });
+      await cleanupRaw.marketingPageSection.createMany({
+        data: [...canonicalOrder].reverse().map((section, index) => ({
+          id: `${REVERSED_SECTION_ID_PREFIX}${index}`,
+          pageSlug: PageSlug.ABOUT,
+          section,
+          data: {},
+        })),
+      });
+
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT);
+
+      expect(details.sections.map((section) => section.section)).toEqual(canonicalOrder);
+    });
   });
 
   describe("updatePageMetadata", () => {
@@ -85,9 +117,18 @@ describe("cmsPagesAdminApi", () => {
       const updated = pages.find((p) => p.id === testPageId);
 
       expect(updated?.title).toBe("Updated Home Page");
+      expect(await readStoredSeo(testPageId)).toEqual({
+        seoTitle: "Updated SEO Title",
+        seoDesc: "Updated SEO Description",
+      });
     });
 
     it("allows nullable SEO fields", async () => {
+      await cleanupRaw.marketingPage.update({
+        where: { id: testPageId },
+        data: { seoTitle: "Stored SEO Title", seoDesc: "Stored SEO Description" },
+      });
+
       await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, {
         title: "Home Page Reset",
         seoTitle: null,
@@ -98,6 +139,7 @@ describe("cmsPagesAdminApi", () => {
       const updated = pages.find((p) => p.id === testPageId);
 
       expect(updated?.title).toBe("Home Page Reset");
+      expect(await readStoredSeo(testPageId)).toEqual({ seoTitle: null, seoDesc: null });
     });
   });
 

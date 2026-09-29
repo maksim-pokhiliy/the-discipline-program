@@ -10,21 +10,21 @@ import {
 } from "@repo/contracts/cms/pages";
 
 import {
-  captureMarketingState,
-  clearMarketingState,
-  restoreMarketingState,
-  type MarketingState,
-} from "./__fixtures__/marketing-state";
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "./__fixtures__/marketing-pages-state";
 import { PARTIAL_SECTION_DATA } from "./__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesPublicApi } from "./public";
 
 describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)", () => {
-  let snapshot: MarketingState;
+  let snapshot: MarketingPagesState;
 
   beforeAll(async () => {
-    snapshot = await captureMarketingState();
-    await clearMarketingState();
+    snapshot = await captureMarketingPagesState();
+    await clearMarketingPagesState();
     await seedSectionsWithOverrides({
       "home:hero": PARTIAL_SECTION_DATA["home:hero"],
       "storefront:hero": PARTIAL_SECTION_DATA["storefront:hero"],
@@ -36,7 +36,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
   });
 
   afterAll(async () => {
-    await restoreMarketingState(snapshot);
+    await restoreMarketingPagesState(snapshot);
   });
 
   it("getHomePage returns partial hero, null for empty sections", async () => {

@@ -4,9 +4,9 @@ import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contra
 
 import { cleanupRaw } from "../../../../test/helpers";
 
-export async function seedSectionsWithOverrides(
+export const seedSectionsWithOverrides = async (
   overrides: Partial<Record<SectionSchemaKey, Prisma.InputJsonValue>>,
-): Promise<void> {
+): Promise<void> => {
   const slugs = Object.values(PageSlug);
 
   await cleanupRaw.marketingPage.createMany({
@@ -23,4 +23,4 @@ export async function seedSectionsWithOverrides(
       })),
     ),
   });
-}
+};

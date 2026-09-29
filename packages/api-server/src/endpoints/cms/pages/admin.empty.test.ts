@@ -6,42 +6,41 @@ import { NotFoundError } from "@repo/errors";
 import { cleanupRaw } from "../../../test/helpers";
 
 import {
-  captureMarketingState,
-  clearMarketingState,
-  restoreMarketingState,
-  type MarketingState,
-} from "./__fixtures__/marketing-state";
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "./__fixtures__/marketing-pages-state";
 import { cmsPagesAdminApi } from "./admin";
 
 const TEST_PREFIX = `test-empty-pages-admin-${crypto.randomUUID().slice(0, 8)}`;
+const NON_CANONICAL_SLUG = "retired-landing";
 
 describe("cmsPagesAdminApi — empty DB", () => {
-  let snapshot: MarketingState;
+  let snapshot: MarketingPagesState;
 
   beforeAll(async () => {
-    snapshot = await captureMarketingState();
+    snapshot = await captureMarketingPagesState();
   });
 
   beforeEach(async () => {
-    await clearMarketingState();
+    await clearMarketingPagesState();
   });
 
   afterAll(async () => {
-    await restoreMarketingState(snapshot);
+    await restoreMarketingPagesState(snapshot);
   });
 
   describe("getPages", () => {
-    it("returns an array", async () => {
+    it("leaves out a stored page whose slug is not canonical", async () => {
+      await cleanupRaw.marketingPage.create({
+        data: { slug: NON_CANONICAL_SLUG, title: "A page the site no longer has" },
+      });
+
       const result = await cmsPagesAdminApi.getPages();
 
-      expect(Array.isArray(result)).toBe(true);
-    });
-
-    it("returns empty array when filtered to test prefix slugs", async () => {
-      const result = await cmsPagesAdminApi.getPages();
-      const filtered = result.filter((page) => page.slug.startsWith(TEST_PREFIX));
-
-      expect(filtered).toHaveLength(0);
+      expect(await cleanupRaw.marketingPage.count({ where: { slug: NON_CANONICAL_SLUG } })).toBe(1);
+      expect(result.map((page) => page.slug)).not.toContain(NON_CANONICAL_SLUG);
     });
 
     it("every returned page has required fields", async () => {

@@ -11,25 +11,25 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import {
-  captureMarketingState,
-  clearMarketingState,
-  restoreMarketingState,
-  type MarketingState,
-} from "./__fixtures__/marketing-state";
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "./__fixtures__/marketing-pages-state";
 import { cmsPagesPublicApi } from "./public";
 
 const NON_EXISTENT_SUFFIX = crypto.randomUUID().slice(0, 8);
 
 describe("cmsPagesPublicApi — empty DB", () => {
-  let snapshot: MarketingState;
+  let snapshot: MarketingPagesState;
 
   beforeAll(async () => {
-    snapshot = await captureMarketingState();
-    await clearMarketingState();
+    snapshot = await captureMarketingPagesState();
+    await clearMarketingPagesState();
   });
 
   afterAll(async () => {
-    await restoreMarketingState(snapshot);
+    await restoreMarketingPagesState(snapshot);
   });
 
   it("getHomePage returns valid response with null sections on cold DB", async () => {
@@ -38,6 +38,11 @@ describe("cmsPagesPublicApi — empty DB", () => {
     const parsed = getHomePageResponseSchema.safeParse(data);
 
     expect(parsed.success).toBe(true);
+    expect(data.hero).toBeNull();
+    expect(data.whyChoose).toBeNull();
+    expect(data.storefront).toBeNull();
+    expect(data.reviews).toBeNull();
+    expect(data.contact).toBeNull();
     expect(Array.isArray(data.productsList)).toBe(true);
     expect(Array.isArray(data.reviewsList)).toBe(true);
   });
@@ -48,6 +53,9 @@ describe("cmsPagesPublicApi — empty DB", () => {
     const parsed = getStorefrontProgramsPageResponseSchema.safeParse(data);
 
     expect(parsed.success).toBe(true);
+    expect(data.hero).toBeNull();
+    expect(data.grid).toBeNull();
+    expect(data.cta).toBeNull();
     expect(Array.isArray(data.productsList)).toBe(true);
   });
 
@@ -57,6 +65,11 @@ describe("cmsPagesPublicApi — empty DB", () => {
     const parsed = getAboutPageResponseSchema.safeParse(data);
 
     expect(parsed.success).toBe(true);
+    expect(data.hero).toBeNull();
+    expect(data.journey).toBeNull();
+    expect(data.credentials).toBeNull();
+    expect(data.personal).toBeNull();
+    expect(data.cta).toBeNull();
   });
 
   it("getBlogPage returns valid response with null sections on cold DB", async () => {
@@ -65,6 +78,8 @@ describe("cmsPagesPublicApi — empty DB", () => {
     const parsed = getBlogPageResponseSchema.safeParse(data);
 
     expect(parsed.success).toBe(true);
+    expect(data.hero).toBeNull();
+    expect(data.grid).toBeNull();
     expect(Array.isArray(data.posts)).toBe(true);
     expect(Array.isArray(data.categories)).toBe(true);
   });
@@ -75,6 +90,8 @@ describe("cmsPagesPublicApi — empty DB", () => {
     const parsed = getContactPageResponseSchema.safeParse(data);
 
     expect(parsed.success).toBe(true);
+    expect(data.hero).toBeNull();
+    expect(data.form).toBeNull();
     expect(Array.isArray(data.programOptions)).toBe(true);
   });
 
@@ -84,6 +101,9 @@ describe("cmsPagesPublicApi — empty DB", () => {
     const parsed = getFaqPageResponseSchema.safeParse(data);
 
     expect(parsed.success).toBe(true);
+    expect(data.hero).toBeNull();
+    expect(data.content).toBeNull();
+    expect(data.cta).toBeNull();
   });
 
   it("does not silently swallow unexpected errors for non-existent article slug", async () => {

@@ -4,11 +4,11 @@ import { NotFoundError } from "@repo/errors";
 
 import { cleanup, cleanupRaw, createTestBlogPost } from "../../../test/helpers";
 import {
-  captureMarketingState,
-  clearMarketingState,
-  restoreMarketingState,
-  type MarketingState,
-} from "../pages/__fixtures__/marketing-state";
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "../pages/__fixtures__/marketing-pages-state";
 import { FULL_SECTION_DATA } from "../pages/__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
 
@@ -99,16 +99,16 @@ describe("cmsBlogPublicApi", () => {
   });
 
   describe("getArticle", () => {
-    let snapshot: MarketingState;
+    let snapshot: MarketingPagesState;
 
     beforeAll(async () => {
-      snapshot = await captureMarketingState();
-      await clearMarketingState();
+      snapshot = await captureMarketingPagesState();
+      await clearMarketingPagesState();
       await seedSectionsWithOverrides(FULL_SECTION_DATA);
     });
 
     afterAll(async () => {
-      await restoreMarketingState(snapshot);
+      await restoreMarketingPagesState(snapshot);
     });
 
     it("returns full article data for valid published slug", async () => {
@@ -125,7 +125,23 @@ describe("cmsBlogPublicApi", () => {
         notPublishedLabel: grid.notPublishedLabel,
       });
       expect(article.relatedSectionTitle).toBe(FULL_SECTION_DATA["blog:related"].title);
-      expect(Array.isArray(article.relatedPosts)).toBe(true);
+      expect(article.relatedPosts).toEqual([]);
+    });
+
+    it("relates a second published post of the same category", async () => {
+      const sibling = await createTestBlogPost({
+        isPublished: true,
+        publishedAt: new Date("2021-01-01"),
+        category: publishedPost.category,
+      });
+
+      try {
+        const article = await cmsBlogPublicApi.getArticle(publishedPost.slug);
+
+        expect(article.relatedPosts.map((post) => post.id)).toEqual([sibling.id]);
+      } finally {
+        await cleanup({ table: "marketingBlogPost", id: sibling.id });
+      }
     });
 
     it("throws NotFoundError for non-existent slug", async () => {
