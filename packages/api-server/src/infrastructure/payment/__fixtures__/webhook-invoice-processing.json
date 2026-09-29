@@ -1,0 +1,24 @@
+{
+  "body": {
+    "amount": 100,
+    "ccy": 980,
+    "createdDate": "2026-09-25T11:23:28Z",
+    "destination": "Storefront billing spike",
+    "finalAmount": 0,
+    "invoiceId": "2609254jRCJHF2jM5rb3",
+    "modifiedDate": "2026-09-25T11:23:28Z",
+    "reference": "spike-webhook-mit",
+    "status": "processing"
+  },
+  "capturedAt": "2026-09-25T11:23:29.720Z",
+  "headers": {
+    "content-length": "246",
+    "content-type": "application/json",
+    "user-agent": "Go-http-client/1.1",
+    "x-sign": "MEQCIC7P43AW5XJW9ptTN1mzLlUZd/95xN1dUhnMhHWb66yDAiBVshZobmB7doBbIMMmDXzPE6f5LpKrXtyxzcBytpZziw=="
+  },
+  "method": "POST",
+  "note": "Captured 2026-09-25 from mono's test merchant through the named tunnel; x-sign verified over the raw body bytes with monobank-test-pubkey.pem (ECDSA P-256, SHA-256). Verify the raw bytes, never re-serialized JSON.",
+  "rawBody": "{\"invoiceId\":\"2609254jRCJHF2jM5rb3\",\"status\":\"processing\",\"amount\":100,\"ccy\":980,\"finalAmount\":0,\"createdDate\":\"2026-09-25T11:23:28Z\",\"modifiedDate\":\"2026-09-25T11:23:28Z\",\"reference\":\"spike-webhook-mit\",\"destination\":\"Storefront billing spike\"}\n",
+  "verified": true
+}
