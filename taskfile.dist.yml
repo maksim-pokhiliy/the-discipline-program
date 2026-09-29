@@ -63,12 +63,12 @@ tasks:
   test:watch:
     desc: "Run unit/integration tests in watch mode"
     cmds:
-      - pnpm test:watch
+      - DATABASE_URL={{.TDP_TEST_DB_URL}} pnpm test:watch
 
   test:coverage:
     desc: "Run unit/integration tests with coverage report (text + html in ./coverage)"
     cmds:
-      - pnpm test:coverage
+      - DATABASE_URL={{.TDP_TEST_DB_URL}} pnpm test:coverage
 
   db:generate:
     desc: "Generate Prisma client (run after schema changes)"

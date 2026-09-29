@@ -1,3 +1,4 @@
+import { MarketingBlogCategory } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { NotFoundError } from "@repo/errors";
@@ -13,6 +14,8 @@ import { FULL_SECTION_DATA } from "../pages/__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
 
 import { cmsBlogPublicApi } from "./public";
+
+const OTHER_CATEGORY = MarketingBlogCategory.FITNESS;
 
 describe("cmsBlogPublicApi", () => {
   let publishedPost: Awaited<ReturnType<typeof createTestBlogPost>>;
@@ -128,19 +131,30 @@ describe("cmsBlogPublicApi", () => {
       expect(article.relatedPosts).toEqual([]);
     });
 
-    it("relates a second published post of the same category", async () => {
+    it("relates a second published post of the same category and not one of another category", async () => {
       const sibling = await createTestBlogPost({
         isPublished: true,
         publishedAt: new Date("2021-01-01"),
         category: publishedPost.category,
       });
+      const stranger = await createTestBlogPost({
+        isPublished: true,
+        publishedAt: new Date("2021-01-02"),
+        category: OTHER_CATEGORY,
+      });
 
       try {
         const article = await cmsBlogPublicApi.getArticle(publishedPost.slug);
+        const relatedIds = article.relatedPosts.map((post) => post.id);
 
-        expect(article.relatedPosts.map((post) => post.id)).toEqual([sibling.id]);
+        expect(stranger.category).not.toBe(publishedPost.category);
+        expect(relatedIds).toEqual([sibling.id]);
+        expect(relatedIds).not.toContain(stranger.id);
       } finally {
-        await cleanup({ table: "marketingBlogPost", id: sibling.id });
+        await cleanup(
+          { table: "marketingBlogPost", id: sibling.id },
+          { table: "marketingBlogPost", id: stranger.id },
+        );
       }
     });
 

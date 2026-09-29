@@ -14,6 +14,7 @@ import { cleanupRaw, createTestUser } from "./helpers";
 
 const HOLDER_UPDATED_AT = new Date("2020-01-02T03:04:05.678Z");
 const UNIQUE_VIOLATION = { code: "P2002" };
+const RECORD_NOT_FOUND = { code: "P2025" };
 
 const holderAt = (id: string): { id: string; updatedAt: Date } => ({
   id,
@@ -95,6 +96,39 @@ describe("head-coach slot", () => {
           releaseHeadCoachSlotAfter(slot, () => Promise.reject(teardownError)),
         ).rejects.toBe(teardownError);
         expect(await findHeadCoachHolders()).toEqual([holderAt(holderId)]);
+      });
+    });
+
+    it("keeps the teardown's error when giving the slot back fails as well", async () => {
+      const outerSlot = await takeHeadCoachSlot();
+
+      try {
+        const holder = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
+        const slot = await takeHeadCoachSlot();
+        const teardownError = new Error("teardown failed");
+
+        await cleanupRaw.user.delete({ where: { id: holder.id } });
+
+        await expect(
+          releaseHeadCoachSlotAfter(slot, () => Promise.reject(teardownError)),
+        ).rejects.toMatchObject({ errors: [teardownError, RECORD_NOT_FOUND] });
+      } finally {
+        await releaseHeadCoachSlot(outerSlot);
+      }
+    });
+
+    it("surfaces the release's error when only giving the slot back fails", async () => {
+      await withOwnHolder(async () => {
+        const slot = await takeHeadCoachSlot();
+        const intruder = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
+
+        try {
+          await expect(
+            releaseHeadCoachSlotAfter(slot, () => Promise.resolve()),
+          ).rejects.toMatchObject(UNIQUE_VIOLATION);
+        } finally {
+          await cleanupRaw.user.delete({ where: { id: intruder.id } });
+        }
       });
     });
 

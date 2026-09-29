@@ -1,3 +1,6 @@
+import { UserRole } from "@repo/contracts/iam/auth";
+
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
   releaseHeadCoachSlotAfter,
   takeHeadCoachSlot,
@@ -55,7 +58,7 @@ export const setupCloneSuite = async (): Promise<CloneSuiteContext> => {
   try {
     await cleanupRaw.user.update({
       where: { id: headCoach.user.id },
-      data: { role: "HEAD_COACH" },
+      data: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
     });
 
     const activePlan = await createTestPlan(owner.user.id, { status: "ACTIVE" });
@@ -82,7 +85,10 @@ export const setupCloneSuite = async (): Promise<CloneSuiteContext> => {
     };
   } catch (error) {
     await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
-      await cleanupRaw.user.update({ where: { id: headCoach.user.id }, data: { role: "COACH" } });
+      await cleanupRaw.user.update({
+        where: { id: headCoach.user.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
     });
 
     throw error;

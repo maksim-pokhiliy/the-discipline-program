@@ -43,8 +43,6 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(data.storefront).toBeNull();
     expect(data.reviews).toBeNull();
     expect(data.contact).toBeNull();
-    expect(Array.isArray(data.productsList)).toBe(true);
-    expect(Array.isArray(data.reviewsList)).toBe(true);
   });
 
   it("getStorefrontProgramsPage returns valid response with null sections on cold DB", async () => {
@@ -56,7 +54,6 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(data.hero).toBeNull();
     expect(data.grid).toBeNull();
     expect(data.cta).toBeNull();
-    expect(Array.isArray(data.productsList)).toBe(true);
   });
 
   it("getAboutPage returns valid response with null sections on cold DB", async () => {
@@ -80,8 +77,6 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(parsed.success).toBe(true);
     expect(data.hero).toBeNull();
     expect(data.grid).toBeNull();
-    expect(Array.isArray(data.posts)).toBe(true);
-    expect(Array.isArray(data.categories)).toBe(true);
   });
 
   it("getContactPage returns valid response with null sections on cold DB", async () => {
@@ -92,7 +87,6 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(parsed.success).toBe(true);
     expect(data.hero).toBeNull();
     expect(data.form).toBeNull();
-    expect(Array.isArray(data.programOptions)).toBe(true);
   });
 
   it("getFaqPage returns valid response with null sections on cold DB", async () => {

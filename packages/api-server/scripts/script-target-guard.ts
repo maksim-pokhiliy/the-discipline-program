@@ -79,7 +79,7 @@ export const parseTarget = (databaseUrl: string): URL => {
 
 export const HOST_QUERY_PARAM = "host";
 
-const hasHostQueryParam = (target: URL): boolean =>
+export const hasHostQueryParam = (target: URL): boolean =>
   [...target.searchParams.keys()].some((name) => name.toLowerCase() === HOST_QUERY_PARAM);
 
 export const authorityOf = (target: URL): string =>

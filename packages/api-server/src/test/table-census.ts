@@ -1,3 +1,4 @@
+import { type Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { cleanupRaw } from "./helpers";
@@ -28,9 +29,11 @@ export const parseTableCensus = (rows: unknown): TableCensus => {
   return census;
 };
 
-export const takeTableCensus = async (): Promise<TableCensus> =>
+export const takeTableCensus = async (
+  client: Prisma.TransactionClient = cleanupRaw,
+): Promise<TableCensus> =>
   parseTableCensus(
-    await cleanupRaw.$queryRaw`
+    await client.$queryRaw`
       SELECT
         table_name::text AS "tableName",
         (xpath(
@@ -43,7 +46,7 @@ export const takeTableCensus = async (): Promise<TableCensus> =>
           )
         ))[1]::text::int AS "rowCount"
       FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+      WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
       ORDER BY table_name
     `,
   );

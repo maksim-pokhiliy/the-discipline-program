@@ -1,7 +1,14 @@
-import { databaseNameOf, HOST_QUERY_PARAM, parseTarget } from "../../scripts/script-target-guard";
+import {
+  databaseNameOf,
+  hasHostQueryParam,
+  HOST_QUERY_PARAM,
+  parseTarget,
+} from "../../scripts/script-target-guard";
 
+const POSTGRES_PROTOCOLS: ReadonlySet<string> = new Set(["postgres:", "postgresql:"]);
 const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "::1"]);
 const BRACKETED_IPV6_HOST = /^\[(.*)\]$/;
+const PATH_SEGMENT_SEPARATOR = "/";
 const TEST_DATABASE_NAME = "test";
 const TEST_DATABASE_NAME_SUFFIX = "_test";
 
@@ -12,8 +19,8 @@ const RUN_INSTEAD =
 const hostOf = (target: URL): string =>
   target.hostname.toLowerCase().replace(BRACKETED_IPV6_HOST, "$1");
 
-const carriesHostQueryParam = (target: URL): boolean =>
-  [...target.searchParams.keys()].some((name) => name.toLowerCase() === HOST_QUERY_PARAM);
+const namesOnePathSegment = (target: URL): boolean =>
+  !databaseNameOf(target).includes(PATH_SEGMENT_SEPARATOR);
 
 const isTestDatabaseName = (name: string): boolean =>
   name === TEST_DATABASE_NAME || name.endsWith(TEST_DATABASE_NAME_SUFFIX);
@@ -29,12 +36,20 @@ const findRefusal = (databaseUrl: string | undefined): string | null => {
 
   const target = parseTarget(databaseUrl);
 
-  if (carriesHostQueryParam(target)) {
+  if (!POSTGRES_PROTOCOLS.has(target.protocol)) {
+    return "DATABASE_URL does not use the postgres or postgresql scheme";
+  }
+
+  if (hasHostQueryParam(target)) {
     return `DATABASE_URL carries a ${HOST_QUERY_PARAM} query parameter, which overrides its host at connect time`;
   }
 
   if (!LOOPBACK_HOSTS.has(hostOf(target))) {
     return "DATABASE_URL does not point at a loopback host";
+  }
+
+  if (!namesOnePathSegment(target)) {
+    return "DATABASE_URL names more than one path segment, and the client connects to the database the first one names";
   }
 
   if (!isTestDatabaseName(databaseNameOf(target))) {

@@ -8,6 +8,7 @@ const ACCEPTED_TARGETS = [
   ["a throwaway server on its own port", "postgresql://postgres:postgres@localhost:5544/tdp_test"],
   ["an IPv4 loopback host", "postgres://postgres:postgres@127.0.0.1:5432/tdp_test"],
   ["an IPv6 loopback host", "postgres://postgres:postgres@[::1]:5432/tdp_test"],
+  ["an upper-case loopback host", "postgres://postgres:postgres@LOCALHOST:5432/tdp_test"],
 ] as const;
 
 const REFUSED_URLS = [
@@ -26,6 +27,24 @@ const REFUSED_URLS = [
     "a mixed-case host query parameter",
     "postgres://user:password@localhost:5434/tdp_test?Host=/var/run/elsewhere",
   ],
+  [
+    "a test name in the second path segment",
+    "postgres://user:password@localhost:5432/tdp/tdp_test",
+  ],
+  ["a second path segment ending in _test", "postgres://user:password@localhost:5432/tdp/x_test"],
+  ["an empty path segment", "postgres://user:password@localhost:5432/tdp//x_test"],
+  ["a dot-dot path segment", "postgres://user:password@localhost:5432/tdp/.._test"],
+  ["an empty first path segment", "postgres://user:password@localhost:5432//tdp_test"],
+  [
+    "a name that only starts like a test database",
+    "postgres://user:password@localhost:5432/tdp_testing",
+  ],
+  [
+    "a name ending in test without the underscore",
+    "postgres://user:password@localhost:5432/contest",
+  ],
+  ["a mysql URL", "mysql://user:password@localhost:3306/tdp_test"],
+  ["a Prisma Postgres URL", "prisma+postgres://localhost/x_test"],
 ] as const;
 
 const UNPARSEABLE_URL = "::not a database url::";

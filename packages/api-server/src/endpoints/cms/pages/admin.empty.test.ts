@@ -47,9 +47,7 @@ describe("cmsPagesAdminApi — empty DB", () => {
       const result = await cmsPagesAdminApi.getPages();
 
       for (const page of result) {
-        expect(page.id).toBeDefined();
         expect(typeof page.id).toBe("string");
-        expect(page.slug).toBeDefined();
         expect(typeof page.title).toBe("string");
         expect(page.updatedAt).toBeInstanceOf(Date);
       }

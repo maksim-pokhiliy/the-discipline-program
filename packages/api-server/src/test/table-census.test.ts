@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cleanupRaw, createTestReview } from "./helpers";
+import { cleanupRaw, createTestProduct } from "./helpers";
 import {
   describeGrownTables,
   findTablesGrownSince,
@@ -8,7 +8,7 @@ import {
   takeTableCensus,
 } from "./table-census";
 
-const REVIEWS_TABLE = "marketing_reviews";
+const PRODUCTS_TABLE = "app_products";
 
 const CENSUS_WITH_REQUIRED_TABLES = [
   { tableName: "_prisma_migrations", rowCount: 7 },
@@ -64,19 +64,27 @@ describe("parseTableCensus", () => {
 });
 
 describe("findTablesGrownSince", () => {
-  it("names the table a row went into and nothing once the row is gone", async () => {
-    const before = await takeTableCensus();
-    const reviewsBefore = before.get(REVIEWS_TABLE) ?? 0;
-    const review = await createTestReview();
+  it("names a table that grew from a non-zero count and nothing once its rows are gone", async () => {
+    const firstProduct = await createTestProduct();
+    const productIds = [firstProduct.id];
 
     try {
-      expect(await findTablesGrownSince(before)).toEqual([
-        `${REVIEWS_TABLE}: ${reviewsBefore} -> ${reviewsBefore + 1}`,
-      ]);
-    } finally {
-      await cleanupRaw.marketingReview.delete({ where: { id: review.id } });
-    }
+      const before = await takeTableCensus();
+      const productsBefore = before.get(PRODUCTS_TABLE) ?? 0;
+      const secondProduct = await createTestProduct();
 
-    expect(await findTablesGrownSince(before)).toEqual([]);
+      productIds.push(secondProduct.id);
+
+      expect(productsBefore).toBeGreaterThan(0);
+      expect(await findTablesGrownSince(before)).toEqual([
+        `${PRODUCTS_TABLE}: ${productsBefore} -> ${productsBefore + 1}`,
+      ]);
+
+      await cleanupRaw.product.deleteMany({ where: { id: { in: productIds } } });
+
+      expect(await findTablesGrownSince(before)).toEqual([]);
+    } finally {
+      await cleanupRaw.product.deleteMany({ where: { id: { in: productIds } } });
+    }
   });
 });

@@ -22,6 +22,7 @@ const heroSectionData = {
 };
 
 const REVERSED_SECTION_ID_PREFIX = "reversed-about-section-";
+const NON_CANONICAL_SECTION = "contact:retiredBanner";
 
 const readStoredSeo = (
   pageId: string,
@@ -53,23 +54,20 @@ describe("cmsPagesAdminApi", () => {
   describe("getPages", () => {
     it("returns an array of page list items", async () => {
       const pages = await cmsPagesAdminApi.getPages();
-
-      expect(Array.isArray(pages)).toBe(true);
-
       const found = pages.find((p) => p.id === testPageId);
 
-      expect(found).toBeDefined();
-      expect(found?.slug).toBe(PageSlug.HOME);
-      expect(found?.updatedAt).toBeInstanceOf(Date);
+      expect(found).toEqual({
+        id: testPageId,
+        slug: PageSlug.HOME,
+        title: "Test Home Page",
+        updatedAt: expect.any(Date),
+      });
     });
 
     it("each page has required fields", async () => {
       const pages = await cmsPagesAdminApi.getPages();
 
       for (const page of pages) {
-        expect(page.id).toBeDefined();
-        expect(page.slug).toBeDefined();
-        expect(page.title).toBeDefined();
         expect(page.updatedAt).toBeInstanceOf(Date);
       }
     });
@@ -102,6 +100,23 @@ describe("cmsPagesAdminApi", () => {
       const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT);
 
       expect(details.sections.map((section) => section.section)).toEqual(canonicalOrder);
+    });
+
+    it("leaves a stored section whose name is not canonical out of the page", async () => {
+      await cleanupRaw.marketingPage.upsert({
+        where: { slug: PageSlug.CONTACT },
+        create: { slug: PageSlug.CONTACT, title: "Contact" },
+        update: {},
+      });
+      await cleanupRaw.marketingPageSection.create({
+        data: { pageSlug: PageSlug.CONTACT, section: NON_CANONICAL_SECTION, data: {} },
+      });
+
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.CONTACT);
+
+      expect(details.sections.map((section) => section.section)).toEqual(
+        Object.values(PAGE_SECTIONS_MAP.contact),
+      );
     });
   });
 
@@ -140,6 +155,41 @@ describe("cmsPagesAdminApi", () => {
 
       expect(updated?.title).toBe("Home Page Reset");
       expect(await readStoredSeo(testPageId)).toEqual({ seoTitle: null, seoDesc: null });
+    });
+
+    it("keeps the stored SEO fields when an update carries only the title", async () => {
+      await cleanupRaw.marketingPage.update({
+        where: { id: testPageId },
+        data: { seoTitle: "Kept SEO Title", seoDesc: "Kept SEO Description" },
+      });
+
+      await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, { title: "Title Only Update" });
+
+      expect(await readStoredSeo(testPageId)).toEqual({
+        seoTitle: "Kept SEO Title",
+        seoDesc: "Kept SEO Description",
+      });
+    });
+
+    it("creates a page that does not exist yet with its SEO fields stored", async () => {
+      await cleanupRaw.marketingPage.deleteMany({ where: { slug: PageSlug.FAQ } });
+
+      await cmsPagesAdminApi.updatePageMetadata(PageSlug.FAQ, {
+        title: "Created FAQ",
+        seoTitle: "Created SEO Title",
+        seoDesc: "Created SEO Description",
+      });
+
+      expect(
+        await cleanupRaw.marketingPage.findUniqueOrThrow({
+          where: { slug: PageSlug.FAQ },
+          select: { title: true, seoTitle: true, seoDesc: true },
+        }),
+      ).toEqual({
+        title: "Created FAQ",
+        seoTitle: "Created SEO Title",
+        seoDesc: "Created SEO Description",
+      });
     });
   });
 

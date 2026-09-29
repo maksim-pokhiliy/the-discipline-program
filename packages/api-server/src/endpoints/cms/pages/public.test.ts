@@ -28,6 +28,25 @@ const updateSection = async (
   });
 };
 
+const PAGE_READERS: readonly (readonly [PageSlug, () => Promise<unknown>])[] = [
+  [PageSlug.HOME, () => cmsPagesPublicApi.getHomePage()],
+  [PageSlug.STOREFRONT, () => cmsPagesPublicApi.getStorefrontProgramsPage()],
+  [PageSlug.ABOUT, () => cmsPagesPublicApi.getAboutPage()],
+  [PageSlug.BLOG, () => cmsPagesPublicApi.getBlogPage()],
+  [PageSlug.CONTACT, () => cmsPagesPublicApi.getContactPage()],
+  [PageSlug.FAQ, () => cmsPagesPublicApi.getFaqPage()],
+];
+
+const sectionsWithInactiveHero = (slug: PageSlug): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(PAGE_SECTIONS_MAP[slug])
+      .filter(([, section]) => section !== PAGE_SECTIONS_MAP.blog.related)
+      .map(([field, section]) => [
+        field,
+        section === PAGE_SECTIONS_MAP[slug].hero ? null : FULL_SECTION_DATA[section],
+      ]),
+  );
+
 describe("cmsPagesPublicApi", () => {
   let snapshot: MarketingPagesState;
 
@@ -73,22 +92,23 @@ describe("cmsPagesPublicApi", () => {
       expect(data.personal).toEqual(FULL_SECTION_DATA["about:personal"]);
       expect(data.cta).toEqual(FULL_SECTION_DATA["about:cta"]);
     });
+  });
 
-    it("answers null for an inactive section and the payload for its active siblings", async () => {
-      await updateSection(PageSlug.ABOUT, PAGE_SECTIONS_MAP.about.journey, { isActive: false });
+  describe("inactive sections", () => {
+    it.each(PAGE_READERS)(
+      "answers null for the inactive hero of %s and the payload for its other sections",
+      async (slug, readPage) => {
+        const hero = PAGE_SECTIONS_MAP[slug].hero;
 
-      try {
-        const data = await cmsPagesPublicApi.getAboutPage();
+        await updateSection(slug, hero, { isActive: false });
 
-        expect(data.journey).toBeNull();
-        expect(data.hero).toEqual(FULL_SECTION_DATA["about:hero"]);
-        expect(data.credentials).toEqual(FULL_SECTION_DATA["about:credentials"]);
-        expect(data.personal).toEqual(FULL_SECTION_DATA["about:personal"]);
-        expect(data.cta).toEqual(FULL_SECTION_DATA["about:cta"]);
-      } finally {
-        await updateSection(PageSlug.ABOUT, PAGE_SECTIONS_MAP.about.journey, { isActive: true });
-      }
-    });
+        try {
+          expect(await readPage()).toEqual(expect.objectContaining(sectionsWithInactiveHero(slug)));
+        } finally {
+          await updateSection(slug, hero, { isActive: true });
+        }
+      },
+    );
   });
 
   describe("getBlogPage", () => {
