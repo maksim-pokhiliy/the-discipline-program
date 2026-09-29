@@ -2,6 +2,92 @@ import { type Prisma } from "@prisma/client";
 
 import { type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
+function heroSection(title: string): Prisma.InputJsonValue {
+  return {
+    title,
+    subtitle: "Subtitle",
+    buttonText: "Start",
+    buttonHref: "/start",
+    backgroundImage: "/bg.jpg",
+  };
+}
+
+const CTA_SECTION: Prisma.InputJsonValue = {
+  title: "CTA",
+  subtitle: "Subtitle",
+  buttonText: "Start",
+  buttonHref: "/start",
+};
+
+export const FULL_SECTION_DATA: Record<SectionSchemaKey, Prisma.InputJsonValue> = {
+  "home:hero": heroSection("Home"),
+  "home:whyChoose": { title: "Why choose", subtitle: "Subtitle", features: [] },
+  "home:storefront": {
+    title: "Programs",
+    subtitle: "Subtitle",
+    buttonText: "View",
+    buttonHref: "/programs",
+    freeLabel: "Free",
+    cardActionLabel: "Details",
+    modalDismissLabel: "Cancel",
+    modalActionLabel: "Sign up",
+  },
+  "home:reviews": { title: "Reviews", subtitle: "Subtitle" },
+  "home:contact": {
+    title: "Contact",
+    subtitle: "Subtitle",
+    buttonText: "Reach out",
+    buttonHref: "/contact",
+  },
+  "storefront:hero": heroSection("Storefront"),
+  "storefront:grid": {
+    title: "Programs",
+    subtitle: "Subtitle",
+    freeLabel: "Free",
+    modalDismissLabel: "Cancel",
+    modalActionLabel: "Sign up",
+  },
+  "storefront:cta": CTA_SECTION,
+  "about:hero": heroSection("About"),
+  "about:journey": { title: "Journey", subtitle: "Subtitle", timeline: [] },
+  "about:credentials": { title: "Credentials", subtitle: "Subtitle", items: [] },
+  "about:personal": {
+    title: "Personal",
+    subtitle: "Subtitle",
+    description: "Bio text",
+    image: "https://example.com/photo.jpg",
+    name: "Coach",
+    role: "Head Coach",
+  },
+  "about:cta": CTA_SECTION,
+  "blog:hero": { title: "Blog", subtitle: "Subtitle" },
+  "blog:grid": {
+    title: "Grid",
+    subtitle: "Subtitle",
+    readMoreLabel: "Read more",
+    minReadSuffix: "min read",
+    readArticleLabel: "Read article",
+    notPublishedLabel: "Not published",
+  },
+  "blog:related": { title: "Related articles" },
+  "contact:hero": heroSection("Contact"),
+  "contact:form": {
+    title: "Form",
+    subtitle: "Subtitle",
+    successTitle: "Sent",
+    successMessage: "We will get back to you",
+    submitLabel: "Send",
+    sendAnotherLabel: "Send another",
+    sendingLabel: "Sending...",
+    errorMessage: "Something went wrong",
+    fieldLabels: { name: "Name", contact: "Contact", program: "Program", message: "Message" },
+    fieldPlaceholders: { contact: "Email or phone", message: "Your message" },
+  },
+  "faq:hero": heroSection("FAQ"),
+  "faq:content": { title: "Content", subtitle: "Subtitle", items: [] },
+  "faq:cta": CTA_SECTION,
+};
+
 export const PARTIAL_SECTION_DATA: Record<SectionSchemaKey, Prisma.InputJsonValue> = {
   "home:hero": { title: "Partial Home Hero" },
   "home:whyChoose": { title: "Partial Why Choose" },

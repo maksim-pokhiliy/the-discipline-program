@@ -3,6 +3,7 @@ import { type Prisma } from "@prisma/client";
 import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
 import { cleanupRaw } from "../../../../test/helpers";
+import { marshalNullableJson } from "../../../../utils/to-input-json";
 
 export type SectionState = {
   id: string;
@@ -10,6 +11,8 @@ export type SectionState = {
   section: string;
   wasCreated: boolean;
   previousData: Prisma.JsonValue;
+  previousIsActive: boolean;
+  previousUpdatedAt: Date;
 };
 
 export async function seedSectionsWithOverrides(
@@ -41,10 +44,12 @@ export async function seedSectionsWithOverrides(
           section,
           wasCreated: false,
           previousData: existing.data,
+          previousIsActive: existing.isActive,
+          previousUpdatedAt: existing.updatedAt,
         });
         await cleanupRaw.marketingPageSection.update({
           where: { id: existing.id },
-          data: { data },
+          data: { data, isActive: true },
         });
       } else {
         const created = await cleanupRaw.marketingPageSection.create({
@@ -57,6 +62,8 @@ export async function seedSectionsWithOverrides(
           section,
           wasCreated: true,
           previousData: {},
+          previousIsActive: created.isActive,
+          previousUpdatedAt: created.updatedAt,
         });
       }
     }
@@ -69,13 +76,25 @@ export async function restoreSections(
   states: SectionState[],
   createdPageIds: string[],
 ): Promise<void> {
-  for (const { pageSlug, section, wasCreated, previousData, id } of states) {
+  for (const {
+    pageSlug,
+    section,
+    wasCreated,
+    previousData,
+    previousIsActive,
+    previousUpdatedAt,
+    id,
+  } of states) {
     if (wasCreated) {
       await cleanupRaw.marketingPageSection.delete({ where: { id } }).catch(() => {});
     } else {
       await cleanupRaw.marketingPageSection.updateMany({
         where: { pageSlug, section },
-        data: { data: JSON.parse(JSON.stringify(previousData)) as Prisma.InputJsonValue },
+        data: {
+          data: marshalNullableJson(previousData),
+          isActive: previousIsActive,
+          updatedAt: previousUpdatedAt,
+        },
       });
     }
   }

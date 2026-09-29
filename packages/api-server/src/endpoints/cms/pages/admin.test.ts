@@ -5,6 +5,12 @@ import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
 
+import {
+  captureMarketingState,
+  clearMarketingState,
+  restoreMarketingState,
+  type MarketingState,
+} from "./__fixtures__/marketing-state";
 import { cmsPagesAdminApi } from "./admin";
 
 const heroSectionData = {
@@ -16,87 +22,24 @@ const heroSectionData = {
 };
 
 describe("cmsPagesAdminApi", () => {
+  let snapshot: MarketingState;
   let testPageId: string;
-  let originalPageTitle: string | undefined;
-  let originalSectionData: unknown;
-  let createdPage: boolean;
-  let createdSection: boolean;
 
   beforeAll(async () => {
-    const existing = await cleanupRaw.marketingPage.findUnique({
-      where: { slug: PageSlug.HOME },
+    snapshot = await captureMarketingState();
+    await clearMarketingState();
+
+    const page = await cleanupRaw.marketingPage.create({
+      data: { slug: PageSlug.HOME, title: "Test Home Page" },
     });
 
-    if (existing) {
-      createdPage = false;
-      testPageId = existing.id;
-      originalPageTitle = existing.title;
-    } else {
-      createdPage = true;
-      const page = await cleanupRaw.marketingPage.create({
-        data: {
-          slug: PageSlug.HOME,
-          title: "Test Home Page",
-        },
-      });
-
-      testPageId = page.id;
-    }
-
-    const existingSection = await cleanupRaw.marketingPageSection.findFirst({
-      where: {
-        pageSlug: PageSlug.HOME,
-        section: PAGE_SECTIONS_MAP.home.hero,
-      },
-    });
-
-    if (existingSection) {
-      createdSection = false;
-      originalSectionData = existingSection.data;
-    } else {
-      createdSection = true;
-      await cleanupRaw.marketingPageSection.create({
-        data: {
-          pageSlug: PageSlug.HOME,
-          section: PAGE_SECTIONS_MAP.home.hero,
-          data: JSON.parse(JSON.stringify(heroSectionData)),
-        },
-      });
-    }
+    testPageId = page.id;
   });
 
   afterAll(async () => {
-    await cleanupRaw.marketingPageSection
-      .deleteMany({
-        where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews },
-      })
-      .catch(() => {});
+    await restoreMarketingState(snapshot);
 
-    if (createdSection) {
-      await cleanupRaw.marketingPageSection
-        .deleteMany({
-          where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.hero },
-        })
-        .catch(() => {});
-    } else if (originalSectionData !== undefined) {
-      await cleanupRaw.marketingPageSection
-        .updateMany({
-          where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.hero },
-          data: { data: JSON.parse(JSON.stringify(originalSectionData)) },
-        })
-        .catch(() => {});
-    }
-
-    if (createdPage) {
-      await cleanupRaw.marketingPage.delete({ where: { id: testPageId } }).catch(() => {});
-    } else if (originalPageTitle !== undefined) {
-      await cleanupRaw.marketingPage
-        .update({
-          where: { id: testPageId },
-          data: { title: originalPageTitle, seoTitle: null, seoDesc: null },
-        })
-        .catch(() => {});
-    }
+    expect(await captureMarketingState()).toEqual(snapshot);
   });
 
   describe("getPages", () => {
@@ -172,15 +115,17 @@ describe("cmsPagesAdminApi", () => {
     });
 
     it("upserts a canonical section that does not exist yet", async () => {
+      const where = { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews };
+
+      expect(await cleanupRaw.marketingPageSection.findFirst({ where })).toBeNull();
+
       await cmsPagesAdminApi.updateSection({
         pageSlug: PageSlug.HOME,
         section: PAGE_SECTIONS_MAP.home.reviews,
         data: { title: "Lazy Reviews" },
       });
 
-      const created = await cleanupRaw.marketingPageSection.findFirst({
-        where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews },
-      });
+      const created = await cleanupRaw.marketingPageSection.findFirst({ where });
 
       expect(created).not.toBeNull();
       expect(created?.data).toMatchObject({ title: "Lazy Reviews" });
