@@ -1,4 +1,9 @@
 import {
+  releaseHeadCoachSlot,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
+import {
   cleanupRaw,
   createTestCoach,
   createTestExercise,
@@ -13,20 +18,10 @@ export type CloneSuiteContext = {
   owner: Coach;
   otherCoach: Coach;
   headCoach: Coach;
+  headCoachSlot: HeadCoachSlot;
   activePlanId: string;
   archivedPlanId: string;
   catalog: CloneFixtureCatalog;
-};
-
-const demotePreexistingHeadCoaches = async (): Promise<void> => {
-  const preexisting = await cleanupRaw.user.findMany({
-    where: { role: "HEAD_COACH" },
-    select: { id: true },
-  });
-
-  for (const headCoach of preexisting) {
-    await cleanupRaw.user.update({ where: { id: headCoach.id }, data: { role: "COACH" } });
-  }
 };
 
 const createLabel = async (prefix: string, applicableLevels: string[]): Promise<string> => {
@@ -55,8 +50,8 @@ export const setupCloneSuite = async (): Promise<CloneSuiteContext> => {
   const owner = await createTestCoach();
   const otherCoach = await createTestCoach();
   const headCoach = await createTestCoach();
+  const headCoachSlot = await takeHeadCoachSlot();
 
-  await demotePreexistingHeadCoaches();
   await cleanupRaw.user.update({ where: { id: headCoach.user.id }, data: { role: "HEAD_COACH" } });
 
   const activePlan = await createTestPlan(owner.user.id, { status: "ACTIVE" });
@@ -76,6 +71,7 @@ export const setupCloneSuite = async (): Promise<CloneSuiteContext> => {
     owner,
     otherCoach,
     headCoach,
+    headCoachSlot,
     activePlanId: activePlan.id,
     archivedPlanId: archivedPlan.id,
     catalog,
@@ -149,4 +145,6 @@ export const teardownCloneSuite = async (context: CloneSuiteContext): Promise<vo
       },
     })
     .catch(() => {});
+
+  await releaseHeadCoachSlot(context.headCoachSlot);
 };

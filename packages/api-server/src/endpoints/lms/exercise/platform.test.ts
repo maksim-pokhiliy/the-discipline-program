@@ -11,6 +11,11 @@ import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
+  releaseHeadCoachSlot,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
+import {
   cleanupRaw,
   createTestCoach,
   createTestExercise,
@@ -45,6 +50,7 @@ describe("lmsExercisePlatformApi.list", () => {
   const createdUserIds: string[] = [];
   const createdCoachProfileIds: string[] = [];
   const createdExerciseIds: string[] = [];
+  const takenHeadCoachSlots: HeadCoachSlot[] = [];
 
   afterEach(async () => {
     for (const id of createdExerciseIds.splice(0).reverse()) {
@@ -57,6 +63,10 @@ describe("lmsExercisePlatformApi.list", () => {
 
     for (const id of createdUserIds.splice(0).reverse()) {
       await cleanupRaw.user.delete({ where: { id } }).catch(() => {});
+    }
+
+    for (const slot of takenHeadCoachSlots.splice(0)) {
+      await releaseHeadCoachSlot(slot);
     }
   });
 
@@ -72,17 +82,7 @@ describe("lmsExercisePlatformApi.list", () => {
   });
 
   it("authorizes a HEAD_COACH caller", async () => {
-    const preexisting = await cleanupRaw.user.findMany({
-      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
-      select: { id: true },
-    });
-
-    for (const hc of preexisting) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
-      });
-    }
+    takenHeadCoachSlots.push(await takeHeadCoachSlot());
 
     const headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 

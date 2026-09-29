@@ -6,6 +6,11 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
+  releaseHeadCoachSlot,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
+import {
   cleanupRaw,
   createTestAssignment,
   createTestCoach,
@@ -24,6 +29,7 @@ describe("lmsPlanEnrollmentApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let headCoach: Awaited<ReturnType<typeof createTestUser>>;
+  let headCoachSlot: HeadCoachSlot;
 
   let assignedAthlete: Awaited<ReturnType<typeof createTestUser>>;
   let unassignedAthlete: Awaited<ReturnType<typeof createTestUser>>;
@@ -39,17 +45,7 @@ describe("lmsPlanEnrollmentApi", () => {
     coach = await createTestCoach();
     otherCoach = await createTestCoach();
 
-    const preexisting = await cleanupRaw.user.findMany({
-      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
-      select: { id: true },
-    });
-
-    for (const hc of preexisting) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
-      });
-    }
+    headCoachSlot = await takeHeadCoachSlot();
 
     headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
@@ -96,6 +92,8 @@ describe("lmsPlanEnrollmentApi", () => {
     await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: otherCoach.user.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: headCoach.id } }).catch(() => {});
+
+    await releaseHeadCoachSlot(headCoachSlot);
   });
 
   describe("listByPlan", () => {

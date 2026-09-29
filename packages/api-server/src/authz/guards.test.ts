@@ -6,6 +6,11 @@ import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
 import {
+  releaseHeadCoachSlot,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../test/head-coach-slot";
+import {
   cleanup,
   cleanupRaw,
   createTestCoach,
@@ -34,6 +39,7 @@ describe("platform guards", () => {
   let assignmentId: string;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherPlan: Awaited<ReturnType<typeof createTestPlan>>;
+  let headCoachSlot: HeadCoachSlot;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -42,17 +48,7 @@ describe("platform guards", () => {
     athleteUser = await createTestUser();
     nonAssignedUser = await createTestUser();
 
-    const preexisting = await cleanupRaw.user.findMany({
-      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
-      select: { id: true },
-    });
-
-    for (const hc of preexisting) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
-      });
-    }
+    headCoachSlot = await takeHeadCoachSlot();
 
     headCoachUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
@@ -80,6 +76,8 @@ describe("platform guards", () => {
       { table: "trainingPlan", id: plan.id },
       { table: "trainingPlan", id: otherPlan.id },
     );
+
+    await releaseHeadCoachSlot(headCoachSlot);
   });
 
   describe("resolveCoachId", () => {
