@@ -2,8 +2,8 @@ import { waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
-import { ProductCurrency, updateProductRequestSchema } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { updateProductRequestSchema } from "@repo/contracts/cms/product";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
@@ -36,7 +36,7 @@ const { ProductEditForm } = await import("./product-edit-form");
 
 const MONTHLY_USD_PRICE = makePrice({
   amountCents: 9900,
-  currency: ProductCurrency.USD,
+  currency: Currency.USD,
   periodCount: 1,
   periodUnit: PeriodUnit.MONTH,
   autoRenew: true,
@@ -50,7 +50,7 @@ describe("ProductEditForm pricing", () => {
   it("shows a stored 4-week UAH price without auto-renew", () => {
     const price = makePrice({
       amountCents: 120000,
-      currency: ProductCurrency.UAH,
+      currency: Currency.UAH,
       periodCount: 4,
       periodUnit: PeriodUnit.WEEK,
       autoRenew: false,
@@ -111,7 +111,7 @@ describe("ProductEditForm pricing", () => {
     expect(request?.id).toBe(product.id);
     expect(updateProductRequestSchema.parse(request?.data).price).toEqual({
       amountCents: 1250,
-      currency: ProductCurrency.USD,
+      currency: Currency.USD,
       periodCount: 4,
       periodUnit: PeriodUnit.WEEK,
       autoRenew: true,

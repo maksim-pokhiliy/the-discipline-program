@@ -7,13 +7,12 @@ import {
 
 import { BlogCategory } from "@repo/contracts/cms/blog";
 import { ContactStatus } from "@repo/contracts/cms/contact";
-import { ProductCurrency } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 
-export const CURRENCY_MAP: Record<PrismaCurrency, ProductCurrency> = {
-  USD: ProductCurrency.USD,
-  EUR: ProductCurrency.EUR,
-  UAH: ProductCurrency.UAH,
+export const CURRENCY_MAP: Record<PrismaCurrency, Currency> = {
+  USD: Currency.USD,
+  EUR: Currency.EUR,
+  UAH: Currency.UAH,
 };
 
 export const PERIOD_UNIT_MAP: Record<PrismaPeriodUnit, PeriodUnit> = {

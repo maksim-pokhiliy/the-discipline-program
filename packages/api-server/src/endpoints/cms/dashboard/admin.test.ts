@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DashboardActivityType } from "@repo/contracts/cms/dashboard";
-import { ProductCurrency } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 import { UserRole } from "@repo/contracts/iam/auth";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
@@ -188,7 +187,7 @@ describe("cmsDashboardAdminApi", () => {
         prices: {
           create: {
             amountCents: 9900,
-            currency: ProductCurrency.USD,
+            currency: Currency.USD,
             periodCount: 1,
             periodUnit: PeriodUnit.MONTH,
           },
@@ -202,7 +201,7 @@ describe("cmsDashboardAdminApi", () => {
         prices: {
           create: {
             amountCents: 120000,
-            currency: ProductCurrency.UAH,
+            currency: Currency.UAH,
             periodCount: 4,
             periodUnit: PeriodUnit.WEEK,
           },
