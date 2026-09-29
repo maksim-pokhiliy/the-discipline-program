@@ -10,22 +10,25 @@ import {
 } from "@repo/contracts/cms/pages";
 
 import {
-  restoreSections,
-  seedSectionsWithOverrides,
-  type SectionState,
-} from "./__fixtures__/seed-with-overrides";
+  captureMarketingState,
+  clearMarketingState,
+  restoreMarketingState,
+  type MarketingState,
+} from "./__fixtures__/marketing-state";
+import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesPublicApi } from "./public";
 
 describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => {
-  let states: SectionState[] = [];
-  let createdPageIds: string[] = [];
+  let snapshot: MarketingState;
 
   beforeAll(async () => {
-    ({ states, createdPageIds } = await seedSectionsWithOverrides({}));
+    snapshot = await captureMarketingState();
+    await clearMarketingState();
+    await seedSectionsWithOverrides({});
   });
 
   afterAll(async () => {
-    await restoreSections(states, createdPageIds);
+    await restoreMarketingState(snapshot);
   });
 
   it("getHomePage returns null sections without throwing", async () => {

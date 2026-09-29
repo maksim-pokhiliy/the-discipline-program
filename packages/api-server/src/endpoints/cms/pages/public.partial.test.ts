@@ -9,31 +9,34 @@ import {
   getStorefrontProgramsPageResponseSchema,
 } from "@repo/contracts/cms/pages";
 
-import { PARTIAL_SECTION_DATA } from "./__fixtures__/section-data";
 import {
-  restoreSections,
-  seedSectionsWithOverrides,
-  type SectionState,
-} from "./__fixtures__/seed-with-overrides";
+  captureMarketingState,
+  clearMarketingState,
+  restoreMarketingState,
+  type MarketingState,
+} from "./__fixtures__/marketing-state";
+import { PARTIAL_SECTION_DATA } from "./__fixtures__/section-data";
+import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesPublicApi } from "./public";
 
 describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)", () => {
-  let states: SectionState[] = [];
-  let createdPageIds: string[] = [];
+  let snapshot: MarketingState;
 
   beforeAll(async () => {
-    ({ states, createdPageIds } = await seedSectionsWithOverrides({
+    snapshot = await captureMarketingState();
+    await clearMarketingState();
+    await seedSectionsWithOverrides({
       "home:hero": PARTIAL_SECTION_DATA["home:hero"],
       "storefront:hero": PARTIAL_SECTION_DATA["storefront:hero"],
       "about:hero": PARTIAL_SECTION_DATA["about:hero"],
       "blog:hero": PARTIAL_SECTION_DATA["blog:hero"],
       "contact:hero": PARTIAL_SECTION_DATA["contact:hero"],
       "faq:hero": PARTIAL_SECTION_DATA["faq:hero"],
-    }));
+    });
   });
 
   afterAll(async () => {
-    await restoreSections(states, createdPageIds);
+    await restoreMarketingState(snapshot);
   });
 
   it("getHomePage returns partial hero, null for empty sections", async () => {

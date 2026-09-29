@@ -1,23 +1,26 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { FULL_SECTION_DATA } from "./__fixtures__/section-data";
 import {
-  restoreSections,
-  seedSectionsWithOverrides,
-  type SectionState,
-} from "./__fixtures__/seed-with-overrides";
+  captureMarketingState,
+  clearMarketingState,
+  restoreMarketingState,
+  type MarketingState,
+} from "./__fixtures__/marketing-state";
+import { FULL_SECTION_DATA } from "./__fixtures__/section-data";
+import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesPublicApi } from "./public";
 
 describe("cmsPagesPublicApi", () => {
-  let states: SectionState[] = [];
-  let createdPageIds: string[] = [];
+  let snapshot: MarketingState;
 
   beforeAll(async () => {
-    ({ states, createdPageIds } = await seedSectionsWithOverrides(FULL_SECTION_DATA));
+    snapshot = await captureMarketingState();
+    await clearMarketingState();
+    await seedSectionsWithOverrides(FULL_SECTION_DATA);
   });
 
   afterAll(async () => {
-    await restoreSections(states, createdPageIds);
+    await restoreMarketingState(snapshot);
   });
 
   describe("getHomePage", () => {

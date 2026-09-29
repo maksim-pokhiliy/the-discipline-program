@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   getAboutPageResponseSchema,
@@ -10,11 +10,28 @@ import {
 } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
+import {
+  captureMarketingState,
+  clearMarketingState,
+  restoreMarketingState,
+  type MarketingState,
+} from "./__fixtures__/marketing-state";
 import { cmsPagesPublicApi } from "./public";
 
 const NON_EXISTENT_SUFFIX = crypto.randomUUID().slice(0, 8);
 
 describe("cmsPagesPublicApi — empty DB", () => {
+  let snapshot: MarketingState;
+
+  beforeAll(async () => {
+    snapshot = await captureMarketingState();
+    await clearMarketingState();
+  });
+
+  afterAll(async () => {
+    await restoreMarketingState(snapshot);
+  });
+
   it("getHomePage returns valid response with null sections on cold DB", async () => {
     const data = await cmsPagesPublicApi.getHomePage();
 

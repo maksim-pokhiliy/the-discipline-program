@@ -38,8 +38,6 @@ describe("cmsPagesAdminApi", () => {
 
   afterAll(async () => {
     await restoreMarketingState(snapshot);
-
-    expect(await captureMarketingState()).toEqual(snapshot);
   });
 
   describe("getPages", () => {

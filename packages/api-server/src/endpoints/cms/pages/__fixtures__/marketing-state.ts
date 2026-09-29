@@ -1,4 +1,5 @@
 import { type MarketingPage, type MarketingPageSection } from "@prisma/client";
+import { expect } from "vitest";
 
 import { cleanupRaw } from "../../../../test/helpers";
 import { marshalNullableJson } from "../../../../utils/to-input-json";
@@ -24,13 +25,21 @@ export async function clearMarketingState(): Promise<void> {
   ]);
 }
 
-export async function restoreMarketingState({ pages, sections }: MarketingState): Promise<void> {
+export async function restoreMarketingState(state: MarketingState): Promise<void> {
   await cleanupRaw.$transaction([
     cleanupRaw.marketingPageSection.deleteMany(),
     cleanupRaw.marketingPage.deleteMany(),
-    cleanupRaw.marketingPage.createMany({ data: pages }),
+    cleanupRaw.marketingPage.createMany({ data: state.pages }),
     cleanupRaw.marketingPageSection.createMany({
-      data: sections.map((section) => ({ ...section, data: marshalNullableJson(section.data) })),
+      data: state.sections.map((section) => ({
+        ...section,
+        data: marshalNullableJson(section.data),
+      })),
     }),
   ]);
+
+  expect(
+    await captureMarketingState(),
+    "the marketing tables differ from the snapshot after the restore",
+  ).toEqual(state);
 }

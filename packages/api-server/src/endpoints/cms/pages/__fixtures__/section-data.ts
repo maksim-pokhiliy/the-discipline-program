@@ -1,8 +1,11 @@
 import { type Prisma } from "@prisma/client";
+import { type z } from "zod";
 
-import { type SectionSchemaKey } from "@repo/contracts/cms/pages";
+import { type SECTION_SCHEMAS, type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
-function heroSection(title: string): Prisma.InputJsonValue {
+type FullSectionData = { [K in SectionSchemaKey]: z.infer<(typeof SECTION_SCHEMAS)[K]> };
+
+function heroSection(title: string) {
   return {
     title,
     subtitle: "Subtitle",
@@ -12,14 +15,14 @@ function heroSection(title: string): Prisma.InputJsonValue {
   };
 }
 
-const CTA_SECTION: Prisma.InputJsonValue = {
+const CTA_SECTION = {
   title: "CTA",
   subtitle: "Subtitle",
   buttonText: "Start",
   buttonHref: "/start",
 };
 
-export const FULL_SECTION_DATA: Record<SectionSchemaKey, Prisma.InputJsonValue> = {
+export const FULL_SECTION_DATA: FullSectionData = {
   "home:hero": heroSection("Home"),
   "home:whyChoose": { title: "Why choose", subtitle: "Subtitle", features: [] },
   "home:storefront": {
