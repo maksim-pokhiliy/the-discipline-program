@@ -218,7 +218,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ## 5. Billing — Products, Prices, Subscriptions, Transactions
 
-**Responsibility:** What users pay for, how much they pay, and the record of those payments. The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. Its W0 schema is in place (migration `20260928120000_storefront_billing_w0`); no billing endpoint, billing contract or billing UI exists yet. D-numbers from here on refer to `initiatives/storefront-billing/decisions.md`.
+**Responsibility:** What users pay for, how much they pay, and the record of those payments. The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. Its W0 schema is in place (migration `20260928120000_storefront_billing_w0`); its contracts, the payment port with its Monobank adapter and the card-token cipher exist since step 0.5; no billing endpoint or billing UI exists yet. D-numbers from here on refer to `initiatives/storefront-billing/decisions.md`.
 
 > **Dead until step 0.3b (D-18).** W0 expands now and contracts later. `app_products.stripeProductId`, `app_prices.interval`, `app_prices.stripePriceId` and the `PriceInterval` enum stay in the database because the code running in production when W0 is applied still selects them. They stay declared in `schema.prisma` with `@ignore` on the three fields, so no query the generated client builds selects or writes them: a price created by the new code gets `interval = 'MONTHLY'` from the column default. Step 0.3b drops the columns and the enum once W0 is live, and the `@ignore` fields with them. The tables below leave them out.
 
@@ -235,7 +235,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Value objects
 
-- `Currency` (`USD | EUR | UAH`).
+- `Currency` (`USD | EUR | UAH`); its contract twin is `Currency` in `@repo/contracts/common`, shared by the CMS price and the Billing transaction.
 - `PeriodUnit` (`DAY | WEEK | MONTH | YEAR`). With `periodCount` (1 to 365) it makes up a price's period; the contract twin is `Period` / `periodSchema` in `@repo/contracts/common`, rendered by `formatPeriod`.
 - `BillingProvider` (`MONOBANK | MANUAL | FREE`). `MANUAL` is a comp or the cohort grant (D-5, D-9); `FREE` covers zero-price products such as the 3-day trial, whose checkout skips the payment provider (D-13).
 - `PlanDelivery` (`JOIN | COPY`).
@@ -257,14 +257,14 @@ The rest of this document describes each context in detail: what it owns, which 
 - **Our own subscription id.** `Subscription.id` is a cuid; the provider's subscription id, when there is one, lives in `providerSubscriptionId @unique`.
 - **Billing history pins the catalog.** `Subscription.productId` and `Subscription.priceId` are `ON DELETE RESTRICT`, so a product or a price with subscriptions cannot be hard-deleted. The admin product delete is a soft delete and never reaches this constraint.
 - **Deleting a subscription never deletes an enrollment.** `PlanEnrollment.subscriptionId` is `ON DELETE SET NULL`, indexed but not unique: one subscription feeds every enrollment its product creates.
-- **The card token stays on the server.** `Subscription.cardToken` is plain text: it is a bearer scoped to our merchant token, and encrypting it with a sibling environment key would add no boundary (D-17). It never enters a contract, a mapper or an API response. It can appear in the text of a database error, because Postgres prints the failing row when a constraint refuses it, and from there in logs; how the token is protected at rest and in logs is decided at step 0.5. There is no wallet column either, because the wallet id sent to Monobank is the platform `userId`.
+- **The card token stays on the server, encrypted.** `Subscription.cardToken` holds AES-256-GCM ciphertext under `BILLING_ENCRYPTION_KEY`, a key of its own (D-20, amending D-17); the token is decrypted only in the process that charges or forgets the card. It never enters a contract, a mapper or an API response (`subscriptionSchema` has no `cardToken` key, pinned by a test). From step 1.2 the webhook ledger stores the body with `walletData.cardToken` replaced by a marker after the signature was verified, a replayed ledger event never writes `cardToken`, and `BillingWebhookEvent.error` and log lines carry our own message, never the text of a Prisma or Postgres error. There is no wallet column either, because the wallet id sent to Monobank is the platform `userId`.
 - **Money is integer.** All monetary amounts are `Int` in cents/kopeks.
 
 ### Where it lives today
 
 - **DB:** `Product` (billing facet), `ProductPlan`, `Price`, `Subscription`, `Transaction`, `BillingWebhookEvent`, the `PlanEnrollment.subscriptionId` column, and the enums above. Migration `20260928120000_storefront_billing_w0` laid them; its two CHECKs are hand-written SQL because Prisma cannot declare them. `packages/api-server/src/endpoints/billing/billing-schema.invariants.test.ts` proves each constraint against a real database.
-- **Contracts:** the price shape lives in `packages/contracts/src/entities/cms/product/`, the period value object (`PeriodUnit`, `periodSchema`, `formatPeriod`) in `packages/contracts/src/common/`. `packages/contracts/src/entities/billing/` is a placeholder until step 0.5.
-- **API — `api-server`:** no billing endpoint yet. The admin product form writes the active price through `endpoints/cms/product/admin.ts` (§7). The payment port in `infrastructure/payment/` is still a vendor-neutral hosted-checkout scaffold; step 0.5 reshapes it around the Monobank adapter.
+- **Contracts:** the billing entities live in `packages/contracts/src/entities/billing/` (`@repo/contracts/billing/{subscription,transaction,product-plan}`). The price shape stays in `packages/contracts/src/entities/cms/product/` until step 3.1, and `Currency` and the period value object (`PeriodUnit`, `periodSchema`, `formatPeriod`) live in `packages/contracts/src/common/`.
+- **API — `api-server`:** no billing endpoint yet. The admin product form writes the active price through `endpoints/cms/product/admin.ts` (§7). The payment port and its one Monobank adapter live in `infrastructure/payment/`, with `defaultPayment` as the default instance; the `monobank-*` files are private to that directory by the dep-cruiser rule `api-server-payment-vendor-is-private`. The billing mappers are in `mappers/billing/` (the Prisma-to-contract `CURRENCY_MAP` in `mappers/common/`), and the card-token cipher is `endpoints/billing/card-token-cipher.ts`.
 - **Consumer apps:** the price only, through CMS: `apps/admin` (product form, list, dashboard activity) and `apps/marketing` (storefront card and modal).
 
 ### Dependencies
@@ -419,5 +419,5 @@ Every cross-context interaction is currently a read, apart from the product form
 - `docs/adr/0008-singleton-subscription-invariant.md` — superseded by ADR-0044. It was the canonical example of a context-owned invariant enforced at the DB; W0 retired the per-user key it recorded (§8).
 - `docs/adr/0010-bff-via-http-loopback-for-rsc.md` — the reason context-to-context reads go over HTTP today.
 - `docs/adr/0044-monobank-provider-and-subscription-per-product.md` — the Billing model §5 describes: Monobank behind a payment port, a subscription per product, products bound to training plans.
-- `initiatives/storefront-billing/decisions.md` — the storefront-billing decisions (D-2 to D-18) cited from §3 on.
+- `initiatives/storefront-billing/decisions.md` — the storefront-billing decisions (D-2 to D-20) cited from §3 on.
 - `packages/api-server/prisma/schema.prisma` — the physical data reality every context projects from.

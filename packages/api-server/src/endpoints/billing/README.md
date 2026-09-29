@@ -1,10 +1,12 @@
 # Billing endpoints
 
-This directory is the Billing context's place in the endpoint layout of `docs/BOUNDED-CONTEXTS.md` (section 5). The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. The W0 schema is in place (migration `20260928120000_storefront_billing_w0`), but **no billing endpoint has been written yet**.
+This directory is the Billing context's place in the endpoint layout of `docs/BOUNDED-CONTEXTS.md` (section 5). The model is ADR-0044's: Monobank behind a provider-agnostic core, one subscription per user and product, and products bound to training plans. The W0 schema is in place (migration `20260928120000_storefront_billing_w0`) and the payment port with its Monobank adapter exists in `src/infrastructure/payment/`, but **no billing endpoint has been written yet**.
 
 ## What is here today
 
 `billing-schema.invariants.test.ts` proves the W0 constraints against a real database, each with the refused case and a legal neighbour for every column of a composite key: `(userId, productId)` and `providerSubscriptionId` on subscriptions, the two CHECKs (a price for every provider except `MANUAL`, a period of 1 to 365 units), `(provider, providerTxId, kind)` on transactions, `(provider, eventKey)` on webhook events, `(productId, planId)` on plan bindings and their cascade when a plan is hard-deleted, an enrollment keeping its row when its subscription is deleted, and the `Restrict` from a subscription to its product and to its price. The cascades and restricts fire on hard deletes only: the application soft-deletes plans, users and products, so their deletes never reach these foreign keys. The fixtures live in `src/test/billing-helpers.ts`.
+
+`card-token-cipher.ts` is the card-token cipher of D-20: an instance of `createTokenCipher` (`src/utils/token-cipher.ts`, AES-256-GCM with a random 12-byte IV and a 16-byte tag) keyed by `BILLING_ENCRYPTION_KEY`, a key of its own and never `MOBILE_PUBLISH_ENCRYPTION_KEY`. It exports `encryptCardToken` and `decryptCardToken`, and decryption throws on a tampered payload or one sealed under another key. The cipher is built when the module is imported, so a key that does not decode to 32 bytes fails the import instead of the first charge (fail-closed, as the mobile-publish cipher does). Its key-identity test proves the instance uses its own key: a token it seals opens under the billing test key and not under the mobile-publish one. Nothing but that test imports the module yet.
 
 The product price is the only billing shape with a live consumer, and the admin product form still writes it through `endpoints/cms/product/admin.ts` until the billing admin of step 3.1.
 
@@ -23,17 +25,20 @@ Three columns and one enum of the previous schema stay in the database until ste
 
 Step numbers follow `initiatives/storefront-billing/plan.md`. Route handlers stay in the apps; this folder holds the logic they call.
 
-- **0.5, payment port and adapter.** Not in this folder. The reshaped `PaymentPort` and the one Monobank adapter (HTTP calls and webhook signature verification) live in `src/infrastructure/payment/`, configured from `packages/env/src/monobank.ts`. Endpoints here will receive the port through a factory, the same DI seam `endpoints/storage/` uses.
+- **0.5, payment port, adapter and card-token cipher: done.** Only the cipher is in this folder. `src/infrastructure/payment/` holds `PaymentPort` and its one Monobank adapter (`createMonobankAdapter`, and `defaultPayment` configured from `@repo/env/monobank`); the billing contracts are in `packages/contracts/src/entities/billing/` and their mappers in `src/mappers/billing/`. Endpoints here receive the port through a factory, the DI seam `endpoints/storage/` uses. Their tests pass a fake port to the factory and import the type with a statement-level `import type`, because the inline `import { type … }` form loads the payment `index.ts` and with it the validation of `@repo/env/monobank`.
 - **1.1, the subscription state machine** and the first endpoints: start a purchase, cancel, my subscriptions.
-- **1.2, the webhook path.** Record the event in `BillingWebhookEvent` first (a duplicate key means it was already received), write the `Transaction`, drive the state machine, then run the purchase side effects: `JOIN` enrolls, `COPY` clones and enrolls, a newcomer gets a pending account and an invite. A zero-price `FREE` purchase skips the provider.
+- **1.2, the webhook path.** Record the event in `BillingWebhookEvent` first (a duplicate key means it was already received), write the `Transaction`, drive the state machine, then run the purchase side effects: `JOIN` enrolls, `COPY` clones and enrolls, a newcomer gets a pending account and an invite. A zero-price `FREE` purchase skips the provider. The D-20 rules apply here: the ledger stores a body only after `verifyWebhook` accepted its raw bytes, and stores it with `walletData.cardToken` replaced by a fixed marker, while the token itself reaches `Subscription.cardToken` only through `encryptCardToken`. A replayed ledger event never writes `cardToken`, because parsing a redacted body puts the marker in `storedCard.cardToken`. `BillingWebhookEvent.error` and log lines carry our own message and codes, never the text of a Prisma or Postgres error.
 - **1.3, renewals, grace and reconciliation.** Charge the stored card when a period ends, move a failed renewal to `PAST_DUE` and an expired grace to `EXPIRED`, and repair a missed webhook from the provider's status.
+
+  The decline shape of a charge is unverified (SB-1 item 6), so 1.3 decides the mapping after a test-mode observation or the first production decline; until then a 4xx on a charge is an `InternalServerError` and the outcome of the charge is unknown (`src/infrastructure/payment/README.md`).
+
 - **3.1 and 3.2, admin and coach.** Plan bindings, prices, the user billing panel and `MANUAL` grants; the payment state the coach roster reads through a billing-owned endpoint.
 
 The access gate is not here. `resolveEnrollmentAccess` goes to `src/authz/` in step 1.1 and is the only reader of subscription state outside Billing; LMS, Coaching and the mobile-compat shim stay Billing-blind by convention (D-7): `.dependency-cruiser.cjs` stops them importing Billing code, but nothing stops a Prisma read of `PlanEnrollment.subscriptionId`, so reviews hold that line.
 
 ## Rules for the code that lands here
 
-- `Subscription.cardToken` never enters a contract, a mapper or an API response. It can appear in the text of a database error, because Postgres prints the failing row when a constraint refuses it, and from there in logs. It is stored as plain text for now, because it only works together with our merchant token; how it is protected at rest and in logs is decided at step 0.5.
+- `Subscription.cardToken` never enters a contract, a mapper or an API response. It is stored encrypted with `encryptCardToken` and decrypted only where the card is charged or forgotten (D-20); the plaintext never reaches a log line or a stored error.
 - The wallet id sent to Monobank is the platform `userId`; there is no wallet column.
 - The admin product delete is a soft delete (`src/db/client.ts`), so it never meets the `Restrict` from `Subscription.productId`. Step 3.1 decides what deleting a product with subscriptions means.
 - Every mutation takes an `Idempotency-Key` through the route factories (ADR 0036), and money stays integer cents.
