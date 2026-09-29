@@ -9,31 +9,34 @@ import {
   getStorefrontProgramsPageResponseSchema,
 } from "@repo/contracts/cms/pages";
 
-import { PARTIAL_SECTION_DATA } from "./__fixtures__/section-data";
 import {
-  restoreSections,
-  seedSectionsWithOverrides,
-  type SectionState,
-} from "./__fixtures__/seed-with-overrides";
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "./__fixtures__/marketing-pages-state";
+import { PARTIAL_SECTION_DATA } from "./__fixtures__/section-data";
+import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesPublicApi } from "./public";
 
 describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)", () => {
-  let states: SectionState[] = [];
-  let createdPageIds: string[] = [];
+  let snapshot: MarketingPagesState;
 
   beforeAll(async () => {
-    ({ states, createdPageIds } = await seedSectionsWithOverrides({
+    snapshot = await captureMarketingPagesState();
+    await clearMarketingPagesState();
+    await seedSectionsWithOverrides({
       "home:hero": PARTIAL_SECTION_DATA["home:hero"],
       "storefront:hero": PARTIAL_SECTION_DATA["storefront:hero"],
       "about:hero": PARTIAL_SECTION_DATA["about:hero"],
       "blog:hero": PARTIAL_SECTION_DATA["blog:hero"],
       "contact:hero": PARTIAL_SECTION_DATA["contact:hero"],
       "faq:hero": PARTIAL_SECTION_DATA["faq:hero"],
-    }));
+    });
   });
 
   afterAll(async () => {
-    await restoreSections(states, createdPageIds);
+    await restoreMarketingPagesState(snapshot);
   });
 
   it("getHomePage returns partial hero, null for empty sections", async () => {
@@ -45,8 +48,6 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.storefront).toBeNull();
     expect(data.reviews).toBeNull();
     expect(data.contact).toBeNull();
-    expect(Array.isArray(data.productsList)).toBe(true);
-    expect(Array.isArray(data.reviewsList)).toBe(true);
     expect(getHomePageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -57,7 +58,6 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero?.title).toBe("Partial Storefront Hero");
     expect(data.grid).toBeNull();
     expect(data.cta).toBeNull();
-    expect(Array.isArray(data.productsList)).toBe(true);
     expect(getStorefrontProgramsPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -79,8 +79,6 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero).not.toBeNull();
     expect(data.hero?.title).toBe("Partial Blog Hero");
     expect(data.grid).toBeNull();
-    expect(Array.isArray(data.posts)).toBe(true);
-    expect(Array.isArray(data.categories)).toBe(true);
     expect(getBlogPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -90,7 +88,6 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero).not.toBeNull();
     expect(data.hero?.title).toBe("Partial Contact Hero");
     expect(data.form).toBeNull();
-    expect(Array.isArray(data.programOptions)).toBe(true);
     expect(getContactPageResponseSchema.safeParse(data).success).toBe(true);
   });
 

@@ -1,3 +1,11 @@
+import { UserRole } from "@repo/contracts/iam/auth";
+
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
+import {
+  releaseHeadCoachSlotAfter,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
 import {
   cleanupRaw,
   createTestCoach,
@@ -13,20 +21,10 @@ export type CloneSuiteContext = {
   owner: Coach;
   otherCoach: Coach;
   headCoach: Coach;
+  headCoachSlot: HeadCoachSlot;
   activePlanId: string;
   archivedPlanId: string;
   catalog: CloneFixtureCatalog;
-};
-
-const demotePreexistingHeadCoaches = async (): Promise<void> => {
-  const preexisting = await cleanupRaw.user.findMany({
-    where: { role: "HEAD_COACH" },
-    select: { id: true },
-  });
-
-  for (const headCoach of preexisting) {
-    await cleanupRaw.user.update({ where: { id: headCoach.id }, data: { role: "COACH" } });
-  }
 };
 
 const createLabel = async (prefix: string, applicableLevels: string[]): Promise<string> => {
@@ -55,34 +53,49 @@ export const setupCloneSuite = async (): Promise<CloneSuiteContext> => {
   const owner = await createTestCoach();
   const otherCoach = await createTestCoach();
   const headCoach = await createTestCoach();
+  const headCoachSlot = await takeHeadCoachSlot();
 
-  await demotePreexistingHeadCoaches();
-  await cleanupRaw.user.update({ where: { id: headCoach.user.id }, data: { role: "HEAD_COACH" } });
+  try {
+    await cleanupRaw.user.update({
+      where: { id: headCoach.user.id },
+      data: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+    });
 
-  const activePlan = await createTestPlan(owner.user.id, { status: "ACTIVE" });
-  const archivedPlan = await createTestPlan(owner.user.id, { status: "ARCHIVED" });
-  const exercise = await createTestExercise();
+    const activePlan = await createTestPlan(owner.user.id, { status: "ACTIVE" });
+    const archivedPlan = await createTestPlan(owner.user.id, { status: "ARCHIVED" });
+    const exercise = await createTestExercise();
 
-  const catalog: CloneFixtureCatalog = {
-    exerciseId: exercise.id,
-    modifierAId: await createModifier("Clone Modifier A"),
-    modifierBId: await createModifier("Clone Modifier B"),
-    dayLabelId: await createLabel("Clone Day Label", ["DAY"]),
-    sessionLabelId: await createLabel("Clone Session Label", ["SESSION"]),
-    blockLabelId: await createLabel("Clone Block Label", ["BLOCK"]),
-  };
+    const catalog: CloneFixtureCatalog = {
+      exerciseId: exercise.id,
+      modifierAId: await createModifier("Clone Modifier A"),
+      modifierBId: await createModifier("Clone Modifier B"),
+      dayLabelId: await createLabel("Clone Day Label", ["DAY"]),
+      sessionLabelId: await createLabel("Clone Session Label", ["SESSION"]),
+      blockLabelId: await createLabel("Clone Block Label", ["BLOCK"]),
+    };
 
-  return {
-    owner,
-    otherCoach,
-    headCoach,
-    activePlanId: activePlan.id,
-    archivedPlanId: archivedPlan.id,
-    catalog,
-  };
+    return {
+      owner,
+      otherCoach,
+      headCoach,
+      headCoachSlot,
+      activePlanId: activePlan.id,
+      archivedPlanId: archivedPlan.id,
+      catalog,
+    };
+  } catch (error) {
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({
+        where: { id: headCoach.user.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+    });
+
+    throw error;
+  }
 };
 
-export const teardownCloneSuite = async (context: CloneSuiteContext): Promise<void> => {
+const deleteCloneSuiteRows = async (context: CloneSuiteContext): Promise<void> => {
   const planIds = [context.activePlanId, context.archivedPlanId];
   const scope = { schema: { block: { session: { day: { week: { planId: { in: planIds } } } } } } };
 
@@ -149,4 +162,12 @@ export const teardownCloneSuite = async (context: CloneSuiteContext): Promise<vo
       },
     })
     .catch(() => {});
+};
+
+export const teardownCloneSuite = async (context: CloneSuiteContext | undefined): Promise<void> => {
+  if (context === undefined) {
+    return;
+  }
+
+  await releaseHeadCoachSlotAfter(context.headCoachSlot, () => deleteCloneSuiteRows(context));
 };

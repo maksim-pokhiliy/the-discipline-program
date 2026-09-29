@@ -91,28 +91,28 @@ docs/adr/         Architecture Decision Records
 
 ## Commands
 
-| Task            | Command                                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------------------- |
-| Setup           | `pnpm setup` -- install + migrate deploy + seed                                                         |
-| Local stack     | `task stack:up` / `stack:reset` / `stack:env` / `stack:demo` -- [runbook](docs/runbooks/local-stack.md) |
-| API tests       | `task test:api` -- api-server suite against the local `tdp_test` database                               |
-| Dev (all apps)  | `pnpm dev`                                                                                              |
-| Dev (admin)     | `pnpm dev:admin`                                                                                        |
-| Dev (platform)  | `pnpm dev:platform`                                                                                     |
-| Dev (marketing) | `pnpm dev:marketing`                                                                                    |
-| Dev (storybook) | `pnpm dev:storybook`                                                                                    |
-| Build           | `pnpm build`                                                                                            |
-| Type check      | `pnpm check-types`                                                                                      |
-| Lint            | `pnpm lint`                                                                                             |
-| Format          | `pnpm format`                                                                                           |
-| Format check    | `pnpm format:check`                                                                                     |
-| Unit tests      | `pnpm test`                                                                                             |
-| Clean           | `pnpm clean`                                                                                            |
-| DB generate     | `pnpm db:generate`                                                                                      |
-| DB migrate dev  | `pnpm db:migrate`                                                                                       |
-| DB deploy       | `pnpm db:deploy`                                                                                        |
-| DB reset (dev)  | `pnpm db:reset`                                                                                         |
-| DB seed         | `pnpm db:seed`                                                                                          |
+| Task            | Command                                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Setup           | `pnpm setup` -- install + migrate deploy + seed                                                                   |
+| Local stack     | `task stack:up` / `stack:reset` / `stack:env` / `stack:demo` -- [runbook](docs/runbooks/local-stack.md)           |
+| API tests       | `task test:api` -- api-server suite against the local `tdp_test` database                                         |
+| Dev (all apps)  | `pnpm dev`                                                                                                        |
+| Dev (admin)     | `pnpm dev:admin`                                                                                                  |
+| Dev (platform)  | `pnpm dev:platform`                                                                                               |
+| Dev (marketing) | `pnpm dev:marketing`                                                                                              |
+| Dev (storybook) | `pnpm dev:storybook`                                                                                              |
+| Build           | `pnpm build`                                                                                                      |
+| Type check      | `pnpm check-types`                                                                                                |
+| Lint            | `pnpm lint`                                                                                                       |
+| Format          | `pnpm format`                                                                                                     |
+| Format check    | `pnpm format:check`                                                                                               |
+| Unit tests      | `task test` -- the root suite; passes the test database to the api-server files (a bare `pnpm test` refuses them) |
+| Clean           | `pnpm clean`                                                                                                      |
+| DB generate     | `pnpm db:generate`                                                                                                |
+| DB migrate dev  | `pnpm db:migrate`                                                                                                 |
+| DB deploy       | `pnpm db:deploy`                                                                                                  |
+| DB reset (dev)  | `pnpm db:reset`                                                                                                   |
+| DB seed         | `pnpm db:seed`                                                                                                    |
 
 ## App Status
 

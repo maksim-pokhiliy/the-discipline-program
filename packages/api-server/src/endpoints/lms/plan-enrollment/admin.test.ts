@@ -6,6 +6,11 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
+  releaseHeadCoachSlotAfter,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
+import {
   cleanupRaw,
   createTestAssignment,
   createTestCoach,
@@ -24,6 +29,7 @@ describe("lmsPlanEnrollmentApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let headCoach: Awaited<ReturnType<typeof createTestUser>>;
+  let headCoachSlot: HeadCoachSlot | undefined;
 
   let assignedAthlete: Awaited<ReturnType<typeof createTestUser>>;
   let unassignedAthlete: Awaited<ReturnType<typeof createTestUser>>;
@@ -39,17 +45,7 @@ describe("lmsPlanEnrollmentApi", () => {
     coach = await createTestCoach();
     otherCoach = await createTestCoach();
 
-    const preexisting = await cleanupRaw.user.findMany({
-      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
-      select: { id: true },
-    });
-
-    for (const hc of preexisting) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
-      });
-    }
+    headCoachSlot = await takeHeadCoachSlot();
 
     headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
@@ -81,21 +77,31 @@ describe("lmsPlanEnrollmentApi", () => {
   });
 
   afterAll(async () => {
-    await cleanupRaw.planEnrollment
-      .deleteMany({ where: { planId: { in: [activePlanId, draftPlanId, archivedPlanId] } } })
-      .catch(() => {});
-    await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
-    await cleanupRaw.trainingPlan.delete({ where: { id: draftPlanId } }).catch(() => {});
-    await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
-    await cleanupRaw.coachAthleteAssignment.delete({ where: { id: assignmentId } }).catch(() => {});
-    await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
-    await cleanupRaw.coachProfile.delete({ where: { id: otherCoach.profile.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: assignedAthlete.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: unassignedAthlete.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: coachUserAsAthlete.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: otherCoach.user.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: headCoach.id } }).catch(() => {});
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({
+        where: { id: headCoach.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+      await cleanupRaw.planEnrollment
+        .deleteMany({ where: { planId: { in: [activePlanId, draftPlanId, archivedPlanId] } } })
+        .catch(() => {});
+      await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
+      await cleanupRaw.trainingPlan.delete({ where: { id: draftPlanId } }).catch(() => {});
+      await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
+      await cleanupRaw.coachAthleteAssignment
+        .delete({ where: { id: assignmentId } })
+        .catch(() => {});
+      await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
+      await cleanupRaw.coachProfile
+        .delete({ where: { id: otherCoach.profile.id } })
+        .catch(() => {});
+      await cleanupRaw.user.delete({ where: { id: assignedAthlete.id } }).catch(() => {});
+      await cleanupRaw.user.delete({ where: { id: unassignedAthlete.id } }).catch(() => {});
+      await cleanupRaw.user.delete({ where: { id: coachUserAsAthlete.id } }).catch(() => {});
+      await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
+      await cleanupRaw.user.delete({ where: { id: otherCoach.user.id } }).catch(() => {});
+      await cleanupRaw.user.delete({ where: { id: headCoach.id } }).catch(() => {});
+    });
   });
 
   describe("listByPlan", () => {

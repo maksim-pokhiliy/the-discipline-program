@@ -161,12 +161,12 @@ describe("coachingCoachProfileApi", () => {
       await cleanup(
         { table: "coachCredential", id: firstCredential.id },
         { table: "coachCredential", id: secondCredential.id },
-        { table: "trainingPlan", id: activePlan.id },
-        { table: "trainingPlan", id: deletedPlan.id },
         { table: "user", id: athleteA.id },
         { table: "user", id: athleteB.id },
         { table: "coachProfile", id: scopedCoach.profile.id },
         { table: "user", id: scopedCoach.user.id },
+        { table: "trainingPlan", id: activePlan.id },
+        { table: "trainingPlan", id: deletedPlan.id },
       );
     });
 

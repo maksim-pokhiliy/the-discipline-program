@@ -4,6 +4,11 @@ import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/co
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import {
+  releaseHeadCoachSlot,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
+import {
   cleanupRaw,
   createTestCoach,
   createTestExercise,
@@ -39,6 +44,7 @@ describe("lmsSchemaApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let headCoach: Awaited<ReturnType<typeof createTestCoach>>;
+  let headCoachSlot: HeadCoachSlot;
 
   let activePlanId: string;
   let archivedPlanId: string;
@@ -92,17 +98,7 @@ describe("lmsSchemaApi", () => {
     otherCoach = await createTestCoach();
     headCoach = await createTestCoach();
 
-    const preexisting = await cleanupRaw.user.findMany({
-      where: { role: "HEAD_COACH" },
-      select: { id: true },
-    });
-
-    for (const hc of preexisting) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: "COACH" },
-      });
-    }
+    headCoachSlot = await takeHeadCoachSlot();
 
     await cleanupRaw.user.update({
       where: { id: headCoach.user.id },
@@ -181,6 +177,8 @@ describe("lmsSchemaApi", () => {
     await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: otherCoach.user.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: headCoach.user.id } }).catch(() => {});
+
+    await releaseHeadCoachSlot(headCoachSlot);
   });
 
   describe("create", () => {

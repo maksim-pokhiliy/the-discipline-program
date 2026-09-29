@@ -1,0 +1,45 @@
+import { type MarketingPage, type MarketingPageSection } from "@prisma/client";
+import { expect } from "vitest";
+
+import { cleanupRaw } from "../../../../test/helpers";
+import { marshalNullableJson } from "../../../../utils/to-input-json";
+
+export type MarketingPagesState = {
+  pages: MarketingPage[];
+  sections: MarketingPageSection[];
+};
+
+export const captureMarketingPagesState = async (): Promise<MarketingPagesState> => {
+  const [pages, sections] = await Promise.all([
+    cleanupRaw.marketingPage.findMany({ orderBy: { id: "asc" } }),
+    cleanupRaw.marketingPageSection.findMany({ orderBy: { id: "asc" } }),
+  ]);
+
+  return { pages, sections };
+};
+
+export const clearMarketingPagesState = async (): Promise<void> => {
+  await cleanupRaw.$transaction([
+    cleanupRaw.marketingPageSection.deleteMany(),
+    cleanupRaw.marketingPage.deleteMany(),
+  ]);
+};
+
+export const restoreMarketingPagesState = async (state: MarketingPagesState): Promise<void> => {
+  await cleanupRaw.$transaction([
+    cleanupRaw.marketingPageSection.deleteMany(),
+    cleanupRaw.marketingPage.deleteMany(),
+    cleanupRaw.marketingPage.createMany({ data: state.pages }),
+    cleanupRaw.marketingPageSection.createMany({
+      data: state.sections.map((section) => ({
+        ...section,
+        data: marshalNullableJson(section.data),
+      })),
+    }),
+  ]);
+
+  expect(
+    await captureMarketingPagesState(),
+    "the marketing page tables differ from the snapshot after the restore",
+  ).toEqual(state);
+};

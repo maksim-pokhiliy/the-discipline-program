@@ -4,6 +4,11 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
+import {
+  releaseHeadCoachSlotAfter,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../test/head-coach-slot";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { iamUserAdminApi } from "./users-admin";
@@ -14,19 +19,10 @@ describe("iamUserAdminApi — actor must be ADMIN for role-mutation paths", () =
   let athleteActor: Awaited<ReturnType<typeof createTestUser>>;
   let targetUser: Awaited<ReturnType<typeof createTestUser>>;
   let targetAdmin: Awaited<ReturnType<typeof createTestUser>>;
+  let headCoachSlot: HeadCoachSlot | undefined;
 
   beforeAll(async () => {
-    const preexistingHC = await cleanupRaw.user.findMany({
-      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
-      select: { id: true },
-    });
-
-    for (const hc of preexistingHC) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
-      });
-    }
+    headCoachSlot = await takeHeadCoachSlot();
 
     headCoachActor = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
     coachActor = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
@@ -36,13 +32,19 @@ describe("iamUserAdminApi — actor must be ADMIN for role-mutation paths", () =
   });
 
   afterAll(async () => {
-    await cleanup(
-      { table: "user", id: headCoachActor.id },
-      { table: "user", id: coachActor.id },
-      { table: "user", id: athleteActor.id },
-      { table: "user", id: targetUser.id },
-      { table: "user", id: targetAdmin.id },
-    );
+    await releaseHeadCoachSlotAfter(headCoachSlot, async () => {
+      await cleanupRaw.user.update({
+        where: { id: headCoachActor.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+      await cleanup(
+        { table: "user", id: headCoachActor.id },
+        { table: "user", id: coachActor.id },
+        { table: "user", id: athleteActor.id },
+        { table: "user", id: targetUser.id },
+        { table: "user", id: targetAdmin.id },
+      );
+    });
   });
 
   describe("updateUser", () => {

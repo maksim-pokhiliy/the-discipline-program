@@ -5,6 +5,11 @@ import { type AppLevelValue, type CreateLabelData } from "@repo/contracts/lms/la
 import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
+import {
+  releaseHeadCoachSlot,
+  takeHeadCoachSlot,
+  type HeadCoachSlot,
+} from "../../../test/head-coach-slot";
 import { cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
 
 import { lmsLabelPlatformApi } from "./platform";
@@ -23,6 +28,7 @@ describe("lmsLabelPlatformApi.list", () => {
   const createdLabelIds: string[] = [];
   const createdUserIds: string[] = [];
   const createdCoachProfileIds: string[] = [];
+  const takenHeadCoachSlots: HeadCoachSlot[] = [];
 
   afterEach(async () => {
     if (createdLabelIds.length > 0) {
@@ -37,6 +43,10 @@ describe("lmsLabelPlatformApi.list", () => {
 
     for (const id of createdUserIds.splice(0).reverse()) {
       await cleanupRaw.user.delete({ where: { id } }).catch(() => {});
+    }
+
+    for (const slot of takenHeadCoachSlots.splice(0)) {
+      await releaseHeadCoachSlot(slot);
     }
   });
 
@@ -211,17 +221,7 @@ describe("lmsLabelPlatformApi.list", () => {
   });
 
   it("authorizes a HEAD_COACH caller", async () => {
-    const preexisting = await cleanupRaw.user.findMany({
-      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
-      select: { id: true },
-    });
-
-    for (const hc of preexisting) {
-      await cleanupRaw.user.update({
-        where: { id: hc.id },
-        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
-      });
-    }
+    takenHeadCoachSlots.push(await takeHeadCoachSlot());
 
     const headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 

@@ -55,9 +55,9 @@ describe("lmsTrainingPlanApi — empty DB", () => {
 
     afterAll(async () => {
       await cleanup(
-        { table: "trainingPlan", id: plan.id },
         { table: "coachProfile", id: coach.profile.id },
         { table: "user", id: coach.user.id },
+        { table: "trainingPlan", id: plan.id },
       );
     });
 

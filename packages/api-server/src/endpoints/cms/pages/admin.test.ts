@@ -5,6 +5,12 @@ import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
 
+import {
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "./__fixtures__/marketing-pages-state";
 import { cmsPagesAdminApi } from "./admin";
 
 const heroSectionData = {
@@ -15,110 +21,53 @@ const heroSectionData = {
   backgroundImage: "/test.jpg",
 };
 
+const REVERSED_SECTION_ID_PREFIX = "reversed-about-section-";
+const NON_CANONICAL_SECTION = "contact:retiredBanner";
+
+const readStoredSeo = (
+  pageId: string,
+): Promise<{ seoTitle: string | null; seoDesc: string | null }> =>
+  cleanupRaw.marketingPage.findUniqueOrThrow({
+    where: { id: pageId },
+    select: { seoTitle: true, seoDesc: true },
+  });
+
 describe("cmsPagesAdminApi", () => {
+  let snapshot: MarketingPagesState;
   let testPageId: string;
-  let originalPageTitle: string | undefined;
-  let originalSectionData: unknown;
-  let createdPage: boolean;
-  let createdSection: boolean;
 
   beforeAll(async () => {
-    const existing = await cleanupRaw.marketingPage.findUnique({
-      where: { slug: PageSlug.HOME },
+    snapshot = await captureMarketingPagesState();
+    await clearMarketingPagesState();
+
+    const page = await cleanupRaw.marketingPage.create({
+      data: { slug: PageSlug.HOME, title: "Test Home Page" },
     });
 
-    if (existing) {
-      createdPage = false;
-      testPageId = existing.id;
-      originalPageTitle = existing.title;
-    } else {
-      createdPage = true;
-      const page = await cleanupRaw.marketingPage.create({
-        data: {
-          slug: PageSlug.HOME,
-          title: "Test Home Page",
-        },
-      });
-
-      testPageId = page.id;
-    }
-
-    const existingSection = await cleanupRaw.marketingPageSection.findFirst({
-      where: {
-        pageSlug: PageSlug.HOME,
-        section: PAGE_SECTIONS_MAP.home.hero,
-      },
-    });
-
-    if (existingSection) {
-      createdSection = false;
-      originalSectionData = existingSection.data;
-    } else {
-      createdSection = true;
-      await cleanupRaw.marketingPageSection.create({
-        data: {
-          pageSlug: PageSlug.HOME,
-          section: PAGE_SECTIONS_MAP.home.hero,
-          data: JSON.parse(JSON.stringify(heroSectionData)),
-        },
-      });
-    }
+    testPageId = page.id;
   });
 
   afterAll(async () => {
-    await cleanupRaw.marketingPageSection
-      .deleteMany({
-        where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews },
-      })
-      .catch(() => {});
-
-    if (createdSection) {
-      await cleanupRaw.marketingPageSection
-        .deleteMany({
-          where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.hero },
-        })
-        .catch(() => {});
-    } else if (originalSectionData !== undefined) {
-      await cleanupRaw.marketingPageSection
-        .updateMany({
-          where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.hero },
-          data: { data: JSON.parse(JSON.stringify(originalSectionData)) },
-        })
-        .catch(() => {});
-    }
-
-    if (createdPage) {
-      await cleanupRaw.marketingPage.delete({ where: { id: testPageId } }).catch(() => {});
-    } else if (originalPageTitle !== undefined) {
-      await cleanupRaw.marketingPage
-        .update({
-          where: { id: testPageId },
-          data: { title: originalPageTitle, seoTitle: null, seoDesc: null },
-        })
-        .catch(() => {});
-    }
+    await restoreMarketingPagesState(snapshot);
   });
 
   describe("getPages", () => {
     it("returns an array of page list items", async () => {
       const pages = await cmsPagesAdminApi.getPages();
-
-      expect(Array.isArray(pages)).toBe(true);
-
       const found = pages.find((p) => p.id === testPageId);
 
-      expect(found).toBeDefined();
-      expect(found?.slug).toBe(PageSlug.HOME);
-      expect(found?.updatedAt).toBeInstanceOf(Date);
+      expect(found).toEqual({
+        id: testPageId,
+        slug: PageSlug.HOME,
+        title: "Test Home Page",
+        updatedAt: expect.any(Date),
+      });
     });
 
     it("each page has required fields", async () => {
       const pages = await cmsPagesAdminApi.getPages();
 
       for (const page of pages) {
-        expect(page.id).toBeDefined();
-        expect(page.slug).toBeDefined();
-        expect(page.title).toBeDefined();
         expect(page.updatedAt).toBeInstanceOf(Date);
       }
     });
@@ -128,6 +77,45 @@ describe("cmsPagesAdminApi", () => {
     it("throws NotFoundError for non-existent slug", async () => {
       await expect(cmsPagesAdminApi.getPageBySlug("non-existent-slug")).rejects.toThrow(
         NotFoundError,
+      );
+    });
+
+    it("returns the sections in the canonical order whatever order the rows were stored in", async () => {
+      const canonicalOrder = Object.values(PAGE_SECTIONS_MAP.about);
+
+      await cleanupRaw.marketingPage.upsert({
+        where: { slug: PageSlug.ABOUT },
+        create: { slug: PageSlug.ABOUT, title: "About" },
+        update: {},
+      });
+      await cleanupRaw.marketingPageSection.createMany({
+        data: [...canonicalOrder].reverse().map((section, index) => ({
+          id: `${REVERSED_SECTION_ID_PREFIX}${index}`,
+          pageSlug: PageSlug.ABOUT,
+          section,
+          data: {},
+        })),
+      });
+
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT);
+
+      expect(details.sections.map((section) => section.section)).toEqual(canonicalOrder);
+    });
+
+    it("leaves a stored section whose name is not canonical out of the page", async () => {
+      await cleanupRaw.marketingPage.upsert({
+        where: { slug: PageSlug.CONTACT },
+        create: { slug: PageSlug.CONTACT, title: "Contact" },
+        update: {},
+      });
+      await cleanupRaw.marketingPageSection.create({
+        data: { pageSlug: PageSlug.CONTACT, section: NON_CANONICAL_SECTION, data: {} },
+      });
+
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.CONTACT);
+
+      expect(details.sections.map((section) => section.section)).toEqual(
+        Object.values(PAGE_SECTIONS_MAP.contact),
       );
     });
   });
@@ -144,9 +132,18 @@ describe("cmsPagesAdminApi", () => {
       const updated = pages.find((p) => p.id === testPageId);
 
       expect(updated?.title).toBe("Updated Home Page");
+      expect(await readStoredSeo(testPageId)).toEqual({
+        seoTitle: "Updated SEO Title",
+        seoDesc: "Updated SEO Description",
+      });
     });
 
     it("allows nullable SEO fields", async () => {
+      await cleanupRaw.marketingPage.update({
+        where: { id: testPageId },
+        data: { seoTitle: "Stored SEO Title", seoDesc: "Stored SEO Description" },
+      });
+
       await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, {
         title: "Home Page Reset",
         seoTitle: null,
@@ -157,6 +154,42 @@ describe("cmsPagesAdminApi", () => {
       const updated = pages.find((p) => p.id === testPageId);
 
       expect(updated?.title).toBe("Home Page Reset");
+      expect(await readStoredSeo(testPageId)).toEqual({ seoTitle: null, seoDesc: null });
+    });
+
+    it("keeps the stored SEO fields when an update carries only the title", async () => {
+      await cleanupRaw.marketingPage.update({
+        where: { id: testPageId },
+        data: { seoTitle: "Kept SEO Title", seoDesc: "Kept SEO Description" },
+      });
+
+      await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, { title: "Title Only Update" });
+
+      expect(await readStoredSeo(testPageId)).toEqual({
+        seoTitle: "Kept SEO Title",
+        seoDesc: "Kept SEO Description",
+      });
+    });
+
+    it("creates a page that does not exist yet with its SEO fields stored", async () => {
+      await cleanupRaw.marketingPage.deleteMany({ where: { slug: PageSlug.FAQ } });
+
+      await cmsPagesAdminApi.updatePageMetadata(PageSlug.FAQ, {
+        title: "Created FAQ",
+        seoTitle: "Created SEO Title",
+        seoDesc: "Created SEO Description",
+      });
+
+      expect(
+        await cleanupRaw.marketingPage.findUniqueOrThrow({
+          where: { slug: PageSlug.FAQ },
+          select: { title: true, seoTitle: true, seoDesc: true },
+        }),
+      ).toEqual({
+        title: "Created FAQ",
+        seoTitle: "Created SEO Title",
+        seoDesc: "Created SEO Description",
+      });
     });
   });
 
@@ -172,15 +205,17 @@ describe("cmsPagesAdminApi", () => {
     });
 
     it("upserts a canonical section that does not exist yet", async () => {
+      const where = { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews };
+
+      expect(await cleanupRaw.marketingPageSection.findFirst({ where })).toBeNull();
+
       await cmsPagesAdminApi.updateSection({
         pageSlug: PageSlug.HOME,
         section: PAGE_SECTIONS_MAP.home.reviews,
         data: { title: "Lazy Reviews" },
       });
 
-      const created = await cleanupRaw.marketingPageSection.findFirst({
-        where: { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.reviews },
-      });
+      const created = await cleanupRaw.marketingPageSection.findFirst({ where });
 
       expect(created).not.toBeNull();
       expect(created?.data).toMatchObject({ title: "Lazy Reviews" });

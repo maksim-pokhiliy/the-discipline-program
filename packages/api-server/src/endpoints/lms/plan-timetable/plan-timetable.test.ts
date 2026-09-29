@@ -239,10 +239,10 @@ describe("lmsPlanTimetableApi.getTimetable", () => {
       } finally {
         await cleanup(
           ...enrollment.toCleanup,
-          { table: "trainingPlan", id: plan.id },
           { table: "user", id: athlete.id },
           { table: "coachProfile", id: coach.profile.id },
           { table: "user", id: coach.user.id },
+          { table: "trainingPlan", id: plan.id },
         );
       }
     });

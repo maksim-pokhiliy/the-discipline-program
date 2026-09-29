@@ -28,7 +28,7 @@
 - Build all: `pnpm build` / `task build`
 - Lint: `pnpm lint` / `task lint`
 - Type-check: `pnpm check-types` / `task check-types`
-- Unit tests (Vitest): `pnpm test` / `pnpm test:coverage` / `task test`
+- Unit tests (Vitest): `task test` / `task test:coverage` (they pass the test database; a bare `pnpm test` refuses the api-server files, which accept a test `DATABASE_URL` only)
 - Prisma: `pnpm db:generate` | `db:migrate` (dev) | `db:deploy` (prod) | `db:reset` | `db:seed`
 - Bundle analyze: `pnpm analyze:{admin,marketing,platform}`
 - Dep boundaries: `pnpm dep:check` (dependency-cruiser)

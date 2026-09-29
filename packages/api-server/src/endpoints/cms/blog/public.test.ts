@@ -1,10 +1,21 @@
+import { MarketingBlogCategory } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { NotFoundError } from "@repo/errors";
 
 import { cleanup, cleanupRaw, createTestBlogPost } from "../../../test/helpers";
+import {
+  captureMarketingPagesState,
+  clearMarketingPagesState,
+  restoreMarketingPagesState,
+  type MarketingPagesState,
+} from "../pages/__fixtures__/marketing-pages-state";
+import { FULL_SECTION_DATA } from "../pages/__fixtures__/section-data";
+import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
 
 import { cmsBlogPublicApi } from "./public";
+
+const OTHER_CATEGORY = MarketingBlogCategory.FITNESS;
 
 describe("cmsBlogPublicApi", () => {
   let publishedPost: Awaited<ReturnType<typeof createTestBlogPost>>;
@@ -91,109 +102,60 @@ describe("cmsBlogPublicApi", () => {
   });
 
   describe("getArticle", () => {
-    let blogPage: Awaited<ReturnType<typeof cleanupRaw.marketingPage.create>> | undefined;
-    let gridSection: Awaited<ReturnType<typeof cleanupRaw.marketingPageSection.create>> | undefined;
-    let relatedSection:
-      | Awaited<ReturnType<typeof cleanupRaw.marketingPageSection.create>>
-      | undefined;
-    let heroSection: Awaited<ReturnType<typeof cleanupRaw.marketingPageSection.create>> | undefined;
+    let snapshot: MarketingPagesState;
 
     beforeAll(async () => {
-      const existingPage = await cleanupRaw.marketingPage.findUnique({
-        where: { slug: "blog" },
-      });
-
-      if (!existingPage) {
-        blogPage = await cleanupRaw.marketingPage.create({
-          data: {
-            slug: "blog",
-            title: "Blog",
-          },
-        });
-      }
-
-      const existingGrid = await cleanupRaw.marketingPageSection.findFirst({
-        where: { pageSlug: "blog", section: "blog:grid" },
-      });
-
-      if (!existingGrid) {
-        gridSection = await cleanupRaw.marketingPageSection.create({
-          data: {
-            pageSlug: "blog",
-            section: "blog:grid",
-            data: {
-              title: "Test Blog",
-              subtitle: "Test subtitle",
-              readMoreLabel: "Read more",
-              minReadSuffix: "min read",
-              readArticleLabel: "Read article",
-              notPublishedLabel: "Not published",
-            },
-          },
-        });
-      }
-
-      const existingRelated = await cleanupRaw.marketingPageSection.findFirst({
-        where: { pageSlug: "blog", section: "blog:related" },
-      });
-
-      if (!existingRelated) {
-        relatedSection = await cleanupRaw.marketingPageSection.create({
-          data: {
-            pageSlug: "blog",
-            section: "blog:related",
-            data: {
-              title: "Related articles",
-            },
-          },
-        });
-      }
-
-      const existingHero = await cleanupRaw.marketingPageSection.findFirst({
-        where: { pageSlug: "blog", section: "blog:hero" },
-      });
-
-      if (!existingHero) {
-        heroSection = await cleanupRaw.marketingPageSection.create({
-          data: {
-            pageSlug: "blog",
-            section: "blog:hero",
-            data: {
-              title: "Blog hero",
-              subtitle: "Blog hero subtitle",
-            },
-          },
-        });
-      }
+      snapshot = await captureMarketingPagesState();
+      await clearMarketingPagesState();
+      await seedSectionsWithOverrides(FULL_SECTION_DATA);
     });
 
     afterAll(async () => {
-      const sectionsToDelete = [heroSection, gridSection, relatedSection].filter(
-        (s): s is NonNullable<typeof s> => s !== undefined,
-      );
-
-      for (const section of sectionsToDelete) {
-        await cleanupRaw.marketingPageSection.delete({ where: { id: section.id } }).catch(() => {});
-      }
-
-      if (blogPage) {
-        await cleanupRaw.marketingPage.delete({ where: { id: blogPage.id } }).catch(() => {});
-      }
+      await restoreMarketingPagesState(snapshot);
     });
 
     it("returns full article data for valid published slug", async () => {
       const article = await cmsBlogPublicApi.getArticle(publishedPost.slug);
+      const grid = FULL_SECTION_DATA["blog:grid"];
 
       expect(article.post.id).toBe(publishedPost.id);
       expect(article.post.slug).toBe(publishedPost.slug);
       expect(article.post.title).toBe(publishedPost.title);
-      expect(article.labels).toHaveProperty("readMoreLabel");
-      expect(article.labels).toHaveProperty("minReadSuffix");
-      expect(article.labels).toHaveProperty("readArticleLabel");
-      expect(article.labels).toHaveProperty("notPublishedLabel");
-      expect(article).toHaveProperty("relatedSectionTitle");
-      expect(article).toHaveProperty("relatedPosts");
-      expect(Array.isArray(article.relatedPosts)).toBe(true);
+      expect(article.labels).toEqual({
+        readMoreLabel: grid.readMoreLabel,
+        minReadSuffix: grid.minReadSuffix,
+        readArticleLabel: grid.readArticleLabel,
+        notPublishedLabel: grid.notPublishedLabel,
+      });
+      expect(article.relatedSectionTitle).toBe(FULL_SECTION_DATA["blog:related"].title);
+      expect(article.relatedPosts).toEqual([]);
+    });
+
+    it("relates a second published post of the same category and not one of another category", async () => {
+      const sibling = await createTestBlogPost({
+        isPublished: true,
+        publishedAt: new Date("2021-01-01"),
+        category: publishedPost.category,
+      });
+      const stranger = await createTestBlogPost({
+        isPublished: true,
+        publishedAt: new Date("2021-01-02"),
+        category: OTHER_CATEGORY,
+      });
+
+      try {
+        const article = await cmsBlogPublicApi.getArticle(publishedPost.slug);
+        const relatedIds = article.relatedPosts.map((post) => post.id);
+
+        expect(stranger.category).not.toBe(publishedPost.category);
+        expect(relatedIds).toEqual([sibling.id]);
+        expect(relatedIds).not.toContain(stranger.id);
+      } finally {
+        await cleanup(
+          { table: "marketingBlogPost", id: sibling.id },
+          { table: "marketingBlogPost", id: stranger.id },
+        );
+      }
     });
 
     it("throws NotFoundError for non-existent slug", async () => {
