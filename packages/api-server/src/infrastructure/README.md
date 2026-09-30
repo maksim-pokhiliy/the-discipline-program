@@ -10,9 +10,9 @@ Port interfaces are owned by this directory, not by consumers. Consumers (`endpo
 
 ## Dependency rules
 
-- The `infrastructure/` directory is **outside** all context-scoped dep-cruiser rules (rules anchor on `from.path: (endpoints|mappers)/<ctx>/`). Ports are cross-cutting by definition.
+- The `infrastructure/` directory is **outside** all context-scoped dep-cruiser rules as a source (they anchor on `from.path: (endpoints|mappers)/<ctx>/`). Ports are cross-cutting by definition. As a target, `infrastructure/payment/` is Billing's: every context rule that refuses Billing refuses it too.
 - A `port.ts` file imports **zero** vendor SDKs. It declares types only. No runtime code.
-- A `*-adapter.ts` file is the **only** file in the api-server package that imports its vendor SDK. Dep-cruiser can enforce this with a scoped rule if drift becomes a problem. The payment port speaks plain HTTP (no SDK): its vendor files are the `monobank-*` family, and `api-server-payment-vendor-is-private` forbids importing them from outside `infrastructure/payment/`.
+- A `*-adapter.ts` file is the **only** file in the api-server package that imports its vendor SDK. Dep-cruiser can enforce this with a scoped rule if drift becomes a problem. The payment port speaks plain HTTP (no SDK): its vendor files are the `monobank-*` family, and `api-server-payment-vendor-is-private` refuses the imports of them from outside `infrastructure/payment/` that dependency-cruiser sees; type-only imports escape it (see `payment/README.md`, "Files and wiring").
 - The `index.ts` barrel imports the adapter factory and constructs the default instance (a module-level singleton). Consumers import the default from here. Tests never import from `index.ts` — they import the factory directly and pass a fake.
 
 ## Convention per port

@@ -11,7 +11,7 @@ Coach + athlete experience for The Discipline Program. Mobile-first PWA serving 
 
 ## Environment
 
-`apps/platform/.env.local`. Validators imported at module entry: `@repo/env/base`, `@repo/env/auth`, `@repo/env/sentry`, `@repo/env/mobile-publish`. See the root [README — Environment Variables](../../README.md#environment-variables) and [`docs/DEPLOY.md`](../../docs/DEPLOY.md).
+`apps/platform/.env.local`. Validators imported at module entry: `@repo/env/base`, `@repo/env/auth`, `@repo/env/sentry`, `@repo/env/mobile-publish`, `@repo/env/mobile-shim`. See the root [README — Environment Variables](../../README.md#environment-variables) and [`docs/DEPLOY.md`](../../docs/DEPLOY.md).
 
 Required in this app:
 
