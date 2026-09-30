@@ -14,6 +14,8 @@ const PRODUCT_PLAN_ROW = {
 
 const DELIVERIES = ["JOIN", "COPY"];
 
+const CUID_FIELDS = ["id", "productId", "planId"];
+
 describe("productPlanSchema", () => {
   it("parses a complete binding", () => {
     expect(productPlanSchema.parse(PRODUCT_PLAN_ROW)).toEqual(PRODUCT_PLAN_ROW);
@@ -29,9 +31,9 @@ describe("productPlanSchema", () => {
     expect(productPlanSchema.safeParse({ ...PRODUCT_PLAN_ROW, delivery }).success).toBe(true);
   });
 
-  it("rejects a planId that is not a cuid", () => {
-    expect(productPlanSchema.safeParse({ ...PRODUCT_PLAN_ROW, planId: "not-a-cuid" }).success).toBe(
-      false,
-    );
+  it.each(CUID_FIELDS)("rejects a non-cuid %s", (field) => {
+    expect(
+      productPlanSchema.safeParse({ ...PRODUCT_PLAN_ROW, [field]: "not-a-cuid" }).success,
+    ).toBe(false);
   });
 });

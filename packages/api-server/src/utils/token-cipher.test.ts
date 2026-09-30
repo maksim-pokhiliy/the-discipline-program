@@ -17,6 +17,10 @@ const JWT_LIKE =
   "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJyb2xlIjoiQURNSU4ifQ." +
   "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
+const TOO_SHORT_MESSAGE = "Encrypted payload is too short to contain an IV and auth tag";
+const OWNER_A = "clz00000000000000000usr1";
+const OWNER_B = "clz00000000000000000usr2";
+
 const KNOWN_ANSWER_PLAINTEXT = "synthetic-kat-token-ключ-01";
 const KNOWN_ANSWER_PAYLOAD =
   "9M5Xf60UPsiAu/rgz7InClaa4nrsg8QBu4WkqtN2N57FWnN3tqGXt/kTifx7dOPXamQS6AR+JDuA3us=";
@@ -68,13 +72,13 @@ describe("createTokenCipher", () => {
   });
 
   it("throws on an empty payload", () => {
-    expect(() => cipher.decrypt("")).toThrow();
+    expect(() => cipher.decrypt("")).toThrow(TOO_SHORT_MESSAGE);
   });
 
   it("throws on a too-short payload", () => {
     const tooShort = Buffer.alloc(8, 1).toString("base64");
 
-    expect(() => cipher.decrypt(tooShort)).toThrow();
+    expect(() => cipher.decrypt(tooShort)).toThrow(TOO_SHORT_MESSAGE);
   });
 
   it("refuses a key that does not decode to 32 bytes and names it", () => {
@@ -100,5 +104,20 @@ describe("createTokenCipher", () => {
 
   it("opens a known payload that the pre-factory cipher sealed under the same key", () => {
     expect(cipher.decrypt(KNOWN_ANSWER_PAYLOAD)).toBe(KNOWN_ANSWER_PLAINTEXT);
+  });
+
+  it("opens a payload sealed with associated data only with the same associated data", () => {
+    const plaintext = "bound-to-owner-a";
+    const sealed = cipher.encrypt(plaintext, OWNER_A);
+
+    expect(cipher.decrypt(sealed, OWNER_A)).toBe(plaintext);
+    expect(() => cipher.decrypt(sealed, OWNER_B)).toThrow();
+    expect(() => cipher.decrypt(sealed)).toThrow();
+  });
+
+  it("does not open a payload sealed without associated data when some is given", () => {
+    const sealed = cipher.encrypt("bound-to-nothing");
+
+    expect(() => cipher.decrypt(sealed, OWNER_A)).toThrow();
   });
 });

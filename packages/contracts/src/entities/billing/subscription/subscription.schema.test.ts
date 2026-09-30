@@ -22,6 +22,8 @@ const SUBSCRIPTION_ROW = {
 
 const NULLABLE_FIELDS = ["priceId", "graceEndsAt", "canceledAt", "endedAt"];
 
+const CUID_FIELDS = ["id", "userId", "productId", "priceId"];
+
 const ACCEPTED_ENUM_VALUES: [string, string][] = [
   ["provider", "MONOBANK"],
   ["provider", "MANUAL"],
@@ -36,6 +38,9 @@ const SYNTHETIC_CIPHER_TEXT = "synthetic-cipher-text";
 
 const SYNTHETIC_PROVIDER_SUBSCRIPTION_ID = "synthetic-provider-sub";
 
+const rowWithout = (field: string): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(SUBSCRIPTION_ROW).filter(([key]) => key !== field));
+
 describe("subscriptionSchema", () => {
   it("parses a complete subscription row", () => {
     expect(subscriptionSchema.parse(SUBSCRIPTION_ROW)).toEqual(SUBSCRIPTION_ROW);
@@ -43,6 +48,10 @@ describe("subscriptionSchema", () => {
 
   it.each(NULLABLE_FIELDS)("accepts null for %s", (field) => {
     expect(subscriptionSchema.safeParse({ ...SUBSCRIPTION_ROW, [field]: null }).success).toBe(true);
+  });
+
+  it.each(NULLABLE_FIELDS)("rejects a row without %s", (field) => {
+    expect(subscriptionSchema.safeParse(rowWithout(field)).success).toBe(false);
   });
 
   it("rejects a provider outside BillingProvider", () => {
@@ -81,9 +90,9 @@ describe("subscriptionSchema", () => {
     expect(parsed).not.toHaveProperty("providerSubscriptionId");
   });
 
-  it("rejects a userId that is not a cuid", () => {
+  it.each(CUID_FIELDS)("rejects a non-cuid %s", (field) => {
     expect(
-      subscriptionSchema.safeParse({ ...SUBSCRIPTION_ROW, userId: "not-a-cuid" }).success,
+      subscriptionSchema.safeParse({ ...SUBSCRIPTION_ROW, [field]: "not-a-cuid" }).success,
     ).toBe(false);
   });
 });

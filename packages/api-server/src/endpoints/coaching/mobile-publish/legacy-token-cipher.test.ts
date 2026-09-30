@@ -1,18 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  KEY_DECODING_TO_33_BYTES,
+  MOBILE_PUBLISH_KEY_ENV_NAME,
+  readTestEnvKey,
+} from "../../../test/token-cipher-test-keys";
 import { createTokenCipher } from "../../../utils";
 
 import { decryptLegacyToken, encryptLegacyToken } from "./legacy-token-cipher";
 
-const KEY_BYTES = 32;
-const MOBILE_PUBLISH_TEST_KEY_FILL = 0x07;
-const ENV_KEY_LENGTH = 44;
-const MOBILE_PUBLISH_TEST_KEY = Buffer.alloc(KEY_BYTES, MOBILE_PUBLISH_TEST_KEY_FILL).toString(
-  "base64",
-);
-const KEY_DECODING_TO_33_BYTES = "A".repeat(ENV_KEY_LENGTH);
-const MOBILE_PUBLISH_KEY_ENV_NAME = "MOBILE_PUBLISH_ENCRYPTION_KEY";
 const RAW_TOKEN = "raw-legacy-access-token-value";
+
+const mobilePublishTestCipher = createTokenCipher({
+  key: readTestEnvKey(MOBILE_PUBLISH_KEY_ENV_NAME),
+  name: MOBILE_PUBLISH_KEY_ENV_NAME,
+});
 
 describe("legacy-token-cipher", () => {
   afterEach(() => {
@@ -20,12 +22,11 @@ describe("legacy-token-cipher", () => {
   });
 
   it("opens a token sealed under the mobile-publish test key", () => {
-    const mobilePublishTestCipher = createTokenCipher({
-      key: MOBILE_PUBLISH_TEST_KEY,
-      name: "MOBILE_PUBLISH_TEST_KEY",
-    });
-
     expect(decryptLegacyToken(mobilePublishTestCipher.encrypt(RAW_TOKEN))).toBe(RAW_TOKEN);
+  });
+
+  it("seals without associated data, so a cipher given none under the same key opens it", () => {
+    expect(mobilePublishTestCipher.decrypt(encryptLegacyToken(RAW_TOKEN))).toBe(RAW_TOKEN);
   });
 
   it("round-trips a token", () => {

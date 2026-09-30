@@ -24,7 +24,14 @@ const TRANSACTION_ROW = {
 
 const NULLABLE_FIELDS = ["subscriptionId", "periodStart", "periodEnd"];
 
+const REQUIRED_FIELDS = [...NULLABLE_FIELDS, "providerTxId", "updatedAt"];
+
+const CUID_FIELDS = ["id", "userId", "subscriptionId"];
+
 const ACCEPTED_ENUM_VALUES: [string, string][] = [
+  ["provider", "MONOBANK"],
+  ["provider", "MANUAL"],
+  ["provider", "FREE"],
   ["kind", "INITIAL"],
   ["kind", "RENEWAL"],
   ["kind", "ONE_OFF"],
@@ -36,9 +43,8 @@ const ACCEPTED_ENUM_VALUES: [string, string][] = [
 
 const SYNTHETIC_IDEMPOTENCY_KEY = "synthetic-idempotency";
 
-const ROW_WITHOUT_UPDATED_AT = Object.fromEntries(
-  Object.entries(TRANSACTION_ROW).filter(([key]) => key !== "updatedAt"),
-);
+const rowWithout = (field: string): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(TRANSACTION_ROW).filter(([key]) => key !== field));
 
 describe("transactionSchema", () => {
   it("parses a complete transaction row", () => {
@@ -47,6 +53,12 @@ describe("transactionSchema", () => {
 
   it.each(NULLABLE_FIELDS)("accepts null for %s", (field) => {
     expect(transactionSchema.safeParse({ ...TRANSACTION_ROW, [field]: null }).success).toBe(true);
+  });
+
+  it("rejects a provider outside BillingProvider", () => {
+    expect(transactionSchema.safeParse({ ...TRANSACTION_ROW, provider: "STRIPE" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects a kind outside TransactionKind", () => {
@@ -90,7 +102,13 @@ describe("transactionSchema", () => {
     expect(parsed).not.toHaveProperty("idempotencyKey");
   });
 
-  it("rejects a row without updatedAt", () => {
-    expect(transactionSchema.safeParse(ROW_WITHOUT_UPDATED_AT).success).toBe(false);
+  it.each(REQUIRED_FIELDS)("rejects a row without %s", (field) => {
+    expect(transactionSchema.safeParse(rowWithout(field)).success).toBe(false);
+  });
+
+  it.each(CUID_FIELDS)("rejects a non-cuid %s", (field) => {
+    expect(transactionSchema.safeParse({ ...TRANSACTION_ROW, [field]: "not-a-cuid" }).success).toBe(
+      false,
+    );
   });
 });

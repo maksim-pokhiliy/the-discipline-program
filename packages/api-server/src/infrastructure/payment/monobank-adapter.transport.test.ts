@@ -10,33 +10,36 @@ import {
 import {
   captureAppError,
   emptyResponse,
+  EVERY_PORT_CALL,
+  INVOICE_CREATE_PATH,
+  INVOICE_STATUS_PATH,
   jsonResponse,
   makeAdapterConfig,
   makeChargeInput,
   makeInvoiceBody,
   makePurchaseInput,
+  OK_STATUS,
   requestOf,
+  RESERVED_CHARACTER_CARD_TOKEN,
   SYNTHETIC_CARD_TOKEN,
   SYNTHETIC_INVOICE_ID,
   TEST_API_URL,
   TEST_MERCHANT_TOKEN,
   textResponse,
+  UNAUTHORIZED_STATUS,
+  UNREADABLE_INVOICE_REPLY_MESSAGE,
+  WALLET_CARD_PATH,
+  WALLET_PAYMENT_PATH,
 } from "./__fixtures__/monobank-fixtures";
 import { createMonobankAdapter } from "./monobank-adapter";
 import type { PaymentPort } from "./port";
 
-const INVOICE_CREATE_PATH = "/api/merchant/invoice/create";
-const INVOICE_STATUS_PATH = "/api/merchant/invoice/status";
-const WALLET_PAYMENT_PATH = "/api/merchant/wallet/payment";
-const WALLET_CARD_PATH = "/api/merchant/wallet/card";
 const ATTEMPT_TIMEOUT_MS = 10_000;
 const READ_ATTEMPTS = 3;
 const HALF_JITTER = 0.5;
 const FIRST_RETRY_AT_MS = 1_500;
 const SECOND_RETRY_AT_MS = 4_000;
-const OK_STATUS = 200;
 const BAD_REQUEST_STATUS = 400;
-const UNAUTHORIZED_STATUS = 401;
 const TOO_MANY_REQUESTS_STATUS = 429;
 const INTERNAL_SERVER_ERROR_STATUS = 500;
 const SERVICE_UNAVAILABLE_STATUS = 503;
@@ -46,7 +49,7 @@ const REDACTED = "[REDACTED]";
 const MONOBANK_ERROR_BODY = { errCode: "1001", errText: "invalid 'amount'" };
 const UNAVAILABLE_TEXT = "service unavailable";
 const ECHO_ERROR_CODE = "BAD_REQUEST";
-const RESERVED_CHARACTER_CARD_TOKEN = "a+b/c=";
+const NOT_JSON_REPLY = "<html>ok</html>";
 const QUERY_ENCODED_CARD_TOKEN = "a%2Bb%2Fc%3D";
 
 const LEAKABLE_CHARGE_INPUT = makeChargeInput();
@@ -338,6 +341,17 @@ describe("createMonobankAdapter transport", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
+    it.each(EVERY_PORT_CALL)(
+      "leaves no timer pending after %s settles",
+      async (_name, call, reply) => {
+        fetchMock.mockResolvedValueOnce(reply());
+
+        await call(adapter);
+
+        expect(vi.getTimerCount()).toBe(0);
+      },
+    );
+
     it("retries a GET that times out and surfaces TimeoutError after three attempts", async () => {
       fetchMock.mockImplementation(abortedByTheSignal);
 
@@ -486,12 +500,12 @@ describe("createMonobankAdapter transport", () => {
     });
 
     it("surfaces a 2xx body that is not JSON as BadGatewayError with the invalid_json issue", async () => {
-      fetchMock.mockResolvedValueOnce(textResponse(OK_STATUS, "<html>ok</html>"));
+      fetchMock.mockResolvedValueOnce(textResponse(OK_STATUS, NOT_JSON_REPLY));
 
       const error = await captureAppError(adapter.createPurchase(makePurchaseInput()));
 
       expect(error).toBeInstanceOf(BadGatewayError);
-      expect(error.message).toBe("monobank sent an invoice reply we cannot read");
+      expect(error.message).toBe(UNREADABLE_INVOICE_REPLY_MESSAGE);
       expect(error.details).toEqual({ issues: [{ path: "", code: "invalid_json" }] });
     });
 
@@ -569,7 +583,7 @@ describe("createMonobankAdapter transport", () => {
         await slashedAdapter.forgetStoredCard(SYNTHETIC_CARD_TOKEN);
 
         expect(requestOf(fetchMock, 0).url).toBe(
-          `${TEST_API_URL}/api/merchant/wallet/card?cardToken=${SYNTHETIC_CARD_TOKEN}`,
+          `${TEST_API_URL}${WALLET_CARD_PATH}?cardToken=${SYNTHETIC_CARD_TOKEN}`,
         );
       },
     );

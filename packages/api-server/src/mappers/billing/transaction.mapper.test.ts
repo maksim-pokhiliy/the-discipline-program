@@ -85,6 +85,34 @@ describe("mapToTransaction", () => {
     expect(mapToTransaction(makeRow(overrides))[field]).toBeNull();
   });
 
+  it.each(Object.values(PrismaBillingProvider))(
+    "maps the row provider %s to its contract twin",
+    (provider) => {
+      expect(mapToTransaction(makeRow({ provider })).provider).toBe(provider);
+    },
+  );
+
+  it.each(Object.values(PrismaTransactionKind))(
+    "maps the row kind %s to its contract twin",
+    (kind) => {
+      expect(mapToTransaction(makeRow({ kind })).kind).toBe(kind);
+    },
+  );
+
+  it.each(Object.values(PrismaCurrency))(
+    "maps the row currency %s to its contract twin",
+    (currency) => {
+      expect(mapToTransaction(makeRow({ currency })).currency).toBe(currency);
+    },
+  );
+
+  it.each(Object.values(PrismaTransactionStatus))(
+    "maps the row status %s to its contract twin",
+    (status) => {
+      expect(mapToTransaction(makeRow({ status })).status).toBe(status);
+    },
+  );
+
   it("produces a value transactionSchema accepts", () => {
     const result = mapToTransaction(makeRow());
 

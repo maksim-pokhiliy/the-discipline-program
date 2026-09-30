@@ -10,7 +10,12 @@ import { Currency } from "@repo/contracts/common";
 import { AppError } from "@repo/errors";
 
 import type { MonobankAdapterConfig } from "../monobank-adapter";
-import type { ChargeStoredCardInput, CreatePurchaseInput, SignedWebhook } from "../port";
+import type {
+  ChargeStoredCardInput,
+  CreatePurchaseInput,
+  PaymentPort,
+  SignedWebhook,
+} from "../port";
 
 export const TEST_API_URL = "https://api.monobank.test";
 export const TEST_MERCHANT_TOKEN = "test-merchant-token-0001";
@@ -21,13 +26,45 @@ export const SYNTHETIC_REFERENCE = "clz00000000000000000pur1";
 export const SYNTHETIC_AMOUNT_CENTS = 4_900;
 export const SYNTHETIC_INVOICE_DATE = "2026-09-25T10:55:41Z";
 export const SYNTHETIC_MODIFIED_DATE = "2026-09-25T11:02:03Z";
+export const RESERVED_CHARACTER_CARD_TOKEN = "a+b/c=";
+
+export const OFFSET_TIMESTAMP = "2026-09-25T14:23:28.764528+03:00";
+export const OFFSET_TIMESTAMP_AS_DATE = new Date("2026-09-25T11:23:28.764Z");
+
+export const UAH_CCY = 980;
+export const USD_CCY = 840;
+export const EUR_CCY = 978;
+export const UNKNOWN_CCY = 999;
+
+export const OK_STATUS = 200;
+export const NO_CONTENT_STATUS = 204;
+export const UNAUTHORIZED_STATUS = 401;
+
+export const INVOICE_CREATE_PATH = "/api/merchant/invoice/create";
+export const INVOICE_STATUS_PATH = "/api/merchant/invoice/status";
+export const WALLET_PAYMENT_PATH = "/api/merchant/wallet/payment";
+export const WALLET_CARD_PATH = "/api/merchant/wallet/card";
+export const PUBLIC_KEY_PATH = "/api/merchant/pubkey";
+
+export const OUTGOING_INVALID_MESSAGE = "monobank request is invalid";
+export const UNREADABLE_INVOICE_MESSAGE = "monobank sent an invoice we cannot read";
+export const UNREADABLE_INVOICE_REPLY_MESSAGE = "monobank sent an invoice reply we cannot read";
+export const UNREADABLE_CHARGE_REPLY_MESSAGE = "monobank sent a charge reply we cannot read";
+
+export const PAGE_URL = "https://pay.monobank.test/synthetic-invoice-0001";
+export const INVOICE_CREATE_REPLY = { invoiceId: SYNTHETIC_INVOICE_ID, pageUrl: PAGE_URL };
+
+export const CURRENCY_CODES: [Currency, number][] = [
+  [Currency.UAH, UAH_CCY],
+  [Currency.USD, USD_CCY],
+  [Currency.EUR, EUR_CCY],
+];
 
 const SYNTHETIC_DESCRIPTION = "Discipline program, 4 weeks";
 const SYNTHETIC_PRODUCT_NAME = "Discipline program";
 const SYNTHETIC_PRODUCT_CODE = "clz00000000000000000prd1";
 const SYNTHETIC_RETURN_URL = "https://platform.example.test/billing/return";
 const SYNTHETIC_WEBHOOK_URL = "https://platform.example.test/api/billing/monobank/webhook";
-const UAH_CCY = 980;
 
 const FIXTURES_DIR = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_KEY_FIXTURE = "monobank-test-pubkey.json";
@@ -48,6 +85,17 @@ type RecordedRequest = {
   headers: Record<string, string>;
   body: string | undefined;
   json: unknown;
+};
+
+type PortCall = [
+  name: string,
+  call: (adapter: PaymentPort) => Promise<unknown>,
+  reply: () => Response,
+];
+
+export type WireIssue = {
+  path: string;
+  code: string;
 };
 
 const webhookCaptureSchema = z.object({
@@ -122,6 +170,18 @@ export const makeInvoiceBody = (
   ...overrides,
 });
 
+export const makeChargeReply = (
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> => ({
+  invoiceId: SYNTHETIC_INVOICE_ID,
+  status: "success",
+  amount: SYNTHETIC_AMOUNT_CENTS,
+  ccy: UAH_CCY,
+  createdDate: OFFSET_TIMESTAMP,
+  modifiedDate: OFFSET_TIMESTAMP,
+  ...overrides,
+});
+
 export const jsonResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 
@@ -129,6 +189,29 @@ export const textResponse = (status: number, text: string): Response =>
   new Response(text, { status });
 
 export const emptyResponse = (status: number): Response => new Response(null, { status });
+
+export const EVERY_PORT_CALL: PortCall[] = [
+  [
+    "createPurchase",
+    (adapter) => adapter.createPurchase(makePurchaseInput()),
+    () => jsonResponse(OK_STATUS, INVOICE_CREATE_REPLY),
+  ],
+  [
+    "chargeStoredCard",
+    (adapter) => adapter.chargeStoredCard(makeChargeInput()),
+    () => jsonResponse(OK_STATUS, makeChargeReply()),
+  ],
+  [
+    "fetchPurchase",
+    (adapter) => adapter.fetchPurchase(SYNTHETIC_INVOICE_ID),
+    () => jsonResponse(OK_STATUS, makeInvoiceBody()),
+  ],
+  [
+    "forgetStoredCard",
+    (adapter) => adapter.forgetStoredCard(SYNTHETIC_CARD_TOKEN),
+    () => emptyResponse(NO_CONTENT_STATUS),
+  ],
+];
 
 export const generateSigningKey = (): SigningKeyPair =>
   generateKeyPairSync("ec", { namedCurve: SIGNING_CURVE });

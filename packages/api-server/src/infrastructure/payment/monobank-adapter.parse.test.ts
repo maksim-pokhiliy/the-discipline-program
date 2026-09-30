@@ -5,10 +5,15 @@ import { BadGatewayError } from "@repo/errors";
 
 import {
   captureThrownAppError,
+  EUR_CCY,
   jsonResponse,
   makeAdapterConfig,
   makeChargeInput,
+  makeChargeReply,
   makeInvoiceBody,
+  OFFSET_TIMESTAMP,
+  OFFSET_TIMESTAMP_AS_DATE,
+  OK_STATUS,
   readWebhookCapture,
   SYNTHETIC_AMOUNT_CENTS,
   SYNTHETIC_CARD_TOKEN,
@@ -18,22 +23,18 @@ import {
   SYNTHETIC_REFERENCE,
   SYNTHETIC_WALLET_ID,
   textResponse,
+  UNKNOWN_CCY,
+  UNREADABLE_INVOICE_MESSAGE,
+  USD_CCY,
 } from "./__fixtures__/monobank-fixtures";
 import { createMonobankAdapter } from "./monobank-adapter";
 import type { ChargeOutcome, PaymentPort, PurchaseState, StoredCard } from "./port";
 
-const OK_STATUS = 200;
-const UNKNOWN_CCY = 999;
-const USD_CCY = 840;
-const EUR_CCY = 978;
 const UNIX_SECONDS = 1_758_797_741;
 const UNKNOWN_STATUS = "SYNTHETIC-UNKNOWN-STATUS";
 const NOT_JSON_BODY = "SYNTHETIC not json";
-const OFFSET_TIMESTAMP = "2026-09-25T14:23:28.764528+03:00";
-const OFFSET_TIMESTAMP_AS_DATE = new Date("2026-09-25T11:23:28.764Z");
 const SYNTHETIC_MASKED_PAN = "424242******4242";
 const SYNTHETIC_PAYMENT_SYSTEM = "visa";
-const UNREADABLE_INVOICE_MESSAGE = "monobank sent an invoice we cannot read";
 
 const CAPTURED_MIT_INVOICE_ID = "2609254jRCJHF2jM5rb3";
 const CAPTURED_MIT_REFERENCE = "spike-webhook-mit";
@@ -43,6 +44,28 @@ const CAPTURED_AMOUNT_CENTS = 100;
 const EMPTY_TEXT_VALUES: [string, string | null][] = [
   ["null", null],
   ["an empty string", ""],
+];
+
+type UnsettledWalletCase = [
+  walletStatus: string,
+  label: string,
+  cardToken: string | null,
+  cardStatus: "PENDING" | "FAILED",
+  expectedToken: string | null,
+];
+
+const UNSETTLED_WALLET_TOKENS: UnsettledWalletCase[] = [
+  ["new", "a null token", null, "PENDING", null],
+  ["new", "an empty token", "", "PENDING", null],
+  ["new", "a token", SYNTHETIC_CARD_TOKEN, "PENDING", SYNTHETIC_CARD_TOKEN],
+  ["failed", "a null token", null, "FAILED", null],
+  ["failed", "an empty token", "", "FAILED", null],
+  ["failed", "a token", SYNTHETIC_CARD_TOKEN, "FAILED", SYNTHETIC_CARD_TOKEN],
+];
+
+const PARTIAL_PAYMENT_INFO: [string, Record<string, string>][] = [
+  ["an empty masked PAN", { maskedPan: "", paymentSystem: SYNTHETIC_PAYMENT_SYSTEM }],
+  ["an empty payment system", { maskedPan: SYNTHETIC_MASKED_PAN, paymentSystem: "" }],
 ];
 
 const STORED_CARD_WITHOUT_DETAILS: StoredCard = {
@@ -64,8 +87,8 @@ const PENDING_CARD_WITHOUT_DETAILS: StoredCard = {
 const SUCCEEDED_CHARGE_WITHOUT_CHALLENGE: ChargeOutcome = {
   providerRef: SYNTHETIC_INVOICE_ID,
   status: "SUCCEEDED",
-  amountCents: null,
-  currency: null,
+  amountCents: SYNTHETIC_AMOUNT_CENTS,
+  currency: Currency.UAH,
   challengeUrl: null,
   modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
 };
@@ -85,13 +108,6 @@ const expectedSyntheticState = (overrides: Partial<PurchaseState> = {}): Purchas
 
 const bodyOf = (overrides: Record<string, unknown>): string =>
   JSON.stringify(makeInvoiceBody(overrides));
-
-const successfulChargeReply = (tdsUrl: string | null): Record<string, unknown> => ({
-  invoiceId: SYNTHETIC_INVOICE_ID,
-  status: "success",
-  modifiedDate: OFFSET_TIMESTAMP,
-  tdsUrl,
-});
 
 describe("createMonobankAdapter parsing", () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -272,6 +288,27 @@ describe("createMonobankAdapter parsing", () => {
       });
     });
 
+    it.each(UNSETTLED_WALLET_TOKENS)(
+      "reads a %s wallet with %s in a webhook and in a status reply",
+      async (status, _label, cardToken, cardStatus, expectedToken) => {
+        const body = bodyOf({ walletData: { walletId: SYNTHETIC_WALLET_ID, status, cardToken } });
+        const expected: StoredCard = {
+          status: cardStatus,
+          walletId: SYNTHETIC_WALLET_ID,
+          cardToken: expectedToken,
+          maskedPan: null,
+          paymentSystem: null,
+        };
+
+        fetchMock.mockResolvedValueOnce(textResponse(OK_STATUS, body));
+
+        expect(adapter.parseWebhook(body).storedCard).toEqual(expected);
+        await expect(adapter.fetchPurchase(SYNTHETIC_INVOICE_ID)).resolves.toMatchObject({
+          storedCard: expected,
+        });
+      },
+    );
+
     it("refuses a created wallet without a token", () => {
       const walletData = { walletId: SYNTHETIC_WALLET_ID, status: "created" };
       const error = captureThrownAppError(() => adapter.parseWebhook(bodyOf({ walletData })));
@@ -295,6 +332,13 @@ describe("createMonobankAdapter parsing", () => {
 
       expect(adapter.parseWebhook(bodyOf({ paymentInfo })).paidWith).toBeNull();
     });
+
+    it.each(PARTIAL_PAYMENT_INFO)(
+      "leaves paidWith null when paymentInfo has %s and the other field",
+      (_label, paymentInfo) => {
+        expect(adapter.parseWebhook(bodyOf({ paymentInfo })).paidWith).toBeNull();
+      },
+    );
   });
 
   describe("empty optional fields", () => {
@@ -315,7 +359,9 @@ describe("createMonobankAdapter parsing", () => {
           walletData: storedWallet,
         });
 
-        fetchMock.mockResolvedValueOnce(jsonResponse(OK_STATUS, successfulChargeReply(empty)));
+        fetchMock.mockResolvedValueOnce(
+          jsonResponse(OK_STATUS, makeChargeReply({ tdsUrl: empty })),
+        );
 
         expect(adapter.parseWebhook(storedBody)).toEqual(
           expectedSyntheticState({ reference: null, storedCard: STORED_CARD_WITHOUT_DETAILS }),

@@ -96,6 +96,24 @@ describe("mapToSubscription", () => {
     expect(mapToSubscription(makeRow(overrides))[field]).toBeNull();
   });
 
+  it.each(Object.values(PrismaSubscriptionStatus))(
+    "maps the row status %s to its contract twin",
+    (status) => {
+      expect(mapToSubscription(makeRow({ status })).status).toBe(status);
+    },
+  );
+
+  it.each(Object.values(PrismaBillingProvider))(
+    "maps the row provider %s to its contract twin",
+    (provider) => {
+      expect(mapToSubscription(makeRow({ provider })).provider).toBe(provider);
+    },
+  );
+
+  it.each([true, false])("passes autoRenew %s through", (autoRenew) => {
+    expect(mapToSubscription(makeRow({ autoRenew })).autoRenew).toBe(autoRenew);
+  });
+
   it("has no cardToken and no providerSubscriptionId key at the type level", () => {
     type ResultKeys = keyof ReturnType<typeof mapToSubscription>;
     const assertNoCardToken: "cardToken" extends ResultKeys ? never : true = true;

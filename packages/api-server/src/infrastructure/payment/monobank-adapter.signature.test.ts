@@ -1,4 +1,4 @@
-import { generateKeyPairSync } from "node:crypto";
+import { generateKeyPairSync, type KeyObject } from "node:crypto";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,6 +9,8 @@ import {
   generateSigningKey,
   jsonResponse,
   makeAdapterConfig,
+  OK_STATUS,
+  PUBLIC_KEY_PATH,
   publicKeyValueOf,
   readTestPublicKeyValue,
   readWebhookCapture,
@@ -16,12 +18,11 @@ import {
   signBody,
   TEST_API_URL,
   TEST_MERCHANT_TOKEN,
+  UNAUTHORIZED_STATUS,
 } from "./__fixtures__/monobank-fixtures";
 import { createMonobankAdapter } from "./monobank-adapter";
 import type { PaymentPort, SignedWebhook } from "./port";
 
-const OK_STATUS = 200;
-const UNAUTHORIZED_STATUS = 401;
 const KEY_REFETCH_MIN_INTERVAL_MS = 60_000;
 const RSA_MODULUS_BITS = 2_048;
 const OVERSIZED_SIGNATURE_BYTES = 100;
@@ -35,13 +36,16 @@ const DER_INTEGER_TAG = 0x02;
 const SEVEN_BYTE_DER_SIGNATURE = "MAUCAQECAA==";
 const P384_CURVE = "secp384r1";
 const SECP256K1_CURVE = "secp256k1";
-const PUBLIC_KEY_PATH = "/api/merchant/pubkey";
 const MALFORMED_PINNED_KEY_MESSAGE =
   "monobank webhook public key is not a base64-encoded EC public key";
 const UNAUTHORIZED_BODY = { errCode: "UNAUTHORIZED", errText: "invalid token" };
 const DESTINATION = "Storefront billing spike";
 const DESTINATION_WITH_ONE_BYTE_CHANGED = "Storefront billing spikf";
 const CYRILLIC_DESTINATION = "Програма «Дисципліна», 4 тижні";
+const NOT_BASE64_OF_ALIGNED_LENGTH = "not-base64!!";
+const JUNK_INSERT_AT = 8;
+const GENUINE_DER_SIGNATURE_BYTES = [69, 70, 71, 72];
+const MAX_SIGNING_ATTEMPTS = 20_000;
 
 const created = readWebhookCapture("created");
 const processing = readWebhookCapture("processing");
@@ -70,6 +74,21 @@ const bareKeyBody = (value: string): string =>
 
 const toBase64Url = (signature: string): string =>
   signature.replaceAll("+", "-").replaceAll("/", "_");
+
+const withInsertedJunk = (signature: string, junk: string): string =>
+  `${signature.slice(0, JUNK_INSERT_AT)}${junk}${signature.slice(JUNK_INSERT_AT)}`;
+
+const signatureOfByteLength = (privateKey: KeyObject, rawBody: string, bytes: number): string => {
+  for (let attempt = 0; attempt < MAX_SIGNING_ATTEMPTS; attempt++) {
+    const signature = signBody(privateKey, rawBody);
+
+    if (Buffer.from(signature, "base64").length === bytes) {
+      return signature;
+    }
+  }
+
+  throw new Error(`no ${bytes}-byte signature in ${MAX_SIGNING_ATTEMPTS} attempts`);
+};
 
 const keyReply = async (): Promise<Response> => jsonResponse(OK_STATUS, { key: testKey });
 
@@ -156,6 +175,20 @@ describe("createMonobankAdapter webhook verification", () => {
       expect(() => pinnedAdapter(curveKey)).toThrow(MALFORMED_PINNED_KEY_MESSAGE);
     });
 
+    it.each(GENUINE_DER_SIGNATURE_BYTES)("verifies a genuine %i-byte signature", async (bytes) => {
+      const signingKey = generateSigningKey();
+      const signature = signatureOfByteLength(signingKey.privateKey, success.rawBody, bytes);
+
+      expect(Buffer.from(signature, "base64")).toHaveLength(bytes);
+
+      await expect(
+        pinnedAdapter(publicKeyValueOf(signingKey.publicKey)).verifyWebhook({
+          rawBody: success.rawBody,
+          signature,
+        }),
+      ).resolves.toBe(true);
+    });
+
     it("verifies a body with Cyrillic text signed over its UTF-8 bytes", async () => {
       const signingKey = generateSigningKey();
       const rawBody = success.rawBody.replace(DESTINATION, CYRILLIC_DESTINATION);
@@ -198,7 +231,12 @@ describe("createMonobankAdapter webhook verification", () => {
 
     it.each([
       ["an empty value", ""],
-      ["a value that is not base64", "not-base64!"],
+      ["a value that is not base64", NOT_BASE64_OF_ALIGNED_LENGTH],
+      ["the success signature with four ! inserted", withInsertedJunk(success.signature, "!!!!")],
+      [
+        "the success signature with four spaces inserted",
+        withInsertedJunk(success.signature, "    "),
+      ],
       ["the base64url form of the success signature", toBase64Url(success.signature)],
       ["a length that is not a multiple of four", success.signature.slice(0, -1)],
       [
