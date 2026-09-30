@@ -14,8 +14,10 @@ import {
   INITIATION_KIND_MERCHANT,
   type InvoiceCreateRequest,
   invoiceCreateRequestSchema,
+  invoiceStatusQuerySchema,
   MONOBANK_PATH,
   PAYMENT_TYPE_DEBIT,
+  walletCardQuerySchema,
   type WalletPaymentRequest,
   walletPaymentRequestSchema,
 } from "./monobank-wire";
@@ -117,18 +119,18 @@ export const createMonobankAdapter = (config: MonobankAdapterConfig): PaymentPor
   };
 
   const fetchPurchase = async (providerRef: string): Promise<PurchaseState> => {
-    const query = { invoiceId: providerRef };
+    const path = MONOBANK_PATH.invoiceStatus;
+    const query = checkOutgoing(invoiceStatusQuerySchema, { invoiceId: providerRef }, path);
 
-    return readPurchaseState(
-      await http.send({ method: "GET", path: MONOBANK_PATH.invoiceStatus, query }),
-    );
+    return readPurchaseState(await http.send({ method: "GET", path, query }));
   };
 
   const forgetStoredCard = async (cardToken: string): Promise<void> => {
-    const query = { cardToken };
+    const path = MONOBANK_PATH.walletCard;
+    const query = checkOutgoing(walletCardQuerySchema, { cardToken }, path);
     const secrets = [cardToken];
 
-    await http.send({ method: "DELETE", path: MONOBANK_PATH.walletCard, query, secrets });
+    await http.send({ method: "DELETE", path, query, secrets });
   };
 
   return {

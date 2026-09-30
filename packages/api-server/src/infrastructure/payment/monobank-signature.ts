@@ -18,6 +18,7 @@ const PUBLIC_KEY_PEM_BEGIN = "-----BEGIN PUBLIC KEY-----";
 const PUBLIC_KEY_PEM_END = "-----END PUBLIC KEY-----";
 const SIGNATURE_ALGORITHM = "SHA256";
 const EC_KEY_TYPE = "ec";
+const P256_CURVE = "prime256v1";
 
 const MALFORMED_PINNED_KEY_MESSAGE =
   "monobank webhook public key is not a base64-encoded EC public key";
@@ -62,10 +63,13 @@ const importPublicKey = (pem: string): KeyObject | null => {
   }
 };
 
+const isP256Key = (key: KeyObject): boolean =>
+  key.asymmetricKeyType === EC_KEY_TYPE && key.asymmetricKeyDetails?.namedCurve === P256_CURVE;
+
 const decodePublicKey = (value: string): KeyObject | null => {
   const key = importPublicKey(toPem(value));
 
-  return key?.asymmetricKeyType === EC_KEY_TYPE ? key : null;
+  return key !== null && isP256Key(key) ? key : null;
 };
 
 const toSignatureBytes = (signature: string): Buffer | null => {

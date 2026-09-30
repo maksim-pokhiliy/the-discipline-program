@@ -18,7 +18,6 @@ export type {
   StoredCardStatus,
 } from "./port";
 export { createMonobankAdapter } from "./monobank-adapter";
-export type { MonobankAdapterConfig } from "./monobank-adapter";
 
 export const defaultPayment: PaymentPort = createMonobankAdapter({
   apiUrl: monobankEnv.MONOBANK_API_URL,

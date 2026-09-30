@@ -19,8 +19,6 @@ export const BASKET_UNIT = "шт.";
 export const PAYMENT_TYPE_DEBIT = "debit";
 export const INITIATION_KIND_MERCHANT = "merchant";
 
-const UNKNOWN_CCY_MESSAGE = "unknown ISO 4217 numeric currency code";
-
 export const CCY_BY_CURRENCY: Record<Currency, number> = {
   [Currency.UAH]: 980,
   [Currency.USD]: 840,
@@ -34,9 +32,9 @@ const CURRENCY_BY_CCY = new Map(
   ]),
 );
 
-export const monobankDateSchema = z.string().datetime({ offset: true }).pipe(z.coerce.date());
+const monobankDateSchema = z.string().datetime({ offset: true }).pipe(z.coerce.date());
 
-export const invoiceStatusSchema = z.enum([
+const invoiceStatusSchema = z.enum([
   "created",
   "processing",
   "hold",
@@ -46,11 +44,11 @@ export const invoiceStatusSchema = z.enum([
   "expired",
 ]);
 
-export type MonobankInvoiceStatus = z.infer<typeof invoiceStatusSchema>;
+type MonobankInvoiceStatus = z.infer<typeof invoiceStatusSchema>;
 
 const walletStatusSchema = z.enum(["new", "created", "failed"]);
 
-export type MonobankWalletStatus = z.infer<typeof walletStatusSchema>;
+type MonobankWalletStatus = z.infer<typeof walletStatusSchema>;
 
 export const PURCHASE_STATUS_BY_INVOICE_STATUS = {
   created: "AWAITING_PAYMENT",
@@ -75,7 +73,7 @@ const ccySchema = z
     const currency = CURRENCY_BY_CCY.get(ccy);
 
     if (currency === undefined) {
-      context.addIssue({ code: z.ZodIssueCode.custom, message: UNKNOWN_CCY_MESSAGE });
+      context.addIssue({ code: z.ZodIssueCode.custom });
 
       return z.NEVER;
     }
@@ -83,20 +81,25 @@ const ccySchema = z
     return currency;
   });
 
+const absentWhenEmpty = (value: unknown): unknown =>
+  value === null || value === "" ? undefined : value;
+
+const optionalReplyText = z.preprocess(absentWhenEmpty, z.string().optional());
+
 const storedWalletSchema = z.object({
   status: walletStatusSchema.extract(["created"]),
   walletId: z.string(),
   cardToken: z.string().min(1),
-  maskedPan: z.string().optional(),
-  paymentSystem: z.string().optional(),
+  maskedPan: optionalReplyText,
+  paymentSystem: optionalReplyText,
 });
 
 const unsettledWalletSchema = z.object({
   status: walletStatusSchema.exclude(["created"]),
   walletId: z.string(),
   cardToken: z.string().optional(),
-  maskedPan: z.string().optional(),
-  paymentSystem: z.string().optional(),
+  maskedPan: optionalReplyText,
+  paymentSystem: optionalReplyText,
 });
 
 const walletDataSchema = z.discriminatedUnion("status", [
@@ -105,8 +108,8 @@ const walletDataSchema = z.discriminatedUnion("status", [
 ]);
 
 const paymentInfoSchema = z.object({
-  maskedPan: z.string().optional(),
-  paymentSystem: z.string().optional(),
+  maskedPan: optionalReplyText,
+  paymentSystem: optionalReplyText,
 });
 
 export const invoiceSchema = z.object({
@@ -116,17 +119,17 @@ export const invoiceSchema = z.object({
   ccy: ccySchema,
   createdDate: monobankDateSchema,
   modifiedDate: monobankDateSchema,
-  reference: z.string().optional(),
-  walletData: walletDataSchema.optional(),
-  paymentInfo: paymentInfoSchema.optional(),
+  reference: optionalReplyText,
+  walletData: z.preprocess(absentWhenEmpty, walletDataSchema.optional()),
+  paymentInfo: z.preprocess(absentWhenEmpty, paymentInfoSchema.optional()),
 });
 
 const basketItemSchema = z
   .object({
     name: z.string().min(1),
     qty: z.literal(BASKET_QUANTITY),
-    sum: z.number().int().positive(),
-    total: z.number().int().positive(),
+    sum: z.number().int().positive().safe(),
+    total: z.number().int().positive().safe(),
     unit: z.literal(BASKET_UNIT),
     code: z.string().min(1),
   })
@@ -142,7 +145,7 @@ const merchantPaymInfoSchema = z
 
 export const invoiceCreateRequestSchema = z
   .object({
-    amount: z.number().int().positive(),
+    amount: z.number().int().positive().safe(),
     ccy: z.number().int(),
     merchantPaymInfo: merchantPaymInfoSchema,
     redirectUrl: z.string().url(),
@@ -161,7 +164,7 @@ export type InvoiceCreateRequest = z.infer<typeof invoiceCreateRequestSchema>;
 export const walletPaymentRequestSchema = z
   .object({
     cardToken: z.string().min(1),
-    amount: z.number().int().positive(),
+    amount: z.number().int().positive().safe(),
     ccy: z.number().int(),
     initiationKind: z.literal(INITIATION_KIND_MERCHANT),
     merchantPaymInfo: merchantPaymInfoSchema,
@@ -172,6 +175,10 @@ export const walletPaymentRequestSchema = z
 
 export type WalletPaymentRequest = z.infer<typeof walletPaymentRequestSchema>;
 
+export const invoiceStatusQuerySchema = z.object({ invoiceId: z.string().min(1) }).strict();
+
+export const walletCardQuerySchema = z.object({ cardToken: z.string().min(1) }).strict();
+
 export const invoiceCreateReplySchema = z.object({
   invoiceId: z.string().min(1),
   pageUrl: z.string().url(),
@@ -180,8 +187,9 @@ export const invoiceCreateReplySchema = z.object({
 export const walletPaymentReplySchema = z.object({
   invoiceId: z.string().min(1),
   status: invoiceStatusSchema,
+  ccy: z.preprocess(absentWhenEmpty, ccySchema.optional()),
   modifiedDate: monobankDateSchema,
-  tdsUrl: z.string().url().optional(),
+  tdsUrl: z.preprocess(absentWhenEmpty, z.string().url().optional()),
 });
 
 export const publicKeyReplySchema = z.object({

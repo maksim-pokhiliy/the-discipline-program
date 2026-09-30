@@ -5,12 +5,12 @@ const TAG_BYTES = 16;
 const KEY_BYTES = 32;
 const ALGORITHM = "aes-256-gcm";
 
-export type TokenCipher = {
+type TokenCipher = {
   encrypt: (plaintext: string) => string;
   decrypt: (payload: string) => string;
 };
 
-export type TokenCipherOptions = {
+type TokenCipherOptions = {
   key: string | undefined;
   name: string;
 };

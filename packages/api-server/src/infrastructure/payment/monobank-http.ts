@@ -23,13 +23,13 @@ const FAILED_MESSAGE = "monobank failed the request";
 const UNREACHABLE_MESSAGE = "monobank could not be reached";
 const TIMEOUT_MESSAGE = "monobank did not answer in time";
 
-export type MonobankHttpConfig = {
+type MonobankHttpConfig = {
   apiUrl: string;
   merchantToken: string;
   fetch?: typeof fetch | undefined;
 };
 
-export type MonobankCall =
+type MonobankCall =
   | {
       method: "GET";
       path: MonobankPath;
@@ -119,11 +119,17 @@ const backoffDelayMs = (retry: number): number =>
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+const formsOf = (secret: string): string[] => {
+  const queryForm = new URLSearchParams([["", secret]]).toString().slice(1);
+
+  return queryForm === secret ? [secret] : [secret, queryForm];
+};
+
 const scrub = (text: string, secrets: readonly string[]): string =>
-  secrets.reduce(
-    (scrubbed, secret) => (secret === "" ? scrubbed : scrubbed.replaceAll(secret, REDACTED)),
-    text,
-  );
+  secrets
+    .filter((secret) => secret !== "")
+    .flatMap(formsOf)
+    .reduce((scrubbed, form) => scrubbed.replaceAll(form, REDACTED), text);
 
 const parseErrorJson = (text: string): unknown => {
   try {
