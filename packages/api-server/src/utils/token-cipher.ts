@@ -6,8 +6,8 @@ const KEY_BYTES = 32;
 const ALGORITHM = "aes-256-gcm";
 
 type TokenCipher = {
-  encrypt: (plaintext: string) => string;
-  decrypt: (payload: string) => string;
+  encrypt: (plaintext: string, associatedData?: string) => string;
+  decrypt: (payload: string, associatedData?: string) => string;
 };
 
 type TokenCipherOptions = {
@@ -15,16 +15,29 @@ type TokenCipherOptions = {
   name: string;
 };
 
-const encryptWithKey = (key: Buffer, plaintext: string): string => {
+const encryptWithKey = (
+  key: Buffer,
+  plaintext: string,
+  associatedData: string | undefined,
+): string => {
   const iv = crypto.randomBytes(IV_BYTES);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+
+  if (associatedData !== undefined) {
+    cipher.setAAD(Buffer.from(associatedData, "utf8"));
+  }
+
   const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const authTag = cipher.getAuthTag();
 
   return Buffer.concat([iv, ciphertext, authTag]).toString("base64");
 };
 
-const decryptWithKey = (key: Buffer, payload: string): string => {
+const decryptWithKey = (
+  key: Buffer,
+  payload: string,
+  associatedData: string | undefined,
+): string => {
   const buffer = Buffer.from(payload, "base64");
 
   if (buffer.length < IV_BYTES + TAG_BYTES) {
@@ -39,6 +52,10 @@ const decryptWithKey = (key: Buffer, payload: string): string => {
 
   decipher.setAuthTag(authTag);
 
+  if (associatedData !== undefined) {
+    decipher.setAAD(Buffer.from(associatedData, "utf8"));
+  }
+
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
 };
 
@@ -52,7 +69,7 @@ export const createTokenCipher = ({ key, name }: TokenCipherOptions): TokenCiphe
   }
 
   return {
-    encrypt: (plaintext) => encryptWithKey(keyBytes, plaintext),
-    decrypt: (payload) => decryptWithKey(keyBytes, payload),
+    encrypt: (plaintext, associatedData) => encryptWithKey(keyBytes, plaintext, associatedData),
+    decrypt: (payload, associatedData) => decryptWithKey(keyBytes, payload, associatedData),
   };
 };

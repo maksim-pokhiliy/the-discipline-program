@@ -118,6 +118,8 @@ export const readChargeOutcome = (text: string): ChargeOutcome => {
   return {
     providerRef: reply.invoiceId,
     status: PURCHASE_STATUS_BY_INVOICE_STATUS[reply.status],
+    amountCents: reply.amount ?? null,
+    currency: reply.ccy ?? null,
     challengeUrl: reply.tdsUrl ?? null,
     modifiedAt: reply.modifiedDate,
   };

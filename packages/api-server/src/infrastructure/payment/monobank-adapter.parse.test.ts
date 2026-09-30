@@ -64,6 +64,8 @@ const PENDING_CARD_WITHOUT_DETAILS: StoredCard = {
 const SUCCEEDED_CHARGE_WITHOUT_CHALLENGE: ChargeOutcome = {
   providerRef: SYNTHETIC_INVOICE_ID,
   status: "SUCCEEDED",
+  amountCents: null,
+  currency: null,
   challengeUrl: null,
   modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
 };

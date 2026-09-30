@@ -97,7 +97,7 @@ const storedWalletSchema = z.object({
 const unsettledWalletSchema = z.object({
   status: walletStatusSchema.exclude(["created"]),
   walletId: z.string(),
-  cardToken: z.string().optional(),
+  cardToken: optionalReplyText,
   maskedPan: optionalReplyText,
   paymentSystem: optionalReplyText,
 });
@@ -150,7 +150,7 @@ export const invoiceCreateRequestSchema = z
     merchantPaymInfo: merchantPaymInfoSchema,
     redirectUrl: z.string().url(),
     webHookUrl: z.string().url(),
-    validity: z.number().int().positive().optional(),
+    validity: z.number().int().positive().safe().optional(),
     paymentType: z.literal(PAYMENT_TYPE_DEBIT),
     saveCardData: z
       .object({ saveCard: z.literal(true), walletId: z.string().min(1) })
@@ -187,6 +187,7 @@ export const invoiceCreateReplySchema = z.object({
 export const walletPaymentReplySchema = z.object({
   invoiceId: z.string().min(1),
   status: invoiceStatusSchema,
+  amount: z.preprocess(absentWhenEmpty, z.number().int().nonnegative().optional()),
   ccy: z.preprocess(absentWhenEmpty, ccySchema.optional()),
   modifiedDate: monobankDateSchema,
   tdsUrl: z.preprocess(absentWhenEmpty, z.string().url().optional()),

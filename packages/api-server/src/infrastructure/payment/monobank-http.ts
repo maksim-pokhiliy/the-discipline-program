@@ -16,7 +16,7 @@ const MERCHANT_TOKEN_HEADER = "X-Token";
 const CONTENT_TYPE_HEADER = "Content-Type";
 const JSON_CONTENT_TYPE = "application/json";
 const TRAILING_SLASHES = /\/+$/;
-const TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set(["AbortError", "TimeoutError"]);
+const ABORT_ERROR_NAME = "AbortError";
 
 const REJECTED_MESSAGE = "monobank rejected the request";
 const FAILED_MESSAGE = "monobank failed the request";
@@ -87,8 +87,8 @@ const buildInit = (call: MonobankCall, merchantToken: string, signal: AbortSigna
   };
 };
 
-const isTimeoutError = (error: unknown): boolean =>
-  error instanceof Error && TIMEOUT_ERROR_NAMES.has(error.name);
+const isAbortedAttempt = (error: unknown): boolean =>
+  error instanceof Error && error.name === ABORT_ERROR_NAME;
 
 const attemptOnce = async (
   doFetch: typeof fetch,
@@ -103,7 +103,7 @@ const attemptOnce = async (
 
     return { kind: "reply", status: response.status, body: await response.text() };
   } catch (error) {
-    return isTimeoutError(error) ? { kind: "timeout" } : { kind: "unreachable" };
+    return isAbortedAttempt(error) ? { kind: "timeout" } : { kind: "unreachable" };
   } finally {
     clearTimeout(timer);
   }

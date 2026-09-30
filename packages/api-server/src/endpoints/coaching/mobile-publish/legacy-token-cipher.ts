@@ -7,5 +7,7 @@ const legacyTokenCipher = createTokenCipher({
   name: "MOBILE_PUBLISH_ENCRYPTION_KEY",
 });
 
-export const encryptLegacyToken = legacyTokenCipher.encrypt;
-export const decryptLegacyToken = legacyTokenCipher.decrypt;
+export const encryptLegacyToken = (plaintext: string): string =>
+  legacyTokenCipher.encrypt(plaintext);
+
+export const decryptLegacyToken = (payload: string): string => legacyTokenCipher.decrypt(payload);

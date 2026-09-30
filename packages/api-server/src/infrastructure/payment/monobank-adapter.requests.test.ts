@@ -300,6 +300,8 @@ describe("createMonobankAdapter requests", () => {
       await expect(adapter.chargeStoredCard(makeChargeInput())).resolves.toEqual({
         providerRef: SYNTHETIC_INVOICE_ID,
         status: "SUCCEEDED",
+        amountCents: SYNTHETIC_AMOUNT_CENTS,
+        currency: Currency.UAH,
         challengeUrl: null,
         modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
       });
@@ -313,6 +315,8 @@ describe("createMonobankAdapter requests", () => {
       await expect(adapter.chargeStoredCard(makeChargeInput())).resolves.toEqual({
         providerRef: SYNTHETIC_INVOICE_ID,
         status: "PROCESSING",
+        amountCents: SYNTHETIC_AMOUNT_CENTS,
+        currency: Currency.UAH,
         challengeUrl: CHALLENGE_URL,
         modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
       });
@@ -326,6 +330,8 @@ describe("createMonobankAdapter requests", () => {
       await expect(adapter.chargeStoredCard(makeChargeInput())).resolves.toEqual({
         providerRef: SYNTHETIC_INVOICE_ID,
         status: "FAILED",
+        amountCents: SYNTHETIC_AMOUNT_CENTS,
+        currency: Currency.UAH,
         challengeUrl: null,
         modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
       });
@@ -339,6 +345,8 @@ describe("createMonobankAdapter requests", () => {
         await expect(adapter.chargeStoredCard(makeChargeInput())).resolves.toEqual({
           providerRef: SYNTHETIC_INVOICE_ID,
           status: "FAILED",
+          amountCents: null,
+          currency: null,
           challengeUrl: null,
           modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
         });

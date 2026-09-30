@@ -7,5 +7,8 @@ const cardTokenCipher = createTokenCipher({
   name: "BILLING_ENCRYPTION_KEY",
 });
 
-export const encryptCardToken = cardTokenCipher.encrypt;
-export const decryptCardToken = cardTokenCipher.decrypt;
+export const encryptCardToken = (cardToken: string, userId: string): string =>
+  cardTokenCipher.encrypt(cardToken, userId);
+
+export const decryptCardToken = (payload: string, userId: string): string =>
+  cardTokenCipher.decrypt(payload, userId);

@@ -46,6 +46,8 @@ export type ChargeStoredCardInput = {
 export type ChargeOutcome = {
   providerRef: string;
   status: PurchaseStatus;
+  amountCents: number | null;
+  currency: Currency | null;
   challengeUrl: string | null;
   modifiedAt: Date;
 };
