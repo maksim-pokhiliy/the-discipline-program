@@ -26,14 +26,22 @@ const KEY_REFETCH_MIN_INTERVAL_MS = 60_000;
 const RSA_MODULUS_BITS = 2_048;
 const OVERSIZED_SIGNATURE_BYTES = 100;
 const DER_SIZED_SIGNATURE_BYTES = 70;
+const OVERSIZED_DER_SIGNATURE_BYTES = 73;
+const DER_HEADER_BYTES = 2;
 const NOT_A_DER_SEQUENCE_BYTE = 0x01;
+const WRONG_DER_LENGTH_BYTE = 0x01;
 const DER_SEQUENCE_TAG = 0x30;
+const DER_INTEGER_TAG = 0x02;
+const SEVEN_BYTE_DER_SIGNATURE = "MAUCAQECAA==";
+const P384_CURVE = "secp384r1";
+const SECP256K1_CURVE = "secp256k1";
 const PUBLIC_KEY_PATH = "/api/merchant/pubkey";
 const MALFORMED_PINNED_KEY_MESSAGE =
   "monobank webhook public key is not a base64-encoded EC public key";
 const UNAUTHORIZED_BODY = { errCode: "UNAUTHORIZED", errText: "invalid token" };
 const DESTINATION = "Storefront billing spike";
 const DESTINATION_WITH_ONE_BYTE_CHANGED = "Storefront billing spikf";
+const CYRILLIC_DESTINATION = "Програма «Дисципліна», 4 тижні";
 
 const created = readWebhookCapture("created");
 const processing = readWebhookCapture("processing");
@@ -43,6 +51,15 @@ const forgedSuccess: SignedWebhook = { rawBody: success.rawBody, signature: crea
 
 const rsaPublicKeyValue = (): string =>
   publicKeyValueOf(generateKeyPairSync("rsa", { modulusLength: RSA_MODULUS_BITS }).publicKey);
+
+const ecPublicKeyValue = (namedCurve: string): string =>
+  publicKeyValueOf(generateKeyPairSync("ec", { namedCurve }).publicKey);
+
+const derShapedSignature = (tag: number, lengthByte: number, totalBytes: number): string =>
+  Buffer.concat([
+    Buffer.from([tag, lengthByte]),
+    Buffer.alloc(totalBytes - DER_HEADER_BYTES, DER_INTEGER_TAG),
+  ]).toString("base64");
 
 const bareKeyBody = (value: string): string =>
   Buffer.from(value, "base64")
@@ -128,6 +145,31 @@ describe("createMonobankAdapter webhook verification", () => {
 
       expect(() => pinnedAdapter(rsaKey)).toThrow(InternalServerError);
     });
+
+    it.each([
+      ["P-384", P384_CURVE],
+      ["secp256k1", SECP256K1_CURVE],
+    ])("throws InternalServerError at construction for a pinned %s key", (_label, namedCurve) => {
+      const curveKey = ecPublicKeyValue(namedCurve);
+
+      expect(() => pinnedAdapter(curveKey)).toThrow(InternalServerError);
+      expect(() => pinnedAdapter(curveKey)).toThrow(MALFORMED_PINNED_KEY_MESSAGE);
+    });
+
+    it("verifies a body with Cyrillic text signed over its UTF-8 bytes", async () => {
+      const signingKey = generateSigningKey();
+      const rawBody = success.rawBody.replace(DESTINATION, CYRILLIC_DESTINATION);
+
+      expect(rawBody).toContain(CYRILLIC_DESTINATION);
+      expect(Buffer.from(rawBody, "utf8").equals(Buffer.from(rawBody, "latin1"))).toBe(false);
+
+      await expect(
+        pinnedAdapter(publicKeyValueOf(signingKey.publicKey)).verifyWebhook({
+          rawBody,
+          signature: signBody(signingKey.privateKey, rawBody),
+        }),
+      ).resolves.toBe(true);
+    });
   });
 
   describe("with a fetched key", () => {
@@ -166,6 +208,27 @@ describe("createMonobankAdapter webhook verification", () => {
       [
         "a 70-byte value that is not a DER sequence",
         Buffer.alloc(DER_SIZED_SIGNATURE_BYTES, NOT_A_DER_SEQUENCE_BYTE).toString("base64"),
+      ],
+      ["a 7-byte DER sequence", SEVEN_BYTE_DER_SIGNATURE],
+      [
+        "a 73-byte DER sequence",
+        derShapedSignature(
+          DER_SEQUENCE_TAG,
+          OVERSIZED_DER_SIGNATURE_BYTES - DER_HEADER_BYTES,
+          OVERSIZED_DER_SIGNATURE_BYTES,
+        ),
+      ],
+      [
+        "a 70-byte value with the right length byte and a tag that is not a sequence",
+        derShapedSignature(
+          NOT_A_DER_SEQUENCE_BYTE,
+          DER_SIZED_SIGNATURE_BYTES - DER_HEADER_BYTES,
+          DER_SIZED_SIGNATURE_BYTES,
+        ),
+      ],
+      [
+        "a 70-byte DER sequence with a wrong length byte",
+        derShapedSignature(DER_SEQUENCE_TAG, WRONG_DER_LENGTH_BYTE, DER_SIZED_SIGNATURE_BYTES),
       ],
     ])("answers false without fetching for %s as the signature", async (_label, signature) => {
       fetchMock.mockImplementation(keyReply);
@@ -296,6 +359,44 @@ describe("createMonobankAdapter webhook verification", () => {
       vi.advanceTimersByTime(KEY_REFETCH_MIN_INTERVAL_MS + 1);
 
       await expect(adapter.verifyWebhook(success)).resolves.toBe(true);
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("lets a failing verification join the refetch in flight, so both verify with one refetch", async () => {
+      const rotatedAway = generateSigningKey();
+      let releaseRefetch: () => void = () => undefined;
+
+      fetchMock
+        .mockResolvedValueOnce(
+          jsonResponse(OK_STATUS, { key: publicKeyValueOf(rotatedAway.publicKey) }),
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((resolve) => {
+              releaseRefetch = () => resolve(jsonResponse(OK_STATUS, { key: testKey }));
+            }),
+        );
+
+      const adapter = fetchedKeyAdapter();
+
+      await expect(
+        adapter.verifyWebhook({
+          rawBody: success.rawBody,
+          signature: signBody(rotatedAway.privateKey, success.rawBody),
+        }),
+      ).resolves.toBe(true);
+
+      vi.advanceTimersByTime(KEY_REFETCH_MIN_INTERVAL_MS + 1);
+
+      const verifications = Promise.all([
+        adapter.verifyWebhook(success),
+        adapter.verifyWebhook(success),
+      ]);
+
+      releaseRefetch();
+
+      await expect(verifications).resolves.toEqual([true, true]);
 
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });

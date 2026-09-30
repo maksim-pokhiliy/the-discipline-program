@@ -5,22 +5,27 @@ import { BadGatewayError } from "@repo/errors";
 
 import {
   captureThrownAppError,
+  jsonResponse,
   makeAdapterConfig,
+  makeChargeInput,
   makeInvoiceBody,
   readWebhookCapture,
   SYNTHETIC_AMOUNT_CENTS,
   SYNTHETIC_CARD_TOKEN,
   SYNTHETIC_INVOICE_DATE,
   SYNTHETIC_INVOICE_ID,
+  SYNTHETIC_MODIFIED_DATE,
   SYNTHETIC_REFERENCE,
   SYNTHETIC_WALLET_ID,
   textResponse,
 } from "./__fixtures__/monobank-fixtures";
 import { createMonobankAdapter } from "./monobank-adapter";
-import type { PaymentPort, PurchaseState } from "./port";
+import type { ChargeOutcome, PaymentPort, PurchaseState, StoredCard } from "./port";
 
 const OK_STATUS = 200;
 const UNKNOWN_CCY = 999;
+const USD_CCY = 840;
+const EUR_CCY = 978;
 const UNIX_SECONDS = 1_758_797_741;
 const UNKNOWN_STATUS = "SYNTHETIC-UNKNOWN-STATUS";
 const NOT_JSON_BODY = "SYNTHETIC not json";
@@ -35,6 +40,34 @@ const CAPTURED_MIT_REFERENCE = "spike-webhook-mit";
 const CAPTURED_MIT_DATE = new Date("2026-09-25T11:23:28Z");
 const CAPTURED_AMOUNT_CENTS = 100;
 
+const EMPTY_TEXT_VALUES: [string, string | null][] = [
+  ["null", null],
+  ["an empty string", ""],
+];
+
+const STORED_CARD_WITHOUT_DETAILS: StoredCard = {
+  status: "STORED",
+  walletId: SYNTHETIC_WALLET_ID,
+  cardToken: SYNTHETIC_CARD_TOKEN,
+  maskedPan: null,
+  paymentSystem: null,
+};
+
+const PENDING_CARD_WITHOUT_DETAILS: StoredCard = {
+  status: "PENDING",
+  walletId: SYNTHETIC_WALLET_ID,
+  cardToken: null,
+  maskedPan: null,
+  paymentSystem: null,
+};
+
+const SUCCEEDED_CHARGE_WITHOUT_CHALLENGE: ChargeOutcome = {
+  providerRef: SYNTHETIC_INVOICE_ID,
+  status: "SUCCEEDED",
+  challengeUrl: null,
+  modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
+};
+
 const expectedSyntheticState = (overrides: Partial<PurchaseState> = {}): PurchaseState => ({
   providerRef: SYNTHETIC_INVOICE_ID,
   status: "AWAITING_PAYMENT",
@@ -42,7 +75,7 @@ const expectedSyntheticState = (overrides: Partial<PurchaseState> = {}): Purchas
   currency: Currency.UAH,
   reference: SYNTHETIC_REFERENCE,
   createdAt: new Date(SYNTHETIC_INVOICE_DATE),
-  modifiedAt: new Date(SYNTHETIC_INVOICE_DATE),
+  modifiedAt: new Date(SYNTHETIC_MODIFIED_DATE),
   storedCard: null,
   paidWith: null,
   ...overrides,
@@ -50,6 +83,13 @@ const expectedSyntheticState = (overrides: Partial<PurchaseState> = {}): Purchas
 
 const bodyOf = (overrides: Record<string, unknown>): string =>
   JSON.stringify(makeInvoiceBody(overrides));
+
+const successfulChargeReply = (tdsUrl: string | null): Record<string, unknown> => ({
+  invoiceId: SYNTHETIC_INVOICE_ID,
+  status: "success",
+  modifiedDate: OFFSET_TIMESTAMP,
+  tdsUrl,
+});
 
 describe("createMonobankAdapter parsing", () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -144,6 +184,13 @@ describe("createMonobankAdapter parsing", () => {
       expect(error).toBeInstanceOf(BadGatewayError);
       expect(error.details).toEqual({ issues: [{ path: "ccy", code: "custom" }] });
     });
+
+    it.each([
+      [USD_CCY, Currency.USD],
+      [EUR_CCY, Currency.EUR],
+    ])("reads the ccy %i as %s", (ccy, currency) => {
+      expect(adapter.parseWebhook(bodyOf({ ccy })).currency).toBe(currency);
+    });
   });
 
   describe("dates", () => {
@@ -155,6 +202,15 @@ describe("createMonobankAdapter parsing", () => {
 
       expect(state.createdAt).toEqual(expected);
       expect(state.modifiedAt).toEqual(expected);
+    });
+
+    it("maps createdDate to createdAt and modifiedDate to modifiedAt", () => {
+      const state = adapter.parseWebhook(
+        bodyOf({ createdDate: SYNTHETIC_INVOICE_DATE, modifiedDate: SYNTHETIC_MODIFIED_DATE }),
+      );
+
+      expect(state.createdAt).toEqual(new Date(SYNTHETIC_INVOICE_DATE));
+      expect(state.modifiedAt).toEqual(new Date(SYNTHETIC_MODIFIED_DATE));
     });
 
     it.each([
@@ -230,6 +286,61 @@ describe("createMonobankAdapter parsing", () => {
       const paymentInfo = { paymentSystem: SYNTHETIC_PAYMENT_SYSTEM };
 
       expect(adapter.parseWebhook(bodyOf({ paymentInfo })).paidWith).toBeNull();
+    });
+
+    it("leaves paidWith null when paymentInfo lacks a payment system", () => {
+      const paymentInfo = { maskedPan: SYNTHETIC_MASKED_PAN };
+
+      expect(adapter.parseWebhook(bodyOf({ paymentInfo })).paidWith).toBeNull();
+    });
+  });
+
+  describe("empty optional fields", () => {
+    it.each(EMPTY_TEXT_VALUES)(
+      "reads %s in an optional text field as absent",
+      async (_label, empty) => {
+        const cardDetails = { maskedPan: empty, paymentSystem: empty };
+        const storedWallet = {
+          walletId: SYNTHETIC_WALLET_ID,
+          status: "created",
+          cardToken: SYNTHETIC_CARD_TOKEN,
+          ...cardDetails,
+        };
+        const pendingWallet = { walletId: SYNTHETIC_WALLET_ID, status: "new", ...cardDetails };
+        const storedBody = bodyOf({
+          reference: empty,
+          paymentInfo: cardDetails,
+          walletData: storedWallet,
+        });
+
+        fetchMock.mockResolvedValueOnce(jsonResponse(OK_STATUS, successfulChargeReply(empty)));
+
+        expect(adapter.parseWebhook(storedBody)).toEqual(
+          expectedSyntheticState({ reference: null, storedCard: STORED_CARD_WITHOUT_DETAILS }),
+        );
+        expect(adapter.parseWebhook(bodyOf({ walletData: pendingWallet })).storedCard).toEqual(
+          PENDING_CARD_WITHOUT_DETAILS,
+        );
+        await expect(adapter.chargeStoredCard(makeChargeInput())).resolves.toEqual(
+          SUCCEEDED_CHARGE_WITHOUT_CHALLENGE,
+        );
+      },
+    );
+
+    it("reads a null paymentInfo and a null walletData as absent", () => {
+      expect(adapter.parseWebhook(bodyOf({ paymentInfo: null, walletData: null }))).toEqual(
+        expectedSyntheticState(),
+      );
+    });
+
+    it("still refuses a created wallet whose card token is empty", () => {
+      const walletData = { walletId: SYNTHETIC_WALLET_ID, status: "created", cardToken: "" };
+      const error = captureThrownAppError(() => adapter.parseWebhook(bodyOf({ walletData })));
+
+      expect(error).toBeInstanceOf(BadGatewayError);
+      expect(error.details).toEqual({
+        issues: [{ path: "walletData.cardToken", code: "too_small" }],
+      });
     });
   });
 

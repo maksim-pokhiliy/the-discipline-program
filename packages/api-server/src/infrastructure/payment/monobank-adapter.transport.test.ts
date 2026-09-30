@@ -31,6 +31,9 @@ const WALLET_PAYMENT_PATH = "/api/merchant/wallet/payment";
 const WALLET_CARD_PATH = "/api/merchant/wallet/card";
 const ATTEMPT_TIMEOUT_MS = 10_000;
 const READ_ATTEMPTS = 3;
+const HALF_JITTER = 0.5;
+const FIRST_RETRY_AT_MS = 1_500;
+const SECOND_RETRY_AT_MS = 4_000;
 const OK_STATUS = 200;
 const BAD_REQUEST_STATUS = 400;
 const UNAUTHORIZED_STATUS = 401;
@@ -42,8 +45,20 @@ const API_HOST = "api.monobank.test";
 const REDACTED = "[REDACTED]";
 const MONOBANK_ERROR_BODY = { errCode: "1001", errText: "invalid 'amount'" };
 const UNAVAILABLE_TEXT = "service unavailable";
+const ECHO_ERROR_CODE = "BAD_REQUEST";
+const RESERVED_CHARACTER_CARD_TOKEN = "a+b/c=";
+const QUERY_ENCODED_CARD_TOKEN = "a%2Bb%2Fc%3D";
 
 const LEAKABLE_CHARGE_INPUT = makeChargeInput();
+
+const ECHOED_CARD_TOKENS: [string, string, string][] = [
+  ["the card token", SYNTHETIC_CARD_TOKEN, SYNTHETIC_CARD_TOKEN],
+  [
+    "the query-encoded form of a card token with reserved characters",
+    RESERVED_CHARACTER_CARD_TOKEN,
+    QUERY_ENCODED_CARD_TOKEN,
+  ],
+];
 
 type LeakCase = [string, (port: PaymentPort) => Promise<unknown>, string[]];
 
@@ -70,6 +85,21 @@ const abortedByTheSignal = (_input: RequestInfo | URL, init?: RequestInit): Prom
     });
   });
 
+const bodyStalledUntilAbort = async (
+  _input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> =>
+  new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        init?.signal?.addEventListener("abort", () => {
+          controller.error(new DOMException("aborted", "AbortError"));
+        });
+      },
+    }),
+    { status: OK_STATUS },
+  );
+
 describe("createMonobankAdapter transport", () => {
   const fetchMock = vi.fn<typeof fetch>();
   let adapter: PaymentPort;
@@ -86,6 +116,7 @@ describe("createMonobankAdapter transport", () => {
 
     afterEach(() => {
       vi.useRealTimers();
+      vi.restoreAllMocks();
     });
 
     it("sends a POST that meets a 503 exactly once and surfaces BadGatewayError", async () => {
@@ -133,6 +164,51 @@ describe("createMonobankAdapter transport", () => {
       await assertion;
 
       expect(fetchMock).toHaveBeenCalledTimes(READ_ATTEMPTS);
+    });
+
+    it("waits the base delay, doubled on each retry, plus the jitter before each GET retry", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(HALF_JITTER);
+      fetchMock
+        .mockImplementationOnce(unavailable)
+        .mockImplementationOnce(unavailable)
+        .mockResolvedValueOnce(jsonResponse(OK_STATUS, makeInvoiceBody()));
+
+      const assertion = expect(adapter.fetchPurchase(SYNTHETIC_INVOICE_ID)).resolves.toMatchObject({
+        providerRef: SYNTHETIC_INVOICE_ID,
+      });
+
+      await vi.advanceTimersByTimeAsync(FIRST_RETRY_AT_MS - 1);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(SECOND_RETRY_AT_MS - FIRST_RETRY_AT_MS - 1);
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(fetchMock).toHaveBeenCalledTimes(READ_ATTEMPTS);
+
+      await assertion;
+    });
+
+    it("retries a GET whose first attempt cannot reach Monobank", async () => {
+      fetchMock
+        .mockRejectedValueOnce(new TypeError("fetch failed"))
+        .mockResolvedValueOnce(jsonResponse(OK_STATUS, makeInvoiceBody()));
+
+      const assertion = expect(adapter.fetchPurchase(SYNTHETIC_INVOICE_ID)).resolves.toMatchObject({
+        providerRef: SYNTHETIC_INVOICE_ID,
+      });
+
+      await vi.runAllTimersAsync();
+      await assertion;
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("surfaces BadGatewayError after three GET attempts that all meet 503", async () => {
@@ -240,6 +316,28 @@ describe("createMonobankAdapter transport", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
+    it("times out at 10 s a reply whose headers arrive at once but whose body never ends", async () => {
+      fetchMock.mockImplementation(bodyStalledUntilAbort);
+
+      const settled = vi.fn();
+      const pending = adapter.createPurchase(makePurchaseInput());
+      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
+
+      void pending.then(settled, settled);
+
+      await vi.advanceTimersByTimeAsync(ATTEMPT_TIMEOUT_MS - 1);
+
+      expect(settled).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(settled).toHaveBeenCalledTimes(1);
+
+      await assertion;
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it("retries a GET that times out and surfaces TimeoutError after three attempts", async () => {
       fetchMock.mockImplementation(abortedByTheSignal);
 
@@ -289,6 +387,61 @@ describe("createMonobankAdapter transport", () => {
         status: BAD_REQUEST_STATUS,
         errCode: `BAD_${REDACTED}`,
         errText: `invalid 'cardToken' ${REDACTED} for ${REDACTED}`,
+      });
+    });
+
+    it.each(ECHOED_CARD_TOKENS)(
+      "scrubs %s that a DELETE error echoes",
+      async (_label, cardToken, echoed) => {
+        fetchMock.mockResolvedValueOnce(
+          jsonResponse(BAD_REQUEST_STATUS, {
+            errCode: ECHO_ERROR_CODE,
+            errText: `unknown card ${echoed}`,
+          }),
+        );
+
+        const error = await captureAppError(adapter.forgetStoredCard(cardToken));
+
+        expect(error.details).toEqual({
+          path: WALLET_CARD_PATH,
+          status: BAD_REQUEST_STATUS,
+          errCode: ECHO_ERROR_CODE,
+          errText: `unknown card ${REDACTED}`,
+        });
+      },
+    );
+
+    it("scrubs every occurrence of a secret", async () => {
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse(BAD_REQUEST_STATUS, {
+          errCode: ECHO_ERROR_CODE,
+          errText: `token ${SYNTHETIC_CARD_TOKEN} invalid (${SYNTHETIC_CARD_TOKEN})`,
+        }),
+      );
+
+      const error = await captureAppError(adapter.chargeStoredCard(makeChargeInput()));
+
+      expect(error.details).toEqual({
+        path: WALLET_PAYMENT_PATH,
+        status: BAD_REQUEST_STATUS,
+        errCode: ECHO_ERROR_CODE,
+        errText: `token ${REDACTED} invalid (${REDACTED})`,
+      });
+    });
+
+    it("leaves errCode and errText untouched when the merchant token is empty", async () => {
+      const emptyTokenAdapter = createMonobankAdapter(
+        makeAdapterConfig({ merchantToken: "", fetch: fetchMock }),
+      );
+
+      fetchMock.mockResolvedValueOnce(jsonResponse(BAD_REQUEST_STATUS, MONOBANK_ERROR_BODY));
+
+      const error = await captureAppError(emptyTokenAdapter.chargeStoredCard(makeChargeInput()));
+
+      expect(error.details).toEqual({
+        path: WALLET_PAYMENT_PATH,
+        status: BAD_REQUEST_STATUS,
+        ...MONOBANK_ERROR_BODY,
       });
     });
 
@@ -369,6 +522,7 @@ describe("createMonobankAdapter transport", () => {
   describe("fetch resolution and URL building", () => {
     afterEach(() => {
       vi.restoreAllMocks();
+      vi.unstubAllGlobals();
     });
 
     it("uses globalThis.fetch when no fetch is injected", async () => {
@@ -383,6 +537,24 @@ describe("createMonobankAdapter transport", () => {
 
       expect(globalFetch).toHaveBeenCalledTimes(1);
       expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("resolves globalThis.fetch on every call, so a fetch swapped in after construction is used", async () => {
+      const replacedFetch = vi.fn<typeof fetch>().mockRejectedValue(new TypeError("replaced"));
+      const currentFetch = vi.fn<typeof fetch>().mockResolvedValue(emptyResponse(OK_STATUS));
+
+      vi.stubGlobal("fetch", replacedFetch);
+
+      const defaultFetchAdapter = createMonobankAdapter(makeAdapterConfig());
+
+      vi.stubGlobal("fetch", currentFetch);
+
+      await expect(
+        defaultFetchAdapter.forgetStoredCard(SYNTHETIC_CARD_TOKEN),
+      ).resolves.toBeUndefined();
+
+      expect(currentFetch).toHaveBeenCalledTimes(1);
+      expect(replacedFetch).not.toHaveBeenCalled();
     });
 
     it.each([`${TEST_API_URL}/`, `${TEST_API_URL}//`])(

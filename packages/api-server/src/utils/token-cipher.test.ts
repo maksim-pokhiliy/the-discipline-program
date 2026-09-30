@@ -17,6 +17,10 @@ const JWT_LIKE =
   "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJyb2xlIjoiQURNSU4ifQ." +
   "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
+const KNOWN_ANSWER_PLAINTEXT = "synthetic-kat-token-ключ-01";
+const KNOWN_ANSWER_PAYLOAD =
+  "9M5Xf60UPsiAu/rgz7InClaa4nrsg8QBu4WkqtN2N57FWnN3tqGXt/kTifx7dOPXamQS6AR+JDuA3us=";
+
 const cipher = createTokenCipher({ key: TEST_KEY, name: TEST_KEY_NAME });
 
 describe("createTokenCipher", () => {
@@ -92,5 +96,9 @@ describe("createTokenCipher", () => {
 
     expect(cipher.decrypt(sealed)).toBe(plaintext);
     expect(() => other.decrypt(sealed)).toThrow();
+  });
+
+  it("opens a known payload that the pre-factory cipher sealed under the same key", () => {
+    expect(cipher.decrypt(KNOWN_ANSWER_PAYLOAD)).toBe(KNOWN_ANSWER_PLAINTEXT);
   });
 });

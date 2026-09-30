@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Currency } from "@repo/contracts/common";
-import { InternalServerError } from "@repo/errors";
+import { BadGatewayError, InternalServerError } from "@repo/errors";
 
 import {
   captureAppError,
@@ -18,6 +18,7 @@ import {
   SYNTHETIC_WALLET_ID,
   TEST_API_URL,
   TEST_MERCHANT_TOKEN,
+  textResponse,
 } from "./__fixtures__/monobank-fixtures";
 import { createMonobankAdapter } from "./monobank-adapter";
 import type { BasketLine, ChargeStoredCardInput, CreatePurchaseInput, PaymentPort } from "./port";
@@ -31,6 +32,9 @@ const PAYMENT_TYPE_DEBIT = "debit";
 const INITIATION_KIND_MERCHANT = "merchant";
 const VALIDITY_SECONDS = 3_600;
 const FRACTIONAL_AMOUNT = 4_900.5;
+const HUGE_AMOUNT = 1e21;
+const FIRST_UNSAFE_EVEN_AMOUNT = 2 ** 53 + 2;
+const UNKNOWN_CCY = 999;
 const OK_STATUS = 200;
 const NO_CONTENT_STATUS = 204;
 const JSON_CONTENT_TYPE = "application/json";
@@ -40,8 +44,20 @@ const PAGE_URL = "https://pay.monobank.test/synthetic-invoice-0001";
 const CHALLENGE_URL = "https://pay.monobank.test/fake-tds/synthetic-invoice-0001";
 const RESERVED_CHARACTER_CARD_TOKEN = "a+b/c=";
 const TOKENIZATION_CHOICE_FIELD = "allowTokenizationChoice";
+const NOT_JSON_REPLY = "<html>ok</html>";
+const INVOICE_STATUS_PATH = "/api/merchant/invoice/status";
+const WALLET_PAYMENT_PATH = "/api/merchant/wallet/payment";
+const WALLET_CARD_PATH = "/api/merchant/wallet/card";
+const OUTGOING_INVALID_MESSAGE = "monobank request is invalid";
+const UNREADABLE_CHARGE_REPLY_MESSAGE = "monobank sent a charge reply we cannot read";
 
 const INVOICE_CREATE_REPLY = { invoiceId: SYNTHETIC_INVOICE_ID, pageUrl: PAGE_URL };
+
+const DECLINE_CCY_FIELDS: [string, Record<string, unknown>][] = [
+  ["without a ccy or an amount", {}],
+  ["with a null ccy", { ccy: null }],
+  ["with an empty ccy", { ccy: "" }],
+];
 
 const makeChargeReply = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   invoiceId: SYNTHETIC_INVOICE_ID,
@@ -51,6 +67,13 @@ const makeChargeReply = (overrides: Record<string, unknown> = {}): Record<string
   createdDate: OFFSET_TIMESTAMP,
   modifiedDate: OFFSET_TIMESTAMP,
   ...overrides,
+});
+
+const makeDeclineReply = (fields: Record<string, unknown>): Record<string, unknown> => ({
+  invoiceId: SYNTHETIC_INVOICE_ID,
+  status: "failure",
+  modifiedDate: OFFSET_TIMESTAMP,
+  ...fields,
 });
 
 type MerchantPaymInfoSource = {
@@ -122,6 +145,34 @@ const EVERY_PORT_CALL: PortCall[] = [
     () => emptyResponse(NO_CONTENT_STATUS),
   ],
 ];
+
+type EmptyIdCase = [string, (adapter: PaymentPort) => Promise<unknown>, string, string];
+
+const EMPTY_ID_CASES: EmptyIdCase[] = [
+  ["forgetStoredCard", (adapter) => adapter.forgetStoredCard(""), WALLET_CARD_PATH, "cardToken"],
+  ["fetchPurchase", (adapter) => adapter.fetchPurchase(""), INVOICE_STATUS_PATH, "invoiceId"],
+];
+
+type AmountWrite = (adapter: PaymentPort, amountCents: number) => Promise<unknown>;
+
+const AMOUNT_WRITES: [string, AmountWrite][] = [
+  [
+    "createPurchase",
+    (adapter, amountCents) => adapter.createPurchase(makePurchaseInput({ amountCents })),
+  ],
+  [
+    "chargeStoredCard",
+    (adapter, amountCents) => adapter.chargeStoredCard(makeChargeInput({ amountCents })),
+  ],
+];
+
+const UNSAFE_AMOUNT_CASES = AMOUNT_WRITES.flatMap(([name, write]) =>
+  [HUGE_AMOUNT, FIRST_UNSAFE_EVEN_AMOUNT].map((amountCents): [string, number, AmountWrite] => [
+    name,
+    amountCents,
+    write,
+  ]),
+);
 
 describe("createMonobankAdapter requests", () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -279,6 +330,54 @@ describe("createMonobankAdapter requests", () => {
         modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
       });
     });
+
+    it.each(DECLINE_CCY_FIELDS)(
+      "returns a FAILED outcome for a 200 decline %s",
+      async (_label, ccyFields) => {
+        fetchMock.mockResolvedValueOnce(jsonResponse(OK_STATUS, makeDeclineReply(ccyFields)));
+
+        await expect(adapter.chargeStoredCard(makeChargeInput())).resolves.toEqual({
+          providerRef: SYNTHETIC_INVOICE_ID,
+          status: "FAILED",
+          challengeUrl: null,
+          modifiedAt: OFFSET_TIMESTAMP_AS_DATE,
+        });
+      },
+    );
+
+    it("refuses a charge reply with an unknown ccy", async () => {
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse(OK_STATUS, makeChargeReply({ ccy: UNKNOWN_CCY })),
+      );
+
+      const error = await captureAppError(adapter.chargeStoredCard(makeChargeInput()));
+
+      expect(error).toBeInstanceOf(BadGatewayError);
+      expect(error.message).toBe(UNREADABLE_CHARGE_REPLY_MESSAGE);
+      expect(error.details).toEqual({ issues: [{ path: "ccy", code: "custom" }] });
+    });
+
+    it("refuses a 200 charge reply that is not JSON", async () => {
+      fetchMock.mockResolvedValueOnce(textResponse(OK_STATUS, NOT_JSON_REPLY));
+
+      const error = await captureAppError(adapter.chargeStoredCard(makeChargeInput()));
+
+      expect(error).toBeInstanceOf(BadGatewayError);
+      expect(error.message).toBe(UNREADABLE_CHARGE_REPLY_MESSAGE);
+      expect(error.details).toEqual({ issues: [{ path: "", code: "invalid_json" }] });
+    });
+
+    it("refuses to send a charge with a fractional amount and sends nothing", async () => {
+      const error = await captureAppError(
+        adapter.chargeStoredCard(makeChargeInput({ amountCents: FRACTIONAL_AMOUNT })),
+      );
+
+      expect(error).toBeInstanceOf(InternalServerError);
+      expect(error.message).toBe(OUTGOING_INVALID_MESSAGE);
+      expect(error.details).toMatchObject({ path: WALLET_PAYMENT_PATH });
+      expect(error.details?.issues).toContainEqual({ path: "amount", code: "invalid_type" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("fetchPurchase", () => {
@@ -334,6 +433,34 @@ describe("createMonobankAdapter requests", () => {
       expect(url).toBe(`${TEST_API_URL}/api/merchant/wallet/card?cardToken=a%2Bb%2Fc%3D`);
       expect(new URL(url).searchParams.get("cardToken")).toBe(RESERVED_CHARACTER_CARD_TOKEN);
     });
+  });
+
+  describe("empty ids", () => {
+    it.each(EMPTY_ID_CASES)(
+      "refuses an empty id in %s and sends nothing",
+      async (_name, call, path, issuePath) => {
+        const error = await captureAppError(call(adapter));
+
+        expect(error).toBeInstanceOf(InternalServerError);
+        expect(error.message).toBe(OUTGOING_INVALID_MESSAGE);
+        expect(error.details).toEqual({ path, issues: [{ path: issuePath, code: "too_small" }] });
+        expect(fetchMock).not.toHaveBeenCalled();
+      },
+    );
+  });
+
+  describe("unsafe amounts", () => {
+    it.each(UNSAFE_AMOUNT_CASES)(
+      "refuses %s with the amount %d and sends nothing",
+      async (_name, amountCents, write) => {
+        const error = await captureAppError(write(adapter, amountCents));
+
+        expect(error).toBeInstanceOf(InternalServerError);
+        expect(error.message).toBe(OUTGOING_INVALID_MESSAGE);
+        expect(error.details?.issues).toContainEqual({ path: "amount", code: "too_big" });
+        expect(fetchMock).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("every method", () => {

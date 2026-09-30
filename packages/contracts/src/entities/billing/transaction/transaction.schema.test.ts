@@ -24,6 +24,18 @@ const TRANSACTION_ROW = {
 
 const NULLABLE_FIELDS = ["subscriptionId", "periodStart", "periodEnd"];
 
+const ACCEPTED_ENUM_VALUES: [string, string][] = [
+  ["kind", "INITIAL"],
+  ["kind", "RENEWAL"],
+  ["kind", "ONE_OFF"],
+  ["kind", "REFUND"],
+  ["status", "PENDING"],
+  ["status", "SUCCEEDED"],
+  ["status", "FAILED"],
+];
+
+const SYNTHETIC_IDEMPOTENCY_KEY = "synthetic-idempotency";
+
 const ROW_WITHOUT_UPDATED_AT = Object.fromEntries(
   Object.entries(TRANSACTION_ROW).filter(([key]) => key !== "updatedAt"),
 );
@@ -49,6 +61,10 @@ describe("transactionSchema", () => {
     );
   });
 
+  it.each(ACCEPTED_ENUM_VALUES)("accepts the %s %s", (field, value) => {
+    expect(transactionSchema.safeParse({ ...TRANSACTION_ROW, [field]: value }).success).toBe(true);
+  });
+
   it("rejects a currency outside Currency", () => {
     expect(transactionSchema.safeParse({ ...TRANSACTION_ROW, currency: "GBP" }).success).toBe(
       false,
@@ -63,6 +79,15 @@ describe("transactionSchema", () => {
 
   it("has no idempotencyKey in its shape", () => {
     expect(Object.keys(transactionSchema.shape)).not.toContain("idempotencyKey");
+  });
+
+  it("drops an idempotencyKey a row carries", () => {
+    const parsed = transactionSchema.parse({
+      ...TRANSACTION_ROW,
+      idempotencyKey: SYNTHETIC_IDEMPOTENCY_KEY,
+    });
+
+    expect(parsed).not.toHaveProperty("idempotencyKey");
   });
 
   it("rejects a row without updatedAt", () => {

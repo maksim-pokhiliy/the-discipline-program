@@ -18,10 +18,11 @@ export const SYNTHETIC_CARD_TOKEN = "synthetic-card-token-01";
 export const SYNTHETIC_WALLET_ID = "clz00000000000000000usr1";
 export const SYNTHETIC_INVOICE_ID = "synthetic-invoice-0001";
 export const SYNTHETIC_REFERENCE = "clz00000000000000000pur1";
-export const SYNTHETIC_DESCRIPTION = "Discipline program, 4 weeks";
 export const SYNTHETIC_AMOUNT_CENTS = 4_900;
 export const SYNTHETIC_INVOICE_DATE = "2026-09-25T10:55:41Z";
+export const SYNTHETIC_MODIFIED_DATE = "2026-09-25T11:02:03Z";
 
+const SYNTHETIC_DESCRIPTION = "Discipline program, 4 weeks";
 const SYNTHETIC_PRODUCT_NAME = "Discipline program";
 const SYNTHETIC_PRODUCT_CODE = "clz00000000000000000prd1";
 const SYNTHETIC_RETURN_URL = "https://platform.example.test/billing/return";
@@ -34,14 +35,14 @@ const SIGNING_CURVE = "prime256v1";
 const SIGNATURE_ALGORITHM = "SHA256";
 const JSON_HEADERS = { "content-type": "application/json" };
 
-export type WebhookCaptureName = "created" | "processing" | "success";
+type WebhookCaptureName = "created" | "processing" | "success";
 
-export type SigningKeyPair = {
+type SigningKeyPair = {
   privateKey: KeyObject;
   publicKey: KeyObject;
 };
 
-export type RecordedRequest = {
+type RecordedRequest = {
   url: string;
   init: RequestInit;
   headers: Record<string, string>;
@@ -115,7 +116,7 @@ export const makeInvoiceBody = (
   amount: SYNTHETIC_AMOUNT_CENTS,
   ccy: UAH_CCY,
   createdDate: SYNTHETIC_INVOICE_DATE,
-  modifiedDate: SYNTHETIC_INVOICE_DATE,
+  modifiedDate: SYNTHETIC_MODIFIED_DATE,
   reference: SYNTHETIC_REFERENCE,
   destination: SYNTHETIC_DESCRIPTION,
   ...overrides,
