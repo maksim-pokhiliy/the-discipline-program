@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ProductCurrency } from "@repo/contracts/cms/product";
+import { Currency } from "@repo/contracts/common";
 
 import { getCurrencySymbol } from "./get-currency-symbol";
 
-const SYMBOL_CASES: [ProductCurrency, string][] = [
-  [ProductCurrency.USD, "$"],
-  [ProductCurrency.EUR, "€"],
-  [ProductCurrency.UAH, "₴"],
+const SYMBOL_CASES: [Currency, string][] = [
+  [Currency.USD, "$"],
+  [Currency.EUR, "€"],
+  [Currency.UAH, "₴"],
 ];
 
 describe("getCurrencySymbol", () => {
@@ -24,6 +24,6 @@ describe("getCurrencySymbol", () => {
       { type: "integer", value: "0" },
     ]);
 
-    expect(getCurrencySymbol(ProductCurrency.UAH)).toBe("UAH");
+    expect(getCurrencySymbol(Currency.UAH)).toBe("UAH");
   });
 });

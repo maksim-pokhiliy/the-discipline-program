@@ -1,7 +1,7 @@
-import { type ProductCurrency } from "@repo/contracts/cms/product";
+import { type Currency } from "@repo/contracts/common";
 import { DEFAULT_LOCALE } from "@repo/shared";
 
-export const getCurrencySymbol = (currency: ProductCurrency): string => {
+export const getCurrencySymbol = (currency: Currency): string => {
   const currencyPart = new Intl.NumberFormat(DEFAULT_LOCALE, {
     style: "currency",
     currency,

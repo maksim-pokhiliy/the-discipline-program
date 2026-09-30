@@ -2,8 +2,8 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
-import { createProductRequestSchema, ProductCurrency } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { createProductRequestSchema } from "@repo/contracts/cms/product";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
@@ -124,7 +124,7 @@ describe("ProductCreateView pricing", () => {
 
     expect(payload.price).toEqual({
       amountCents: 1999,
-      currency: ProductCurrency.EUR,
+      currency: Currency.EUR,
       periodCount: 3,
       periodUnit: PeriodUnit.DAY,
       autoRenew: false,

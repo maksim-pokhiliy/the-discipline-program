@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { periodSchema } from "../../../common";
+import { Currency, periodSchema } from "../../../common";
 
-import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS, ProductCurrency } from "./product.constants";
+import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS } from "./product.constants";
 
 const priceAmountCentsSchema = z
   .number()
@@ -12,7 +12,7 @@ const priceAmountCentsSchema = z
 
 const priceTermsShape = {
   amountCents: priceAmountCentsSchema,
-  currency: z.nativeEnum(ProductCurrency),
+  currency: z.nativeEnum(Currency),
   ...periodSchema.shape,
   autoRenew: z.boolean(),
 };

@@ -111,7 +111,9 @@ module.exports = {
         "(see 1.2.J). The authz/ directory is intentionally excluded from this rule because " +
         "it is cross-cutting policy, not a bounded context.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/iam/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|billing)/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|billing)/|^packages/api-server/src/infrastructure/payment/|^packages/env/src/(billing|monobank)\\.ts$",
+      },
     },
 
     {
@@ -145,7 +147,9 @@ module.exports = {
         "LMS depends on IAM only; subscription gating is enforced upstream in a guard, not " +
         "by LMS endpoints reaching into Billing. Mirrors api-server-lms-no-coaching.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/lms/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/|^packages/api-server/src/infrastructure/payment/|^packages/env/src/(billing|monobank)\\.ts$",
+      },
     },
 
     {
@@ -157,7 +161,9 @@ module.exports = {
         "for the Coaching → CMS / Billing direction (no Coaching → CMS / Billing imports " +
         "exist today, but the rule must land before Billing endpoints do).",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/coaching/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/|^packages/api-server/src/infrastructure/payment/|^packages/env/src/(billing|monobank)\\.ts$",
+      },
     },
 
     {
@@ -183,7 +189,9 @@ module.exports = {
         "domain context; the dependency direction is always domain → storage. Closes " +
         "1.4.D — moved upload out of IAM into its own supporting context.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/storage/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|iam|billing)/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|iam|billing)/|^packages/api-server/src/infrastructure/payment/|^packages/env/src/(billing|monobank)\\.ts$",
+      },
     },
 
     {
@@ -197,7 +205,24 @@ module.exports = {
         "CMS and Billing have no business in a compat shim — deny them now, while the " +
         "surface is small, rather than after someone reaches sideways.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/mobile-compat/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/|^packages/api-server/src/infrastructure/payment/|^packages/env/src/(billing|monobank)\\.ts$",
+      },
+    },
+
+    {
+      name: "api-server-payment-vendor-is-private",
+      severity: "error",
+      comment:
+        "ADR-0044 / storefront-billing D-1: exactly one adapter speaks Monobank. The " +
+        "infrastructure/payment/monobank-* files (transport, wire schemas, signature, adapter) " +
+        "are private to infrastructure/payment/; consumers import the port types and " +
+        "defaultPayment from the directory's index.ts. The rule sees only the imports that " +
+        "survive dependency-cruiser's own TypeScript emit, so it misses type-only ones; " +
+        "packages/api-server/src/infrastructure/payment/README.md ('Files and wiring') has " +
+        "the caveat in full.",
+      from: { pathNot: "^packages/api-server/src/infrastructure/payment/" },
+      to: { path: "^packages/api-server/src/infrastructure/payment/monobank" },
     },
 
     {
@@ -327,7 +352,9 @@ module.exports = {
         "apps/platform is the coach + athlete product surface. It does not render CMS " +
         "content or process billing. Its allowed backend surface is LMS + Coaching + IAM.",
       from: { path: "^apps/platform/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/|^packages/api-server/src/infrastructure/payment/",
+      },
     },
 
     {

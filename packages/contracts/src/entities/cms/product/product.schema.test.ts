@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { PeriodUnit } from "../../../common";
+import { Currency, PeriodUnit } from "../../../common";
 
-import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS, ProductCurrency } from "./product.constants";
+import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS } from "./product.constants";
 import {
   createProductPriceSchema,
   priceSchema,
@@ -22,7 +22,7 @@ const REJECTED_PERIOD_COUNTS = [0, 366, 1.5];
 
 const TRIAL_PRICE = {
   amountCents: 0,
-  currency: ProductCurrency.UAH,
+  currency: Currency.UAH,
   periodCount: 3,
   periodUnit: PeriodUnit.DAY,
   autoRenew: false,
@@ -157,7 +157,7 @@ describe("priceSchema", () => {
       priceSchema.safeParse({
         id: PRICE_ID,
         amountCents: 9900,
-        currency: ProductCurrency.USD,
+        currency: Currency.USD,
         ...LEGACY_INTERVAL,
         isActive: true,
       }).success,

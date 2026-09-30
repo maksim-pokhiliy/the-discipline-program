@@ -10,9 +10,9 @@ Port interfaces are owned by this directory, not by consumers. Consumers (`endpo
 
 ## Dependency rules
 
-- The `infrastructure/` directory is **outside** all context-scoped dep-cruiser rules (rules anchor on `from.path: (endpoints|mappers)/<ctx>/`). Ports are cross-cutting by definition.
+- The `infrastructure/` directory is **outside** all context-scoped dep-cruiser rules as a source (they anchor on `from.path: (endpoints|mappers)/<ctx>/`). Ports are cross-cutting by definition. As a target, `infrastructure/payment/` is Billing's: every context rule that refuses Billing refuses it too.
 - A `port.ts` file imports **zero** vendor SDKs. It declares types only. No runtime code.
-- A `*-adapter.ts` file is the **only** file in the api-server package that imports its vendor SDK. Dep-cruiser can enforce this with a scoped rule if drift becomes a problem.
+- A `*-adapter.ts` file is the **only** file in the api-server package that imports its vendor SDK. Dep-cruiser can enforce this with a scoped rule if drift becomes a problem. The payment port speaks plain HTTP (no SDK): its vendor files are the `monobank-*` family, and `api-server-payment-vendor-is-private` refuses the imports of them from outside `infrastructure/payment/` that dependency-cruiser sees; type-only imports escape it (see `payment/README.md`, "Files and wiring").
 - The `index.ts` barrel imports the adapter factory and constructs the default instance (a module-level singleton). Consumers import the default from here. Tests never import from `index.ts` — they import the factory directly and pass a fake.
 
 ## Convention per port
@@ -40,15 +40,15 @@ New ports follow this shape. When adding one:
 | ------- | ------------- | ----------------------------------------------- |
 | storage | Live          | `vercel-blob`                                   |
 | email   | Live          | `@repo/email/createResendEmailService` (Resend) |
-| payment | Scaffold only | —                                               |
+| payment | Live          | `monobank`                                      |
 | queue   | Scaffold only | —                                               |
 | cache   | Scaffold only | —                                               |
 
-"Scaffold only" means the `port.ts` interface exists and is considered stable for a first adapter, but no adapter has landed yet. Consumers may import the type for design purposes, but there is no default instance to inject at runtime. Adding an adapter requires:
+`payment` counts as live because its adapter and its default instance `defaultPayment` exist, although no endpoint injects it yet. "Scaffold only" means the `port.ts` interface exists and is considered stable for a first adapter, but no adapter has landed yet. Consumers may import the type for design purposes, but there is no default instance to inject at runtime. Adding an adapter requires:
 
 1. A vendor selection (technical + business decision).
 2. A `<vendor>-adapter.ts` implementing `<Port>`.
-3. Env var registration in `packages/env/<port>.ts`.
+3. Env var registration in `packages/env/src/<name>.ts` (named after the port or the vendor: `blob.ts`, `monobank.ts`).
 4. Update `index.ts` to construct `default<Port>` from the new adapter.
 5. Wire the default into the consumer's endpoint barrel (same pattern as `endpoints/storage/index.ts` wiring `defaultStorage` into `createStorageUploadAdminApi`).
 

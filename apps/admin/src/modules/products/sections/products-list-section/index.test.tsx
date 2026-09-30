@@ -1,8 +1,8 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { type Price, ProductCurrency } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { type Price } from "@repo/contracts/cms/product";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import { render } from "@app/test/render";
 
@@ -19,7 +19,7 @@ const PRICE_COLUMN_CASES: [string, Price, string][] = [
     "a monthly USD price",
     makePrice({
       amountCents: 9900,
-      currency: ProductCurrency.USD,
+      currency: Currency.USD,
       periodCount: 1,
       periodUnit: PeriodUnit.MONTH,
     }),
@@ -29,7 +29,7 @@ const PRICE_COLUMN_CASES: [string, Price, string][] = [
     "a 4-week EUR price",
     makePrice({
       amountCents: 4900,
-      currency: ProductCurrency.EUR,
+      currency: Currency.EUR,
       periodCount: 4,
       periodUnit: PeriodUnit.WEEK,
     }),

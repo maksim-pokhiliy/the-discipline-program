@@ -4,8 +4,8 @@ import { BadRequestError, UnauthorizedError } from "@repo/errors";
 import { resolveCoachId } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
-import { decrypt } from "../../../utils/token-cipher";
 
+import { decryptLegacyToken } from "./legacy-token-cipher";
 import { reconnectRequiredError, tokenUnreadableError } from "./reconnect-signal";
 
 export type TrainingLevelsApi = {
@@ -14,7 +14,7 @@ export type TrainingLevelsApi = {
 
 const decryptToken = (encryptedToken: string): string => {
   try {
-    return decrypt(encryptedToken);
+    return decryptLegacyToken(encryptedToken);
   } catch {
     throw tokenUnreadableError();
   }

@@ -56,19 +56,26 @@ Use `/api/ready` for load balancer health checks. Use `/api/version` to verify w
 
 ## Environment variables
 
-All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nextjs`). A missing or malformed variable crashes the app on startup, not at request time.
+Every env var is validated by `@repo/env` (Zod via `@t3-oss/env-nextjs`) when its module loads. For most that happens at boot, and a missing or malformed variable crashes the app on startup, not at request time. The Monobank and billing variables are validated only when a billing route first imports them, never from `next.config.ts`.
 
 ### Required variables
 
-| Variable                    | Scope  | Used by         | Description                                                           |
-| --------------------------- | ------ | --------------- | --------------------------------------------------------------------- |
-| `DATABASE_URL`              | Server | All apps        | PostgreSQL connection string (Neon; direct/non-pooler for migrations) |
-| `NEXTAUTH_SECRET`           | Server | Admin, Platform | JWT signing secret for NextAuth                                       |
-| `NEXTAUTH_URL`              | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`)          |
-| `NEXT_PUBLIC_APP_URL`       | Client | All apps        | Admin app public URL                                                  |
-| `NEXT_PUBLIC_MARKETING_URL` | Client | All apps        | Marketing app public URL                                              |
-| `NEXT_PUBLIC_PLATFORM_URL`  | Client | All apps        | Platform app public URL                                               |
-| `BLOB_READ_WRITE_TOKEN`     | Server | Admin, Platform | Vercel Blob read/write token for file uploads                         |
+| Variable                        | Scope  | Used by         | Description                                                                                           |
+| ------------------------------- | ------ | --------------- | ----------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                  | Server | All apps        | PostgreSQL connection string (Neon; direct/non-pooler for migrations)                                 |
+| `NEXTAUTH_SECRET`               | Server | Admin, Platform | JWT signing secret for NextAuth                                                                       |
+| `NEXTAUTH_URL`                  | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`)                                          |
+| `NEXT_PUBLIC_APP_URL`           | Client | All apps        | Admin app public URL                                                                                  |
+| `NEXT_PUBLIC_MARKETING_URL`     | Client | All apps        | Marketing app public URL                                                                              |
+| `NEXT_PUBLIC_PLATFORM_URL`      | Client | All apps        | Platform app public URL                                                                               |
+| `BLOB_READ_WRITE_TOKEN`         | Server | Admin, Platform | Vercel Blob read/write token for file uploads                                                         |
+| `MOBILE_PUBLISH_ENCRYPTION_KEY` | Server | Admin, Platform | AES-256-GCM key for the legacy mobile connector token at rest; retiring at P4.1 (ADR-0043)            |
+| `LEGACY_MOBILE_API_BASE_URL`    | Server | Admin, Platform | Legacy Spring backend base URL, version prefix included; the connector dual-writes into it until P4.1 |
+| `MOBILE_SHIM_JWT_SECRET`        | Server | Platform        | Signs the bearer token the App-Store iOS app stores for `/api/v1/*` (min 32 chars)                    |
+| `MONOBANK_MERCHANT_TOKEN`       | Server | Platform        | Monobank acquiring `X-Token`; read from storefront-billing 1.1                                        |
+| `BILLING_ENCRYPTION_KEY`        | Server | Platform        | Card-token cipher key, base64 of 32 random bytes (D-20); read from storefront-billing 1.1             |
+
+`MONOBANK_API_URL` (defaults to `https://api.monobank.ua`) and `MONOBANK_WEBHOOK_PUBLIC_KEY` (leave it unset in deployments) are optional.
 
 ### Build-time variables
 
@@ -79,9 +86,9 @@ All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nex
 
 ### Per-app env usage
 
-- **Marketing** imports only `@repo/env/base` (no auth, no blob).
-- **Admin** imports `@repo/env/base` + `@repo/env/auth` + `@repo/env/blob` (in upload endpoint).
-- **Platform** imports `@repo/env/base` + `@repo/env/auth` + `@repo/env/blob` (in the coach avatar upload endpoint).
+- **Marketing** — `next.config.ts` validates `@repo/env/base` + `@repo/env/sentry`; through `@repo/api-server` it also loads `blob` (the `ops` subpath) and `email` (the contact form). It no longer reaches `mobile-publish`: storefront-billing 0.5 moved the legacy token cipher out of the api-server `utils` barrel.
+- **Admin** — `next.config.ts` validates `@repo/env/base` + `@repo/env/auth` + `@repo/env/sentry`; through `@repo/api-server` it also loads `blob`, `email` and `mobile-publish` (the `coaching` subpath).
+- **Platform** — `next.config.ts` validates `@repo/env/base` + `@repo/env/auth` + `@repo/env/sentry` + `@repo/env/mobile-publish` + `@repo/env/mobile-shim`; through `@repo/api-server` it also loads `blob` and `email`. From storefront-billing 1.1 its billing routes load `monobank` and `billing` as well; nothing loads them before that step, and `next.config.ts` never imports them.
 
 Each app has its own `.env.local` for local development. The `packages/api-server` directory has its own `.env` for Prisma CLI commands and tests.
 

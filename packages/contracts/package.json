@@ -8,6 +8,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./common": "./src/common/index.ts",
+    "./billing/product-plan": "./src/entities/billing/product-plan/index.ts",
+    "./billing/subscription": "./src/entities/billing/subscription/index.ts",
+    "./billing/transaction": "./src/entities/billing/transaction/index.ts",
     "./cms/blog": "./src/entities/cms/blog/index.ts",
     "./cms/contact": "./src/entities/cms/contact/index.ts",
     "./cms/dashboard": "./src/entities/cms/dashboard/index.ts",

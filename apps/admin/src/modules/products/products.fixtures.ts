@@ -1,13 +1,13 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { expect } from "vitest";
 
-import { type Price, type Product, ProductCurrency } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { type Price, type Product } from "@repo/contracts/cms/product";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 export const makePrice = (overrides: Partial<Price> = {}): Price => ({
   id: "clz00000000000000000prc1",
   amountCents: 9900,
-  currency: ProductCurrency.USD,
+  currency: Currency.USD,
   periodCount: 1,
   periodUnit: PeriodUnit.MONTH,
   autoRenew: true,

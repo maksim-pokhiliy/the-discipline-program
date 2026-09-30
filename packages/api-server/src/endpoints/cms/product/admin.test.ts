@@ -4,10 +4,9 @@ import { type z } from "zod";
 import {
   createProductRequestSchema,
   PRODUCT_PRICE_DEFAULTS,
-  ProductCurrency,
   updateProductRequestSchema,
 } from "@repo/contracts/cms/product";
-import { PeriodUnit } from "@repo/contracts/common";
+import { Currency, PeriodUnit } from "@repo/contracts/common";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { mapToPrice } from "../../../mappers/cms";
@@ -33,7 +32,7 @@ const updateInput = (input: z.input<typeof updateProductRequestSchema>) =>
 
 const TRIAL_PRICE = {
   amountCents: 0,
-  currency: ProductCurrency.UAH,
+  currency: Currency.UAH,
   periodCount: 3,
   periodUnit: PeriodUnit.DAY,
   autoRenew: false,
@@ -124,7 +123,7 @@ describe("cmsProductAdminApi", () => {
         createInput({
           price: {
             amountCents: 9900,
-            currency: ProductCurrency.USD,
+            currency: Currency.USD,
             periodCount: 1,
             periodUnit: PeriodUnit.MONTH,
             autoRenew: true,
@@ -137,7 +136,7 @@ describe("cmsProductAdminApi", () => {
       expect(product.prices).toHaveLength(1);
       expect(product.prices[0]).toMatchObject({
         amountCents: 9900,
-        currency: ProductCurrency.USD,
+        currency: Currency.USD,
         periodCount: 1,
         periodUnit: PeriodUnit.MONTH,
         autoRenew: true,
@@ -215,7 +214,7 @@ describe("cmsProductAdminApi", () => {
         updateInput({
           price: {
             amountCents: 1999,
-            currency: ProductCurrency.EUR,
+            currency: Currency.EUR,
             periodCount: 1,
             periodUnit: PeriodUnit.YEAR,
             autoRenew: true,
@@ -226,7 +225,7 @@ describe("cmsProductAdminApi", () => {
       expect(updated.prices).toHaveLength(1);
       expect(updated.prices[0]).toMatchObject({
         amountCents: 1999,
-        currency: ProductCurrency.EUR,
+        currency: Currency.EUR,
         periodCount: 1,
         periodUnit: PeriodUnit.YEAR,
         autoRenew: true,

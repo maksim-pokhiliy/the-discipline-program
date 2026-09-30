@@ -1,4 +1,5 @@
 export * from "./api-error";
+export * from "./currency";
 export * from "./format-period";
 export * from "./image";
 export * from "./money";

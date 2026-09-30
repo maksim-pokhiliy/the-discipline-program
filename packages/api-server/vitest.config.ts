@@ -19,6 +19,7 @@ export default defineConfig({
       MOBILE_PUBLISH_ENCRYPTION_KEY: "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
       LEGACY_MOBILE_API_BASE_URL: "http://localhost:8080/api/v1",
       MOBILE_SHIM_JWT_SECRET: "test-only-mobile-shim-secret-000000000000",
+      BILLING_ENCRYPTION_KEY: "CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCws=",
     },
     coverage: {
       provider: "v8",

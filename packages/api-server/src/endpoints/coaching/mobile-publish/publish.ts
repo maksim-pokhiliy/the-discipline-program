@@ -13,11 +13,11 @@ import { verifyMobileLinkOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
 import { toUtcDateParam } from "../../../utils";
-import { decrypt } from "../../../utils/token-cipher";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
 import { buildChannelOps } from "./channel-program-ops";
 import { type MobilePublishDayPayload } from "./day-include";
+import { decryptLegacyToken } from "./legacy-token-cipher";
 import { publishDay } from "./publish-day";
 import { loadExerciseById, loadTargetDays } from "./publish-loaders";
 import { reconnectRequiredError, tokenUnreadableError } from "./reconnect-signal";
@@ -63,7 +63,7 @@ const loadLink = async (
 
 const decryptToken = (encryptedToken: string): string => {
   try {
-    return decrypt(encryptedToken);
+    return decryptLegacyToken(encryptedToken);
   } catch {
     throw tokenUnreadableError();
   }

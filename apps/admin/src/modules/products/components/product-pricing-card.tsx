@@ -3,8 +3,7 @@
 import { InputAdornment, MenuItem, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
-import { ProductCurrency } from "@repo/contracts/cms/product";
-import { PERIOD_CONSTANTS, PERIOD_UNIT_LABELS, PeriodUnit } from "@repo/contracts/common";
+import { Currency, PERIOD_CONSTANTS, PERIOD_UNIT_LABELS, PeriodUnit } from "@repo/contracts/common";
 
 import { FormCard } from "@app/lib/components/form-card";
 
@@ -62,7 +61,7 @@ export const ProductPricingCard = ({ isLoading }: ProductPricingCardProps) => {
               error={!!fieldState.error}
               helperText={fieldState.error?.message}
             >
-              {Object.values(ProductCurrency).map((option) => (
+              {Object.values(Currency).map((option) => (
                 <MenuItem key={option} value={option}>
                   {option}
                 </MenuItem>
