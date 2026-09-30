@@ -56,7 +56,7 @@ Use `/api/ready` for load balancer health checks. Use `/api/version` to verify w
 
 ## Environment variables
 
-All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nextjs`). A missing or malformed variable crashes the app on startup, not at request time.
+Every env var is validated by `@repo/env` (Zod via `@t3-oss/env-nextjs`) when its module loads. For most that happens at boot, and a missing or malformed variable crashes the app on startup, not at request time. The Monobank and billing variables are validated only when a billing route first imports them, never from `next.config.ts`.
 
 ### Required variables
 

@@ -29,15 +29,15 @@ src/
   email.ts       Email provider — admin (transactional only, currently)
   rate-limit.ts  Upstash Redis — apps that gate writes
   sentry.ts      Sentry DSN + build-time tokens
-  mobile-publish.ts  Legacy mobile connector — encryption key + legacy API base URL (platform)
+  mobile-publish.ts  Legacy mobile connector — encryption key + legacy API base URL (admin + platform)
   mobile-shim.ts     Mobile compat shim — JWT secret for the iOS bearer token (platform)
-  monobank.ts    Monobank acquiring — API URL, merchant token, optional pinned webhook key (platform, read from 1.1)
-  billing.ts     Card-token cipher key (platform, read from 1.1)
+  monobank.ts    Monobank acquiring — API URL, merchant token, optional pinned webhook key (platform, read from 1.1; validated when a billing module first imports it, never from next.config.ts)
+  billing.ts     Card-token cipher key (platform, read from 1.1; validated when a billing module first imports it, never from next.config.ts)
 ```
 
 ## Conventions
 
-- Each app imports the validators it needs from its `instrumentation.ts` and `next.config.ts` so failures surface at boot, not at request time.
+- Each app imports the validators it needs from its `instrumentation.ts` and `next.config.ts` so failures surface at boot, not at request time. `monobank` and `billing` are an exception: no `instrumentation.ts` or `next.config.ts` imports them, so they are validated only when the api-server code that reads them (`infrastructure/payment/index.ts`, `endpoints/billing/card-token-cipher.ts`) is first imported, from storefront-billing 1.1 by a billing route.
 - `SKIP_ENV_VALIDATION=1` bypasses validation for CI builds and local one-off scripts. Production must boot with full validation.
 - Real keys never live in `.env.example` — placeholders only.
 

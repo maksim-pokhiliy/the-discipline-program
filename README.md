@@ -140,7 +140,7 @@ All changes follow this order. Contracts are the single source of truth for API 
 
 ## Environment Variables
 
-Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validation (used by CI + local build). See [docs/DEPLOY.md](docs/DEPLOY.md) for per-app usage details.
+Validated by `@repo/env` (Zod) when each variable's module loads: most at boot, the Monobank and billing variables only when a billing route first imports them, never from `next.config.ts`. `SKIP_ENV_VALIDATION=1` bypasses validation (used by CI + local build). See [docs/DEPLOY.md](docs/DEPLOY.md) for per-app usage details.
 
 ### Required
 
@@ -156,7 +156,7 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 | `MOBILE_PUBLISH_ENCRYPTION_KEY` | admin + platform                            | AES-256-GCM key for the legacy mobile connector token-at-rest. Retiring at P4.1 (ADR-0043) — the platform itself serves the iOS app since the 2026-09-17 apex cutover; stays required until the connector edge is removed. |
 | `LEGACY_MOBILE_API_BASE_URL`    | admin + platform                            | Base URL of the retired legacy Spring backend the connector still dual-writes plans into (nobody reads it since the 2026-09-17 cutover; retiring at P4.1, required until then).                                            |
 | `MOBILE_SHIM_JWT_SECRET`        | platform                                    | Signs the bearer token the App-Store iOS app stores for `/api/v1/*`; min 32 chars. Generate: `openssl rand -base64 32`.                                                                                                    |
-| `MONOBANK_MERCHANT_TOKEN`       | platform (read from storefront-billing 1.1) | Monobank acquiring `X-Token`: the personal token from api.monobank.ua (test mode) in dev and preview, the merchant token in production.                                                                                    |
+| `MONOBANK_MERCHANT_TOKEN`       | platform (read from storefront-billing 1.1) | Monobank acquiring `X-Token`: the test-mode token in dev and preview, the merchant token in production. The test-mode token is the personal api.monobank.ua token of the account holder, a personal bank credential.       |
 | `BILLING_ENCRYPTION_KEY`        | platform (read from storefront-billing 1.1) | AES-256-GCM key for the stored card token (D-20); its own key, never `MOBILE_PUBLISH_ENCRYPTION_KEY`. Generate: `openssl rand -base64 32`.                                                                                 |
 
 ### Optional

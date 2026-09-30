@@ -207,7 +207,14 @@ module.exports = {
         "ADR-0044 / storefront-billing D-1: exactly one adapter speaks Monobank. The " +
         "infrastructure/payment/monobank-* files (transport, wire schemas, signature, adapter) " +
         "are private to infrastructure/payment/; consumers import the port types and " +
-        "defaultPayment from the directory's index.ts.",
+        "defaultPayment from the directory's index.ts. The rule refuses the imports of a " +
+        "monobank-* file from outside infrastructure/payment/ that dependency-cruiser sees: " +
+        "dep:check reads each file after its own TypeScript emit (no tsPreCompilationDeps), " +
+        "made without the repository's tsconfig (no tsConfig), so only the imports that " +
+        "survive that emit reach the rule. It never sees a type-only import: import type, the " +
+        "inline import { type X } form, export type ... from, import('...').T, or a value " +
+        "import used only in types. Under the repository's verbatimModuleSyntax the inline " +
+        "form and the last one still load the module at run time. Reviews hold that line.",
       from: { pathNot: "^packages/api-server/src/infrastructure/payment/" },
       to: { path: "^packages/api-server/src/infrastructure/payment/monobank" },
     },
