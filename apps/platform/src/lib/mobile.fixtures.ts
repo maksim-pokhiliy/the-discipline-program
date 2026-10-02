@@ -1,4 +1,4 @@
-import type { LegacyTrainingLevel, MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
+import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
 import type { GeneralMobileLink, IndividualMobileLink } from "@repo/contracts/coaching/mobile-link";
 import {
   MOBILE_PUBLISH_ACTIONS,
@@ -63,12 +63,6 @@ export const trainingLevelsFixture: LegacyTrainingLevel[] = [
   { id: 1, name: "Scaled" },
   { id: 2, name: "Pro" },
   { id: 3, name: "RX" },
-];
-
-export const mobileAthletesFixture: MobileAthlete[] = [
-  { id: 101, username: "alice", firstName: "Alice", lastName: "Stone" },
-  { id: 102, username: "bob", firstName: "Bob", lastName: null },
-  { id: 103, username: "charlie", firstName: null, lastName: null },
 ];
 
 export const makePublishDayResult = (

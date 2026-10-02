@@ -18,10 +18,11 @@ export const useTrainingLevels = () =>
     staleTime: TRAINING_LEVELS_STALE_TIME_MS,
   });
 
-export const useMobileAthletes = () =>
+export const useMobileAthletes = (planId: string) =>
   useQuery({
-    queryKey: platformKeys.mobile.athletes(),
-    queryFn: () => api.mobile.listAthletes(),
+    queryKey: platformKeys.mobile.athletes(planId),
+    queryFn: () => api.mobile.listAthletes(planId),
+    enabled: Boolean(planId),
     staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
   });
 

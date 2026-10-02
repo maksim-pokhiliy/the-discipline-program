@@ -1,9 +1,10 @@
 import { type ApiClient } from "@repo/api-client";
+import type { GetTrainingLevelsResponse } from "@repo/contracts/coaching/mobile-connection";
 import type {
-  GetMobileAthletesResponse,
-  GetTrainingLevelsResponse,
-} from "@repo/contracts/coaching/mobile-connection";
-import type { CreateMobileLinkRequest, MobileLink } from "@repo/contracts/coaching/mobile-link";
+  CreateMobileLinkRequest,
+  GetLinkableAthletesResponse,
+  MobileLink,
+} from "@repo/contracts/coaching/mobile-link";
 import type {
   PublishMobileData,
   PublishMobileResult,
@@ -13,8 +14,8 @@ export const createMobileAPI = (client: ApiClient) => ({
   listTrainingLevels: (): Promise<GetTrainingLevelsResponse> =>
     client.request("/api/platform/mobile/training-levels"),
 
-  listAthletes: (): Promise<GetMobileAthletesResponse> =>
-    client.request("/api/platform/mobile/athletes"),
+  listAthletes: (planId: string): Promise<GetLinkableAthletesResponse> =>
+    client.request("/api/platform/mobile/athletes", "GET", undefined, { planId }),
 
   createLink: (data: CreateMobileLinkRequest): Promise<MobileLink> =>
     client.request("/api/platform/mobile/links", "POST", data),

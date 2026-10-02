@@ -2,10 +2,9 @@
 
 import { useMemo } from "react";
 
-import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, Stack } from "@mui/material";
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
-import type { MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
 import type { IndividualMobileLink } from "@repo/contracts/coaching/mobile-link";
 import { EnrollmentStatus, type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 import { EmptyState } from "@repo/ui";
@@ -24,8 +23,6 @@ const PICKLIST_MAX_HEIGHT = 280;
 const ATHLETES_ERROR_MESSAGE = "Couldn't load athletes. Try again.";
 const EMPTY_MESSAGE = "No enrolled athletes to link yet.";
 const UNKNOWN_ATHLETE_LABEL = "Unknown athlete";
-const ALL_LEGACY_LINKED_MESSAGE = "Every mobile athlete is already linked.";
-const NO_LEGACY_ATHLETES_MESSAGE = "No mobile athletes found.";
 
 type IndividualRowModel = {
   athleteId: string;
@@ -73,7 +70,7 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
 }) => {
   const enrollmentsQuery = usePlanEnrollments(planId);
   const athletesQuery = useCoachAthletes();
-  const mobileAthletesQuery = useMobileAthletes();
+  const mobileAthletesQuery = useMobileAthletes(planId);
   const createLink = useCreateMobileLink(planId);
   const deleteLink = useDeleteMobileLink(planId);
 
@@ -102,24 +99,9 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
     [individualLinks],
   );
 
-  const linkedLegacyUserIds = useMemo(
-    () => new Set(individualLinks.map((link) => link.legacyUserId)),
-    [individualLinks],
-  );
-
-  const legacyAthletes = useMemo<MobileAthlete[]>(
-    () => mobileAthletesQuery.data ?? [],
+  const linkableAthleteIds = useMemo(
+    () => new Set((mobileAthletesQuery.data ?? []).map((athlete) => athlete.athleteId)),
     [mobileAthletesQuery.data],
-  );
-
-  const legacyAthleteById = useMemo(
-    () => new Map(legacyAthletes.map((athlete) => [athlete.id, athlete])),
-    [legacyAthletes],
-  );
-
-  const legacyOptions = useMemo(
-    () => legacyAthletes.filter((athlete) => !linkedLegacyUserIds.has(athlete.id)),
-    [legacyAthletes, linkedLegacyUserIds],
   );
 
   const rows = useMemo(
@@ -130,7 +112,6 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
   const linkedRows = useMemo(() => rows.filter((row) => row.existingLink !== undefined), [rows]);
   const unlinkedRows = useMemo(() => rows.filter((row) => row.existingLink === undefined), [rows]);
 
-  const isAthletesLoading = mobileAthletesQuery.isPending;
   const isRosterPending = enrollmentsQuery.isPending || athletesQuery.isPending;
   const isMutating = createLink.isPending || deleteLink.isPending;
 
@@ -141,17 +122,8 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
       image={row.image}
       athleteId={row.athleteId}
       {...(row.existingLink !== undefined && { existingLink: row.existingLink })}
-      legacyOptions={legacyOptions}
-      legacyAthleteById={legacyAthleteById}
-      isLegacyLoading={isAthletesLoading}
-      onLink={(legacyUserId) =>
-        createLink.mutate({
-          planId,
-          channel: "INDIVIDUAL",
-          athleteId: row.athleteId,
-          legacyUserId,
-        })
-      }
+      canLink={linkableAthleteIds.has(row.athleteId)}
+      onLink={() => createLink.mutate({ planId, channel: "INDIVIDUAL", athleteId: row.athleteId })}
       onUnlink={() => {
         if (row.existingLink !== undefined) {
           deleteLink.mutate(row.existingLink.id);
@@ -170,19 +142,11 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
       return <Alert severity="error">{ATHLETES_ERROR_MESSAGE}</Alert>;
     }
 
-    if (isAthletesLoading) {
+    if (mobileAthletesQuery.isPending) {
       return (
         <Stack alignItems="center" sx={{ py: 2 }}>
           <CircularProgress size={20} />
         </Stack>
-      );
-    }
-
-    if (legacyOptions.length === 0) {
-      return (
-        <Typography variant="caption" color="text.secondary">
-          {legacyAthletes.length > 0 ? ALL_LEGACY_LINKED_MESSAGE : NO_LEGACY_ATHLETES_MESSAGE}
-        </Typography>
       );
     }
 
