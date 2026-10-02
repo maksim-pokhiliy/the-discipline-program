@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createMobileLinkRequestSchema, getMobileLinksQuerySchema } from "./mobile-link-api.schema";
+import {
+  createMobileLinkRequestSchema,
+  getLinkableAthletesQuerySchema,
+  getLinkableAthletesResponseSchema,
+  getMobileLinksQuerySchema,
+} from "./mobile-link-api.schema";
 import { createMobileLinkSchema, mobileLinkSchema } from "./mobile-link.schema";
 
 const PLAN_ID = "clp9z8x7w0001abcd1234efgh";
@@ -203,7 +208,17 @@ describe("createMobileLinkRequestSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts the INDIVIDUAL arm with channel, athleteId and legacyUserId", () => {
+  it("accepts the INDIVIDUAL arm with channel and athleteId only", () => {
+    const result = createMobileLinkRequestSchema.safeParse({
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("strips a client-sent legacyUserId so the server derives it", () => {
     const result = createMobileLinkRequestSchema.safeParse({
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
@@ -212,9 +227,13 @@ describe("createMobileLinkRequestSchema", () => {
     });
 
     expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("legacyUserId");
+    }
   });
 
-  it("rejects an INDIVIDUAL request missing athleteId and legacyUserId", () => {
+  it("rejects an INDIVIDUAL request missing athleteId", () => {
     const result = createMobileLinkRequestSchema.safeParse({
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
@@ -228,7 +247,6 @@ describe("createMobileLinkRequestSchema", () => {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: 5,
       legacyLevelId: 9,
     });
 
@@ -251,5 +269,32 @@ describe("createMobileLinkRequestSchema", () => {
     if (result.success) {
       expect(result.data).not.toHaveProperty("channel");
     }
+  });
+});
+
+describe("getLinkableAthletesResponseSchema", () => {
+  it("accepts a list of athlete ids", () => {
+    expect(getLinkableAthletesResponseSchema.safeParse([{ athleteId: ATHLETE_ID }]).success).toBe(
+      true,
+    );
+  });
+
+  it("strips anything beyond the athlete id", () => {
+    const result = getLinkableAthletesResponseSchema.safeParse([
+      { athleteId: ATHLETE_ID, legacyUserId: 5, username: "athlete@example.com" },
+    ]);
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).toEqual([{ athleteId: ATHLETE_ID }]);
+    }
+  });
+});
+
+describe("getLinkableAthletesQuerySchema", () => {
+  it("requires a cuid planId", () => {
+    expect(getLinkableAthletesQuerySchema.safeParse({ planId: PLAN_ID }).success).toBe(true);
+    expect(getLinkableAthletesQuerySchema.safeParse({ planId: "nope" }).success).toBe(false);
   });
 });

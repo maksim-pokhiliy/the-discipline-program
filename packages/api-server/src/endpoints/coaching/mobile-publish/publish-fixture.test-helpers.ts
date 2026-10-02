@@ -5,13 +5,20 @@ import { DayOfWeek } from "@prisma/client";
 import { UserRole } from "@repo/contracts/iam/auth";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
-import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "../../../test/helpers";
+import {
+  cleanupRaw,
+  createTestCoach,
+  createTestLegacyIdentity,
+  createTestPlan,
+  createTestUser,
+} from "../../../test/helpers";
 import {
   createTestDay,
   createTestLabel,
   createTestSession,
   createTestWeek,
 } from "../../../test/schedule-helpers";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
 const FIXTURE_LEVEL_FLOOR = 700_000;
 const FIXTURE_LEVEL_CEILING = 800_000;
@@ -64,6 +71,17 @@ export const createTrackedUser = async (
   tracker.userIds.push(user.id);
 
   return user.id;
+};
+
+export const createTrackedIndividualAthlete = async (
+  tracker: FixtureTracker,
+  legacyUserId: number,
+): Promise<string> => {
+  const athleteId = await createTrackedUser(tracker);
+
+  await createTestLegacyIdentity(athleteId, { legacyUserId, legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+
+  return athleteId;
 };
 
 export const createTrackedCoach = async (tracker: FixtureTracker) => {

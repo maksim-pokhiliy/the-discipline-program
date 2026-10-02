@@ -14,7 +14,7 @@ import {
   cleanupFixtures,
   createFixtureTracker,
   createPublishFixture,
-  createTrackedUser,
+  createTrackedIndividualAthlete,
   mintFixtureLegacyUserId,
   mintFixtureLevelId,
   utcDate,
@@ -79,7 +79,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
   beforeAll(async () => {
     fixture = await createPublishFixture(tracker, WEEK_MONDAY);
 
-    const athleteId = await createTrackedUser(tracker);
+    const athleteId = await createTrackedIndividualAthlete(tracker, legacyUserId);
     const general = await linksApi.createLink(fixture.coachUserId, {
       planId: fixture.planId,
       legacyLevelId,
@@ -88,7 +88,6 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
       planId: fixture.planId,
       channel: "INDIVIDUAL",
       athleteId,
-      legacyUserId,
     });
 
     generalLinkId = general.id;

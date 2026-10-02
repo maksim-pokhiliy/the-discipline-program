@@ -14,6 +14,7 @@ import { prisma } from "../../../db/client";
 import { mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
 export type LinksApi = {
   createLink(userId: string, data: CreateMobileLinkRequest): Promise<MobileLink>;
@@ -24,6 +25,8 @@ export type LinksApi = {
 const NEVER_PUBLISHED: MobileLinkPublishAggregate = { publishedDayCount: 0, lastPublishedAt: null };
 const WEEK_START_FIELD = "weekStart";
 const INVALID_WEEK_START_MESSAGE = "weekStart must be a valid YYYY-MM-DD date";
+const NO_INDIVIDUAL_ACCOUNT_MESSAGE =
+  "This athlete has no Individual-plan account in the mobile app";
 
 export const buildWeekScheduledDates = (weekStart: string): Date[] => {
   if (parseDateParam(weekStart) === null) {
@@ -83,6 +86,19 @@ const upsertGeneralLink = (data: {
     update: {},
   });
 
+const resolveIndividualLegacyUserId = async (athleteId: string): Promise<number> => {
+  const identity = await prisma.mobileLegacyIdentity.findUnique({
+    where: { userId: athleteId },
+    select: { legacyUserId: true, legacyPlanId: true },
+  });
+
+  if (identity === null || identity.legacyPlanId !== LEGACY_PLAN_INDIVIDUAL) {
+    throw new BadRequestError(NO_INDIVIDUAL_ACCOUNT_MESSAGE, { field: "athleteId" });
+  }
+
+  return identity.legacyUserId;
+};
+
 const upsertIndividualLink = (data: {
   planId: string;
   athleteId: string;
@@ -118,9 +134,11 @@ const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
   );
 };
 
-const upsertLink = async (data: CreateMobileLinkRequest): Promise<PrismaMobilePublishLink> => {
+const runLinkUpsert = async (
+  upsert: () => Promise<PrismaMobilePublishLink>,
+): Promise<PrismaMobilePublishLink> => {
   try {
-    return "channel" in data ? await upsertIndividualLink(data) : await upsertGeneralLink(data);
+    return await upsert();
   } catch (error) {
     if (isLegacyUserAlreadyLinked(error)) {
       throw new ConflictError("This mobile athlete is already linked to another plan member", {
@@ -130,6 +148,16 @@ const upsertLink = async (data: CreateMobileLinkRequest): Promise<PrismaMobilePu
 
     return handlePrismaError(error, { entity: "Mobile publish link" });
   }
+};
+
+const upsertLink = async (data: CreateMobileLinkRequest): Promise<PrismaMobilePublishLink> => {
+  if (!("channel" in data)) {
+    return runLinkUpsert(() => upsertGeneralLink(data));
+  }
+
+  const legacyUserId = await resolveIndividualLegacyUserId(data.athleteId);
+
+  return runLinkUpsert(() => upsertIndividualLink({ ...data, legacyUserId }));
 };
 
 export const linksApi: LinksApi = {

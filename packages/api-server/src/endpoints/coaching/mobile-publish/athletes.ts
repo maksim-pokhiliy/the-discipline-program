@@ -1,36 +1,27 @@
-import { type GetMobileAthletesResponse } from "@repo/contracts/coaching/mobile-connection";
+import { type GetLinkableAthletesResponse } from "@repo/contracts/coaching/mobile-link";
 
+import { verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-export const SYNTHETIC_LEGACY_USER_ID_FLOOR = 990_000;
-
 export type AthletesApi = {
-  listIndividualAthletes(userId: string): Promise<GetMobileAthletesResponse>;
+  listLinkableAthletes(userId: string, planId: string): Promise<GetLinkableAthletesResponse>;
 };
 
 export const athletesApi: AthletesApi = {
-  listIndividualAthletes: async () => {
-    const identities = await prisma.mobileLegacyIdentity.findMany({
+  listLinkableAthletes: async (userId, planId) => {
+    await verifyPlanOwnership(planId, userId);
+
+    const athletes = await prisma.user.findMany({
       where: {
-        legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
-        legacyUserId: { lt: SYNTHETIC_LEGACY_USER_ID_FLOOR },
-        user: { deletedAt: null },
+        deletedAt: null,
+        planEnrollmentsAsAthlete: { some: { planId } },
+        legacyIdentity: { is: { legacyPlanId: LEGACY_PLAN_INDIVIDUAL } },
       },
-      orderBy: { legacyUserId: "asc" },
-      select: {
-        legacyUserId: true,
-        firstName: true,
-        lastName: true,
-        user: { select: { email: true } },
-      },
+      orderBy: { id: "asc" },
+      select: { id: true },
     });
 
-    return identities.map((identity) => ({
-      id: identity.legacyUserId,
-      username: identity.user.email,
-      firstName: identity.firstName,
-      lastName: identity.lastName,
-    }));
+    return athletes.map((athlete) => ({ athleteId: athlete.id }));
   },
 };

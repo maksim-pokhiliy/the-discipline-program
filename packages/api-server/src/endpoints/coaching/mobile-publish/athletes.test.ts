@@ -1,112 +1,115 @@
-import { randomInt } from "node:crypto";
-
+import { EnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { cleanupRaw, createTestLegacyIdentity, createTestUser } from "../../../test/helpers";
+import { ForbiddenError } from "@repo/errors";
+
+import { cleanupRaw, createTestLegacyIdentity, createTestPlan } from "../../../test/helpers";
+import { createTestEnrollment } from "../../../test/schedule-helpers";
 import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-import { athletesApi, SYNTHETIC_LEGACY_USER_ID_FLOOR } from "./athletes";
+import { athletesApi } from "./athletes";
+import {
+  cleanupFixtures,
+  createFixtureTracker,
+  createTrackedCoach,
+  createTrackedUser,
+} from "./publish-fixture.test-helpers";
 
 const LEGACY_PLAN_GENERAL = 1;
-const REAL_ID_FLOOR = 100_000;
-const SYNTHETIC_ID_OFFSET = 1_000;
-const SYNTHETIC_ID_SPAN = 9_000;
-const CALLER_USER_ID = "clcaller00000000000000000";
 
-const mintRealLegacyUserId = (): number => randomInt(REAL_ID_FLOOR, SYNTHETIC_LEGACY_USER_ID_FLOOR);
+const tracker = createFixtureTracker();
 
-const userIds: string[] = [];
+describe("athletesApi.listLinkableAthletes", () => {
+  let coachUserId = "";
+  let foreignCoachUserId = "";
+  let planId = "";
+  let otherPlanId = "";
+  const ids = {
+    linkable: "",
+    pausedLinkable: "",
+    generalPlanAccount: "",
+    noAccount: "",
+    softDeleted: "",
+    notEnrolled: "",
+    enrolledElsewhere: "",
+  };
 
-const seedIdentity = async (
-  legacyUserId: number,
-  overrides: { legacyPlanId?: number; isEnabled?: boolean; deletedAt?: Date } = {},
-) => {
-  const user = await createTestUser(
-    overrides.deletedAt === undefined ? {} : { deletedAt: overrides.deletedAt },
-  );
+  const enrolledAthlete = async (
+    targetPlanId: string,
+    options: { legacyPlanId?: number; status?: EnrollmentStatus } = {},
+  ): Promise<string> => {
+    const athleteId = await createTrackedUser(tracker);
 
-  userIds.push(user.id);
+    await createTestEnrollment(targetPlanId, athleteId, coachUserId, {
+      status: options.status ?? EnrollmentStatus.ACTIVE,
+    });
 
-  await createTestLegacyIdentity(user.id, {
-    legacyUserId,
-    legacyPlanId: overrides.legacyPlanId ?? LEGACY_PLAN_INDIVIDUAL,
-    isEnabled: overrides.isEnabled ?? true,
-    firstName: "Synthetic",
-    lastName: `Athlete ${legacyUserId}`,
-  });
+    if (options.legacyPlanId !== undefined) {
+      await createTestLegacyIdentity(athleteId, { legacyPlanId: options.legacyPlanId });
+    }
 
-  return { user, legacyUserId };
-};
-
-describe("athletesApi.listIndividualAthletes", () => {
-  const lowerId = mintRealLegacyUserId();
-  const higherId = lowerId + 1;
-  const disabledId = lowerId + 2;
-  const generalId = lowerId + 3;
-  const deletedId = lowerId + 4;
-  const floorId = SYNTHETIC_LEGACY_USER_ID_FLOOR;
-  const syntheticId =
-    SYNTHETIC_LEGACY_USER_ID_FLOOR + randomInt(SYNTHETIC_ID_OFFSET, SYNTHETIC_ID_SPAN);
-
-  let lowerEmail = "";
+    return athleteId;
+  };
 
   beforeAll(async () => {
-    await seedIdentity(higherId);
-    lowerEmail = (await seedIdentity(lowerId)).user.email;
-    await seedIdentity(disabledId, { isEnabled: false });
-    await seedIdentity(generalId, { legacyPlanId: LEGACY_PLAN_GENERAL });
-    await seedIdentity(deletedId, { deletedAt: new Date() });
-    await seedIdentity(floorId);
-    await seedIdentity(syntheticId);
-  });
+    coachUserId = (await createTrackedCoach(tracker)).user.id;
+    foreignCoachUserId = (await createTrackedCoach(tracker)).user.id;
+    planId = (await createTestPlan(coachUserId)).id;
+    otherPlanId = (await createTestPlan(coachUserId)).id;
+    tracker.planIds.push(planId, otherPlanId);
 
-  afterAll(async () => {
-    await cleanupRaw.user.deleteMany({ where: { id: { in: userIds } } });
-  });
+    ids.linkable = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+    ids.pausedLinkable = await enrolledAthlete(planId, {
+      legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+      status: EnrollmentStatus.PAUSED,
+    });
+    ids.generalPlanAccount = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_GENERAL });
+    ids.noAccount = await enrolledAthlete(planId);
+    ids.softDeleted = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+    ids.enrolledElsewhere = await enrolledAthlete(otherPlanId, {
+      legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+    });
+    ids.notEnrolled = await createTrackedUser(tracker);
+    await createTestLegacyIdentity(ids.notEnrolled, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
 
-  const listedIds = async (): Promise<number[]> =>
-    (await athletesApi.listIndividualAthletes(CALLER_USER_ID)).map((athlete) => athlete.id);
-
-  it("pins the synthetic floor at 990000", () => {
-    expect(SYNTHETIC_LEGACY_USER_ID_FLOOR).toBe(990_000);
-  });
-
-  it("lists Individual-plan identities in legacyUserId order", async () => {
-    const ids = await listedIds();
-
-    expect(ids).toContain(lowerId);
-    expect(ids).toContain(higherId);
-    expect(ids.indexOf(lowerId)).toBeLessThan(ids.indexOf(higherId));
-  });
-
-  it("returns the user's email as the username with the identity's names", async () => {
-    const athletes = await athletesApi.listIndividualAthletes(CALLER_USER_ID);
-
-    expect(athletes.find((athlete) => athlete.id === lowerId)).toEqual({
-      id: lowerId,
-      username: lowerEmail,
-      firstName: "Synthetic",
-      lastName: `Athlete ${lowerId}`,
+    await cleanupRaw.user.update({
+      where: { id: ids.softDeleted },
+      data: { deletedAt: new Date() },
     });
   });
 
-  it("includes an identity the legacy backend had disabled", async () => {
-    expect(await listedIds()).toContain(disabledId);
+  afterAll(async () => {
+    await cleanupFixtures(tracker);
   });
 
-  it("leaves out identities on the General plan", async () => {
-    expect(await listedIds()).not.toContain(generalId);
+  it("returns exactly the plan's enrolled athletes with an Individual-plan account, as ids in order", async () => {
+    expect(await athletesApi.listLinkableAthletes(coachUserId, planId)).toEqual(
+      [ids.linkable, ids.pausedLinkable].sort().map((athleteId) => ({ athleteId })),
+    );
   });
 
-  it("leaves out identities whose user is soft-deleted", async () => {
-    expect(await listedIds()).not.toContain(deletedId);
+  it("leaves out an Individual-plan account that is not enrolled in this plan", async () => {
+    const athleteIds = (await athletesApi.listLinkableAthletes(coachUserId, planId)).map(
+      (athlete) => athlete.athleteId,
+    );
+
+    expect(athleteIds).not.toContain(ids.notEnrolled);
+    expect(athleteIds).not.toContain(ids.enrolledElsewhere);
   });
 
-  it("leaves out the synthetic range from the floor upwards", async () => {
-    const ids = await listedIds();
+  it("leaves out enrolled athletes with a General-plan account, with no account, or soft-deleted", async () => {
+    const athleteIds = (await athletesApi.listLinkableAthletes(coachUserId, planId)).map(
+      (athlete) => athlete.athleteId,
+    );
 
-    expect(ids).not.toContain(floorId);
-    expect(ids).not.toContain(syntheticId);
-    expect(ids.every((id) => id < SYNTHETIC_LEGACY_USER_ID_FLOOR)).toBe(true);
+    expect(athleteIds).not.toContain(ids.generalPlanAccount);
+    expect(athleteIds).not.toContain(ids.noAccount);
+    expect(athleteIds).not.toContain(ids.softDeleted);
+  });
+
+  it("refuses a coach who does not own the plan", async () => {
+    await expect(
+      athletesApi.listLinkableAthletes(foreignCoachUserId, planId),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
