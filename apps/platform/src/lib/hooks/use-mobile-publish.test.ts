@@ -15,6 +15,7 @@ import type {
   PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 import type * as Query from "@repo/query";
+import { STALE_TIMES } from "@repo/query";
 
 import { platformKeys } from "../api/keys";
 import { makeMobileLink, makePublishDayResult, trainingLevelsFixture } from "../mobile.fixtures";
@@ -124,10 +125,12 @@ describe("useLinkableAthletes", () => {
     );
   });
 
-  it("refetches on the next mount so a newly enrolled athlete is not shown as unlinkable", async () => {
+  it("refetches on the next mount despite the app-wide stale time, so a newly enrolled athlete is not shown as unlinkable", async () => {
     listLinkableAthletesMock.mockResolvedValue(linkableAthletes);
 
-    const queryClient = new QueryClient();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { staleTime: STALE_TIMES.THIRTY_SECONDS } },
+    });
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children);
     const first = renderHook(() => useLinkableAthletes(PLAN_ID), { wrapper });
