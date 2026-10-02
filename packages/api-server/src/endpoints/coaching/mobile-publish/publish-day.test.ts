@@ -1,26 +1,35 @@
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ChannelProgramOps, type LegacyProgramRow } from "./channel-program-ops";
+import { InternalServerError } from "@repo/errors";
+
+import { dayContentHash } from "./day-content-hash";
 import { type MobilePublishDayPayload } from "./day-include";
 import { type PublishDayArgs, publishDay } from "./publish-day";
 
 const NOW = new Date("2026-06-08T00:00:00Z");
 const SCHEDULED_DATE = "2026-06-08";
 const LINK_ID = "cllink0000000000000000000";
-const RACED_ROW_ID = 555;
-const OWNED_RECORD_ID = "clrec0000000000000000000";
+const MINTED_ROW_ID = 1_000_000;
+const STORED_ROW_ID = 1_000_042;
+const REST_HASH = dayContentHash({ isRestDay: true });
+const STALE_HASH = "hash-of-an-older-projection";
 
 const cuid = (suffix: string): string => `clz${suffix}`.padEnd(25, "0").slice(0, 25);
 
 const mocks = vi.hoisted(() => ({
   findUniqueMock: vi.fn(),
-  upsertMock: vi.fn(),
+  createMock: vi.fn(),
+  updateMock: vi.fn(),
 }));
 
 vi.mock("../../../db/client", () => ({
   prisma: {
-    mobilePublishedDay: { findUnique: mocks.findUniqueMock, upsert: mocks.upsertMock },
+    mobilePublishedDay: {
+      findUnique: mocks.findUniqueMock,
+      create: mocks.createMock,
+      update: mocks.updateMock,
+    },
     $disconnect: vi.fn(),
   },
 }));
@@ -29,221 +38,198 @@ vi.mock("@repo/shared", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-const restDay = (): MobilePublishDayPayload => ({
+const restLabel = {
+  id: cuid("restlbl"),
+  name: "Rest",
+  nameLower: "rest",
+  applicableLevels: ["DAY" as const],
+  notes: null,
+  rest: true,
+  createdAt: NOW,
+  updatedAt: NOW,
+};
+
+const makeDay = (isRest: boolean): MobilePublishDayPayload => ({
   id: cuid("day"),
   weekId: cuid("week"),
   dayOfWeek: "MONDAY",
-  labelId: cuid("restlbl"),
+  labelId: isRest ? restLabel.id : null,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
   week: { startDate: NOW },
-  label: {
-    id: cuid("restlbl"),
-    name: "Rest",
-    nameLower: "rest",
-    applicableLevels: ["DAY"],
-    notes: null,
-    rest: true,
-    createdAt: NOW,
-    updatedAt: NOW,
-  },
+  label: isRest ? restLabel : null,
   sessions: [],
 });
 
-const restLegacyRow = (): LegacyProgramRow => ({
-  id: RACED_ROW_ID,
-  isRestDay: true,
-  dailyProgram: null,
-});
-
-const nonRestLegacyRow = (): LegacyProgramRow => ({
-  id: RACED_ROW_ID,
-  isRestDay: false,
-  dailyProgram: { dayTrainings: [] },
-});
-
-const makeFakeOps = (): ChannelProgramOps => ({
-  getProgram: vi.fn<ChannelProgramOps["getProgram"]>(),
-  createProgram: vi.fn(),
-  replaceProgram: vi.fn(),
-});
-
-const baseArgs = (
-  ops: ChannelProgramOps,
-  overrides: Partial<PublishDayArgs> = {},
-): PublishDayArgs => ({
-  ops,
+const baseArgs = (overrides: Partial<PublishDayArgs> = {}): PublishDayArgs => ({
   linkId: LINK_ID,
   scheduledDate: SCHEDULED_DATE,
   absoluteDate: NOW,
-  day: restDay(),
+  day: makeDay(true),
   exerciseById: new Map(),
-  overwriteUnowned: false,
   ...overrides,
 });
+
+const uniqueViolation = (): Prisma.PrismaClientKnownRequestError =>
+  new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "6.0.0",
+    meta: { target: ["linkId", "scheduledDate"] },
+  });
+
+type WriteCall = { data: Record<string, unknown> };
+
+const firstCallData = (mock: ReturnType<typeof vi.fn>): Record<string, unknown> => {
+  const call = mock.mock.calls[0]?.[0] as WriteCall | undefined;
+
+  return call?.data ?? {};
+};
 
 describe("publishDay", () => {
   beforeEach(() => {
     mocks.findUniqueMock.mockReset();
-    mocks.upsertMock.mockReset();
+    mocks.createMock.mockReset();
+    mocks.updateMock.mockReset();
     mocks.findUniqueMock.mockResolvedValue(null);
-    mocks.upsertMock.mockResolvedValue({ id: cuid("rec") });
+    mocks.createMock.mockResolvedValue({ legacyRowId: MINTED_ROW_ID });
+    mocks.updateMock.mockResolvedValue({ legacyRowId: STORED_ROW_ID });
   });
 
-  it("falls back to PUT and reports updated when an owned day races a 409", async () => {
-    const { ConflictError } = await import("@repo/errors");
-    const ops = makeFakeOps();
+  it("creates a new row without supplying the wire id and reports the minted one", async () => {
+    const result = await publishDay(baseArgs());
 
-    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(ops.getProgram).mockResolvedValueOnce(null).mockResolvedValueOnce(nonRestLegacyRow());
-    vi.mocked(ops.createProgram).mockRejectedValue(new ConflictError("already exists"));
-    vi.mocked(ops.replaceProgram).mockResolvedValue(nonRestLegacyRow());
-
-    const result = await publishDay(baseArgs(ops));
-
-    expect(ops.createProgram).toHaveBeenCalledTimes(1);
-    expect(ops.replaceProgram).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(ops.replaceProgram).mock.calls[0]?.[1]).toBe(RACED_ROW_ID);
-    expect(result.action).toBe("updated");
-    expect(result.legacyRowId).toBe(RACED_ROW_ID);
-    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("conflicts without writing when an unowned day races a 409 and overwrite is off", async () => {
-    const { ConflictError } = await import("@repo/errors");
-    const ops = makeFakeOps();
-
-    vi.mocked(ops.getProgram).mockResolvedValueOnce(null).mockResolvedValueOnce(nonRestLegacyRow());
-    vi.mocked(ops.createProgram).mockRejectedValue(new ConflictError("already exists"));
-
-    const result = await publishDay(baseArgs(ops, { overwriteUnowned: false }));
-
-    expect(ops.createProgram).toHaveBeenCalledTimes(1);
-    expect(ops.replaceProgram).not.toHaveBeenCalled();
-    expect(result.action).toBe("conflict");
-    expect(result.legacyRowId).toBe(RACED_ROW_ID);
-    expect(mocks.upsertMock).not.toHaveBeenCalled();
-  });
-
-  it("throws ConflictError without re-posting when the 409 re-GET returns null (QA-#22)", async () => {
-    const { ConflictError } = await import("@repo/errors");
-    const ops = makeFakeOps();
-
-    vi.mocked(ops.getProgram).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
-    vi.mocked(ops.createProgram).mockRejectedValue(new ConflictError("already exists"));
-
-    await expect(publishDay(baseArgs(ops))).rejects.toBeInstanceOf(ConflictError);
-
-    expect(ops.createProgram).toHaveBeenCalledTimes(1);
-    expect(ops.replaceProgram).not.toHaveBeenCalled();
-    expect(mocks.upsertMock).not.toHaveBeenCalled();
-  });
-
-  it("skips without writing when the live legacy content matches the projection", async () => {
-    const ops = makeFakeOps();
-
-    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(ops.getProgram).mockResolvedValue(restLegacyRow());
-
-    const result = await publishDay(baseArgs(ops));
-
-    expect(ops.createProgram).not.toHaveBeenCalled();
-    expect(ops.replaceProgram).not.toHaveBeenCalled();
-    expect(result.action).toBe("skipped");
-    expect(result.legacyRowId).toBe(RACED_ROW_ID);
-    expect(mocks.upsertMock).not.toHaveBeenCalled();
-  });
-
-  it("claims the ledger when a content-identical legacy row is unowned (skip, not conflict)", async () => {
-    const ops = makeFakeOps();
-
-    mocks.findUniqueMock.mockResolvedValue(null);
-    vi.mocked(ops.getProgram).mockResolvedValue(restLegacyRow());
-
-    const result = await publishDay(baseArgs(ops, { overwriteUnowned: false }));
-
-    expect(result.action).toBe("skipped");
-    expect(ops.createProgram).not.toHaveBeenCalled();
-    expect(ops.replaceProgram).not.toHaveBeenCalled();
-    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("leaves the ledger untouched when an owned replace fails (individual DELETE+POST crash window)", async () => {
-    const ops = makeFakeOps();
-
-    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(ops.getProgram).mockResolvedValue(nonRestLegacyRow());
-    vi.mocked(ops.replaceProgram).mockRejectedValue(new Error("legacy POST failed after DELETE"));
-
-    await expect(publishDay(baseArgs(ops))).rejects.toThrow();
-
-    expect(ops.replaceProgram).toHaveBeenCalledTimes(1);
-    expect(mocks.upsertMock).not.toHaveBeenCalled();
-  });
-
-  it("self-heals on the next publish by creating a fresh row when the legacy row has vanished", async () => {
-    const ops = makeFakeOps();
-
-    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(ops.getProgram).mockResolvedValue(null);
-    vi.mocked(ops.createProgram).mockResolvedValue({
-      id: 999,
+    expect(result).toEqual({
+      scheduledDate: SCHEDULED_DATE,
+      action: "created",
+      legacyRowId: MINTED_ROW_ID,
+    });
+    expect(firstCallData(mocks.createMock)).not.toHaveProperty("legacyRowId");
+    expect(firstCallData(mocks.createMock)).toMatchObject({
+      linkId: LINK_ID,
+      scheduledDate: NOW,
+      contentHash: REST_HASH,
       isRestDay: true,
-      dailyProgram: null,
+    });
+  });
+
+  it("stores a rest day as Prisma.DbNull so the rest_xor_program CHECK accepts it", async () => {
+    await publishDay(baseArgs());
+
+    expect(firstCallData(mocks.createMock).dailyProgram).toBe(Prisma.DbNull);
+  });
+
+  it("stores a training day with isRestDay false and its projected program", async () => {
+    await publishDay(baseArgs({ day: makeDay(false) }));
+
+    expect(firstCallData(mocks.createMock)).toMatchObject({
+      isRestDay: false,
+      dailyProgram: { dayTrainings: [] },
+    });
+  });
+
+  it("skips without any write when the stored content carries the projection's hash", async () => {
+    mocks.findUniqueMock.mockResolvedValue({
+      legacyRowId: STORED_ROW_ID,
+      contentHash: REST_HASH,
+      isRestDay: true,
     });
 
-    const result = await publishDay(baseArgs(ops));
+    const result = await publishDay(baseArgs());
 
-    expect(ops.createProgram).toHaveBeenCalledTimes(1);
-    expect(result.action).toBe("created");
-    expect(result.legacyRowId).toBe(999);
-    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      scheduledDate: SCHEDULED_DATE,
+      action: "skipped",
+      legacyRowId: STORED_ROW_ID,
+    });
+    expect(mocks.createMock).not.toHaveBeenCalled();
+    expect(mocks.updateMock).not.toHaveBeenCalled();
   });
 
-  it("stores a rest day as Prisma.DbNull (SQL NULL) so the rest_xor_program CHECK accepts it", async () => {
-    const ops = makeFakeOps();
+  it("updates content, hash and publishedAt but never the wire id when the hash differs", async () => {
+    mocks.findUniqueMock.mockResolvedValue({
+      legacyRowId: STORED_ROW_ID,
+      contentHash: STALE_HASH,
+      isRestDay: false,
+    });
 
-    mocks.findUniqueMock.mockResolvedValue(null);
-    vi.mocked(ops.getProgram).mockResolvedValue(restLegacyRow());
+    const result = await publishDay(baseArgs());
 
-    await publishDay(baseArgs(ops, { overwriteUnowned: false }));
+    expect(result).toEqual({
+      scheduledDate: SCHEDULED_DATE,
+      action: "updated",
+      legacyRowId: STORED_ROW_ID,
+    });
+    expect(mocks.createMock).not.toHaveBeenCalled();
 
-    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+    const data = firstCallData(mocks.updateMock);
 
-    const call = mocks.upsertMock.mock.calls[0]?.[0] as {
-      create: { isRestDay: boolean; dailyProgram: unknown; legacyRowId: number };
-      update: { isRestDay: boolean; dailyProgram: unknown };
-    };
-
-    expect(call.create.isRestDay).toBe(true);
-    expect(call.create.dailyProgram).toBe(Prisma.DbNull);
-    expect(call.create.dailyProgram).not.toBe(Prisma.JsonNull);
-    expect(call.create.legacyRowId).toBe(RACED_ROW_ID);
-    expect(call.update.isRestDay).toBe(true);
-    expect(call.update.dailyProgram).toBe(Prisma.DbNull);
-    expect(call.update.dailyProgram).not.toBe(Prisma.JsonNull);
+    expect(data).not.toHaveProperty("legacyRowId");
+    expect(data).toMatchObject({ contentHash: REST_HASH, isRestDay: true });
+    expect(data.dailyProgram).toBe(Prisma.DbNull);
+    expect(data.publishedAt).toBeInstanceOf(Date);
   });
 
-  it("stores a training day's dailyProgram json content on the ledger row", async () => {
-    const ops = makeFakeOps();
+  it("fills a content-less row even when its hash already matches", async () => {
+    mocks.findUniqueMock.mockResolvedValue({
+      legacyRowId: STORED_ROW_ID,
+      contentHash: REST_HASH,
+      isRestDay: null,
+    });
 
-    mocks.findUniqueMock.mockResolvedValue({ id: OWNED_RECORD_ID });
-    vi.mocked(ops.getProgram).mockResolvedValue(null);
-    vi.mocked(ops.createProgram).mockResolvedValue(nonRestLegacyRow());
+    const result = await publishDay(baseArgs());
 
-    await publishDay(baseArgs(ops));
+    expect(result.action).toBe("updated");
+    expect(mocks.updateMock).toHaveBeenCalledTimes(1);
+  });
 
-    expect(mocks.upsertMock).toHaveBeenCalledTimes(1);
+  it("re-decides against the row a concurrent run inserted and skips an identical one", async () => {
+    mocks.findUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      legacyRowId: STORED_ROW_ID,
+      contentHash: REST_HASH,
+      isRestDay: true,
+    });
+    mocks.createMock.mockRejectedValue(uniqueViolation());
 
-    const call = mocks.upsertMock.mock.calls[0]?.[0] as {
-      create: { isRestDay: boolean; dailyProgram: unknown };
-      update: { isRestDay: boolean; dailyProgram: unknown };
-    };
+    const result = await publishDay(baseArgs());
 
-    expect(call.create.isRestDay).toBe(false);
-    expect(call.create.dailyProgram).toEqual({ dayTrainings: [] });
-    expect(call.update.isRestDay).toBe(false);
-    expect(call.update.dailyProgram).toEqual({ dayTrainings: [] });
+    expect(result).toEqual({
+      scheduledDate: SCHEDULED_DATE,
+      action: "skipped",
+      legacyRowId: STORED_ROW_ID,
+    });
+    expect(mocks.createMock).toHaveBeenCalledTimes(1);
+    expect(mocks.updateMock).not.toHaveBeenCalled();
+  });
+
+  it("re-decides against the row a concurrent run inserted and updates a different one", async () => {
+    mocks.findUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      legacyRowId: STORED_ROW_ID,
+      contentHash: STALE_HASH,
+      isRestDay: false,
+    });
+    mocks.createMock.mockRejectedValue(uniqueViolation());
+
+    const result = await publishDay(baseArgs());
+
+    expect(result.action).toBe("updated");
+    expect(mocks.createMock).toHaveBeenCalledTimes(1);
+    expect(mocks.updateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws when the concurrently inserted row is gone on the re-read", async () => {
+    mocks.createMock.mockRejectedValue(uniqueViolation());
+
+    await expect(publishDay(baseArgs())).rejects.toBeInstanceOf(InternalServerError);
+    expect(mocks.createMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("rethrows a create failure that is not a unique violation", async () => {
+    const failure = new Error("connection reset");
+
+    mocks.createMock.mockRejectedValue(failure);
+
+    await expect(publishDay(baseArgs())).rejects.toBe(failure);
+    expect(mocks.findUniqueMock).toHaveBeenCalledTimes(1);
   });
 });

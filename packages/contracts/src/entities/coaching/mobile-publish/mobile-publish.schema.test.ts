@@ -20,16 +20,6 @@ describe("publishMobileSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("defaults overwriteUnowned to false", () => {
-    const result = publishMobileSchema.safeParse(baseWeekInput);
-
-    expect(result.success).toBe(true);
-
-    if (result.success) {
-      expect(result.data.overwriteUnowned).toBe(false);
-    }
-  });
-
   it("accepts a day-scope payload with dayOfWeek", () => {
     const result = publishMobileSchema.safeParse({
       ...baseWeekInput,
@@ -82,11 +72,21 @@ describe("publishDayResultSchema", () => {
   it("accepts a null legacyRowId", () => {
     const result = publishDayResultSchema.safeParse({
       scheduledDate: "2026-06-22",
-      action: "conflict",
+      action: "failed",
       legacyRowId: null,
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("rejects the retired conflict action", () => {
+    const result = publishDayResultSchema.safeParse({
+      scheduledDate: "2026-06-22",
+      action: "conflict",
+      legacyRowId: null,
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("rejects an unknown action", () => {

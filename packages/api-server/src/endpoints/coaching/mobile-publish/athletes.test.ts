@@ -1,107 +1,112 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { randomInt } from "node:crypto";
 
-import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { createAthletesApi } from "./athletes";
-import { encryptLegacyToken } from "./legacy-token-cipher";
+import { cleanupRaw, createTestLegacyIdentity, createTestUser } from "../../../test/helpers";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-const RAW_TOKEN = "raw-legacy-access-token-value";
-const COACH_PROFILE_ID = "clcoach000000000000000000";
-const USER_ID = "cluser0000000000000000000";
+import { athletesApi, SYNTHETIC_LEGACY_USER_ID_FLOOR } from "./athletes";
 
-const ATHLETES = [{ id: 5, username: "athlete@tdp.local", firstName: "Test", lastName: "Athlete" }];
+const LEGACY_PLAN_GENERAL = 1;
+const REAL_ID_FLOOR = 100_000;
+const SYNTHETIC_ID_OFFSET = 1_000;
+const SYNTHETIC_ID_SPAN = 9_000;
+const CALLER_USER_ID = "clcaller00000000000000000";
 
-const mocks = vi.hoisted(() => ({
-  findUniqueMock: vi.fn(),
-  resolveCoachIdMock: vi.fn(),
-}));
+const mintRealLegacyUserId = (): number => randomInt(REAL_ID_FLOOR, SYNTHETIC_LEGACY_USER_ID_FLOOR);
 
-vi.mock("../../../db/client", () => ({
-  prisma: {
-    mobileConnection: { findUnique: mocks.findUniqueMock },
-    $disconnect: vi.fn(),
-  },
-}));
+const userIds: string[] = [];
 
-vi.mock("../../../authz/guards", () => ({
-  resolveCoachId: mocks.resolveCoachIdMock,
-}));
+const seedIdentity = async (
+  legacyUserId: number,
+  overrides: { legacyPlanId?: number; isEnabled?: boolean; deletedAt?: Date } = {},
+) => {
+  const user = await createTestUser(
+    overrides.deletedAt === undefined ? {} : { deletedAt: overrides.deletedAt },
+  );
 
-vi.mock("@repo/shared", () => ({
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}));
+  userIds.push(user.id);
 
-const makeFakeLegacyClient = (): LegacyMobileClientPort => ({
-  signin: vi.fn(),
-  getTrainingLevels: vi.fn(async () => []),
-  getGeneralProgram: vi.fn(async () => null),
-  createGeneralProgram: vi.fn(),
-  updateGeneralProgram: vi.fn(),
-  getIndividualProgram: vi.fn(async () => null),
-  createIndividualProgram: vi.fn(),
-  deleteIndividualProgram: vi.fn(),
-  getIndividualAthletes: vi.fn(async () => ATHLETES),
-});
-
-describe("createAthletesApi.listIndividualAthletes", () => {
-  beforeEach(() => {
-    mocks.findUniqueMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
-    mocks.findUniqueMock.mockResolvedValue({ encryptedToken: encryptLegacyToken(RAW_TOKEN) });
+  await createTestLegacyIdentity(user.id, {
+    legacyUserId,
+    legacyPlanId: overrides.legacyPlanId ?? LEGACY_PLAN_INDIVIDUAL,
+    isEnabled: overrides.isEnabled ?? true,
+    firstName: "Synthetic",
+    lastName: `Athlete ${legacyUserId}`,
   });
 
-  it("decrypts the stored token and returns the legacy athletes for a connected coach", async () => {
-    const legacyClient = makeFakeLegacyClient();
-    const api = createAthletesApi(legacyClient);
+  return { user, legacyUserId };
+};
 
-    const result = await api.listIndividualAthletes(USER_ID);
+describe("athletesApi.listIndividualAthletes", () => {
+  const lowerId = mintRealLegacyUserId();
+  const higherId = lowerId + 1;
+  const disabledId = lowerId + 2;
+  const generalId = lowerId + 3;
+  const deletedId = lowerId + 4;
+  const floorId = SYNTHETIC_LEGACY_USER_ID_FLOOR;
+  const syntheticId =
+    SYNTHETIC_LEGACY_USER_ID_FLOOR + randomInt(SYNTHETIC_ID_OFFSET, SYNTHETIC_ID_SPAN);
 
-    expect(result).toEqual(ATHLETES);
-    expect(legacyClient.getIndividualAthletes).toHaveBeenCalledWith(RAW_TOKEN);
+  let lowerEmail = "";
+
+  beforeAll(async () => {
+    await seedIdentity(higherId);
+    lowerEmail = (await seedIdentity(lowerId)).user.email;
+    await seedIdentity(disabledId, { isEnabled: false });
+    await seedIdentity(generalId, { legacyPlanId: LEGACY_PLAN_GENERAL });
+    await seedIdentity(deletedId, { deletedAt: new Date() });
+    await seedIdentity(floorId);
+    await seedIdentity(syntheticId);
   });
 
-  it("returns an empty list when the coach has no individual athletes", async () => {
-    const legacyClient = makeFakeLegacyClient();
-
-    vi.mocked(legacyClient.getIndividualAthletes).mockResolvedValue([]);
-    const api = createAthletesApi(legacyClient);
-
-    const result = await api.listIndividualAthletes(USER_ID);
-
-    expect(result).toEqual([]);
+  afterAll(async () => {
+    await cleanupRaw.user.deleteMany({ where: { id: { in: userIds } } });
   });
 
-  it("throws a BadRequestError when the coach is not connected", async () => {
-    const { BadRequestError } = await import("@repo/errors");
+  const listedIds = async (): Promise<number[]> =>
+    (await athletesApi.listIndividualAthletes(CALLER_USER_ID)).map((athlete) => athlete.id);
 
-    mocks.findUniqueMock.mockResolvedValue(null);
-    const legacyClient = makeFakeLegacyClient();
-    const api = createAthletesApi(legacyClient);
-
-    await expect(api.listIndividualAthletes(USER_ID)).rejects.toBeInstanceOf(BadRequestError);
-
-    expect(legacyClient.getIndividualAthletes).not.toHaveBeenCalled();
+  it("pins the synthetic floor at 990000", () => {
+    expect(SYNTHETIC_LEGACY_USER_ID_FLOOR).toBe(990_000);
   });
 
-  it("surfaces a reconnect signal without leaking the token when the legacy session is rejected", async () => {
-    const { UnauthorizedError } = await import("@repo/errors");
-    const legacyClient = makeFakeLegacyClient();
+  it("lists Individual-plan identities in legacyUserId order", async () => {
+    const ids = await listedIds();
 
-    vi.mocked(legacyClient.getIndividualAthletes).mockRejectedValue(
-      new UnauthorizedError("legacy 401"),
-    );
-    const api = createAthletesApi(legacyClient);
+    expect(ids).toContain(lowerId);
+    expect(ids).toContain(higherId);
+    expect(ids.indexOf(lowerId)).toBeLessThan(ids.indexOf(higherId));
+  });
 
-    await expect(api.listIndividualAthletes(USER_ID)).rejects.toBeInstanceOf(UnauthorizedError);
+  it("returns the user's email as the username with the identity's names", async () => {
+    const athletes = await athletesApi.listIndividualAthletes(CALLER_USER_ID);
 
-    await api.listIndividualAthletes(USER_ID).catch((error: unknown) => {
-      expect(error).toBeInstanceOf(UnauthorizedError);
-
-      if (error instanceof UnauthorizedError) {
-        expect(error.message).toBe("Mobile session expired — please reconnect");
-        expect(error.message).not.toContain(RAW_TOKEN);
-      }
+    expect(athletes.find((athlete) => athlete.id === lowerId)).toEqual({
+      id: lowerId,
+      username: lowerEmail,
+      firstName: "Synthetic",
+      lastName: `Athlete ${lowerId}`,
     });
+  });
+
+  it("includes an identity the legacy backend had disabled", async () => {
+    expect(await listedIds()).toContain(disabledId);
+  });
+
+  it("leaves out identities on the General plan", async () => {
+    expect(await listedIds()).not.toContain(generalId);
+  });
+
+  it("leaves out identities whose user is soft-deleted", async () => {
+    expect(await listedIds()).not.toContain(deletedId);
+  });
+
+  it("leaves out the synthetic range from the floor upwards", async () => {
+    const ids = await listedIds();
+
+    expect(ids).not.toContain(floorId);
+    expect(ids).not.toContain(syntheticId);
+    expect(ids.every((id) => id < SYNTHETIC_LEGACY_USER_ID_FLOOR)).toBe(true);
   });
 });

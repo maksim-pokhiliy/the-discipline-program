@@ -9,7 +9,6 @@ import { BadRequestError } from "@repo/errors";
 
 import { buildWeekScheduledDates, linksApi } from "./links";
 
-const COACH_PROFILE_ID = "clcoach000000000000000000";
 const USER_ID = "cluser0000000000000000000";
 const PLAN_ID = "clplan0000000000000000000";
 const LINK_ID = "cllink0000000000000000000";
@@ -42,8 +41,6 @@ const mocks = vi.hoisted(() => ({
   deleteMock: vi.fn(),
   upsertMock: vi.fn(),
   groupByMock: vi.fn(),
-  connectionFindUniqueMock: vi.fn(),
-  resolveCoachIdMock: vi.fn(),
   verifyPlanOwnershipMock: vi.fn(),
   verifyMobileLinkOwnershipMock: vi.fn(),
 }));
@@ -56,13 +53,11 @@ vi.mock("../../../db/client", () => ({
       upsert: mocks.upsertMock,
     },
     mobilePublishedDay: { groupBy: mocks.groupByMock },
-    mobileConnection: { findUnique: mocks.connectionFindUniqueMock },
     $disconnect: vi.fn(),
   },
 }));
 
 vi.mock("../../../authz/guards", () => ({
-  resolveCoachId: mocks.resolveCoachIdMock,
   verifyPlanOwnership: mocks.verifyPlanOwnershipMock,
   verifyMobileLinkOwnership: mocks.verifyMobileLinkOwnershipMock,
 }));
@@ -129,21 +124,18 @@ describe("linksApi.listLinks", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
     mocks.groupByMock.mockResolvedValue([]);
   });
 
-  it("scopes the findMany by planId and the coach's connection after verifying plan ownership", async () => {
+  it("scopes the findMany by planId alone after verifying plan ownership", async () => {
     const result = await linksApi.listLinks(USER_ID, PLAN_ID);
 
-    expect(mocks.resolveCoachIdMock).toHaveBeenCalledWith(USER_ID);
     expect(mocks.verifyPlanOwnershipMock).toHaveBeenCalledWith(PLAN_ID, USER_ID);
     expect(mocks.findManyMock).toHaveBeenCalledWith({
-      where: { planId: PLAN_ID, connection: { coachProfileId: COACH_PROFILE_ID } },
+      where: { planId: PLAN_ID },
       orderBy: { createdAt: "asc" },
     });
     expect(result).toEqual([
@@ -177,9 +169,7 @@ describe("linksApi.listLinks publish aggregates", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
     mocks.groupByMock.mockResolvedValue([]);
@@ -303,9 +293,7 @@ describe("linksApi.listLinks weekStart validation", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
     mocks.groupByMock.mockResolvedValue([]);
@@ -316,7 +304,6 @@ describe("linksApi.listLinks weekStart validation", () => {
       linksApi.listLinks(USER_ID, PLAN_ID, IMPOSSIBLE_WEEK_START),
     ).rejects.toBeInstanceOf(BadRequestError);
 
-    expect(mocks.resolveCoachIdMock).not.toHaveBeenCalled();
     expect(mocks.verifyPlanOwnershipMock).not.toHaveBeenCalled();
     expect(mocks.findManyMock).not.toHaveBeenCalled();
     expect(mocks.groupByMock).not.toHaveBeenCalled();
@@ -344,12 +331,8 @@ describe("linksApi.createLink", () => {
   beforeEach(() => {
     mocks.upsertMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.connectionFindUniqueMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
-    mocks.connectionFindUniqueMock.mockResolvedValue({ id: CONNECTION_ID });
     mocks.upsertMock.mockResolvedValue(makePrismaLink());
     mocks.groupByMock.mockResolvedValue([]);
   });
@@ -360,12 +343,7 @@ describe("linksApi.createLink", () => {
       legacyLevelId: LEGACY_LEVEL_ID,
     });
 
-    expect(mocks.resolveCoachIdMock).toHaveBeenCalledWith(USER_ID);
     expect(mocks.verifyPlanOwnershipMock).toHaveBeenCalledWith(PLAN_ID, USER_ID);
-    expect(mocks.connectionFindUniqueMock).toHaveBeenCalledWith({
-      where: { coachProfileId: COACH_PROFILE_ID },
-      select: { id: true },
-    });
     expect(mocks.upsertMock).toHaveBeenCalledWith({
       where: {
         planId_channel_legacyLevelId: {
@@ -375,12 +353,11 @@ describe("linksApi.createLink", () => {
         },
       },
       create: {
-        connectionId: CONNECTION_ID,
         planId: PLAN_ID,
         channel: "GENERAL",
         legacyLevelId: LEGACY_LEVEL_ID,
       },
-      update: { connectionId: CONNECTION_ID },
+      update: {},
     });
     expect(result.channel).toBe("GENERAL");
     expect(result.legacyLevelId).toBe(LEGACY_LEVEL_ID);
@@ -405,13 +382,12 @@ describe("linksApi.createLink", () => {
         },
       },
       create: {
-        connectionId: CONNECTION_ID,
         planId: PLAN_ID,
         channel: "INDIVIDUAL",
         legacyUserId: LEGACY_USER_ID,
         athleteId: ATHLETE_ID,
       },
-      update: { connectionId: CONNECTION_ID, legacyUserId: LEGACY_USER_ID },
+      update: { legacyUserId: LEGACY_USER_ID },
     });
     expect(result).toEqual({
       id: LINK_ID,
@@ -499,14 +475,14 @@ describe("linksApi.createLink", () => {
     await expect(attempt).rejects.not.toThrow("already linked to another plan member");
   });
 
-  it("rejects with BadRequestError when the coach has no mobile connection", async () => {
-    const { BadRequestError } = await import("@repo/errors");
+  it("refuses before any upsert when the caller does not own the plan", async () => {
+    const { ForbiddenError } = await import("@repo/errors");
 
-    mocks.connectionFindUniqueMock.mockResolvedValue(null);
+    mocks.verifyPlanOwnershipMock.mockRejectedValue(new ForbiddenError("not your plan"));
 
     await expect(
       linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID }),
-    ).rejects.toBeInstanceOf(BadRequestError);
+    ).rejects.toBeInstanceOf(ForbiddenError);
 
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
@@ -549,7 +525,7 @@ describe("linksApi.deleteLink", () => {
   beforeEach(() => {
     mocks.deleteMock.mockReset();
     mocks.verifyMobileLinkOwnershipMock.mockReset();
-    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue(undefined);
+    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue({ planId: PLAN_ID });
     mocks.deleteMock.mockResolvedValue(makePrismaLink());
   });
 

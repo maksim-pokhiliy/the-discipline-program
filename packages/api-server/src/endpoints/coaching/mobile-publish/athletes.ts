@@ -1,47 +1,36 @@
 import { type GetMobileAthletesResponse } from "@repo/contracts/coaching/mobile-connection";
-import { BadRequestError, UnauthorizedError } from "@repo/errors";
 
-import { resolveCoachId } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-import { decryptLegacyToken } from "./legacy-token-cipher";
-import { reconnectRequiredError, tokenUnreadableError } from "./reconnect-signal";
+export const SYNTHETIC_LEGACY_USER_ID_FLOOR = 990_000;
 
 export type AthletesApi = {
   listIndividualAthletes(userId: string): Promise<GetMobileAthletesResponse>;
 };
 
-const decryptToken = (encryptedToken: string): string => {
-  try {
-    return decryptLegacyToken(encryptedToken);
-  } catch {
-    throw tokenUnreadableError();
-  }
-};
-
-export const createAthletesApi = (legacyClient: LegacyMobileClientPort): AthletesApi => ({
-  listIndividualAthletes: async (userId) => {
-    const coachProfileId = await resolveCoachId(userId);
-    const connection = await prisma.mobileConnection.findUnique({
-      where: { coachProfileId },
-      select: { encryptedToken: true },
+export const athletesApi: AthletesApi = {
+  listIndividualAthletes: async () => {
+    const identities = await prisma.mobileLegacyIdentity.findMany({
+      where: {
+        legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+        legacyUserId: { lt: SYNTHETIC_LEGACY_USER_ID_FLOOR },
+        user: { deletedAt: null },
+      },
+      orderBy: { legacyUserId: "asc" },
+      select: {
+        legacyUserId: true,
+        firstName: true,
+        lastName: true,
+        user: { select: { email: true } },
+      },
     });
 
-    if (connection === null) {
-      throw new BadRequestError("Connect the mobile app first");
-    }
-
-    const token = decryptToken(connection.encryptedToken);
-
-    try {
-      return await legacyClient.getIndividualAthletes(token);
-    } catch (error) {
-      if (error instanceof UnauthorizedError) {
-        throw reconnectRequiredError("Mobile session expired — please reconnect");
-      }
-
-      throw error;
-    }
+    return identities.map((identity) => ({
+      id: identity.legacyUserId,
+      username: identity.user.email,
+      firstName: identity.firstName,
+      lastName: identity.lastName,
+    }));
   },
-});
+};

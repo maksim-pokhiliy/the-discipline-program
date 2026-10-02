@@ -151,8 +151,8 @@ model MobileConnection {
 
 model MobilePublishLink {
   id            String               @id @default(cuid())
-  connectionId  String
-  connection    MobileConnection     @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  connectionId  String?
+  connection    MobileConnection?    @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   planId        String
   plan          TrainingPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
   channel       MobilePublishChannel @default(GENERAL)
@@ -181,7 +181,7 @@ model MobilePublishedDay {
   linkId        String
   link          MobilePublishLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
   scheduledDate DateTime          @db.Date
-  legacyRowId   Int
+  legacyRowId   Int               @default(autoincrement())
   contentHash   String
   isRestDay     Boolean?
   dailyProgram  Json?
