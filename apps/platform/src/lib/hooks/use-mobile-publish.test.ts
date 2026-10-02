@@ -4,8 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { LegacyTrainingLevel, MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
-import type { CreateMobileLinkRequest, MobileLink } from "@repo/contracts/coaching/mobile-link";
+import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
+import type {
+  CreateMobileLinkRequest,
+  GetLinkableAthletesResponse,
+  MobileLink,
+} from "@repo/contracts/coaching/mobile-link";
 import type {
   PublishMobileData,
   PublishMobileResult,
@@ -13,15 +17,10 @@ import type {
 import type * as Query from "@repo/query";
 
 import { platformKeys } from "../api/keys";
-import {
-  makeMobileLink,
-  makePublishDayResult,
-  mobileAthletesFixture,
-  trainingLevelsFixture,
-} from "../mobile.fixtures";
+import { makeMobileLink, makePublishDayResult, trainingLevelsFixture } from "../mobile.fixtures";
 
 const listTrainingLevelsMock = vi.fn<() => Promise<LegacyTrainingLevel[]>>();
-const listAthletesMock = vi.fn<() => Promise<MobileAthlete[]>>();
+const listAthletesMock = vi.fn<(planId: string) => Promise<GetLinkableAthletesResponse>>();
 const createLinkMock = vi.fn<(data: CreateMobileLinkRequest) => Promise<MobileLink>>();
 const listLinksMock = vi.fn<(planId: string, weekStart?: string) => Promise<MobileLink[]>>();
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
@@ -32,7 +31,7 @@ vi.mock("../api", () => ({
   api: {
     mobile: {
       listTrainingLevels: () => listTrainingLevelsMock(),
-      listAthletes: () => listAthletesMock(),
+      listAthletes: (planId: string) => listAthletesMock(planId),
       createLink: (data: CreateMobileLinkRequest) => createLinkMock(data),
       listLinks: (planId: string, weekStart?: string) => listLinksMock(planId, weekStart),
       deleteLink: (linkId: string) => deleteLinkMock(linkId),
@@ -108,16 +107,28 @@ describe("useTrainingLevels", () => {
 });
 
 describe("useMobileAthletes", () => {
-  it("fetches api.mobile.listAthletes on mount under the athletes key", async () => {
-    listAthletesMock.mockResolvedValueOnce(mobileAthletesFixture);
+  const linkableAthletes: GetLinkableAthletesResponse = [{ athleteId: ATHLETE_ID }];
 
-    const { view, queryClient } = renderRunner(() => useMobileAthletes());
+  it("fetches the plan's linkable athletes under the plan-scoped athletes key", async () => {
+    listAthletesMock.mockResolvedValueOnce(linkableAthletes);
+
+    const { view, queryClient } = renderRunner(() => useMobileAthletes(PLAN_ID));
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
     expect(listAthletesMock).toHaveBeenCalledTimes(1);
-    expect(view.result.current.data).toEqual(mobileAthletesFixture);
-    expect(queryClient.getQueryData(platformKeys.mobile.athletes())).toEqual(mobileAthletesFixture);
+    expect(listAthletesMock).toHaveBeenCalledWith(PLAN_ID);
+    expect(view.result.current.data).toEqual(linkableAthletes);
+    expect(queryClient.getQueryData(platformKeys.mobile.athletes(PLAN_ID))).toEqual(
+      linkableAthletes,
+    );
+  });
+
+  it("does not fetch when the planId is empty", () => {
+    const { view } = renderRunner(() => useMobileAthletes(""));
+
+    expect(listAthletesMock).not.toHaveBeenCalled();
+    expect(view.result.current.fetchStatus).toBe("idle");
   });
 });
 
@@ -266,13 +277,37 @@ describe("useCreateMobileLink", () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
   });
 
+  it("sends an individual create with the athlete only and no app account id", async () => {
+    const individualPayload: CreateMobileLinkRequest = {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    };
+
+    createLinkMock.mockResolvedValueOnce(makeMobileLink());
+
+    const { view } = renderRunner(() => useCreateMobileLink(PLAN_ID));
+
+    await act(async () => {
+      view.result.current.mutate(individualPayload);
+    });
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    expect(createLinkMock).toHaveBeenCalledWith({
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    });
+    expect(createLinkMock.mock.calls[0]?.[0]).not.toHaveProperty("legacyUserId");
+  });
+
   it("notifies with the athlete fallback message when an individual create fails", async () => {
     const failure = new Error("conflict");
     const individualPayload: CreateMobileLinkRequest = {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: 101,
     };
 
     createLinkMock.mockRejectedValueOnce(failure);
