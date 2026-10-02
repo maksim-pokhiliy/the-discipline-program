@@ -14,6 +14,7 @@ import type {
   PublishMobileData,
   PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
+import { UserRole } from "@repo/contracts/iam/auth";
 import type * as Query from "@repo/query";
 import { STALE_TIMES } from "@repo/query";
 
@@ -27,6 +28,11 @@ const listLinksMock = vi.fn<(planId: string, weekStart?: string) => Promise<Mobi
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
 const publishMock = vi.fn<(data: PublishMobileData) => Promise<PublishMobileResult>>();
 const notifyErrorMock = vi.fn<(error: Error, fallback: string) => void>();
+const currentRole: { value: UserRole | null } = { value: null };
+
+vi.mock("@repo/auth/client", () => ({
+  useCurrentUserRole: () => currentRole.value,
+}));
 
 vi.mock("../api", () => ({
   api: {
@@ -59,6 +65,7 @@ const {
   useDeleteMobileLink,
   usePublishMobile,
   useMobileLinks,
+  useCanPublishToLevels,
   useLinkableAthletes,
   useTrainingLevels,
 } = await import("./use-mobile-publish");
@@ -441,5 +448,21 @@ describe("usePublishMobile", () => {
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
     expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("useCanPublishToLevels", () => {
+  it.each([
+    [UserRole.HEAD_COACH, true],
+    [UserRole.ADMIN, true],
+    [UserRole.COACH, false],
+    [UserRole.ATHLETE, false],
+    [null, false],
+  ])("answers %s with %s", (role, expected) => {
+    currentRole.value = role;
+
+    const { result } = renderHook(() => useCanPublishToLevels());
+
+    expect(result.current).toBe(expected);
   });
 });

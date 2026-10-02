@@ -37,8 +37,10 @@ const deleteLinkMutate = vi.fn();
 const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
 const trainingLevelsSpy = vi.fn<(...args: unknown[]) => void>();
 const individualSectionSpy = vi.fn<(props: Record<string, unknown>) => void>();
+const viewerRole = { canPublishToLevels: true };
 
 vi.mock("@app/lib/hooks", () => ({
+  useCanPublishToLevels: () => viewerRole.canPublishToLevels,
   useTrainingLevels: (...args: unknown[]) => {
     trainingLevelsSpy(...args);
 
@@ -74,6 +76,7 @@ const renderModal = () =>
   render(<ManageMobileLinksModal open onClose={vi.fn()} planId={PLAN_ID} weekStart={WEEK_START} />);
 
 beforeEach(() => {
+  viewerRole.canPublishToLevels = true;
   levelsState.data = trainingLevelsFixture;
   levelsState.error = null;
   levelsState.isError = false;
@@ -282,5 +285,30 @@ describe("ManageMobileLinksModal row publish status (MP-22)", () => {
     expect(
       screen.getByText(`Last published ${formatDate(PUBLISHED_AT, "day")}`),
     ).toBeInTheDocument();
+  });
+});
+
+describe("ManageMobileLinksModal for a coach who may not publish to training levels", () => {
+  beforeEach(() => {
+    viewerRole.canPublishToLevels = false;
+  });
+
+  it("offers no training level picker but still lists and unlinks the linked levels", () => {
+    linksState.data = [makeMobileLink({ legacyLevelId: 2 })];
+
+    renderModal();
+
+    expect(screen.queryByLabelText("Training level")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Unlink training level" })).toBeInTheDocument();
+  });
+
+  it("offers the picker to a head coach", () => {
+    viewerRole.canPublishToLevels = true;
+
+    renderModal();
+
+    expect(screen.getByLabelText("Training level")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
   });
 });

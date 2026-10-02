@@ -36,7 +36,8 @@ const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
 const trainingLevelsSpy = vi.fn<(...args: unknown[]) => void>();
 const manageModalSpy =
   vi.fn<(props: { planId: string; weekStart: string; open: boolean }) => void>();
-const publishModalSpy = vi.fn<(props: { open: boolean }) => void>();
+const publishModalSpy = vi.fn<(props: { open: boolean; links: MobileLink[] }) => void>();
+const viewerRole = { canPublishToLevels: true };
 
 type RosterAthlete = Pick<CoachAthleteListItem, "userId" | "name" | "email">;
 
@@ -53,6 +54,7 @@ const coachAthletesState: QueryState<{ athletes: RosterAthlete[] }> = {
 };
 
 vi.mock("@app/lib/hooks", () => ({
+  useCanPublishToLevels: () => viewerRole.canPublishToLevels,
   useCoachAthletes: () => coachAthletesState,
   useTrainingLevels: (...args: unknown[]) => {
     trainingLevelsSpy(...args);
@@ -75,7 +77,7 @@ vi.mock("./manage-mobile-links-modal", () => ({
 }));
 
 vi.mock("./publish-week-modal", () => ({
-  PublishWeekModal: (props: { open: boolean }) => {
+  PublishWeekModal: (props: { open: boolean; links: MobileLink[] }) => {
     publishModalSpy(props);
 
     return <div data-testid="publish-week-modal" data-open={String(props.open)} />;
@@ -90,6 +92,7 @@ const MONDAY_PARAM = "2026-01-05";
 const PUBLISH_BUTTON_NAME = "Publish this week";
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
 const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
+const LEVEL_PUBLISH_FORBIDDEN_TOOLTIP = "Only the head coach can publish to a training level";
 const LINKS_ERROR_LABEL = "Couldn't load the publishing status";
 const LINKS_ERROR_TOOLTIP = "Can't publish until the publishing status loads";
 const CHECKING_LABEL = "Checking this week…";
@@ -124,6 +127,7 @@ const hoverPublishTooltip = async (): Promise<HTMLElement> => {
 };
 
 beforeEach(() => {
+  viewerRole.canPublishToLevels = true;
   levelsState.data = trainingLevelsFixture;
   levelsState.isError = false;
   levelsState.isPending = false;
@@ -507,5 +511,44 @@ describe("MobilePublishingStrip on a week with no content (F7)", () => {
     render(stripFor(false));
 
     expect(screen.getByText("Never published")).toBeInTheDocument();
+  });
+});
+
+describe("MobilePublishingStrip for a coach who may not publish to training levels", () => {
+  const levelLink = makeMobileLink({ legacyLevelId: 2 });
+  const athleteLink = makeIndividualLink({ athleteId: ALICE.userId });
+
+  const lastPublishModalLinks = (): MobileLink[] =>
+    publishModalSpy.mock.calls.at(-1)?.[0].links ?? [];
+
+  beforeEach(() => {
+    viewerRole.canPublishToLevels = false;
+  });
+
+  it("disables Publish and says why when only training levels are linked", async () => {
+    linksState.data = [levelLink];
+
+    renderStrip();
+
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeDisabled();
+    expect(await hoverPublishTooltip()).toHaveTextContent(LEVEL_PUBLISH_FORBIDDEN_TOOLTIP);
+  });
+
+  it("publishes only through the athlete links", () => {
+    linksState.data = [levelLink, athleteLink];
+
+    renderStrip();
+
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
+    expect(lastPublishModalLinks()).toEqual([athleteLink]);
+  });
+
+  it("hands every link to the publish modal for a head coach", () => {
+    viewerRole.canPublishToLevels = true;
+    linksState.data = [levelLink, athleteLink];
+
+    renderStrip();
+
+    expect(lastPublishModalLinks()).toEqual([levelLink, athleteLink]);
   });
 });

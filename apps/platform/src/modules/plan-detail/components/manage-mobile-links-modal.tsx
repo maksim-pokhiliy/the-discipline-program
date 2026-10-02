@@ -20,6 +20,7 @@ import { type GeneralMobileLink, partitionMobileLinks } from "@repo/contracts/co
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
 import {
+  useCanPublishToLevels,
   useCreateMobileLink,
   useDeleteMobileLink,
   useMobileLinks,
@@ -51,6 +52,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   planId,
   weekStart,
 }) => {
+  const canPublishToLevels = useCanPublishToLevels();
   const levelsQuery = useTrainingLevels();
   const linksQuery = useMobileLinks(planId, weekStart);
 
@@ -108,6 +110,51 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
     deleteLink.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) });
   };
 
+  const renderAddLevel = (): React.ReactNode => {
+    if (!canPublishToLevels) {
+      return null;
+    }
+
+    return levelsQuery.isError ? (
+      <Alert severity="error">{LEVELS_ERROR_MESSAGE}</Alert>
+    ) : (
+      <>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <FormControl fullWidth size="small" disabled={unlinkedLevels.length === 0}>
+            <InputLabel id="add-training-level-label">Training level</InputLabel>
+
+            <Select
+              labelId="add-training-level-label"
+              label="Training level"
+              value={selectedLevelId}
+              onChange={(event) => setSelectedLevelId(event.target.value)}
+            >
+              {unlinkedLevels.map((level) => (
+                <MenuItem key={level.id} value={String(level.id)}>
+                  {level.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="contained"
+            onClick={handleAdd}
+            disabled={selectedLevelId === NO_LEVEL_SELECTED || createLink.isPending}
+          >
+            Add
+          </Button>
+        </Stack>
+
+        {unlinkedLevels.length === 0 && links.length > 0 && (
+          <Typography variant="caption" color="text.secondary">
+            {ALL_LINKED_MESSAGE}
+          </Typography>
+        )}
+      </>
+    );
+  };
+
   const renderBody = () => {
     if (isLoading) {
       return (
@@ -147,44 +194,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
           </Stack>
         )}
 
-        {levelsQuery.isError ? (
-          <Alert severity="error">{LEVELS_ERROR_MESSAGE}</Alert>
-        ) : (
-          <>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <FormControl fullWidth size="small" disabled={unlinkedLevels.length === 0}>
-                <InputLabel id="add-training-level-label">Training level</InputLabel>
-
-                <Select
-                  labelId="add-training-level-label"
-                  label="Training level"
-                  value={selectedLevelId}
-                  onChange={(event) => setSelectedLevelId(event.target.value)}
-                >
-                  {unlinkedLevels.map((level) => (
-                    <MenuItem key={level.id} value={String(level.id)}>
-                      {level.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <Button
-                variant="contained"
-                onClick={handleAdd}
-                disabled={selectedLevelId === NO_LEVEL_SELECTED || createLink.isPending}
-              >
-                Add
-              </Button>
-            </Stack>
-
-            {unlinkedLevels.length === 0 && links.length > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                {ALL_LINKED_MESSAGE}
-              </Typography>
-            )}
-          </>
-        )}
+        {renderAddLevel()}
 
         <Divider />
 

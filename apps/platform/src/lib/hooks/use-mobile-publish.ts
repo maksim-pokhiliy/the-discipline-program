@@ -3,12 +3,21 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { useCurrentUserRole } from "@repo/auth/client";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { notifyError, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 const TRAINING_LEVELS_STALE_TIME_MS = 5 * 60_000;
+const LEVEL_PUBLISHER_ROLES: ReadonlySet<UserRole> = new Set([UserRole.ADMIN, UserRole.HEAD_COACH]);
+
+export const useCanPublishToLevels = (): boolean => {
+  const role = useCurrentUserRole();
+
+  return role !== null && LEVEL_PUBLISHER_ROLES.has(role);
+};
 
 export const useTrainingLevels = () =>
   useQuery({
