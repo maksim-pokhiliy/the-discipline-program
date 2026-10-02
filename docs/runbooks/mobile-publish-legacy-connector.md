@@ -1,5 +1,11 @@
 # Mobile publish: legacy connector operations
 
+> **Superseded for publishing as of step 4.1a of apex-sunset (2026-10-02).** Publish no longer
+> calls the legacy backend: it projects the day and writes the snapshot the app reads straight into
+> `app_mobile_published_days`, with no token, connection or reconnect involved. Training levels and
+> the athlete picker come from our own data. Only the connection endpoints below still touch the
+> legacy client, until step 4.1b removes them.
+
 Operational notes for the Connector push-projection that publishes platform plans into the legacy mobile (Spring) backend. The legacy upstream is **frozen and external** (Vladyslav's Spring Boot 3 backend feeding the App-Store iOS app); we are a pure ADMIN client of it and cannot change it. That makes a handful of failure modes the operator's problem rather than something we can fix in code. See the port doc at [`packages/api-server/src/infrastructure/legacy-mobile/README.md`](../../packages/api-server/src/infrastructure/legacy-mobile/README.md) and `initiatives/mobile-publish/` for the why.
 
 > **Status (2026-09-17): the app no longer reads the legacy backend.** The apex cutover moved every
