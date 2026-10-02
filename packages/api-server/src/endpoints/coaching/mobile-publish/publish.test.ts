@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ForbiddenError } from "@repo/errors";
+import type * as SharedModule from "@repo/shared";
 
 import { type MobilePublishDayPayload } from "./day-include";
 import { createPublishApi } from "./publish";
@@ -48,7 +49,8 @@ vi.mock("./projection/project-day", () => ({
   projectDay: mocks.projectDayMock,
 }));
 
-vi.mock("@repo/shared", () => ({
+vi.mock("@repo/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof SharedModule>()),
   logger: { info: vi.fn(), warn: mocks.warnMock, error: vi.fn() },
 }));
 
