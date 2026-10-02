@@ -14,7 +14,6 @@ export const athletesApi: AthletesApi = {
 
     const athletes = await prisma.user.findMany({
       where: {
-        deletedAt: null,
         planEnrollmentsAsAthlete: { some: { planId } },
         legacyIdentity: { is: { legacyPlanId: LEGACY_PLAN_INDIVIDUAL } },
       },
