@@ -5,6 +5,7 @@ import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile
 import type { IndividualMobileLink, MobileLink } from "@repo/contracts/coaching/mobile-link";
 import { formatDate } from "@repo/shared";
 
+import type { LevelPublishAccess } from "@app/lib/hooks";
 import {
   makeIndividualLink,
   makeMobileLink,
@@ -37,10 +38,10 @@ const deleteLinkMutate = vi.fn();
 const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
 const trainingLevelsSpy = vi.fn<(...args: unknown[]) => void>();
 const individualSectionSpy = vi.fn<(props: Record<string, unknown>) => void>();
-const viewerRole = { canPublishToLevels: true };
+const viewerRole: { access: LevelPublishAccess } = { access: "allowed" };
 
 vi.mock("@app/lib/hooks", () => ({
-  useCanPublishToLevels: () => viewerRole.canPublishToLevels,
+  useLevelPublishAccess: () => viewerRole.access,
   useTrainingLevels: (...args: unknown[]) => {
     trainingLevelsSpy(...args);
 
@@ -76,7 +77,7 @@ const renderModal = () =>
   render(<ManageMobileLinksModal open onClose={vi.fn()} planId={PLAN_ID} weekStart={WEEK_START} />);
 
 beforeEach(() => {
-  viewerRole.canPublishToLevels = true;
+  viewerRole.access = "allowed";
   levelsState.data = trainingLevelsFixture;
   levelsState.error = null;
   levelsState.isError = false;
@@ -290,7 +291,7 @@ describe("ManageMobileLinksModal row publish status (MP-22)", () => {
 
 describe("ManageMobileLinksModal for a coach who may not publish to training levels", () => {
   beforeEach(() => {
-    viewerRole.canPublishToLevels = false;
+    viewerRole.access = "denied";
   });
 
   it("offers no training level picker but still lists and unlinks the linked levels", () => {
@@ -304,11 +305,24 @@ describe("ManageMobileLinksModal for a coach who may not publish to training lev
   });
 
   it("offers the picker to a head coach", () => {
-    viewerRole.canPublishToLevels = true;
+    viewerRole.access = "allowed";
 
     renderModal();
 
     expect(screen.getByLabelText("Training level")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
+  });
+});
+
+describe("ManageMobileLinksModal while the viewer's session is still loading", () => {
+  it("shows the loading state instead of the coach view", () => {
+    viewerRole.access = "pending";
+    linksState.data = [makeMobileLink({ legacyLevelId: 2 })];
+
+    renderModal();
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Unlink training level" })).toBeNull();
+    expect(screen.queryByLabelText("Training level")).toBeNull();
   });
 });

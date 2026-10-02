@@ -28,10 +28,16 @@ const listLinksMock = vi.fn<(planId: string, weekStart?: string) => Promise<Mobi
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
 const publishMock = vi.fn<(data: PublishMobileData) => Promise<PublishMobileResult>>();
 const notifyErrorMock = vi.fn<(error: Error, fallback: string) => void>();
-const currentRole: { value: UserRole | null } = { value: null };
+const sessionState: { role: UserRole | null; status: "loading" | "authenticated" } = {
+  role: null,
+  status: "authenticated",
+};
 
 vi.mock("@repo/auth/client", () => ({
-  useCurrentUserRole: () => currentRole.value,
+  useSession: () => ({
+    data: sessionState.status === "loading" ? null : { user: { role: sessionState.role } },
+    status: sessionState.status,
+  }),
 }));
 
 vi.mock("../api", () => ({
@@ -65,7 +71,7 @@ const {
   useDeleteMobileLink,
   usePublishMobile,
   useMobileLinks,
-  useCanPublishToLevels,
+  useLevelPublishAccess,
   useLinkableAthletes,
   useTrainingLevels,
 } = await import("./use-mobile-publish");
@@ -451,18 +457,28 @@ describe("usePublishMobile", () => {
   });
 });
 
-describe("useCanPublishToLevels", () => {
+describe("useLevelPublishAccess", () => {
   it.each([
-    [UserRole.HEAD_COACH, true],
-    [UserRole.ADMIN, true],
-    [UserRole.COACH, false],
-    [UserRole.ATHLETE, false],
-    [null, false],
-  ])("answers %s with %s", (role, expected) => {
-    currentRole.value = role;
+    [UserRole.HEAD_COACH, "allowed"],
+    [UserRole.ADMIN, "allowed"],
+    [UserRole.COACH, "denied"],
+    [UserRole.ATHLETE, "denied"],
+    [null, "denied"],
+  ])("answers %s with %s once the session has loaded", (role, expected) => {
+    sessionState.status = "authenticated";
+    sessionState.role = role;
 
-    const { result } = renderHook(() => useCanPublishToLevels());
+    const { result } = renderHook(() => useLevelPublishAccess());
 
     expect(result.current).toBe(expected);
+  });
+
+  it("answers pending while the session is loading, whatever the role turns out to be", () => {
+    sessionState.status = "loading";
+    sessionState.role = UserRole.HEAD_COACH;
+
+    const { result } = renderHook(() => useLevelPublishAccess());
+
+    expect(result.current).toBe("pending");
   });
 });

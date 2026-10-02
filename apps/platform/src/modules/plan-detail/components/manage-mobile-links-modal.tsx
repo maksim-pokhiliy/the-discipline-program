@@ -20,7 +20,7 @@ import { type GeneralMobileLink, partitionMobileLinks } from "@repo/contracts/co
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
 import {
-  useCanPublishToLevels,
+  useLevelPublishAccess,
   useCreateMobileLink,
   useDeleteMobileLink,
   useMobileLinks,
@@ -52,7 +52,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   planId,
   weekStart,
 }) => {
-  const canPublishToLevels = useCanPublishToLevels();
+  const levelPublishAccess = useLevelPublishAccess();
   const levelsQuery = useTrainingLevels();
   const linksQuery = useMobileLinks(planId, weekStart);
 
@@ -83,7 +83,8 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
     [levels, linkedLevelIds],
   );
 
-  const isLoading = levelsQuery.isPending || linksQuery.isPending;
+  const isLoading =
+    levelPublishAccess === "pending" || levelsQuery.isPending || linksQuery.isPending;
 
   const handleAdd = () => {
     if (selectedLevelId === NO_LEVEL_SELECTED) {
@@ -111,7 +112,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   };
 
   const renderAddLevel = (): React.ReactNode => {
-    if (!canPublishToLevels) {
+    if (levelPublishAccess !== "allowed") {
       return null;
     }
 

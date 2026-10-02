@@ -8,12 +8,13 @@ import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 import {
   type GeneralMobileLink,
   type IndividualMobileLink,
+  type MobileLink,
   partitionMobileLinks,
 } from "@repo/contracts/coaching/mobile-link";
 import { formatDateParam } from "@repo/shared";
 
 import {
-  useCanPublishToLevels,
+  useLevelPublishAccess,
   useCoachAthletes,
   useMobileLinks,
   useTrainingLevels,
@@ -45,6 +46,7 @@ const LEVELS_CLAUSE_LABEL = "Levels: ";
 const ATHLETES_CLAUSE_LABEL = "Athletes: ";
 const CLAUSE_SEPARATOR = " · ";
 const NO_PUBLISH_STATUS: StripPublishStatus = { kind: "none" };
+const NO_LINKS: MobileLink[] = [];
 const CHECKING_PUBLISH_STATUS: StripPublishStatus = { kind: "checking" };
 
 type ChannelSummary = { clause: string; allResolved: boolean };
@@ -118,7 +120,8 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
   monday,
   hasWeekContent,
 }) => {
-  const canPublishToLevels = useCanPublishToLevels();
+  const levelPublishAccess = useLevelPublishAccess();
+  const isAccessPending = levelPublishAccess === "pending";
   const weekStart = formatDateParam(monday);
   const linksQuery = useMobileLinks(planId, weekStart);
   const levelsQuery = useTrainingLevels();
@@ -165,14 +168,17 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
   const statusLabel = hasLinksError
     ? LINKS_ERROR_LABEL
     : describeLinks(generalLinks, individualLinks, levelNameById, athleteNameById);
-  const publishableLinks = useMemo(
-    () => (canPublishToLevels ? (linksQuery.data ?? []) : individualLinks),
-    [canPublishToLevels, linksQuery.data, individualLinks],
-  );
+  const publishableLinks = useMemo(() => {
+    if (isAccessPending) {
+      return NO_LINKS;
+    }
+
+    return levelPublishAccess === "allowed" ? (linksQuery.data ?? NO_LINKS) : individualLinks;
+  }, [isAccessPending, levelPublishAccess, linksQuery.data, individualLinks]);
   const canPublish = !hasLinksError && publishableLinks.length > 0;
-  const hasUnpublishableLevels = !canPublishToLevels && generalLinks.length > 0;
+  const hasUnpublishableLevels = levelPublishAccess === "denied" && generalLinks.length > 0;
   const publishTooltip = resolvePublishTooltip(hasLinksError, canPublish, hasUnpublishableLevels);
-  const isStripHidden = linksQuery.isPending;
+  const isStripHidden = linksQuery.isPending || isAccessPending;
 
   return (
     <>

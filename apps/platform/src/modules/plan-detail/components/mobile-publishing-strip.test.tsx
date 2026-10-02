@@ -6,6 +6,7 @@ import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile
 import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
 import { formatDate } from "@repo/shared";
 
+import type { LevelPublishAccess } from "@app/lib/hooks";
 import {
   makeIndividualLink,
   makeMobileLink,
@@ -37,7 +38,7 @@ const trainingLevelsSpy = vi.fn<(...args: unknown[]) => void>();
 const manageModalSpy =
   vi.fn<(props: { planId: string; weekStart: string; open: boolean }) => void>();
 const publishModalSpy = vi.fn<(props: { open: boolean; links: MobileLink[] }) => void>();
-const viewerRole = { canPublishToLevels: true };
+const viewerRole: { access: LevelPublishAccess } = { access: "allowed" };
 
 type RosterAthlete = Pick<CoachAthleteListItem, "userId" | "name" | "email">;
 
@@ -54,7 +55,7 @@ const coachAthletesState: QueryState<{ athletes: RosterAthlete[] }> = {
 };
 
 vi.mock("@app/lib/hooks", () => ({
-  useCanPublishToLevels: () => viewerRole.canPublishToLevels,
+  useLevelPublishAccess: () => viewerRole.access,
   useCoachAthletes: () => coachAthletesState,
   useTrainingLevels: (...args: unknown[]) => {
     trainingLevelsSpy(...args);
@@ -127,7 +128,7 @@ const hoverPublishTooltip = async (): Promise<HTMLElement> => {
 };
 
 beforeEach(() => {
-  viewerRole.canPublishToLevels = true;
+  viewerRole.access = "allowed";
   levelsState.data = trainingLevelsFixture;
   levelsState.isError = false;
   levelsState.isPending = false;
@@ -522,7 +523,7 @@ describe("MobilePublishingStrip for a coach who may not publish to training leve
     publishModalSpy.mock.calls.at(-1)?.[0].links ?? [];
 
   beforeEach(() => {
-    viewerRole.canPublishToLevels = false;
+    viewerRole.access = "denied";
   });
 
   it("disables Publish and says why when only training levels are linked", async () => {
@@ -544,11 +545,29 @@ describe("MobilePublishingStrip for a coach who may not publish to training leve
   });
 
   it("hands every link to the publish modal for a head coach", () => {
-    viewerRole.canPublishToLevels = true;
+    viewerRole.access = "allowed";
     linksState.data = [levelLink, athleteLink];
 
     renderStrip();
 
     expect(lastPublishModalLinks()).toEqual([levelLink, athleteLink]);
+  });
+});
+
+describe("MobilePublishingStrip while the viewer's session is still loading", () => {
+  beforeEach(() => {
+    viewerRole.access = "pending";
+  });
+
+  it("offers no Publish button and hands the publish modal no links", () => {
+    linksState.data = [
+      makeMobileLink({ legacyLevelId: 2 }),
+      makeIndividualLink({ athleteId: ALICE.userId }),
+    ];
+
+    renderStrip();
+
+    expect(screen.queryByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeNull();
+    expect(publishModalSpy.mock.calls.at(-1)?.[0].links).toEqual([]);
   });
 });
