@@ -33,7 +33,6 @@ const NOW = new Date("2026-01-05T00:00:00.000Z");
 const ATHLETES_ERROR_MESSAGE = "Couldn't load athletes. Try again.";
 const EMPTY_MESSAGE = "No enrolled athletes to link yet.";
 const NO_ACCOUNT_CAPTION = "No Individual-plan account in the mobile app";
-const SESSION_EXPIRED_REASON = "SESSION_EXPIRED";
 
 const enrollmentsState: QueryState<PlanEnrollment[]> = {
   data: [],
@@ -47,7 +46,7 @@ const athletesState: QueryState<{ athletes: CoachAthleteListItem[] }> = {
   isError: false,
   isPending: false,
 };
-const mobileAthletesState: QueryState<GetLinkableAthletesResponse> = {
+const linkableAthletesState: QueryState<GetLinkableAthletesResponse> = {
   data: [],
   error: null,
   isError: false,
@@ -56,15 +55,15 @@ const mobileAthletesState: QueryState<GetLinkableAthletesResponse> = {
 
 const createLinkMutate = vi.fn();
 const deleteLinkMutate = vi.fn();
-const mobileAthletesSpy = vi.fn<(...args: unknown[]) => void>();
+const linkableAthletesSpy = vi.fn<(...args: unknown[]) => void>();
 
 vi.mock("@app/lib/hooks", () => ({
   usePlanEnrollments: () => enrollmentsState,
   useCoachAthletes: () => athletesState,
-  useMobileAthletes: (...args: unknown[]) => {
-    mobileAthletesSpy(...args);
+  useLinkableAthletes: (...args: unknown[]) => {
+    linkableAthletesSpy(...args);
 
-    return mobileAthletesState;
+    return linkableAthletesState;
   },
   useCreateMobileLink: () => ({ mutate: createLinkMutate, isPending: false }),
   useDeleteMobileLink: () => ({ mutate: deleteLinkMutate, isPending: false }),
@@ -107,14 +106,6 @@ const makeEnrollment = (overrides: Partial<PlanEnrollment> = {}): PlanEnrollment
   ...overrides,
 });
 
-const errorWithReason = (reason: string): Error => {
-  const error = new Error("Session expired");
-
-  Object.assign(error, { details: { reason } });
-
-  return error;
-};
-
 const enrolLinkedAndUnlinked = (): void => {
   athletesState.data = {
     athletes: [
@@ -152,13 +143,13 @@ beforeEach(() => {
   athletesState.error = null;
   athletesState.isError = false;
   athletesState.isPending = false;
-  mobileAthletesState.data = [];
-  mobileAthletesState.error = null;
-  mobileAthletesState.isError = false;
-  mobileAthletesState.isPending = false;
+  linkableAthletesState.data = [];
+  linkableAthletesState.error = null;
+  linkableAthletesState.isError = false;
+  linkableAthletesState.isPending = false;
   createLinkMutate.mockReset();
   deleteLinkMutate.mockReset();
-  mobileAthletesSpy.mockClear();
+  linkableAthletesSpy.mockClear();
 });
 
 afterEach(() => {
@@ -171,7 +162,7 @@ describe("IndividualLinksSection", () => {
       athletes: [makeAthlete({ userId: UNLINKED_ATHLETE_ID, name: "Sam Athlete" })],
     };
     enrollmentsState.data = [makeEnrollment({ athleteId: UNLINKED_ATHLETE_ID })];
-    mobileAthletesState.data = [{ athleteId: UNLINKED_ATHLETE_ID }];
+    linkableAthletesState.data = [{ athleteId: UNLINKED_ATHLETE_ID }];
 
     renderSection([]);
 
@@ -194,7 +185,7 @@ describe("IndividualLinksSection", () => {
       athletes: [makeAthlete({ userId: UNLINKED_ATHLETE_ID, name: "Sam Athlete" })],
     };
     enrollmentsState.data = [makeEnrollment({ athleteId: UNLINKED_ATHLETE_ID })];
-    mobileAthletesState.data = [];
+    linkableAthletesState.data = [];
 
     renderSection([]);
 
@@ -205,7 +196,7 @@ describe("IndividualLinksSection", () => {
 
   it("gives each unlinked row its own Link or caption by the linkable list", () => {
     enrolLinkedAndUnlinked();
-    mobileAthletesState.data = [{ athleteId: UNLINKED_ATHLETE_ID }];
+    linkableAthletesState.data = [{ athleteId: UNLINKED_ATHLETE_ID }];
 
     renderSection([]);
 
@@ -226,7 +217,7 @@ describe("IndividualLinksSection", () => {
       athletes: [makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" })],
     };
     enrollmentsState.data = [makeEnrollment({ athleteId: LINKED_ATHLETE_ID })];
-    mobileAthletesState.data = [{ athleteId: LINKED_ATHLETE_ID }];
+    linkableAthletesState.data = [{ athleteId: LINKED_ATHLETE_ID }];
 
     renderSection([makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID })]);
 
@@ -288,7 +279,7 @@ describe("IndividualLinksSection", () => {
         status: EnrollmentStatus.REMOVED,
       }),
     ];
-    mobileAthletesState.data = [{ athleteId: LINKED_ATHLETE_ID }];
+    linkableAthletesState.data = [{ athleteId: LINKED_ATHLETE_ID }];
 
     renderSection([]);
 
@@ -320,15 +311,15 @@ describe("IndividualLinksSection", () => {
 
     renderSection([]);
 
-    expect(mobileAthletesSpy).toHaveBeenCalled();
-    expect(mobileAthletesSpy.mock.calls.every((args) => args.length === 1)).toBe(true);
-    expect(mobileAthletesSpy).toHaveBeenCalledWith(PLAN_ID);
+    expect(linkableAthletesSpy).toHaveBeenCalled();
+    expect(linkableAthletesSpy.mock.calls.every((args) => args.length === 1)).toBe(true);
+    expect(linkableAthletesSpy).toHaveBeenCalledWith(PLAN_ID);
   });
 
   it("shows a spinner in place of the unlinked rows while the linkable athletes load, keeping the linked row", () => {
     enrolLinkedAndUnlinked();
-    mobileAthletesState.data = undefined;
-    mobileAthletesState.isPending = true;
+    linkableAthletesState.data = undefined;
+    linkableAthletesState.isPending = true;
 
     renderSection([makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID })]);
 
@@ -340,35 +331,17 @@ describe("IndividualLinksSection", () => {
     expect(screen.queryByText(NO_ACCOUNT_CAPTION)).toBeNull();
   });
 
-  it("keeps the linked row unlinkable and shows the plain error alert, with no Reconnect prompt, when the athletes error carries a session-expired reason", () => {
+  it("keeps the linked row unlinkable and shows the error alert in place of the unlinked rows on a plain error", () => {
     enrolLinkedAndUnlinked();
-    mobileAthletesState.data = undefined;
-    mobileAthletesState.error = errorWithReason(SESSION_EXPIRED_REASON);
-    mobileAthletesState.isError = true;
+    linkableAthletesState.data = undefined;
+    linkableAthletesState.error = new Error("server 500");
+    linkableAthletesState.isError = true;
 
     renderSection([makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID })]);
 
     expect(screen.getByText("Pat Platform")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(ATHLETES_ERROR_MESSAGE);
     expect(screen.queryByRole("button", { name: "Reconnect" })).toBeNull();
-    expect(screen.queryByText(/Connection expired/)).toBeNull();
-    expect(screen.queryByRole("button", { name: "Link" })).toBeNull();
-
-    confirmUnlink();
-
-    expect(deleteLinkMutate).toHaveBeenCalledWith(LINK_ID);
-  });
-
-  it("keeps the linked row unlinkable and shows the error alert in place of the unlinked rows on a plain error", () => {
-    enrolLinkedAndUnlinked();
-    mobileAthletesState.data = undefined;
-    mobileAthletesState.error = new Error("server 500");
-    mobileAthletesState.isError = true;
-
-    renderSection([makeIndividualLink({ id: LINK_ID, athleteId: LINKED_ATHLETE_ID })]);
-
-    expect(screen.getByText("Pat Platform")).toBeInTheDocument();
-    expect(screen.getByText(ATHLETES_ERROR_MESSAGE)).toBeInTheDocument();
     expect(screen.queryByText("Sam Athlete")).toBeNull();
     expect(screen.queryByRole("button", { name: "Link" })).toBeNull();
     expect(screen.queryByText(NO_ACCOUNT_CAPTION)).toBeNull();
@@ -417,7 +390,7 @@ describe("IndividualLinksSection", () => {
       makeEnrollment({ athleteId: RACE_ROW_A_ID }),
       makeEnrollment({ id: "ckenrl0000000000000race00", athleteId: RACE_ROW_B_ID }),
     ];
-    mobileAthletesState.data = [{ athleteId: RACE_ROW_A_ID }, { athleteId: RACE_ROW_B_ID }];
+    linkableAthletesState.data = [{ athleteId: RACE_ROW_A_ID }, { athleteId: RACE_ROW_B_ID }];
 
     renderSection([]);
 

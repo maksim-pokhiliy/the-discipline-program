@@ -3,13 +3,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { notifyError } from "@repo/query";
+import { notifyError, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 const TRAINING_LEVELS_STALE_TIME_MS = 5 * 60_000;
-const MOBILE_ATHLETES_STALE_TIME_MS = 5 * 60_000;
 
 export const useTrainingLevels = () =>
   useQuery({
@@ -18,12 +17,12 @@ export const useTrainingLevels = () =>
     staleTime: TRAINING_LEVELS_STALE_TIME_MS,
   });
 
-export const useMobileAthletes = (planId: string) =>
+export const useLinkableAthletes = (planId: string) =>
   useQuery({
-    queryKey: platformKeys.mobile.athletes(planId),
-    queryFn: () => api.mobile.listAthletes(planId),
+    queryKey: platformKeys.mobile.linkableAthletes(planId),
+    queryFn: () => api.mobile.listLinkableAthletes(planId),
     enabled: Boolean(planId),
-    staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
+    staleTime: STALE_TIMES.NONE,
   });
 
 export const useMobileLinks = (planId: string, weekStart?: string) =>

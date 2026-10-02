@@ -14,7 +14,7 @@ export const createMobileAPI = (client: ApiClient) => ({
   listTrainingLevels: (): Promise<GetTrainingLevelsResponse> =>
     client.request("/api/platform/mobile/training-levels"),
 
-  listAthletes: (planId: string): Promise<GetLinkableAthletesResponse> =>
+  listLinkableAthletes: (planId: string): Promise<GetLinkableAthletesResponse> =>
     client.request("/api/platform/mobile/athletes", "GET", undefined, { planId }),
 
   createLink: (data: CreateMobileLinkRequest): Promise<MobileLink> =>

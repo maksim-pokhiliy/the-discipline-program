@@ -20,7 +20,7 @@ import { platformKeys } from "../api/keys";
 import { makeMobileLink, makePublishDayResult, trainingLevelsFixture } from "../mobile.fixtures";
 
 const listTrainingLevelsMock = vi.fn<() => Promise<LegacyTrainingLevel[]>>();
-const listAthletesMock = vi.fn<(planId: string) => Promise<GetLinkableAthletesResponse>>();
+const listLinkableAthletesMock = vi.fn<(planId: string) => Promise<GetLinkableAthletesResponse>>();
 const createLinkMock = vi.fn<(data: CreateMobileLinkRequest) => Promise<MobileLink>>();
 const listLinksMock = vi.fn<(planId: string, weekStart?: string) => Promise<MobileLink[]>>();
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
@@ -31,7 +31,7 @@ vi.mock("../api", () => ({
   api: {
     mobile: {
       listTrainingLevels: () => listTrainingLevelsMock(),
-      listAthletes: (planId: string) => listAthletesMock(planId),
+      listLinkableAthletes: (planId: string) => listLinkableAthletesMock(planId),
       createLink: (data: CreateMobileLinkRequest) => createLinkMock(data),
       listLinks: (planId: string, weekStart?: string) => listLinksMock(planId, weekStart),
       deleteLink: (linkId: string) => deleteLinkMock(linkId),
@@ -58,7 +58,7 @@ const {
   useDeleteMobileLink,
   usePublishMobile,
   useMobileLinks,
-  useMobileAthletes,
+  useLinkableAthletes,
   useTrainingLevels,
 } = await import("./use-mobile-publish");
 
@@ -78,7 +78,7 @@ const renderRunner = <THook>(hook: () => THook) => {
 
 beforeEach(() => {
   listTrainingLevelsMock.mockReset();
-  listAthletesMock.mockReset();
+  listLinkableAthletesMock.mockReset();
   createLinkMock.mockReset();
   listLinksMock.mockReset();
   deleteLinkMock.mockReset();
@@ -106,28 +106,45 @@ describe("useTrainingLevels", () => {
   });
 });
 
-describe("useMobileAthletes", () => {
+describe("useLinkableAthletes", () => {
   const linkableAthletes: GetLinkableAthletesResponse = [{ athleteId: ATHLETE_ID }];
 
   it("fetches the plan's linkable athletes under the plan-scoped athletes key", async () => {
-    listAthletesMock.mockResolvedValueOnce(linkableAthletes);
+    listLinkableAthletesMock.mockResolvedValueOnce(linkableAthletes);
 
-    const { view, queryClient } = renderRunner(() => useMobileAthletes(PLAN_ID));
+    const { view, queryClient } = renderRunner(() => useLinkableAthletes(PLAN_ID));
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
-    expect(listAthletesMock).toHaveBeenCalledTimes(1);
-    expect(listAthletesMock).toHaveBeenCalledWith(PLAN_ID);
+    expect(listLinkableAthletesMock).toHaveBeenCalledTimes(1);
+    expect(listLinkableAthletesMock).toHaveBeenCalledWith(PLAN_ID);
     expect(view.result.current.data).toEqual(linkableAthletes);
-    expect(queryClient.getQueryData(platformKeys.mobile.athletes(PLAN_ID))).toEqual(
+    expect(queryClient.getQueryData(platformKeys.mobile.linkableAthletes(PLAN_ID))).toEqual(
       linkableAthletes,
     );
   });
 
-  it("does not fetch when the planId is empty", () => {
-    const { view } = renderRunner(() => useMobileAthletes(""));
+  it("refetches on the next mount so a newly enrolled athlete is not shown as unlinkable", async () => {
+    listLinkableAthletesMock.mockResolvedValue(linkableAthletes);
 
-    expect(listAthletesMock).not.toHaveBeenCalled();
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    const first = renderHook(() => useLinkableAthletes(PLAN_ID), { wrapper });
+
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+
+    const second = renderHook(() => useLinkableAthletes(PLAN_ID), { wrapper });
+
+    await waitFor(() => expect(listLinkableAthletesMock).toHaveBeenCalledTimes(2));
+    second.unmount();
+  });
+
+  it("does not fetch when the planId is empty", () => {
+    const { view } = renderRunner(() => useLinkableAthletes(""));
+
+    expect(listLinkableAthletesMock).not.toHaveBeenCalled();
     expect(view.result.current.fetchStatus).toBe("idle");
   });
 });

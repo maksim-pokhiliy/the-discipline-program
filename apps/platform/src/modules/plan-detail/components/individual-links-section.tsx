@@ -13,7 +13,7 @@ import {
   useCoachAthletes,
   useCreateMobileLink,
   useDeleteMobileLink,
-  useMobileAthletes,
+  useLinkableAthletes,
   usePlanEnrollments,
 } from "@app/lib/hooks";
 
@@ -70,7 +70,7 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
 }) => {
   const enrollmentsQuery = usePlanEnrollments(planId);
   const athletesQuery = useCoachAthletes();
-  const mobileAthletesQuery = useMobileAthletes(planId);
+  const linkableAthletesQuery = useLinkableAthletes(planId);
   const createLink = useCreateMobileLink(planId);
   const deleteLink = useDeleteMobileLink(planId);
 
@@ -100,8 +100,8 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
   );
 
   const linkableAthleteIds = useMemo(
-    () => new Set((mobileAthletesQuery.data ?? []).map((athlete) => athlete.athleteId)),
-    [mobileAthletesQuery.data],
+    () => new Set((linkableAthletesQuery.data ?? []).map((athlete) => athlete.athleteId)),
+    [linkableAthletesQuery.data],
   );
 
   const rows = useMemo(
@@ -138,11 +138,11 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
       return null;
     }
 
-    if (mobileAthletesQuery.isError) {
+    if (linkableAthletesQuery.isError) {
       return <Alert severity="error">{ATHLETES_ERROR_MESSAGE}</Alert>;
     }
 
-    if (mobileAthletesQuery.isPending) {
+    if (linkableAthletesQuery.isPending) {
       return (
         <Stack alignItems="center" sx={{ py: 2 }}>
           <CircularProgress size={20} />

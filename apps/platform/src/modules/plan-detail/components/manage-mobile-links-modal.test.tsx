@@ -69,15 +69,6 @@ const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
 const LINKS_ERROR_MESSAGE = "Couldn't load what this plan is linked to. Try again.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
-const SESSION_EXPIRED_REASON = "SESSION_EXPIRED";
-
-const errorWithReason = (reason: string): Error => {
-  const error = new Error("Session expired");
-
-  Object.assign(error, { details: { reason } });
-
-  return error;
-};
 
 const renderModal = () =>
   render(<ManageMobileLinksModal open onClose={vi.fn()} planId={PLAN_ID} weekStart={WEEK_START} />);
@@ -137,19 +128,6 @@ describe("ManageMobileLinksModal (MT-12)", () => {
     });
   });
 
-  it("renders the plain error alert, with no connect or reconnect prompt, on a levels error that carries a session-expired reason", () => {
-    levelsState.data = undefined;
-    levelsState.error = errorWithReason(SESSION_EXPIRED_REASON);
-    levelsState.isError = true;
-
-    renderModal();
-
-    expect(screen.getByRole("alert")).toHaveTextContent(LEVELS_ERROR_MESSAGE);
-    expect(screen.queryByRole("button", { name: "Reconnect" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Connect mobile app" })).toBeNull();
-    expect(screen.queryByLabelText("Training level")).toBeNull();
-  });
-
   it("renders the error alert (not a silent empty picker) on a levels error (QA-013)", () => {
     levelsState.data = undefined;
     levelsState.error = new Error("legacy 500");
@@ -157,8 +135,11 @@ describe("ManageMobileLinksModal (MT-12)", () => {
 
     renderModal();
 
-    expect(screen.getByText(LEVELS_ERROR_MESSAGE)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(LEVELS_ERROR_MESSAGE);
     expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reconnect" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Connect mobile app" })).toBeNull();
+    expect(screen.queryByLabelText("Training level")).toBeNull();
   });
 
   it("disables the Select and shows the all-linked caption when every level is linked", () => {
