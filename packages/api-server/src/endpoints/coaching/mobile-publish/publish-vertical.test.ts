@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { type LegacyShimIdentity } from "@repo/api-routes/legacy-shim";
 import { type PublishDayResult } from "@repo/contracts/coaching/mobile-publish";
+import { UserRole } from "@repo/contracts/iam/auth";
 
 import { prisma } from "../../../db/client";
 import {
@@ -21,6 +22,7 @@ import {
   createFixtureTracker,
   createPublishFixture,
   createTrackedIndividualAthlete,
+  createTrackedUser,
   utcDate,
   type PublishFixture,
 } from "./publish-fixture.test-helpers";
@@ -67,8 +69,19 @@ const loadRows = (linkId: string) =>
     },
   });
 
-const publishWeek = (fixture: PublishFixture, linkId: string, startDate = WEEK_MONDAY) =>
-  publishApi.publish(fixture.coachUserId, { linkId, startDate, scope: "week" });
+const actorTracker = createFixtureTracker();
+let adminUserId = "";
+
+beforeAll(async () => {
+  adminUserId = await createTrackedUser(actorTracker, UserRole.ADMIN);
+});
+
+afterAll(async () => {
+  await cleanupFixtures(actorTracker);
+});
+
+const publishWeek = (actorUserId: string, linkId: string, startDate = WEEK_MONDAY) =>
+  publishApi.publish(actorUserId, { linkId, startDate, scope: "week" });
 
 describe("publish vertical: our own ledger is the snapshot the app reads", () => {
   let fixture: PublishFixture;
@@ -83,7 +96,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
     const athlete = await createTrackedIndividualAthlete(tracker, fixture);
 
     legacyUserId = athlete.legacyUserId;
-    const general = await linksApi.createLink(fixture.coachUserId, {
+    const general = await linksApi.createLink(adminUserId, {
       planId: fixture.planId,
       legacyLevelId,
     });
@@ -102,7 +115,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
   });
 
   it("creates every day with its content, the projection's hash and a minted id", async () => {
-    const result = await publishWeek(fixture, generalLinkId);
+    const result = await publishWeek(adminUserId, generalLinkId);
 
     expect(actionsByDate(result.results)).toEqual({
       [MONDAY]: "created",
@@ -128,7 +141,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
 
   it("skips every day of an immediate republish and leaves publishedAt untouched", async () => {
     const before = await loadRows(generalLinkId);
-    const result = await publishWeek(fixture, generalLinkId);
+    const result = await publishWeek(adminUserId, generalLinkId);
 
     expect(result.results.map((day) => day.action)).toEqual(["skipped", "skipped", "skipped"]);
     expect(await loadRows(generalLinkId)).toEqual(before);
@@ -139,7 +152,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
 
     await fixture.addMondaySession();
 
-    const result = await publishWeek(fixture, generalLinkId);
+    const result = await publishWeek(adminUserId, generalLinkId);
     const after = await loadRows(generalLinkId);
 
     expect(actionsByDate(result.results)).toEqual({
@@ -181,7 +194,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
   });
 
   it("serves the published Individual days to the linked athlete", async () => {
-    const result = await publishWeek(fixture, individualLinkId);
+    const result = await publishWeek(fixture.coachUserId, individualLinkId);
     const rows = await loadRows(individualLinkId);
     const identity: LegacyShimIdentity = {
       userId: "individual-athlete",
@@ -210,7 +223,7 @@ describe("publish vertical: two concurrent runs for the same link", () => {
   beforeAll(async () => {
     fixture = await createPublishFixture(tracker, RACE_WEEK_MONDAY);
     linkId = (
-      await linksApi.createLink(fixture.coachUserId, {
+      await linksApi.createLink(adminUserId, {
         planId: fixture.planId,
         legacyLevelId: LEGACY_LEVEL_SCALED,
       })
@@ -223,8 +236,8 @@ describe("publish vertical: two concurrent runs for the same link", () => {
 
   it("writes one row per day, fails no day and reports the same id from both runs", async () => {
     const [first, second] = await Promise.all([
-      publishWeek(fixture, linkId, RACE_WEEK_MONDAY),
-      publishWeek(fixture, linkId, RACE_WEEK_MONDAY),
+      publishWeek(adminUserId, linkId, RACE_WEEK_MONDAY),
+      publishWeek(adminUserId, linkId, RACE_WEEK_MONDAY),
     ]);
     const rows = await loadRows(linkId);
 
@@ -248,7 +261,7 @@ describe("publish vertical: two concurrent runs for the same link", () => {
     findUnique.mockResolvedValueOnce(null);
 
     try {
-      const result = await publishWeek(fixture, linkId, RACE_WEEK_MONDAY);
+      const result = await publishWeek(adminUserId, linkId, RACE_WEEK_MONDAY);
 
       expect(result.results.map((day) => day.action)).toEqual(["skipped", "skipped", "skipped"]);
       expect(result.results.map((day) => day.legacyRowId)).toEqual(

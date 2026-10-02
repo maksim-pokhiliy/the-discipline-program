@@ -12,6 +12,9 @@ const SCHEDULED_DATE = "2026-06-08";
 const LINK_ID = "cllink0000000000000000000";
 const MINTED_ROW_ID = 1_000_000;
 const STORED_ROW_ID = 1_000_042;
+const STORED_DAY_ID = "clzstoredday0000000000000";
+const OTHER_DAY_ID = "clzotherday00000000000000";
+const LEVEL_PRO = 2;
 const REST_HASH = dayContentHash({ isRestDay: true });
 const STALE_HASH = "hash-of-an-older-projection";
 
@@ -19,6 +22,7 @@ const cuid = (suffix: string): string => `clz${suffix}`.padEnd(25, "0").slice(0,
 
 const mocks = vi.hoisted(() => ({
   findUniqueMock: vi.fn(),
+  findFirstMock: vi.fn(),
   createMock: vi.fn(),
   updateMock: vi.fn(),
 }));
@@ -27,6 +31,7 @@ vi.mock("../../../db/client", () => ({
   prisma: {
     mobilePublishedDay: {
       findUnique: mocks.findUniqueMock,
+      findFirst: mocks.findFirstMock,
       create: mocks.createMock,
       update: mocks.updateMock,
     },
@@ -64,6 +69,7 @@ const makeDay = (isRest: boolean): MobilePublishDayPayload => ({
 
 const baseArgs = (overrides: Partial<PublishDayArgs> = {}): PublishDayArgs => ({
   linkId: LINK_ID,
+  audience: { channel: "GENERAL", legacyLevelId: LEVEL_PRO },
   scheduledDate: SCHEDULED_DATE,
   absoluteDate: NOW,
   day: makeDay(true),
@@ -91,7 +97,9 @@ describe("publishDay", () => {
     mocks.findUniqueMock.mockReset();
     mocks.createMock.mockReset();
     mocks.updateMock.mockReset();
+    mocks.findFirstMock.mockReset();
     mocks.findUniqueMock.mockResolvedValue(null);
+    mocks.findFirstMock.mockResolvedValue({ id: STORED_DAY_ID });
     mocks.createMock.mockResolvedValue({ legacyRowId: MINTED_ROW_ID });
     mocks.updateMock.mockResolvedValue({ legacyRowId: STORED_ROW_ID });
   });
@@ -130,6 +138,7 @@ describe("publishDay", () => {
 
   it("skips without any write when the stored content carries the projection's hash", async () => {
     mocks.findUniqueMock.mockResolvedValue({
+      id: STORED_DAY_ID,
       legacyRowId: STORED_ROW_ID,
       contentHash: REST_HASH,
       isRestDay: true,
@@ -146,8 +155,52 @@ describe("publishDay", () => {
     expect(mocks.updateMock).not.toHaveBeenCalled();
   });
 
+  it("reclaims the day when another link's newer row is served for the same audience", async () => {
+    mocks.findUniqueMock.mockResolvedValue({
+      id: STORED_DAY_ID,
+      legacyRowId: STORED_ROW_ID,
+      contentHash: REST_HASH,
+      isRestDay: true,
+    });
+    mocks.findFirstMock.mockResolvedValue({ id: OTHER_DAY_ID });
+
+    const result = await publishDay(baseArgs());
+
+    expect(result).toEqual({
+      scheduledDate: SCHEDULED_DATE,
+      action: "updated",
+      legacyRowId: STORED_ROW_ID,
+    });
+    expect(firstCallData(mocks.updateMock)).not.toHaveProperty("legacyRowId");
+    expect(firstCallData(mocks.updateMock).publishedAt).toBeInstanceOf(Date);
+  });
+
+  it("looks up the served row the way the app's read path picks it", async () => {
+    mocks.findUniqueMock.mockResolvedValue({
+      id: STORED_DAY_ID,
+      legacyRowId: STORED_ROW_ID,
+      contentHash: REST_HASH,
+      isRestDay: true,
+    });
+
+    await publishDay(
+      baseArgs({ audience: { channel: "INDIVIDUAL", legacyUserId: STORED_ROW_ID } }),
+    );
+
+    expect(mocks.findFirstMock).toHaveBeenCalledWith({
+      where: {
+        scheduledDate: NOW,
+        isRestDay: { not: null },
+        link: { channel: "INDIVIDUAL", legacyUserId: STORED_ROW_ID },
+      },
+      orderBy: [{ publishedAt: "desc" }, { legacyRowId: "desc" }],
+      select: { id: true },
+    });
+  });
+
   it("updates content, hash and publishedAt but never the wire id when the hash differs", async () => {
     mocks.findUniqueMock.mockResolvedValue({
+      id: STORED_DAY_ID,
       legacyRowId: STORED_ROW_ID,
       contentHash: STALE_HASH,
       isRestDay: false,
@@ -172,6 +225,7 @@ describe("publishDay", () => {
 
   it("fills a content-less row even when its hash already matches", async () => {
     mocks.findUniqueMock.mockResolvedValue({
+      id: STORED_DAY_ID,
       legacyRowId: STORED_ROW_ID,
       contentHash: REST_HASH,
       isRestDay: null,
@@ -185,6 +239,7 @@ describe("publishDay", () => {
 
   it("re-decides against the row a concurrent run inserted and skips an identical one", async () => {
     mocks.findUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: STORED_DAY_ID,
       legacyRowId: STORED_ROW_ID,
       contentHash: REST_HASH,
       isRestDay: true,
@@ -204,6 +259,7 @@ describe("publishDay", () => {
 
   it("re-decides against the row a concurrent run inserted and updates a different one", async () => {
     mocks.findUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: STORED_DAY_ID,
       legacyRowId: STORED_ROW_ID,
       contentHash: STALE_HASH,
       isRestDay: false,

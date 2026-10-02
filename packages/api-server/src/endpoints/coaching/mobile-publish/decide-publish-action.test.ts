@@ -11,16 +11,26 @@ describe("decidePublishAction", () => {
   });
 
   it("skips when the stored row carries content with the same hash", () => {
-    expect(decidePublishAction({ contentHash: HASH, hasContent: true }, HASH)).toBe("skipped");
-  });
-
-  it("updates when the stored row carries content with a different hash", () => {
-    expect(decidePublishAction({ contentHash: OTHER_HASH, hasContent: true }, HASH)).toBe(
-      "updated",
+    expect(decidePublishAction({ contentHash: HASH, hasContent: true, isServed: true }, HASH)).toBe(
+      "skipped",
     );
   });
 
+  it("updates when the stored row carries content with a different hash", () => {
+    expect(
+      decidePublishAction({ contentHash: OTHER_HASH, hasContent: true, isServed: true }, HASH),
+    ).toBe("updated");
+  });
+
+  it("updates unchanged content that another link's newer row is outserving, to reclaim the day", () => {
+    expect(
+      decidePublishAction({ contentHash: HASH, hasContent: true, isServed: false }, HASH),
+    ).toBe("updated");
+  });
+
   it("updates a content-less row even when its hash matches", () => {
-    expect(decidePublishAction({ contentHash: HASH, hasContent: false }, HASH)).toBe("updated");
+    expect(
+      decidePublishAction({ contentHash: HASH, hasContent: false, isServed: false }, HASH),
+    ).toBe("updated");
   });
 });

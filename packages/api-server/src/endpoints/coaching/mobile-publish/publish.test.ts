@@ -14,9 +14,25 @@ const LINK_ID = "cllink0000000000000000000";
 const START_DATE = "2026-06-08";
 const BROKEN_DAY_ID = "clzbrokenday0000000000000";
 const MINTED_ROW_ID = 1_000_000;
+const LEVEL_PRO = 2;
+const LEGACY_USER_ID = 501;
+const LEVEL_FORBIDDEN_MESSAGE = "Only the head coach can publish to a training level";
+const GENERAL_LINK = {
+  planId: PLAN_ID,
+  channel: "GENERAL",
+  legacyLevelId: LEVEL_PRO,
+  legacyUserId: null,
+};
+const INDIVIDUAL_LINK = {
+  planId: PLAN_ID,
+  channel: "INDIVIDUAL",
+  legacyLevelId: null,
+  legacyUserId: LEGACY_USER_ID,
+};
 
 const mocks = vi.hoisted(() => ({
   verifyMobileLinkOwnershipMock: vi.fn(),
+  verifyCanPublishToLevelMock: vi.fn(),
   loadTargetDaysMock: vi.fn(),
   loadExerciseByIdMock: vi.fn(),
   findUniqueMock: vi.fn(),
@@ -39,6 +55,7 @@ vi.mock("../../../db/client", () => ({
 
 vi.mock("../../../authz/guards", () => ({
   verifyMobileLinkOwnership: mocks.verifyMobileLinkOwnershipMock,
+  verifyCanPublishToLevel: mocks.verifyCanPublishToLevelMock,
 }));
 
 vi.mock("./publish-loaders", () => ({
@@ -74,7 +91,8 @@ const makeDay = (
 describe("createPublishApi().publish", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue({ planId: PLAN_ID });
+    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue(GENERAL_LINK);
+    mocks.verifyCanPublishToLevelMock.mockResolvedValue(undefined);
     mocks.loadExerciseByIdMock.mockResolvedValue(new Map());
     mocks.findUniqueMock.mockResolvedValue(null);
     mocks.createMock.mockResolvedValue({ legacyRowId: MINTED_ROW_ID });
@@ -148,6 +166,38 @@ describe("createPublishApi().publish", () => {
     });
 
     expect(mocks.verifyMobileLinkOwnershipMock).toHaveBeenCalledWith(LINK_ID, USER_ID);
+    expect(mocks.loadTargetDaysMock).toHaveBeenCalledWith(PLAN_ID, NOW, undefined);
+  });
+
+  it("refuses a caller who may not publish to a training level and writes nothing", async () => {
+    mocks.loadTargetDaysMock.mockResolvedValue([makeDay("clzmonday000000000000000", "MONDAY")]);
+    mocks.verifyCanPublishToLevelMock.mockRejectedValue(
+      new ForbiddenError(LEVEL_FORBIDDEN_MESSAGE),
+    );
+
+    await expect(
+      createPublishApi().publish(USER_ID, {
+        linkId: LINK_ID,
+        startDate: START_DATE,
+        scope: "week",
+      }),
+    ).rejects.toThrow(LEVEL_FORBIDDEN_MESSAGE);
+    expect(mocks.verifyCanPublishToLevelMock).toHaveBeenCalledWith(USER_ID);
+    expect(mocks.loadTargetDaysMock).not.toHaveBeenCalled();
+    expect(mocks.createMock).not.toHaveBeenCalled();
+  });
+
+  it("does not ask for the level role when publishing to an athlete", async () => {
+    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue(INDIVIDUAL_LINK);
+    mocks.loadTargetDaysMock.mockResolvedValue([]);
+
+    await createPublishApi().publish(USER_ID, {
+      linkId: LINK_ID,
+      startDate: START_DATE,
+      scope: "week",
+    });
+
+    expect(mocks.verifyCanPublishToLevelMock).not.toHaveBeenCalled();
     expect(mocks.loadTargetDaysMock).toHaveBeenCalledWith(PLAN_ID, NOW, undefined);
   });
 

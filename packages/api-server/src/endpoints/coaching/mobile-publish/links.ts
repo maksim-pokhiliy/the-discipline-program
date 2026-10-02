@@ -9,7 +9,11 @@ import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import { BadRequestError, ConflictError } from "@repo/errors";
 import { parseDateParam } from "@repo/shared";
 
-import { verifyMobileLinkOwnership, verifyPlanOwnership } from "../../../authz/guards";
+import {
+  verifyCanPublishToLevel,
+  verifyMobileLinkOwnership,
+  verifyPlanOwnership,
+} from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
@@ -173,8 +177,12 @@ const runLinkUpsert = async (
   }
 };
 
-const upsertLink = async (data: CreateMobileLinkRequest): Promise<PrismaMobilePublishLink> => {
+const upsertLink = async (
+  userId: string,
+  data: CreateMobileLinkRequest,
+): Promise<PrismaMobilePublishLink> => {
   if (!("channel" in data)) {
+    await verifyCanPublishToLevel(userId);
     assertKnownLevel(data.legacyLevelId);
 
     return runLinkUpsert(() => upsertGeneralLink(data));
@@ -189,7 +197,7 @@ export const linksApi: LinksApi = {
   createLink: async (userId, data) => {
     await verifyPlanOwnership(data.planId, userId);
 
-    const link = await upsertLink(data);
+    const link = await upsertLink(userId, data);
 
     return mapToMobileLink(link, await loadPublishAggregate(link.id));
   },

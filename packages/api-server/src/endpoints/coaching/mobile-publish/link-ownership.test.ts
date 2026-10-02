@@ -36,6 +36,7 @@ const WEEK_MONDAY = "2031-04-07";
 const MISSING_LINK_ID = "clmissinglink000000000000";
 const CONNECTION_TTL_MS = 60 * 60 * 1000;
 const UNKNOWN_LEVEL_ID = 99;
+const LEVEL_FORBIDDEN_MESSAGE = "Only the head coach can publish to a training level";
 const NOT_ENROLLED_MESSAGE = "This athlete is not enrolled in this plan";
 const NO_INDIVIDUAL_ACCOUNT_MESSAGE =
   "This athlete has no Individual-plan account in the mobile app";
@@ -51,6 +52,7 @@ describe("mobile links belong to their plan's coach", () => {
   let foreignCoachUserId = "";
   let headCoachUserId = "";
   let headCoachSlot: HeadCoachSlot | undefined;
+  let adminUserId = "";
   let generalLinkId = "";
 
   beforeAll(async () => {
@@ -58,6 +60,7 @@ describe("mobile links belong to their plan's coach", () => {
     foreignCoachUserId = (await createTrackedCoach(tracker)).user.id;
     headCoachSlot = await takeHeadCoachSlot();
     headCoachUserId = await createTrackedUser(tracker, UserRole.HEAD_COACH);
+    adminUserId = await createTrackedUser(tracker, UserRole.ADMIN);
   });
 
   afterAll(async () => {
@@ -70,7 +73,7 @@ describe("mobile links belong to their plan's coach", () => {
     });
   });
 
-  it("lets a coach with no mobile connection create a General and an Individual link", async () => {
+  it("lets a coach with no mobile connection create an Individual link, and a head coach a General one on that plan", async () => {
     const { athleteId, legacyUserId } = await createTrackedIndividualAthlete(tracker, fixture);
 
     expect(
@@ -79,7 +82,7 @@ describe("mobile links belong to their plan's coach", () => {
       }),
     ).toBe(0);
 
-    const general = await linksApi.createLink(fixture.coachUserId, {
+    const general = await linksApi.createLink(headCoachUserId, {
       planId: fixture.planId,
       legacyLevelId: LEGACY_LEVEL_PRO,
     });
@@ -99,6 +102,31 @@ describe("mobile links belong to their plan's coach", () => {
         select: { connectionId: true },
       }),
     ).toEqual([{ connectionId: null }, { connectionId: null }]);
+  });
+
+  it("refuses a plain coach a General link even on their own plan, and writes no link", async () => {
+    await expect(
+      linksApi.createLink(fixture.coachUserId, {
+        planId: fixture.planId,
+        legacyLevelId: LEGACY_LEVEL_SCALED,
+      }),
+    ).rejects.toThrow(LEVEL_FORBIDDEN_MESSAGE);
+    expect(
+      await cleanupRaw.mobilePublishLink.count({
+        where: { planId: fixture.planId, channel: "GENERAL" },
+      }),
+    ).toBe(1);
+  });
+
+  it("refuses a plain coach publishing through a General link on their own plan, and writes nothing", async () => {
+    await expect(
+      publishApi.publish(fixture.coachUserId, {
+        linkId: generalLinkId,
+        startDate: WEEK_MONDAY,
+        scope: "week",
+      }),
+    ).rejects.toThrow(LEVEL_FORBIDDEN_MESSAGE);
+    expect(await countPublishedDays(generalLinkId)).toBe(0);
   });
 
   it("refuses another coach listing the plan's links", async () => {
@@ -145,6 +173,21 @@ describe("mobile links belong to their plan's coach", () => {
     expect(result.results.map((day) => day.action)).toEqual(["created", "created", "created"]);
     expect(await countPublishedDays(generalLinkId)).toBe(3);
   });
+
+  it("lets an admin create a General link and publish through it", async () => {
+    const link = await linksApi.createLink(adminUserId, {
+      planId: fixture.planId,
+      legacyLevelId: LEGACY_LEVEL_SCALED,
+    });
+    const result = await publishApi.publish(adminUserId, {
+      linkId: link.id,
+      startDate: WEEK_MONDAY,
+      scope: "week",
+    });
+
+    expect(result.results.map((day) => day.action)).toEqual(["created", "created", "created"]);
+    expect(await countPublishedDays(link.id)).toBe(3);
+  });
 });
 
 describe("a link created under the old connection model", () => {
@@ -170,12 +213,14 @@ describe("a link created under the old connection model", () => {
 
     tracker.connectionIds.push(connection.id);
 
+    const athlete = await createTrackedIndividualAthlete(tracker, fixture);
     const link = await cleanupRaw.mobilePublishLink.create({
       data: {
         connectionId: connection.id,
         planId: fixture.planId,
-        channel: "GENERAL",
-        legacyLevelId: LEGACY_LEVEL_SCALED,
+        channel: "INDIVIDUAL",
+        athleteId: athlete.athleteId,
+        legacyUserId: athlete.legacyUserId,
       },
     });
 
@@ -289,8 +334,10 @@ describe("an Individual link uses the athlete's own app account", () => {
   });
 
   it("refuses a General link to a level outside the catalog", async () => {
+    const adminUserId = await createTrackedUser(tracker, UserRole.ADMIN);
+
     await expect(
-      linksApi.createLink(fixture.coachUserId, {
+      linksApi.createLink(adminUserId, {
         planId: fixture.planId,
         legacyLevelId: UNKNOWN_LEVEL_ID,
       }),

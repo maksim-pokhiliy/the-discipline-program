@@ -16,9 +16,11 @@ import {
   type PublishedDayState,
 } from "./decide-publish-action";
 import { type LegacyDailyProgramResult, projectDay } from "./projection/project-day";
+import { loadServedDayId, type PublishAudience } from "./served-day";
 
 export type PublishDayArgs = {
   linkId: string;
+  audience: PublishAudience;
   scheduledDate: string;
   absoluteDate: Date;
   day: MobilePublishDayPayload;
@@ -50,7 +52,7 @@ const isUniqueViolation = (error: unknown): boolean =>
 const loadStoredDay = (args: PublishDayArgs) =>
   prisma.mobilePublishedDay.findUnique({
     where: dayKey(args),
-    select: { legacyRowId: true, contentHash: true, isRestDay: true },
+    select: { id: true, legacyRowId: true, contentHash: true, isRestDay: true },
   });
 
 type StoredDay = NonNullable<Awaited<ReturnType<typeof loadStoredDay>>>;
@@ -69,10 +71,17 @@ const updateDay = async (write: DayWrite): Promise<DayOutcome> => {
   return { action: "updated", legacyRowId: row.legacyRowId };
 };
 
-const toDayState = (stored: StoredDay | null): PublishedDayState | null =>
+const toDayState = async (
+  args: PublishDayArgs,
+  stored: StoredDay | null,
+): Promise<PublishedDayState | null> =>
   stored === null
     ? null
-    : { contentHash: stored.contentHash, hasContent: stored.isRestDay !== null };
+    : {
+        contentHash: stored.contentHash,
+        hasContent: stored.isRestDay !== null,
+        isServed: (await loadServedDayId(args.audience, args.absoluteDate)) === stored.id,
+      };
 
 const resolveConcurrentInsert = async (write: DayWrite): Promise<DayOutcome> => {
   const stored = await loadStoredDay(write.args);
@@ -110,7 +119,7 @@ const createDay = async (write: DayWrite): Promise<DayOutcome> => {
 };
 
 const writeDecided = async (write: DayWrite, stored: StoredDay | null): Promise<DayOutcome> => {
-  const action = decidePublishAction(toDayState(stored), write.hash);
+  const action = decidePublishAction(await toDayState(write.args, stored), write.hash);
 
   if (stored === null || action === "created") {
     return createDay(write);

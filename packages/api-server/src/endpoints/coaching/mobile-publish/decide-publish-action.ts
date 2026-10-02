@@ -3,6 +3,7 @@ export type PublishAction = "created" | "updated" | "skipped";
 export type PublishedDayState = {
   contentHash: string;
   hasContent: boolean;
+  isServed: boolean;
 };
 
 export const decidePublishAction = (
@@ -13,7 +14,7 @@ export const decidePublishAction = (
     return "created";
   }
 
-  if (existing.hasContent && existing.contentHash === hash) {
+  if (existing.isServed && existing.hasContent && existing.contentHash === hash) {
     return "skipped";
   }
 

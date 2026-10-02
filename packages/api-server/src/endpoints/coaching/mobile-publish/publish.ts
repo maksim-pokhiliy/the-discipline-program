@@ -6,16 +6,21 @@ import {
   type PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
-import { AppError } from "@repo/errors";
+import { AppError, InternalServerError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
-import { verifyMobileLinkOwnership } from "../../../authz/guards";
+import {
+  type OwnedMobileLink,
+  verifyCanPublishToLevel,
+  verifyMobileLinkOwnership,
+} from "../../../authz/guards";
 import { toUtcDateParam } from "../../../utils";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
 import { type MobilePublishDayPayload } from "./day-include";
 import { publishDay } from "./publish-day";
 import { loadExerciseById, loadTargetDays } from "./publish-loaders";
+import { type PublishAudience } from "./served-day";
 
 export type PublishApi = {
   publish(userId: string, data: PublishMobileData): Promise<PublishMobileResult>;
@@ -33,6 +38,28 @@ const resolveFailureCode = (error: unknown): string => {
   return error instanceof Error ? error.name : "unknown";
 };
 
+const toAudience = (link: OwnedMobileLink): PublishAudience => {
+  if (link.channel === "INDIVIDUAL" && link.legacyUserId !== null) {
+    return { channel: "INDIVIDUAL", legacyUserId: link.legacyUserId };
+  }
+
+  if (link.channel === "GENERAL" && link.legacyLevelId !== null) {
+    return { channel: "GENERAL", legacyLevelId: link.legacyLevelId };
+  }
+
+  throw new InternalServerError("Mobile publish link is missing its audience key");
+};
+
+const authorizePublish = async (linkId: string, userId: string) => {
+  const link = await verifyMobileLinkOwnership(linkId, userId);
+
+  if (link.channel === "GENERAL") {
+    await verifyCanPublishToLevel(userId);
+  }
+
+  return { planId: link.planId, audience: toAudience(link) };
+};
+
 const sortDaysByDate = (
   days: MobilePublishDayPayload[],
   weekStartDate: Date,
@@ -45,7 +72,7 @@ const sortDaysByDate = (
 
 export const createPublishApi = (): PublishApi => ({
   publish: async (userId, data) => {
-    const { planId } = await verifyMobileLinkOwnership(data.linkId, userId);
+    const { planId, audience } = await authorizePublish(data.linkId, userId);
     const weekStartDate = resolveWeekStartDate(data.startDate);
     const dayOfWeek: DayOfWeek | undefined = data.scope === "day" ? data.dayOfWeek : undefined;
     const days = sortDaysByDate(
@@ -64,6 +91,7 @@ export const createPublishApi = (): PublishApi => ({
         results.push(
           await publishDay({
             linkId: data.linkId,
+            audience,
             scheduledDate,
             absoluteDate,
             day,

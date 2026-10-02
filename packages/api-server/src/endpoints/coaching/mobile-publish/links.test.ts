@@ -52,6 +52,7 @@ const mocks = vi.hoisted(() => ({
   groupByMock: vi.fn(),
   verifyPlanOwnershipMock: vi.fn(),
   verifyMobileLinkOwnershipMock: vi.fn(),
+  verifyCanPublishToLevelMock: vi.fn(),
 }));
 
 vi.mock("../../../db/client", () => ({
@@ -70,6 +71,7 @@ vi.mock("../../../db/client", () => ({
 vi.mock("../../../authz/guards", () => ({
   verifyPlanOwnership: mocks.verifyPlanOwnershipMock,
   verifyMobileLinkOwnership: mocks.verifyMobileLinkOwnershipMock,
+  verifyCanPublishToLevel: mocks.verifyCanPublishToLevelMock,
 }));
 
 const makePrismaLink = (
@@ -345,6 +347,8 @@ describe("linksApi.createLink", () => {
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.upsertMock.mockResolvedValue(makePrismaLink());
     mocks.groupByMock.mockResolvedValue([]);
+    mocks.verifyCanPublishToLevelMock.mockReset();
+    mocks.verifyCanPublishToLevelMock.mockResolvedValue(undefined);
     mocks.athleteFindFirstMock.mockReset();
     mocks.athleteFindFirstMock.mockResolvedValue({
       legacyIdentity: { legacyUserId: LEGACY_USER_ID, legacyPlanId: LEGACY_PLAN_INDIVIDUAL },
@@ -552,6 +556,33 @@ describe("linksApi.createLink", () => {
     await linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID });
 
     expect(mocks.athleteFindFirstMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a GENERAL link from a caller who may not publish to a training level", async () => {
+    const { ForbiddenError } = await import("@repo/errors");
+
+    mocks.verifyCanPublishToLevelMock.mockRejectedValue(
+      new ForbiddenError("Only the head coach can publish to a training level"),
+    );
+
+    await expect(
+      linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+    expect(mocks.verifyCanPublishToLevelMock).toHaveBeenCalledWith(USER_ID);
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("does not ask for the level role for an INDIVIDUAL link", async () => {
+    mocks.upsertMock.mockResolvedValue(makeIndividualPrismaLink());
+
+    await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    });
+
+    expect(mocks.verifyCanPublishToLevelMock).not.toHaveBeenCalled();
   });
 
   it("refuses a GENERAL link to a level outside the catalog and writes nothing", async () => {
