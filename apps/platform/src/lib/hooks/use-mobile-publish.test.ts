@@ -5,10 +5,6 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { LegacyTrainingLevel, MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
-import type {
-  ConnectMobileData,
-  MobileConnection,
-} from "@repo/contracts/coaching/mobile-connection";
 import type { CreateMobileLinkRequest, MobileLink } from "@repo/contracts/coaching/mobile-link";
 import type {
   PublishMobileData,
@@ -18,15 +14,12 @@ import type * as Query from "@repo/query";
 
 import { platformKeys } from "../api/keys";
 import {
-  makeMobileConnection,
   makeMobileLink,
   makePublishDayResult,
   mobileAthletesFixture,
   trainingLevelsFixture,
 } from "../mobile.fixtures";
 
-const connectMock = vi.fn<(data: ConnectMobileData) => Promise<MobileConnection>>();
-const listConnectionsMock = vi.fn<() => Promise<MobileConnection[]>>();
 const listTrainingLevelsMock = vi.fn<() => Promise<LegacyTrainingLevel[]>>();
 const listAthletesMock = vi.fn<() => Promise<MobileAthlete[]>>();
 const createLinkMock = vi.fn<(data: CreateMobileLinkRequest) => Promise<MobileLink>>();
@@ -38,8 +31,6 @@ const notifyErrorMock = vi.fn<(error: Error, fallback: string) => void>();
 vi.mock("../api", () => ({
   api: {
     mobile: {
-      connect: (data: ConnectMobileData) => connectMock(data),
-      listConnections: () => listConnectionsMock(),
       listTrainingLevels: () => listTrainingLevelsMock(),
       listAthletes: () => listAthletesMock(),
       createLink: (data: CreateMobileLinkRequest) => createLinkMock(data),
@@ -64,11 +55,9 @@ vi.mock("sonner", () => ({
 }));
 
 const {
-  useConnectMobile,
   useCreateMobileLink,
   useDeleteMobileLink,
   usePublishMobile,
-  useMobileConnections,
   useMobileLinks,
   useMobileAthletes,
   useTrainingLevels,
@@ -89,8 +78,6 @@ const renderRunner = <THook>(hook: () => THook) => {
 };
 
 beforeEach(() => {
-  connectMock.mockReset();
-  listConnectionsMock.mockReset();
   listTrainingLevelsMock.mockReset();
   listAthletesMock.mockReset();
   createLinkMock.mockReset();
@@ -104,56 +91,33 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("useMobileConnections", () => {
-  it("queries api.mobile.listConnections under the connections key", async () => {
-    const connections = [makeMobileConnection()];
-
-    listConnectionsMock.mockResolvedValueOnce(connections);
-
-    const { view } = renderRunner(() => useMobileConnections());
-
-    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
-
-    expect(listConnectionsMock).toHaveBeenCalledTimes(1);
-    expect(view.result.current.data).toEqual(connections);
-  });
-});
-
 describe("useTrainingLevels", () => {
-  it("does not fetch when disabled", () => {
-    renderRunner(() => useTrainingLevels(false));
-
-    expect(listTrainingLevelsMock).not.toHaveBeenCalled();
-  });
-
-  it("fetches api.mobile.listTrainingLevels when enabled", async () => {
+  it("fetches api.mobile.listTrainingLevels on mount under the training levels key", async () => {
     listTrainingLevelsMock.mockResolvedValueOnce(trainingLevelsFixture);
 
-    const { view } = renderRunner(() => useTrainingLevels(true));
+    const { view, queryClient } = renderRunner(() => useTrainingLevels());
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
     expect(listTrainingLevelsMock).toHaveBeenCalledTimes(1);
     expect(view.result.current.data).toEqual(trainingLevelsFixture);
+    expect(queryClient.getQueryData(platformKeys.mobile.trainingLevels())).toEqual(
+      trainingLevelsFixture,
+    );
   });
 });
 
 describe("useMobileAthletes", () => {
-  it("does not fetch when disabled", () => {
-    renderRunner(() => useMobileAthletes(false));
-
-    expect(listAthletesMock).not.toHaveBeenCalled();
-  });
-
-  it("fetches api.mobile.listAthletes when enabled", async () => {
+  it("fetches api.mobile.listAthletes on mount under the athletes key", async () => {
     listAthletesMock.mockResolvedValueOnce(mobileAthletesFixture);
 
-    const { view } = renderRunner(() => useMobileAthletes(true));
+    const { view, queryClient } = renderRunner(() => useMobileAthletes());
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
     expect(listAthletesMock).toHaveBeenCalledTimes(1);
     expect(view.result.current.data).toEqual(mobileAthletesFixture);
+    expect(queryClient.getQueryData(platformKeys.mobile.athletes())).toEqual(mobileAthletesFixture);
   });
 });
 
@@ -163,7 +127,7 @@ type DeferredLinks = {
 };
 
 const createDeferredLinks = (): DeferredLinks => {
-  let resolve!: (value: MobileLink[]) => void;
+  let resolve: (value: MobileLink[]) => void = () => undefined;
   const promise = new Promise<MobileLink[]>((res) => {
     resolve = res;
   });
@@ -251,43 +215,6 @@ describe("useMobileLinks", () => {
 
     await waitFor(() => expect(view.result.current.isPlaceholderData).toBe(false));
     expect(view.result.current.data).toEqual(nextWeek);
-  });
-});
-
-describe("useConnectMobile", () => {
-  const payload: ConnectMobileData = { email: "coach@example.com", password: "secret" };
-
-  it("calls api.mobile.connect and invalidates the connections, trainingLevels, and athletes keys", async () => {
-    connectMock.mockResolvedValueOnce(makeMobileConnection());
-
-    const { view, invalidateSpy } = renderRunner(() => useConnectMobile());
-
-    await act(async () => {
-      view.result.current.mutate(payload);
-    });
-
-    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
-
-    expect(connectMock).toHaveBeenCalledWith(payload);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.connections() });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.trainingLevels() });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.athletes() });
-  });
-
-  it("notifies with the fallback message when the connect fails", async () => {
-    const failure = new Error("bad credentials");
-
-    connectMock.mockRejectedValueOnce(failure);
-
-    const { view } = renderRunner(() => useConnectMobile());
-
-    await act(async () => {
-      view.result.current.mutate(payload);
-    });
-
-    await waitFor(() => expect(view.result.current.isError).toBe(true));
-
-    expect(notifyErrorMock).toHaveBeenCalledWith(failure, "Failed to connect mobile app");
   });
 });
 
@@ -414,7 +341,6 @@ describe("usePublishMobile", () => {
     linkId: LINK_ID,
     startDate: "2026-01-05",
     scope: "week",
-    overwriteUnowned: false,
   };
 
   it("calls api.mobile.publish and returns the PublishMobileResult from mutateAsync", async () => {
@@ -435,7 +361,7 @@ describe("usePublishMobile", () => {
   });
 
   it("does not toast or notifyError on failure (the modal is the feedback surface)", async () => {
-    const failure = new Error("reconnect required");
+    const failure = new Error("publish failed");
 
     publishMock.mockRejectedValueOnce(failure);
 

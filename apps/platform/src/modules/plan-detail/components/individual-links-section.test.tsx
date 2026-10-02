@@ -6,7 +6,6 @@ import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athlet
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import type { MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
 import type { IndividualMobileLink } from "@repo/contracts/coaching/mobile-link";
-import { MOBILE_RECONNECT_REQUIRED } from "@repo/contracts/coaching/mobile-publish";
 import { EnrollmentStatus, type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 import { formatDate } from "@repo/shared";
 
@@ -28,6 +27,8 @@ const ENROLLMENT_ID = "ckenrl1234567890abcdef0123";
 const LINK_ID = "cklink1234567890abcdef0123";
 const ORPHAN_LINK_ID = "cklink00000000000000orphan";
 const NOW = new Date("2026-01-05T00:00:00.000Z");
+const ATHLETES_ERROR_MESSAGE = "Couldn't load athletes. Try again.";
+const SESSION_EXPIRED_REASON = "SESSION_EXPIRED";
 
 const enrollmentsState: QueryState<PlanEnrollment[]> = {
   data: [],
@@ -50,18 +51,18 @@ const mobileAthletesState: QueryState<MobileAthlete[]> = {
 
 const createLinkMutate = vi.fn();
 const deleteLinkMutate = vi.fn();
+const mobileAthletesSpy = vi.fn<(...args: unknown[]) => void>();
 
 vi.mock("@app/lib/hooks", () => ({
   usePlanEnrollments: () => enrollmentsState,
   useCoachAthletes: () => athletesState,
-  useMobileAthletes: () => mobileAthletesState,
+  useMobileAthletes: (...args: unknown[]) => {
+    mobileAthletesSpy(...args);
+
+    return mobileAthletesState;
+  },
   useCreateMobileLink: () => ({ mutate: createLinkMutate, isPending: false }),
   useDeleteMobileLink: () => ({ mutate: deleteLinkMutate, isPending: false }),
-}));
-
-vi.mock("../../coach-profile/components", () => ({
-  ConnectMobileModal: ({ open }: { open: boolean }) =>
-    open ? <div>connect-modal-open</div> : null,
 }));
 
 const { IndividualLinksSection } = await import("./individual-links-section");
@@ -101,16 +102,16 @@ const makeEnrollment = (overrides: Partial<PlanEnrollment> = {}): PlanEnrollment
   ...overrides,
 });
 
-const reconnectError = (): Error => {
+const errorWithReason = (reason: string): Error => {
   const error = new Error("Session expired");
 
-  Object.assign(error, { details: { reason: MOBILE_RECONNECT_REQUIRED } });
+  Object.assign(error, { details: { reason } });
 
   return error;
 };
 
 const renderSection = (individualLinks: IndividualMobileLink[] = []) =>
-  render(<IndividualLinksSection planId={PLAN_ID} isConnected individualLinks={individualLinks} />);
+  render(<IndividualLinksSection planId={PLAN_ID} individualLinks={individualLinks} />);
 
 beforeEach(() => {
   enrollmentsState.data = [];
@@ -127,6 +128,7 @@ beforeEach(() => {
   mobileAthletesState.isPending = false;
   createLinkMutate.mockReset();
   deleteLinkMutate.mockReset();
+  mobileAthletesSpy.mockClear();
 });
 
 afterEach(() => {
@@ -233,7 +235,22 @@ describe("IndividualLinksSection (T6)", () => {
     expect(deleteLinkMutate).toHaveBeenCalledWith(ORPHAN_LINK_ID);
   });
 
-  it("keeps the linked row unlinkable and shows the Reconnect CTA in place of the picker when the live list is reconnect-required (T6-e)", () => {
+  it("loads the live mobile athletes unconditionally, with no argument", () => {
+    athletesState.data = {
+      athletes: [makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" })],
+    };
+    enrollmentsState.data = [
+      makeEnrollment({ athleteId: LINKED_ATHLETE_ID, status: EnrollmentStatus.ACTIVE }),
+    ];
+
+    renderSection([]);
+
+    expect(mobileAthletesSpy).toHaveBeenCalled();
+    expect(mobileAthletesSpy.mock.calls.every((args) => args.length === 0)).toBe(true);
+    expect(screen.getByRole("combobox", { name: "Link mobile athlete" })).toBeInTheDocument();
+  });
+
+  it("keeps the linked row unlinkable and shows the plain error alert, with no Reconnect prompt, when the live list error carries a session-expired reason (T6-e)", () => {
     athletesState.data = {
       athletes: [
         makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" }),
@@ -249,7 +266,7 @@ describe("IndividualLinksSection (T6)", () => {
       }),
     ];
     mobileAthletesState.data = undefined;
-    mobileAthletesState.error = reconnectError();
+    mobileAthletesState.error = errorWithReason(SESSION_EXPIRED_REASON);
     mobileAthletesState.isError = true;
 
     renderSection([
@@ -257,11 +274,10 @@ describe("IndividualLinksSection (T6)", () => {
     ]);
 
     expect(screen.getByText("Pat Platform")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(ATHLETES_ERROR_MESSAGE);
+    expect(screen.queryByRole("button", { name: "Reconnect" })).toBeNull();
+    expect(screen.queryByText(/Connection expired/)).toBeNull();
     expect(screen.queryByRole("combobox", { name: "Link mobile athlete" })).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
-
-    expect(screen.getByText("connect-modal-open")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Unlink mobile athlete" }));
 
@@ -272,7 +288,7 @@ describe("IndividualLinksSection (T6)", () => {
     expect(deleteLinkMutate).toHaveBeenCalledWith(LINK_ID);
   });
 
-  it("keeps the linked row unlinkable and shows the error alert in place of the picker on a non-reconnect error (T6-f)", () => {
+  it("keeps the linked row unlinkable and shows the error alert in place of the picker on a plain error (T6-f)", () => {
     athletesState.data = {
       athletes: [
         makeAthlete({ userId: LINKED_ATHLETE_ID, name: "Pat Platform" }),
@@ -296,7 +312,7 @@ describe("IndividualLinksSection (T6)", () => {
     ]);
 
     expect(screen.getByText("Pat Platform")).toBeInTheDocument();
-    expect(screen.getByText("Couldn't load athletes. Try again.")).toBeInTheDocument();
+    expect(screen.getByText(ATHLETES_ERROR_MESSAGE)).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Link mobile athlete" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Unlink mobile athlete" }));
