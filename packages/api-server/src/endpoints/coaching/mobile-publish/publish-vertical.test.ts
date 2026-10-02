@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { type LegacyShimIdentity } from "@repo/api-routes/legacy-shim";
 import { type PublishDayResult } from "@repo/contracts/coaching/mobile-publish";
@@ -29,6 +29,7 @@ const RACE_WEEK_MONDAY = "2031-03-10";
 const FIRST_MINTED_ROW_ID = 1_000_000;
 const LEGACY_PLAN_GENERAL = 1;
 const LEGACY_ROLE_USER = 1;
+const LEGACY_LEVEL_PRO = 2;
 
 const ONE_SESSION_DAY: Hashable & { isRestDay: false } = {
   isRestDay: false,
@@ -72,7 +73,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
   let fixture: PublishFixture;
   let generalLinkId = "";
   let individualLinkId = "";
-  const legacyLevelId = mintFixtureLevelId();
+  const legacyLevelId = LEGACY_LEVEL_PRO;
   const legacyUserId = mintFixtureLegacyUserId();
 
   beforeAll(async () => {
@@ -236,5 +237,24 @@ describe("publish vertical: two concurrent runs for the same link", () => {
     expect(first.results.map((day) => day.legacyRowId)).toEqual(
       second.results.map((day) => day.legacyRowId),
     );
+  });
+
+  it("turns the unique violation of a run that lost the insert race into a skip on the stored row", async () => {
+    const before = await loadRows(linkId);
+    const findUnique = vi.spyOn(prisma.mobilePublishedDay, "findUnique");
+
+    findUnique.mockResolvedValueOnce(null);
+
+    try {
+      const result = await publishWeek(fixture, linkId, RACE_WEEK_MONDAY);
+
+      expect(result.results.map((day) => day.action)).toEqual(["skipped", "skipped", "skipped"]);
+      expect(result.results.map((day) => day.legacyRowId)).toEqual(
+        before.map((row) => row.legacyRowId),
+      );
+      expect(await loadRows(linkId)).toEqual(before);
+    } finally {
+      findUnique.mockRestore();
+    }
   });
 });
