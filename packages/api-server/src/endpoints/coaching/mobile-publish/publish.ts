@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import {
   type PublishDayResult,
   type PublishMobileData,
@@ -17,6 +19,18 @@ import { loadExerciseById, loadTargetDays } from "./publish-loaders";
 
 export type PublishApi = {
   publish(userId: string, data: PublishMobileData): Promise<PublishMobileResult>;
+};
+
+const resolveFailureCode = (error: unknown): string => {
+  if (error instanceof AppError) {
+    return error.code;
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code;
+  }
+
+  return error instanceof Error ? error.name : "unknown";
 };
 
 const sortDaysByDate = (
@@ -57,7 +71,7 @@ export const createPublishApi = (): PublishApi => ({
           }),
         );
       } catch (error) {
-        const code = error instanceof AppError ? error.code : "unknown";
+        const code = resolveFailureCode(error);
 
         logger.warn("mobile.publish.day_failed", { linkId: data.linkId, scheduledDate, code });
         results.push({ scheduledDate, action: "failed", legacyRowId: null });

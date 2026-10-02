@@ -4,6 +4,12 @@ import { type LegacyShimIdentity } from "@repo/api-routes/legacy-shim";
 import { type PublishDayResult } from "@repo/contracts/coaching/mobile-publish";
 
 import { prisma } from "../../../db/client";
+import {
+  LEGACY_LEVEL_PRO,
+  LEGACY_LEVEL_SCALED,
+  LEGACY_PLAN_GENERAL,
+  LEGACY_ROLE_USER,
+} from "../../../test/golden-fixture";
 import { createGetProgramApi } from "../../mobile-compat/get-program";
 import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
@@ -15,8 +21,6 @@ import {
   createFixtureTracker,
   createPublishFixture,
   createTrackedIndividualAthlete,
-  mintFixtureLegacyUserId,
-  mintFixtureLevelId,
   utcDate,
   type PublishFixture,
 } from "./publish-fixture.test-helpers";
@@ -27,9 +31,6 @@ const TUESDAY = "2031-03-04";
 const SUNDAY = "2031-03-09";
 const RACE_WEEK_MONDAY = "2031-03-10";
 const FIRST_MINTED_ROW_ID = 1_000_000;
-const LEGACY_PLAN_GENERAL = 1;
-const LEGACY_ROLE_USER = 1;
-const LEGACY_LEVEL_PRO = 2;
 
 const ONE_SESSION_DAY: Hashable & { isRestDay: false } = {
   isRestDay: false,
@@ -74,12 +75,14 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
   let generalLinkId = "";
   let individualLinkId = "";
   const legacyLevelId = LEGACY_LEVEL_PRO;
-  const legacyUserId = mintFixtureLegacyUserId();
+  let legacyUserId = 0;
 
   beforeAll(async () => {
     fixture = await createPublishFixture(tracker, WEEK_MONDAY);
 
-    const athleteId = await createTrackedIndividualAthlete(tracker, legacyUserId);
+    const athlete = await createTrackedIndividualAthlete(tracker, fixture);
+
+    legacyUserId = athlete.legacyUserId;
     const general = await linksApi.createLink(fixture.coachUserId, {
       planId: fixture.planId,
       legacyLevelId,
@@ -87,7 +90,7 @@ describe("publish vertical: our own ledger is the snapshot the app reads", () =>
     const individual = await linksApi.createLink(fixture.coachUserId, {
       planId: fixture.planId,
       channel: "INDIVIDUAL",
-      athleteId,
+      athleteId: athlete.athleteId,
     });
 
     generalLinkId = general.id;
@@ -209,7 +212,7 @@ describe("publish vertical: two concurrent runs for the same link", () => {
     linkId = (
       await linksApi.createLink(fixture.coachUserId, {
         planId: fixture.planId,
-        legacyLevelId: mintFixtureLevelId(),
+        legacyLevelId: LEGACY_LEVEL_SCALED,
       })
     ).id;
   });

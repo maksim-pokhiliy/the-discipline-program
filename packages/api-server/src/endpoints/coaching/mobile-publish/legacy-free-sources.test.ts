@@ -11,52 +11,81 @@ const GUARDED_SOURCES = [
   "training-levels.ts",
 ] as const;
 
-const IMPORT_STATEMENT = /import\s+(type\s+)?([^;]*?)\s+from\s+"([^"]+)";/gs;
+const LEGACY_CLIENT_MODULE = "infrastructure/legacy-mobile";
+const TOKEN_CIPHER_MODULE = "token-cipher";
 
-type ImportStatement = { isTypeOnly: boolean; specifiers: string; source: string };
+const STATIC_IMPORT = /\bimport\s+(type\s+)?([^;]*?)\s+from\s+["']([^"']+)["']/gs;
+const RE_EXPORT = /\bexport\s+(type\s+)?([^;]*?)\s+from\s+["']([^"']+)["']/gs;
+const SIDE_EFFECT_IMPORT = /\bimport\s+["']([^"']+)["']/g;
+const DYNAMIC_IMPORT = /\bimport\(\s*["']([^"']+)["']\s*\)/g;
 
-const readImports = (fileName: string): ImportStatement[] =>
-  [...readFileSync(join(__dirname, fileName), "utf8").matchAll(IMPORT_STATEMENT)].map((match) => ({
+type ModuleReference = { isTypeOnly: boolean; specifiers: string; source: string };
+
+const namedReferences = (code: string, pattern: RegExp): ModuleReference[] =>
+  [...code.matchAll(pattern)].map((match) => ({
     isTypeOnly: match[1] !== undefined,
     specifiers: match[2] ?? "",
     source: match[3] ?? "",
   }));
 
-const importsOnlyTypes = (statement: ImportStatement): boolean =>
-  statement.isTypeOnly ||
-  statement.specifiers
-    .replace(/[{}]/g, "")
-    .split(",")
-    .map((specifier) => specifier.trim())
-    .filter((specifier) => specifier !== "")
-    .every((specifier) => specifier.startsWith("type "));
+const valueReferences = (code: string, pattern: RegExp): ModuleReference[] =>
+  [...code.matchAll(pattern)].map((match) => ({
+    isTypeOnly: false,
+    specifiers: "",
+    source: match[1] ?? "",
+  }));
+
+const readModuleReferences = (code: string): ModuleReference[] => [
+  ...namedReferences(code, STATIC_IMPORT),
+  ...namedReferences(code, RE_EXPORT),
+  ...valueReferences(code, SIDE_EFFECT_IMPORT),
+  ...valueReferences(code, DYNAMIC_IMPORT),
+];
+
+const readSource = (fileName: string): string => readFileSync(join(__dirname, fileName), "utf8");
+
+const referencesOnlyTypes = (reference: ModuleReference): boolean =>
+  reference.isTypeOnly ||
+  (reference.specifiers !== "" &&
+    reference.specifiers
+      .replace(/[{}]/g, "")
+      .split(",")
+      .map((specifier) => specifier.trim())
+      .filter((specifier) => specifier !== "")
+      .every((specifier) => specifier.startsWith("type ")));
+
+const referencesTo = (code: string, module: string): ModuleReference[] =>
+  readModuleReferences(code).filter((reference) => reference.source.includes(module));
 
 describe("the publish path stays free of the legacy session", () => {
   it.each(GUARDED_SOURCES)("%s imports only types from infrastructure/legacy-mobile", (file) => {
-    const legacyImports = readImports(file).filter((statement) =>
-      statement.source.includes("infrastructure/legacy-mobile"),
+    expect(referencesTo(readSource(file), LEGACY_CLIENT_MODULE).every(referencesOnlyTypes)).toBe(
+      true,
     );
-
-    expect(legacyImports.every(importsOnlyTypes)).toBe(true);
   });
 
   it.each(GUARDED_SOURCES)("%s imports nothing from the token cipher", (file) => {
-    const cipherImports = readImports(file).filter(
-      (statement) =>
-        statement.source.includes("legacy-token-cipher") ||
-        statement.source.includes("token-cipher"),
-    );
-
-    expect(cipherImports).toEqual([]);
+    expect(referencesTo(readSource(file), TOKEN_CIPHER_MODULE)).toEqual([]);
   });
 
   it("recognises a value import from the legacy client as a violation", () => {
-    expect(
-      importsOnlyTypes({
-        isTypeOnly: false,
-        specifiers: "{ type LegacyDailyProgram, defaultLegacyMobileClient }",
-        source: "../../../infrastructure/legacy-mobile",
-      }),
-    ).toBe(false);
+    const code = `import { type LegacyDailyProgram, defaultLegacyMobileClient } from "../../../infrastructure/legacy-mobile";`;
+
+    expect(referencesTo(code, LEGACY_CLIENT_MODULE).every(referencesOnlyTypes)).toBe(false);
+  });
+
+  it.each([
+    ["a side-effect import", `import "./legacy-token-cipher";`],
+    ["a re-export", `export { decryptLegacyToken } from "./legacy-token-cipher";`],
+    ["a dynamic import", `const cipher = await import("./legacy-token-cipher");`],
+    ["a single-quoted import", `import { decryptLegacyToken } from './legacy-token-cipher';`],
+  ])("catches %s of the token cipher", (_label, code) => {
+    expect(referencesTo(code, TOKEN_CIPHER_MODULE)).not.toEqual([]);
+  });
+
+  it("treats a type-only re-export from the legacy client as allowed", () => {
+    const code = `export type { LegacyDailyProgram } from "../../../infrastructure/legacy-mobile";`;
+
+    expect(referencesTo(code, LEGACY_CLIENT_MODULE).every(referencesOnlyTypes)).toBe(true);
   });
 });

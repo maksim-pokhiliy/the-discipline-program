@@ -1,3 +1,4 @@
+import { EnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
@@ -6,11 +7,18 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 import { prisma } from "../../../db/client";
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
+  LEGACY_LEVEL_PRO,
+  LEGACY_LEVEL_SCALED,
+  LEGACY_PLAN_GENERAL,
+} from "../../../test/golden-fixture";
+import {
   releaseHeadCoachSlotAfter,
   takeHeadCoachSlot,
   type HeadCoachSlot,
 } from "../../../test/head-coach-slot";
 import { cleanupRaw, createTestLegacyIdentity } from "../../../test/helpers";
+import { createTestEnrollment } from "../../../test/schedule-helpers";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
 import { linksApi } from "./links";
 import { createPublishApi } from "./publish";
@@ -21,15 +29,14 @@ import {
   createTrackedCoach,
   createTrackedIndividualAthlete,
   createTrackedUser,
-  mintFixtureLegacyUserId,
-  mintFixtureLevelId,
   type PublishFixture,
 } from "./publish-fixture.test-helpers";
 
 const WEEK_MONDAY = "2031-04-07";
 const MISSING_LINK_ID = "clmissinglink000000000000";
 const CONNECTION_TTL_MS = 60 * 60 * 1000;
-const LEGACY_PLAN_GENERAL = 1;
+const UNKNOWN_LEVEL_ID = 99;
+const NOT_ENROLLED_MESSAGE = "This athlete is not enrolled in this plan";
 const NO_INDIVIDUAL_ACCOUNT_MESSAGE =
   "This athlete has no Individual-plan account in the mobile app";
 
@@ -64,8 +71,7 @@ describe("mobile links belong to their plan's coach", () => {
   });
 
   it("lets a coach with no mobile connection create a General and an Individual link", async () => {
-    const legacyUserId = mintFixtureLegacyUserId();
-    const athleteId = await createTrackedIndividualAthlete(tracker, legacyUserId);
+    const { athleteId, legacyUserId } = await createTrackedIndividualAthlete(tracker, fixture);
 
     expect(
       await cleanupRaw.mobileConnection.count({
@@ -75,7 +81,7 @@ describe("mobile links belong to their plan's coach", () => {
 
     const general = await linksApi.createLink(fixture.coachUserId, {
       planId: fixture.planId,
-      legacyLevelId: mintFixtureLevelId(),
+      legacyLevelId: LEGACY_LEVEL_PRO,
     });
     const individual = await linksApi.createLink(fixture.coachUserId, {
       planId: fixture.planId,
@@ -169,7 +175,7 @@ describe("a link created under the old connection model", () => {
         connectionId: connection.id,
         planId: fixture.planId,
         channel: "GENERAL",
-        legacyLevelId: mintFixtureLevelId(),
+        legacyLevelId: LEGACY_LEVEL_SCALED,
       },
     });
 
@@ -221,37 +227,79 @@ describe("an Individual link uses the athlete's own app account", () => {
   const countPlanLinks = (): Promise<number> =>
     cleanupRaw.mobilePublishLink.count({ where: { planId: fixture.planId } });
 
-  it("refuses an athlete with no app account and writes no link", async () => {
+  const enrolledUser = async (): Promise<string> => {
     const athleteId = await createTrackedUser(tracker);
 
-    await expect(
-      linksApi.createLink(fixture.coachUserId, {
-        planId: fixture.planId,
-        channel: "INDIVIDUAL",
-        athleteId,
-      }),
-    ).rejects.toThrow(NO_INDIVIDUAL_ACCOUNT_MESSAGE);
+    await createTestEnrollment(fixture.planId, athleteId, fixture.coachUserId);
+
+    return athleteId;
+  };
+
+  const linkIndividual = (athleteId: string) =>
+    linksApi.createLink(fixture.coachUserId, {
+      planId: fixture.planId,
+      channel: "INDIVIDUAL",
+      athleteId,
+    });
+
+  it("refuses an enrolled athlete with no app account and writes no link", async () => {
+    await expect(linkIndividual(await enrolledUser())).rejects.toThrow(
+      NO_INDIVIDUAL_ACCOUNT_MESSAGE,
+    );
     expect(await countPlanLinks()).toBe(0);
   });
 
-  it("refuses an athlete whose app account is on the General plan and writes no link", async () => {
-    const athleteId = await createTrackedUser(tracker);
+  it("refuses an enrolled athlete whose app account is on the General plan and writes no link", async () => {
+    const athleteId = await enrolledUser();
 
     await createTestLegacyIdentity(athleteId, { legacyPlanId: LEGACY_PLAN_GENERAL });
 
+    await expect(linkIndividual(athleteId)).rejects.toBeInstanceOf(BadRequestError);
+    expect(await countPlanLinks()).toBe(0);
+  });
+
+  it("refuses an athlete with an Individual-plan account who is not enrolled in the plan", async () => {
+    const athleteId = await createTrackedUser(tracker);
+
+    await createTestLegacyIdentity(athleteId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+
+    await expect(linkIndividual(athleteId)).rejects.toThrow(NOT_ENROLLED_MESSAGE);
+    expect(await countPlanLinks()).toBe(0);
+  });
+
+  it("refuses an athlete whose enrollment in the plan was removed", async () => {
+    const { athleteId } = await createTrackedIndividualAthlete(tracker, fixture);
+
+    await cleanupRaw.planEnrollment.updateMany({
+      where: { planId: fixture.planId, athleteId },
+      data: { status: EnrollmentStatus.REMOVED, deletedAt: new Date() },
+    });
+
+    await expect(linkIndividual(athleteId)).rejects.toThrow(NOT_ENROLLED_MESSAGE);
+    expect(await countPlanLinks()).toBe(0);
+  });
+
+  it("refuses a soft-deleted athlete", async () => {
+    const { athleteId } = await createTrackedIndividualAthlete(tracker, fixture);
+
+    await cleanupRaw.user.update({ where: { id: athleteId }, data: { deletedAt: new Date() } });
+
+    await expect(linkIndividual(athleteId)).rejects.toThrow(NOT_ENROLLED_MESSAGE);
+    expect(await countPlanLinks()).toBe(0);
+  });
+
+  it("refuses a General link to a level outside the catalog", async () => {
     await expect(
       linksApi.createLink(fixture.coachUserId, {
         planId: fixture.planId,
-        channel: "INDIVIDUAL",
-        athleteId,
+        legacyLevelId: UNKNOWN_LEVEL_ID,
       }),
     ).rejects.toBeInstanceOf(BadRequestError);
     expect(await countPlanLinks()).toBe(0);
   });
 
   it("refuses to pair an account an older link on the plan already gave to another athlete", async () => {
-    const legacyUserId = mintFixtureLegacyUserId();
-    const athleteId = await createTrackedIndividualAthlete(tracker, legacyUserId);
+    const { athleteId, legacyUserId } = await createTrackedIndividualAthlete(tracker, fixture);
     const otherAthleteId = await createTrackedUser(tracker);
 
     await cleanupRaw.mobilePublishLink.create({
@@ -263,13 +311,7 @@ describe("an Individual link uses the athlete's own app account", () => {
       },
     });
 
-    await expect(
-      linksApi.createLink(fixture.coachUserId, {
-        planId: fixture.planId,
-        channel: "INDIVIDUAL",
-        athleteId,
-      }),
-    ).rejects.toBeInstanceOf(ConflictError);
+    await expect(linkIndividual(athleteId)).rejects.toBeInstanceOf(ConflictError);
     expect(await countPlanLinks()).toBe(1);
   });
 });

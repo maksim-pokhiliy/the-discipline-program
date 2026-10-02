@@ -4,6 +4,8 @@ import { verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
+import { enrolledInPlanWhere } from "./enrolled-athlete-where";
+
 export type AthletesApi = {
   listLinkableAthletes(userId: string, planId: string): Promise<GetLinkableAthletesResponse>;
 };
@@ -14,7 +16,7 @@ export const athletesApi: AthletesApi = {
 
     const athletes = await prisma.user.findMany({
       where: {
-        planEnrollmentsAsAthlete: { some: { planId } },
+        ...enrolledInPlanWhere(planId),
         legacyIdentity: { is: { legacyPlanId: LEGACY_PLAN_INDIVIDUAL } },
       },
       orderBy: { id: "asc" },

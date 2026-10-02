@@ -14,7 +14,13 @@ import { prisma } from "../../../db/client";
 import { mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
-import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
+import {
+  findLegacyCatalogEntry,
+  LEGACY_PLAN_INDIVIDUAL,
+  LEGACY_TRAINING_LEVELS,
+} from "../../mobile-compat/legacy-catalogs";
+
+import { enrolledInPlanWhere } from "./enrolled-athlete-where";
 
 export type LinksApi = {
   createLink(userId: string, data: CreateMobileLinkRequest): Promise<MobileLink>;
@@ -27,6 +33,8 @@ const WEEK_START_FIELD = "weekStart";
 const INVALID_WEEK_START_MESSAGE = "weekStart must be a valid YYYY-MM-DD date";
 const NO_INDIVIDUAL_ACCOUNT_MESSAGE =
   "This athlete has no Individual-plan account in the mobile app";
+const NOT_ENROLLED_MESSAGE = "This athlete is not enrolled in this plan";
+const UNKNOWN_LEVEL_MESSAGE = "Unknown training level";
 
 export const buildWeekScheduledDates = (weekStart: string): Date[] => {
   if (parseDateParam(weekStart) === null) {
@@ -86,11 +94,26 @@ const upsertGeneralLink = (data: {
     update: {},
   });
 
-const resolveIndividualLegacyUserId = async (athleteId: string): Promise<number> => {
-  const identity = await prisma.mobileLegacyIdentity.findUnique({
-    where: { userId: athleteId },
-    select: { legacyUserId: true, legacyPlanId: true },
+const assertKnownLevel = (legacyLevelId: number): void => {
+  if (findLegacyCatalogEntry(LEGACY_TRAINING_LEVELS, legacyLevelId) === null) {
+    throw new BadRequestError(UNKNOWN_LEVEL_MESSAGE, { field: "legacyLevelId" });
+  }
+};
+
+const resolveIndividualLegacyUserId = async (
+  planId: string,
+  athleteId: string,
+): Promise<number> => {
+  const athlete = await prisma.user.findFirst({
+    where: { id: athleteId, ...enrolledInPlanWhere(planId) },
+    select: { legacyIdentity: { select: { legacyUserId: true, legacyPlanId: true } } },
   });
+
+  if (athlete === null) {
+    throw new BadRequestError(NOT_ENROLLED_MESSAGE, { field: "athleteId" });
+  }
+
+  const identity = athlete.legacyIdentity;
 
   if (identity === null || identity.legacyPlanId !== LEGACY_PLAN_INDIVIDUAL) {
     throw new BadRequestError(NO_INDIVIDUAL_ACCOUNT_MESSAGE, { field: "athleteId" });
@@ -152,10 +175,12 @@ const runLinkUpsert = async (
 
 const upsertLink = async (data: CreateMobileLinkRequest): Promise<PrismaMobilePublishLink> => {
   if (!("channel" in data)) {
+    assertKnownLevel(data.legacyLevelId);
+
     return runLinkUpsert(() => upsertGeneralLink(data));
   }
 
-  const legacyUserId = await resolveIndividualLegacyUserId(data.athleteId);
+  const legacyUserId = await resolveIndividualLegacyUserId(data.planId, data.athleteId);
 
   return runLinkUpsert(() => upsertIndividualLink({ ...data, legacyUserId }));
 };

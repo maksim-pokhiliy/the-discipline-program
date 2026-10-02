@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ForbiddenError } from "@repo/errors";
 
+import { LEGACY_PLAN_GENERAL } from "../../../test/golden-fixture";
 import { cleanupRaw, createTestLegacyIdentity, createTestPlan } from "../../../test/helpers";
 import { createTestEnrollment } from "../../../test/schedule-helpers";
 import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
@@ -14,8 +15,6 @@ import {
   createTrackedCoach,
   createTrackedUser,
 } from "./publish-fixture.test-helpers";
-
-const LEGACY_PLAN_GENERAL = 1;
 
 const tracker = createFixtureTracker();
 
@@ -32,6 +31,7 @@ describe("athletesApi.listLinkableAthletes", () => {
     softDeleted: "",
     notEnrolled: "",
     enrolledElsewhere: "",
+    removedEnrollment: "",
   };
 
   const enrolledAthlete = async (
@@ -69,6 +69,11 @@ describe("athletesApi.listLinkableAthletes", () => {
     ids.enrolledElsewhere = await enrolledAthlete(otherPlanId, {
       legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
     });
+    ids.removedEnrollment = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+    await cleanupRaw.planEnrollment.updateMany({
+      where: { planId, athleteId: ids.removedEnrollment },
+      data: { status: EnrollmentStatus.REMOVED, deletedAt: new Date() },
+    });
     ids.notEnrolled = await createTrackedUser(tracker);
     await createTestLegacyIdentity(ids.notEnrolled, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
 
@@ -88,13 +93,14 @@ describe("athletesApi.listLinkableAthletes", () => {
     );
   });
 
-  it("leaves out an Individual-plan account that is not enrolled in this plan", async () => {
+  it("leaves out Individual-plan accounts not enrolled in this plan, enrolled elsewhere or removed from it", async () => {
     const athleteIds = (await athletesApi.listLinkableAthletes(coachUserId, planId)).map(
       (athlete) => athlete.athleteId,
     );
 
     expect(athleteIds).not.toContain(ids.notEnrolled);
     expect(athleteIds).not.toContain(ids.enrolledElsewhere);
+    expect(athleteIds).not.toContain(ids.removedEnrollment);
   });
 
   it("leaves out enrolled athletes with a General-plan account, with no account, or soft-deleted", async () => {

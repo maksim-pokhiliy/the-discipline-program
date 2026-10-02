@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ForbiddenError } from "@repo/errors";
@@ -108,7 +109,32 @@ describe("createPublishApi().publish", () => {
     expect(mocks.warnMock).toHaveBeenCalledWith("mobile.publish.day_failed", {
       linkId: LINK_ID,
       scheduledDate: "2026-06-09",
-      code: "unknown",
+      code: "Error",
+    });
+  });
+
+  it("logs the Prisma error code of a day whose write fails", async () => {
+    mocks.loadTargetDaysMock.mockResolvedValue([makeDay("clzmonday000000000000000", "MONDAY")]);
+    mocks.createMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint failed", {
+        code: "P2003",
+        clientVersion: "6.0.0",
+      }),
+    );
+
+    const result = await createPublishApi().publish(USER_ID, {
+      linkId: LINK_ID,
+      startDate: START_DATE,
+      scope: "week",
+    });
+
+    expect(result.results).toEqual([
+      { scheduledDate: "2026-06-08", action: "failed", legacyRowId: null },
+    ]);
+    expect(mocks.warnMock).toHaveBeenCalledWith("mobile.publish.day_failed", {
+      linkId: LINK_ID,
+      scheduledDate: "2026-06-08",
+      code: "P2003",
     });
   });
 

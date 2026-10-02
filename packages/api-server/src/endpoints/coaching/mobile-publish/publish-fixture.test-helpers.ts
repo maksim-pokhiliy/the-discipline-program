@@ -1,5 +1,3 @@
-import { randomInt } from "node:crypto";
-
 import { DayOfWeek } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
@@ -14,23 +12,14 @@ import {
 } from "../../../test/helpers";
 import {
   createTestDay,
+  createTestEnrollment,
   createTestLabel,
   createTestSession,
   createTestWeek,
 } from "../../../test/schedule-helpers";
 import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-const FIXTURE_LEVEL_FLOOR = 700_000;
-const FIXTURE_LEVEL_CEILING = 800_000;
-const FIXTURE_USER_FLOOR = 100_000;
-const FIXTURE_USER_CEILING = 900_000;
 const SECOND_SESSION_ORDER = 1;
-
-export const mintFixtureLevelId = (): number =>
-  randomInt(FIXTURE_LEVEL_FLOOR, FIXTURE_LEVEL_CEILING);
-
-export const mintFixtureLegacyUserId = (): number =>
-  randomInt(FIXTURE_USER_FLOOR, FIXTURE_USER_CEILING);
 
 export const utcDate = (value: string): Date => new Date(`${value}T00:00:00.000Z`);
 
@@ -75,13 +64,16 @@ export const createTrackedUser = async (
 
 export const createTrackedIndividualAthlete = async (
   tracker: FixtureTracker,
-  legacyUserId: number,
-): Promise<string> => {
+  plan: { planId: string; coachUserId: string },
+): Promise<{ athleteId: string; legacyUserId: number }> => {
   const athleteId = await createTrackedUser(tracker);
+  const identity = await createTestLegacyIdentity(athleteId, {
+    legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+  });
 
-  await createTestLegacyIdentity(athleteId, { legacyUserId, legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+  await createTestEnrollment(plan.planId, athleteId, plan.coachUserId);
 
-  return athleteId;
+  return { athleteId, legacyUserId: identity.legacyUserId };
 };
 
 export const createTrackedCoach = async (tracker: FixtureTracker) => {
