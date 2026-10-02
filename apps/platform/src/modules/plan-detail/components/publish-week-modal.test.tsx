@@ -159,7 +159,7 @@ describe("PublishResultsPanel (MT-1, MT-13)", () => {
 });
 
 describe("PublishWeekModal publish request (no overwrite)", () => {
-  it("publishes every link once with only linkId, startDate and scope, never overwriteUnowned", async () => {
+  it("publishes every link once with exactly linkId, startDate and scope", async () => {
     mutateAsyncMock.mockResolvedValue(skippedResult());
 
     renderModal([LINK_A, LINK_B]);
@@ -173,7 +173,6 @@ describe("PublishWeekModal publish request (no overwrite)", () => {
 
     for (const [vars] of mutateAsyncMock.mock.calls) {
       expect(Object.keys(vars).sort()).toEqual(PUBLISH_REQUEST_KEYS);
-      expect(vars).not.toHaveProperty("overwriteUnowned");
     }
   });
 
