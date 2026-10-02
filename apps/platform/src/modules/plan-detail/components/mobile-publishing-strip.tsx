@@ -12,12 +12,7 @@ import {
 } from "@repo/contracts/coaching/mobile-link";
 import { formatDateParam } from "@repo/shared";
 
-import {
-  useCoachAthletes,
-  useMobileConnections,
-  useMobileLinks,
-  useTrainingLevels,
-} from "@app/lib/hooks";
+import { useCoachAthletes, useMobileLinks, useTrainingLevels } from "@app/lib/hooks";
 
 import {
   summarizeStripPublishStatus,
@@ -109,12 +104,9 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
   monday,
   hasWeekContent,
 }) => {
-  const connectionsQuery = useMobileConnections();
-  const isConnected = (connectionsQuery.data ?? []).length > 0;
-
   const weekStart = formatDateParam(monday);
   const linksQuery = useMobileLinks(planId, weekStart);
-  const levelsQuery = useTrainingLevels(isConnected);
+  const levelsQuery = useTrainingLevels();
   const athletesQuery = useCoachAthletes();
 
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -160,7 +152,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
     : describeLinks(generalLinks, individualLinks, levelNameById, athleteNameById);
   const canPublish = !hasLinksError && generalLinks.length + individualLinks.length > 0;
   const publishTooltip = resolvePublishTooltip(hasLinksError, canPublish);
-  const isStripHidden = connectionsQuery.isPending || linksQuery.isPending;
+  const isStripHidden = linksQuery.isPending;
 
   return (
     <>

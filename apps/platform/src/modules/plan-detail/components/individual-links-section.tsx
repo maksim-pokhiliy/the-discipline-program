@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 import type { MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
@@ -10,7 +10,6 @@ import type { IndividualMobileLink } from "@repo/contracts/coaching/mobile-link"
 import { EnrollmentStatus, type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 import { EmptyState } from "@repo/ui";
 
-import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
 import {
   useCoachAthletes,
   useCreateMobileLink,
@@ -19,14 +18,10 @@ import {
   usePlanEnrollments,
 } from "@app/lib/hooks";
 
-import { ConnectMobileModal } from "../../coach-profile/components";
-
 import { IndividualLinkRow } from "./individual-link-row";
 
 const PICKLIST_MAX_HEIGHT = 280;
-const RECONNECT_MESSAGE = "Connection expired. Reconnect to link athletes.";
 const ATHLETES_ERROR_MESSAGE = "Couldn't load athletes. Try again.";
-const RECONNECT_TITLE = "Reconnect mobile app";
 const EMPTY_MESSAGE = "No enrolled athletes to link yet.";
 const UNKNOWN_ATHLETE_LABEL = "Unknown athlete";
 const ALL_LEGACY_LINKED_MESSAGE = "Every mobile athlete is already linked.";
@@ -69,22 +64,18 @@ const buildRows = (
 
 type IndividualLinksSectionProps = {
   planId: string;
-  isConnected: boolean;
   individualLinks: IndividualMobileLink[];
 };
 
 export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
   planId,
-  isConnected,
   individualLinks,
 }) => {
   const enrollmentsQuery = usePlanEnrollments(planId);
   const athletesQuery = useCoachAthletes();
-  const mobileAthletesQuery = useMobileAthletes(isConnected);
+  const mobileAthletesQuery = useMobileAthletes();
   const createLink = useCreateMobileLink(planId);
   const deleteLink = useDeleteMobileLink(planId);
-
-  const [isConnectOpen, setIsConnectOpen] = useState<boolean>(false);
 
   const rosterById = useMemo(() => {
     const map = new Map<string, CoachAthleteListItem>();
@@ -139,10 +130,7 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
   const linkedRows = useMemo(() => rows.filter((row) => row.existingLink !== undefined), [rows]);
   const unlinkedRows = useMemo(() => rows.filter((row) => row.existingLink === undefined), [rows]);
 
-  const isReconnect =
-    mobileAthletesQuery.error !== null && isReconnectRequired(mobileAthletesQuery.error);
-  const hasAthletesError = mobileAthletesQuery.isError && !isReconnect;
-  const isAthletesLoading = isConnected && mobileAthletesQuery.isPending;
+  const isAthletesLoading = mobileAthletesQuery.isPending;
   const isRosterPending = enrollmentsQuery.isPending || athletesQuery.isPending;
   const isMutating = createLink.isPending || deleteLink.isPending;
 
@@ -178,19 +166,7 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
       return null;
     }
 
-    if (isReconnect) {
-      return (
-        <Stack spacing={2}>
-          <Alert severity="warning">{RECONNECT_MESSAGE}</Alert>
-
-          <Button variant="contained" onClick={() => setIsConnectOpen(true)}>
-            Reconnect
-          </Button>
-        </Stack>
-      );
-    }
-
-    if (hasAthletesError) {
+    if (mobileAthletesQuery.isError) {
       return <Alert severity="error">{ATHLETES_ERROR_MESSAGE}</Alert>;
     }
 
@@ -226,21 +202,12 @@ export const IndividualLinksSection: React.FC<IndividualLinksSectionProps> = ({
   }
 
   return (
-    <>
-      <Box sx={{ maxHeight: PICKLIST_MAX_HEIGHT, overflowY: "auto" }}>
-        <Stack spacing={1.5}>
-          {linkedRows.map(renderRow)}
+    <Box sx={{ maxHeight: PICKLIST_MAX_HEIGHT, overflowY: "auto" }}>
+      <Stack spacing={1.5}>
+        {linkedRows.map(renderRow)}
 
-          {renderAddAffordance()}
-        </Stack>
-      </Box>
-
-      <ConnectMobileModal
-        open={isConnectOpen}
-        onClose={() => setIsConnectOpen(false)}
-        onConnected={() => setIsConnectOpen(false)}
-        title={RECONNECT_TITLE}
-      />
-    </>
+        {renderAddAffordance()}
+      </Stack>
+    </Box>
   );
 };

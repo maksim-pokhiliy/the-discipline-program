@@ -17,18 +17,14 @@ import {
 
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
 import { type GeneralMobileLink, partitionMobileLinks } from "@repo/contracts/coaching/mobile-link";
-import { BaseModal, ConfirmationModal, EmptyState } from "@repo/ui";
+import { BaseModal, ConfirmationModal } from "@repo/ui";
 
-import { isReconnectRequired } from "@app/lib/api/is-reconnect-required";
 import {
   useCreateMobileLink,
   useDeleteMobileLink,
-  useMobileConnections,
   useMobileLinks,
   useTrainingLevels,
 } from "@app/lib/hooks";
-
-import { ConnectMobileModal } from "../../coach-profile/components";
 
 import { GeneralLinkRow } from "./general-link-row";
 import { IndividualLinksSection } from "./individual-links-section";
@@ -41,13 +37,10 @@ type ManageMobileLinksModalProps = {
 };
 
 const MODAL_TITLE = "Mobile publishing";
-const NOT_CONNECTED_MESSAGE = "Connect your mobile app to publish plans to a training level.";
-const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training levels.";
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
 const LINKS_ERROR_MESSAGE = "Couldn't load what this plan is linked to. Try again.";
-const RECONNECT_TITLE = "Reconnect mobile app";
 const NO_LEVEL_SELECTED = "";
 const TRAINING_LEVELS_HEADING = "Training levels";
 const ATHLETES_HEADING = "Athletes";
@@ -58,16 +51,12 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
   planId,
   weekStart,
 }) => {
-  const connectionsQuery = useMobileConnections();
-  const isConnected = (connectionsQuery.data ?? []).length > 0;
-
-  const levelsQuery = useTrainingLevels(isConnected);
+  const levelsQuery = useTrainingLevels();
   const linksQuery = useMobileLinks(planId, weekStart);
 
   const createLink = useCreateMobileLink(planId);
   const deleteLink = useDeleteMobileLink(planId);
 
-  const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [selectedLevelId, setSelectedLevelId] = useState<string>(NO_LEVEL_SELECTED);
   const [pendingDelete, setPendingDelete] = useState<GeneralMobileLink | null>(null);
 
@@ -92,10 +81,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
     [levels, linkedLevelIds],
   );
 
-  const isReconnect = levelsQuery.error !== null && isReconnectRequired(levelsQuery.error);
-  const hasLevelsError = levelsQuery.isError && !isReconnect;
-  const isLoading =
-    connectionsQuery.isPending || (isConnected && (levelsQuery.isPending || linksQuery.isPending));
+  const isLoading = levelsQuery.isPending || linksQuery.isPending;
 
   const handleAdd = () => {
     if (selectedLevelId === NO_LEVEL_SELECTED) {
@@ -131,27 +117,6 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
       );
     }
 
-    if (!isConnected) {
-      return (
-        <EmptyState
-          message={NOT_CONNECTED_MESSAGE}
-          action={{ label: "Connect mobile app", onClick: () => setIsConnectOpen(true) }}
-        />
-      );
-    }
-
-    if (isReconnect) {
-      return (
-        <Stack spacing={2}>
-          <Alert severity="warning">{RECONNECT_MESSAGE}</Alert>
-
-          <Button variant="contained" onClick={() => setIsConnectOpen(true)}>
-            Reconnect
-          </Button>
-        </Stack>
-      );
-    }
-
     if (linksQuery.isError) {
       return <Alert severity="error">{LINKS_ERROR_MESSAGE}</Alert>;
     }
@@ -182,7 +147,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
           </Stack>
         )}
 
-        {hasLevelsError ? (
+        {levelsQuery.isError ? (
           <Alert severity="error">{LEVELS_ERROR_MESSAGE}</Alert>
         ) : (
           <>
@@ -227,11 +192,7 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
           {ATHLETES_HEADING}
         </Typography>
 
-        <IndividualLinksSection
-          planId={planId}
-          isConnected={isConnected}
-          individualLinks={individualLinks}
-        />
+        <IndividualLinksSection planId={planId} individualLinks={individualLinks} />
       </Stack>
     );
   };
@@ -250,13 +211,6 @@ export const ManageMobileLinksModal: React.FC<ManageMobileLinksModalProps> = ({
       >
         {renderBody()}
       </BaseModal>
-
-      <ConnectMobileModal
-        open={isConnectOpen}
-        onClose={() => setIsConnectOpen(false)}
-        onConnected={() => setIsConnectOpen(false)}
-        {...(isReconnect && { title: RECONNECT_TITLE })}
-      />
 
       <ConfirmationModal
         open={pendingDelete !== null}

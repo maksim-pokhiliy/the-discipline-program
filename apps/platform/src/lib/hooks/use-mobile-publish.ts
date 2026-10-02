@@ -11,25 +11,17 @@ import { platformKeys } from "../api/keys";
 const TRAINING_LEVELS_STALE_TIME_MS = 5 * 60_000;
 const MOBILE_ATHLETES_STALE_TIME_MS = 5 * 60_000;
 
-export const useMobileConnections = () =>
-  useQuery({
-    queryKey: platformKeys.mobile.connections(),
-    queryFn: () => api.mobile.listConnections(),
-  });
-
-export const useTrainingLevels = (enabled: boolean) =>
+export const useTrainingLevels = () =>
   useQuery({
     queryKey: platformKeys.mobile.trainingLevels(),
     queryFn: () => api.mobile.listTrainingLevels(),
-    enabled,
     staleTime: TRAINING_LEVELS_STALE_TIME_MS,
   });
 
-export const useMobileAthletes = (enabled: boolean) =>
+export const useMobileAthletes = () =>
   useQuery({
     queryKey: platformKeys.mobile.athletes(),
     queryFn: () => api.mobile.listAthletes(),
-    enabled,
     staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
   });
 
@@ -40,23 +32,6 @@ export const useMobileLinks = (planId: string, weekStart?: string) =>
     enabled: Boolean(planId),
     placeholderData: keepPreviousData,
   });
-
-export const useConnectMobile = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: api.mobile.connect,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.connections() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.trainingLevels() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.athletes() });
-      toast.success("Mobile app connected");
-    },
-    onError: (error: Error) => {
-      notifyError(error, "Failed to connect mobile app");
-    },
-  });
-};
 
 export const useCreateMobileLink = (planId: string) => {
   const queryClient = useQueryClient();
