@@ -121,7 +121,7 @@ const createDay = async (write: DayWrite): Promise<DayOutcome> => {
 const writeDecided = async (write: DayWrite, stored: StoredDay | null): Promise<DayOutcome> => {
   const action = decidePublishAction(await toDayState(write.args, stored), write.hash);
 
-  if (stored === null || action === "created") {
+  if (stored === null) {
     return createDay(write);
   }
 

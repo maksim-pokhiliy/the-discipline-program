@@ -5,6 +5,7 @@ import { UserRole } from "@repo/contracts/iam/auth";
 
 import { prisma } from "../../../db/client";
 import {
+  LEGACY_LEVEL_PRO,
   LEGACY_LEVEL_SCALED,
   LEGACY_PLAN_GENERAL,
   LEGACY_ROLE_USER,
@@ -29,6 +30,7 @@ const GENERAL_TUESDAY = "2031-05-06";
 const INDIVIDUAL_WEEK_MONDAY = "2031-05-12";
 const INDIVIDUAL_TUESDAY = "2031-05-13";
 const GENERAL_READER_LEGACY_USER_ID = 424_242;
+const TWO_LEVELS_WEEK_MONDAY = "2031-05-19";
 
 const tracker = createFixtureTracker();
 const publishApi = createPublishApi();
@@ -125,6 +127,29 @@ describe("a re-publish takes the day back for its audience", () => {
       },
       GENERAL_TUESDAY,
     );
+  });
+
+  it("leaves a level's day alone when only another level published the same date later", async () => {
+    const levelSide = async (legacyLevelId: number): Promise<PlanSide> => {
+      const fixture = await createPublishFixture(tracker, TWO_LEVELS_WEEK_MONDAY);
+      const link = await linksApi.createLink(adminUserId, {
+        planId: fixture.planId,
+        legacyLevelId,
+      });
+
+      return { fixture, linkId: link.id, actorUserId: adminUserId };
+    };
+    const scaled = await levelSide(LEGACY_LEVEL_SCALED);
+    const pro = await levelSide(LEGACY_LEVEL_PRO);
+
+    await publishWeek(scaled, TWO_LEVELS_WEEK_MONDAY);
+    await publishWeek(pro, TWO_LEVELS_WEEK_MONDAY);
+
+    const before = await loadRows(scaled.linkId);
+    const again = await publishWeek(scaled, TWO_LEVELS_WEEK_MONDAY);
+
+    expect(again.results.map((day) => day.action)).toEqual(["skipped", "skipped", "skipped"]);
+    expect(await loadRows(scaled.linkId)).toEqual(before);
   });
 
   it("serves the plan that published an Individual day last, and an unchanged re-publish reclaims it", async () => {
