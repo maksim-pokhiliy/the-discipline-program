@@ -19,7 +19,7 @@ Required in this app:
 - `NEXTAUTH_SECRET`, `NEXTAUTH_URL` — platform runs its own NextAuth instance ([ADR 0011](../../docs/adr/0011-two-independent-nextauth-instances.md)).
 - `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_MARKETING_URL` — HTTP loopback + cross-app links.
 - `BLOB_READ_WRITE_TOKEN` — Vercel Blob token for coach avatar uploads ([ADR 0013](../../docs/adr/0013-vercel-blob-for-image-storage.md)).
-- `MOBILE_PUBLISH_ENCRYPTION_KEY`, `LEGACY_MOBILE_API_BASE_URL` — legacy mobile connector, now a dual-write nobody reads: the iOS app is served by this platform since the 2026-09-17 apex cutover (`/api/v1/*`). Retiring at P4.1 (ADR-0043); until then the vars stay REQUIRED — `/api/v1/program` module-initialises them. Validated at boot via `next.config.ts`, consumed server-side in `@repo/api-server`.
+- `MOBILE_PUBLISH_ENCRYPTION_KEY`, `LEGACY_MOBILE_API_BASE_URL` — legacy mobile connector, no longer on the publish path: the iOS app is served by this platform since the 2026-09-17 apex cutover (`/api/v1/*`) and publish writes its own snapshot since 2026-10-03. Retiring at P4.1b (ADR-0043); until then the vars stay REQUIRED — `/api/v1/program` module-initialises them. Validated at boot via `next.config.ts`, consumed server-side in `@repo/api-server`.
 
 Storefront billing, read from step 1.1 (set them before that step ships; nothing reads them before then): `MONOBANK_MERCHANT_TOKEN`, `BILLING_ENCRYPTION_KEY`, optional `MONOBANK_API_URL`, `MONOBANK_WEBHOOK_PUBLIC_KEY`.
 
