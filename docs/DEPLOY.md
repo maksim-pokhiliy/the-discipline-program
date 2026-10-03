@@ -60,20 +60,20 @@ Every env var is validated by `@repo/env` (Zod via `@t3-oss/env-nextjs`) when it
 
 ### Required variables
 
-| Variable                        | Scope  | Used by         | Description                                                                                           |
-| ------------------------------- | ------ | --------------- | ----------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                  | Server | All apps        | PostgreSQL connection string (Neon; direct/non-pooler for migrations)                                 |
-| `NEXTAUTH_SECRET`               | Server | Admin, Platform | JWT signing secret for NextAuth                                                                       |
-| `NEXTAUTH_URL`                  | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`)                                          |
-| `NEXT_PUBLIC_APP_URL`           | Client | All apps        | Admin app public URL                                                                                  |
-| `NEXT_PUBLIC_MARKETING_URL`     | Client | All apps        | Marketing app public URL                                                                              |
-| `NEXT_PUBLIC_PLATFORM_URL`      | Client | All apps        | Platform app public URL                                                                               |
-| `BLOB_READ_WRITE_TOKEN`         | Server | Admin, Platform | Vercel Blob read/write token for file uploads                                                         |
-| `MOBILE_PUBLISH_ENCRYPTION_KEY` | Server | Admin, Platform | AES-256-GCM key for the legacy mobile connector token at rest; retiring at P4.1 (ADR-0043)            |
-| `LEGACY_MOBILE_API_BASE_URL`    | Server | Admin, Platform | Legacy Spring backend base URL, version prefix included; the connector dual-writes into it until P4.1 |
-| `MOBILE_SHIM_JWT_SECRET`        | Server | Platform        | Signs the bearer token the App-Store iOS app stores for `/api/v1/*` (min 32 chars)                    |
-| `MONOBANK_MERCHANT_TOKEN`       | Server | Platform        | Monobank acquiring `X-Token`; read from storefront-billing 1.1                                        |
-| `BILLING_ENCRYPTION_KEY`        | Server | Platform        | Card-token cipher key, base64 of 32 random bytes (D-20); read from storefront-billing 1.1             |
+| Variable                        | Scope  | Used by         | Description                                                                                                                                         |
+| ------------------------------- | ------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                  | Server | All apps        | PostgreSQL connection string (Neon; direct/non-pooler for migrations)                                                                               |
+| `NEXTAUTH_SECRET`               | Server | Admin, Platform | JWT signing secret for NextAuth                                                                                                                     |
+| `NEXTAUTH_URL`                  | Server | Admin, Platform | Canonical URL of the app (e.g., `https://admin.example.com`)                                                                                        |
+| `NEXT_PUBLIC_APP_URL`           | Client | All apps        | Admin app public URL                                                                                                                                |
+| `NEXT_PUBLIC_MARKETING_URL`     | Client | All apps        | Marketing app public URL                                                                                                                            |
+| `NEXT_PUBLIC_PLATFORM_URL`      | Client | All apps        | Platform app public URL                                                                                                                             |
+| `BLOB_READ_WRITE_TOKEN`         | Server | Admin, Platform | Vercel Blob read/write token for file uploads                                                                                                       |
+| `MOBILE_PUBLISH_ENCRYPTION_KEY` | Server | Admin, Platform | AES-256-GCM key for the legacy mobile connector token at rest; retiring at P4.1 (ADR-0043)                                                          |
+| `LEGACY_MOBILE_API_BASE_URL`    | Server | Admin, Platform | Legacy Spring backend base URL; nothing calls it for publishing since 2026-10-03 (P4.1a) — still REQUIRED at boot until P4.1b removes the connector |
+| `MOBILE_SHIM_JWT_SECRET`        | Server | Platform        | Signs the bearer token the App-Store iOS app stores for `/api/v1/*` (min 32 chars)                                                                  |
+| `MONOBANK_MERCHANT_TOKEN`       | Server | Platform        | Monobank acquiring `X-Token`; read from storefront-billing 1.1                                                                                      |
+| `BILLING_ENCRYPTION_KEY`        | Server | Platform        | Card-token cipher key, base64 of 32 random bytes (D-20); read from storefront-billing 1.1                                                           |
 
 `MONOBANK_API_URL` (defaults to `https://api.monobank.ua`) and `MONOBANK_WEBHOOK_PUBLIC_KEY` (leave it unset in deployments) are optional.
 

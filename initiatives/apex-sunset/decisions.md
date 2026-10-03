@@ -8,17 +8,20 @@ This file is the SSOT for "why."
 
 ## Index
 
-| ID  | Topic                                                                                   | Status   |
-| --- | --------------------------------------------------------------------------------------- | -------- |
-| D-1 | Absorb & retire via compat shim + domain takeover; zero Swift changes                   | RATIFIED |
-| D-2 | The iOS app is a production surface, NOT legacy; redesign later, no sunset              | RATIFIED |
-| D-3 | Users import: ALL rows, no activity filter; legacy integer id preserved                 | RATIFIED |
-| D-4 | Publish becomes a snapshot in our DB; the shim serves snapshots                         | RATIFIED |
-| D-5 | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal              | RATIFIED |
-| D-6 | Legacy identity = separate `MobileLegacyIdentity` table; schema pulled forward to P1.1  | RATIFIED |
-| D-7 | Shim wire schemas live api-server-local — a stated ADR-0005 exception                   | RATIFIED |
-| D-8 | The Appetize stand targets PROD; a synthetic INDIVIDUAL demo universe lives in prod     | RATIFIED |
-| D-9 | Cutover mechanism: apex DNS → Vercel as a platform custom domain (no Cloudflare Worker) | RATIFIED |
+| ID   | Topic                                                                                                    | Status   |
+| ---- | -------------------------------------------------------------------------------------------------------- | -------- |
+| D-1  | Absorb & retire via compat shim + domain takeover; zero Swift changes                                    | RATIFIED |
+| D-2  | The iOS app is a production surface, NOT legacy; redesign later, no sunset                               | RATIFIED |
+| D-3  | Users import: ALL rows, no activity filter; legacy integer id preserved                                  | RATIFIED |
+| D-4  | Publish becomes a snapshot in our DB; the shim serves snapshots                                          | RATIFIED |
+| D-5  | E2E harness: golden contract tests + Appetize stand + prod-build rehearsal                               | RATIFIED |
+| D-6  | Legacy identity = separate `MobileLegacyIdentity` table; schema pulled forward to P1.1                   | RATIFIED |
+| D-7  | Shim wire schemas live api-server-local — a stated ADR-0005 exception                                    | RATIFIED |
+| D-8  | The Appetize stand targets PROD; a synthetic INDIVIDUAL demo universe lives in prod                      | RATIFIED |
+| D-9  | Cutover mechanism: apex DNS → Vercel as a platform custom domain (no Cloudflare Worker)                  | RATIFIED |
+| D-10 | An Individual link uses the athlete's own app account; no picker                                         | RATIFIED |
+| D-11 | A link belongs to its plan; writing to a General audience is the head coach's and the admin's            | RATIFIED |
+| D-12 | Publish decides against our own ledger and the row the audience is served; the wire id is minted locally | RATIFIED |
 
 ---
 
@@ -88,3 +91,24 @@ This file is the SSOT for "why."
 - **Decision.** At P3.2 the apex `thedisciplineprogram.com` becomes a custom domain of the platform Vercel project (Vercel issues the cert); the Cloudflare A record moves from the VPS (proxied) to Vercel (unproxied, like `www`/`platform`/`admin`), so Cloudflare stays DNS-only. Every non-`/api/v1` path on the apex 308-redirects to `www` (marketing) from `apps/platform/vercel.json`; `/api/v1/*` is served by the shim on the same host. Rollback = the A record back to the VPS with proxying on (TTL lowered to 60 s beforehand). Not chosen: a Cloudflare Worker route on `/api/v1/*` proxying to `platform.…`.
 - **Rationale.** (1) The Vercel edge refuses a request whose Host differs from the SNI (403, proven at P3.1), so in the DNS-flip design the apex MUST be a Vercel custom domain — a Worker would instead rewrite Host itself, as the rehearsal proxy did. (2) The Worker would be a permanently running production component inside Vladyslav's Cloudflare account (the owner has full-rights access, but not ownership — billing, removal), i.e. a bus-factor dependency this initiative exists to retire. (3) P3.3 switches the VPS off, after which the apex has to move anyway — the Worker route is a second cutover, not an alternative to one. (4) The bare apex serves an empty 200 on the VPS today, so the www redirect loses nothing. The Worker's genuine advantages — per-path scope and instant revert — are bought instead by the 60 s TTL and by staging the Vercel domain + redirect BEFORE the flip (3.2a) and checking the routing live against the Vercel IP before DNS moves.
 - **Links.** journal 2026-08-07-later (the original two-option analysis), journal 2026-08-25 (Host≠SNI), plan 3.2a/3.2b, `docs/runbooks/apex-cutover.md` (3.2a deliverable).
+
+### D-10 — An Individual link uses the athlete's own app account; no picker
+
+- **Status:** RATIFIED (owner, 2026-10-02 — «Меняем на "свой аккаунт, без выбора"»).
+- **Decision.** Creating an Individual link carries the plan and the athlete only. The server derives the app account from that athlete's own `MobileLegacyIdentity` and refuses when the athlete is not enrolled in the plan or has no account on the Individual plan. The coach UI shows a `Link` button for an enrolled athlete who has such an account and a caption for one who has not; the list endpoint answers only which of the plan's enrolled athletes are linkable.
+- **Rationale.** After the P2 import every app account belongs to exactly one platform user, so the pairing the old picker asked the coach to make already exists in the schema. The planner's first rule for the picker — Individual-plan identities with a legacy id below 990000 — was a number standing in for that relation; the owner called it a smell. Production evidence: all five Individual links already pair an athlete with their own identity, and a free pairing is exactly what AS-12's `link-and-identity-disagree` treats as a violation. Synthetic accounts drop out because they are not enrolled in a coach's plan, with no threshold anywhere.
+- **Links.** journal 2026-10-02 (later); PR #412; AS-12; AS-28 / AS-31 (what happens to a link when the account or the enrollment later changes).
+
+### D-11 — A link belongs to its plan; writing to a General audience is the head coach's and the admin's
+
+- **Status:** RATIFIED (planner, 2026-10-02; reported to the owner the same day and merged by him in PR #412).
+- **Decision.** A link no longer needs a `MobileConnection`: `connectionId` is optional, and listing, publishing through and deleting a link are governed by the plan rule (`verifyPlanOwnership`, verbatim — ADMIN and HEAD_COACH pass on any plan, a foreign coach is refused). On top of that, creating a General link and publishing through one require ADMIN or HEAD_COACH (`verifyCanPublishToLevel`); a plain coach is refused even on their own plan, and the client does not offer them the level picker or the General publish.
+- **Rationale.** The connection existed only to hold a legacy session. It was also, by accident, the only thing that kept a plain coach from publishing to a whole training level: the internal review reproduced a takeover of a level's feed once links were owned through the plan alone. A General level is one shared feed for every athlete of that level, so writing to it is a head-coach capability; Individual links are bounded by enrollment and D-10.
+- **Links.** journal 2026-10-02 (later, RF-1); PR #412; AS-25 (the cascade that 4.1b must remove first); AS-34 (what a plain coach sees and may delete).
+
+### D-12 — Publish decides against our own ledger and the row the audience is served; the wire id is minted locally
+
+- **Status:** RATIFIED (planner, 2026-10-02, completing D-4; merged by the owner in PR #412).
+- **Decision.** Publish projects the day and writes the snapshot with no outbound call. Per (link, date): no row of ours → `created`; our row is the one the shim would serve that audience and its hash equals the projection's → `skipped`, nothing written; anything else → `updated` (content, hash and `publishedAt`), the wire id unchanged. `failed` isolates one day. `conflict`, `overwriteUnowned` and every connect / reconnect state are deleted. The wire `id` comes from a database sequence starting at 1 000 000 and is stable per (link, day) across re-publishes (closes AS-14).
+- **Rationale.** The connector-era decision compared against the legacy row; with the legacy API gone the truth is what the shim serves. Comparing only against the link's own row would let `skipped` be a lie when another link of the same audience published the day later, so the served row is an input: a publish always ends with this plan's day being the one athletes see. The old overwrite prompt is not restored for two plans on one audience — the latest publish wins and the statuses stay truthful (AS-30 holds the product question).
+- **Links.** D-4; `mobile-publish/decisions.md` D-18 (statuses and run guards, unchanged); journal 2026-10-02; PR #412; AS-14, AS-30, AS-32 (the served-row predicate is duplicated from `get-program.ts`), AS-33.
