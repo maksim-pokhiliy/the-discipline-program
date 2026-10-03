@@ -9,8 +9,6 @@ import {
   type legacySigninResponseSchema,
   type legacyTrainingLevelSchema,
   type legacyTrainingLevelsSchema,
-  type mobileAthleteSchema,
-  type mobileAthletesSchema,
 } from "./legacy-mobile.schema";
 
 export type LegacySigninResponse = z.infer<typeof legacySigninResponseSchema>;
@@ -21,5 +19,3 @@ export type LegacyGeneralProgram = z.infer<typeof legacyGeneralProgramSchema>;
 export type LegacyIndividualProgram = z.infer<typeof legacyIndividualProgramSchema>;
 export type LegacyAthlete = z.infer<typeof legacyAthleteSchema>;
 export type LegacyAthletes = z.infer<typeof legacyAthletesSchema>;
-export type MobileAthlete = z.infer<typeof mobileAthleteSchema>;
-export type MobileAthletes = z.infer<typeof mobileAthletesSchema>;

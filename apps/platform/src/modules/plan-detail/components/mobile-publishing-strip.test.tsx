@@ -3,13 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
-import type { MobileConnection } from "@repo/contracts/coaching/mobile-connection";
 import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
 import { formatDate } from "@repo/shared";
 
+import type { LevelPublishAccess } from "@app/lib/hooks";
 import {
   makeIndividualLink,
-  makeMobileConnection,
   makeMobileLink,
   trainingLevelsFixture,
 } from "@app/lib/mobile.fixtures";
@@ -22,12 +21,6 @@ type QueryState<TData> = {
   isPlaceholderData: boolean;
 };
 
-const connectionsState: QueryState<MobileConnection[]> = {
-  data: [makeMobileConnection()],
-  isError: false,
-  isPending: false,
-  isPlaceholderData: false,
-};
 const levelsState: QueryState<LegacyTrainingLevel[]> = {
   data: trainingLevelsFixture,
   isError: false,
@@ -41,9 +34,11 @@ const linksState: QueryState<MobileLink[]> = {
   isPlaceholderData: false,
 };
 const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
+const trainingLevelsSpy = vi.fn<(...args: unknown[]) => void>();
 const manageModalSpy =
   vi.fn<(props: { planId: string; weekStart: string; open: boolean }) => void>();
-const publishModalSpy = vi.fn<(props: { open: boolean }) => void>();
+const publishModalSpy = vi.fn<(props: { open: boolean; links: MobileLink[] }) => void>();
+const viewerRole: { access: LevelPublishAccess } = { access: "allowed" };
 
 type RosterAthlete = Pick<CoachAthleteListItem, "userId" | "name" | "email">;
 
@@ -60,9 +55,13 @@ const coachAthletesState: QueryState<{ athletes: RosterAthlete[] }> = {
 };
 
 vi.mock("@app/lib/hooks", () => ({
+  useLevelPublishAccess: () => viewerRole.access,
   useCoachAthletes: () => coachAthletesState,
-  useMobileConnections: () => connectionsState,
-  useTrainingLevels: () => levelsState,
+  useTrainingLevels: (...args: unknown[]) => {
+    trainingLevelsSpy(...args);
+
+    return levelsState;
+  },
   useMobileLinks: (planId: string, weekStart?: string) => {
     mobileLinksSpy(planId, weekStart);
 
@@ -79,7 +78,7 @@ vi.mock("./manage-mobile-links-modal", () => ({
 }));
 
 vi.mock("./publish-week-modal", () => ({
-  PublishWeekModal: (props: { open: boolean }) => {
+  PublishWeekModal: (props: { open: boolean; links: MobileLink[] }) => {
     publishModalSpy(props);
 
     return <div data-testid="publish-week-modal" data-open={String(props.open)} />;
@@ -94,6 +93,7 @@ const MONDAY_PARAM = "2026-01-05";
 const PUBLISH_BUTTON_NAME = "Publish this week";
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
 const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
+const LEVEL_PUBLISH_FORBIDDEN_TOOLTIP = "Only the head coach can publish to a training level";
 const LINKS_ERROR_LABEL = "Couldn't load the publishing status";
 const LINKS_ERROR_TOOLTIP = "Can't publish until the publishing status loads";
 const CHECKING_LABEL = "Checking this week…";
@@ -128,9 +128,7 @@ const hoverPublishTooltip = async (): Promise<HTMLElement> => {
 };
 
 beforeEach(() => {
-  connectionsState.data = [makeMobileConnection()];
-  connectionsState.isError = false;
-  connectionsState.isPending = false;
+  viewerRole.access = "allowed";
   levelsState.data = trainingLevelsFixture;
   levelsState.isError = false;
   levelsState.isPending = false;
@@ -142,6 +140,7 @@ beforeEach(() => {
   coachAthletesState.isError = false;
   coachAthletesState.isPending = false;
   mobileLinksSpy.mockClear();
+  trainingLevelsSpy.mockClear();
   manageModalSpy.mockClear();
   publishModalSpy.mockClear();
 });
@@ -184,13 +183,41 @@ describe("MobilePublishingStrip (MT-14)", () => {
     expect(screen.getByText("2 levels")).toBeInTheDocument();
   });
 
-  it("hides the card while the connections or links queries are pending", () => {
+  it("hides the card while the links query is pending", () => {
     linksState.isPending = true;
 
     renderStrip();
 
     expect(screen.queryByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeNull();
     expect(screen.queryByText("Mobile publishing")).toBeNull();
+  });
+
+  it("renders as soon as the links resolve, with no connections query in the way", () => {
+    linksState.data = [makeMobileLink()];
+
+    renderStrip();
+
+    expect(screen.getByText("Mobile publishing")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
+  });
+
+  it("renders once the links resolve even while the training levels are still loading", () => {
+    levelsState.data = undefined;
+    levelsState.isPending = true;
+    linksState.data = [makeMobileLink()];
+
+    renderStrip();
+
+    expect(screen.getByText("Mobile publishing")).toBeInTheDocument();
+    expect(screen.getByText("1 level")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
+  });
+
+  it("loads the training levels unconditionally, with no argument", () => {
+    renderStrip();
+
+    expect(trainingLevelsSpy).toHaveBeenCalled();
+    expect(trainingLevelsSpy.mock.calls.every((args) => args.length === 0)).toBe(true);
   });
 });
 
@@ -209,18 +236,6 @@ describe("MobilePublishingStrip modal lifetime (F2)", () => {
 
   beforeEach(() => {
     linksState.data = [makeMobileLink()];
-  });
-
-  it("keeps both modals mounted while the connections query is pending", () => {
-    const view = renderStrip();
-
-    hideStripWith(() => {
-      connectionsState.isPending = true;
-    }, view);
-
-    expect(screen.queryByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeNull();
-    expect(screen.getByTestId("publish-week-modal")).toHaveAttribute("data-open", "true");
-    expect(manageModalSpy).toHaveBeenCalled();
   });
 
   it("keeps both modals mounted while the links query is pending", () => {
@@ -497,5 +512,62 @@ describe("MobilePublishingStrip on a week with no content (F7)", () => {
     render(stripFor(false));
 
     expect(screen.getByText("Never published")).toBeInTheDocument();
+  });
+});
+
+describe("MobilePublishingStrip for a coach who may not publish to training levels", () => {
+  const levelLink = makeMobileLink({ legacyLevelId: 2 });
+  const athleteLink = makeIndividualLink({ athleteId: ALICE.userId });
+
+  const lastPublishModalLinks = (): MobileLink[] =>
+    publishModalSpy.mock.calls.at(-1)?.[0].links ?? [];
+
+  beforeEach(() => {
+    viewerRole.access = "denied";
+  });
+
+  it("disables Publish and says why when only training levels are linked", async () => {
+    linksState.data = [levelLink];
+
+    renderStrip();
+
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeDisabled();
+    expect(await hoverPublishTooltip()).toHaveTextContent(LEVEL_PUBLISH_FORBIDDEN_TOOLTIP);
+  });
+
+  it("publishes only through the athlete links", () => {
+    linksState.data = [levelLink, athleteLink];
+
+    renderStrip();
+
+    expect(screen.getByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeEnabled();
+    expect(lastPublishModalLinks()).toEqual([athleteLink]);
+  });
+
+  it("hands every link to the publish modal for a head coach", () => {
+    viewerRole.access = "allowed";
+    linksState.data = [levelLink, athleteLink];
+
+    renderStrip();
+
+    expect(lastPublishModalLinks()).toEqual([levelLink, athleteLink]);
+  });
+});
+
+describe("MobilePublishingStrip while the viewer's session is still loading", () => {
+  beforeEach(() => {
+    viewerRole.access = "pending";
+  });
+
+  it("offers no Publish button and hands the publish modal no links", () => {
+    linksState.data = [
+      makeMobileLink({ legacyLevelId: 2 }),
+      makeIndividualLink({ athleteId: ALICE.userId }),
+    ];
+
+    renderStrip();
+
+    expect(screen.queryByRole("button", { name: PUBLISH_BUTTON_NAME })).toBeNull();
+    expect(publishModalSpy.mock.calls.at(-1)?.[0].links).toEqual([]);
   });
 });

@@ -3,34 +3,43 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { notifyError } from "@repo/query";
+import { useSession } from "@repo/auth/client";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { notifyError, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 const TRAINING_LEVELS_STALE_TIME_MS = 5 * 60_000;
-const MOBILE_ATHLETES_STALE_TIME_MS = 5 * 60_000;
+const LEVEL_PUBLISHER_ROLES: ReadonlySet<UserRole> = new Set([UserRole.ADMIN, UserRole.HEAD_COACH]);
 
-export const useMobileConnections = () =>
-  useQuery({
-    queryKey: platformKeys.mobile.connections(),
-    queryFn: () => api.mobile.listConnections(),
-  });
+export type LevelPublishAccess = "pending" | "allowed" | "denied";
 
-export const useTrainingLevels = (enabled: boolean) =>
+export const useLevelPublishAccess = (): LevelPublishAccess => {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return "pending";
+  }
+
+  const role = session?.user?.role ?? null;
+
+  return role !== null && LEVEL_PUBLISHER_ROLES.has(role) ? "allowed" : "denied";
+};
+
+export const useTrainingLevels = () =>
   useQuery({
     queryKey: platformKeys.mobile.trainingLevels(),
     queryFn: () => api.mobile.listTrainingLevels(),
-    enabled,
     staleTime: TRAINING_LEVELS_STALE_TIME_MS,
   });
 
-export const useMobileAthletes = (enabled: boolean) =>
+export const useLinkableAthletes = (planId: string) =>
   useQuery({
-    queryKey: platformKeys.mobile.athletes(),
-    queryFn: () => api.mobile.listAthletes(),
-    enabled,
-    staleTime: MOBILE_ATHLETES_STALE_TIME_MS,
+    queryKey: platformKeys.mobile.linkableAthletes(planId),
+    queryFn: () => api.mobile.listLinkableAthletes(planId),
+    enabled: Boolean(planId),
+    staleTime: STALE_TIMES.NONE,
   });
 
 export const useMobileLinks = (planId: string, weekStart?: string) =>
@@ -40,23 +49,6 @@ export const useMobileLinks = (planId: string, weekStart?: string) =>
     enabled: Boolean(planId),
     placeholderData: keepPreviousData,
   });
-
-export const useConnectMobile = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: api.mobile.connect,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.connections() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.trainingLevels() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.mobile.athletes() });
-      toast.success("Mobile app connected");
-    },
-    onError: (error: Error) => {
-      notifyError(error, "Failed to connect mobile app");
-    },
-  });
-};
 
 export const useCreateMobileLink = (planId: string) => {
   const queryClient = useQueryClient();

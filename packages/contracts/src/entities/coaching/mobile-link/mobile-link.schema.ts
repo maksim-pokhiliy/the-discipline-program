@@ -43,5 +43,8 @@ export const createIndividualMobileLinkSchema = z.object({
   planId: z.string().cuid(),
   channel: z.literal("INDIVIDUAL"),
   athleteId: z.string().cuid(),
-  legacyUserId: z.number().int(),
+});
+
+export const linkableAthleteSchema = z.object({
+  athleteId: z.string().cuid(),
 });

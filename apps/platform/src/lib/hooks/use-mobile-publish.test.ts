@@ -4,44 +4,47 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { LegacyTrainingLevel, MobileAthlete } from "@repo/contracts/coaching/legacy-mobile";
+import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
 import type {
-  ConnectMobileData,
-  MobileConnection,
-} from "@repo/contracts/coaching/mobile-connection";
-import type { CreateMobileLinkRequest, MobileLink } from "@repo/contracts/coaching/mobile-link";
+  CreateMobileLinkRequest,
+  GetLinkableAthletesResponse,
+  MobileLink,
+} from "@repo/contracts/coaching/mobile-link";
 import type {
   PublishMobileData,
   PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
+import { UserRole } from "@repo/contracts/iam/auth";
 import type * as Query from "@repo/query";
+import { STALE_TIMES } from "@repo/query";
 
 import { platformKeys } from "../api/keys";
-import {
-  makeMobileConnection,
-  makeMobileLink,
-  makePublishDayResult,
-  mobileAthletesFixture,
-  trainingLevelsFixture,
-} from "../mobile.fixtures";
+import { makeMobileLink, makePublishDayResult, trainingLevelsFixture } from "../mobile.fixtures";
 
-const connectMock = vi.fn<(data: ConnectMobileData) => Promise<MobileConnection>>();
-const listConnectionsMock = vi.fn<() => Promise<MobileConnection[]>>();
 const listTrainingLevelsMock = vi.fn<() => Promise<LegacyTrainingLevel[]>>();
-const listAthletesMock = vi.fn<() => Promise<MobileAthlete[]>>();
+const listLinkableAthletesMock = vi.fn<(planId: string) => Promise<GetLinkableAthletesResponse>>();
 const createLinkMock = vi.fn<(data: CreateMobileLinkRequest) => Promise<MobileLink>>();
 const listLinksMock = vi.fn<(planId: string, weekStart?: string) => Promise<MobileLink[]>>();
 const deleteLinkMock = vi.fn<(linkId: string) => Promise<void>>();
 const publishMock = vi.fn<(data: PublishMobileData) => Promise<PublishMobileResult>>();
 const notifyErrorMock = vi.fn<(error: Error, fallback: string) => void>();
+const sessionState: { role: UserRole | null; status: "loading" | "authenticated" } = {
+  role: null,
+  status: "authenticated",
+};
+
+vi.mock("@repo/auth/client", () => ({
+  useSession: () => ({
+    data: sessionState.status === "loading" ? null : { user: { role: sessionState.role } },
+    status: sessionState.status,
+  }),
+}));
 
 vi.mock("../api", () => ({
   api: {
     mobile: {
-      connect: (data: ConnectMobileData) => connectMock(data),
-      listConnections: () => listConnectionsMock(),
       listTrainingLevels: () => listTrainingLevelsMock(),
-      listAthletes: () => listAthletesMock(),
+      listLinkableAthletes: (planId: string) => listLinkableAthletesMock(planId),
       createLink: (data: CreateMobileLinkRequest) => createLinkMock(data),
       listLinks: (planId: string, weekStart?: string) => listLinksMock(planId, weekStart),
       deleteLink: (linkId: string) => deleteLinkMock(linkId),
@@ -64,13 +67,12 @@ vi.mock("sonner", () => ({
 }));
 
 const {
-  useConnectMobile,
   useCreateMobileLink,
   useDeleteMobileLink,
   usePublishMobile,
-  useMobileConnections,
   useMobileLinks,
-  useMobileAthletes,
+  useLevelPublishAccess,
+  useLinkableAthletes,
   useTrainingLevels,
 } = await import("./use-mobile-publish");
 
@@ -89,10 +91,8 @@ const renderRunner = <THook>(hook: () => THook) => {
 };
 
 beforeEach(() => {
-  connectMock.mockReset();
-  listConnectionsMock.mockReset();
   listTrainingLevelsMock.mockReset();
-  listAthletesMock.mockReset();
+  listLinkableAthletesMock.mockReset();
   createLinkMock.mockReset();
   listLinksMock.mockReset();
   deleteLinkMock.mockReset();
@@ -104,56 +104,64 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("useMobileConnections", () => {
-  it("queries api.mobile.listConnections under the connections key", async () => {
-    const connections = [makeMobileConnection()];
-
-    listConnectionsMock.mockResolvedValueOnce(connections);
-
-    const { view } = renderRunner(() => useMobileConnections());
-
-    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
-
-    expect(listConnectionsMock).toHaveBeenCalledTimes(1);
-    expect(view.result.current.data).toEqual(connections);
-  });
-});
-
 describe("useTrainingLevels", () => {
-  it("does not fetch when disabled", () => {
-    renderRunner(() => useTrainingLevels(false));
-
-    expect(listTrainingLevelsMock).not.toHaveBeenCalled();
-  });
-
-  it("fetches api.mobile.listTrainingLevels when enabled", async () => {
+  it("fetches api.mobile.listTrainingLevels on mount under the training levels key", async () => {
     listTrainingLevelsMock.mockResolvedValueOnce(trainingLevelsFixture);
 
-    const { view } = renderRunner(() => useTrainingLevels(true));
+    const { view, queryClient } = renderRunner(() => useTrainingLevels());
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
     expect(listTrainingLevelsMock).toHaveBeenCalledTimes(1);
     expect(view.result.current.data).toEqual(trainingLevelsFixture);
+    expect(queryClient.getQueryData(platformKeys.mobile.trainingLevels())).toEqual(
+      trainingLevelsFixture,
+    );
   });
 });
 
-describe("useMobileAthletes", () => {
-  it("does not fetch when disabled", () => {
-    renderRunner(() => useMobileAthletes(false));
+describe("useLinkableAthletes", () => {
+  const linkableAthletes: GetLinkableAthletesResponse = [{ athleteId: ATHLETE_ID }];
 
-    expect(listAthletesMock).not.toHaveBeenCalled();
-  });
+  it("fetches the plan's linkable athletes under the plan-scoped athletes key", async () => {
+    listLinkableAthletesMock.mockResolvedValueOnce(linkableAthletes);
 
-  it("fetches api.mobile.listAthletes when enabled", async () => {
-    listAthletesMock.mockResolvedValueOnce(mobileAthletesFixture);
-
-    const { view } = renderRunner(() => useMobileAthletes(true));
+    const { view, queryClient } = renderRunner(() => useLinkableAthletes(PLAN_ID));
 
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
-    expect(listAthletesMock).toHaveBeenCalledTimes(1);
-    expect(view.result.current.data).toEqual(mobileAthletesFixture);
+    expect(listLinkableAthletesMock).toHaveBeenCalledTimes(1);
+    expect(listLinkableAthletesMock).toHaveBeenCalledWith(PLAN_ID);
+    expect(view.result.current.data).toEqual(linkableAthletes);
+    expect(queryClient.getQueryData(platformKeys.mobile.linkableAthletes(PLAN_ID))).toEqual(
+      linkableAthletes,
+    );
+  });
+
+  it("refetches on the next mount despite the app-wide stale time, so a newly enrolled athlete is not shown as unlinkable", async () => {
+    listLinkableAthletesMock.mockResolvedValue(linkableAthletes);
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { staleTime: STALE_TIMES.THIRTY_SECONDS } },
+    });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    const first = renderHook(() => useLinkableAthletes(PLAN_ID), { wrapper });
+
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+
+    const second = renderHook(() => useLinkableAthletes(PLAN_ID), { wrapper });
+
+    await waitFor(() => expect(listLinkableAthletesMock).toHaveBeenCalledTimes(2));
+    second.unmount();
+  });
+
+  it("does not fetch when the planId is empty", () => {
+    const { view } = renderRunner(() => useLinkableAthletes(""));
+
+    expect(listLinkableAthletesMock).not.toHaveBeenCalled();
+    expect(view.result.current.fetchStatus).toBe("idle");
   });
 });
 
@@ -163,7 +171,7 @@ type DeferredLinks = {
 };
 
 const createDeferredLinks = (): DeferredLinks => {
-  let resolve!: (value: MobileLink[]) => void;
+  let resolve: (value: MobileLink[]) => void = () => undefined;
   const promise = new Promise<MobileLink[]>((res) => {
     resolve = res;
   });
@@ -254,43 +262,6 @@ describe("useMobileLinks", () => {
   });
 });
 
-describe("useConnectMobile", () => {
-  const payload: ConnectMobileData = { email: "coach@example.com", password: "secret" };
-
-  it("calls api.mobile.connect and invalidates the connections, trainingLevels, and athletes keys", async () => {
-    connectMock.mockResolvedValueOnce(makeMobileConnection());
-
-    const { view, invalidateSpy } = renderRunner(() => useConnectMobile());
-
-    await act(async () => {
-      view.result.current.mutate(payload);
-    });
-
-    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
-
-    expect(connectMock).toHaveBeenCalledWith(payload);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.connections() });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.trainingLevels() });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.athletes() });
-  });
-
-  it("notifies with the fallback message when the connect fails", async () => {
-    const failure = new Error("bad credentials");
-
-    connectMock.mockRejectedValueOnce(failure);
-
-    const { view } = renderRunner(() => useConnectMobile());
-
-    await act(async () => {
-      view.result.current.mutate(payload);
-    });
-
-    await waitFor(() => expect(view.result.current.isError).toBe(true));
-
-    expect(notifyErrorMock).toHaveBeenCalledWith(failure, "Failed to connect mobile app");
-  });
-});
-
 describe("useCreateMobileLink", () => {
   const payload: CreateMobileLinkRequest = { planId: PLAN_ID, legacyLevelId: 2 };
 
@@ -339,13 +310,37 @@ describe("useCreateMobileLink", () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: platformKeys.mobile.links(PLAN_ID) });
   });
 
+  it("sends an individual create with the athlete only and no app account id", async () => {
+    const individualPayload: CreateMobileLinkRequest = {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    };
+
+    createLinkMock.mockResolvedValueOnce(makeMobileLink());
+
+    const { view } = renderRunner(() => useCreateMobileLink(PLAN_ID));
+
+    await act(async () => {
+      view.result.current.mutate(individualPayload);
+    });
+
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+
+    expect(createLinkMock).toHaveBeenCalledWith({
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    });
+    expect(createLinkMock.mock.calls[0]?.[0]).not.toHaveProperty("legacyUserId");
+  });
+
   it("notifies with the athlete fallback message when an individual create fails", async () => {
     const failure = new Error("conflict");
     const individualPayload: CreateMobileLinkRequest = {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: 101,
     };
 
     createLinkMock.mockRejectedValueOnce(failure);
@@ -414,7 +409,6 @@ describe("usePublishMobile", () => {
     linkId: LINK_ID,
     startDate: "2026-01-05",
     scope: "week",
-    overwriteUnowned: false,
   };
 
   it("calls api.mobile.publish and returns the PublishMobileResult from mutateAsync", async () => {
@@ -435,7 +429,7 @@ describe("usePublishMobile", () => {
   });
 
   it("does not toast or notifyError on failure (the modal is the feedback surface)", async () => {
-    const failure = new Error("reconnect required");
+    const failure = new Error("publish failed");
 
     publishMock.mockRejectedValueOnce(failure);
 
@@ -460,5 +454,31 @@ describe("usePublishMobile", () => {
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
 
     expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("useLevelPublishAccess", () => {
+  it.each([
+    [UserRole.HEAD_COACH, "allowed"],
+    [UserRole.ADMIN, "allowed"],
+    [UserRole.COACH, "denied"],
+    [UserRole.ATHLETE, "denied"],
+    [null, "denied"],
+  ])("answers %s with %s once the session has loaded", (role, expected) => {
+    sessionState.status = "authenticated";
+    sessionState.role = role;
+
+    const { result } = renderHook(() => useLevelPublishAccess());
+
+    expect(result.current).toBe(expected);
+  });
+
+  it("answers pending while the session is loading, whatever the role turns out to be", () => {
+    sessionState.status = "loading";
+    sessionState.role = UserRole.HEAD_COACH;
+
+    const { result } = renderHook(() => useLevelPublishAccess());
+
+    expect(result.current).toBe("pending");
   });
 });

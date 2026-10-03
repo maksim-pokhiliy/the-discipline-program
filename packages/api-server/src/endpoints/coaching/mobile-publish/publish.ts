@@ -1,4 +1,4 @@
-import { type MobilePublishChannel } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import {
   type PublishDayResult,
@@ -6,67 +6,58 @@ import {
   type PublishMobileResult,
 } from "@repo/contracts/coaching/mobile-publish";
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
-import { AppError, NotFoundError, UnauthorizedError } from "@repo/errors";
+import { AppError, InternalServerError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
-import { verifyMobileLinkOwnership } from "../../../authz/guards";
-import { prisma } from "../../../db/client";
-import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
+import {
+  type OwnedMobileLink,
+  verifyCanPublishToLevel,
+  verifyMobileLinkOwnership,
+} from "../../../authz/guards";
 import { toUtcDateParam } from "../../../utils";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
 
-import { buildChannelOps } from "./channel-program-ops";
 import { type MobilePublishDayPayload } from "./day-include";
-import { decryptLegacyToken } from "./legacy-token-cipher";
 import { publishDay } from "./publish-day";
 import { loadExerciseById, loadTargetDays } from "./publish-loaders";
-import { reconnectRequiredError, tokenUnreadableError } from "./reconnect-signal";
+import { type PublishAudience } from "./served-day";
 
 export type PublishApi = {
   publish(userId: string, data: PublishMobileData): Promise<PublishMobileResult>;
 };
 
-const loadLink = async (
-  linkId: string,
-): Promise<{
-  planId: string;
-  channel: MobilePublishChannel;
-  legacyLevelId: number | null;
-  legacyUserId: number | null;
-  encryptedToken: string;
-  expiresAt: Date;
-}> => {
-  const link = await prisma.mobilePublishLink.findUnique({
-    where: { id: linkId },
-    select: {
-      planId: true,
-      channel: true,
-      legacyLevelId: true,
-      legacyUserId: true,
-      connection: { select: { encryptedToken: true, expiresAt: true } },
-    },
-  });
-
-  if (link === null) {
-    throw new NotFoundError("Mobile publish link not found", { linkId });
+const resolveFailureCode = (error: unknown): string => {
+  if (error instanceof AppError) {
+    return error.code;
   }
 
-  return {
-    planId: link.planId,
-    channel: link.channel,
-    legacyLevelId: link.legacyLevelId,
-    legacyUserId: link.legacyUserId,
-    encryptedToken: link.connection.encryptedToken,
-    expiresAt: link.connection.expiresAt,
-  };
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code;
+  }
+
+  return error instanceof Error ? error.name : "unknown";
 };
 
-const decryptToken = (encryptedToken: string): string => {
-  try {
-    return decryptLegacyToken(encryptedToken);
-  } catch {
-    throw tokenUnreadableError();
+const toAudience = (link: OwnedMobileLink): PublishAudience => {
+  if (link.channel === "INDIVIDUAL" && link.legacyUserId !== null) {
+    return { channel: "INDIVIDUAL", legacyUserId: link.legacyUserId };
   }
+
+  if (link.channel === "GENERAL" && link.legacyLevelId !== null) {
+    return { channel: "GENERAL", legacyLevelId: link.legacyLevelId };
+  }
+
+  throw new InternalServerError("Mobile publish link is missing its audience key");
+};
+
+const authorizePublish = async (linkId: string, userId: string) => {
+  const link = await verifyMobileLinkOwnership(linkId, userId);
+
+  if (link.channel === "GENERAL") {
+    await verifyCanPublishToLevel(userId);
+  }
+
+  return { planId: link.planId, audience: toAudience(link) };
 };
 
 const sortDaysByDate = (
@@ -79,23 +70,13 @@ const sortDaysByDate = (
       sessionAbsoluteDateFromParts(weekStartDate, b.dayOfWeek).getTime(),
   );
 
-export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishApi => ({
+export const createPublishApi = (): PublishApi => ({
   publish: async (userId, data) => {
-    await verifyMobileLinkOwnership(data.linkId, userId);
-
-    const link = await loadLink(data.linkId);
-    const token = decryptToken(link.encryptedToken);
-
-    if (link.expiresAt.getTime() <= Date.now()) {
-      throw reconnectRequiredError("Mobile session expired — please reconnect");
-    }
-
-    const ops = buildChannelOps(legacyClient, token, link);
-
+    const { planId, audience } = await authorizePublish(data.linkId, userId);
     const weekStartDate = resolveWeekStartDate(data.startDate);
     const dayOfWeek: DayOfWeek | undefined = data.scope === "day" ? data.dayOfWeek : undefined;
     const days = sortDaysByDate(
-      await loadTargetDays(link.planId, weekStartDate, dayOfWeek),
+      await loadTargetDays(planId, weekStartDate, dayOfWeek),
       weekStartDate,
     );
     const exerciseById = await loadExerciseById(days);
@@ -109,21 +90,16 @@ export const createPublishApi = (legacyClient: LegacyMobileClientPort): PublishA
       try {
         results.push(
           await publishDay({
-            ops,
             linkId: data.linkId,
+            audience,
             scheduledDate,
             absoluteDate,
             day,
             exerciseById,
-            overwriteUnowned: data.overwriteUnowned,
           }),
         );
       } catch (error) {
-        if (error instanceof UnauthorizedError) {
-          throw reconnectRequiredError("Mobile session rejected — please reconnect");
-        }
-
-        const code = error instanceof AppError ? error.code : "unknown";
+        const code = resolveFailureCode(error);
 
         logger.warn("mobile.publish.day_failed", { linkId: data.linkId, scheduledDate, code });
         results.push({ scheduledDate, action: "failed", legacyRowId: null });

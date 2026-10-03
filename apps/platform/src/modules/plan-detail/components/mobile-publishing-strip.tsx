@@ -8,13 +8,14 @@ import { Box, Button, Card, Stack, Tooltip, Typography } from "@mui/material";
 import {
   type GeneralMobileLink,
   type IndividualMobileLink,
+  type MobileLink,
   partitionMobileLinks,
 } from "@repo/contracts/coaching/mobile-link";
 import { formatDateParam } from "@repo/shared";
 
 import {
+  useLevelPublishAccess,
   useCoachAthletes,
-  useMobileConnections,
   useMobileLinks,
   useTrainingLevels,
 } from "@app/lib/hooks";
@@ -35,6 +36,7 @@ type MobilePublishingStripProps = {
 };
 
 const PUBLISH_DISABLED_TOOLTIP = "Link a training level or athlete first";
+const LEVEL_PUBLISH_FORBIDDEN_TOOLTIP = "Only the head coach can publish to a training level";
 const PUBLISH_WEEK_SCOPE_TOOLTIP = "Sends only the week you have open";
 const LINKS_ERROR_LABEL = "Couldn't load the publishing status";
 const LINKS_ERROR_TOOLTIP = "Can't publish until the publishing status loads";
@@ -44,16 +46,25 @@ const LEVELS_CLAUSE_LABEL = "Levels: ";
 const ATHLETES_CLAUSE_LABEL = "Athletes: ";
 const CLAUSE_SEPARATOR = " · ";
 const NO_PUBLISH_STATUS: StripPublishStatus = { kind: "none" };
+const NO_LINKS: MobileLink[] = [];
 const CHECKING_PUBLISH_STATUS: StripPublishStatus = { kind: "checking" };
 
 type ChannelSummary = { clause: string; allResolved: boolean };
 
-const resolvePublishTooltip = (hasLinksError: boolean, canPublish: boolean): string => {
+const resolvePublishTooltip = (
+  hasLinksError: boolean,
+  canPublish: boolean,
+  hasUnpublishableLevels: boolean,
+): string => {
   if (hasLinksError) {
     return LINKS_ERROR_TOOLTIP;
   }
 
-  return canPublish ? PUBLISH_WEEK_SCOPE_TOOLTIP : PUBLISH_DISABLED_TOOLTIP;
+  if (canPublish) {
+    return PUBLISH_WEEK_SCOPE_TOOLTIP;
+  }
+
+  return hasUnpublishableLevels ? LEVEL_PUBLISH_FORBIDDEN_TOOLTIP : PUBLISH_DISABLED_TOOLTIP;
 };
 
 const summarizeChannel = (
@@ -109,12 +120,11 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
   monday,
   hasWeekContent,
 }) => {
-  const connectionsQuery = useMobileConnections();
-  const isConnected = (connectionsQuery.data ?? []).length > 0;
-
+  const levelPublishAccess = useLevelPublishAccess();
+  const isAccessPending = levelPublishAccess === "pending";
   const weekStart = formatDateParam(monday);
   const linksQuery = useMobileLinks(planId, weekStart);
-  const levelsQuery = useTrainingLevels(isConnected);
+  const levelsQuery = useTrainingLevels();
   const athletesQuery = useCoachAthletes();
 
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -158,9 +168,17 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
   const statusLabel = hasLinksError
     ? LINKS_ERROR_LABEL
     : describeLinks(generalLinks, individualLinks, levelNameById, athleteNameById);
-  const canPublish = !hasLinksError && generalLinks.length + individualLinks.length > 0;
-  const publishTooltip = resolvePublishTooltip(hasLinksError, canPublish);
-  const isStripHidden = connectionsQuery.isPending || linksQuery.isPending;
+  const publishableLinks = useMemo(() => {
+    if (isAccessPending) {
+      return NO_LINKS;
+    }
+
+    return levelPublishAccess === "allowed" ? (linksQuery.data ?? NO_LINKS) : individualLinks;
+  }, [isAccessPending, levelPublishAccess, linksQuery.data, individualLinks]);
+  const canPublish = !hasLinksError && publishableLinks.length > 0;
+  const hasUnpublishableLevels = levelPublishAccess === "denied" && generalLinks.length > 0;
+  const publishTooltip = resolvePublishTooltip(hasLinksError, canPublish, hasUnpublishableLevels);
+  const isStripHidden = linksQuery.isPending || isAccessPending;
 
   return (
     <>
@@ -230,7 +248,7 @@ export const MobilePublishingStrip: React.FC<MobilePublishingStripProps> = ({
         onClose={() => setIsPublishOpen(false)}
         planId={planId}
         monday={monday}
-        links={linksQuery.data ?? []}
+        links={publishableLinks}
         levelNameById={levelNameById}
         athleteNameById={athleteNameById}
       />

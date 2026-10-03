@@ -10,7 +10,7 @@ import { BadRequestError, ConflictError } from "@repo/errors";
 import { parseDateParam } from "@repo/shared";
 
 import {
-  resolveCoachId,
+  verifyCanPublishToLevel,
   verifyMobileLinkOwnership,
   verifyPlanOwnership,
 } from "../../../authz/guards";
@@ -18,6 +18,13 @@ import { prisma } from "../../../db/client";
 import { mapToMobileLink } from "../../../mappers/coaching";
 import { handlePrismaError } from "../../../utils";
 import { resolveWeekStartDate, sessionAbsoluteDateFromParts } from "../../lms/_shared";
+import {
+  findLegacyCatalogEntry,
+  LEGACY_PLAN_INDIVIDUAL,
+  LEGACY_TRAINING_LEVELS,
+} from "../../mobile-compat/legacy-catalogs";
+
+import { enrolledInPlanWhere } from "./enrolled-athlete-where";
 
 export type LinksApi = {
   createLink(userId: string, data: CreateMobileLinkRequest): Promise<MobileLink>;
@@ -28,6 +35,10 @@ export type LinksApi = {
 const NEVER_PUBLISHED: MobileLinkPublishAggregate = { publishedDayCount: 0, lastPublishedAt: null };
 const WEEK_START_FIELD = "weekStart";
 const INVALID_WEEK_START_MESSAGE = "weekStart must be a valid YYYY-MM-DD date";
+const NO_INDIVIDUAL_ACCOUNT_MESSAGE =
+  "This athlete has no Individual-plan account in the mobile app";
+const NOT_ENROLLED_MESSAGE = "This athlete is not enrolled in this plan";
+const UNKNOWN_LEVEL_MESSAGE = "Unknown training level";
 
 export const buildWeekScheduledDates = (weekStart: string): Date[] => {
   if (parseDateParam(weekStart) === null) {
@@ -67,27 +78,10 @@ const loadPublishAggregate = async (linkId: string): Promise<MobileLinkPublishAg
   return aggregates.get(linkId) ?? NEVER_PUBLISHED;
 };
 
-const loadCoachConnectionId = async (userId: string, planId: string): Promise<string> => {
-  const coachProfileId = await resolveCoachId(userId);
-
-  await verifyPlanOwnership(planId, userId);
-
-  const connection = await prisma.mobileConnection.findUnique({
-    where: { coachProfileId },
-    select: { id: true },
-  });
-
-  if (connection === null) {
-    throw new BadRequestError("Connect the mobile app first");
-  }
-
-  return connection.id;
-};
-
-const upsertGeneralLink = (
-  connectionId: string,
-  data: { planId: string; legacyLevelId: number },
-): Promise<PrismaMobilePublishLink> =>
+const upsertGeneralLink = (data: {
+  planId: string;
+  legacyLevelId: number;
+}): Promise<PrismaMobilePublishLink> =>
   prisma.mobilePublishLink.upsert({
     where: {
       planId_channel_legacyLevelId: {
@@ -97,18 +91,46 @@ const upsertGeneralLink = (
       },
     },
     create: {
-      connectionId,
       planId: data.planId,
       channel: "GENERAL",
       legacyLevelId: data.legacyLevelId,
     },
-    update: { connectionId },
+    update: {},
   });
 
-const upsertIndividualLink = (
-  connectionId: string,
-  data: { planId: string; athleteId: string; legacyUserId: number },
-): Promise<PrismaMobilePublishLink> =>
+const assertKnownLevel = (legacyLevelId: number): void => {
+  if (findLegacyCatalogEntry(LEGACY_TRAINING_LEVELS, legacyLevelId) === null) {
+    throw new BadRequestError(UNKNOWN_LEVEL_MESSAGE, { field: "legacyLevelId" });
+  }
+};
+
+const resolveIndividualLegacyUserId = async (
+  planId: string,
+  athleteId: string,
+): Promise<number> => {
+  const athlete = await prisma.user.findFirst({
+    where: { id: athleteId, ...enrolledInPlanWhere(planId) },
+    select: { legacyIdentity: { select: { legacyUserId: true, legacyPlanId: true } } },
+  });
+
+  if (athlete === null) {
+    throw new BadRequestError(NOT_ENROLLED_MESSAGE, { field: "athleteId" });
+  }
+
+  const identity = athlete.legacyIdentity;
+
+  if (identity === null || identity.legacyPlanId !== LEGACY_PLAN_INDIVIDUAL) {
+    throw new BadRequestError(NO_INDIVIDUAL_ACCOUNT_MESSAGE, { field: "athleteId" });
+  }
+
+  return identity.legacyUserId;
+};
+
+const upsertIndividualLink = (data: {
+  planId: string;
+  athleteId: string;
+  legacyUserId: number;
+}): Promise<PrismaMobilePublishLink> =>
   prisma.mobilePublishLink.upsert({
     where: {
       planId_channel_athleteId: {
@@ -118,13 +140,12 @@ const upsertIndividualLink = (
       },
     },
     create: {
-      connectionId,
       planId: data.planId,
       channel: "INDIVIDUAL",
       legacyUserId: data.legacyUserId,
       athleteId: data.athleteId,
     },
-    update: { connectionId, legacyUserId: data.legacyUserId },
+    update: { legacyUserId: data.legacyUserId },
   });
 
 const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
@@ -140,14 +161,11 @@ const isLegacyUserAlreadyLinked = (error: unknown): boolean => {
   );
 };
 
-const upsertLink = async (
-  connectionId: string,
-  data: CreateMobileLinkRequest,
+const runLinkUpsert = async (
+  upsert: () => Promise<PrismaMobilePublishLink>,
 ): Promise<PrismaMobilePublishLink> => {
   try {
-    return "channel" in data
-      ? await upsertIndividualLink(connectionId, data)
-      : await upsertGeneralLink(connectionId, data);
+    return await upsert();
   } catch (error) {
     if (isLegacyUserAlreadyLinked(error)) {
       throw new ConflictError("This mobile athlete is already linked to another plan member", {
@@ -159,10 +177,27 @@ const upsertLink = async (
   }
 };
 
+const upsertLink = async (
+  userId: string,
+  data: CreateMobileLinkRequest,
+): Promise<PrismaMobilePublishLink> => {
+  if (!("channel" in data)) {
+    await verifyCanPublishToLevel(userId);
+    assertKnownLevel(data.legacyLevelId);
+
+    return runLinkUpsert(() => upsertGeneralLink(data));
+  }
+
+  const legacyUserId = await resolveIndividualLegacyUserId(data.planId, data.athleteId);
+
+  return runLinkUpsert(() => upsertIndividualLink({ ...data, legacyUserId }));
+};
+
 export const linksApi: LinksApi = {
   createLink: async (userId, data) => {
-    const connectionId = await loadCoachConnectionId(userId, data.planId);
-    const link = await upsertLink(connectionId, data);
+    await verifyPlanOwnership(data.planId, userId);
+
+    const link = await upsertLink(userId, data);
 
     return mapToMobileLink(link, await loadPublishAggregate(link.id));
   },
@@ -170,12 +205,11 @@ export const linksApi: LinksApi = {
   listLinks: async (userId, planId, weekStart) => {
     const weekScheduledDates =
       weekStart === undefined ? undefined : buildWeekScheduledDates(weekStart);
-    const coachProfileId = await resolveCoachId(userId);
 
     await verifyPlanOwnership(planId, userId);
 
     const links = await prisma.mobilePublishLink.findMany({
-      where: { planId, connection: { coachProfileId } },
+      where: { planId },
       orderBy: { createdAt: "asc" },
     });
 

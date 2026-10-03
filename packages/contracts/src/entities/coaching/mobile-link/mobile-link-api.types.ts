@@ -4,6 +4,8 @@ import {
   type createMobileLinkRequestSchema,
   type createMobileLinkResponseSchema,
   type deleteMobileLinkParamsSchema,
+  type getLinkableAthletesQuerySchema,
+  type getLinkableAthletesResponseSchema,
   type getMobileLinksQuerySchema,
   type getMobileLinksResponseSchema,
 } from "./mobile-link-api.schema";
@@ -12,4 +14,6 @@ export type CreateMobileLinkRequest = z.infer<typeof createMobileLinkRequestSche
 export type CreateMobileLinkResponse = z.infer<typeof createMobileLinkResponseSchema>;
 export type GetMobileLinksResponse = z.infer<typeof getMobileLinksResponseSchema>;
 export type GetMobileLinksQuery = z.infer<typeof getMobileLinksQuerySchema>;
+export type GetLinkableAthletesQuery = z.infer<typeof getLinkableAthletesQuerySchema>;
+export type GetLinkableAthletesResponse = z.infer<typeof getLinkableAthletesResponseSchema>;
 export type DeleteMobileLinkParams = z.infer<typeof deleteMobileLinkParamsSchema>;

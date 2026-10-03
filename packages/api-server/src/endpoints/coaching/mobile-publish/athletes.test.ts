@@ -1,107 +1,121 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EnrollmentStatus } from "@prisma/client";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
+import { ForbiddenError } from "@repo/errors";
 
-import { createAthletesApi } from "./athletes";
-import { encryptLegacyToken } from "./legacy-token-cipher";
+import { LEGACY_PLAN_GENERAL } from "../../../test/golden-fixture";
+import { cleanupRaw, createTestLegacyIdentity, createTestPlan } from "../../../test/helpers";
+import { createTestEnrollment } from "../../../test/schedule-helpers";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-const RAW_TOKEN = "raw-legacy-access-token-value";
-const COACH_PROFILE_ID = "clcoach000000000000000000";
-const USER_ID = "cluser0000000000000000000";
+import { athletesApi } from "./athletes";
+import {
+  cleanupFixtures,
+  createFixtureTracker,
+  createTrackedCoach,
+  createTrackedUser,
+} from "./publish-fixture.test-helpers";
 
-const ATHLETES = [{ id: 5, username: "athlete@tdp.local", firstName: "Test", lastName: "Athlete" }];
+const tracker = createFixtureTracker();
 
-const mocks = vi.hoisted(() => ({
-  findUniqueMock: vi.fn(),
-  resolveCoachIdMock: vi.fn(),
-}));
+describe("athletesApi.listLinkableAthletes", () => {
+  let coachUserId = "";
+  let foreignCoachUserId = "";
+  let planId = "";
+  let otherPlanId = "";
+  const ids = {
+    linkable: "",
+    pausedLinkable: "",
+    generalPlanAccount: "",
+    noAccount: "",
+    softDeleted: "",
+    notEnrolled: "",
+    enrolledElsewhere: "",
+    removedEnrollment: "",
+  };
 
-vi.mock("../../../db/client", () => ({
-  prisma: {
-    mobileConnection: { findUnique: mocks.findUniqueMock },
-    $disconnect: vi.fn(),
-  },
-}));
+  const enrolledAthlete = async (
+    targetPlanId: string,
+    options: { legacyPlanId?: number; status?: EnrollmentStatus } = {},
+  ): Promise<string> => {
+    const athleteId = await createTrackedUser(tracker);
 
-vi.mock("../../../authz/guards", () => ({
-  resolveCoachId: mocks.resolveCoachIdMock,
-}));
-
-vi.mock("@repo/shared", () => ({
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}));
-
-const makeFakeLegacyClient = (): LegacyMobileClientPort => ({
-  signin: vi.fn(),
-  getTrainingLevels: vi.fn(async () => []),
-  getGeneralProgram: vi.fn(async () => null),
-  createGeneralProgram: vi.fn(),
-  updateGeneralProgram: vi.fn(),
-  getIndividualProgram: vi.fn(async () => null),
-  createIndividualProgram: vi.fn(),
-  deleteIndividualProgram: vi.fn(),
-  getIndividualAthletes: vi.fn(async () => ATHLETES),
-});
-
-describe("createAthletesApi.listIndividualAthletes", () => {
-  beforeEach(() => {
-    mocks.findUniqueMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
-    mocks.findUniqueMock.mockResolvedValue({ encryptedToken: encryptLegacyToken(RAW_TOKEN) });
-  });
-
-  it("decrypts the stored token and returns the legacy athletes for a connected coach", async () => {
-    const legacyClient = makeFakeLegacyClient();
-    const api = createAthletesApi(legacyClient);
-
-    const result = await api.listIndividualAthletes(USER_ID);
-
-    expect(result).toEqual(ATHLETES);
-    expect(legacyClient.getIndividualAthletes).toHaveBeenCalledWith(RAW_TOKEN);
-  });
-
-  it("returns an empty list when the coach has no individual athletes", async () => {
-    const legacyClient = makeFakeLegacyClient();
-
-    vi.mocked(legacyClient.getIndividualAthletes).mockResolvedValue([]);
-    const api = createAthletesApi(legacyClient);
-
-    const result = await api.listIndividualAthletes(USER_ID);
-
-    expect(result).toEqual([]);
-  });
-
-  it("throws a BadRequestError when the coach is not connected", async () => {
-    const { BadRequestError } = await import("@repo/errors");
-
-    mocks.findUniqueMock.mockResolvedValue(null);
-    const legacyClient = makeFakeLegacyClient();
-    const api = createAthletesApi(legacyClient);
-
-    await expect(api.listIndividualAthletes(USER_ID)).rejects.toBeInstanceOf(BadRequestError);
-
-    expect(legacyClient.getIndividualAthletes).not.toHaveBeenCalled();
-  });
-
-  it("surfaces a reconnect signal without leaking the token when the legacy session is rejected", async () => {
-    const { UnauthorizedError } = await import("@repo/errors");
-    const legacyClient = makeFakeLegacyClient();
-
-    vi.mocked(legacyClient.getIndividualAthletes).mockRejectedValue(
-      new UnauthorizedError("legacy 401"),
-    );
-    const api = createAthletesApi(legacyClient);
-
-    await expect(api.listIndividualAthletes(USER_ID)).rejects.toBeInstanceOf(UnauthorizedError);
-
-    await api.listIndividualAthletes(USER_ID).catch((error: unknown) => {
-      expect(error).toBeInstanceOf(UnauthorizedError);
-
-      if (error instanceof UnauthorizedError) {
-        expect(error.message).toBe("Mobile session expired — please reconnect");
-        expect(error.message).not.toContain(RAW_TOKEN);
-      }
+    await createTestEnrollment(targetPlanId, athleteId, coachUserId, {
+      status: options.status ?? EnrollmentStatus.ACTIVE,
     });
+
+    if (options.legacyPlanId !== undefined) {
+      await createTestLegacyIdentity(athleteId, { legacyPlanId: options.legacyPlanId });
+    }
+
+    return athleteId;
+  };
+
+  beforeAll(async () => {
+    coachUserId = (await createTrackedCoach(tracker)).user.id;
+    foreignCoachUserId = (await createTrackedCoach(tracker)).user.id;
+    planId = (await createTestPlan(coachUserId)).id;
+    otherPlanId = (await createTestPlan(coachUserId)).id;
+    tracker.planIds.push(planId, otherPlanId);
+
+    ids.linkable = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+    ids.pausedLinkable = await enrolledAthlete(planId, {
+      legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+      status: EnrollmentStatus.PAUSED,
+    });
+    ids.generalPlanAccount = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_GENERAL });
+    ids.noAccount = await enrolledAthlete(planId);
+    ids.softDeleted = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+    ids.enrolledElsewhere = await enrolledAthlete(otherPlanId, {
+      legacyPlanId: LEGACY_PLAN_INDIVIDUAL,
+    });
+    ids.removedEnrollment = await enrolledAthlete(planId, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+    await cleanupRaw.planEnrollment.updateMany({
+      where: { planId, athleteId: ids.removedEnrollment },
+      data: { status: EnrollmentStatus.REMOVED, deletedAt: new Date() },
+    });
+    ids.notEnrolled = await createTrackedUser(tracker);
+    await createTestLegacyIdentity(ids.notEnrolled, { legacyPlanId: LEGACY_PLAN_INDIVIDUAL });
+
+    await cleanupRaw.user.update({
+      where: { id: ids.softDeleted },
+      data: { deletedAt: new Date() },
+    });
+  });
+
+  afterAll(async () => {
+    await cleanupFixtures(tracker);
+  });
+
+  it("returns exactly the plan's enrolled athletes with an Individual-plan account, as ids in order", async () => {
+    expect(await athletesApi.listLinkableAthletes(coachUserId, planId)).toEqual(
+      [ids.linkable, ids.pausedLinkable].sort().map((athleteId) => ({ athleteId })),
+    );
+  });
+
+  it("leaves out Individual-plan accounts not enrolled in this plan, enrolled elsewhere or removed from it", async () => {
+    const athleteIds = (await athletesApi.listLinkableAthletes(coachUserId, planId)).map(
+      (athlete) => athlete.athleteId,
+    );
+
+    expect(athleteIds).not.toContain(ids.notEnrolled);
+    expect(athleteIds).not.toContain(ids.enrolledElsewhere);
+    expect(athleteIds).not.toContain(ids.removedEnrollment);
+  });
+
+  it("leaves out enrolled athletes with a General-plan account, with no account, or soft-deleted", async () => {
+    const athleteIds = (await athletesApi.listLinkableAthletes(coachUserId, planId)).map(
+      (athlete) => athlete.athleteId,
+    );
+
+    expect(athleteIds).not.toContain(ids.generalPlanAccount);
+    expect(athleteIds).not.toContain(ids.noAccount);
+    expect(athleteIds).not.toContain(ids.softDeleted);
+  });
+
+  it("refuses a coach who does not own the plan", async () => {
+    await expect(
+      athletesApi.listLinkableAthletes(foreignCoachUserId, planId),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

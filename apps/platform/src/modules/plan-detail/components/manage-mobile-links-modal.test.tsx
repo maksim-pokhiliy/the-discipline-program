@@ -2,13 +2,12 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { LegacyTrainingLevel } from "@repo/contracts/coaching/legacy-mobile";
-import type { MobileConnection } from "@repo/contracts/coaching/mobile-connection";
-import type { MobileLink } from "@repo/contracts/coaching/mobile-link";
-import { MOBILE_RECONNECT_REQUIRED } from "@repo/contracts/coaching/mobile-publish";
+import type { IndividualMobileLink, MobileLink } from "@repo/contracts/coaching/mobile-link";
 import { formatDate } from "@repo/shared";
 
+import type { LevelPublishAccess } from "@app/lib/hooks";
 import {
-  makeMobileConnection,
+  makeIndividualLink,
   makeMobileLink,
   trainingLevelsFixture,
 } from "@app/lib/mobile.fixtures";
@@ -21,12 +20,6 @@ type QueryState<TData> = {
   isPending: boolean;
 };
 
-const connectionsState: QueryState<MobileConnection[]> = {
-  data: [makeMobileConnection()],
-  error: null,
-  isError: false,
-  isPending: false,
-};
 const levelsState: QueryState<LegacyTrainingLevel[]> = {
   data: trainingLevelsFixture,
   error: null,
@@ -43,10 +36,17 @@ const linksState: QueryState<MobileLink[]> = {
 const createLinkMutate = vi.fn();
 const deleteLinkMutate = vi.fn();
 const mobileLinksSpy = vi.fn<(planId: string, weekStart?: string) => void>();
+const trainingLevelsSpy = vi.fn<(...args: unknown[]) => void>();
+const individualSectionSpy = vi.fn<(props: Record<string, unknown>) => void>();
+const viewerRole: { access: LevelPublishAccess } = { access: "allowed" };
 
 vi.mock("@app/lib/hooks", () => ({
-  useMobileConnections: () => connectionsState,
-  useTrainingLevels: () => levelsState,
+  useLevelPublishAccess: () => viewerRole.access,
+  useTrainingLevels: (...args: unknown[]) => {
+    trainingLevelsSpy(...args);
+
+    return levelsState;
+  },
   useMobileLinks: (planId: string, weekStart?: string) => {
     mobileLinksSpy(planId, weekStart);
 
@@ -56,39 +56,28 @@ vi.mock("@app/lib/hooks", () => ({
   useDeleteMobileLink: () => ({ mutate: deleteLinkMutate, isPending: false }),
 }));
 
-vi.mock("../../coach-profile/components", () => ({
-  ConnectMobileModal: ({ open }: { open: boolean }) =>
-    open ? <div>connect-modal-open</div> : null,
-}));
+vi.mock("./individual-links-section", () => ({
+  IndividualLinksSection: (props: Record<string, unknown>) => {
+    individualSectionSpy(props);
 
-vi.mock("./individual-links-section", () => ({ IndividualLinksSection: () => null }));
+    return null;
+  },
+}));
 
 const { ManageMobileLinksModal } = await import("./manage-mobile-links-modal");
 
 const PLAN_ID = "ckplan1234567890abcdef0123";
 const WEEK_START = "2026-01-05";
-const RECONNECT_MESSAGE = "Connection expired. Reconnect to manage training levels.";
 const LEVELS_ERROR_MESSAGE = "Couldn't load training levels. Try again.";
 const LINKS_ERROR_MESSAGE = "Couldn't load what this plan is linked to. Try again.";
 const ALL_LINKED_MESSAGE = "Every training level is already linked.";
 const NO_LINKS_MESSAGE = "No training levels linked yet.";
 
-const reconnectError = (): Error => {
-  const error = new Error("Session expired");
-
-  Object.assign(error, { details: { reason: MOBILE_RECONNECT_REQUIRED } });
-
-  return error;
-};
-
 const renderModal = () =>
   render(<ManageMobileLinksModal open onClose={vi.fn()} planId={PLAN_ID} weekStart={WEEK_START} />);
 
 beforeEach(() => {
-  connectionsState.data = [makeMobileConnection()];
-  connectionsState.error = null;
-  connectionsState.isError = false;
-  connectionsState.isPending = false;
+  viewerRole.access = "allowed";
   levelsState.data = trainingLevelsFixture;
   levelsState.error = null;
   levelsState.isError = false;
@@ -100,6 +89,8 @@ beforeEach(() => {
   createLinkMutate.mockReset();
   deleteLinkMutate.mockReset();
   mobileLinksSpy.mockClear();
+  trainingLevelsSpy.mockClear();
+  individualSectionSpy.mockClear();
 });
 
 afterEach(() => {
@@ -107,36 +98,52 @@ afterEach(() => {
 });
 
 describe("ManageMobileLinksModal (MT-12)", () => {
-  it("renders the connect CTA when not connected", () => {
-    connectionsState.data = [];
-
+  it("loads the training levels unconditionally, with no argument", () => {
     renderModal();
 
-    expect(screen.getByRole("button", { name: "Connect mobile app" })).toBeInTheDocument();
-    expect(screen.queryByLabelText("Training level")).toBeNull();
+    expect(trainingLevelsSpy).toHaveBeenCalled();
+    expect(trainingLevelsSpy.mock.calls.every((args) => args.length === 0)).toBe(true);
+    expect(screen.getByLabelText("Training level")).toBeInTheDocument();
   });
 
-  it("renders the Reconnect CTA (not the picker) on a reconnect-required levels error", () => {
+  it("shows the spinner while the training levels are still loading", () => {
     levelsState.data = undefined;
-    levelsState.error = reconnectError();
-    levelsState.isError = true;
+    levelsState.isPending = true;
 
     renderModal();
 
-    expect(screen.getByText(RECONNECT_MESSAGE)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reconnect" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.queryByLabelText("Training level")).toBeNull();
   });
 
-  it("renders the error alert (not a silent empty picker) on a non-reconnect levels error (QA-013)", () => {
+  it("hands the athletes section only the plan and its individual links", () => {
+    const individualLink: IndividualMobileLink = makeIndividualLink({
+      id: "cklinkindiv0000000000000a1",
+    });
+
+    linksState.data = [makeMobileLink({ legacyLevelId: 2 }), individualLink];
+
+    renderModal();
+
+    expect(individualSectionSpy).toHaveBeenCalled();
+    expect(individualSectionSpy.mock.lastCall?.[0]).toEqual({
+      planId: PLAN_ID,
+      individualLinks: [individualLink],
+    });
+  });
+
+  it("renders the error alert (not a silent empty picker) on a levels error (QA-013)", () => {
     levelsState.data = undefined;
     levelsState.error = new Error("legacy 500");
     levelsState.isError = true;
 
     renderModal();
 
-    expect(screen.getByText(LEVELS_ERROR_MESSAGE)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(LEVELS_ERROR_MESSAGE);
     expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reconnect" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Connect mobile app" })).toBeNull();
+    expect(screen.queryByLabelText("Training level")).toBeNull();
   });
 
   it("disables the Select and shows the all-linked caption when every level is linked", () => {
@@ -279,5 +286,43 @@ describe("ManageMobileLinksModal row publish status (MP-22)", () => {
     expect(
       screen.getByText(`Last published ${formatDate(PUBLISHED_AT, "day")}`),
     ).toBeInTheDocument();
+  });
+});
+
+describe("ManageMobileLinksModal for a coach who may not publish to training levels", () => {
+  beforeEach(() => {
+    viewerRole.access = "denied";
+  });
+
+  it("offers no training level picker but still lists and unlinks the linked levels", () => {
+    linksState.data = [makeMobileLink({ legacyLevelId: 2 })];
+
+    renderModal();
+
+    expect(screen.queryByLabelText("Training level")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Unlink training level" })).toBeInTheDocument();
+  });
+
+  it("offers the picker to a head coach", () => {
+    viewerRole.access = "allowed";
+
+    renderModal();
+
+    expect(screen.getByLabelText("Training level")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
+  });
+});
+
+describe("ManageMobileLinksModal while the viewer's session is still loading", () => {
+  it("shows the loading state instead of the coach view", () => {
+    viewerRole.access = "pending";
+    linksState.data = [makeMobileLink({ legacyLevelId: 2 })];
+
+    renderModal();
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Unlink training level" })).toBeNull();
+    expect(screen.queryByLabelText("Training level")).toBeNull();
   });
 });

@@ -1,47 +1,28 @@
-import { type GetMobileAthletesResponse } from "@repo/contracts/coaching/mobile-connection";
-import { BadRequestError, UnauthorizedError } from "@repo/errors";
+import { type GetLinkableAthletesResponse } from "@repo/contracts/coaching/mobile-link";
 
-import { resolveCoachId } from "../../../authz/guards";
+import { verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { type LegacyMobileClientPort } from "../../../infrastructure/legacy-mobile";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
 
-import { decryptLegacyToken } from "./legacy-token-cipher";
-import { reconnectRequiredError, tokenUnreadableError } from "./reconnect-signal";
+import { enrolledInPlanWhere } from "./enrolled-athlete-where";
 
 export type AthletesApi = {
-  listIndividualAthletes(userId: string): Promise<GetMobileAthletesResponse>;
+  listLinkableAthletes(userId: string, planId: string): Promise<GetLinkableAthletesResponse>;
 };
 
-const decryptToken = (encryptedToken: string): string => {
-  try {
-    return decryptLegacyToken(encryptedToken);
-  } catch {
-    throw tokenUnreadableError();
-  }
-};
+export const athletesApi: AthletesApi = {
+  listLinkableAthletes: async (userId, planId) => {
+    await verifyPlanOwnership(planId, userId);
 
-export const createAthletesApi = (legacyClient: LegacyMobileClientPort): AthletesApi => ({
-  listIndividualAthletes: async (userId) => {
-    const coachProfileId = await resolveCoachId(userId);
-    const connection = await prisma.mobileConnection.findUnique({
-      where: { coachProfileId },
-      select: { encryptedToken: true },
+    const athletes = await prisma.user.findMany({
+      where: {
+        ...enrolledInPlanWhere(planId),
+        legacyIdentity: { is: { legacyPlanId: LEGACY_PLAN_INDIVIDUAL } },
+      },
+      orderBy: { id: "asc" },
+      select: { id: true },
     });
 
-    if (connection === null) {
-      throw new BadRequestError("Connect the mobile app first");
-    }
-
-    const token = decryptToken(connection.encryptedToken);
-
-    try {
-      return await legacyClient.getIndividualAthletes(token);
-    } catch (error) {
-      if (error instanceof UnauthorizedError) {
-        throw reconnectRequiredError("Mobile session expired — please reconnect");
-      }
-
-      throw error;
-    }
+    return athletes.map((athlete) => ({ athleteId: athlete.id }));
   },
-});
+};

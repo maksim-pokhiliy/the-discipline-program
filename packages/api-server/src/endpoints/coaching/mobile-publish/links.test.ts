@@ -7,9 +7,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BadRequestError } from "@repo/errors";
 
+import { LEGACY_PLAN_GENERAL } from "../../../test/golden-fixture";
+import { LEGACY_PLAN_INDIVIDUAL } from "../../mobile-compat/legacy-catalogs";
+
 import { buildWeekScheduledDates, linksApi } from "./links";
 
-const COACH_PROFILE_ID = "clcoach000000000000000000";
 const USER_ID = "cluser0000000000000000000";
 const PLAN_ID = "clplan0000000000000000000";
 const LINK_ID = "cllink0000000000000000000";
@@ -19,6 +21,11 @@ const ATHLETE_ID = "clathlete00000000000000000";
 const LEGACY_LEVEL_ID = 2;
 const OTHER_LEGACY_LEVEL_ID = 3;
 const LEGACY_USER_ID = 5;
+const UNKNOWN_LEVEL_ID = 99;
+const UNKNOWN_LEVEL_MESSAGE = "Unknown training level";
+const NOT_ENROLLED_MESSAGE = "This athlete is not enrolled in this plan";
+const NO_INDIVIDUAL_ACCOUNT_MESSAGE =
+  "This athlete has no Individual-plan account in the mobile app";
 const NOW = new Date("2026-01-05T00:00:00.000Z");
 const WEEK_START = "2026-01-07";
 const WEEK_SCHEDULED_ISO = [
@@ -41,11 +48,11 @@ const mocks = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   deleteMock: vi.fn(),
   upsertMock: vi.fn(),
+  athleteFindFirstMock: vi.fn(),
   groupByMock: vi.fn(),
-  connectionFindUniqueMock: vi.fn(),
-  resolveCoachIdMock: vi.fn(),
   verifyPlanOwnershipMock: vi.fn(),
   verifyMobileLinkOwnershipMock: vi.fn(),
+  verifyCanPublishToLevelMock: vi.fn(),
 }));
 
 vi.mock("../../../db/client", () => ({
@@ -56,15 +63,15 @@ vi.mock("../../../db/client", () => ({
       upsert: mocks.upsertMock,
     },
     mobilePublishedDay: { groupBy: mocks.groupByMock },
-    mobileConnection: { findUnique: mocks.connectionFindUniqueMock },
+    user: { findFirst: mocks.athleteFindFirstMock },
     $disconnect: vi.fn(),
   },
 }));
 
 vi.mock("../../../authz/guards", () => ({
-  resolveCoachId: mocks.resolveCoachIdMock,
   verifyPlanOwnership: mocks.verifyPlanOwnershipMock,
   verifyMobileLinkOwnership: mocks.verifyMobileLinkOwnershipMock,
+  verifyCanPublishToLevel: mocks.verifyCanPublishToLevelMock,
 }));
 
 const makePrismaLink = (
@@ -129,21 +136,18 @@ describe("linksApi.listLinks", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
     mocks.groupByMock.mockResolvedValue([]);
   });
 
-  it("scopes the findMany by planId and the coach's connection after verifying plan ownership", async () => {
+  it("scopes the findMany by planId alone after verifying plan ownership", async () => {
     const result = await linksApi.listLinks(USER_ID, PLAN_ID);
 
-    expect(mocks.resolveCoachIdMock).toHaveBeenCalledWith(USER_ID);
     expect(mocks.verifyPlanOwnershipMock).toHaveBeenCalledWith(PLAN_ID, USER_ID);
     expect(mocks.findManyMock).toHaveBeenCalledWith({
-      where: { planId: PLAN_ID, connection: { coachProfileId: COACH_PROFILE_ID } },
+      where: { planId: PLAN_ID },
       orderBy: { createdAt: "asc" },
     });
     expect(result).toEqual([
@@ -177,9 +181,7 @@ describe("linksApi.listLinks publish aggregates", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
     mocks.groupByMock.mockResolvedValue([]);
@@ -303,9 +305,7 @@ describe("linksApi.listLinks weekStart validation", () => {
   beforeEach(() => {
     mocks.findManyMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
     mocks.findManyMock.mockResolvedValue([makePrismaLink()]);
     mocks.groupByMock.mockResolvedValue([]);
@@ -316,7 +316,6 @@ describe("linksApi.listLinks weekStart validation", () => {
       linksApi.listLinks(USER_ID, PLAN_ID, IMPOSSIBLE_WEEK_START),
     ).rejects.toBeInstanceOf(BadRequestError);
 
-    expect(mocks.resolveCoachIdMock).not.toHaveBeenCalled();
     expect(mocks.verifyPlanOwnershipMock).not.toHaveBeenCalled();
     expect(mocks.findManyMock).not.toHaveBeenCalled();
     expect(mocks.groupByMock).not.toHaveBeenCalled();
@@ -344,14 +343,16 @@ describe("linksApi.createLink", () => {
   beforeEach(() => {
     mocks.upsertMock.mockReset();
     mocks.groupByMock.mockReset();
-    mocks.connectionFindUniqueMock.mockReset();
-    mocks.resolveCoachIdMock.mockReset();
     mocks.verifyPlanOwnershipMock.mockReset();
-    mocks.resolveCoachIdMock.mockResolvedValue(COACH_PROFILE_ID);
     mocks.verifyPlanOwnershipMock.mockResolvedValue(undefined);
-    mocks.connectionFindUniqueMock.mockResolvedValue({ id: CONNECTION_ID });
     mocks.upsertMock.mockResolvedValue(makePrismaLink());
     mocks.groupByMock.mockResolvedValue([]);
+    mocks.verifyCanPublishToLevelMock.mockReset();
+    mocks.verifyCanPublishToLevelMock.mockResolvedValue(undefined);
+    mocks.athleteFindFirstMock.mockReset();
+    mocks.athleteFindFirstMock.mockResolvedValue({
+      legacyIdentity: { legacyUserId: LEGACY_USER_ID, legacyPlanId: LEGACY_PLAN_INDIVIDUAL },
+    });
   });
 
   it("upserts a GENERAL link on the (plan, channel, legacyLevelId) key", async () => {
@@ -360,12 +361,7 @@ describe("linksApi.createLink", () => {
       legacyLevelId: LEGACY_LEVEL_ID,
     });
 
-    expect(mocks.resolveCoachIdMock).toHaveBeenCalledWith(USER_ID);
     expect(mocks.verifyPlanOwnershipMock).toHaveBeenCalledWith(PLAN_ID, USER_ID);
-    expect(mocks.connectionFindUniqueMock).toHaveBeenCalledWith({
-      where: { coachProfileId: COACH_PROFILE_ID },
-      select: { id: true },
-    });
     expect(mocks.upsertMock).toHaveBeenCalledWith({
       where: {
         planId_channel_legacyLevelId: {
@@ -375,25 +371,23 @@ describe("linksApi.createLink", () => {
         },
       },
       create: {
-        connectionId: CONNECTION_ID,
         planId: PLAN_ID,
         channel: "GENERAL",
         legacyLevelId: LEGACY_LEVEL_ID,
       },
-      update: { connectionId: CONNECTION_ID },
+      update: {},
     });
     expect(result.channel).toBe("GENERAL");
     expect(result.legacyLevelId).toBe(LEGACY_LEVEL_ID);
   });
 
-  it("upserts an INDIVIDUAL link keyed on athleteId, re-pointing legacyUserId on update", async () => {
+  it("upserts an INDIVIDUAL link with the legacyUserId of the athlete's own identity", async () => {
     mocks.upsertMock.mockResolvedValue(makeIndividualPrismaLink());
 
     const result = await linksApi.createLink(USER_ID, {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: LEGACY_USER_ID,
     });
 
     expect(mocks.upsertMock).toHaveBeenCalledWith({
@@ -405,13 +399,12 @@ describe("linksApi.createLink", () => {
         },
       },
       create: {
-        connectionId: CONNECTION_ID,
         planId: PLAN_ID,
         channel: "INDIVIDUAL",
         legacyUserId: LEGACY_USER_ID,
         athleteId: ATHLETE_ID,
       },
-      update: { connectionId: CONNECTION_ID, legacyUserId: LEGACY_USER_ID },
+      update: { legacyUserId: LEGACY_USER_ID },
     });
     expect(result).toEqual({
       id: LINK_ID,
@@ -449,7 +442,6 @@ describe("linksApi.createLink", () => {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: LEGACY_USER_ID,
     });
 
     expect(mocks.groupByMock).toHaveBeenCalledWith(lifetimeAggregateQuery([LINK_ID]));
@@ -492,21 +484,123 @@ describe("linksApi.createLink", () => {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: LEGACY_USER_ID,
     });
 
     await expect(attempt).rejects.not.toBeInstanceOf(ConflictError);
     await expect(attempt).rejects.not.toThrow("already linked to another plan member");
   });
 
-  it("rejects with BadRequestError when the coach has no mobile connection", async () => {
-    const { BadRequestError } = await import("@repo/errors");
+  it("reads the athlete's identity only through a live enrollment in the plan", async () => {
+    mocks.upsertMock.mockResolvedValue(makeIndividualPrismaLink());
 
-    mocks.connectionFindUniqueMock.mockResolvedValue(null);
+    await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    });
+
+    expect(mocks.athleteFindFirstMock).toHaveBeenCalledWith({
+      where: {
+        id: ATHLETE_ID,
+        planEnrollmentsAsAthlete: { some: { planId: PLAN_ID, deletedAt: null } },
+      },
+      select: { legacyIdentity: { select: { legacyUserId: true, legacyPlanId: true } } },
+    });
+  });
+
+  it("refuses an athlete who is not enrolled in the plan and writes nothing", async () => {
+    mocks.athleteFindFirstMock.mockResolvedValue(null);
+
+    await expect(
+      linksApi.createLink(USER_ID, {
+        planId: PLAN_ID,
+        channel: "INDIVIDUAL",
+        athleteId: ATHLETE_ID,
+      }),
+    ).rejects.toThrow(NOT_ENROLLED_MESSAGE);
+
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an athlete with no app account and writes nothing", async () => {
+    mocks.athleteFindFirstMock.mockResolvedValue({ legacyIdentity: null });
+
+    await expect(
+      linksApi.createLink(USER_ID, {
+        planId: PLAN_ID,
+        channel: "INDIVIDUAL",
+        athleteId: ATHLETE_ID,
+      }),
+    ).rejects.toThrow(NO_INDIVIDUAL_ACCOUNT_MESSAGE);
+
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an athlete whose app account is on the General plan and writes nothing", async () => {
+    mocks.athleteFindFirstMock.mockResolvedValue({
+      legacyIdentity: { legacyUserId: LEGACY_USER_ID, legacyPlanId: LEGACY_PLAN_GENERAL },
+    });
+
+    await expect(
+      linksApi.createLink(USER_ID, {
+        planId: PLAN_ID,
+        channel: "INDIVIDUAL",
+        athleteId: ATHLETE_ID,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestError);
+
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("reads no identity for a GENERAL link", async () => {
+    await linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID });
+
+    expect(mocks.athleteFindFirstMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a GENERAL link from a caller who may not publish to a training level", async () => {
+    const { ForbiddenError } = await import("@repo/errors");
+
+    mocks.verifyCanPublishToLevelMock.mockRejectedValue(
+      new ForbiddenError("Only the head coach can publish to a training level"),
+    );
 
     await expect(
       linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID }),
-    ).rejects.toBeInstanceOf(BadRequestError);
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+    expect(mocks.verifyCanPublishToLevelMock).toHaveBeenCalledWith(USER_ID);
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("does not ask for the level role for an INDIVIDUAL link", async () => {
+    mocks.upsertMock.mockResolvedValue(makeIndividualPrismaLink());
+
+    await linksApi.createLink(USER_ID, {
+      planId: PLAN_ID,
+      channel: "INDIVIDUAL",
+      athleteId: ATHLETE_ID,
+    });
+
+    expect(mocks.verifyCanPublishToLevelMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a GENERAL link to a level outside the catalog and writes nothing", async () => {
+    await expect(
+      linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: UNKNOWN_LEVEL_ID }),
+    ).rejects.toThrow(UNKNOWN_LEVEL_MESSAGE);
+
+    expect(mocks.upsertMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses before any upsert when the caller does not own the plan", async () => {
+    const { ForbiddenError } = await import("@repo/errors");
+
+    mocks.verifyPlanOwnershipMock.mockRejectedValue(new ForbiddenError("not your plan"));
+
+    await expect(
+      linksApi.createLink(USER_ID, { planId: PLAN_ID, legacyLevelId: LEGACY_LEVEL_ID }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
 
     expect(mocks.upsertMock).not.toHaveBeenCalled();
   });
@@ -522,7 +616,6 @@ describe("linksApi.createLink", () => {
       planId: PLAN_ID,
       channel: "INDIVIDUAL",
       athleteId: ATHLETE_ID,
-      legacyUserId: LEGACY_USER_ID,
     });
 
     await expect(attempt).rejects.toBeInstanceOf(ConflictError);
@@ -539,7 +632,6 @@ describe("linksApi.createLink", () => {
         planId: PLAN_ID,
         channel: "INDIVIDUAL",
         athleteId: ATHLETE_ID,
-        legacyUserId: LEGACY_USER_ID,
       }),
     ).rejects.toBeInstanceOf(BadRequestError);
   });
@@ -549,7 +641,7 @@ describe("linksApi.deleteLink", () => {
   beforeEach(() => {
     mocks.deleteMock.mockReset();
     mocks.verifyMobileLinkOwnershipMock.mockReset();
-    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue(undefined);
+    mocks.verifyMobileLinkOwnershipMock.mockResolvedValue({ planId: PLAN_ID });
     mocks.deleteMock.mockResolvedValue(makePrismaLink());
   });
 

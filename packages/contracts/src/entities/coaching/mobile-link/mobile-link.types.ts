@@ -5,6 +5,7 @@ import {
   type createMobileLinkSchema,
   type generalMobileLinkSchema,
   type individualMobileLinkSchema,
+  type linkableAthleteSchema,
   type mobileLinkSchema,
   type publishAggregateSchema,
 } from "./mobile-link.schema";
@@ -15,3 +16,4 @@ export type GeneralMobileLink = z.infer<typeof generalMobileLinkSchema>;
 export type IndividualMobileLink = z.infer<typeof individualMobileLinkSchema>;
 export type CreateMobileLinkData = z.infer<typeof createMobileLinkSchema>;
 export type CreateIndividualMobileLinkData = z.infer<typeof createIndividualMobileLinkSchema>;
+export type LinkableAthlete = z.infer<typeof linkableAthleteSchema>;
