@@ -12,6 +12,8 @@ The monorepo deploys **three independent Vercel projects** from a single git rep
 
 All three apps share a single PostgreSQL database (Neon) and a single Vercel Blob store.
 
+Each project's **Node.js Version** is a Vercel project setting, not something the repo controls: the apps' `package.json` files carry no `engines` field, so Vercel never reads one. Keep all three on the current LTS (24.x). Vercel discontinued 20.x in October 2026 and the marketing project, still set to it, failed every production build for a week while the live site kept serving the last good deployment. As of 2026-10-08 marketing and platform run 24.x and admin still runs 22.x.
+
 ### Domains (since the apex cutover, 2026-09-17)
 
 | Domain                              | Project   | Notes                                                                                                           |

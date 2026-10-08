@@ -20,7 +20,7 @@ High-performance coaching platform (LMS + Billing) with a Marketing CMS. Turbo m
 
 ### Prerequisites
 
-- **Node.js 20+** -- pinned via `.nvmrc` and `engines.node`. Recommended: `nvm use` or `volta install node@20`.
+- **Node.js 24 (LTS)** -- pinned via `.nvmrc`; `engines.node` keeps the floor at 20. Recommended: `nvm use` or `volta install node@24`.
 - **pnpm 10.33.2** -- pinned via `package.json#packageManager`. Easiest path: enable Corepack (`corepack enable`); falls back to `npm install -g pnpm@10.33.2`.
 - **Docker** -- `task stack:up` runs PostgreSQL 17 in a container; every dev server, test run and migration rehearsal targets it. See [docs/runbooks/local-stack.md](docs/runbooks/local-stack.md). A Neon connection string is for read-only looks at a deployed environment, not a dev or test target.
 
