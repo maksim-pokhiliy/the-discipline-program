@@ -13,7 +13,7 @@ concurrency:
 env:
   # pnpm version comes from root package.json `packageManager` field —
   # action-setup@v6 reads it directly. Keep Node bumped in lockstep with engines.node.
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
 
 jobs:
   check-types:

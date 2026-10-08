@@ -36,6 +36,7 @@ const ALLOWED_FILES = new Set([
   ".env.example",
   "scripts/check-secrets.mjs",
   ".husky/pre-commit",
+  ".github/workflows/ci.yml",
 ]);
 
 const SKIP_DIRS = new Set(["node_modules", ".next", ".turbo", "dist", "build", ".git"]);
