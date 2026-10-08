@@ -34,7 +34,7 @@ Access, open or closed per enrollment, is resolved by the gate in `api-server/sr
 
 ## Related work
 
-- `docs/BOUNDED-CONTEXTS.md` (section 5) is the canonical record of the Billing model, its invariants and the dead columns step 0.3b drops.
+- `docs/BOUNDED-CONTEXTS.md` (section 5) is the canonical record of the Billing model and its invariants.
 - ADR-0044 sets the current product decisions and supersedes ADR 0008 and ADR 0014; ADR 0036 covers the `Idempotency-Key` every billing mutation carries.
 - `packages/api-server/src/infrastructure/payment/README.md` describes the payment port and its Monobank adapter, and `packages/api-server/src/endpoints/billing/README.md` the endpoints that will use them.
 - `initiatives/storefront-billing/domain-model.md` sketches the subscription state machine, access resolution and purchase flows the later steps build.
