@@ -231,20 +231,19 @@ enum ProfileAxisBinding {
 }
 
 model Product {
-  id              String         @id @default(cuid())
-  slug            String         @unique
-  title           String
-  description     String
-  features        String[]
-  stripeProductId String?        @unique @ignore
-  isFeatured      Boolean        @default(false)
-  isActive        Boolean        @default(true)
-  prices          Price[]
-  plans           ProductPlan[]
-  subscriptions   Subscription[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  deletedAt       DateTime?
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  title         String
+  description   String
+  features      String[]
+  isFeatured    Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  prices        Price[]
+  plans         ProductPlan[]
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
 
   @@index([createdAt, title])
   @@index([deletedAt])
@@ -277,8 +276,6 @@ model Price {
   periodCount   Int            @default(4)
   periodUnit    PeriodUnit     @default(WEEK)
   autoRenew     Boolean        @default(true)
-  interval      PriceInterval  @default(MONTHLY) @ignore
-  stripePriceId String?        @unique @ignore
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
@@ -292,16 +289,10 @@ enum Currency {
   UAH
 }
 
-enum PriceInterval {
-  MONTHLY
-  YEARLY
-  ONE_TIME
-}
-
 model Subscription {
   id                     String             @id @default(cuid())
   userId                 String
-  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Restrict)
   productId              String
   product                Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
   priceId                String?
@@ -332,7 +323,7 @@ model Subscription {
 model Transaction {
   id             String            @id @default(cuid())
   userId         String
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   subscriptionId String?
   subscription   Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   provider       BillingProvider
