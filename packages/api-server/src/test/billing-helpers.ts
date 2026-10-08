@@ -176,6 +176,8 @@ export const createTrackedWebhookEvent = (
   trackFixture(ids.webhookEventIds, createTestWebhookEvent(overrides));
 
 export const cleanupBillingFixtures = async (ids: BillingFixtureIds): Promise<void> => {
+  await cleanupRaw.transaction.deleteMany({ where: { userId: { in: ids.buyerIds } } });
+  await cleanupRaw.subscription.deleteMany({ where: { userId: { in: ids.buyerIds } } });
   await cleanupRaw.user.deleteMany({ where: { id: { in: ids.buyerIds } } });
   await cleanupRaw.product.deleteMany({ where: { id: { in: ids.productIds } } });
   await cleanupRaw.trainingPlan.deleteMany({ where: { id: { in: ids.planIds } } });

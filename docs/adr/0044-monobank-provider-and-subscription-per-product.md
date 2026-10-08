@@ -29,6 +29,8 @@ The Stripe columns (`stripeProductId`, `stripePriceId`), the externally-assigned
 
 _Amended 2026-09-28._ W0 ships in two halves, because production has to receive a migration before the code that needs it, and the code it replaces still reads the old columns (`docs/runbooks/db-migrate-dispatch.md`). The expand half (step 0.3) adds the new shapes, converts the existing prices, retires `userId @unique`, the external `Subscription.id` and `TRIAL`. The contract half (step 0.3b) drops the Stripe columns and `PriceInterval` once the expand half is live.
 
+_Amended 2026-10-08._ The contract half landed as `20261008120000_storefront_billing_w0_contract`. Besides the drop it adds the CHECK on the price amount (the contract's bounds, 0 to 99 999 999 cents) and switches the user foreign keys of `Subscription` and `Transaction` to `RESTRICT`, so a hard delete of a user can never erase the money ledger; the admin user delete is a soft delete and never meets them.
+
 ## Consequences
 
 - **Positive:** the provider that can actually pay a Ukrainian FOP, at 1.3% instead of 15%; Denys's 4-week periods and per-product pricing map 1:1 onto the model and onto the provider; one gate in `authz/` serves the web and the unchanged App-Store app; the seam keeps an Apple IAP adapter (or any second acquirer) a bolt-on with no schema change; the fiscal switch costs nothing later.

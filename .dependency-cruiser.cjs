@@ -82,9 +82,9 @@ module.exports = {
       name: "contracts-billing-no-cms-coaching",
       severity: "error",
       comment:
-        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM and LMS (via the Purchase = " +
-        "Immediate Value invariant on TrainingPlan). Billing must not read marketing " +
-        "content or coaching state.",
+        "BOUNDED-CONTEXTS.md §9: Billing depends on IAM and LMS only (a product binds " +
+        "training plans through ProductPlan, an enrollment carries its subscription). " +
+        "Billing must not read marketing content or coaching state.",
       from: { path: "^packages/contracts/src/entities/billing/" },
       to: { path: "^packages/contracts/src/entities/(cms|coaching)/" },
     },
@@ -170,11 +170,10 @@ module.exports = {
       name: "api-server-billing-no-cms-coaching",
       severity: "error",
       comment:
-        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM + LMS (Product→TrainingPlan through ProductPlan) " +
+        "BOUNDED-CONTEXTS.md §9: Billing depends on IAM + LMS (Product→TrainingPlan through ProductPlan) " +
         "only. Billing must not read marketing content or coach state. The single allowed " +
-        "cross-context write Billing → LMS (PlanEnrollment on purchase success, see §8 " +
-        "'Purchase = Immediate Value') stays inside LMS — it does not require Coaching or " +
-        "CMS reads.",
+        "cross-context write Billing → LMS (the purchase enrolls the buyer, §5 Dependencies, " +
+        "step 1.2) stays inside LMS and needs no Coaching or CMS read.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/billing/" },
       to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|coaching)/" },
     },

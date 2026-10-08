@@ -8,6 +8,7 @@ import {
 } from "@prisma/client";
 import { afterAll, describe, expect, it } from "vitest";
 
+import { PRODUCT_CONSTANTS } from "@repo/contracts/cms/product";
 import { PERIOD_CONSTANTS } from "@repo/contracts/common";
 
 import {
@@ -28,11 +29,14 @@ import { cleanupRaw } from "../../test/helpers";
 
 const PRICE_REQUIRED_CHECK = "app_subscriptions_price_required_check";
 const PERIOD_COUNT_CHECK = "app_prices_period_count_check";
+const AMOUNT_CENTS_CHECK = "app_prices_amount_cents_check";
 const UNIQUE_VIOLATION = { code: "P2002" };
 const FOREIGN_KEY_VIOLATION = { code: "P2003" };
 const PRICED_PROVIDERS = [BillingProvider.MONOBANK, BillingProvider.FREE];
 const REFUSED_PERIOD_COUNTS = [PERIOD_CONSTANTS.MIN_COUNT - 1, -1, PERIOD_CONSTANTS.MAX_COUNT + 1];
 const ACCEPTED_PERIOD_COUNTS = [PERIOD_CONSTANTS.MIN_COUNT, PERIOD_CONSTANTS.MAX_COUNT];
+const REFUSED_AMOUNTS = [-1, PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS + 1];
+const ACCEPTED_AMOUNTS = [0, PRODUCT_CONSTANTS.MAX_AMOUNT_CENTS];
 
 const ids = createBillingFixtureIds();
 
@@ -177,6 +181,26 @@ describe(PERIOD_COUNT_CHECK, () => {
 
     await expect(createTestPrice(product.id, { periodCount })).resolves.toMatchObject({
       periodCount,
+    });
+  });
+});
+
+describe(AMOUNT_CENTS_CHECK, () => {
+  it.each(REFUSED_AMOUNTS)("refuses an amount of %i", async (amountCents) => {
+    const product = await createTrackedProduct(ids);
+
+    await expect(createTestPrice(product.id, { amountCents })).rejects.toThrow(AMOUNT_CENTS_CHECK);
+
+    const priceCount = await cleanupRaw.price.count({ where: { productId: product.id } });
+
+    expect(priceCount).toBe(0);
+  });
+
+  it.each(ACCEPTED_AMOUNTS)("accepts an amount of %i", async (amountCents) => {
+    const product = await createTrackedProduct(ids);
+
+    await expect(createTestPrice(product.id, { amountCents })).resolves.toMatchObject({
+      amountCents,
     });
   });
 });
@@ -462,5 +486,65 @@ describe("app_subscriptions_priceId_fkey", () => {
     const priceCount = await cleanupRaw.price.count({ where: { id: price.id } });
 
     expect(priceCount).toBe(0);
+  });
+});
+
+describe("app_subscriptions_userId_fkey", () => {
+  it("refuses a hard delete of a buyer who has a subscription", async () => {
+    const buyer = await createTrackedBuyer(ids);
+    const product = await createTrackedProduct(ids);
+
+    await createTestSubscription(buyer.id, product.id);
+
+    await expect(cleanupRaw.user.delete({ where: { id: buyer.id } })).rejects.toMatchObject(
+      FOREIGN_KEY_VIOLATION,
+    );
+
+    const buyerCount = await cleanupRaw.user.count({ where: { id: buyer.id } });
+
+    expect(buyerCount).toBe(1);
+  });
+
+  it("hard-deletes a buyer without billing rows", async () => {
+    const buyer = await createTrackedBuyer(ids);
+
+    await expect(cleanupRaw.user.delete({ where: { id: buyer.id } })).resolves.toMatchObject({
+      id: buyer.id,
+    });
+
+    const buyerCount = await cleanupRaw.user.count({ where: { id: buyer.id } });
+
+    expect(buyerCount).toBe(0);
+  });
+});
+
+describe("app_transactions_userId_fkey", () => {
+  it("refuses a hard delete of a buyer who has a transaction", async () => {
+    const buyer = await createTrackedBuyer(ids);
+
+    await createTestTransaction(buyer.id);
+
+    await expect(cleanupRaw.user.delete({ where: { id: buyer.id } })).rejects.toMatchObject(
+      FOREIGN_KEY_VIOLATION,
+    );
+
+    const buyerCount = await cleanupRaw.user.count({ where: { id: buyer.id } });
+
+    expect(buyerCount).toBe(1);
+  });
+});
+
+describe("the Stripe-era columns", () => {
+  it("are gone from the database together with the PriceInterval type", async () => {
+    const columns = await cleanupRaw.$queryRaw<{ column_name: string }[]>`
+      select column_name
+      from information_schema.columns
+      where (table_name = 'app_products' and column_name = 'stripeProductId')
+         or (table_name = 'app_prices' and column_name in ('interval', 'stripePriceId'))`;
+    const types = await cleanupRaw.$queryRaw<{ typname: string }[]>`
+      select typname from pg_type where typname = 'PriceInterval'`;
+
+    expect(columns).toEqual([]);
+    expect(types).toEqual([]);
   });
 });
