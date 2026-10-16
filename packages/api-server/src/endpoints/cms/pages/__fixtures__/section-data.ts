@@ -108,6 +108,8 @@ export const PARTIAL_SECTION_DATA: PartialSectionData<HeroSectionKey> = {
   "faq:hero": { title: "Partial FAQ Hero" },
 };
 
+export const UNPARSABLE_SECTION_DATA = { title: 42 };
+
 export const UK_ABOUT_HERO = heroSection("Про мене");
 
 export const GERMAN_ABOUT_HERO = { title: "Über mich" };

@@ -23,7 +23,13 @@ import {
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
-import { FULL_SECTION_DATA, GERMAN_ABOUT_HERO, UK_ABOUT_HERO } from "./__fixtures__/section-data";
+import { PAGE_READERS } from "./__fixtures__/page-readers";
+import {
+  FULL_SECTION_DATA,
+  GERMAN_ABOUT_HERO,
+  UK_ABOUT_HERO,
+  UNPARSABLE_SECTION_DATA,
+} from "./__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { updateEnglishSection } from "./__fixtures__/update-english-section";
 import { cmsPagesPublicApi } from "./public";
@@ -37,7 +43,6 @@ type AboutRowSeed = {
 
 type UkHeroRow = Pick<AboutRowSeed, "data" | "isActive">;
 
-const UNPARSABLE_SECTION_DATA = { title: 42 };
 const ABOUT = PAGE_SECTIONS_MAP.about;
 const ENGLISH_ABOUT_HERO = FULL_SECTION_DATA[ABOUT.hero];
 const UK_ABOUT_CREDENTIALS = { title: "Сертифікати" };
@@ -76,18 +81,6 @@ const FALLBACK_CASES: readonly (readonly [string, readonly UkHeroRow[], unknown]
     [{ data: UK_ABOUT_HERO, isActive: true }],
     UK_ABOUT_HERO,
   ],
-];
-
-const PAGE_READERS: readonly (readonly [
-  PageSlug,
-  (locale: LocaleCode) => Promise<{ hero: unknown }>,
-])[] = [
-  [PageSlug.HOME, cmsPagesPublicApi.getHomePage],
-  [PageSlug.STOREFRONT, cmsPagesPublicApi.getStorefrontProgramsPage],
-  [PageSlug.ABOUT, cmsPagesPublicApi.getAboutPage],
-  [PageSlug.BLOG, cmsPagesPublicApi.getBlogPage],
-  [PageSlug.CONTACT, cmsPagesPublicApi.getContactPage],
-  [PageSlug.FAQ, cmsPagesPublicApi.getFaqPage],
 ];
 
 const createAboutRows = async (rows: readonly AboutRowSeed[]): Promise<void> => {

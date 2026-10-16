@@ -114,6 +114,23 @@ describe("marketing_page_sections.locale", () => {
   });
 });
 
+describe("marketing_locales.isEnabled", () => {
+  it("starts a locale disabled when a Prisma create omits the flag", async () => {
+    await expect(
+      cleanupRaw.marketingLocale.create({ data: { code: UKRAINIAN.code, name: UKRAINIAN.name } }),
+    ).resolves.toMatchObject({ code: UKRAINIAN.code, isEnabled: false });
+  });
+
+  it("starts a locale disabled when an SQL insert omits the column", async () => {
+    const inserted = await cleanupRaw.$queryRaw<{ isEnabled: boolean }[]>`
+      insert into marketing_locales (code, name, "updatedAt")
+      values (${UKRAINIAN.code}, ${UKRAINIAN.name}, now())
+      returning "isEnabled"`;
+
+    expect(inserted).toEqual([{ isEnabled: false }]);
+  });
+});
+
 describe("marketing_page_sections indexes", () => {
   it("carries the locale-scoped unique key and index and neither of the two they replaced", async () => {
     const indexes = await cleanupRaw.$queryRaw<{ indexname: string }[]>`
