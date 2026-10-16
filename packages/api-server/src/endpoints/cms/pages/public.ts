@@ -1,6 +1,7 @@
 import { type Prisma } from "@prisma/client";
 import { type z } from "zod";
 
+import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type HomePageData,
   type StorefrontProgramsPageData,
@@ -18,14 +19,21 @@ import { prisma } from "../../../db/client";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { mapToReview, mapToProduct } from "../../../mappers/cms";
 import { cmsBlogPublicApi } from "../blog/public";
+import { assertPublicLocale } from "../locale/locale-access";
 
 const HOME_PAGE_PRODUCTS_LIMIT = 6;
 const HOME_PAGE_REVIEWS_LIMIT = 12;
 
+type SectionRow = { section: string; locale: string; data: Prisma.JsonValue };
+
+type SectionData<TKey extends SectionSchemaKey> = Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>>;
+
+type SectionPicker = <TKey extends SectionSchemaKey>(sectionName: TKey) => SectionData<TKey> | null;
+
 const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
-  sections: { section: string; data: Prisma.JsonValue }[],
+  sections: SectionRow[],
   sectionName: TKey,
-): Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>> | null => {
+): SectionData<TKey> | null => {
   const section = sections.find((s) => s.section === sectionName);
 
   if (!section) {
@@ -37,14 +45,14 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
   if (!result.success) {
     defaultMonitoring.captureException(result.error, {
       level: "warning",
-      tags: { area: "cms.pages.public", section: sectionName },
+      tags: { area: "cms.pages.public", section: sectionName, locale: section.locale },
       extra: { rawData: section.data },
     });
 
     return null;
   }
 
-  const parsed = result.data as Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>>;
+  const parsed = result.data as SectionData<TKey>;
 
   if (Object.keys(parsed).length === 0) {
     return null;
@@ -53,13 +61,36 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
   return parsed;
 };
 
-export const cmsPagesPublicApi = {
-  getHomePage: async (): Promise<HomePageData> => {
-    const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: PageSlug.HOME, isActive: true },
-    });
+const localeChain = (locale: LocaleCode): LocaleCode[] =>
+  locale === DEFAULT_LOCALE_CODE ? [DEFAULT_LOCALE_CODE] : [locale, DEFAULT_LOCALE_CODE];
 
-    const [products, reviews] = await Promise.all([
+const readSections = async (pageSlug: PageSlug, locale: LocaleCode): Promise<SectionPicker> => {
+  const chain = localeChain(locale);
+  const rows = await prisma.marketingPageSection.findMany({
+    where: { pageSlug, isActive: true, locale: { in: chain } },
+    select: { section: true, locale: true, data: true },
+  });
+  const rowsByLocale = chain.map((code) => rows.filter((row) => row.locale === code));
+
+  return (sectionName) => {
+    for (const localeRows of rowsByLocale) {
+      const data = extractSectionDataOrNull(localeRows, sectionName);
+
+      if (data !== null) {
+        return data;
+      }
+    }
+
+    return null;
+  };
+};
+
+export const cmsPagesPublicApi = {
+  getHomePage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<HomePageData> => {
+    await assertPublicLocale(locale);
+
+    const [pick, products, reviews] = await Promise.all([
+      readSections(PageSlug.HOME, locale),
       prisma.product.findMany({
         where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
@@ -74,21 +105,23 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.home;
 
     return {
-      hero: extractSectionDataOrNull(sections, map.hero),
-      whyChoose: extractSectionDataOrNull(sections, map.whyChoose),
-      storefront: extractSectionDataOrNull(sections, map.storefront),
-      reviews: extractSectionDataOrNull(sections, map.reviews),
-      contact: extractSectionDataOrNull(sections, map.contact),
+      hero: pick(map.hero),
+      whyChoose: pick(map.whyChoose),
+      storefront: pick(map.storefront),
+      reviews: pick(map.reviews),
+      contact: pick(map.contact),
       productsList: products.map(mapToProduct),
       reviewsList: reviews.map(mapToReview),
     };
   },
 
-  getStorefrontProgramsPage: async (): Promise<StorefrontProgramsPageData> => {
-    const [sections, products] = await Promise.all([
-      prisma.marketingPageSection.findMany({
-        where: { pageSlug: PageSlug.STOREFRONT, isActive: true },
-      }),
+  getStorefrontProgramsPage: async (
+    locale: LocaleCode = DEFAULT_LOCALE_CODE,
+  ): Promise<StorefrontProgramsPageData> => {
+    await assertPublicLocale(locale);
+
+    const [pick, products] = await Promise.all([
+      readSections(PageSlug.STOREFRONT, locale),
       prisma.product.findMany({
         where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
@@ -98,49 +131,50 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.storefront;
 
     return {
-      hero: extractSectionDataOrNull(sections, map.hero),
-      grid: extractSectionDataOrNull(sections, map.grid),
-      cta: extractSectionDataOrNull(sections, map.cta),
+      hero: pick(map.hero),
+      grid: pick(map.grid),
+      cta: pick(map.cta),
       productsList: products.map(mapToProduct),
     };
   },
 
-  getAboutPage: async (): Promise<AboutPageData> => {
-    const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: PageSlug.ABOUT, isActive: true },
-    });
+  getAboutPage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<AboutPageData> => {
+    await assertPublicLocale(locale);
 
+    const pick = await readSections(PageSlug.ABOUT, locale);
     const map = PAGE_SECTIONS_MAP.about;
 
     return {
-      hero: extractSectionDataOrNull(sections, map.hero),
-      journey: extractSectionDataOrNull(sections, map.journey),
-      credentials: extractSectionDataOrNull(sections, map.credentials),
-      personal: extractSectionDataOrNull(sections, map.personal),
-      cta: extractSectionDataOrNull(sections, map.cta),
+      hero: pick(map.hero),
+      journey: pick(map.journey),
+      credentials: pick(map.credentials),
+      personal: pick(map.personal),
+      cta: pick(map.cta),
     };
   },
 
-  getBlogPage: async (): Promise<BlogPageData> => {
-    const [sections, publicPosts] = await Promise.all([
-      prisma.marketingPageSection.findMany({ where: { pageSlug: PageSlug.BLOG, isActive: true } }),
+  getBlogPage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<BlogPageData> => {
+    await assertPublicLocale(locale);
+
+    const [pick, publicPosts] = await Promise.all([
+      readSections(PageSlug.BLOG, locale),
       cmsBlogPublicApi.listPublished(),
     ]);
 
     return {
-      hero: extractSectionDataOrNull(sections, PAGE_SECTIONS_MAP.blog.hero),
-      grid: extractSectionDataOrNull(sections, PAGE_SECTIONS_MAP.blog.grid),
+      hero: pick(PAGE_SECTIONS_MAP.blog.hero),
+      grid: pick(PAGE_SECTIONS_MAP.blog.grid),
       featuredPost: publicPosts.find((p) => p.isFeatured) || publicPosts[0],
       posts: publicPosts,
       categories: [...new Set(publicPosts.map((p) => p.category))],
     };
   },
 
-  getContactPage: async (): Promise<ContactPageData> => {
-    const [sections, products] = await Promise.all([
-      prisma.marketingPageSection.findMany({
-        where: { pageSlug: PageSlug.CONTACT, isActive: true },
-      }),
+  getContactPage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<ContactPageData> => {
+    await assertPublicLocale(locale);
+
+    const [pick, products] = await Promise.all([
+      readSections(PageSlug.CONTACT, locale),
       prisma.product.findMany({
         where: { isActive: true },
       }),
@@ -149,23 +183,22 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.contact;
 
     return {
-      hero: extractSectionDataOrNull(sections, map.hero),
-      form: extractSectionDataOrNull(sections, map.form),
+      hero: pick(map.hero),
+      form: pick(map.form),
       programOptions: products.map((p) => ({ slug: p.slug, title: p.title })),
     };
   },
 
-  getFaqPage: async (): Promise<FaqPageData> => {
-    const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: PageSlug.FAQ, isActive: true },
-    });
+  getFaqPage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<FaqPageData> => {
+    await assertPublicLocale(locale);
 
+    const pick = await readSections(PageSlug.FAQ, locale);
     const map = PAGE_SECTIONS_MAP.faq;
 
     return {
-      hero: extractSectionDataOrNull(sections, map.hero),
-      content: extractSectionDataOrNull(sections, map.content),
-      cta: extractSectionDataOrNull(sections, map.cta),
+      hero: pick(map.hero),
+      content: pick(map.content),
+      cta: pick(map.cta),
     };
   },
 };
