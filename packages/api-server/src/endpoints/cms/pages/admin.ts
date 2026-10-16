@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
+import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageListItem,
   type AdminPageDetails,
@@ -13,8 +13,9 @@ import { capitalize } from "@repo/shared";
 import { prisma } from "../../../db/client";
 import { handlePrismaError } from "../../../utils";
 import { asJsonRecord } from "../../../utils/json-record";
+import { assertAdminLocale } from "../locale/locale-access";
 
-import { getPageSectionsOrder } from "./page-sections";
+import { EMPTY_SECTION_DATA, getPageSectionsOrder } from "./page-sections";
 
 const PAGE_SLUGS: ReadonlySet<string> = new Set(Object.values(PageSlug));
 const SECTION_KEYS: ReadonlySet<string> = new Set(Object.keys(SECTION_SCHEMAS));
@@ -31,11 +32,16 @@ const ensurePages = async (slugs: readonly PageSlug[]): Promise<void> => {
   });
 };
 
-const ensurePageScaffold = async (slug: PageSlug): Promise<void> => {
+const ensurePageScaffold = async (slug: PageSlug, locale: LocaleCode): Promise<void> => {
   await ensurePages([slug]);
 
   await prisma.marketingPageSection.createMany({
-    data: getPageSectionsOrder(slug).map((section) => ({ pageSlug: slug, section, data: {} })),
+    data: getPageSectionsOrder(slug).map((section) => ({
+      pageSlug: slug,
+      section,
+      locale,
+      data: EMPTY_SECTION_DATA,
+    })),
     skipDuplicates: true,
   });
 };
@@ -58,18 +64,20 @@ export const cmsPagesAdminApi = {
       }));
   },
 
-  getPageBySlug: async (slug: string): Promise<AdminPageDetails> => {
+  getPageBySlug: async (
+    slug: string,
+    locale: LocaleCode = DEFAULT_LOCALE_CODE,
+  ): Promise<AdminPageDetails> => {
     if (!isValidPageSlug(slug)) {
       throw new NotFoundError(`Page with slug ${slug} not found`);
     }
 
-    await ensurePageScaffold(slug);
+    await assertAdminLocale(locale);
+    await ensurePageScaffold(slug, locale);
 
     const page = await prisma.marketingPage.findUnique({
       where: { slug },
-      include: {
-        sections: true,
-      },
+      include: { sections: { where: { locale } } },
     });
 
     if (!page) {
@@ -86,6 +94,7 @@ export const cmsPagesAdminApi = {
 
     return {
       slug,
+      locale,
       sections: sortedSections
         .filter((s): s is typeof s & { section: SectionKey } => isValidSectionKey(s.section))
         .map((s) => ({
@@ -129,6 +138,7 @@ export const cmsPagesAdminApi = {
       throw new NotFoundError(`Section ${payload.section} for page ${payload.pageSlug} not found`);
     }
 
+    await assertAdminLocale(locale);
     await ensurePages([payload.pageSlug]);
 
     try {

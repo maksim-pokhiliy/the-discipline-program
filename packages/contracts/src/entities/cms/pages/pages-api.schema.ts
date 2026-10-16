@@ -151,6 +151,7 @@ const adminSectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
 
 export const adminPageDetailsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
+  locale: localeCodeSchema,
   sections: z.array(z.discriminatedUnion("section", toNonEmptyArray(adminSectionVariants))),
 });
 

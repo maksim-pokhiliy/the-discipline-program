@@ -107,3 +107,5 @@ export const PARTIAL_SECTION_DATA: PartialHeroSectionData = {
   "contact:hero": { title: "Partial Contact Hero" },
   "faq:hero": { title: "Partial FAQ Hero" },
 };
+
+export const UK_ABOUT_HERO = heroSection("Про мене");

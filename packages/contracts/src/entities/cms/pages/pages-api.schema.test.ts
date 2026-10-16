@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_LOCALE_CODE } from "../locale";
 
 import {
+  adminPageDetailsSchema,
   pageSlugRouteParamsSchema,
   SECTION_SCHEMAS,
   updatePageSectionBodySchema,
@@ -80,5 +81,16 @@ describe("updatePageSectionBodySchema locale", () => {
 
     expect(omitted.locale).toBe(DEFAULT_LOCALE_CODE);
     expect(malformed.success).toBe(false);
+  });
+});
+
+describe("adminPageDetailsSchema locale", () => {
+  it("refuses details without a locale", () => {
+    const details = { slug: PageSlug.HOME, sections: [] };
+
+    expect(adminPageDetailsSchema.safeParse(details).success).toBe(false);
+    expect(
+      adminPageDetailsSchema.safeParse({ ...details, locale: DEFAULT_LOCALE_CODE }).success,
+    ).toBe(true);
   });
 });
