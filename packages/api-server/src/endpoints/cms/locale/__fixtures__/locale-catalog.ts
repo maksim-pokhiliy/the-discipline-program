@@ -1,3 +1,7 @@
+import { type MarketingLocale } from "@prisma/client";
+
+import { type LocaleCode } from "@repo/contracts/cms/locale";
+
 import { cleanupRaw } from "../../../../test/helpers";
 
 export const UKRAINIAN = { code: "uk", name: "Українська", isEnabled: true, sortOrder: 1 };
@@ -10,3 +14,6 @@ export const UNKNOWN_LOCALE_CODE = "xx";
 export const seedLocaleCatalog = async (): Promise<void> => {
   await cleanupRaw.marketingLocale.createMany({ data: SEEDED_LOCALES });
 };
+
+export const readLocale = (code: LocaleCode): Promise<MarketingLocale | null> =>
+  cleanupRaw.marketingLocale.findUnique({ where: { code } });

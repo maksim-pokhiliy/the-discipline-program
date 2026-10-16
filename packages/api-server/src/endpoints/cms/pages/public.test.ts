@@ -8,12 +8,10 @@ import {
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
-import { FULL_SECTION_DATA } from "./__fixtures__/section-data";
+import { FULL_SECTION_DATA, UNPARSABLE_SECTION_DATA } from "./__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { updateEnglishSection } from "./__fixtures__/update-english-section";
 import { cmsPagesPublicApi } from "./public";
-
-const INVALID_SECTION_DATA = { title: 42 };
 
 const PAGE_READERS: readonly (readonly [PageSlug, () => Promise<unknown>])[] = [
   [PageSlug.HOME, () => cmsPagesPublicApi.getHomePage()],
@@ -127,7 +125,7 @@ describe("cmsPagesPublicApi", () => {
 
     it("answers null for a section whose stored data does not fit its schema", async () => {
       await updateEnglishSection(PageSlug.FAQ, PAGE_SECTIONS_MAP.faq.content, {
-        data: INVALID_SECTION_DATA,
+        data: UNPARSABLE_SECTION_DATA,
       });
 
       try {

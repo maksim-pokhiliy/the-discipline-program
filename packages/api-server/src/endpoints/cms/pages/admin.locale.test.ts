@@ -27,12 +27,11 @@ import {
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
 import { FULL_SECTION_DATA, GERMAN_ABOUT_HERO, UK_ABOUT_HERO } from "./__fixtures__/section-data";
+import { ABOUT_HERO_ROW, ABOUT_SECTIONS, readRows } from "./__fixtures__/section-rows";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesAdminApi } from "./admin";
 
-const ABOUT_SECTIONS = Object.values(PAGE_SECTIONS_MAP.about);
 const ABOUT_HERO = PAGE_SECTIONS_MAP.about.hero;
-const ABOUT_HERO_ROW = { pageSlug: PageSlug.ABOUT, section: ABOUT_HERO };
 const ABOUT_JOURNEY_ROW = { pageSlug: PageSlug.ABOUT, section: PAGE_SECTIONS_MAP.about.journey };
 const REVERSED_SECTION_ID_PREFIX = "reversed-uk-about-section-";
 const REWRITTEN_UK_ABOUT_HERO = { title: "Про мене, друга редакція" };
@@ -46,9 +45,6 @@ const LOCALE_WRITES: readonly (readonly [string, (locale: LocaleCode) => Promise
     (locale) => cmsPagesAdminApi.updateSection({ ...ABOUT_HERO_ROW, data: UK_ABOUT_HERO, locale }),
   ],
 ];
-
-const readRows = (locale: LocaleCode) =>
-  cleanupRaw.marketingPageSection.findMany({ where: { locale }, orderBy: { id: "asc" } });
 
 const readAboutRowIds = async (locale: LocaleCode): Promise<string[]> => {
   const rows = await cleanupRaw.marketingPageSection.findMany({
