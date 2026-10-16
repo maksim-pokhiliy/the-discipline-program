@@ -2,6 +2,7 @@ import { type Prisma } from "@prisma/client";
 import { type z } from "zod";
 
 import { type BlogPostPageData, type PublicBlogPost } from "@repo/contracts/cms/blog";
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import {
   PageSlug,
   PAGE_SECTIONS_MAP,
@@ -58,7 +59,7 @@ export const cmsBlogPublicApi = {
         },
       }),
       prisma.marketingPageSection.findMany({
-        where: { pageSlug: PageSlug.BLOG, isActive: true },
+        where: { pageSlug: PageSlug.BLOG, isActive: true, locale: DEFAULT_LOCALE_CODE },
       }),
     ]);
 
