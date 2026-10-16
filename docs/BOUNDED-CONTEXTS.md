@@ -97,7 +97,8 @@ The rest of this document describes each context in detail: what it owns, which 
 | Aggregate / entity              | Prisma model                 | Role                                                                                                                |
 | ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `MarketingPage` (root)          | `MarketingPage`              | A static landing page — home, about, blog, contact, faq, storefront. Keyed by slug.                                 |
-| `MarketingPageSection`          | `MarketingPageSection`       | Child entity of `MarketingPage`. Each page has a fixed list of section keys; the section payload is typed `Json`.   |
+| `MarketingPageSection`          | `MarketingPageSection`       | Child entity of `MarketingPage`. A fixed list of section keys per page, one row per key and locale; `Json` payload. |
+| `MarketingLocale` (root)        | `MarketingLocale`            | A language of the site, keyed by its code (`en`, `uk`): name, enabled flag, order. English is the default locale.   |
 | `MarketingBlogPost` (root)      | `MarketingBlogPost`          | One blog article. Has publish/feature flags, category, tags, precomputed read time.                                 |
 | `MarketingReview` (root)        | `MarketingReview`            | A customer review shown on the home page and storefront.                                                            |
 | `MarketingContactSubmission`    | `MarketingContactSubmission` | An inbound contact form submission. Append-only from public POST, triaged from admin.                               |
@@ -107,23 +108,27 @@ The rest of this document describes each context in detail: what it owns, which 
 
 - `PageSlug` (`home | about | blog | contact | faq | storefront`).
 - `SectionKey` — string literal union per page, in `PAGE_SECTIONS_MAP`.
+- `LocaleCode` — two or three lowercase ASCII letters (`en`, `uk`, `crh`), validated by `localeCodeSchema`. It is the primary key of `MarketingLocale`, the URL prefix of a non-default locale (`/uk/about`) and the `html lang` value at once; regional variants (`pt-BR`) are out of scope. The default is `DEFAULT_LOCALE_CODE = "en"`.
 - `MarketingBlogCategory` — fitness, nutrition, mindset, training, recovery, uncategorized.
 - `ContactSubmissionStatus` — inbox triage state (new, in-progress, replied, closed).
 
 ### Invariants
 
 - **Unique slug per page.** `MarketingPage.slug @unique`, `MarketingBlogPost.slug @unique`, `Product.slug @unique`.
-- **One section of each kind per page.** `@@unique([pageSlug, section])`.
+- **One section per page, kind and locale.** `@@unique([pageSlug, section, locale])`.
+- **The default locale always exists and stays enabled.** The migration `20261016120000_cms_locales` inserts `en`, the admin locale and page calls re-create it when it is missing (`ensureDefaultLocale`), and `cmsLocaleAdminApi` refuses to disable or delete it (`BadRequestError`).
+- **A locale with content cannot be deleted.** `cmsLocaleAdminApi.deleteLocale` refuses with a `ConflictError` naming the count while a section row with content (`data` other than the `{}` the scaffold writes) carries the locale; otherwise the locale's empty scaffold rows go with it in one transaction. `marketing_page_sections.locale` → `marketing_locales.code` is `ON DELETE RESTRICT`, the backstop.
+- **A non-default locale falls back to English section by section.** The public read takes a section from the locale's own row when that row is active, parses and is non-empty, otherwise from the English row under the same three conditions, otherwise `null`. An unknown or disabled locale is a 404 before any page query; English is read without a catalog lookup (ADR-0045).
 - **Section payload must match its Zod schema.** Enforced at read time via `SECTION_SCHEMAS[key].parse(...)`.
 - **At most one featured blog post / featured product at a time.** Enforced inside `$transaction`.
 - **Read-time is derived, not authoritative.** Computed from `content` word count during create/update.
 
 ### Where it lives today
 
-- **DB:** `MarketingPage`, `MarketingPageSection`, `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`, and the `Product` model (shared with Billing).
-- **Contracts:** `packages/contracts/src/entities/cms/pages/`, `cms/blog/`, `cms/review/`, `cms/contact/`, `cms/product/`, `cms/dashboard/`.
-- **API — `api-server`:** all CMS lives under `endpoints/cms/`. Each entity is a subfolder with sibling admin-write and public-read files.
-- **Consumer apps:** `apps/admin` (authoring, triage), `apps/marketing` (public rendering).
+- **DB:** `MarketingPage`, `MarketingPageSection`, `MarketingLocale` (migration `20261016120000_cms_locales`), `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`, and the `Product` model (shared with Billing).
+- **Contracts:** `packages/contracts/src/entities/cms/pages/`, `cms/locale/` (`@repo/contracts/cms/locale`), `cms/blog/`, `cms/review/`, `cms/contact/`, `cms/product/`, `cms/dashboard/`. `marketingPagePath(slug, locale)` in `cms/pages` builds the marketing path of a page in a locale.
+- **API — `api-server`:** all CMS lives under `endpoints/cms/`. Each entity is a subfolder with sibling admin-write and public-read files. The locale catalog is `endpoints/cms/locale/` (`cmsLocaleAdminApi`, `cmsLocalePublicApi`); the page reads and section writes in `endpoints/cms/pages/` take a locale and default to English.
+- **Consumer apps:** `apps/admin` (authoring, triage, the locale catalog under `/api/admin/locales`), `apps/marketing` (public rendering, the enabled locales under `/api/public/locales`).
 
 ### Dependencies
 
@@ -343,7 +348,7 @@ The Prisma model does not split. The contracts and the API do, with one exceptio
 | Subscription         | One subscription per (user, product)                 | `@@unique([userId, productId])`                                         |
 | Subscription         | One subscription per provider subscription ID        | `providerSubscriptionId @unique`                                        |
 | Subscription         | A price unless the provider is `MANUAL`              | CHECK `app_subscriptions_price_required_check`                          |
-| MarketingPageSection | One section per page+section-name pair               | `@@unique([pageSlug, section])`                                         |
+| MarketingPageSection | One section per page, kind and locale                | `@@unique([pageSlug, section, locale])`                                 |
 | Product              | One product per slug                                 | `slug @unique`                                                          |
 | ProductPlan          | One binding per (product, plan)                      | `@@unique([productId, planId])`                                         |
 | Price                | A period of 1 to 365 units                           | CHECK `app_prices_period_count_check`                                   |
@@ -404,6 +409,7 @@ Every cross-context interaction is currently a read, apart from the product form
 | **CoachActionItem**     | Coaching    | A system-generated task about an athlete (health report, missed-workouts slot).                                                                                                              | CoachNote — ActionItem is structured and has status, Note is free-text                                        |
 | **CoachNote**           | Coaching    | Free-text note a coach writes about an athlete. No status, no lifecycle.                                                                                                                     | CoachActionItem — Note is observation, ActionItem is action                                                   |
 | **MarketingPage**       | CMS         | A page on the public site (home, about, pricing). Content stored as JSON sections.                                                                                                           | —                                                                                                             |
+| **MarketingLocale**     | CMS         | A language of the marketing site, keyed by its code. English (`en`) is the default; every other locale lives under `/{code}` and falls back to English per section.                          | `DEFAULT_LOCALE` in `@repo/shared` — the `en-US` `Intl` tag of the price formatters                           |
 | **Program**             | —           | **Not a term in the codebase.** Marketing copy may say "program" loosely. Do not use "Program" in code — use Product (billing/marketing).                                                    | TrainingPlan, Product                                                                                         |
 
 ---
@@ -422,5 +428,6 @@ Every cross-context interaction is currently a read, apart from the product form
 - `docs/adr/0008-singleton-subscription-invariant.md` — superseded by ADR-0044. It was the canonical example of a context-owned invariant enforced at the DB; W0 retired the per-user key it recorded (§8).
 - `docs/adr/0010-bff-via-http-loopback-for-rsc.md` — the reason context-to-context reads go over HTTP today.
 - `docs/adr/0044-monobank-provider-and-subscription-per-product.md` — the Billing model §5 describes: Monobank behind a payment port, a subscription per product, products bound to training plans.
+- `docs/adr/0045-cms-managed-localization.md` — the CMS locale model §2 describes: a locale catalog, page sections per locale, English the default with a per-section fallback.
 - `initiatives/storefront-billing/decisions.md` — the storefront-billing decisions (D-2 to D-20) cited from §3 on.
 - `packages/api-server/prisma/schema.prisma` — the physical data reality every context projects from.
