@@ -1,4 +1,4 @@
-# Design round 0.4 — MARKETING: the Ukrainian storefront, the language switch and the fonts (carry FOURTH)
+# Design round 0.4 — MARKETING: the Ukrainian storefront, the language switch and the fonts (carry FIRST)
 
 ## Context
 

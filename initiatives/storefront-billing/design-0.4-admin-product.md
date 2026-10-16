@@ -1,4 +1,6 @@
-# Design round 0.4 — ADMIN: the product form with translations and a photo (carry THIRD)
+# UI spec 0.4e — ADMIN: the product form with translations and a photo
+
+> Owner ruling 2026-10-16: admin screens are not carried to Claude Design. The admin has no design of its own, so the planner specs them from the existing admin patterns, and this brief is the spec the 0.4e prompt is written from (D-22 amendment).
 
 ## Context
 

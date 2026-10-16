@@ -7,6 +7,10 @@ triage gate with the report; the ruling arrives as a follow-up message) → PR. 
 skill INPUT, not a plan override; where it pins a live-verified fact, trust it over
 guessing, and verify anchors against the tree.
 
+> Amended 2026-10-16 (planner ruling R14, sent to the executor during its review stage): a new
+> locale is created disabled (`isEnabled @default(false)`, `createLocale` writes `false`, the
+> default locale is inserted and re-created enabled); the two lines below carry the amended value.
+
 ## Mission
 
 D-12 makes a Ukrainian version of the buyer-facing pages a precondition of Monobank's
@@ -45,7 +49,7 @@ test one (the coach creates it in the admin, 0.4d).
   D-18 (expand before contract), D-19 (your own database container), D-21, D-22.
 - `docs/planner-discipline.md` (a)–(i); `docs/BOUNDED-CONTEXTS.md` §2 (CMS), §7, §8.
 - `docs/runbooks/db-migrate-dispatch.md` — the rules for the migration file and what the
-  planner does with it after your PR; `docs/local-stack.md` "Authoring a migration".
+  planner does with it after your PR; `docs/runbooks/local-stack.md` "Authoring a migration".
 - `docs/adr/0042-adopt-prisma-migrate.md`, `docs/adr/_template.md`, `docs/adr/README.md`.
 - The reference migration, verbatim:
   `packages/api-server/prisma/migrations/20260928120000_storefront_billing_w0/migration.sql`
@@ -87,8 +91,9 @@ test one (the coach creates it in the admin, 0.4d).
   (`__fixtures__/marketing-pages-state.ts`); `seedSectionsWithOverrides` creates every page
   and every section with `isActive: true`. `prisma/seed/clear-all.ts` deletes sections then
   pages.
-- `@repo/shared` exports `DEFAULT_LOCALE = "en-US"`, the Intl tag `formatPrice` and
-  `formatPeriod` use today. It is not the CMS locale code; both stay.
+- `@repo/shared` exports `DEFAULT_LOCALE = "en-US"`, the Intl tag `formatPrice` uses today
+  (`formatPeriod` in `@repo/contracts/common` takes the same kind of tag). It is not the CMS
+  locale code; both stay.
 - No i18n library exists in the workspace, and none is added.
 - `@repo/errors` has `BadRequestError`, `ConflictError`, `NotFoundError`, `ValidationError`.
   `handlePrismaError` maps `P2002` to `ConflictError` and `P2003` to `BadRequestError`
@@ -138,7 +143,7 @@ test one (the coach creates it in the admin, 0.4d).
 model MarketingLocale {
   code      String                 @id
   name      String
-  isEnabled Boolean                @default(true)
+  isEnabled Boolean                @default(false)
   sortOrder Int                    @default(0)
   sections  MarketingPageSection[]
   createdAt DateTime               @default(now())
@@ -184,7 +189,8 @@ at verification, not yours.
 
 New entity folder `packages/contracts/src/entities/cms/locale/` in the `cms/review` layout
 (`locale.constants.ts`, `locale.schema.ts`, `locale.types.ts`, `locale-api.schema.ts`,
-`locale-api.types.ts`, `index.ts`, a `locale.schema.test.ts`) and the export
+`locale-api.types.ts`, `index.ts`, a `locale.schema.test.ts` in the idiom of
+`cms/product/product.schema.test.ts`, since `cms/review` has no test file) and the export
 `"./cms/locale": "./src/entities/cms/locale/index.ts"` in `packages/contracts/package.json`,
 in the alphabetical position between `./cms/dashboard` and `./cms/pages`.
 
@@ -216,7 +222,7 @@ page in both the default and a non-default locale.
 
 - `getLocales()`: `ensureDefaultLocale()` then every row ordered by `sortOrder asc, code asc`,
   mapped with `isDefault = code === DEFAULT_LOCALE_CODE`.
-- `createLocale({ code, name })`: `isEnabled: true`, `sortOrder` = the current maximum plus
+- `createLocale({ code, name })`: `isEnabled: false`, `sortOrder` = the current maximum plus
   one; a duplicate code through `handlePrismaError({ entity: "Locale", field: "code" })`.
 - `updateLocale(code, data)`: `findOrThrow` first; `isEnabled: false` on the default locale
   is a `BadRequestError`; otherwise the review-style conditional spread.
@@ -383,7 +389,8 @@ through `prisma migrate` + `db-migrate`, expand before contract (D-18).
 - Resource fence (WSL): every heavy command inside `systemd-run --user --scope -q
 --slice=heavy.slice -p MemoryMax=4G -p MemorySwapMax=1G -- <cmd>`, builds with
   `NODE_OPTIONS=--max-old-space-size=3072` in the caller's environment, vitest
-  `--maxWorkers=2`, turbo `--concurrency=2`, one heavy command at a time.
+  `--maxWorkers=2` where a runner takes it (`task test:api` is already serial and takes no
+  flag), turbo `--concurrency=2`, one heavy command at a time.
 - Databases: your own throwaway container (D-19, `postgres:17-alpine`, `--memory=512m`, a
   free port, the stack's init directory mounted: `docker run -d --name <name> -p 127.0.0.1:<port>:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=tdp -v "$PWD/docker/db/init:/docker-entrypoint-initdb.d:ro" -m 512m postgres:17-alpine`;
   `task stack:migrate TDP_DB_PORT=<port>` then `task test:api TDP_DB_PORT=<port>`); the

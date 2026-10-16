@@ -1,4 +1,6 @@
-# Design round 0.4 — ADMIN: the page editor with languages (carry FIRST)
+# UI spec 0.4d — ADMIN: the page editor with languages
+
+> Owner ruling 2026-10-16: admin screens are not carried to Claude Design. The admin has no design of its own, so the planner specs them from the existing admin patterns, and this brief is the spec the 0.4d prompt is written from (D-22 amendment).
 
 ## Context
 
