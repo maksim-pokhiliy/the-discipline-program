@@ -14,13 +14,15 @@ import {
   type MarketingPagesState,
 } from "../pages/__fixtures__/marketing-pages-state";
 
+import {
+  CATALAN,
+  FRENCH,
+  GERMAN,
+  seedLocaleCatalog,
+  UKRAINIAN,
+} from "./__fixtures__/locale-catalog";
 import { cmsLocalePublicApi } from "./public";
 
-const UKRAINIAN = { code: "uk", name: "Українська", isEnabled: true, sortOrder: 1 };
-const GERMAN = { code: "de", name: "Deutsch", isEnabled: false, sortOrder: 2 };
-const FRENCH = { code: "fr", name: "Français", isEnabled: true, sortOrder: 3 };
-const CATALAN = { code: "ca", name: "Català", isEnabled: true, sortOrder: 3 };
-const SEEDED_LOCALES = [UKRAINIAN, GERMAN, FRENCH, CATALAN];
 const ENABLED_LOCALES = [
   { code: DEFAULT_LOCALE_CODE, name: DEFAULT_LOCALE_NAME },
   { code: UKRAINIAN.code, name: UKRAINIAN.name },
@@ -37,7 +39,7 @@ describe("cmsLocalePublicApi", () => {
 
   beforeEach(async () => {
     await clearMarketingPagesState();
-    await cleanupRaw.marketingLocale.createMany({ data: SEEDED_LOCALES });
+    await seedLocaleCatalog();
   });
 
   afterAll(async () => {

@@ -18,13 +18,15 @@ import {
 import { FULL_SECTION_DATA } from "../pages/__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
 
+import {
+  CATALAN,
+  FRENCH,
+  GERMAN,
+  seedLocaleCatalog,
+  UKRAINIAN,
+} from "./__fixtures__/locale-catalog";
 import { cmsLocaleAdminApi } from "./admin";
 
-const UKRAINIAN = { code: "uk", name: "Українська", isEnabled: true, sortOrder: 1 };
-const GERMAN = { code: "de", name: "Deutsch", isEnabled: false, sortOrder: 2 };
-const FRENCH = { code: "fr", name: "Français", isEnabled: true, sortOrder: 3 };
-const CATALAN = { code: "ca", name: "Català", isEnabled: true, sortOrder: 3 };
-const SEEDED_LOCALES = [UKRAINIAN, GERMAN, FRENCH, CATALAN];
 const ORDERED_CODES = [DEFAULT_LOCALE_CODE, UKRAINIAN.code, GERMAN.code, CATALAN.code, FRENCH.code];
 const LAST_SORT_ORDER = FRENCH.sortOrder;
 const POLISH = { code: "pl", name: "Polski" };
@@ -54,7 +56,7 @@ describe("cmsLocaleAdminApi", () => {
 
   beforeEach(async () => {
     await clearMarketingPagesState();
-    await cleanupRaw.marketingLocale.createMany({ data: SEEDED_LOCALES });
+    await seedLocaleCatalog();
   });
 
   afterAll(async () => {
