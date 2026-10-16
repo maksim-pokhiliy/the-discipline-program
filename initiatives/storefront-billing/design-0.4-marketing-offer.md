@@ -1,4 +1,4 @@
-# Design round 0.4 — MARKETING: the Offer and requisites page (carry FIFTH)
+# Design round 0.4 — MARKETING: the Offer and requisites page (carry SECOND)
 
 ## Context
 

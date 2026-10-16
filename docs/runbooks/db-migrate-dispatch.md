@@ -25,6 +25,11 @@ The window is minutes when both pipelines are healthy and unbounded when the mig
 A migration that drops such a column is split first. The drop becomes a later step of its own, the
 CONTRACT, which runs once the expand is live (see the last section).
 
+A dropped unique index is not a dropped column, but the old code may still write through it: an
+upsert names its key, and the write fails loudly with `42P10` on the new index until the merge
+deploys. Such a write path is frozen for the window, like the catalog below (0.4a dropped
+`marketing_page_sections_pageSlug_section_key`; the admin pages editor is its frozen path).
+
 ## Rules for the migration file
 
 - No `BEGIN` and no `COMMIT` anywhere in the file; Prisma applies it atomically by itself
@@ -43,9 +48,10 @@ CONTRACT, which runs once the expand is live (see the last section).
    the dispatch the file is frozen and any change to the SQL is a new migration.
 2. The final file was rehearsed on a clone of a production snapshot (`local-stack.md`,
    "Rehearsing against a production snapshot").
-3. The catalog is frozen: until the last step of this runbook nobody creates or edits products and
-   prices in the admin. The code in production does not know the new columns, so whatever it
-   writes lands beside their defaults and no error says so.
+3. The step's freeze is in force: until the last step of this runbook nobody uses, in the admin,
+   the write paths the step names. Two kinds: a write beside new columns lands with their defaults
+   and no error says so (0.3 froze the products and prices catalog); a write through a dropped
+   unique key fails loudly with `42P10` (0.4a freezes the admin pages editor; the catalog is free).
 4. Production has no long transaction open. The checks below are read-only and are run by the
    owner, or by the planner with the owner's word for that run:
 
@@ -82,7 +88,9 @@ Production still runs the OLD code on the NEW schema. Confirm it:
 - the storefront (`/`, `/storefront`) and the contact page load;
 - the admin products page loads;
 - an athlete timetable loads on the platform;
-- the step's consistency query returns what the step expects (for storefront-billing 0.3 see below).
+- the step's own read checks pass (0.4a: the six marketing pages, the admin pages list and one page
+  editor opened; saving there is frozen);
+- the step's consistency query returns what the step expects (storefront-billing 0.3 and 0.4a below).
 
 Then merge. The workflow run the merge triggers finds nothing to apply.
 
@@ -92,15 +100,17 @@ Then merge. The workflow run the merge triggers finds nothing to apply.
   production.
 - The consistency query still returns what the step expects: nothing was written in the window.
 - The migration is applied to the dev Neon database, which serves the Vercel previews and gets no
-  automated migration: `DATABASE_URL=<dev direct url> pnpm db:deploy`.
-- The catalog freeze ends.
+  automated migration: `DATABASE_URL=<dev direct url> pnpm db:deploy`. Until then the previews of
+  the PR branch run the new code on the old dev schema, so whatever the migration adds fails
+  there; expected, not a signal.
+- The step's freeze ends.
 
 A code rollback after an expand is safe for reads: the old code finds every column it knows. It is
 not safe for writes. The old code knows nothing of the new columns, so whatever it writes lands
-beside their defaults, exactly as in the window before the merge. A rollback therefore freezes the
-catalog again until the roll-forward, and the consistency check is repeated after it. Rows the new
-code has written since carry defaults in the old columns, so check what the old code would show
-for them before rolling back.
+beside their defaults, exactly as in the window before the merge, and a write through a dropped
+unique key fails loudly. A rollback therefore puts the step's freeze back until the roll-forward,
+and the consistency check is repeated after it. Rows the new code has written since carry defaults
+in the old columns, so check what the old code would show for them before rolling back.
 
 ## The contract step
 
@@ -135,3 +145,19 @@ writes prices with their own periods, and the query stops being a law.
 Before 0.3b drops `interval`: `select count(*) from app_prices where "interval" = 'ONE_TIME'`
 returns `0`, and every price whose period differs from its `interval` was written by the new code
 after the deploy.
+
+## storefront-billing 0.4a (cms locales expand)
+
+The freeze is the admin pages editor: the old admin upserts a section through the dropped
+`pageSlug_section` key and fails with `42P10` until the merge deploys. The catalog is free. The
+consistency queries for the window between the dispatch and the first language the coach adds:
+
+```sql
+select count(*) from marketing_page_sections where locale <> 'en';
+select code from marketing_locales;
+select count(*) from marketing_page_sections;
+```
+
+Expected: `0`, one row `en`, and the same section count before the dispatch and after the deploy
+(nothing was written in the window). Once the coach adds a language the first query stops being a
+law.

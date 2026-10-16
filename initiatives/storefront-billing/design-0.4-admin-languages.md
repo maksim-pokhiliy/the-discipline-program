@@ -1,4 +1,6 @@
-# Design round 0.4 — ADMIN: the Languages page (carry SECOND)
+# UI spec 0.4d — ADMIN: the Languages page
+
+> Owner ruling 2026-10-16: admin screens are not carried to Claude Design. The admin has no design of its own, so the planner specs them from the existing admin patterns, and this brief is the spec the 0.4d prompt is written from (D-22 amendment).
 
 ## Context
 
@@ -31,8 +33,8 @@ are a `DataTable` list with a create action and a row edit; mirror that density.
    a translation progress that answers "how much of the site is in this language" in one
    glance (sections translated vs total; the site has about thirty sections plus products).
 2. **Create.** Code + name, with the code rules explained inline (lowercase, 2–3 letters, used
-   in links as `/uk/`), a duplicate-code error, and a note that the language is live as soon
-   as it is enabled — so the coach may want to create it disabled, translate, then enable.
+   in links as `/uk/`), a duplicate-code error, and a note that a new language starts hidden
+   from the site: the coach translates it, then enables it from the list (R14).
 3. **Enable / disable** and **reorder** in place (a toggle and move up/down or drag; the list
    is short, three languages is already a lot).
 4. **Delete.** Allowed only for a language without content; show why when it is refused
