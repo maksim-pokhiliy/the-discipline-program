@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import {
   type AdminPageListItem,
   type AdminPageDetails,
@@ -122,6 +123,8 @@ export const cmsPagesAdminApi = {
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {
+    const locale = payload.locale ?? DEFAULT_LOCALE_CODE;
+
     if (!getPageSectionsOrder(payload.pageSlug).includes(payload.section)) {
       throw new NotFoundError(`Section ${payload.section} for page ${payload.pageSlug} not found`);
     }
@@ -131,14 +134,16 @@ export const cmsPagesAdminApi = {
     try {
       await prisma.marketingPageSection.upsert({
         where: {
-          pageSlug_section: {
+          pageSlug_section_locale: {
             pageSlug: payload.pageSlug,
             section: payload.section,
+            locale,
           },
         },
         create: {
           pageSlug: payload.pageSlug,
           section: payload.section,
+          locale,
           data: structuredClone(payload.data),
         },
         update: {

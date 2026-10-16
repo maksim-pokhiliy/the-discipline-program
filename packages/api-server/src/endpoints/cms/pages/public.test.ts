@@ -1,6 +1,7 @@
 import { type Prisma } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
 import { cleanupRaw } from "../../../test/helpers";
@@ -23,7 +24,7 @@ const updateSection = async (
   data: Prisma.MarketingPageSectionUpdateInput,
 ): Promise<void> => {
   await cleanupRaw.marketingPageSection.update({
-    where: { pageSlug_section: { pageSlug, section } },
+    where: { pageSlug_section_locale: { pageSlug, section, locale: DEFAULT_LOCALE_CODE } },
     data,
   });
 };

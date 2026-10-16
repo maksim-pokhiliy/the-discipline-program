@@ -1,6 +1,7 @@
 import { type MarketingPage, type MarketingPageSection } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
 
 import { cleanupRaw } from "../../../../test/helpers";
@@ -59,6 +60,7 @@ const SEEDED_SECTIONS: MarketingPageSection[] = [
     id: NESTED_SECTION_ID,
     pageSlug: PageSlug.HOME,
     section: PAGE_SECTIONS_MAP.home.hero,
+    locale: DEFAULT_LOCALE_CODE,
     data: NESTED_NON_ASCII_DATA,
     isActive: true,
     updatedAt: new Date("2021-03-01T01:02:03.004Z"),
@@ -67,6 +69,7 @@ const SEEDED_SECTIONS: MarketingPageSection[] = [
     id: INACTIVE_SECTION_ID,
     pageSlug: PageSlug.HOME,
     section: PAGE_SECTIONS_MAP.home.whyChoose,
+    locale: DEFAULT_LOCALE_CODE,
     data: { title: "Inactive why choose" },
     isActive: false,
     updatedAt: new Date("2021-03-02T01:02:03.004Z"),
@@ -75,6 +78,7 @@ const SEEDED_SECTIONS: MarketingPageSection[] = [
     id: JSON_NULL_SECTION_ID,
     pageSlug: PageSlug.HOME,
     section: PAGE_SECTIONS_MAP.home.reviews,
+    locale: DEFAULT_LOCALE_CODE,
     data: null,
     isActive: true,
     updatedAt: new Date("2021-03-03T01:02:03.004Z"),
@@ -83,6 +87,7 @@ const SEEDED_SECTIONS: MarketingPageSection[] = [
     id: NON_CANONICAL_SECTION_ID,
     pageSlug: PageSlug.HOME,
     section: NON_CANONICAL_SECTION,
+    locale: DEFAULT_LOCALE_CODE,
     data: { title: "A section the page map does not know" },
     isActive: true,
     updatedAt: new Date("2021-03-04T01:02:03.004Z"),

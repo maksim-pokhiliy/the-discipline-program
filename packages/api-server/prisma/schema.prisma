@@ -558,17 +558,31 @@ model MarketingPage {
 }
 
 model MarketingPageSection {
-  id        String        @id @default(cuid())
-  pageSlug  String
-  page      MarketingPage @relation(fields: [pageSlug], references: [slug], onDelete: Cascade)
-  section   String
-  data      Json
-  isActive  Boolean       @default(true)
-  updatedAt DateTime      @updatedAt
+  id              String          @id @default(cuid())
+  pageSlug        String
+  page            MarketingPage   @relation(fields: [pageSlug], references: [slug], onDelete: Cascade)
+  section         String
+  locale          String          @default("en")
+  marketingLocale MarketingLocale @relation(fields: [locale], references: [code], onDelete: Restrict)
+  data            Json
+  isActive        Boolean         @default(true)
+  updatedAt       DateTime        @updatedAt
 
-  @@unique([pageSlug, section])
-  @@index([pageSlug, isActive])
+  @@unique([pageSlug, section, locale])
+  @@index([pageSlug, locale, isActive])
   @@map("marketing_page_sections")
+}
+
+model MarketingLocale {
+  code      String                 @id
+  name      String
+  isEnabled Boolean                @default(true)
+  sortOrder Int                    @default(0)
+  sections  MarketingPageSection[]
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@map("marketing_locales")
 }
 
 model MarketingBlogPost {
