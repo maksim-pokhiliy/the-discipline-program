@@ -61,13 +61,13 @@ describe("cmsLocaleAdminApi — empty table", () => {
     expect(await readLocaleRows()).toEqual([DEFAULT_LOCALE_ROW]);
   });
 
-  it("createLocale recreates the default locale first and orders the new locale after it", async () => {
+  it("createLocale recreates the default locale first and orders the new disabled locale after it", async () => {
     const created = await cmsLocaleAdminApi.createLocale(UKRAINIAN);
 
-    expect(created).toMatchObject({ ...UKRAINIAN, isEnabled: true, sortOrder: 1 });
+    expect(created).toMatchObject({ ...UKRAINIAN, isEnabled: false, sortOrder: 1 });
     expect(await readLocaleRows()).toEqual([
       DEFAULT_LOCALE_ROW,
-      { ...UKRAINIAN, isEnabled: true, sortOrder: 1 },
+      { ...UKRAINIAN, isEnabled: false, sortOrder: 1 },
     ]);
   });
 

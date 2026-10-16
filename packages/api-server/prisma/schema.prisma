@@ -576,7 +576,7 @@ model MarketingPageSection {
 model MarketingLocale {
   code      String                 @id
   name      String
-  isEnabled Boolean                @default(true)
+  isEnabled Boolean                @default(false)
   sortOrder Int                    @default(0)
   sections  MarketingPageSection[]
   createdAt DateTime               @default(now())

@@ -17,7 +17,7 @@ export const LOCALE_ORDER: Prisma.MarketingLocaleOrderByWithRelationInput[] = [
 
 export const ensureDefaultLocale = async (): Promise<void> => {
   await prisma.marketingLocale.createMany({
-    data: [{ code: DEFAULT_LOCALE_CODE, name: DEFAULT_LOCALE_NAME }],
+    data: [{ code: DEFAULT_LOCALE_CODE, name: DEFAULT_LOCALE_NAME, isEnabled: true }],
     skipDuplicates: true,
   });
 };

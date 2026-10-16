@@ -26,6 +26,7 @@ import {
   UKRAINIAN,
 } from "./__fixtures__/locale-catalog";
 import { cmsLocaleAdminApi } from "./admin";
+import { cmsLocalePublicApi } from "./public";
 
 const ORDERED_CODES = [DEFAULT_LOCALE_CODE, UKRAINIAN.code, GERMAN.code, CATALAN.code, FRENCH.code];
 const LAST_SORT_ORDER = FRENCH.sortOrder;
@@ -35,6 +36,9 @@ const ABOUT_SECTIONS = Object.values(PAGE_SECTIONS_MAP.about);
 const TRANSLATED_ABOUT_SECTIONS = ABOUT_SECTIONS.slice(0, 2);
 
 const readLocale = (code: string) => cleanupRaw.marketingLocale.findUnique({ where: { code } });
+
+const readPublicLocaleCodes = async () =>
+  (await cmsLocalePublicApi.getEnabledLocales()).map((locale) => locale.code);
 
 const seedUkrainianAboutRows = async (translatedSections: readonly string[]): Promise<void> => {
   await cleanupRaw.marketingPageSection.createMany({
@@ -90,13 +94,23 @@ describe("cmsLocaleAdminApi", () => {
   });
 
   describe("createLocale", () => {
-    it("creates an enabled locale ordered after the current last one", async () => {
-      const expected = { ...POLISH, isEnabled: true, sortOrder: LAST_SORT_ORDER + 1 };
+    it("creates a disabled locale ordered after the current last one", async () => {
+      const expected = { ...POLISH, isEnabled: false, sortOrder: LAST_SORT_ORDER + 1 };
 
       const created = await cmsLocaleAdminApi.createLocale(POLISH);
 
       expect(created).toMatchObject({ ...expected, isDefault: false });
       expect(await readLocale(POLISH.code)).toMatchObject(expected);
+    });
+
+    it("keeps the new locale out of the public locales until updateLocale enables it", async () => {
+      await cmsLocaleAdminApi.createLocale(POLISH);
+
+      expect(await readPublicLocaleCodes()).not.toContain(POLISH.code);
+
+      await cmsLocaleAdminApi.updateLocale(POLISH.code, { isEnabled: true });
+
+      expect(await readPublicLocaleCodes()).toContain(POLISH.code);
     });
 
     it("refuses a code that already exists with ConflictError", async () => {

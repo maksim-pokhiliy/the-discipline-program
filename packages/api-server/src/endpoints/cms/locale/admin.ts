@@ -40,7 +40,7 @@ export const cmsLocaleAdminApi = {
         data: {
           code: data.code,
           name: data.name,
-          isEnabled: true,
+          isEnabled: false,
           sortOrder: (_max.sortOrder ?? 0) + 1,
         },
       });

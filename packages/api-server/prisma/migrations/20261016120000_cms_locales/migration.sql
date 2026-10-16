@@ -14,7 +14,7 @@ ALTER TABLE "marketing_page_sections" ADD COLUMN     "locale" TEXT NOT NULL DEFA
 CREATE TABLE "marketing_locales" (
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "isEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "isEnabled" BOOLEAN NOT NULL DEFAULT false,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

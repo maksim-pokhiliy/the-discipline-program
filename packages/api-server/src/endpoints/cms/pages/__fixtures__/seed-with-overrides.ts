@@ -13,7 +13,7 @@ export const seedSectionsWithOverrides = async (
 
   if (locale !== DEFAULT_LOCALE_CODE) {
     await cleanupRaw.marketingLocale.createMany({
-      data: [{ code: locale, name: locale }],
+      data: [{ code: locale, name: locale, isEnabled: true }],
       skipDuplicates: true,
     });
   }
