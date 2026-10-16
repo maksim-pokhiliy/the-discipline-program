@@ -105,12 +105,19 @@ Then merge. The workflow run the merge triggers finds nothing to apply.
   there; expected, not a signal.
 - The step's freeze ends.
 
-A code rollback after an expand is safe for reads: the old code finds every column it knows. It is
-not safe for writes. The old code knows nothing of the new columns, so whatever it writes lands
-beside their defaults, exactly as in the window before the merge, and a write through a dropped
-unique key fails loudly. A rollback therefore puts the step's freeze back until the roll-forward,
-and the consistency check is repeated after it. Rows the new code has written since carry defaults
-in the old columns, so check what the old code would show for them before rolling back.
+A code rollback after an expand is safe for reads only while the old code's queries still return
+the rows it expects. The old code finds every column it knows, but it cannot filter on a column it
+does not know: when the expand adds a column that partitions rows (the `locale` of 0.4a), the old
+readers return every partition and serve whichever row the plan finds first (main's readers, run
+against the 0.4a schema with a `uk` row present, served the `uk` hero on the English about page).
+Before such a rollback hide or remove the rows of the new partitions (for 0.4a:
+`UPDATE marketing_page_sections SET "isActive" = false WHERE locale <> 'en'`), or roll forward
+instead. It is not safe for writes. The old code knows nothing of the new columns, so whatever it
+writes lands beside their defaults, exactly as in the window before the merge, and a write through
+a dropped unique key fails loudly. A rollback therefore puts the step's freeze back until the
+roll-forward, and the consistency check is repeated after it. Rows the new code has written since
+carry defaults in the old columns, so check what the old code would show for them before rolling
+back.
 
 ## The contract step
 
