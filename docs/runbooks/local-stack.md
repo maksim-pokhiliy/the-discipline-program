@@ -102,10 +102,14 @@ that way; these are the rules it enforces.
 - **`cleanup(...)` deletes in reverse argument order.** List a parent before its children (the
   user, then its plans), so that the child goes first. The helper logs a refused delete and goes
   on; the census then names the table.
-- **The two marketing page tables** (`marketing_pages`, `marketing_page_sections`) belong to the
-  protocol of `src/endpoints/cms/pages/__fixtures__/marketing-pages-state.ts`: capture in
-  `beforeAll`, clear, seed through `seedSectionsWithOverrides`, restore the capture in `afterAll`.
-  The restore rewrites every column and verifies itself.
+- **The three marketing page tables** (`marketing_locales`, `marketing_pages`,
+  `marketing_page_sections`) belong to the protocol of
+  `src/endpoints/cms/pages/__fixtures__/marketing-pages-state.ts`: capture in `beforeAll`, clear,
+  seed through `seedSectionsWithOverrides`, restore the capture in `afterAll`. The clear leaves
+  what a fresh migration leaves: no page, no section and the default locale `en` alone, which it
+  re-creates. `seedSectionsWithOverrides(overrides, locale)` seeds every page and section in one
+  locale (English when the locale is omitted) and creates a non-default locale's row first. The
+  restore rewrites every column of the three tables and verifies itself.
 - **One user holds the head-coach role.** A test that needs a head coach calls
   `takeHeadCoachSlot()` before it creates one and `releaseHeadCoachSlotAfter(slot, teardown)` for
   its teardown, demoting its own head coach first inside the teardown. The setup also fails a file
@@ -115,7 +119,7 @@ that way; these are the rules it enforces.
 - **Every file opens the database**, the pure unit files included: the stack must be up, and the
   baseline costs about 0.12 s per file. A locked table fails the file at import after 5 s.
 - **An interrupted run skips every teardown** (vitest runs no `afterAll` on Ctrl-C). A run
-  interrupted inside a cms file leaves the two marketing page tables cleared; `tdp_test` holds
+  interrupted inside a cms file leaves the three marketing page tables cleared; `tdp_test` holds
   nothing of value, so recreate it: `dropdb`, `createdb`, `task stack:migrate` (with
   `TDP_DB_PORT=<port>` after the task name for another port).
 

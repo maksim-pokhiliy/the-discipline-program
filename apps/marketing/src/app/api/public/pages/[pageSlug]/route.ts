@@ -10,6 +10,7 @@ import {
 } from "@repo/api-routes";
 import type { RouteContext } from "@repo/api-routes";
 import { cmsPagesPublicApi } from "@repo/api-server/cms";
+import { type LocaleCode, localeQuerySchema } from "@repo/contracts/cms/locale";
 import {
   getPageBySlugParamsSchema,
   getHomePageResponseSchema,
@@ -18,30 +19,35 @@ import {
   getBlogPageResponseSchema,
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
+  PageSlug,
 } from "@repo/contracts/cms/pages";
-import { NotFoundError } from "@repo/errors";
 
-const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: ZodType }> = {
-  home: { fetch: cmsPagesPublicApi.getHomePage, schema: getHomePageResponseSchema },
-  storefront: {
+const PAGE_HANDLERS: Record<
+  PageSlug,
+  { fetch: (locale: LocaleCode) => Promise<unknown>; schema: ZodType }
+> = {
+  [PageSlug.HOME]: { fetch: cmsPagesPublicApi.getHomePage, schema: getHomePageResponseSchema },
+  [PageSlug.STOREFRONT]: {
     fetch: cmsPagesPublicApi.getStorefrontProgramsPage,
     schema: getStorefrontProgramsPageResponseSchema,
   },
-  about: { fetch: cmsPagesPublicApi.getAboutPage, schema: getAboutPageResponseSchema },
-  blog: { fetch: cmsPagesPublicApi.getBlogPage, schema: getBlogPageResponseSchema },
-  contact: { fetch: cmsPagesPublicApi.getContactPage, schema: getContactPageResponseSchema },
-  faq: { fetch: cmsPagesPublicApi.getFaqPage, schema: getFaqPageResponseSchema },
+  [PageSlug.ABOUT]: { fetch: cmsPagesPublicApi.getAboutPage, schema: getAboutPageResponseSchema },
+  [PageSlug.BLOG]: { fetch: cmsPagesPublicApi.getBlogPage, schema: getBlogPageResponseSchema },
+  [PageSlug.CONTACT]: {
+    fetch: cmsPagesPublicApi.getContactPage,
+    schema: getContactPageResponseSchema,
+  },
+  [PageSlug.FAQ]: { fetch: cmsPagesPublicApi.getFaqPage, schema: getFaqPageResponseSchema },
 };
 
-const handler = async (_request: Request, context: RouteContext) => {
+const handler = async (request: Request, context: RouteContext): Promise<Response> => {
   const { pageSlug } = parseRequest(getPageBySlugParamsSchema, await context.params);
+  const { locale } = parseRequest(
+    localeQuerySchema,
+    Object.fromEntries(new URL(request.url).searchParams.entries()),
+  );
   const config = PAGE_HANDLERS[pageSlug];
-
-  if (!config) {
-    throw new NotFoundError("Page not found", { pageSlug });
-  }
-
-  const data = await config.fetch();
+  const data = await config.fetch(locale);
 
   return NextResponse.json(parseResponse(config.schema, data));
 };

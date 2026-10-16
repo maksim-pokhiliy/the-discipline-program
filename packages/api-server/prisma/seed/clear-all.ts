@@ -1,5 +1,7 @@
 import { type PrismaClient } from "@prisma/client";
 
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
+
 export const clearAll = async (db: PrismaClient): Promise<void> => {
   await db.billingWebhookEvent.deleteMany();
   await db.transaction.deleteMany();
@@ -15,6 +17,7 @@ export const clearAll = async (db: PrismaClient): Promise<void> => {
   await db.marketingContactSubmission.deleteMany();
   await db.marketingPageSection.deleteMany();
   await db.marketingPage.deleteMany();
+  await db.marketingLocale.deleteMany({ where: { code: { not: DEFAULT_LOCALE_CODE } } });
   await db.price.deleteMany();
   await db.product.deleteMany();
   await db.marketingBlogPost.deleteMany();

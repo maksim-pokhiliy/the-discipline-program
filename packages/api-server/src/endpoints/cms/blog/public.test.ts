@@ -1,21 +1,50 @@
 import { MarketingBlogCategory } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { type BlogPostPageData } from "@repo/contracts/cms/blog";
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
+import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { cleanup, cleanupRaw, createTestBlogPost } from "../../../test/helpers";
+import { UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
 import {
   captureMarketingPagesState,
   clearMarketingPagesState,
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "../pages/__fixtures__/marketing-pages-state";
-import { FULL_SECTION_DATA } from "../pages/__fixtures__/section-data";
+import { FULL_SECTION_DATA, UK_BLOG_SECTIONS } from "../pages/__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
 
 import { cmsBlogPublicApi } from "./public";
 
 const OTHER_CATEGORY = MarketingBlogCategory.FITNESS;
+const BLOG_RELATED = PAGE_SECTIONS_MAP.blog.related;
+const ENGLISH_RELATED_SECTION_KEY = {
+  pageSlug_section_locale: {
+    pageSlug: PageSlug.BLOG,
+    section: BLOG_RELATED,
+    locale: DEFAULT_LOCALE_CODE,
+  },
+};
+
+const removeUkrainianSections = async (): Promise<void> => {
+  await cleanupRaw.marketingPageSection.deleteMany({ where: { locale: UKRAINIAN.code } });
+  await cleanupRaw.marketingLocale.deleteMany({ where: { code: UKRAINIAN.code } });
+};
+
+const expectEnglishLabels = (article: BlogPostPageData): void => {
+  const grid = FULL_SECTION_DATA[PAGE_SECTIONS_MAP.blog.grid];
+
+  expect(article.labels).toEqual({
+    readMoreLabel: grid.readMoreLabel,
+    minReadSuffix: grid.minReadSuffix,
+    readArticleLabel: grid.readArticleLabel,
+    notPublishedLabel: grid.notPublishedLabel,
+  });
+  expect(article.relatedSectionTitle).toBe(FULL_SECTION_DATA[BLOG_RELATED].title);
+};
 
 describe("cmsBlogPublicApi", () => {
   let publishedPost: Awaited<ReturnType<typeof createTestBlogPost>>;
@@ -116,18 +145,11 @@ describe("cmsBlogPublicApi", () => {
 
     it("returns full article data for valid published slug", async () => {
       const article = await cmsBlogPublicApi.getArticle(publishedPost.slug);
-      const grid = FULL_SECTION_DATA["blog:grid"];
 
       expect(article.post.id).toBe(publishedPost.id);
       expect(article.post.slug).toBe(publishedPost.slug);
       expect(article.post.title).toBe(publishedPost.title);
-      expect(article.labels).toEqual({
-        readMoreLabel: grid.readMoreLabel,
-        minReadSuffix: grid.minReadSuffix,
-        readArticleLabel: grid.readArticleLabel,
-        notPublishedLabel: grid.notPublishedLabel,
-      });
-      expect(article.relatedSectionTitle).toBe(FULL_SECTION_DATA["blog:related"].title);
+      expectEnglishLabels(article);
       expect(article.relatedPosts).toEqual([]);
     });
 
@@ -166,6 +188,38 @@ describe("cmsBlogPublicApi", () => {
 
     it("throws NotFoundError for unpublished article slug", async () => {
       await expect(cmsBlogPublicApi.getArticle(draftPost.slug)).rejects.toThrow(NotFoundError);
+    });
+
+    it("reads the English grid and related labels when uk rows exist", async () => {
+      await seedSectionsWithOverrides(UK_BLOG_SECTIONS, UKRAINIAN.code);
+
+      try {
+        expectEnglishLabels(await cmsBlogPublicApi.getArticle(publishedPost.slug));
+      } finally {
+        await removeUkrainianSections();
+      }
+    });
+
+    it("refuses an article whose English related section is missing even when a uk one exists", async () => {
+      await seedSectionsWithOverrides(UK_BLOG_SECTIONS, UKRAINIAN.code);
+      await cleanupRaw.marketingPageSection.delete({ where: ENGLISH_RELATED_SECTION_KEY });
+
+      try {
+        const reading = cmsBlogPublicApi.getArticle(publishedPost.slug);
+
+        await expect(reading).rejects.toThrow(NotFoundError);
+        await expect(reading).rejects.toThrow(`Required section '${BLOG_RELATED}' missing`);
+      } finally {
+        await cleanupRaw.marketingPageSection.create({
+          data: {
+            pageSlug: PageSlug.BLOG,
+            section: BLOG_RELATED,
+            locale: DEFAULT_LOCALE_CODE,
+            data: FULL_SECTION_DATA[BLOG_RELATED],
+          },
+        });
+        await removeUkrainianSections();
+      }
     });
   });
 });

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_LOCALE_CODE } from "../locale";
+
 import {
   adminPageDetailsSchema,
   getAboutPageResponseSchema,
@@ -216,6 +218,7 @@ describe("pages-api schema empty collections", () => {
   it("adminPageDetailsSchema accepts empty sections array", () => {
     const result = adminPageDetailsSchema.safeParse({
       slug: PageSlug.HOME,
+      locale: DEFAULT_LOCALE_CODE,
       sections: [],
     });
 
@@ -223,7 +226,10 @@ describe("pages-api schema empty collections", () => {
   });
 
   it("adminPageDetailsSchema rejects missing sections key", () => {
-    const result = adminPageDetailsSchema.safeParse({ slug: PageSlug.HOME });
+    const result = adminPageDetailsSchema.safeParse({
+      slug: PageSlug.HOME,
+      locale: DEFAULT_LOCALE_CODE,
+    });
 
     expect(result.success).toBe(false);
   });
@@ -231,6 +237,7 @@ describe("pages-api schema empty collections", () => {
   it("adminPageDetailsSchema accepts section with empty data (bootstrap state)", () => {
     const result = adminPageDetailsSchema.safeParse({
       slug: PageSlug.HOME,
+      locale: DEFAULT_LOCALE_CODE,
       sections: [
         {
           id: "clxxxxxxxxxxxxxxxxxxx",

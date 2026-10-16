@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { publicBlogPostSchema } from "../blog";
+import { DEFAULT_LOCALE_CODE, localeCodeSchema } from "../locale";
 import { productSchema } from "../product";
 import { reviewSchema } from "../review";
 
@@ -113,7 +114,11 @@ const SECTION_DEFINITIONS = [
 ] as const;
 
 const sectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
-  z.object({ section: z.literal(key), data: schema.deepPartial() }),
+  z.object({
+    section: z.literal(key),
+    data: schema.deepPartial(),
+    locale: localeCodeSchema.default(DEFAULT_LOCALE_CODE),
+  }),
 );
 
 const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
@@ -146,6 +151,7 @@ const adminSectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
 
 export const adminPageDetailsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
+  locale: localeCodeSchema,
   sections: z.array(z.discriminatedUnion("section", toNonEmptyArray(adminSectionVariants))),
 });
 

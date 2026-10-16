@@ -1,9 +1,6 @@
-import { type Prisma } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contracts/cms/pages";
-
-import { cleanupRaw } from "../../../test/helpers";
+import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
 
 import {
   captureMarketingPagesState,
@@ -11,22 +8,10 @@ import {
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
-import { FULL_SECTION_DATA } from "./__fixtures__/section-data";
+import { FULL_SECTION_DATA, UNPARSABLE_SECTION_DATA } from "./__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
+import { updateEnglishSection } from "./__fixtures__/update-english-section";
 import { cmsPagesPublicApi } from "./public";
-
-const INVALID_SECTION_DATA = { title: 42 };
-
-const updateSection = async (
-  pageSlug: PageSlug,
-  section: SectionSchemaKey,
-  data: Prisma.MarketingPageSectionUpdateInput,
-): Promise<void> => {
-  await cleanupRaw.marketingPageSection.update({
-    where: { pageSlug_section: { pageSlug, section } },
-    data,
-  });
-};
 
 const PAGE_READERS: readonly (readonly [PageSlug, () => Promise<unknown>])[] = [
   [PageSlug.HOME, () => cmsPagesPublicApi.getHomePage()],
@@ -100,12 +85,12 @@ describe("cmsPagesPublicApi", () => {
       async (slug, readPage) => {
         const hero = PAGE_SECTIONS_MAP[slug].hero;
 
-        await updateSection(slug, hero, { isActive: false });
+        await updateEnglishSection(slug, hero, { isActive: false });
 
         try {
           expect(await readPage()).toEqual(expect.objectContaining(sectionsWithInactiveHero(slug)));
         } finally {
-          await updateSection(slug, hero, { isActive: true });
+          await updateEnglishSection(slug, hero, { isActive: true });
         }
       },
     );
@@ -139,8 +124,8 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("answers null for a section whose stored data does not fit its schema", async () => {
-      await updateSection(PageSlug.FAQ, PAGE_SECTIONS_MAP.faq.content, {
-        data: INVALID_SECTION_DATA,
+      await updateEnglishSection(PageSlug.FAQ, PAGE_SECTIONS_MAP.faq.content, {
+        data: UNPARSABLE_SECTION_DATA,
       });
 
       try {
@@ -150,7 +135,7 @@ describe("cmsPagesPublicApi", () => {
         expect(data.hero).toEqual(FULL_SECTION_DATA["faq:hero"]);
         expect(data.cta).toEqual(FULL_SECTION_DATA["faq:cta"]);
       } finally {
-        await updateSection(PageSlug.FAQ, PAGE_SECTIONS_MAP.faq.content, {
+        await updateEnglishSection(PageSlug.FAQ, PAGE_SECTIONS_MAP.faq.content, {
           data: FULL_SECTION_DATA["faq:content"],
         });
       }
