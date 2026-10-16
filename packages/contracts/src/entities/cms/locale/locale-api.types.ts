@@ -11,7 +11,7 @@ import {
 
 export type LocaleCodeParams = z.infer<typeof localeCodeParamsSchema>;
 
-export type LocaleQuery = z.infer<typeof localeQuerySchema>;
+export type LocaleQuery = z.input<typeof localeQuerySchema>;
 
 export type GetLocalesResponse = z.infer<typeof getLocalesResponseSchema>;
 

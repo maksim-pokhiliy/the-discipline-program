@@ -24,18 +24,24 @@ import {
   GERMAN,
   seedLocaleCatalog,
   UKRAINIAN,
+  UNKNOWN_LOCALE_CODE,
 } from "./__fixtures__/locale-catalog";
+import { openTransaction, refusalOf, waitForLockWaiter } from "./__fixtures__/lock-race";
 import { cmsLocaleAdminApi } from "./admin";
 import { cmsLocalePublicApi } from "./public";
 
 const ORDERED_CODES = [DEFAULT_LOCALE_CODE, UKRAINIAN.code, GERMAN.code, CATALAN.code, FRENCH.code];
 const LAST_SORT_ORDER = FRENCH.sortOrder;
 const POLISH = { code: "pl", name: "Polski" };
-const UNKNOWN_CODE = "xx";
 const ABOUT_SECTIONS = Object.values(PAGE_SECTIONS_MAP.about);
-const TRANSLATED_ABOUT_SECTIONS = ABOUT_SECTIONS.slice(0, 2);
+const ABOUT_HERO_ROW = { pageSlug: PageSlug.ABOUT, section: PAGE_SECTIONS_MAP.about.hero };
+const TRANSLATED_SECTION_COUNTS = [1, 2];
+const RACING_TRANSLATION = { title: "Переклад, збережений під час видалення" };
 
 const readLocale = (code: string) => cleanupRaw.marketingLocale.findUnique({ where: { code } });
+
+const readRows = (locale: string) =>
+  cleanupRaw.marketingPageSection.findMany({ where: { locale }, orderBy: { id: "asc" } });
 
 const readPublicLocaleCodes = async () =>
   (await cmsLocalePublicApi.getEnabledLocales()).map((locale) => locale.code);
@@ -162,6 +168,19 @@ describe("cmsLocaleAdminApi", () => {
       });
     });
 
+    it("accepts isEnabled: true on the default locale", async () => {
+      const updated = await cmsLocaleAdminApi.updateLocale(DEFAULT_LOCALE_CODE, {
+        isEnabled: true,
+      });
+
+      expect(updated).toMatchObject({
+        code: DEFAULT_LOCALE_CODE,
+        isEnabled: true,
+        isDefault: true,
+      });
+      expect(await readLocale(DEFAULT_LOCALE_CODE)).toMatchObject({ isEnabled: true });
+    });
+
     it("renames and reorders the default locale", async () => {
       const changes = { name: "English (UK)", sortOrder: 9 };
 
@@ -173,10 +192,10 @@ describe("cmsLocaleAdminApi", () => {
 
     it("refuses an unknown code with NotFoundError", async () => {
       await expect(
-        cmsLocaleAdminApi.updateLocale(UNKNOWN_CODE, { name: "Unknown" }),
+        cmsLocaleAdminApi.updateLocale(UNKNOWN_LOCALE_CODE, { name: "Unknown" }),
       ).rejects.toThrow(NotFoundError);
 
-      expect(await readLocale(UNKNOWN_CODE)).toBeNull();
+      expect(await readLocale(UNKNOWN_LOCALE_CODE)).toBeNull();
     });
   });
 
@@ -189,39 +208,68 @@ describe("cmsLocaleAdminApi", () => {
       expect(await readLocale(DEFAULT_LOCALE_CODE)).not.toBeNull();
     });
 
-    it("refuses a locale with translated sections with ConflictError naming their count", async () => {
-      await seedSectionsWithOverrides(FULL_SECTION_DATA);
-      await seedUkrainianAboutRows(TRANSLATED_ABOUT_SECTIONS);
+    it.each(TRANSLATED_SECTION_COUNTS)(
+      "refuses a locale with %i translated section(s) with ConflictError naming the count",
+      async (count) => {
+        await seedSectionsWithOverrides(FULL_SECTION_DATA);
+        await seedUkrainianAboutRows(ABOUT_SECTIONS.slice(0, count));
 
-      const deletion = cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code);
-
-      await expect(deletion).rejects.toThrow(ConflictError);
-      await expect(deletion).rejects.toThrow(
-        `has ${TRANSLATED_ABOUT_SECTIONS.length} translated section`,
-      );
-      expect(await readLocale(UKRAINIAN.code)).not.toBeNull();
-      expect(
-        await cleanupRaw.marketingPageSection.count({ where: { locale: UKRAINIAN.code } }),
-      ).toBe(ABOUT_SECTIONS.length);
-    });
+        expect(await refusalOf(cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code))).toMatchObject({
+          name: ConflictError.name,
+          message: expect.stringContaining(`has ${count} translated section`),
+          details: { code: UKRAINIAN.code, translatedSectionCount: count },
+        });
+        expect(await readLocale(UKRAINIAN.code)).not.toBeNull();
+        expect(await readRows(UKRAINIAN.code)).toHaveLength(ABOUT_SECTIONS.length);
+      },
+    );
 
     it("deletes a locale whose section rows are all empty scaffolds together with those rows", async () => {
-      await seedSectionsWithOverrides(FULL_SECTION_DATA);
+      await seedSectionsWithOverrides({ ...FULL_SECTION_DATA, [ABOUT_HERO_ROW.section]: {} });
       await seedUkrainianAboutRows([]);
-
-      const englishRowCount = await cleanupRaw.marketingPageSection.count({
-        where: { locale: DEFAULT_LOCALE_CODE },
+      await cleanupRaw.marketingPageSection.create({
+        data: { ...ABOUT_HERO_ROW, locale: GERMAN.code, data: {} },
       });
+
+      const englishRows = await readRows(DEFAULT_LOCALE_CODE);
+      const germanRows = await readRows(GERMAN.code);
 
       await cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code);
 
       expect(await readLocale(UKRAINIAN.code)).toBeNull();
-      expect(
-        await cleanupRaw.marketingPageSection.count({ where: { locale: UKRAINIAN.code } }),
-      ).toBe(0);
-      expect(
-        await cleanupRaw.marketingPageSection.count({ where: { locale: DEFAULT_LOCALE_CODE } }),
-      ).toBe(englishRowCount);
+      expect(await readRows(UKRAINIAN.code)).toEqual([]);
+      expect(englishRows).toContainEqual(expect.objectContaining({ ...ABOUT_HERO_ROW, data: {} }));
+      expect(germanRows).toEqual([expect.objectContaining({ ...ABOUT_HERO_ROW, data: {} })]);
+      expect(await readRows(DEFAULT_LOCALE_CODE)).toEqual(englishRows);
+      expect(await readRows(GERMAN.code)).toEqual(germanRows);
+    });
+
+    it("refuses with a ConflictError asking to retry when a section row of the locale commits during the delete", async () => {
+      await seedSectionsWithOverrides(FULL_SECTION_DATA);
+
+      const writer = await openTransaction((tx) =>
+        tx.marketingPageSection.create({
+          data: { ...ABOUT_HERO_ROW, locale: UKRAINIAN.code, data: RACING_TRANSLATION },
+        }),
+      );
+      const refusal = refusalOf(cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code));
+
+      try {
+        await waitForLockWaiter("marketing_locales");
+      } finally {
+        await writer.commit();
+      }
+
+      expect(await refusal).toEqual({
+        name: ConflictError.name,
+        statusCode: 409,
+        message: `Locale ${UKRAINIAN.code} received new section rows while it was being deleted; try again`,
+        details: { code: UKRAINIAN.code },
+      });
+      expect(await readLocale(UKRAINIAN.code)).not.toBeNull();
+      expect(await readRows(UKRAINIAN.code)).toEqual([
+        expect.objectContaining({ data: RACING_TRANSLATION }),
+      ]);
     });
 
     it("deletes a locale that no section row carries", async () => {
@@ -232,7 +280,9 @@ describe("cmsLocaleAdminApi", () => {
     });
 
     it("refuses an unknown code with NotFoundError", async () => {
-      await expect(cmsLocaleAdminApi.deleteLocale(UNKNOWN_CODE)).rejects.toThrow(NotFoundError);
+      await expect(cmsLocaleAdminApi.deleteLocale(UNKNOWN_LOCALE_CODE)).rejects.toThrow(
+        NotFoundError,
+      );
 
       expect(await cleanupRaw.marketingLocale.count()).toBe(ORDERED_CODES.length);
     });

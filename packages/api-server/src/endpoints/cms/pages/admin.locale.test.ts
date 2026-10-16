@@ -1,34 +1,51 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
-  DEFAULT_LOCALE_CODE,
-  DEFAULT_LOCALE_NAME,
-  type LocaleCode,
-} from "@repo/contracts/cms/locale";
-import { type AdminPageDetails, PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
+  type AdminPageDetails,
+  PAGE_SECTIONS_MAP,
+  PageSlug,
+  type SectionSchemaKey,
+} from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
-import { GERMAN, seedLocaleCatalog, UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
+import {
+  FRENCH,
+  GERMAN,
+  seedLocaleCatalog,
+  UKRAINIAN,
+  UNKNOWN_LOCALE_CODE,
+} from "../locale/__fixtures__/locale-catalog";
+import { openTransaction, refusalOf, waitForLockWaiter } from "../locale/__fixtures__/lock-race";
 
 import {
   captureMarketingPagesState,
   clearMarketingPagesState,
+  DEFAULT_LOCALE_ROW,
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
-import { FULL_SECTION_DATA, UK_ABOUT_HERO } from "./__fixtures__/section-data";
+import { FULL_SECTION_DATA, GERMAN_ABOUT_HERO, UK_ABOUT_HERO } from "./__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { cmsPagesAdminApi } from "./admin";
 
-const UNKNOWN_LOCALE_CODE = "xx";
 const ABOUT_SECTIONS = Object.values(PAGE_SECTIONS_MAP.about);
 const ABOUT_HERO = PAGE_SECTIONS_MAP.about.hero;
 const ABOUT_HERO_ROW = { pageSlug: PageSlug.ABOUT, section: ABOUT_HERO };
+const ABOUT_JOURNEY_ROW = { pageSlug: PageSlug.ABOUT, section: PAGE_SECTIONS_MAP.about.journey };
 const REVERSED_SECTION_ID_PREFIX = "reversed-uk-about-section-";
 const REWRITTEN_UK_ABOUT_HERO = { title: "Про мене, друга редакція" };
 const REWRITTEN_ENGLISH_ABOUT_HERO = { title: "About, second edit" };
-const GERMAN_ABOUT_HERO = { title: "Über mich" };
+const UK_PARTIAL_JOURNEY = { title: "Мій шлях", timeline: [{ year: "2019" }] };
+const LOCALE_NOT_FOUND = { name: NotFoundError.name, message: "Locale not found" };
+const LOCALE_WRITES: readonly (readonly [string, (locale: LocaleCode) => Promise<unknown>])[] = [
+  ["getPageBySlug scaffolds", (locale) => cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT, locale)],
+  [
+    "updateSection writes",
+    (locale) => cmsPagesAdminApi.updateSection({ ...ABOUT_HERO_ROW, data: UK_ABOUT_HERO, locale }),
+  ],
+];
 
 const readRows = (locale: LocaleCode) =>
   cleanupRaw.marketingPageSection.findMany({ where: { locale }, orderBy: { id: "asc" } });
@@ -50,8 +67,8 @@ const readAboutHero = (locale: LocaleCode) =>
 const sectionIds = (details: AdminPageDetails): string[] =>
   details.sections.map((section) => section.id).sort();
 
-const heroData = (details: AdminPageDetails): unknown =>
-  details.sections.find((section) => section.section === ABOUT_HERO)?.data;
+const sectionData = (details: AdminPageDetails, key: SectionSchemaKey): unknown =>
+  details.sections.find((section) => section.section === key)?.data;
 
 describe("cmsPagesAdminApi — locales", () => {
   let snapshot: MarketingPagesState;
@@ -94,7 +111,7 @@ describe("cmsPagesAdminApi — locales", () => {
 
       expect(details.locale).toBe(UKRAINIAN.code);
       expect(sectionIds(details)).toEqual(await readAboutRowIds(UKRAINIAN.code));
-      expect(heroData(details)).toEqual(UK_ABOUT_HERO);
+      expect(sectionData(details, ABOUT_HERO)).toEqual(UK_ABOUT_HERO);
     });
 
     it("returns the uk sections in the canonical order whatever order the rows were stored in", async () => {
@@ -144,8 +161,10 @@ describe("cmsPagesAdminApi — locales", () => {
       expect(details.locale).toBe(DEFAULT_LOCALE_CODE);
       expect(details.sections.map((section) => section.section)).toEqual(ABOUT_SECTIONS);
       expect(
-        await cleanupRaw.marketingLocale.findMany({ select: { code: true, name: true } }),
-      ).toEqual([{ code: DEFAULT_LOCALE_CODE, name: DEFAULT_LOCALE_NAME }]);
+        await cleanupRaw.marketingLocale.findMany({
+          select: { code: true, name: true, isEnabled: true, sortOrder: true },
+        }),
+      ).toEqual([DEFAULT_LOCALE_ROW]);
     });
 
     it("answers the English page when the locale is omitted", async () => {
@@ -155,7 +174,19 @@ describe("cmsPagesAdminApi — locales", () => {
 
       expect(details.locale).toBe(DEFAULT_LOCALE_CODE);
       expect(sectionIds(details)).toEqual(await readAboutRowIds(DEFAULT_LOCALE_CODE));
-      expect(heroData(details)).toEqual(FULL_SECTION_DATA[ABOUT_HERO]);
+      expect(sectionData(details, ABOUT_HERO)).toEqual(FULL_SECTION_DATA[ABOUT_HERO]);
+    });
+
+    it("returns a nested partial item that updateSection stored", async () => {
+      await cmsPagesAdminApi.updateSection({
+        ...ABOUT_JOURNEY_ROW,
+        data: UK_PARTIAL_JOURNEY,
+        locale: UKRAINIAN.code,
+      });
+
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT, UKRAINIAN.code);
+
+      expect(sectionData(details, ABOUT_JOURNEY_ROW.section)).toEqual(UK_PARTIAL_JOURNEY);
     });
   });
 
@@ -243,4 +274,25 @@ describe("cmsPagesAdminApi — locales", () => {
       expect(await captureMarketingPagesState()).toEqual(before);
     });
   });
+
+  it.each(LOCALE_WRITES)(
+    "answers the unknown-locale NotFoundError when %s the rows of a locale deleted meanwhile",
+    async (_label, write) => {
+      const unknownRefusal = await refusalOf(write(UNKNOWN_LOCALE_CODE));
+      const deletion = await openTransaction((tx) =>
+        tx.marketingLocale.delete({ where: { code: FRENCH.code } }),
+      );
+      const raceRefusal = refusalOf(write(FRENCH.code));
+
+      try {
+        await waitForLockWaiter("marketing_page_sections");
+      } finally {
+        await deletion.commit();
+      }
+
+      expect(unknownRefusal).toMatchObject(LOCALE_NOT_FOUND);
+      expect(await raceRefusal).toEqual(unknownRefusal);
+      expect(await readRows(FRENCH.code)).toEqual([]);
+    },
+  );
 });

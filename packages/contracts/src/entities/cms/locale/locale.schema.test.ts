@@ -24,7 +24,7 @@ const LOCALE_ROW = {
 
 const ACCEPTED_CODES = ["en", "uk", "crh"];
 
-const REFUSED_CODES = ["EN", "uk-UA", "u", "ukr1", ""];
+const REFUSED_CODES = ["EN", "uk-UA", "u", "ukr1", "", "uk1", "uk/", " uk", "uk "];
 
 const REFUSED_SORT_ORDERS = [-1, 1.5, LOCALE_CONSTANTS.MAX_SORT_ORDER + 1];
 

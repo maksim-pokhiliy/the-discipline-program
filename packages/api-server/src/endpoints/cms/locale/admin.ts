@@ -102,7 +102,7 @@ export const cmsLocaleAdminApi = {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
         throw new ConflictError(
-          `Locale ${code} gained section content while it was being deleted`,
+          `Locale ${code} received new section rows while it was being deleted; try again`,
           { code },
         );
       }

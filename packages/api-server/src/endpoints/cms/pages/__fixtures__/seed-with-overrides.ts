@@ -20,7 +20,7 @@ export const seedSectionsWithOverrides = async (
 
   await cleanupRaw.marketingPage.createMany({
     data: slugs.map((slug) => ({ slug, title: slug })),
-    skipDuplicates: true,
+    skipDuplicates: locale !== DEFAULT_LOCALE_CODE,
   });
 
   await cleanupRaw.marketingPageSection.createMany({

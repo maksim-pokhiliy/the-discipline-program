@@ -11,8 +11,8 @@ type FullSectionData = { [K in SectionSchemaKey]: z.infer<(typeof SECTION_SCHEMA
 
 type HeroSectionKey = (typeof PAGE_SECTIONS_MAP)[PageSlug]["hero"];
 
-type PartialHeroSectionData = {
-  [K in HeroSectionKey]: Partial<z.infer<(typeof SECTION_SCHEMAS)[K]>>;
+type PartialSectionData<TKey extends SectionSchemaKey> = {
+  [K in TKey]: Partial<z.infer<(typeof SECTION_SCHEMAS)[K]>>;
 };
 
 const heroSection = (title: string) => ({
@@ -99,7 +99,7 @@ export const FULL_SECTION_DATA: FullSectionData = {
   "faq:cta": CTA_SECTION,
 };
 
-export const PARTIAL_SECTION_DATA: PartialHeroSectionData = {
+export const PARTIAL_SECTION_DATA: PartialSectionData<HeroSectionKey> = {
   "home:hero": { title: "Partial Home Hero" },
   "storefront:hero": { title: "Partial Storefront Hero" },
   "about:hero": { title: "Partial About Hero" },
@@ -109,3 +109,15 @@ export const PARTIAL_SECTION_DATA: PartialHeroSectionData = {
 };
 
 export const UK_ABOUT_HERO = heroSection("Про мене");
+
+export const GERMAN_ABOUT_HERO = { title: "Über mich" };
+
+export const UK_BLOG_SECTIONS: PartialSectionData<"blog:grid" | "blog:related"> = {
+  "blog:grid": {
+    readMoreLabel: "Читати далі",
+    minReadSuffix: "хв читання",
+    readArticleLabel: "Читати статтю",
+    notPublishedLabel: "Не опубліковано",
+  },
+  "blog:related": { title: "Схожі статті" },
+};

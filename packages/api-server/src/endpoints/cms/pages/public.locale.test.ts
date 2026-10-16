@@ -1,17 +1,21 @@
 import { type Prisma } from "@prisma/client";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
+import { prisma } from "../../../db/client";
 import { cleanupRaw } from "../../../test/helpers";
 import {
   GERMAN,
   SEEDED_LOCALES,
   seedLocaleCatalog,
   UKRAINIAN,
+  UNKNOWN_LOCALE_CODE,
 } from "../locale/__fixtures__/locale-catalog";
+import { refusalOf } from "../locale/__fixtures__/lock-race";
 
 import {
   captureMarketingPagesState,
@@ -19,8 +23,9 @@ import {
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
-import { FULL_SECTION_DATA, UK_ABOUT_HERO } from "./__fixtures__/section-data";
+import { FULL_SECTION_DATA, GERMAN_ABOUT_HERO, UK_ABOUT_HERO } from "./__fixtures__/section-data";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
+import { updateEnglishSection } from "./__fixtures__/update-english-section";
 import { cmsPagesPublicApi } from "./public";
 
 type AboutRowSeed = {
@@ -32,15 +37,14 @@ type AboutRowSeed = {
 
 type UkHeroRow = Pick<AboutRowSeed, "data" | "isActive">;
 
-const UNKNOWN_LOCALE_CODE = "xx";
 const UNPARSABLE_SECTION_DATA = { title: 42 };
 const ABOUT = PAGE_SECTIONS_MAP.about;
 const ENGLISH_ABOUT_HERO = FULL_SECTION_DATA[ABOUT.hero];
 const UK_ABOUT_CREDENTIALS = { title: "Сертифікати" };
 const UK_ABOUT_CTA = { title: "Напишіть мені" };
-const GERMAN_ABOUT_HERO = { title: "Über mich" };
 const THIRD_LOCALE_ABOUT_HERO = { title: "A third locale's hero" };
 const THIRD_LOCALES = SEEDED_LOCALES.filter((locale) => locale.code !== UKRAINIAN.code);
+const SECTION_ROW_LOCALES = z.array(z.object({ locale: z.string() }));
 
 const ENGLISH_ABOUT_PAGE = {
   hero: ENGLISH_ABOUT_HERO,
@@ -92,19 +96,14 @@ const createAboutRows = async (rows: readonly AboutRowSeed[]): Promise<void> => 
   });
 };
 
-const updateEnglishAboutHero = async (
-  data: Prisma.MarketingPageSectionUpdateInput,
-): Promise<void> => {
-  await cleanupRaw.marketingPageSection.update({
-    where: {
-      pageSlug_section_locale: {
-        pageSlug: PageSlug.ABOUT,
-        section: ABOUT.hero,
-        locale: DEFAULT_LOCALE_CODE,
-      },
-    },
-    data,
-  });
+const updateEnglishAboutHero = (data: Prisma.MarketingPageSectionUpdateInput): Promise<void> =>
+  updateEnglishSection(PageSlug.ABOUT, ABOUT.hero, data);
+
+const fetchedLocales = async (results: readonly { value: unknown }[]): Promise<string[]> => {
+  const rows = await Promise.all(results.map((result) => result.value));
+  const locales = SECTION_ROW_LOCALES.parse(rows.flat()).map((row) => row.locale);
+
+  return [...new Set(locales)].sort();
 };
 
 describe("cmsPagesPublicApi — locales", () => {
@@ -122,6 +121,10 @@ describe("cmsPagesPublicApi — locales", () => {
       where: { locale: { not: DEFAULT_LOCALE_CODE } },
     });
     await updateEnglishAboutHero({ data: ENGLISH_ABOUT_HERO, isActive: true });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -161,21 +164,28 @@ describe("cmsPagesPublicApi — locales", () => {
       expect(page.hero).toBeNull();
     });
 
-    it("never reads a third locale's row for a uk read", async () => {
+    it("never reads a third locale's row for a uk read and fetches the uk and English rows in one query", async () => {
       await updateEnglishAboutHero({ isActive: false });
-      await createAboutRows(
-        THIRD_LOCALES.map((locale) => ({
+      await createAboutRows([
+        { section: ABOUT.cta, locale: UKRAINIAN.code, data: UK_ABOUT_CTA, isActive: true },
+        ...THIRD_LOCALES.map((locale) => ({
           section: ABOUT.hero,
           locale: locale.code,
           data: THIRD_LOCALE_ABOUT_HERO,
           isActive: true,
         })),
-      );
+      ]);
 
+      const sectionQueries = vi.spyOn(prisma.marketingPageSection, "findMany");
       const page = await cmsPagesPublicApi.getAboutPage(UKRAINIAN.code);
 
       expect(THIRD_LOCALES.map((locale) => locale.code)).toContain(GERMAN.code);
       expect(page.hero).toBeNull();
+      expect(page.cta).toEqual(UK_ABOUT_CTA);
+      expect(sectionQueries).toHaveBeenCalledTimes(1);
+      expect(await fetchedLocales(sectionQueries.mock.results)).toEqual(
+        [DEFAULT_LOCALE_CODE, UKRAINIAN.code].sort(),
+      );
     });
 
     it("resolves every section of the page on its own", async () => {
@@ -201,31 +211,47 @@ describe("cmsPagesPublicApi — locales", () => {
       expect(page).toEqual({ ...ENGLISH_ABOUT_PAGE, hero: UK_ABOUT_HERO });
     });
 
-    it("reads the English rows for the default locale even when uk rows exist", async () => {
+    it("reads the English rows for the default locale in one query per read even when uk rows exist", async () => {
       await seedSectionsWithOverrides(
         { [ABOUT.hero]: UK_ABOUT_HERO, [ABOUT.cta]: UK_ABOUT_CTA },
         UKRAINIAN.code,
       );
 
+      const sectionQueries = vi.spyOn(prisma.marketingPageSection, "findMany");
+
       expect(await cmsPagesPublicApi.getAboutPage()).toEqual(ENGLISH_ABOUT_PAGE);
       expect(await cmsPagesPublicApi.getAboutPage(DEFAULT_LOCALE_CODE)).toEqual(ENGLISH_ABOUT_PAGE);
+      expect(sectionQueries).toHaveBeenCalledTimes(2);
+      expect(await fetchedLocales(sectionQueries.mock.results)).toEqual([DEFAULT_LOCALE_CODE]);
     });
   });
 
   describe("locale validation", () => {
-    it("refuses an unknown locale with NotFoundError", async () => {
-      await expect(cmsPagesPublicApi.getAboutPage(UNKNOWN_LOCALE_CODE)).rejects.toThrow(
-        NotFoundError,
-      );
-    });
+    it("refuses a disabled locale exactly like an unknown one and issues no page query for either", async () => {
+      const sectionQueries = vi.spyOn(prisma.marketingPageSection, "findMany");
+      const productQueries = vi.spyOn(prisma.product, "findMany");
 
-    it("refuses a disabled locale with NotFoundError", async () => {
       await createAboutRows([
         { section: ABOUT.hero, locale: GERMAN.code, data: GERMAN_ABOUT_HERO, isActive: true },
       ]);
 
+      const disabledRefusal = await refusalOf(cmsPagesPublicApi.getHomePage(GERMAN.code));
+
+      await cleanupRaw.marketingPageSection.deleteMany({ where: { locale: GERMAN.code } });
+      await cleanupRaw.marketingLocale.delete({ where: { code: GERMAN.code } });
+
+      try {
+        expect(await refusalOf(cmsPagesPublicApi.getHomePage(GERMAN.code))).toEqual(
+          disabledRefusal,
+        );
+      } finally {
+        await cleanupRaw.marketingLocale.create({ data: GERMAN });
+      }
+
       expect(GERMAN.isEnabled).toBe(false);
-      await expect(cmsPagesPublicApi.getAboutPage(GERMAN.code)).rejects.toThrow(NotFoundError);
+      expect(disabledRefusal).toMatchObject({ name: NotFoundError.name, statusCode: 404 });
+      expect(sectionQueries).not.toHaveBeenCalled();
+      expect(productQueries).not.toHaveBeenCalled();
     });
 
     it.each(PAGE_READERS)(

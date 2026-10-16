@@ -16,10 +16,11 @@ export type MarketingPagesState = {
   sections: MarketingPageSection[];
 };
 
-const DEFAULT_LOCALE_ROW = {
+export const DEFAULT_LOCALE_ROW = {
   code: DEFAULT_LOCALE_CODE,
   name: DEFAULT_LOCALE_NAME,
   isEnabled: true,
+  sortOrder: 0,
 };
 
 export const captureMarketingPagesState = async (): Promise<MarketingPagesState> => {

@@ -12,10 +12,10 @@ import {
 } from "../pages/__fixtures__/marketing-pages-state";
 import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
 
+import { UKRAINIAN, UNKNOWN_LOCALE_CODE } from "./__fixtures__/locale-catalog";
+
 const UNIQUE_VIOLATION = { code: "P2002" };
 const FOREIGN_KEY_VIOLATION = { code: "P2003" };
-const SECOND_LOCALE_CODE = "uk";
-const UNKNOWN_LOCALE_CODE = "xx";
 const NON_CANONICAL_SECTION = "home:retiredBanner";
 const HERO_ROW = { pageSlug: PageSlug.HOME, section: PAGE_SECTIONS_MAP.home.hero };
 const SECTION_INDEXES = [
@@ -56,14 +56,14 @@ describe("marketing_page_sections_pageSlug_section_locale_key", () => {
 
   it("accepts the same page and section under another locale", async () => {
     await cleanupRaw.marketingLocale.create({
-      data: { code: SECOND_LOCALE_CODE, name: "Українська" },
+      data: { code: UKRAINIAN.code, name: UKRAINIAN.name },
     });
 
     await expect(
       cleanupRaw.marketingPageSection.create({
-        data: { ...HERO_ROW, locale: SECOND_LOCALE_CODE, data: { title: "Герой" } },
+        data: { ...HERO_ROW, locale: UKRAINIAN.code, data: { title: "Герой" } },
       }),
-    ).resolves.toMatchObject({ ...HERO_ROW, locale: SECOND_LOCALE_CODE });
+    ).resolves.toMatchObject({ ...HERO_ROW, locale: UKRAINIAN.code });
 
     const rowCount = await cleanupRaw.marketingPageSection.count({ where: HERO_ROW });
 
@@ -74,18 +74,18 @@ describe("marketing_page_sections_pageSlug_section_locale_key", () => {
 describe("marketing_page_sections_locale_fkey", () => {
   it("refuses to delete a locale that a section row carries", async () => {
     await cleanupRaw.marketingLocale.create({
-      data: { code: SECOND_LOCALE_CODE, name: "Українська" },
+      data: { code: UKRAINIAN.code, name: UKRAINIAN.name },
     });
     await cleanupRaw.marketingPageSection.create({
-      data: { ...HERO_ROW, locale: SECOND_LOCALE_CODE, data: {} },
+      data: { ...HERO_ROW, locale: UKRAINIAN.code, data: {} },
     });
 
     await expect(
-      cleanupRaw.marketingLocale.delete({ where: { code: SECOND_LOCALE_CODE } }),
+      cleanupRaw.marketingLocale.delete({ where: { code: UKRAINIAN.code } }),
     ).rejects.toMatchObject(FOREIGN_KEY_VIOLATION);
 
     const localeCount = await cleanupRaw.marketingLocale.count({
-      where: { code: SECOND_LOCALE_CODE },
+      where: { code: UKRAINIAN.code },
     });
 
     expect(localeCount).toBe(1);

@@ -5,6 +5,7 @@ export const GERMAN = { code: "de", name: "Deutsch", isEnabled: false, sortOrder
 export const FRENCH = { code: "fr", name: "Français", isEnabled: true, sortOrder: 3 };
 export const CATALAN = { code: "ca", name: "Català", isEnabled: true, sortOrder: 3 };
 export const SEEDED_LOCALES = [UKRAINIAN, GERMAN, FRENCH, CATALAN];
+export const UNKNOWN_LOCALE_CODE = "xx";
 
 export const seedLocaleCatalog = async (): Promise<void> => {
   await cleanupRaw.marketingLocale.createMany({ data: SEEDED_LOCALES });

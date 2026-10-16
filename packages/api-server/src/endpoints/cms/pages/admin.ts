@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageListItem,
@@ -32,18 +34,30 @@ const ensurePages = async (slugs: readonly PageSlug[]): Promise<void> => {
   });
 };
 
+const handleSectionWriteError = (error: unknown): never => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+    throw new NotFoundError("Locale not found");
+  }
+
+  return handlePrismaError(error, { entity: "Page section" });
+};
+
 const ensurePageScaffold = async (slug: PageSlug, locale: LocaleCode): Promise<void> => {
   await ensurePages([slug]);
 
-  await prisma.marketingPageSection.createMany({
-    data: getPageSectionsOrder(slug).map((section) => ({
-      pageSlug: slug,
-      section,
-      locale,
-      data: EMPTY_SECTION_DATA,
-    })),
-    skipDuplicates: true,
-  });
+  try {
+    await prisma.marketingPageSection.createMany({
+      data: getPageSectionsOrder(slug).map((section) => ({
+        pageSlug: slug,
+        section,
+        locale,
+        data: EMPTY_SECTION_DATA,
+      })),
+      skipDuplicates: true,
+    });
+  } catch (error) {
+    return handleSectionWriteError(error);
+  }
 };
 
 export const cmsPagesAdminApi = {
@@ -100,7 +114,7 @@ export const cmsPagesAdminApi = {
         .map((s) => ({
           id: s.id,
           section: s.section,
-          data: SECTION_SCHEMAS[s.section].partial().parse(asJsonRecord(s.data) ?? {}),
+          data: SECTION_SCHEMAS[s.section].deepPartial().parse(asJsonRecord(s.data) ?? {}),
           updatedAt: s.updatedAt,
         })),
     };
@@ -161,7 +175,7 @@ export const cmsPagesAdminApi = {
         },
       });
     } catch (error) {
-      return handlePrismaError(error, { entity: "Page section" });
+      return handleSectionWriteError(error);
     }
   },
 };

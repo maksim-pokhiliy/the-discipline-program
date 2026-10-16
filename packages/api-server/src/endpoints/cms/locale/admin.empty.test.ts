@@ -1,25 +1,21 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { DEFAULT_LOCALE_CODE, DEFAULT_LOCALE_NAME } from "@repo/contracts/cms/locale";
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 
 import { cleanupRaw } from "../../../test/helpers";
 import {
   captureMarketingPagesState,
   clearMarketingPagesState,
+  DEFAULT_LOCALE_ROW,
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "../pages/__fixtures__/marketing-pages-state";
 
+import { UKRAINIAN } from "./__fixtures__/locale-catalog";
 import { cmsLocaleAdminApi } from "./admin";
 
-const DEFAULT_LOCALE_ROW = {
-  code: DEFAULT_LOCALE_CODE,
-  name: DEFAULT_LOCALE_NAME,
-  isEnabled: true,
-  sortOrder: 0,
-};
 const REPEATED_READS = 3;
-const UKRAINIAN = { code: "uk", name: "Українська" };
+const NEW_UKRAINIAN = { code: UKRAINIAN.code, name: UKRAINIAN.name };
 const RENAMED_DEFAULT_LOCALE_NAME = "English (UK)";
 
 const readLocaleRows = () =>
@@ -62,12 +58,12 @@ describe("cmsLocaleAdminApi — empty table", () => {
   });
 
   it("createLocale recreates the default locale first and orders the new disabled locale after it", async () => {
-    const created = await cmsLocaleAdminApi.createLocale(UKRAINIAN);
+    const created = await cmsLocaleAdminApi.createLocale(NEW_UKRAINIAN);
 
-    expect(created).toMatchObject({ ...UKRAINIAN, isEnabled: false, sortOrder: 1 });
+    expect(created).toMatchObject({ ...NEW_UKRAINIAN, isEnabled: false, sortOrder: 1 });
     expect(await readLocaleRows()).toEqual([
       DEFAULT_LOCALE_ROW,
-      { ...UKRAINIAN, isEnabled: false, sortOrder: 1 },
+      { ...NEW_UKRAINIAN, isEnabled: false, sortOrder: 1 },
     ]);
   });
 

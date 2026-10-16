@@ -47,7 +47,7 @@ describe("cmsLocalePublicApi", () => {
   });
 
   describe("getEnabledLocales", () => {
-    it("returns the enabled locales as code and name only", async () => {
+    it("returns the enabled locales as code and name only, ordered by sortOrder then code", async () => {
       const locales = await cmsLocalePublicApi.getEnabledLocales();
 
       expect(locales).toEqual(ENABLED_LOCALES);
@@ -59,14 +59,6 @@ describe("cmsLocalePublicApi", () => {
 
       expect(locales.map((locale) => locale.code)).not.toContain(GERMAN.code);
       expect(await cleanupRaw.marketingLocale.count({ where: { code: GERMAN.code } })).toBe(1);
-    });
-
-    it("orders the locales by sortOrder then code", async () => {
-      const locales = await cmsLocalePublicApi.getEnabledLocales();
-
-      expect(locales.map((locale) => locale.code)).toEqual(
-        ENABLED_LOCALES.map((locale) => locale.code),
-      );
     });
 
     it("creates nothing on a table without the default locale", async () => {

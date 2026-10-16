@@ -5,15 +5,17 @@ import {
 } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { DEFAULT_LOCALE_CODE, DEFAULT_LOCALE_NAME } from "@repo/contracts/cms/locale";
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
 
 import { cleanupRaw } from "../../../../test/helpers";
 import { marshalNullableJson } from "../../../../utils/to-input-json";
+import { UKRAINIAN } from "../../locale/__fixtures__/locale-catalog";
 
 import {
   captureMarketingPagesState,
   clearMarketingPagesState,
+  DEFAULT_LOCALE_ROW,
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./marketing-pages-state";
@@ -21,7 +23,6 @@ import { seedSectionsWithOverrides } from "./seed-with-overrides";
 
 const UNIQUE_VIOLATION = { code: "P2002" };
 
-const SECOND_LOCALE_CODE = "uk";
 const ADDED_LOCALE_CODE = "de";
 const PAGE_WITHOUT_SECTIONS_ID = "fixture-page-about";
 const HOME_PAGE_ID = "fixture-page-home";
@@ -52,8 +53,8 @@ const SEEDED_LOCALES: MarketingLocale[] = [
     updatedAt: new Date("2020-01-03T04:05:06.007Z"),
   },
   {
-    code: SECOND_LOCALE_CODE,
-    name: "Українська",
+    code: UKRAINIAN.code,
+    name: UKRAINIAN.name,
     isEnabled: false,
     sortOrder: 1,
     createdAt: new Date("2020-02-02T03:04:05.006Z"),
@@ -96,7 +97,7 @@ const SEEDED_SECTIONS: MarketingPageSection[] = [
     id: SECOND_LOCALE_SECTION_ID,
     pageSlug: PageSlug.HOME,
     section: PAGE_SECTIONS_MAP.home.whyChoose,
-    locale: SECOND_LOCALE_CODE,
+    locale: UKRAINIAN.code,
     data: { title: "Inactive why choose in the second locale" },
     isActive: false,
     updatedAt: new Date("2021-03-02T01:02:03.004Z"),
@@ -141,7 +142,7 @@ const seedKnownContent = async (): Promise<void> => {
 
 const changeEveryTableAfterTheCapture = async (): Promise<void> => {
   await cleanupRaw.marketingPageSection.delete({ where: { id: SECOND_LOCALE_SECTION_ID } });
-  await cleanupRaw.marketingLocale.delete({ where: { code: SECOND_LOCALE_CODE } });
+  await cleanupRaw.marketingLocale.delete({ where: { code: UKRAINIAN.code } });
   await cleanupRaw.marketingLocale.update({
     where: { code: DEFAULT_LOCALE_CODE },
     data: {
@@ -222,18 +223,23 @@ describe("marketing pages state fixture", () => {
       await cleanupRaw.marketingLocale.findMany({
         select: { code: true, name: true, isEnabled: true, sortOrder: true },
       }),
-    ).toEqual([
-      { code: DEFAULT_LOCALE_CODE, name: DEFAULT_LOCALE_NAME, isEnabled: true, sortOrder: 0 },
-    ]);
+    ).toEqual([DEFAULT_LOCALE_ROW]);
   });
 
-  it("refuses to seed the pages over tables that were not cleared", async () => {
+  it("refuses to seed the default locale over pages and sections that were not cleared", async () => {
     await seedSectionsWithOverrides({});
 
     const sectionCount = await cleanupRaw.marketingPageSection.count();
 
     await expect(seedSectionsWithOverrides({})).rejects.toMatchObject(UNIQUE_VIOLATION);
     expect(await cleanupRaw.marketingPageSection.count()).toBe(sectionCount);
+  });
+
+  it("refuses to seed the default locale over pages that were not cleared, even without sections", async () => {
+    await cleanupRaw.marketingPage.create({ data: { slug: PageSlug.ABOUT, title: "Left behind" } });
+
+    await expect(seedSectionsWithOverrides({})).rejects.toMatchObject(UNIQUE_VIOLATION);
+    expect(await cleanupRaw.marketingPageSection.count()).toBe(0);
   });
 
   it("seeds a non-default locale beside the default rows without touching them", async () => {
@@ -243,12 +249,12 @@ describe("marketing pages state fixture", () => {
 
     await seedSectionsWithOverrides(
       { [PAGE_SECTIONS_MAP.home.hero]: SECOND_LOCALE_HERO },
-      SECOND_LOCALE_CODE,
+      UKRAINIAN.code,
     );
 
     const after = await readTables();
     const secondLocaleRows = after.sections
-      .filter((section) => section.locale === SECOND_LOCALE_CODE)
+      .filter((section) => section.locale === UKRAINIAN.code)
       .map(({ pageSlug, section, data, isActive }) => ({ pageSlug, section, data, isActive }));
     const expectedSecondLocaleRows = Object.values(PageSlug).flatMap((pageSlug) =>
       Object.values(PAGE_SECTIONS_MAP[pageSlug]).map((section) => ({
@@ -266,8 +272,8 @@ describe("marketing pages state fixture", () => {
     expect(after.locales).toEqual([
       ...before.locales,
       expect.objectContaining({
-        code: SECOND_LOCALE_CODE,
-        name: SECOND_LOCALE_CODE,
+        code: UKRAINIAN.code,
+        name: UKRAINIAN.code,
         isEnabled: true,
       }),
     ]);
