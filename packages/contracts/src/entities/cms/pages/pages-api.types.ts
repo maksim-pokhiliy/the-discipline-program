@@ -18,8 +18,8 @@ import {
 
 export type AdminPageListItem = z.infer<typeof adminPageListItemSchema>;
 export type AdminPageDetails = z.infer<typeof adminPageDetailsSchema>;
-export type UpdatePageSectionBody = z.infer<typeof updatePageSectionBodySchema>;
-export type UpdatePageSectionData = z.infer<typeof updatePageSectionSchema>;
+export type UpdatePageSectionBody = z.input<typeof updatePageSectionBodySchema>;
+export type UpdatePageSectionData = z.input<typeof updatePageSectionSchema>;
 export type UpdatePageMetadataInput = z.infer<typeof updatePageMetadataSchema>;
 
 export type HomePageData = z.infer<typeof getHomePageResponseSchema>;
