@@ -17,7 +17,7 @@ describe("periodSchema", () => {
     expect(periodSchema.safeParse(period).success).toBe(true);
   });
 
-  it.each(REJECTED_COUNTS)("rejects the count %p", (periodCount) => {
+  it.each(REJECTED_COUNTS)("rejects the count %s", (periodCount) => {
     expect(periodSchema.safeParse({ periodCount, periodUnit: PeriodUnit.WEEK }).success).toBe(
       false,
     );

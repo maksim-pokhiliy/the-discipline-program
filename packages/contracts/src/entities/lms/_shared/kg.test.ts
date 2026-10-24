@@ -21,11 +21,11 @@ const REJECTED_KG = [
 ];
 
 describe("kgSchema", () => {
-  it.each(ACCEPTED_KG)("accepts %p", (kg) => {
+  it.each(ACCEPTED_KG)("accepts %s", (kg) => {
     expect(kgSchema.safeParse(kg).success).toBe(true);
   });
 
-  it.each(REJECTED_KG)("rejects %p", (kg) => {
+  it.each(REJECTED_KG)("rejects %s", (kg) => {
     expect(kgSchema.safeParse(kg).success).toBe(false);
   });
 
