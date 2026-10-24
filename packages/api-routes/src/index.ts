@@ -11,6 +11,7 @@ export type { RequestContext } from "./request-context";
 export {
   withPublicRoute,
   parseJsonBody,
+  parseQuery,
   parseRequest,
   parseResponse,
   createGetHandler,

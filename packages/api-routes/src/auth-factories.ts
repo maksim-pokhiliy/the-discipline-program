@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { type ZodType, type ZodTypeDef } from "zod";
 
 import { wrapAuthHandler } from "./idempotency";
 import type { IdempotencyConfig } from "./idempotency";
-import { parseJsonBody } from "./route-helpers";
+import { type ParseSchema, parseJsonBody, parseQuery, parseRequest } from "./route-helpers";
 import type { AuthenticatedHandler } from "./types";
-
-type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
 
 const JSON_CONFIG: IdempotencyConfig = { bodyMode: "json" };
 const NONE_CONFIG: IdempotencyConfig = { bodyMode: "none" };
@@ -29,8 +26,7 @@ export const createAuthGetWithQueryHandler = <TQuery, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   return async (request, _context, userId) => {
-    const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-    const query = querySchema.parse(queryParams);
+    const query = parseQuery(querySchema, request);
     const data = await apiFn(userId, query);
     const validated = responseSchema.parse(data);
 
@@ -44,7 +40,7 @@ export const createAuthGetByParamHandler = <TParams, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   return async (_request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const data = await apiFn(userId, params);
     const validated = responseSchema.parse(data);
 
@@ -59,9 +55,8 @@ export const createAuthGetByParamWithQueryHandler = <TParams, TQuery, TResponse>
   responseSchema: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   return async (request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
-    const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-    const query = querySchema.parse(queryParams);
+    const params = parseRequest(paramsSchema, await context.params);
+    const query = parseQuery(querySchema, request);
     const data = await apiFn(userId, params, query);
     const validated = responseSchema.parse(data);
 
@@ -76,7 +71,7 @@ export const createAuthPostHandler = <TRequest, TResponse>(
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (request, _context, userId) => {
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
     const result = await apiFn(userId, data);
     const validated = responseSchema.parse(result);
 
@@ -93,9 +88,9 @@ export const createAuthPostByParamHandler = <TParams, TRequest, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
     const result = await apiFn(userId, params, data);
     const validated = responseSchema.parse(result);
 
@@ -112,7 +107,7 @@ export const createAuthPutHandler = <TRequest, TResponse>(
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (request, _context, userId) => {
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
     const result = await apiFn(userId, data);
     const validated = responseSchema.parse(result);
 
@@ -129,9 +124,9 @@ export const createAuthPutByParamHandler = <TParams, TRequest, TResponse>(
   responseSchema: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
     const result = await apiFn(userId, params, data);
     const validated = responseSchema.parse(result);
 
@@ -147,9 +142,9 @@ export const createAuthVoidPutByParamHandler = <TParams, TRequest>(
   requestSchema: ParseSchema<TRequest>,
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const body = await parseJsonBody(request);
-    const data = requestSchema.parse(body);
+    const data = parseRequest(requestSchema, body);
 
     await apiFn(userId, params, data);
 
@@ -164,7 +159,7 @@ export const createAuthDeleteHandler = <TParams>(
   paramsSchema: ParseSchema<TParams>,
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (_request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
 
     await apiFn(userId, params);
 
@@ -181,7 +176,7 @@ export const createAuthActionHandler = <TParams, TResponse>(
   status = 200,
 ): AuthenticatedHandler => {
   const inner: AuthenticatedHandler = async (_request, context, userId) => {
-    const params = paramsSchema.parse(await context.params);
+    const params = parseRequest(paramsSchema, await context.params);
     const result = await apiFn(userId, params);
     const validated = responseSchema.parse(result);
 
