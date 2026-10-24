@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_LOCALE_CODE, LOCALE_CONSTANTS } from "./locale.constants";
+import { localeCodeParamsSchema, localeQuerySchema } from "./locale-api.schema";
+import { DEFAULT_LOCALE_CODE, LOCALE_CONSTANTS, RESERVED_LOCALE_CODES } from "./locale.constants";
 import {
   createLocaleSchema,
   localeCodeSchema,
@@ -44,6 +45,31 @@ describe("localeCodeSchema", () => {
   it.each(REFUSED_CODES)("refuses %j", (code) => {
     expect(localeCodeSchema.safeParse(code).success).toBe(false);
   });
+});
+
+describe("RESERVED_LOCALE_CODES", () => {
+  it("reserves the api route tree and the faq page", () => {
+    expect(RESERVED_LOCALE_CODES).toStrictEqual(["api", "faq"]);
+  });
+
+  it.each(RESERVED_LOCALE_CODES)("refuses %s with a message that names it", (code) => {
+    const result = localeCodeSchema.safeParse(code);
+
+    expect(LOCALE_CONSTANTS.CODE_PATTERN.test(code)).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      expect.stringContaining(`"${code}"`),
+    ]);
+  });
+
+  it.each(RESERVED_LOCALE_CODES)(
+    "keeps %s out of a new locale, a locale param and a locale query",
+    (code) => {
+      expect(createLocaleSchema.safeParse({ ...UKRAINIAN, code }).success).toBe(false);
+      expect(localeCodeParamsSchema.safeParse({ code }).success).toBe(false);
+      expect(localeQuerySchema.safeParse({ locale: code }).success).toBe(false);
+    },
+  );
 });
 
 describe("createLocaleSchema", () => {
