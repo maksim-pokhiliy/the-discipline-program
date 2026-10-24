@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { PageSlug, PAGE_SECTIONS_MAP } from "@repo/contracts/cms/pages";
+import { PageSlug, PAGE_SECTIONS_MAP, SECTION_DEFAULTS } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
@@ -75,7 +75,7 @@ describe("cmsPagesAdminApi — empty DB", () => {
       expect(await cleanupRaw.marketingPage.count()).toBe(Object.values(PageSlug).length);
     });
 
-    it("getPageBySlug resolves a valid slug and returns its canonical sections", async () => {
+    it("getPageBySlug resolves a valid slug and scaffolds its canonical sections, seo with its English default", async () => {
       const homeSections = Object.values(PAGE_SECTIONS_MAP.home);
 
       expect(await cleanupRaw.marketingPageSection.count()).toBe(0);
@@ -90,7 +90,12 @@ describe("cmsPagesAdminApi — empty DB", () => {
       expect(details.sections).toHaveLength(homeSections.length);
       expect(persisted).toHaveLength(homeSections.length);
       expect(persisted).toEqual(
-        expect.arrayContaining(homeSections.map((section) => ({ section, data: {} }))),
+        expect.arrayContaining(
+          homeSections.map((section) => ({
+            section,
+            data: section === PAGE_SECTIONS_MAP.home.seo ? SECTION_DEFAULTS[section] : {},
+          })),
+        ),
       );
     });
   });

@@ -6,6 +6,7 @@ import {
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
   getHomePageResponseSchema,
+  getOfferPageResponseSchema,
   getStorefrontProgramsPageResponseSchema,
 } from "@repo/contracts/cms/pages";
 
@@ -32,6 +33,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
       "blog:hero": PARTIAL_SECTION_DATA["blog:hero"],
       "contact:hero": PARTIAL_SECTION_DATA["contact:hero"],
       "faq:hero": PARTIAL_SECTION_DATA["faq:hero"],
+      "offer:hero": PARTIAL_SECTION_DATA["offer:hero"],
     });
   });
 
@@ -48,6 +50,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.storefront).toBeNull();
     expect(data.reviews).toBeNull();
     expect(data.contact).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getHomePageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -58,6 +61,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero?.title).toBe("Partial Storefront Hero");
     expect(data.grid).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getStorefrontProgramsPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -70,6 +74,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.credentials).toBeNull();
     expect(data.personal).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getAboutPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -79,6 +84,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero).not.toBeNull();
     expect(data.hero?.title).toBe("Partial Blog Hero");
     expect(data.grid).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getBlogPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -88,6 +94,7 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero).not.toBeNull();
     expect(data.hero?.title).toBe("Partial Contact Hero");
     expect(data.form).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getContactPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -98,6 +105,17 @@ describe("cmsPagesPublicApi — partial DB (hero filled, other sections empty)",
     expect(data.hero?.title).toBe("Partial FAQ Hero");
     expect(data.content).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getFaqPageResponseSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("getOfferPage returns partial hero, null for empty sections", async () => {
+    const data = await cmsPagesPublicApi.getOfferPage();
+
+    expect(data.hero).toEqual(PARTIAL_SECTION_DATA["offer:hero"]);
+    expect(data.requisites).toBeNull();
+    expect(data.terms).toBeNull();
+    expect(data.seo).toBeNull();
+    expect(getOfferPageResponseSchema.safeParse(data).success).toBe(true);
   });
 });

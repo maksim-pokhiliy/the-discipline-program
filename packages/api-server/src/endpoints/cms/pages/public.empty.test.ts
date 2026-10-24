@@ -6,9 +6,13 @@ import {
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
   getHomePageResponseSchema,
+  getOfferPageResponseSchema,
+  getSitePageResponseSchema,
   getStorefrontProgramsPageResponseSchema,
 } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
+
+import { cleanupRaw } from "../../../test/helpers";
 
 import {
   captureMarketingPagesState,
@@ -43,6 +47,7 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(data.storefront).toBeNull();
     expect(data.reviews).toBeNull();
     expect(data.contact).toBeNull();
+    expect(data.seo).toBeNull();
   });
 
   it("getStorefrontProgramsPage returns valid response with null sections on cold DB", async () => {
@@ -54,6 +59,7 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(data.hero).toBeNull();
     expect(data.grid).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
   });
 
   it("getAboutPage returns valid response with null sections on cold DB", async () => {
@@ -67,6 +73,7 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(data.credentials).toBeNull();
     expect(data.personal).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
   });
 
   it("getBlogPage returns valid response with null sections on cold DB", async () => {
@@ -77,6 +84,7 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(parsed.success).toBe(true);
     expect(data.hero).toBeNull();
     expect(data.grid).toBeNull();
+    expect(data.seo).toBeNull();
   });
 
   it("getContactPage returns valid response with null sections on cold DB", async () => {
@@ -87,6 +95,7 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(parsed.success).toBe(true);
     expect(data.hero).toBeNull();
     expect(data.form).toBeNull();
+    expect(data.seo).toBeNull();
   });
 
   it("getFaqPage returns valid response with null sections on cold DB", async () => {
@@ -98,6 +107,29 @@ describe("cmsPagesPublicApi — empty DB", () => {
     expect(data.hero).toBeNull();
     expect(data.content).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
+  });
+
+  it("getOfferPage returns valid response with null sections on cold DB", async () => {
+    const data = await cmsPagesPublicApi.getOfferPage();
+
+    expect(getOfferPageResponseSchema.safeParse(data).success).toBe(true);
+    expect(data).toEqual({ hero: null, requisites: null, terms: null, seo: null });
+  });
+
+  it("getSitePage returns valid response with null sections on cold DB", async () => {
+    const data = await cmsPagesPublicApi.getSitePage();
+
+    expect(getSitePageResponseSchema.safeParse(data).success).toBe(true);
+    expect(data).toEqual({ navigation: null, footer: null, leadForm: null, errors: null });
+  });
+
+  it("creates no page and no section row when it reads the site and the offer pages", async () => {
+    await cmsPagesPublicApi.getSitePage();
+    await cmsPagesPublicApi.getOfferPage();
+
+    expect(await cleanupRaw.marketingPage.count()).toBe(0);
+    expect(await cleanupRaw.marketingPageSection.count()).toBe(0);
   });
 
   it("does not silently swallow unexpected errors for non-existent article slug", async () => {

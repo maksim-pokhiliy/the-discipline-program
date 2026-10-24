@@ -5,7 +5,6 @@ import {
   type AdminPageListItem,
   type AdminPageDetails,
   type UpdatePageSectionData,
-  type UpdatePageMetadataInput,
   PageSlug,
   SECTION_SCHEMAS,
 } from "@repo/contracts/cms/pages";
@@ -17,7 +16,7 @@ import { handlePrismaError } from "../../../utils";
 import { asJsonRecord } from "../../../utils/json-record";
 import { assertAdminLocale } from "../locale/locale-access";
 
-import { EMPTY_SECTION_DATA, getPageSectionsOrder } from "./page-sections";
+import { getPageSectionsOrder, scaffoldSectionData } from "./page-sections";
 
 const PAGE_SLUGS: ReadonlySet<string> = new Set(Object.values(PageSlug));
 const SECTION_KEYS: ReadonlySet<string> = new Set(Object.keys(SECTION_SCHEMAS));
@@ -51,7 +50,7 @@ const ensurePageScaffold = async (slug: PageSlug, locale: LocaleCode): Promise<v
         pageSlug: slug,
         section,
         locale,
-        data: EMPTY_SECTION_DATA,
+        data: scaffoldSectionData(section, locale),
       })),
       skipDuplicates: true,
     });
@@ -118,31 +117,6 @@ export const cmsPagesAdminApi = {
           updatedAt: s.updatedAt,
         })),
     };
-  },
-
-  updatePageMetadata: async (slug: string, payload: UpdatePageMetadataInput): Promise<void> => {
-    if (!isValidPageSlug(slug)) {
-      throw new NotFoundError(`Page with slug ${slug} not found`);
-    }
-
-    try {
-      await prisma.marketingPage.upsert({
-        where: { slug },
-        create: {
-          slug,
-          title: payload.title,
-          seoTitle: payload.seoTitle ?? null,
-          seoDesc: payload.seoDesc ?? null,
-        },
-        update: {
-          title: payload.title,
-          ...(payload.seoTitle !== undefined && { seoTitle: payload.seoTitle }),
-          ...(payload.seoDesc !== undefined && { seoDesc: payload.seoDesc }),
-        },
-      });
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Page", field: "slug" });
-    }
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {

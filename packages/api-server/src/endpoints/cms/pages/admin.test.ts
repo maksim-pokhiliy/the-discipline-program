@@ -11,6 +11,7 @@ import {
   restoreMarketingPagesState,
   type MarketingPagesState,
 } from "./__fixtures__/marketing-pages-state";
+import { FULL_SECTION_DATA } from "./__fixtures__/section-data";
 import { cmsPagesAdminApi } from "./admin";
 
 const heroSectionData = {
@@ -23,14 +24,12 @@ const heroSectionData = {
 
 const REVERSED_SECTION_ID_PREFIX = "reversed-about-section-";
 const NON_CANONICAL_SECTION = "contact:retiredBanner";
-
-const readStoredSeo = (
-  pageId: string,
-): Promise<{ seoTitle: string | null; seoDesc: string | null }> =>
-  cleanupRaw.marketingPage.findUniqueOrThrow({
-    where: { id: pageId },
-    select: { seoTitle: true, seoDesc: true },
-  });
+const SITE_FOOTER_ROW = { pageSlug: PageSlug.SITE, section: PAGE_SECTIONS_MAP.site.footer };
+const STOREFRONT_GRID_ROW = {
+  pageSlug: PageSlug.STOREFRONT,
+  section: PAGE_SECTIONS_MAP.storefront.grid,
+};
+const CARD_ACTION_GRID = { cardActionLabel: "Open the program" };
 
 describe("cmsPagesAdminApi", () => {
   let snapshot: MarketingPagesState;
@@ -120,79 +119,6 @@ describe("cmsPagesAdminApi", () => {
     });
   });
 
-  describe("updatePageMetadata", () => {
-    it("updates page title and SEO fields", async () => {
-      await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, {
-        title: "Updated Home Page",
-        seoTitle: "Updated SEO Title",
-        seoDesc: "Updated SEO Description",
-      });
-
-      const pages = await cmsPagesAdminApi.getPages();
-      const updated = pages.find((p) => p.id === testPageId);
-
-      expect(updated?.title).toBe("Updated Home Page");
-      expect(await readStoredSeo(testPageId)).toEqual({
-        seoTitle: "Updated SEO Title",
-        seoDesc: "Updated SEO Description",
-      });
-    });
-
-    it("allows nullable SEO fields", async () => {
-      await cleanupRaw.marketingPage.update({
-        where: { id: testPageId },
-        data: { seoTitle: "Stored SEO Title", seoDesc: "Stored SEO Description" },
-      });
-
-      await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, {
-        title: "Home Page Reset",
-        seoTitle: null,
-        seoDesc: null,
-      });
-
-      const pages = await cmsPagesAdminApi.getPages();
-      const updated = pages.find((p) => p.id === testPageId);
-
-      expect(updated?.title).toBe("Home Page Reset");
-      expect(await readStoredSeo(testPageId)).toEqual({ seoTitle: null, seoDesc: null });
-    });
-
-    it("keeps the stored SEO fields when an update carries only the title", async () => {
-      await cleanupRaw.marketingPage.update({
-        where: { id: testPageId },
-        data: { seoTitle: "Kept SEO Title", seoDesc: "Kept SEO Description" },
-      });
-
-      await cmsPagesAdminApi.updatePageMetadata(PageSlug.HOME, { title: "Title Only Update" });
-
-      expect(await readStoredSeo(testPageId)).toEqual({
-        seoTitle: "Kept SEO Title",
-        seoDesc: "Kept SEO Description",
-      });
-    });
-
-    it("creates a page that does not exist yet with its SEO fields stored", async () => {
-      await cleanupRaw.marketingPage.deleteMany({ where: { slug: PageSlug.FAQ } });
-
-      await cmsPagesAdminApi.updatePageMetadata(PageSlug.FAQ, {
-        title: "Created FAQ",
-        seoTitle: "Created SEO Title",
-        seoDesc: "Created SEO Description",
-      });
-
-      expect(
-        await cleanupRaw.marketingPage.findUniqueOrThrow({
-          where: { slug: PageSlug.FAQ },
-          select: { title: true, seoTitle: true, seoDesc: true },
-        }),
-      ).toEqual({
-        title: "Created FAQ",
-        seoTitle: "Created SEO Title",
-        seoDesc: "Created SEO Description",
-      });
-    });
-  });
-
   describe("updateSection", () => {
     it("throws NotFoundError for a section that is not canonical for the page", async () => {
       await expect(
@@ -219,6 +145,39 @@ describe("cmsPagesAdminApi", () => {
 
       expect(created).not.toBeNull();
       expect(created?.data).toMatchObject({ title: "Lazy Reviews" });
+    });
+
+    it("writes a section of the site pseudo-page", async () => {
+      await cmsPagesAdminApi.updateSection({
+        ...SITE_FOOTER_ROW,
+        data: FULL_SECTION_DATA[SITE_FOOTER_ROW.section],
+      });
+
+      expect(
+        await cleanupRaw.marketingPageSection.findFirst({ where: SITE_FOOTER_ROW }),
+      ).toMatchObject({ data: FULL_SECTION_DATA[SITE_FOOTER_ROW.section] });
+    });
+
+    it("refuses a site section on a public page with NotFoundError", async () => {
+      const misplacedFooter = { pageSlug: PageSlug.HOME, section: SITE_FOOTER_ROW.section };
+
+      await expect(
+        cmsPagesAdminApi.updateSection({
+          ...misplacedFooter,
+          data: FULL_SECTION_DATA[SITE_FOOTER_ROW.section],
+        }),
+      ).rejects.toThrow(NotFoundError);
+      expect(await cleanupRaw.marketingPageSection.count({ where: misplacedFooter })).toBe(0);
+    });
+
+    it("round-trips the card action label of the storefront grid", async () => {
+      await cmsPagesAdminApi.updateSection({ ...STOREFRONT_GRID_ROW, data: CARD_ACTION_GRID });
+
+      const details = await cmsPagesAdminApi.getPageBySlug(PageSlug.STOREFRONT);
+
+      expect(
+        details.sections.find((section) => section.section === STOREFRONT_GRID_ROW.section)?.data,
+      ).toEqual(CARD_ACTION_GRID);
     });
   });
 });

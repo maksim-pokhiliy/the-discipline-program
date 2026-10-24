@@ -1,6 +1,5 @@
 import { type Prisma } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
 
 import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contracts/cms/pages";
@@ -17,6 +16,7 @@ import {
 } from "../locale/__fixtures__/locale-catalog";
 import { refusalOf } from "../locale/__fixtures__/lock-race";
 
+import { fetchedLocales } from "./__fixtures__/fetched-locales";
 import {
   captureMarketingPagesState,
   clearMarketingPagesState,
@@ -49,7 +49,7 @@ const UK_ABOUT_CREDENTIALS = { title: "Сертифікати" };
 const UK_ABOUT_CTA = { title: "Напишіть мені" };
 const THIRD_LOCALE_ABOUT_HERO = { title: "A third locale's hero" };
 const THIRD_LOCALES = SEEDED_LOCALES.filter((locale) => locale.code !== UKRAINIAN.code);
-const SECTION_ROW_LOCALES = z.array(z.object({ locale: z.string() }));
+const UK_SEO = { title: "Пошуковий заголовок сторінки", description: "Пошуковий опис сторінки" };
 
 const ENGLISH_ABOUT_PAGE = {
   hero: ENGLISH_ABOUT_HERO,
@@ -57,6 +57,7 @@ const ENGLISH_ABOUT_PAGE = {
   credentials: FULL_SECTION_DATA[ABOUT.credentials],
   personal: FULL_SECTION_DATA[ABOUT.personal],
   cta: FULL_SECTION_DATA[ABOUT.cta],
+  seo: FULL_SECTION_DATA[ABOUT.seo],
 };
 
 const FALLBACK_CASES: readonly (readonly [string, readonly UkHeroRow[], unknown])[] = [
@@ -91,13 +92,6 @@ const createAboutRows = async (rows: readonly AboutRowSeed[]): Promise<void> => 
 
 const updateEnglishAboutHero = (data: Prisma.MarketingPageSectionUpdateInput): Promise<void> =>
   updateEnglishSection(PageSlug.ABOUT, ABOUT.hero, data);
-
-const fetchedLocales = async (results: readonly { value: unknown }[]): Promise<string[]> => {
-  const rows = await Promise.all(results.map((result) => result.value));
-  const locales = SECTION_ROW_LOCALES.parse(rows.flat()).map((row) => row.locale);
-
-  return [...new Set(locales)].sort();
-};
 
 describe("cmsPagesPublicApi — locales", () => {
   let snapshot: MarketingPagesState;
@@ -263,6 +257,35 @@ describe("cmsPagesPublicApi — locales", () => {
 
         expect((await readPage(UKRAINIAN.code)).hero).toEqual(ukHero);
         await expect(readPage(UNKNOWN_LOCALE_CODE)).rejects.toThrow(NotFoundError);
+      },
+    );
+  });
+
+  describe("seo section per page", () => {
+    it.each(PAGE_READERS)(
+      "%s falls back to the English seo section when the uk seo row is empty",
+      async (slug, readPage) => {
+        const seo = PAGE_SECTIONS_MAP[slug].seo;
+
+        await cleanupRaw.marketingPageSection.create({
+          data: { pageSlug: slug, section: seo, locale: UKRAINIAN.code, data: {} },
+        });
+
+        expect((await readPage(UKRAINIAN.code)).seo).toEqual(FULL_SECTION_DATA[seo]);
+      },
+    );
+
+    it.each(PAGE_READERS)(
+      "%s reads the uk seo section from its own row",
+      async (slug, readPage) => {
+        const seo = PAGE_SECTIONS_MAP[slug].seo;
+
+        await cleanupRaw.marketingPageSection.create({
+          data: { pageSlug: slug, section: seo, locale: UKRAINIAN.code, data: UK_SEO },
+        });
+
+        expect((await readPage(UKRAINIAN.code)).seo).toEqual(UK_SEO);
+        expect((await readPage(DEFAULT_LOCALE_CODE)).seo).toEqual(FULL_SECTION_DATA[seo]);
       },
     );
   });
