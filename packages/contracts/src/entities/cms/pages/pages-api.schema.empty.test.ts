@@ -9,10 +9,13 @@ import {
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
   getHomePageResponseSchema,
+  getOfferPageResponseSchema,
+  getSitePageResponseSchema,
   getStorefrontProgramsPageResponseSchema,
   updatePageSectionBodySchema,
 } from "./pages-api.schema";
 import { PageSlug } from "./pages.constants";
+import { SECTION_DEFAULTS } from "./section-defaults";
 
 const heroStub = {
   title: "t",
@@ -31,6 +34,8 @@ const ctaStub = {
 
 const titleSubtitleStub = { title: "t", subtitle: "s" };
 
+const seoStub = { title: "t", description: "d" };
+
 describe("pages-api schema empty collections", () => {
   it("getHomePageResponseSchema accepts empty productsList and reviewsList", () => {
     const result = getHomePageResponseSchema.safeParse({
@@ -47,6 +52,7 @@ describe("pages-api schema empty collections", () => {
       },
       reviews: titleSubtitleStub,
       contact: ctaStub,
+      seo: seoStub,
       productsList: [],
       reviewsList: [],
     });
@@ -61,6 +67,7 @@ describe("pages-api schema empty collections", () => {
       storefront: null,
       reviews: null,
       contact: null,
+      seo: null,
       productsList: [],
       reviewsList: [],
     });
@@ -74,6 +81,7 @@ describe("pages-api schema empty collections", () => {
       whyChoose: { ...titleSubtitleStub, features: [] },
       reviews: titleSubtitleStub,
       contact: ctaStub,
+      seo: seoStub,
       reviewsList: [],
     });
 
@@ -86,10 +94,12 @@ describe("pages-api schema empty collections", () => {
       grid: {
         ...titleSubtitleStub,
         freeLabel: "free",
+        cardActionLabel: "open",
         modalDismissLabel: "cancel",
         modalActionLabel: "buy",
       },
       cta: ctaStub,
+      seo: seoStub,
       productsList: [],
     });
 
@@ -101,6 +111,7 @@ describe("pages-api schema empty collections", () => {
       hero: null,
       grid: null,
       cta: null,
+      seo: null,
       productsList: [],
     });
 
@@ -120,6 +131,7 @@ describe("pages-api schema empty collections", () => {
         role: "r",
       },
       cta: ctaStub,
+      seo: seoStub,
     });
 
     expect(result.success).toBe(true);
@@ -132,6 +144,7 @@ describe("pages-api schema empty collections", () => {
       credentials: null,
       personal: null,
       cta: null,
+      seo: null,
     });
 
     expect(result.success).toBe(true);
@@ -147,6 +160,7 @@ describe("pages-api schema empty collections", () => {
         readArticleLabel: "read article",
         notPublishedLabel: "not published",
       },
+      seo: seoStub,
       posts: [],
       categories: [],
     });
@@ -158,6 +172,7 @@ describe("pages-api schema empty collections", () => {
     const result = getBlogPageResponseSchema.safeParse({
       hero: null,
       grid: null,
+      seo: null,
       posts: [],
       categories: [],
     });
@@ -179,6 +194,7 @@ describe("pages-api schema empty collections", () => {
         fieldLabels: { name: "n", contact: "c", program: "p", message: "m" },
         fieldPlaceholders: { contact: "c", message: "m" },
       },
+      seo: seoStub,
       programOptions: [],
     });
 
@@ -189,6 +205,7 @@ describe("pages-api schema empty collections", () => {
     const result = getContactPageResponseSchema.safeParse({
       hero: null,
       form: null,
+      seo: null,
       programOptions: [],
     });
 
@@ -200,6 +217,7 @@ describe("pages-api schema empty collections", () => {
       hero: heroStub,
       content: { ...titleSubtitleStub, items: [] },
       cta: ctaStub,
+      seo: seoStub,
     });
 
     expect(result.success).toBe(true);
@@ -210,9 +228,60 @@ describe("pages-api schema empty collections", () => {
       hero: null,
       content: null,
       cta: null,
+      seo: null,
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("getOfferPageResponseSchema accepts empty requisite rows and terms blocks", () => {
+    const result = getOfferPageResponseSchema.safeParse({
+      hero: titleSubtitleStub,
+      requisites: { title: "t", items: [] },
+      terms: { title: "t", blocks: [] },
+      seo: seoStub,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("getOfferPageResponseSchema accepts null sections (cold DB scenario)", () => {
+    const result = getOfferPageResponseSchema.safeParse({
+      hero: null,
+      requisites: null,
+      terms: null,
+      seo: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("getSitePageResponseSchema accepts the English defaults of the site sections", () => {
+    const result = getSitePageResponseSchema.safeParse({
+      navigation: SECTION_DEFAULTS["site:navigation"],
+      footer: SECTION_DEFAULTS["site:footer"],
+      leadForm: SECTION_DEFAULTS["site:leadForm"],
+      errors: SECTION_DEFAULTS["site:errors"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("getSitePageResponseSchema accepts null sections (cold DB scenario)", () => {
+    const result = getSitePageResponseSchema.safeParse({
+      navigation: null,
+      footer: null,
+      leadForm: null,
+      errors: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("refuses a page response without its seo key", () => {
+    const result = getFaqPageResponseSchema.safeParse({ hero: null, content: null, cta: null });
+
+    expect(result.success).toBe(false);
   });
 
   it("adminPageDetailsSchema accepts empty sections array", () => {
