@@ -157,9 +157,7 @@ export const SECTION_SCHEMAS = {
   [PAGE_SECTIONS_MAP.site.errors]: siteErrorsSchema,
 } satisfies Record<PageSectionKey, z.AnyZodObject>;
 
-type SectionKey = keyof typeof SECTION_SCHEMAS;
-
-const sectionVariant = <TKey extends SectionKey, TSchema extends z.AnyZodObject>(
+const sectionVariant = <TKey extends PageSectionKey, TSchema extends z.AnyZodObject>(
   key: TKey,
   schema: TSchema,
 ) =>
@@ -169,7 +167,8 @@ const sectionVariant = <TKey extends SectionKey, TSchema extends z.AnyZodObject>
     locale: localeCodeSchema.default(DEFAULT_LOCALE_CODE),
   });
 
-const variantOf = <TKey extends SectionKey>(key: TKey) => sectionVariant(key, SECTION_SCHEMAS[key]);
+const variantOf = <TKey extends PageSectionKey>(key: TKey) =>
+  sectionVariant(key, SECTION_SCHEMAS[key]);
 
 const SECTION_VARIANTS = [
   variantOf(PAGE_SECTIONS_MAP.home.hero),

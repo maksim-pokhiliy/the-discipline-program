@@ -280,10 +280,41 @@ describe("pages-api schema empty collections", () => {
     expect(result.success).toBe(true);
   });
 
-  it("refuses a page response without its seo key", () => {
-    const result = getFaqPageResponseSchema.safeParse({ hero: null, content: null, cta: null });
+  it.each([
+    [
+      "home",
+      getHomePageResponseSchema,
+      {
+        hero: null,
+        whyChoose: null,
+        storefront: null,
+        reviews: null,
+        contact: null,
+        productsList: [],
+        reviewsList: [],
+      },
+    ],
+    [
+      "storefront",
+      getStorefrontProgramsPageResponseSchema,
+      { hero: null, grid: null, cta: null, productsList: [] },
+    ],
+    [
+      "about",
+      getAboutPageResponseSchema,
+      { hero: null, journey: null, credentials: null, personal: null, cta: null },
+    ],
+    ["blog", getBlogPageResponseSchema, { hero: null, grid: null, posts: [], categories: [] }],
+    ["contact", getContactPageResponseSchema, { hero: null, form: null, programOptions: [] }],
+    ["faq", getFaqPageResponseSchema, { hero: null, content: null, cta: null }],
+    ["offer", getOfferPageResponseSchema, { hero: null, requisites: null, terms: null }],
+  ] as const)("refuses a %s page response without its seo key", (_page, schema, payload) => {
+    expect(schema.safeParse({ ...payload, seo: null }).success).toBe(true);
+
+    const result = schema.safeParse(payload);
 
     expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toStrictEqual([["seo"]]);
   });
 
   it("adminPageDetailsSchema accepts empty sections array", () => {

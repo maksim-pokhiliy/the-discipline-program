@@ -196,7 +196,7 @@ describe("marketing pages state fixture", () => {
     await restoreMarketingPagesState(realState);
   });
 
-  it("gives back every column of the locales, pages and sections changed after the capture", async () => {
+  it("gives back every mapped column of the locales, pages and sections changed after the capture", async () => {
     await seedKnownContent();
 
     const captured = await captureMarketingPagesState();

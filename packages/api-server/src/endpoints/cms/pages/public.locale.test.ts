@@ -191,14 +191,9 @@ describe("cmsPagesPublicApi — locales", () => {
       async (slug, readPage) => {
         const ukHero = { title: `Українська сторінка ${slug}` };
 
-        await cleanupRaw.marketingPageSection.create({
-          data: {
-            pageSlug: slug,
-            section: PAGE_SECTIONS_MAP[slug].hero,
-            locale: UKRAINIAN.code,
-            data: ukHero,
-          },
-        });
+        await insertSectionRows(slug, UKRAINIAN.code, [
+          { section: PAGE_SECTIONS_MAP[slug].hero, data: ukHero, isActive: true },
+        ]);
 
         expect((await readPage(UKRAINIAN.code)).hero).toEqual(ukHero);
         await expect(readPage(UNKNOWN_LOCALE_CODE)).rejects.toThrow(NotFoundError);
@@ -212,9 +207,7 @@ describe("cmsPagesPublicApi — locales", () => {
       async (slug, readPage) => {
         const seo = PAGE_SECTIONS_MAP[slug].seo;
 
-        await cleanupRaw.marketingPageSection.create({
-          data: { pageSlug: slug, section: seo, locale: UKRAINIAN.code, data: {} },
-        });
+        await insertSectionRows(slug, UKRAINIAN.code, [{ section: seo, data: {}, isActive: true }]);
 
         expect((await readPage(UKRAINIAN.code)).seo).toEqual(FULL_SECTION_DATA[seo]);
       },
@@ -225,9 +218,9 @@ describe("cmsPagesPublicApi — locales", () => {
       async (slug, readPage) => {
         const seo = PAGE_SECTIONS_MAP[slug].seo;
 
-        await cleanupRaw.marketingPageSection.create({
-          data: { pageSlug: slug, section: seo, locale: UKRAINIAN.code, data: UK_SEO },
-        });
+        await insertSectionRows(slug, UKRAINIAN.code, [
+          { section: seo, data: UK_SEO, isActive: true },
+        ]);
 
         expect((await readPage(UKRAINIAN.code)).seo).toEqual(UK_SEO);
         expect((await readPage(DEFAULT_LOCALE_CODE)).seo).toEqual(FULL_SECTION_DATA[seo]);

@@ -10,6 +10,7 @@ import {
 
 import { cleanupRaw } from "../../../test/helpers";
 import { FRENCH, seedLocaleCatalog, UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
+import { cmsLocaleAdminApi } from "../locale/admin";
 
 import {
   captureMarketingPagesState,
@@ -134,11 +135,10 @@ describe("cmsPagesAdminApi — the scaffold and the English defaults", () => {
       expect(await cleanupRaw.marketingPageSection.count({ where: { locale } })).toBe(
         SECTION_COUNT,
       );
-      expect(
-        await cleanupRaw.marketingPageSection.count({
-          where: { locale, NOT: { data: { equals: {} } } },
-        }),
-      ).toBe(0);
+      await cmsLocaleAdminApi.deleteLocale(locale);
+
+      expect(await cleanupRaw.marketingLocale.findUnique({ where: { code: locale } })).toBeNull();
+      expect(await cleanupRaw.marketingPageSection.count({ where: { locale } })).toBe(0);
     },
   );
 

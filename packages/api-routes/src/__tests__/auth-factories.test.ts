@@ -100,6 +100,17 @@ describe("createAuthGetWithQueryHandler", () => {
     expect(apiFn).toHaveBeenCalledWith(USER_ID, { page: 2 });
   });
 
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthGetWithQueryHandler(apiFn, querySchema, responseSchema),
+    );
+
+    expect(await failureOf(await route(getRequest(VALID_QUERY), emptyContext()))).toStrictEqual(
+      SERVER_FAULT,
+    );
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { page: 2 });
+  });
+
   it("answers 400 VALIDATION_ERROR for a malformed query and never calls the api function", async () => {
     const { apiFn, route } = build();
 
@@ -111,6 +122,14 @@ describe("createAuthGetWithQueryHandler", () => {
 });
 
 describe("createAuthGetByParamHandler", () => {
+  it("answers 200 and passes the parsed params to the api function", async () => {
+    const apiFn = okApiFn();
+    const route = asRoute(createAuthGetByParamHandler(apiFn, paramsSchema, responseSchema));
+
+    expect((await route(getRequest(), contextWith(VALID_ID))).status).toBe(200);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID });
+  });
+
   it("answers 400 VALIDATION_ERROR for a malformed param and never calls the api function", async () => {
     const apiFn = okApiFn();
     const route = asRoute(createAuthGetByParamHandler(apiFn, paramsSchema, responseSchema));
@@ -137,6 +156,24 @@ describe("createAuthGetByParamWithQueryHandler", () => {
     buildFixture(OK_RESULT, (apiFn) =>
       createAuthGetByParamWithQueryHandler(apiFn, paramsSchema, querySchema, responseSchema),
     );
+
+  it("answers 200 and passes the parsed params and query to the api function", async () => {
+    const { apiFn, route } = build();
+
+    expect((await route(getRequest(VALID_QUERY), contextWith(VALID_ID))).status).toBe(200);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, { page: 2 });
+  });
+
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthGetByParamWithQueryHandler(apiFn, paramsSchema, querySchema, responseSchema),
+    );
+
+    expect(
+      await failureOf(await route(getRequest(VALID_QUERY), contextWith(VALID_ID))),
+    ).toStrictEqual(SERVER_FAULT);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, { page: 2 });
+  });
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -168,6 +205,17 @@ describe("createAuthPostHandler", () => {
     expect(apiFn).toHaveBeenCalledWith(USER_ID, VALID_BODY);
   });
 
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthPostHandler(apiFn, requestSchema, responseSchema),
+    );
+
+    expect(
+      await failureOf(await route(jsonRequest("POST", VALID_BODY), emptyContext())),
+    ).toStrictEqual(SERVER_FAULT);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, VALID_BODY);
+  });
+
   it("answers 400 VALIDATION_ERROR for a malformed body", async () => {
     const { apiFn, route } = build();
 
@@ -183,6 +231,24 @@ describe("createAuthPostByParamHandler", () => {
     buildFixture(OK_RESULT, (apiFn) =>
       createAuthPostByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema),
     );
+
+  it("answers 201 and passes the parsed params and body to the api function", async () => {
+    const { apiFn, route } = build();
+
+    expect((await route(jsonRequest("POST", VALID_BODY), contextWith(VALID_ID))).status).toBe(201);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, VALID_BODY);
+  });
+
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthPostByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema),
+    );
+
+    expect(
+      await failureOf(await route(jsonRequest("POST", VALID_BODY), contextWith(VALID_ID))),
+    ).toStrictEqual(SERVER_FAULT);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, VALID_BODY);
+  });
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -204,6 +270,25 @@ describe("createAuthPostByParamHandler", () => {
 });
 
 describe("createAuthPutHandler", () => {
+  it("answers 200 and passes the parsed body to the api function", async () => {
+    const apiFn = okApiFn();
+    const route = asRoute(createAuthPutHandler(apiFn, requestSchema, responseSchema));
+
+    expect((await route(jsonRequest("PUT", VALID_BODY), emptyContext())).status).toBe(200);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, VALID_BODY);
+  });
+
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthPutHandler(apiFn, requestSchema, responseSchema),
+    );
+
+    expect(
+      await failureOf(await route(jsonRequest("PUT", VALID_BODY), emptyContext())),
+    ).toStrictEqual(SERVER_FAULT);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, VALID_BODY);
+  });
+
   it("answers 400 VALIDATION_ERROR for a malformed body", async () => {
     const apiFn = okApiFn();
     const route = asRoute(createAuthPutHandler(apiFn, requestSchema, responseSchema));
@@ -220,6 +305,24 @@ describe("createAuthPutByParamHandler", () => {
     buildFixture(OK_RESULT, (apiFn) =>
       createAuthPutByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema),
     );
+
+  it("answers 200 and passes the parsed params and body to the api function", async () => {
+    const { apiFn, route } = build();
+
+    expect((await route(jsonRequest("PUT", VALID_BODY), contextWith(VALID_ID))).status).toBe(200);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, VALID_BODY);
+  });
+
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthPutByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema),
+    );
+
+    expect(
+      await failureOf(await route(jsonRequest("PUT", VALID_BODY), contextWith(VALID_ID))),
+    ).toStrictEqual(SERVER_FAULT);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, VALID_BODY);
+  });
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -245,6 +348,13 @@ describe("createAuthVoidPutByParamHandler", () => {
     buildFixture(undefined, (apiFn) =>
       createAuthVoidPutByParamHandler(apiFn, paramsSchema, requestSchema),
     );
+
+  it("answers 204 and passes the parsed params and body to the api function", async () => {
+    const { apiFn, route } = build();
+
+    expect((await route(jsonRequest("PUT", VALID_BODY), contextWith(VALID_ID))).status).toBe(204);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID }, VALID_BODY);
+  });
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -287,6 +397,25 @@ describe("createAuthDeleteHandler", () => {
 });
 
 describe("createAuthActionHandler", () => {
+  it("answers 200 and passes the parsed params to the api function", async () => {
+    const apiFn = okApiFn();
+    const route = asRoute(createAuthActionHandler(apiFn, paramsSchema, responseSchema));
+
+    expect((await route(bodylessRequest("POST"), contextWith(VALID_ID))).status).toBe(200);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID });
+  });
+
+  it("keeps a result that fails the response schema a 500", async () => {
+    const { apiFn, route } = buildFixture(FAILING_RESULT, (apiFn) =>
+      createAuthActionHandler(apiFn, paramsSchema, responseSchema),
+    );
+
+    expect(
+      await failureOf(await route(bodylessRequest("POST"), contextWith(VALID_ID))),
+    ).toStrictEqual(SERVER_FAULT);
+    expect(apiFn).toHaveBeenCalledWith(USER_ID, { id: VALID_ID });
+  });
+
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const apiFn = okApiFn();
     const route = asRoute(createAuthActionHandler(apiFn, paramsSchema, responseSchema));

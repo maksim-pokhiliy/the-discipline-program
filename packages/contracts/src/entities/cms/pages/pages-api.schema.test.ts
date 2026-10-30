@@ -119,7 +119,7 @@ describe("SECTION_SCHEMAS", () => {
     expect([...variantSections].sort()).toEqual([...CATALOG_SECTIONS].sort());
   });
 
-  it("builds every write variant from the schema of its own section", () => {
+  it("builds every write variant with the top-level fields of its own section", () => {
     const mismatched = updatePageSectionBodySchema.options.filter(
       (variant) =>
         Object.keys(variant.shape.data.shape).join() !==
