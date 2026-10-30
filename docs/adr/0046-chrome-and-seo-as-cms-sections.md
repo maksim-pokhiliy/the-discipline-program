@@ -1,7 +1,7 @@
 # 0046. Site chrome, page SEO and the public offer are CMS sections
 
-- **Status:** Proposed (direction ratified; implementation on the delivery branch, pending merge)
-- **Date:** 2026-10-30
+- **Status:** Accepted
+- **Date:** 2026-10-24
 - **Deciders:** Owner (storefront-billing D-21) and planner (step 0.4b rulings)
 - **Tags:** `cms`, `localization`, `seo`, `domain-model`
 
@@ -25,8 +25,8 @@ ADR-0021 risk 5 proposed wiring the page-level `seoTitle` and `seoDesc` columns 
 ## Consequences
 
 - **Positive:** page bodies, chrome, search copy and the offer share one content model, one locale catalog and one fallback rule. English defaults give the coach reference text without overwriting authored content. The offer's search description is a default; its seller details and legal terms remain authored content. Adding the new API surfaces changes no rendered marketing page in this step.
-- **Negative:** missing or cleared English sections remain `null` in the public API until content is supplied; the planned marketing fallback can display the shared English default even after a row is cleared. Partial nested items now pass the public page reader, so consumers must tolerate missing nested fields. The admin adds Site and Offer to its Pages list, but their new section forms remain absent until 0.4d; marketing chrome and metadata consumption arrive in 0.4f, and the rendered offer page in 0.4g. ADR-0045's warning about an English edit not invalidating cached translations that fall back to it still applies; this step adds no cache mechanism for that case.
-- **Neutral:** a new `site:*` section with an English default reaches existing installations through the same lazy scaffold when the page is next opened. Adding a field to an already-scaffolded section would require a backfill of the default-locale rows, because `skipDuplicates` does not update them. This step implements no such backfill; this is a consequence of the current scaffold, not a rule forbidding later fields. The retained SEO columns can be dropped in a later contract migration. The marketing-pages test fixture no longer captures or restores those ignored columns; this affects test data only.
+- **Negative:** missing or cleared English sections remain `null` in the public API until content is supplied; the planned marketing fallback can display the shared English default even after a row is cleared. Partial nested items now pass the public page reader, so consumers must tolerate missing nested fields. The `site` reader issues one sections query and, for a non-default locale, a locale-catalog lookup as well; step 0.4f adds this read to page rendering. The admin adds Site and Offer to its Pages list, but their new section forms remain absent until 0.4d; marketing chrome and metadata consumption arrive in 0.4f, and the rendered offer page in 0.4g. ADR-0045's warning about an English edit not invalidating cached translations that fall back to it still applies; this step adds no cache mechanism for that case.
+- **Neutral:** a new `site:*` section with an English default reaches existing installations through the same lazy scaffold when the page is next opened. Adding a field to an already-scaffolded section would require a backfill of the default-locale rows, because `skipDuplicates` does not update them. This step implements no such backfill; this is a consequence of the current scaffold, not a rule forbidding later fields. The retained SEO columns can be dropped in a later contract migration. The marketing-pages test fixture no longer captures or restores those ignored columns; this affects test data only. The small `parseQuery` adapter in `@repo/api-routes` converts URL query parameters and delegates to existing request validation; adoption in this step is limited to the auth factories and page/revalidation routes, leaving other query adapters unchanged.
 
 ## Alternatives considered
 
