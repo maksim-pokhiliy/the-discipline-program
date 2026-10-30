@@ -96,8 +96,10 @@ The rest of this document describes each context in detail: what it owns, which 
 
 | Aggregate / entity              | Prisma model                 | Role                                                                                                                |
 | ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `MarketingPage` (root)          | `MarketingPage`              | A static landing page — home, about, blog, contact, faq, storefront. Keyed by slug.                                 |
+| `MarketingPage` (root)          | `MarketingPage`              | A CMS page keyed by slug: home, storefront, about, blog, contact, faq, offer, or the site pseudo-page.              |
 | `MarketingPageSection`          | `MarketingPageSection`       | Child entity of `MarketingPage`. A fixed list of section keys per page, one row per key and locale; `Json` payload. |
+| `site` pseudo-page              | `MarketingPage`              | Shared chrome in navigation, footer, leadForm and errors sections. No public URL; readable through the pages API.   |
+| `offer` page                    | `MarketingPage`              | Public offer in hero, requisites, terms and seo sections. The coach supplies seller details and legal terms.        |
 | `MarketingLocale` (root)        | `MarketingLocale`            | A language of the site, keyed by its code (`en`, `uk`): name, enabled flag, order. English is the default locale.   |
 | `MarketingBlogPost` (root)      | `MarketingBlogPost`          | One blog article. Has publish/feature flags, category, tags, precomputed read time.                                 |
 | `MarketingReview` (root)        | `MarketingReview`            | A customer review shown on the home page and storefront.                                                            |
@@ -106,9 +108,10 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Value objects
 
-- `PageSlug` (`home | about | blog | contact | faq | storefront`).
+- `PageSlug` (`home | storefront | about | blog | contact | faq | offer | site`).
+- `PublicPageSlug` — every `PageSlug` except `site`; only these slugs have marketing paths. English is unprefixed, other locales use `/{code}`. The `offer` path is modeled here; its rendered route arrives in step 0.4g.
 - `SectionKey` — string literal union per page, in `PAGE_SECTIONS_MAP`.
-- `LocaleCode` — two or three lowercase ASCII letters (`en`, `uk`, `crh`), validated by `localeCodeSchema`. It is the primary key of `MarketingLocale`, the URL prefix of a non-default locale (`/uk/about`) and the `html lang` value at once; regional variants (`pt-BR`) are out of scope. The default is `DEFAULT_LOCALE_CODE = "en"`.
+- `LocaleCode` — two or three lowercase ASCII letters (`en`, `uk`, `crh`), validated by `localeCodeSchema`; `api` and `faq` are reserved by site paths and rejected. It is the primary key of `MarketingLocale`, the URL prefix of a non-default locale (`/uk/about`) and the `html lang` value at once; regional variants (`pt-BR`) are out of scope. The default is `DEFAULT_LOCALE_CODE = "en"`.
 - `MarketingBlogCategory` — fitness, nutrition, mindset, training, recovery, uncategorized.
 - `ContactSubmissionStatus` — inbox triage state (new, in-progress, replied, closed).
 
@@ -119,16 +122,18 @@ The rest of this document describes each context in detail: what it owns, which 
 - **The default locale always exists and stays enabled; every other locale starts disabled (`isEnabled @default(false)`).** The migration `20261016120000_cms_locales` inserts `en`; `ensureDefaultLocale` re-creates it when it is missing in `getLocales` and `createLocale` and on the default-locale paths of `getPageBySlug`, `updateSection` and `updateLocale`, while the public page reads never need it; `cmsLocaleAdminApi` refuses to disable or delete it (`BadRequestError`).
 - **A locale with content cannot be deleted.** `cmsLocaleAdminApi.deleteLocale` refuses with a `ConflictError` naming the count while a section row with content (`data` other than the `{}` the scaffold writes) carries the locale; otherwise the locale's empty scaffold rows go with it in one transaction. `marketing_page_sections.locale` → `marketing_locales.code` is `ON DELETE RESTRICT`, the backstop.
 - **A non-default locale falls back to English section by section.** The public read takes a section from the locale's own row when that row is active, parses and is non-empty, otherwise from the English row under the same three conditions, otherwise `null`. An unknown or disabled locale is a 404 before any page query; English is read without a catalog lookup (ADR-0045).
-- **Section payload must match its Zod schema.** Enforced at read time via `SECTION_SCHEMAS[key].parse(...)`.
+- **Section payload must match its Zod schema as a partial document.** The section PATCH parses writes through the section's discriminated variant; the admin page read uses `SECTION_SCHEMAS[key].deepPartial().parse(...)`. The public page read uses `.deepPartial().safeParse(...)`, warns on a schema mismatch and tries the next locale; an empty parsed object also falls back. A valid partial nested item stays in its own section, with no field-by-field English merge.
+- **Section defaults apply only when missing default-locale rows are scaffolded.** `SECTION_DEFAULTS` holds eleven English payloads: the `seo` section of every public page and the four `site` sections. `getPageBySlug` lazily inserts these defaults for English and `{}` for all other sections or locales; `skipDuplicates` preserves every existing row, including a cleared `{}` row. The offer's hero, requisites and terms have no defaults or placeholder legal text. Public reads create nothing and fall back per section through stored rows only; step 0.4f will reuse the same constant for marketing display fallback (ADR-0046).
+- **Every public CMS page has SEO; site chrome has no page URL.** `seo` is the last section in editor order and a required nullable response field. A `site` section write targets the root layout for revalidation; a public-page section write targets its concrete localized path without a type (ADR-0046).
 - **At most one featured blog post / featured product at a time.** Enforced inside `$transaction`.
 - **Read-time is derived, not authoritative.** Computed from `content` word count during create/update.
 
 ### Where it lives today
 
 - **DB:** `MarketingPage`, `MarketingPageSection`, `MarketingLocale` (migration `20261016120000_cms_locales`), `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`, and the `Product` model (shared with Billing).
-- **Contracts:** `packages/contracts/src/entities/cms/pages/`, `cms/locale/` (`@repo/contracts/cms/locale`), `cms/blog/`, `cms/review/`, `cms/contact/`, `cms/product/`, `cms/dashboard/`. `marketingPagePath(slug, locale)` in `cms/pages` builds the marketing path of a page in a locale.
-- **API — `api-server`:** all CMS lives under `endpoints/cms/`. Each entity is a subfolder with sibling admin-write and public-read files. The locale catalog is `endpoints/cms/locale/` (`cmsLocaleAdminApi`, `cmsLocalePublicApi`); in `endpoints/cms/pages/` the admin page read (`getPageBySlug`), the six public page readers and the section write (`updateSection`) take a locale and default to English, while the page list (`getPages`) takes none.
-- **Consumer apps:** `apps/admin` (authoring, triage, the locale catalog under `/api/admin/locales`), `apps/marketing` (public rendering, the enabled locales under `/api/public/locales`).
+- **Contracts:** `packages/contracts/src/entities/cms/pages/` (`@repo/contracts/cms/pages`), `cms/locale/` (`@repo/contracts/cms/locale`), `cms/blog/`, `cms/review/`, `cms/contact/`, `cms/product/`, `cms/dashboard/`. In `cms/pages`, `marketingPagePath(slug, locale)` builds public-page paths; `marketingRevalidationTarget` distinguishes those paths from the site root layout. `section-defaults.ts` owns `SECTION_DEFAULTS`; `pages.constants.ts` and `pages-api.schema.ts` own the section order and schemas.
+- **API — `api-server`:** all CMS lives under `endpoints/cms/`. Each entity is a subfolder with sibling admin-write and public-read files. The locale catalog is `endpoints/cms/locale/` (`cmsLocaleAdminApi`, `cmsLocalePublicApi`); in `endpoints/cms/pages/`, `admin.ts` owns the page list, lazy scaffold and section write, `page-sections.ts` selects scaffold payloads, and `public.ts` owns the seven public-page readers plus `getSitePage`. The admin page read (`getPageBySlug`), public readers and section write (`updateSection`) take a locale and default to English; the page list (`getPages`) takes none.
+- **Consumer apps:** `apps/admin` (authoring, triage, `/api/admin/locales`, the page GET and section PATCH under `/api/admin/pages`), `apps/marketing` (public rendering, enabled locales under `/api/public/locales`, eight page-data surfaces under `/api/public/pages/[pageSlug]`, including `site` and `offer`, and `/api/revalidate`). Step 0.4b adds the server model; the new section forms arrive in 0.4d, chrome and SEO consumption in 0.4f, and the rendered offer page in 0.4g. The current marketing UI continues to use its existing code strings.
 
 ### Dependencies
 
