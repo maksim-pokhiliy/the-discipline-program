@@ -68,7 +68,14 @@ const failureOf = async (response: Response): Promise<{ status: number; code: st
 
 const okApiFn = () => vi.fn(async () => OK_RESULT);
 
-const voidApiFn = () => vi.fn(async () => undefined);
+const buildFixture = <TResult extends object | undefined>(
+  result: TResult,
+  createHandler: (apiFn: () => Promise<TResult>) => AuthenticatedHandler,
+) => {
+  const apiFn = vi.fn(async () => result);
+
+  return { apiFn, route: asRoute(createHandler(apiFn)) };
+};
 
 describe("createAuthGetHandler", () => {
   it("keeps a result that fails the response schema a 500", async () => {
@@ -81,14 +88,10 @@ describe("createAuthGetHandler", () => {
 });
 
 describe("createAuthGetWithQueryHandler", () => {
-  const build = () => {
-    const apiFn = okApiFn();
-
-    return {
-      apiFn,
-      route: asRoute(createAuthGetWithQueryHandler(apiFn, querySchema, responseSchema)),
-    };
-  };
+  const build = () =>
+    buildFixture(OK_RESULT, (apiFn) =>
+      createAuthGetWithQueryHandler(apiFn, querySchema, responseSchema),
+    );
 
   it("passes the parsed query and the user id to the api function", async () => {
     const { apiFn, route } = build();
@@ -130,17 +133,10 @@ describe("createAuthGetByParamHandler", () => {
 });
 
 describe("createAuthGetByParamWithQueryHandler", () => {
-  const build = () => {
-    const apiFn = okApiFn();
-    const handler = createAuthGetByParamWithQueryHandler(
-      apiFn,
-      paramsSchema,
-      querySchema,
-      responseSchema,
+  const build = () =>
+    buildFixture(OK_RESULT, (apiFn) =>
+      createAuthGetByParamWithQueryHandler(apiFn, paramsSchema, querySchema, responseSchema),
     );
-
-    return { apiFn, route: asRoute(handler) };
-  };
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -162,11 +158,8 @@ describe("createAuthGetByParamWithQueryHandler", () => {
 });
 
 describe("createAuthPostHandler", () => {
-  const build = () => {
-    const apiFn = okApiFn();
-
-    return { apiFn, route: asRoute(createAuthPostHandler(apiFn, requestSchema, responseSchema)) };
-  };
+  const build = () =>
+    buildFixture(OK_RESULT, (apiFn) => createAuthPostHandler(apiFn, requestSchema, responseSchema));
 
   it("answers 201 and passes the parsed body to the api function", async () => {
     const { apiFn, route } = build();
@@ -186,17 +179,10 @@ describe("createAuthPostHandler", () => {
 });
 
 describe("createAuthPostByParamHandler", () => {
-  const build = () => {
-    const apiFn = okApiFn();
-    const handler = createAuthPostByParamHandler(
-      apiFn,
-      paramsSchema,
-      requestSchema,
-      responseSchema,
+  const build = () =>
+    buildFixture(OK_RESULT, (apiFn) =>
+      createAuthPostByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema),
     );
-
-    return { apiFn, route: asRoute(handler) };
-  };
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -230,12 +216,10 @@ describe("createAuthPutHandler", () => {
 });
 
 describe("createAuthPutByParamHandler", () => {
-  const build = () => {
-    const apiFn = okApiFn();
-    const handler = createAuthPutByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema);
-
-    return { apiFn, route: asRoute(handler) };
-  };
+  const build = () =>
+    buildFixture(OK_RESULT, (apiFn) =>
+      createAuthPutByParamHandler(apiFn, paramsSchema, requestSchema, responseSchema),
+    );
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -257,12 +241,10 @@ describe("createAuthPutByParamHandler", () => {
 });
 
 describe("createAuthVoidPutByParamHandler", () => {
-  const build = () => {
-    const apiFn = voidApiFn();
-    const handler = createAuthVoidPutByParamHandler(apiFn, paramsSchema, requestSchema);
-
-    return { apiFn, route: asRoute(handler) };
-  };
+  const build = () =>
+    buildFixture(undefined, (apiFn) =>
+      createAuthVoidPutByParamHandler(apiFn, paramsSchema, requestSchema),
+    );
 
   it("answers 400 VALIDATION_ERROR for a malformed param", async () => {
     const { apiFn, route } = build();
@@ -284,11 +266,8 @@ describe("createAuthVoidPutByParamHandler", () => {
 });
 
 describe("createAuthDeleteHandler", () => {
-  const build = () => {
-    const apiFn = voidApiFn();
-
-    return { apiFn, route: asRoute(createAuthDeleteHandler(apiFn, paramsSchema)) };
-  };
+  const build = () =>
+    buildFixture(undefined, (apiFn) => createAuthDeleteHandler(apiFn, paramsSchema));
 
   it("answers 204 and passes the parsed params to the api function", async () => {
     const { apiFn, route } = build();

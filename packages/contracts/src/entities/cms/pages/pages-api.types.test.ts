@@ -3,6 +3,7 @@ import { type z } from "zod";
 
 import { type LocaleQuery } from "../locale";
 
+import { type SECTION_SCHEMAS } from "./pages-api.schema";
 import { type UpdatePageSectionBody, type UpdatePageSectionData } from "./pages-api.types";
 import { type homePageHeroSchema, type siteNavigationSchema } from "./pages.schema";
 import { type SectionSchemaKey } from "./pages.types";
@@ -30,6 +31,11 @@ describe("section write types", () => {
   });
 
   it("type every payload by the schema of its own section", () => {
+    expectTypeOf<{
+      [TKey in SectionSchemaKey]: SectionPayload<TKey>;
+    }>().toEqualTypeOf<{
+      [TKey in SectionSchemaKey]: DeepPartialInput<(typeof SECTION_SCHEMAS)[TKey]>;
+    }>();
     expectTypeOf<SectionPayload<"home:hero">>().toEqualTypeOf<
       DeepPartialInput<typeof homePageHeroSchema>
     >();

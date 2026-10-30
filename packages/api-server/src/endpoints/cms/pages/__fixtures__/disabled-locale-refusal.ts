@@ -11,6 +11,7 @@ export const refusalsOfDisabledAndUnknownLocale = async (
 ): Promise<LocaleRefusals> => {
   const disabled = await refusalOf(read(GERMAN.code));
 
+  await cleanupRaw.marketingPageSection.deleteMany({ where: { locale: GERMAN.code } });
   await cleanupRaw.marketingLocale.delete({ where: { code: GERMAN.code } });
 
   try {

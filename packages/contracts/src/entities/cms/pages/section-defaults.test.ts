@@ -31,6 +31,10 @@ describe("SECTION_DEFAULTS", () => {
     expect(Object.keys(SECTION_DEFAULTS).sort()).toEqual([...DEFAULTED_SECTIONS].sort());
   });
 
+  it("names the navigation landmark Main", () => {
+    expect(SECTION_DEFAULTS[PAGE_SECTIONS_MAP.site.navigation].navigationLabel).toBe("Main");
+  });
+
   it.each(UNDEFAULTED_SECTIONS)("leaves %s without a default", (section) => {
     expect(Object.keys(SECTION_DEFAULTS)).not.toContain(section);
   });

@@ -9,7 +9,7 @@ import {
 } from "@repo/contracts/cms/pages";
 
 import { cleanupRaw } from "../../../test/helpers";
-import { seedLocaleCatalog, UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
+import { FRENCH, seedLocaleCatalog, UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
 
 import {
   captureMarketingPagesState,
@@ -25,6 +25,7 @@ type ScaffoldRow = { section: string; data: unknown };
 const SITE = PAGE_SECTIONS_MAP.site;
 const OFFER = PAGE_SECTIONS_MAP.offer;
 const PUBLIC_PAGE_SLUGS = Object.values(PageSlug).filter(isPublicPageSlug);
+const NON_DEFAULT_LOCALES = [UKRAINIAN.code, FRENCH.code];
 const SECTION_COUNT = Object.values(PageSlug).flatMap((slug) =>
   Object.values(PAGE_SECTIONS_MAP[slug]),
 ).length;
@@ -125,24 +126,30 @@ describe("cmsPagesAdminApi — the scaffold and the English defaults", () => {
     );
   });
 
-  it("scaffolds a uk page with empty rows only, so the locale stays deletable", async () => {
-    await scaffoldEveryPage(UKRAINIAN.code);
+  it.each(NON_DEFAULT_LOCALES)(
+    "scaffolds a %s page with empty rows only, so the locale stays deletable",
+    async (locale) => {
+      await scaffoldEveryPage(locale);
 
-    expect(await cleanupRaw.marketingPageSection.count({ where: { locale: UKRAINIAN.code } })).toBe(
-      SECTION_COUNT,
-    );
-    expect(
-      await cleanupRaw.marketingPageSection.count({
-        where: { locale: UKRAINIAN.code, NOT: { data: { equals: {} } } },
-      }),
-    ).toBe(0);
-  });
+      expect(await cleanupRaw.marketingPageSection.count({ where: { locale } })).toBe(
+        SECTION_COUNT,
+      );
+      expect(
+        await cleanupRaw.marketingPageSection.count({
+          where: { locale, NOT: { data: { equals: {} } } },
+        }),
+      ).toBe(0);
+    },
+  );
 
-  it("writes nothing to English when it scaffolds a uk page", async () => {
-    await scaffoldEveryPage(UKRAINIAN.code);
+  it.each(NON_DEFAULT_LOCALES)(
+    "writes nothing to English when it scaffolds a %s page",
+    async (locale) => {
+      await scaffoldEveryPage(locale);
 
-    expect(
-      await cleanupRaw.marketingPageSection.count({ where: { locale: DEFAULT_LOCALE_CODE } }),
-    ).toBe(0);
-  });
+      expect(
+        await cleanupRaw.marketingPageSection.count({ where: { locale: DEFAULT_LOCALE_CODE } }),
+      ).toBe(0);
+    },
+  );
 });

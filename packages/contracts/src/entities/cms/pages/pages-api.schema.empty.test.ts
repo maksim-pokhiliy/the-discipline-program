@@ -79,6 +79,7 @@ describe("pages-api schema empty collections", () => {
     const result = getHomePageResponseSchema.safeParse({
       hero: heroStub,
       whyChoose: { ...titleSubtitleStub, features: [] },
+      storefront: null,
       reviews: titleSubtitleStub,
       contact: ctaStub,
       seo: seoStub,
@@ -86,6 +87,7 @@ describe("pages-api schema empty collections", () => {
     });
 
     expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["productsList"]]);
   });
 
   it("getStorefrontProgramsPageResponseSchema accepts empty productsList", () => {
