@@ -128,6 +128,24 @@ describe("SECTION_SCHEMAS", () => {
 
     expect(mismatched.map((variant) => variant.shape.section.value)).toEqual([]);
   });
+
+  it("preserves the distinct nested fields of credential and FAQ write payloads", () => {
+    const credentials = { items: [{ title: "Coach", description: "Qualified" }] };
+    const content = { items: [{ question: "When?", answer: "Today" }] };
+
+    expect(
+      updatePageSectionBodySchema.parse({
+        section: PAGE_SECTIONS_MAP.about.credentials,
+        data: credentials,
+      }).data,
+    ).toEqual(credentials);
+    expect(
+      updatePageSectionBodySchema.parse({
+        section: PAGE_SECTIONS_MAP.faq.content,
+        data: content,
+      }).data,
+    ).toEqual(content);
+  });
 });
 
 describe("updatePageSectionBodySchema for the new sections", () => {
