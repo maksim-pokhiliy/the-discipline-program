@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
+import { PAGE_SECTIONS_MAP, PageSlug, type PublicPageSlug } from "@repo/contracts/cms/pages";
 
 import {
   captureMarketingPagesState,
@@ -13,16 +13,17 @@ import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
 import { updateEnglishSection } from "./__fixtures__/update-english-section";
 import { cmsPagesPublicApi } from "./public";
 
-const PAGE_READERS: readonly (readonly [PageSlug, () => Promise<unknown>])[] = [
+const PAGE_READERS: readonly (readonly [PublicPageSlug, () => Promise<unknown>])[] = [
   [PageSlug.HOME, () => cmsPagesPublicApi.getHomePage()],
   [PageSlug.STOREFRONT, () => cmsPagesPublicApi.getStorefrontProgramsPage()],
   [PageSlug.ABOUT, () => cmsPagesPublicApi.getAboutPage()],
   [PageSlug.BLOG, () => cmsPagesPublicApi.getBlogPage()],
   [PageSlug.CONTACT, () => cmsPagesPublicApi.getContactPage()],
   [PageSlug.FAQ, () => cmsPagesPublicApi.getFaqPage()],
+  [PageSlug.OFFER, () => cmsPagesPublicApi.getOfferPage()],
 ];
 
-const sectionsWithInactiveHero = (slug: PageSlug): Record<string, unknown> =>
+const sectionsWithInactiveHero = (slug: PublicPageSlug): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(PAGE_SECTIONS_MAP[slug])
       .filter(([, section]) => section !== PAGE_SECTIONS_MAP.blog.related)
@@ -54,6 +55,7 @@ describe("cmsPagesPublicApi", () => {
       expect(data.storefront).toEqual(FULL_SECTION_DATA["home:storefront"]);
       expect(data.reviews).toEqual(FULL_SECTION_DATA["home:reviews"]);
       expect(data.contact).toEqual(FULL_SECTION_DATA["home:contact"]);
+      expect(data.seo).toEqual(FULL_SECTION_DATA["home:seo"]);
     });
   });
 
@@ -64,6 +66,7 @@ describe("cmsPagesPublicApi", () => {
       expect(data.hero).toEqual(FULL_SECTION_DATA["storefront:hero"]);
       expect(data.grid).toEqual(FULL_SECTION_DATA["storefront:grid"]);
       expect(data.cta).toEqual(FULL_SECTION_DATA["storefront:cta"]);
+      expect(data.seo).toEqual(FULL_SECTION_DATA["storefront:seo"]);
     });
   });
 
@@ -76,6 +79,7 @@ describe("cmsPagesPublicApi", () => {
       expect(data.credentials).toEqual(FULL_SECTION_DATA["about:credentials"]);
       expect(data.personal).toEqual(FULL_SECTION_DATA["about:personal"]);
       expect(data.cta).toEqual(FULL_SECTION_DATA["about:cta"]);
+      expect(data.seo).toEqual(FULL_SECTION_DATA["about:seo"]);
     });
   });
 
@@ -102,6 +106,7 @@ describe("cmsPagesPublicApi", () => {
 
       expect(data.hero).toEqual(FULL_SECTION_DATA["blog:hero"]);
       expect(data.grid).toEqual(FULL_SECTION_DATA["blog:grid"]);
+      expect(data.seo).toEqual(FULL_SECTION_DATA["blog:seo"]);
     });
   });
 
@@ -111,6 +116,7 @@ describe("cmsPagesPublicApi", () => {
 
       expect(data.hero).toEqual(FULL_SECTION_DATA["contact:hero"]);
       expect(data.form).toEqual(FULL_SECTION_DATA["contact:form"]);
+      expect(data.seo).toEqual(FULL_SECTION_DATA["contact:seo"]);
     });
   });
 
@@ -121,6 +127,7 @@ describe("cmsPagesPublicApi", () => {
       expect(data.hero).toEqual(FULL_SECTION_DATA["faq:hero"]);
       expect(data.content).toEqual(FULL_SECTION_DATA["faq:content"]);
       expect(data.cta).toEqual(FULL_SECTION_DATA["faq:cta"]);
+      expect(data.seo).toEqual(FULL_SECTION_DATA["faq:seo"]);
     });
 
     it("answers null for a section whose stored data does not fit its schema", async () => {

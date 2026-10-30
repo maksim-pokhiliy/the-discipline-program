@@ -52,11 +52,11 @@ describe("createProductPriceSchema", () => {
     expect(createProductPriceSchema.parse(TRIAL_PRICE)).toEqual(TRIAL_PRICE);
   });
 
-  it.each(ACCEPTED_PERIOD_COUNTS)("accepts a period count of %p", (periodCount) => {
+  it.each(ACCEPTED_PERIOD_COUNTS)("accepts a period count of %s", (periodCount) => {
     expect(createProductPriceSchema.safeParse({ ...AMOUNT_ONLY, periodCount }).success).toBe(true);
   });
 
-  it.each(REJECTED_PERIOD_COUNTS)("rejects a period count of %p", (periodCount) => {
+  it.each(REJECTED_PERIOD_COUNTS)("rejects a period count of %s", (periodCount) => {
     expect(createProductPriceSchema.safeParse({ ...AMOUNT_ONLY, periodCount }).success).toBe(false);
   });
 

@@ -9,7 +9,7 @@ import type { IdempotencyConfig } from "./idempotency";
 import { runWithContext } from "./request-context";
 import { type RouteContext, type RouteHandler } from "./types";
 
-type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
+export type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
 
 export const parseJsonBody = async (request: Request): Promise<unknown> => {
   try {
@@ -35,6 +35,9 @@ export const parseRequest = <T>(schema: ParseSchema<T>, value: unknown): T => {
 
   return result.data;
 };
+
+export const parseQuery = <T>(schema: ParseSchema<T>, request: Request): T =>
+  parseRequest(schema, Object.fromEntries(new URL(request.url).searchParams.entries()));
 
 export const parseResponse = <T>(schema: ParseSchema<T>, value: unknown): T => {
   const result = schema.safeParse(value);

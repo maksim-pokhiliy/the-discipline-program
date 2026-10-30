@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PageSlug, type PublicPageSlug } from "./pages.constants";
+
 const titleSubtitleSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
@@ -123,6 +125,7 @@ export const faqContentSchema = z.object({
 
 export const storefrontGridSchema = titleSubtitleSchema.extend({
   freeLabel: z.string(),
+  cardActionLabel: z.string(),
   modalDismissLabel: z.string(),
   modalActionLabel: z.string(),
 });
@@ -144,4 +147,79 @@ export const blogGridSchema = titleSubtitleSchema.extend({
 
 export const blogRelatedSectionSchema = z.object({
   title: z.string(),
+});
+
+export const seoSectionSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+});
+
+export const offerPageHeroSchema = titleSubtitleSchema;
+
+export const requisiteItemSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
+export const offerRequisitesSchema = z.object({
+  title: z.string(),
+  items: z.array(requisiteItemSchema),
+});
+
+export const termsBlockSchema = z.object({
+  heading: z.string(),
+  body: z.string(),
+});
+
+export const offerTermsSchema = z.object({
+  title: z.string(),
+  blocks: z.array(termsBlockSchema),
+});
+
+const navigationLinkLabelsShape = {
+  [PageSlug.HOME]: z.string(),
+  [PageSlug.STOREFRONT]: z.string(),
+  [PageSlug.ABOUT]: z.string(),
+  [PageSlug.BLOG]: z.string(),
+  [PageSlug.FAQ]: z.string(),
+  [PageSlug.CONTACT]: z.string(),
+  [PageSlug.OFFER]: z.string(),
+} satisfies Record<PublicPageSlug, z.ZodString>;
+
+export const siteNavigationSchema = z.object({
+  ...navigationLinkLabelsShape,
+  navigationLabel: z.string(),
+  openMenuLabel: z.string(),
+  closeMenuLabel: z.string(),
+  languageSwitchLabel: z.string(),
+});
+
+export const siteFooterSchema = z.object({
+  tagline: z.string(),
+  subcopy: z.string(),
+  rightsLabel: z.string(),
+});
+
+export const siteLeadFormSchema = z.object({
+  title: z.string(),
+  productPrefix: z.string(),
+  nameLabel: z.string(),
+  contactLabel: z.string(),
+  messageLabel: z.string(),
+  submitLabel: z.string(),
+  sendingLabel: z.string(),
+  successTitle: z.string(),
+  successMessage: z.string(),
+  sendAnotherLabel: z.string(),
+  errorMessage: z.string(),
+  contactRequiredMessage: z.string(),
+});
+
+export const siteErrorsSchema = z.object({
+  notFoundTitle: z.string(),
+  errorGlyph: z.string(),
+  errorTitle: z.string(),
+  errorIdLabel: z.string(),
+  retryLabel: z.string(),
+  homeLabel: z.string(),
 });

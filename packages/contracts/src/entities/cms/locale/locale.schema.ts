@@ -1,12 +1,16 @@
 import { z } from "zod";
 
-import { LOCALE_CONSTANTS } from "./locale.constants";
+import { LOCALE_CONSTANTS, RESERVED_LOCALE_CODES } from "./locale.constants";
 
 export const localeCodeSchema = z
   .string()
   .min(LOCALE_CONSTANTS.MIN_CODE_LENGTH)
   .max(LOCALE_CONSTANTS.MAX_CODE_LENGTH)
-  .regex(LOCALE_CONSTANTS.CODE_PATTERN);
+  .regex(LOCALE_CONSTANTS.CODE_PATTERN)
+  .refine(
+    (code) => !RESERVED_LOCALE_CODES.includes(code),
+    (code) => ({ message: `The locale code "${code}" is reserved by a path of the site` }),
+  );
 
 const localeNameSchema = z.string().trim().min(1).max(LOCALE_CONSTANTS.MAX_NAME_LENGTH);
 

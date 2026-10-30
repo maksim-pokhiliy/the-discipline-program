@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormProvider, useForm } from "react-hook-form";
+import { type z } from "zod";
 
 import {
   SECTION_SCHEMAS,
@@ -56,6 +57,20 @@ const SECTION_LABELS: Record<SectionSchemaKey, string> = {
   "about:credentials": "Credentials",
   "about:personal": "Personal",
   "faq:content": "FAQ Content",
+  "home:seo": "Home SEO",
+  "storefront:seo": "Storefront SEO",
+  "about:seo": "About SEO",
+  "blog:seo": "Blog SEO",
+  "contact:seo": "Contact SEO",
+  "faq:seo": "FAQ SEO",
+  "offer:hero": "Offer Hero",
+  "offer:requisites": "Offer Requisites",
+  "offer:terms": "Offer Terms",
+  "offer:seo": "Offer SEO",
+  "site:navigation": "Site Navigation",
+  "site:footer": "Site Footer",
+  "site:leadForm": "Site Lead Form",
+  "site:errors": "Site Error Pages",
 };
 
 const isSectionSchemaKey = (key: string): key is SectionSchemaKey => key in SECTION_SCHEMAS;
@@ -64,11 +79,13 @@ const isHeroSectionType = (key: string): key is HeroSectionType => key in SECTIO
 
 type SectionData = AdminPageDetails["sections"][number];
 
+type SectionFormData = UpdatePageSectionData["data"];
+
 type SectionEditorProps = {
   section: SectionData;
   isExpanded: boolean;
   onToggle: (event: React.SyntheticEvent, isExpanded: boolean) => void;
-  onSave: (data: UpdatePageSectionData["data"]) => void;
+  onSave: (data: SectionFormData) => void;
   isLoading: boolean;
 };
 
@@ -79,15 +96,16 @@ export const SectionEditor = ({
   onSave,
   isLoading,
 }: SectionEditorProps) => {
-  const currentSchema = isSectionSchemaKey(section.section)
-    ? SECTION_SCHEMAS[section.section]
-    : undefined;
+  const currentSchema: z.ZodType<SectionFormData, z.ZodObjectDef, SectionFormData> | undefined =
+    isSectionSchemaKey(section.section)
+      ? SECTION_SCHEMAS[section.section].deepPartial()
+      : undefined;
 
-  const parsedData = currentSchema?.deepPartial().safeParse(section.data);
+  const parsedData = currentSchema?.safeParse(section.data);
   const safeDefaultValues = parsedData?.success ? parsedData.data : {};
-  const resolver = currentSchema ? zodResolver(currentSchema.deepPartial()) : undefined;
+  const resolver = currentSchema ? zodResolver(currentSchema) : undefined;
 
-  const methods = useForm<UpdatePageSectionData["data"]>({
+  const methods = useForm<SectionFormData>({
     defaultValues: safeDefaultValues,
     mode: "onChange",
     ...(resolver && { resolver }),

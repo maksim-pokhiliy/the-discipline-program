@@ -9,6 +9,8 @@ import {
   type BlogPageData,
   type ContactPageData,
   type FaqPageData,
+  type OfferPageData,
+  type SitePageData,
   type SectionSchemaKey,
   PageSlug,
   PAGE_SECTIONS_MAP,
@@ -26,7 +28,9 @@ const HOME_PAGE_REVIEWS_LIMIT = 12;
 
 type SectionRow = { section: string; locale: string; data: Prisma.JsonValue };
 
-type SectionData<TKey extends SectionSchemaKey> = Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>>;
+type SectionData<TKey extends SectionSchemaKey> = z.infer<
+  ReturnType<(typeof SECTION_SCHEMAS)[TKey]["deepPartial"]>
+>;
 
 type SectionPicker = <TKey extends SectionSchemaKey>(sectionName: TKey) => SectionData<TKey> | null;
 
@@ -40,7 +44,7 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
     return null;
   }
 
-  const result = SECTION_SCHEMAS[sectionName].partial().safeParse(section.data);
+  const result = SECTION_SCHEMAS[sectionName].deepPartial().safeParse(section.data);
 
   if (!result.success) {
     defaultMonitoring.captureException(result.error, {
@@ -110,6 +114,7 @@ export const cmsPagesPublicApi = {
       storefront: pick(map.storefront),
       reviews: pick(map.reviews),
       contact: pick(map.contact),
+      seo: pick(map.seo),
       productsList: products.map(mapToProduct),
       reviewsList: reviews.map(mapToReview),
     };
@@ -134,6 +139,7 @@ export const cmsPagesPublicApi = {
       hero: pick(map.hero),
       grid: pick(map.grid),
       cta: pick(map.cta),
+      seo: pick(map.seo),
       productsList: products.map(mapToProduct),
     };
   },
@@ -150,6 +156,7 @@ export const cmsPagesPublicApi = {
       credentials: pick(map.credentials),
       personal: pick(map.personal),
       cta: pick(map.cta),
+      seo: pick(map.seo),
     };
   },
 
@@ -164,6 +171,7 @@ export const cmsPagesPublicApi = {
     return {
       hero: pick(PAGE_SECTIONS_MAP.blog.hero),
       grid: pick(PAGE_SECTIONS_MAP.blog.grid),
+      seo: pick(PAGE_SECTIONS_MAP.blog.seo),
       featuredPost: publicPosts.find((p) => p.isFeatured) || publicPosts[0],
       posts: publicPosts,
       categories: [...new Set(publicPosts.map((p) => p.category))],
@@ -185,6 +193,7 @@ export const cmsPagesPublicApi = {
     return {
       hero: pick(map.hero),
       form: pick(map.form),
+      seo: pick(map.seo),
       programOptions: products.map((p) => ({ slug: p.slug, title: p.title })),
     };
   },
@@ -199,6 +208,35 @@ export const cmsPagesPublicApi = {
       hero: pick(map.hero),
       content: pick(map.content),
       cta: pick(map.cta),
+      seo: pick(map.seo),
+    };
+  },
+
+  getOfferPage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<OfferPageData> => {
+    await assertPublicLocale(locale);
+
+    const pick = await readSections(PageSlug.OFFER, locale);
+    const map = PAGE_SECTIONS_MAP.offer;
+
+    return {
+      hero: pick(map.hero),
+      requisites: pick(map.requisites),
+      terms: pick(map.terms),
+      seo: pick(map.seo),
+    };
+  },
+
+  getSitePage: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<SitePageData> => {
+    await assertPublicLocale(locale);
+
+    const pick = await readSections(PageSlug.SITE, locale);
+    const map = PAGE_SECTIONS_MAP.site;
+
+    return {
+      navigation: pick(map.navigation),
+      footer: pick(map.footer),
+      leadForm: pick(map.leadForm),
+      errors: pick(map.errors),
     };
   },
 };

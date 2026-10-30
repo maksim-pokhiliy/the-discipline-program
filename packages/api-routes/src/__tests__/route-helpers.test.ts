@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { BadRequestError, NotFoundError } from "@repo/errors";
+import { BadRequestError, NotFoundError, ValidationError } from "@repo/errors";
 
 import type { RouteContext, RouteHandler } from "../types";
 
@@ -11,6 +11,7 @@ vi.mock("../monitoring", () => ({
 
 const {
   parseJsonBody,
+  parseQuery,
   withErrorHandling,
   withPublicRoute,
   createGetHandler,
@@ -54,6 +55,22 @@ describe("parseJsonBody", () => {
     });
 
     await expect(parseJsonBody(request)).rejects.toBeInstanceOf(BadRequestError);
+  });
+});
+
+describe("parseQuery", () => {
+  const querySchema = z.object({ page: z.coerce.number().int().positive() });
+
+  it("parses the query string of the request through the schema", () => {
+    const request = new Request("https://example.com/api?page=2&extra=x");
+
+    expect(parseQuery(querySchema, request)).toStrictEqual({ page: 2 });
+  });
+
+  it("throws ValidationError for a malformed query", () => {
+    const request = new Request("https://example.com/api?page=zero");
+
+    expect(() => parseQuery(querySchema, request)).toThrow(ValidationError);
   });
 });
 

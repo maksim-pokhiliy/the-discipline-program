@@ -6,6 +6,8 @@ import {
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
   getHomePageResponseSchema,
+  getOfferPageResponseSchema,
+  getSitePageResponseSchema,
   getStorefrontProgramsPageResponseSchema,
 } from "@repo/contracts/cms/pages";
 
@@ -39,6 +41,7 @@ describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => 
     expect(data.storefront).toBeNull();
     expect(data.reviews).toBeNull();
     expect(data.contact).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getHomePageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -48,6 +51,7 @@ describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => 
     expect(data.hero).toBeNull();
     expect(data.grid).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getStorefrontProgramsPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -59,6 +63,7 @@ describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => 
     expect(data.credentials).toBeNull();
     expect(data.personal).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getAboutPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -67,6 +72,7 @@ describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => 
 
     expect(data.hero).toBeNull();
     expect(data.grid).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getBlogPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -75,6 +81,7 @@ describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => 
 
     expect(data.hero).toBeNull();
     expect(data.form).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getContactPageResponseSchema.safeParse(data).success).toBe(true);
   });
 
@@ -84,6 +91,21 @@ describe("cmsPagesPublicApi — bootstrapped DB (sections with data={})", () => 
     expect(data.hero).toBeNull();
     expect(data.content).toBeNull();
     expect(data.cta).toBeNull();
+    expect(data.seo).toBeNull();
     expect(getFaqPageResponseSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("getOfferPage returns null sections without throwing", async () => {
+    const data = await cmsPagesPublicApi.getOfferPage();
+
+    expect(data).toEqual({ hero: null, requisites: null, terms: null, seo: null });
+    expect(getOfferPageResponseSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("getSitePage returns null sections without throwing", async () => {
+    const data = await cmsPagesPublicApi.getSitePage();
+
+    expect(data).toEqual({ navigation: null, footer: null, leadForm: null, errors: null });
+    expect(getSitePageResponseSchema.safeParse(data).success).toBe(true);
   });
 });

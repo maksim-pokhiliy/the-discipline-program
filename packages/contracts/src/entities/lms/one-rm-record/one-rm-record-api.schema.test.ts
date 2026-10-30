@@ -60,7 +60,7 @@ describe("createOneRMRecordRequestSchema valueKg bound (M11 at the request bound
     );
   });
 
-  it.each([150.5, 9999.99])("accepts a realistic 1RM valueKg %p", (valueKg) => {
+  it.each([150.5, 9999.99])("accepts a realistic 1RM valueKg %s", (valueKg) => {
     expect(createOneRMRecordRequestSchema.safeParse({ ...base, valueKg }).success).toBe(true);
   });
 });

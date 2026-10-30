@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { type ZodType } from "zod";
 
 import {
+  parseQuery,
   parseRequest,
   parseResponse,
   withPublicRoute,
@@ -19,6 +20,8 @@ import {
   getBlogPageResponseSchema,
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
+  getOfferPageResponseSchema,
+  getSitePageResponseSchema,
   PageSlug,
 } from "@repo/contracts/cms/pages";
 
@@ -38,14 +41,13 @@ const PAGE_HANDLERS: Record<
     schema: getContactPageResponseSchema,
   },
   [PageSlug.FAQ]: { fetch: cmsPagesPublicApi.getFaqPage, schema: getFaqPageResponseSchema },
+  [PageSlug.OFFER]: { fetch: cmsPagesPublicApi.getOfferPage, schema: getOfferPageResponseSchema },
+  [PageSlug.SITE]: { fetch: cmsPagesPublicApi.getSitePage, schema: getSitePageResponseSchema },
 };
 
 const handler = async (request: Request, context: RouteContext): Promise<Response> => {
   const { pageSlug } = parseRequest(getPageBySlugParamsSchema, await context.params);
-  const { locale } = parseRequest(
-    localeQuerySchema,
-    Object.fromEntries(new URL(request.url).searchParams.entries()),
-  );
+  const { locale } = parseQuery(localeQuerySchema, request);
   const config = PAGE_HANDLERS[pageSlug];
   const data = await config.fetch(locale);
 

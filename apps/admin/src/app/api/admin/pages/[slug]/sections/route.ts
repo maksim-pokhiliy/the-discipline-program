@@ -1,7 +1,8 @@
 import { createPatchByParamHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
 import { cmsPagesAdminApi } from "@repo/api-server/cms";
 import {
-  marketingPagePath,
+  type MarketingRevalidationTarget,
+  marketingRevalidationTarget,
   pageSlugRouteParamsSchema,
   updatePageSectionBodySchema,
 } from "@repo/contracts/cms/pages";
@@ -13,16 +14,21 @@ import { withAdminAuth } from "@app/lib/server/auth";
 const REVALIDATE_TIMEOUT_MS = 10_000;
 const REVALIDATE_ERROR_BODY_PREVIEW_LENGTH = 200;
 
-async function triggerMarketingRevalidation(path: string): Promise<void> {
+async function triggerMarketingRevalidation(target: MarketingRevalidationTarget): Promise<void> {
   const secret = baseEnv.REVALIDATE_SECRET;
 
   if (!secret) {
-    logger.warn("marketing revalidation skipped: REVALIDATE_SECRET not set", { path });
+    logger.warn("marketing revalidation skipped: REVALIDATE_SECRET not set", { ...target });
 
     return;
   }
 
-  const url = `${baseEnv.NEXT_PUBLIC_MARKETING_URL}/api/revalidate?secret=${encodeURIComponent(secret)}&path=${encodeURIComponent(path)}`;
+  const query = new URLSearchParams({
+    secret,
+    path: target.path,
+    ...(target.type !== undefined && { type: target.type }),
+  });
+  const url = `${baseEnv.NEXT_PUBLIC_MARKETING_URL}/api/revalidate?${query.toString()}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REVALIDATE_TIMEOUT_MS);
@@ -34,13 +40,13 @@ async function triggerMarketingRevalidation(path: string): Promise<void> {
       const body = await response.text().catch(() => "");
 
       logger.error("marketing revalidation returned non-2xx", {
-        path,
+        ...target,
         status: response.status,
         body: body.slice(0, REVALIDATE_ERROR_BODY_PREVIEW_LENGTH),
       });
     }
   } catch (err) {
-    logger.error("failed to revalidate marketing page", { path, err });
+    logger.error("failed to revalidate marketing page", { ...target, err });
   } finally {
     clearTimeout(timeout);
   }
@@ -51,7 +57,7 @@ export const PATCH = withAdminAuth(
     createPatchByParamHandler(
       async ({ slug }, body) => {
         await cmsPagesAdminApi.updateSection({ ...body, pageSlug: slug });
-        await triggerMarketingRevalidation(marketingPagePath(slug, body.locale));
+        await triggerMarketingRevalidation(marketingRevalidationTarget(slug, body.locale));
       },
       pageSlugRouteParamsSchema,
       updatePageSectionBodySchema,

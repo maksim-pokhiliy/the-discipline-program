@@ -33,7 +33,7 @@ describe("createOneRMRecordSchema", () => {
     );
   });
 
-  it.each([150.5, 200.25, 9999.99, 142.45])("accepts a realistic 1RM valueKg %p", (valueKg) => {
+  it.each([150.5, 200.25, 9999.99, 142.45])("accepts a realistic 1RM valueKg %s", (valueKg) => {
     expect(createOneRMRecordSchema.safeParse({ ...baseCreate, valueKg }).success).toBe(true);
   });
 });

@@ -548,8 +548,8 @@ model MarketingPage {
   id        String                 @id @default(cuid())
   slug      String                 @unique
   title     String
-  seoTitle  String?
-  seoDesc   String?
+  seoTitle  String?                @ignore
+  seoDesc   String?                @ignore
   sections  MarketingPageSection[]
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
