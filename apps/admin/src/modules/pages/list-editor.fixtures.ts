@@ -12,12 +12,18 @@ const INITIAL_ORDER = ["First", "Second", "Third"];
 const MOVED_ORDER = ["Second", "Third", "First"];
 const LIST_HEADING = { title: "Fixture list title", subtitle: "Fixture list subtitle" };
 
+export const LAST_ROW_INDEX = 2;
+
+export const makeTermsBlock = (
+  name: string,
+): z.infer<typeof offerTermsSchema>["blocks"][number] => ({
+  heading: `${name} fixture heading`,
+  body: `${name} fixture first paragraph.\n\n${name} fixture second paragraph.`,
+});
+
 export const makeTermsData = (order = INITIAL_ORDER): z.infer<typeof offerTermsSchema> => ({
   title: "Fixture terms title",
-  blocks: order.map((name) => ({
-    heading: `${name} fixture heading`,
-    body: `${name} fixture first paragraph.\n\n${name} fixture second paragraph.`,
-  })),
+  blocks: order.map(makeTermsBlock),
 });
 
 const makeFaqData = (order = INITIAL_ORDER) => ({

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { clickButton, nthButton } from "@app/test/interactions";
 
-import { makeListReorderCases } from "../../list-editor.fixtures";
+import { LAST_ROW_INDEX, makeListReorderCases } from "../../list-editor.fixtures";
 import { renderSectionEditor } from "../../pages.fixtures";
 
 describe("populated list section forms", () => {
@@ -14,7 +14,9 @@ describe("populated list section forms", () => {
 
       renderSectionEditor(row, onSave);
 
-      fireEvent.click(nthButton("Move up", 1));
+      expect(nthButton("Move up", 0)).toBeDisabled();
+      expect(nthButton("Move down", LAST_ROW_INDEX)).toBeDisabled();
+      fireEvent.click(nthButton("Move down", 0));
       fireEvent.click(nthButton("Move down", 1));
       clickButton("Update Section");
 

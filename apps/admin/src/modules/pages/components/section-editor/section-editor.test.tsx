@@ -47,6 +47,7 @@ describe("SectionEditor", () => {
     );
 
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Update Section" })).toHaveClass("Mui-disabled");
   });
 
   it("sends the section key together with the edited data", async () => {

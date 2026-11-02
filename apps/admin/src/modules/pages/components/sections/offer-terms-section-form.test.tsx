@@ -3,13 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { clickButton, nthButton, typeInto, typeIntoNth } from "@app/test/interactions";
 
+import { LAST_ROW_INDEX, makeTermsBlock } from "../../list-editor.fixtures";
 import { makeSectionRow, renderSectionEditor } from "../../pages.fixtures";
-
-const makeTermsBlock = (name: string) => ({
-  heading: `${name} heading`,
-  body: `${name} first paragraph.\n\n${name} second paragraph.`,
-});
-const LAST_ROW_INDEX = 2;
 
 describe("OfferTermsSectionForm", () => {
   it("starts without rows on an empty section", () => {

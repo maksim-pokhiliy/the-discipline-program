@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { clickButton, nthButton, typeInto, typeIntoNth } from "@app/test/interactions";
 
+import { LAST_ROW_INDEX } from "../../list-editor.fixtures";
 import { makeSectionRow, renderSectionEditor } from "../../pages.fixtures";
 
 const makeRequisite = (name: string) => ({ label: `${name} label`, value: `${name} value` });
-const LAST_ROW_INDEX = 2;
 
 describe("OfferRequisitesSectionForm", () => {
   it("starts without rows on an empty section", () => {
