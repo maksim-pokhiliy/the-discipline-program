@@ -60,7 +60,13 @@ export const SectionEditor = <TKey extends SectionSchemaKey>({
             component="fieldset"
             disabled={isLoading}
             spacing={3}
-            sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}
+            sx={(theme) => ({
+              border: 0,
+              m: 0,
+              p: 0,
+              minWidth: 0,
+              "&:disabled": { opacity: theme.palette.action.disabledOpacity },
+            })}
           >
             {SECTION_FORMS[section.section]}
 
