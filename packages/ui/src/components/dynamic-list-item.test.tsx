@@ -70,4 +70,107 @@ describe("DynamicListItem", () => {
     expect(screen.getByRole("button", { name: "Delete slot" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove item" })).not.toBeInTheDocument();
   });
+
+  it("renders no move buttons when no move handler is given", () => {
+    render(
+      <DynamicListItem onRemove={vi.fn()}>
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Move up" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Move down" })).not.toBeInTheDocument();
+  });
+
+  it("renders no move buttons when only one move handler is given", () => {
+    const { rerender } = render(
+      <DynamicListItem onRemove={vi.fn()} onMoveUp={vi.fn()}>
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Move up" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Move down" })).not.toBeInTheDocument();
+
+    rerender(
+      <DynamicListItem onRemove={vi.fn()} onMoveDown={vi.fn()}>
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Move up" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Move down" })).not.toBeInTheDocument();
+  });
+
+  it("invokes the matching move handler on click", () => {
+    const onMoveUp = vi.fn();
+    const onMoveDown = vi.fn();
+
+    render(
+      <DynamicListItem onRemove={vi.fn()} onMoveUp={onMoveUp} onMoveDown={onMoveDown}>
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    const moveUpButton = screen.getByRole("button", { name: "Move up" });
+    const moveDownButton = screen.getByRole("button", { name: "Move down" });
+
+    expect(moveUpButton).toBeEnabled();
+    expect(moveDownButton).toBeEnabled();
+
+    fireEvent.click(moveUpButton);
+
+    expect(onMoveUp).toHaveBeenCalledTimes(1);
+    expect(onMoveDown).not.toHaveBeenCalled();
+
+    fireEvent.click(moveDownButton);
+
+    expect(onMoveUp).toHaveBeenCalledTimes(1);
+    expect(onMoveDown).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables move up on the first row and keeps move down enabled", () => {
+    render(
+      <DynamicListItem onRemove={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} disableMoveUp>
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    expect(screen.getByRole("button", { name: "Move up" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Move down" })).toBeEnabled();
+  });
+
+  it("disables move down on the last row and keeps move up enabled", () => {
+    render(
+      <DynamicListItem onRemove={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} disableMoveDown>
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    expect(screen.getByRole("button", { name: "Move up" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Move down" })).toBeDisabled();
+  });
+
+  it("does not call a disabled move handler on click", () => {
+    const onMoveUp = vi.fn();
+    const onMoveDown = vi.fn();
+
+    render(
+      <DynamicListItem
+        onRemove={vi.fn()}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        disableMoveUp
+        disableMoveDown
+      >
+        <span>child</span>
+      </DynamicListItem>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Move up" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move down" }));
+
+    expect(onMoveUp).not.toHaveBeenCalled();
+    expect(onMoveDown).not.toHaveBeenCalled();
+  });
 });

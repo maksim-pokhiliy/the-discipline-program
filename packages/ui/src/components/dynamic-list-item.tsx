@@ -1,7 +1,9 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactElement, type ReactNode } from "react";
 
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IconButton, Stack, Paper, alpha } from "@mui/material";
 
@@ -10,6 +12,10 @@ export type DynamicListItemProps = {
   onRemove: () => void;
   disableRemove?: boolean;
   removeAriaLabel?: string;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  disableMoveUp?: boolean;
+  disableMoveDown?: boolean;
 };
 
 export const DynamicListItem = ({
@@ -17,7 +23,11 @@ export const DynamicListItem = ({
   onRemove,
   disableRemove = false,
   removeAriaLabel = "Remove item",
-}: DynamicListItemProps) => {
+  onMoveUp,
+  onMoveDown,
+  disableMoveUp = false,
+  disableMoveDown = false,
+}: DynamicListItemProps): ReactElement => {
   return (
     <Paper
       variant="outlined"
@@ -39,16 +49,37 @@ export const DynamicListItem = ({
           {children}
         </Stack>
 
-        <IconButton
-          size="medium"
-          color="error"
-          onClick={onRemove}
-          disabled={disableRemove}
-          aria-label={removeAriaLabel}
-          sx={{ mt: 0.5 }}
-        >
-          <DeleteIcon />
-        </IconButton>
+        <Stack sx={{ mt: 0.5 }}>
+          {onMoveUp && onMoveDown && (
+            <>
+              <IconButton
+                size="medium"
+                onClick={onMoveUp}
+                disabled={disableMoveUp}
+                aria-label="Move up"
+              >
+                <ArrowUpwardIcon />
+              </IconButton>
+              <IconButton
+                size="medium"
+                onClick={onMoveDown}
+                disabled={disableMoveDown}
+                aria-label="Move down"
+              >
+                <ArrowDownwardIcon />
+              </IconButton>
+            </>
+          )}
+          <IconButton
+            size="medium"
+            color="error"
+            onClick={onRemove}
+            disabled={disableRemove}
+            aria-label={removeAriaLabel}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Stack>
       </Stack>
     </Paper>
   );
