@@ -1,16 +1,21 @@
 "use client";
 
+import { type ReactElement } from "react";
+
 import { TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
 import { type homePageStorefrontProgramsSchema } from "@repo/contracts/cms/pages";
 
+import { PROGRAM_LISTING_GROUP } from "../../config/listing-section-fields";
+
+import { FlatFieldGroup } from "./flat-field-group";
 import { TitleSubtitleSectionForm } from "./title-subtitle-section-form";
 
 type StorefrontProgramsSectionData = z.infer<typeof homePageStorefrontProgramsSchema>;
 
-export const StorefrontProgramsSectionForm = () => {
+export const StorefrontProgramsSectionForm = (): ReactElement => {
   const {
     register,
     formState: { errors },
@@ -33,6 +38,8 @@ export const StorefrontProgramsSectionForm = () => {
         helperText={errors.buttonHref?.message}
         {...register("buttonHref")}
       />
+
+      <FlatFieldGroup group={PROGRAM_LISTING_GROUP} />
     </TitleSubtitleSectionForm>
   );
 };
