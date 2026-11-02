@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useIsMutating } from "@tanstack/react-query";
 import { FormProvider, useForm } from "react-hook-form";
 
 import {
@@ -20,6 +21,8 @@ import {
   type SectionWriteBody,
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
+
+import { IMAGE_MUTATION_KEY } from "@app/lib/hooks";
 
 import { SECTION_FORMS } from "../../config/section-forms";
 import { SECTION_LABELS } from "../../config/section-labels";
@@ -41,6 +44,7 @@ export const SectionEditor = <TKey extends SectionSchemaKey>({
   onSave,
   isLoading,
 }: SectionEditorProps<TKey>): ReactElement => {
+  const isImageBusy = useIsMutating({ mutationKey: IMAGE_MUTATION_KEY }) > 0;
   const methods = useForm<SectionWriteData[TKey]>({ values: section.data });
   const handleSave = methods.handleSubmit((data) => onSave({ section: section.section, data }));
 
@@ -75,7 +79,7 @@ export const SectionEditor = <TKey extends SectionSchemaKey>({
                 variant="contained"
                 startIcon={<SaveIcon />}
                 onClick={handleSave}
-                disabled={isLoading || !methods.formState.isDirty}
+                disabled={isLoading || isImageBusy || !methods.formState.isDirty}
               >
                 Update Section
               </Button>
