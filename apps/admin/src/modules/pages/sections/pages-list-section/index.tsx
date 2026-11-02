@@ -1,17 +1,26 @@
+import { type ReactElement } from "react";
+
 import EditIcon from "@mui/icons-material/Edit";
 import { IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type AdminPageListItem } from "@repo/contracts/cms/pages";
-import { capitalize, formatDate } from "@repo/shared";
+import { type AdminPageListItem, PageSlug } from "@repo/contracts/cms/pages";
+import { formatDate } from "@repo/shared";
 import { DataTable, type Column } from "@repo/ui";
+
+import { PAGE_LABELS } from "../../config/page-labels";
+
+const PAGE_ORDER = Object.values(PageSlug);
+
+const sortByPageOrder = (pages: AdminPageListItem[]): AdminPageListItem[] =>
+  [...pages].sort((a, b) => PAGE_ORDER.indexOf(a.slug) - PAGE_ORDER.indexOf(b.slug));
 
 const columns: Column<AdminPageListItem>[] = [
   {
     id: "id",
     label: "Page Name",
     width: "60%",
-    render: (page) => <Typography variant="subtitle2">{capitalize(page.slug)} Page</Typography>,
+    render: (page) => <Typography variant="subtitle2">{PAGE_LABELS[page.slug]}</Typography>,
   },
   {
     id: "updatedAt",
@@ -46,6 +55,12 @@ type PagesListSectionProps = {
   pages: AdminPageListItem[];
 };
 
-export const PagesListSection = ({ pages }: PagesListSectionProps) => {
-  return <DataTable data={pages} columns={columns} emptyMessage="No marketing pages found." />;
+export const PagesListSection = ({ pages }: PagesListSectionProps): ReactElement => {
+  return (
+    <DataTable
+      data={sortByPageOrder(pages)}
+      columns={columns}
+      emptyMessage="No marketing pages found."
+    />
+  );
 };
