@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PageSlug } from "@repo/contracts/cms/pages";
+import { PageSlug, updatePageSectionBodySchema } from "@repo/contracts/cms/pages";
 
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
@@ -175,6 +175,39 @@ describe("PagesEditForm", () => {
         },
       }),
     );
+  });
+
+  it("clears requisites when a nonempty refresh drops the array key and saves only a newly added row", async () => {
+    const title = "Fixture requisites title";
+    const items = ["First", "Second"].map((name) => ({ label: name, value: `${name} value` }));
+    const populated = makeSectionRow("offer:requisites", { title, items });
+    const { rerender } = render(<PagesEditForm page={makePage(PageSlug.OFFER, [populated])} />);
+
+    expect(screen.getByText("Requisites (2)")).toBeInTheDocument();
+    rerender(
+      <PagesEditForm
+        page={makePage(PageSlug.OFFER, [makeSectionRow("offer:requisites", { title })])}
+      />,
+    );
+
+    expect(screen.getByText("Requisites (0)")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Label")).not.toBeInTheDocument();
+    clickButton("Add Requisite");
+    const item = { label: "New fixture label", value: "New fixture value" };
+
+    typeInto("Label", item.label);
+    typeInto("Value", item.value);
+    clickButton("Update Section");
+
+    await waitFor(() => expect(updateSectionMock).toHaveBeenCalledTimes(1));
+    const saved = updateSectionMock.mock.calls[0]?.[0];
+
+    expect(saved?.slug).toBe(PageSlug.OFFER);
+    expect(updatePageSectionBodySchema.parse(saved?.body)).toEqual({
+      locale: "en",
+      section: "offer:requisites",
+      data: { title, items: [item] },
+    });
   });
 
   it("keeps dirty edits when an equal populated document refreshes with a new timestamp", () => {

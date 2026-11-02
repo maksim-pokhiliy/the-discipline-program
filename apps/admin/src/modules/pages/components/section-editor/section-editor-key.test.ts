@@ -18,13 +18,20 @@ describe("getSectionEditorKey", () => {
     );
   });
 
-  it("keeps the key when a nonempty document changes or contains an empty array", () => {
-    const populated = makeSectionRow("offer:requisites", { title: "Fixture title" });
-    const partial = { ...populated, data: { title: "Changed fixture title" } };
-    const emptyArray = { ...populated, data: { items: [] } };
+  it("keeps the key for equal top-level key sets in any order", () => {
+    const populated = makeSectionRow("offer:requisites", { title: "Fixture title", items: [] });
+    const reordered = { ...populated, data: { items: [], title: "Changed fixture title" } };
 
-    expect(getSectionEditorKey(partial)).toBe(getSectionEditorKey(populated));
-    expect(getSectionEditorKey(emptyArray)).toBe(getSectionEditorKey(populated));
+    expect(getSectionEditorKey(reordered)).toBe(getSectionEditorKey(populated));
+  });
+
+  it("changes the key when a top-level key is dropped or added", () => {
+    const populated = makeSectionRow("offer:requisites", { title: "Fixture title", items: [] });
+    const dropped = { ...populated, data: { title: "Fixture title" } };
+    const added = { ...populated, data: { ...populated.data, extra: "Fixture extra" } };
+
+    expect(getSectionEditorKey(dropped)).not.toBe(getSectionEditorKey(populated));
+    expect(getSectionEditorKey(added)).not.toBe(getSectionEditorKey(populated));
   });
 
   it("includes the row identity but ignores the timestamp and object identity", () => {
