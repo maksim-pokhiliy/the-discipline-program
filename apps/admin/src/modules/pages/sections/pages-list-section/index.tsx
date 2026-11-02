@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { type ReactElement, useMemo } from "react";
 
 import EditIcon from "@mui/icons-material/Edit";
 import { IconButton, Stack, Tooltip, Typography } from "@mui/material";
@@ -56,11 +56,9 @@ type PagesListSectionProps = {
 };
 
 export const PagesListSection = ({ pages }: PagesListSectionProps): ReactElement => {
+  const sortedPages = useMemo(() => sortByPageOrder(pages), [pages]);
+
   return (
-    <DataTable
-      data={sortByPageOrder(pages)}
-      columns={columns}
-      emptyMessage="No marketing pages found."
-    />
+    <DataTable data={sortedPages} columns={columns} emptyMessage="No marketing pages found." />
   );
 };

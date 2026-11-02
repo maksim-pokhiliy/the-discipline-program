@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import type {} from "vitest/globals";
+import { describe, expectTypeOf, it } from "vitest";
 
 import type {
   AdminPageDetails,
