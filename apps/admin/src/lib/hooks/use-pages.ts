@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { type UpdatePageSectionData } from "@repo/contracts/cms/pages";
+import { type UpdatePageSectionBody } from "@repo/contracts/cms/pages";
 import { notifyError } from "@repo/query";
 
 import { api } from "../api";
@@ -26,8 +26,8 @@ export const useUpdatePageSection = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ slug, data }: { slug: string; data: Omit<UpdatePageSectionData, "pageSlug"> }) =>
-      api.pages.updateSection(slug, data),
+    mutationFn: ({ slug, body }: { slug: string; body: UpdatePageSectionBody }) =>
+      api.pages.updateSection(slug, body),
 
     onSuccess: (_, { slug }) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.pages.bySlug(slug) });

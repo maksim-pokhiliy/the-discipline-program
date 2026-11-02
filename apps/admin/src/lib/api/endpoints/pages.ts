@@ -1,16 +1,16 @@
 import { type ApiClient } from "@repo/api-client";
 import {
   type AdminPageListItem,
-  type AdminPageDetails,
-  type UpdatePageSectionData,
+  type CorrelatedAdminPageDetails,
+  type UpdatePageSectionBody,
 } from "@repo/contracts/cms/pages";
 
 export const createPagesAPI = (client: ApiClient) => ({
   getPages: (): Promise<AdminPageListItem[]> => client.request("/api/admin/pages"),
 
-  getPageBySlug: (slug: string): Promise<AdminPageDetails> =>
+  getPageBySlug: (slug: string): Promise<CorrelatedAdminPageDetails> =>
     client.request(`/api/admin/pages/${slug}`),
 
-  updateSection: (slug: string, data: Omit<UpdatePageSectionData, "pageSlug">): Promise<void> =>
-    client.requestNoContent(`/api/admin/pages/${slug}/sections`, "PATCH", data),
+  updateSection: (slug: string, body: UpdatePageSectionBody): Promise<void> =>
+    client.requestNoContent(`/api/admin/pages/${slug}/sections`, "PATCH", body),
 });

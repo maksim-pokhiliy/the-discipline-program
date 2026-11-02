@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/cms/pages";
+import { type CorrelatedAdminPageDetails } from "@repo/contracts/cms/pages";
 import { capitalize } from "@repo/shared";
 import { ContentSection } from "@repo/ui";
 
@@ -12,7 +12,7 @@ import { useUpdatePageSection } from "@app/lib/hooks";
 import { SectionEditor } from "../../components/section-editor";
 
 type PagesEditFormProps = {
-  page: AdminPageDetails;
+  page: CorrelatedAdminPageDetails;
 };
 
 export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
@@ -36,20 +36,6 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const onSaveSection = (
-    pageSlug: string,
-    sectionName: UpdatePageSectionData["section"],
-    data: UpdatePageSectionData["data"],
-  ) => {
-    updateSection({
-      slug: pageSlug,
-      data: {
-        section: sectionName,
-        data,
-      },
-    });
-  };
-
   return (
     <ContentSection
       title="Edit Marketing Page"
@@ -67,7 +53,7 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
             section={section}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
-            onSave={(formData) => onSaveSection(page.slug, section.section, formData)}
+            onSave={(body) => updateSection({ slug: page.slug, body })}
             isLoading={isPending}
           />
         ))}
