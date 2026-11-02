@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -13,6 +13,7 @@ import { clickButton, nthButton, typeInto, typeIntoNth } from "@app/test/interac
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
+import { makeTermsData } from "../../list-editor.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
@@ -159,6 +160,82 @@ describe("page section save lifecycle with real query hooks", () => {
     });
     expect(screen.getByLabelText("Search Result Title")).toBeEnabled();
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+  });
+
+  it("retains a reordered and edited list after PATCH fails and retries the complete body", async () => {
+    const data = makeTermsData();
+    const reordered = makeTermsData(["Second", "First", "Third"]);
+    const title = "Retained fixture terms title";
+    const body = "Edited fixture first paragraph.\n\nEdited fixture second paragraph.";
+    const saved = {
+      ...reordered,
+      title,
+      blocks: reordered.blocks.map((block, index) => (index === 0 ? { ...block, body } : block)),
+    };
+    const patch = makeDeferred<void>();
+
+    endpoints.getPageBySlug.mockResolvedValueOnce(
+      makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)]),
+    );
+    endpoints.updateSection.mockReturnValueOnce(patch.promise);
+    render(<PagesQueryFormFixture slug={PageSlug.OFFER} />);
+    await screen.findByLabelText("Section Title");
+    typeInto("Section Title", title);
+    typeIntoNth("Body", 1, body);
+    fireEvent.click(nthButton("Move up", 1));
+    clickButton("Update Section");
+
+    await waitFor(() =>
+      expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.OFFER, {
+        section: "offer:terms",
+        data: saved,
+      }),
+    );
+    await waitFor(() => expect(screen.getByLabelText("Section Title")).toBeDisabled());
+    await act(async () => patch.reject(new Error("Fixture list PATCH failure")));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled(),
+    );
+    expect(screen.getByLabelText("Section Title")).toHaveValue(title);
+    saved.blocks.forEach((block, index) => {
+      expect(screen.getAllByLabelText("Heading")[index]).toHaveValue(block.heading);
+      expect(screen.getAllByLabelText("Body")[index]).toHaveValue(block.body);
+    });
+    screen.getAllByRole("textbox").forEach((input) => expect(input).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
+    expect(nthButton("Move up", 0)).toBeDisabled();
+    expect(nthButton("Move down", 0)).toBeEnabled();
+    expect(nthButton("Move up", 1)).toBeEnabled();
+    expect(nthButton("Remove item", 0)).toBeEnabled();
+    expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(1);
+    expect(notifications.error).toHaveBeenCalledExactlyOnceWith("Fixture list PATCH failure");
+    act(() => {
+      nthButton("Move down", 0).click();
+    });
+    act(() => {
+      nthButton("Move up", 1).click();
+    });
+
+    endpoints.updateSection.mockResolvedValueOnce(undefined);
+    endpoints.getPageBySlug.mockResolvedValueOnce(
+      makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", saved)]),
+    );
+    clickButton("Update Section");
+
+    await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
+    expect(endpoints.updateSection).toHaveBeenCalledTimes(2);
+    expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.OFFER, {
+      section: "offer:terms",
+      data: saved,
+    });
+    expect(screen.getByLabelText("Section Title")).toBeEnabled();
+    expect(screen.getAllByLabelText("Body")[0]).toHaveValue(body);
+    expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
+    expect(nthButton("Move down", 0)).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
+    );
   });
 
   it("releases mutation pending after a failed invalidation GET", async () => {

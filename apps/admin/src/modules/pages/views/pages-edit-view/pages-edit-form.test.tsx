@@ -4,10 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PageSlug } from "@repo/contracts/cms/pages";
 
 import type * as Hooks from "@app/lib/hooks";
-import { clickButton, typeInto } from "@app/test/interactions";
+import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import { PAGE_LABELS } from "../../config/page-labels";
+import { makeTermsData } from "../../list-editor.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const updateSectionMock = vi.fn();
@@ -130,6 +131,48 @@ describe("PagesEditForm", () => {
       expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
         slug: PageSlug.OFFER,
         body: { section: "offer:terms", data: { blocks: [{ heading, body: "" }] } },
+      }),
+    );
+  });
+
+  it("adopts a populated server list from an empty document and saves an edit against its rows", async () => {
+    const empty = makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})]);
+    const { rerender } = render(<PagesEditForm page={empty} />);
+
+    expect(screen.queryByLabelText("Heading")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+
+    const data = makeTermsData();
+
+    rerender(
+      <PagesEditForm page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)])} />,
+    );
+
+    expect(screen.getByLabelText("Section Title")).toHaveValue(data.title);
+    expect(screen.getAllByLabelText("Heading")).toHaveLength(data.blocks.length);
+    expect(screen.getAllByLabelText("Body")).toHaveLength(data.blocks.length);
+    data.blocks.forEach((block, index) => {
+      expect(screen.getAllByLabelText("Heading")[index]).toHaveValue(block.heading);
+      expect(screen.getAllByLabelText("Body")[index]).toHaveValue(block.body);
+    });
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+
+    const body = "Edited adopted fixture body.\n\nSecond adopted fixture paragraph.";
+
+    typeIntoNth("Body", 1, body);
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    clickButton("Update Section");
+
+    await waitFor(() =>
+      expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
+        slug: PageSlug.OFFER,
+        body: {
+          section: "offer:terms",
+          data: {
+            ...data,
+            blocks: data.blocks.map((block, index) => (index === 1 ? { ...block, body } : block)),
+          },
+        },
       }),
     );
   });

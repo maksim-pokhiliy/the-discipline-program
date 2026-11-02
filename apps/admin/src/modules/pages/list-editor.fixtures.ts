@@ -1,10 +1,24 @@
-import { type AdminPageSection, type SectionWriteBody } from "@repo/contracts/cms/pages";
+import { type z } from "zod";
+
+import {
+  type AdminPageSection,
+  type offerTermsSchema,
+  type SectionWriteBody,
+} from "@repo/contracts/cms/pages";
 
 import { makeSectionRow } from "./pages.fixtures";
 
 const INITIAL_ORDER = ["First", "Second", "Third"];
 const MOVED_ORDER = ["Second", "Third", "First"];
 const LIST_HEADING = { title: "Fixture list title", subtitle: "Fixture list subtitle" };
+
+export const makeTermsData = (order = INITIAL_ORDER): z.infer<typeof offerTermsSchema> => ({
+  title: "Fixture terms title",
+  blocks: order.map((name) => ({
+    heading: `${name} fixture heading`,
+    body: `${name} fixture first paragraph.\n\n${name} fixture second paragraph.`,
+  })),
+});
 
 const makeFaqData = (order = INITIAL_ORDER) => ({
   ...LIST_HEADING,
