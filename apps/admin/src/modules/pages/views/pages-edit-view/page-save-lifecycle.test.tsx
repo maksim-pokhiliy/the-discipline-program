@@ -7,6 +7,7 @@ import {
   type SectionSchemaKey,
   type UpdatePageSectionBody,
 } from "@repo/contracts/cms/pages";
+import { QueryProvider } from "@repo/query";
 
 import type * as Api from "@app/lib/api";
 import { clickButton, nthButton, typeInto, typeIntoNth } from "@app/test/interactions";
@@ -30,7 +31,7 @@ vi.mock("@app/lib/api", async () => {
 vi.mock("sonner", () => ({ toast: notifications }));
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
 
-const { PagesQueryFormFixture } = await import("./pages-query-form.fixture");
+const { PagesEditView } = await import("./index");
 
 const expectTermsLocked = () => {
   screen.getAllByRole("textbox").forEach((input) => expect(input).toBeDisabled());
@@ -67,12 +68,16 @@ beforeEach(() => {
 });
 
 describe("page section save lifecycle with real query hooks", () => {
+  it("shows the load error when no page has loaded", async () => {
+    endpoints.getPageBySlug.mockRejectedValueOnce(new Error("Fixture initial GET failure"));
+    render(<PagesEditView slug={PageSlug.HOME} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load data");
+    expect(screen.queryByRole("button", { name: "Update Section" })).not.toBeInTheDocument();
+  });
+
   it("excludes native text and list edits throughout PATCH and GET, then becomes clean and unlocked", async () => {
-    const blocks = ["First", "Second"].map((name) => ({
-      heading: `${name} fixture heading`,
-      body: `${name} fixture body`,
-    }));
-    const data = { title: "Stored fixture title", blocks };
+    const data = makeTermsData(["First", "Second"]);
     const patch = makeDeferred<void>();
     const refetch = makeDeferred<CorrelatedAdminPageDetails>();
 
@@ -80,14 +85,14 @@ describe("page section save lifecycle with real query hooks", () => {
       .mockResolvedValueOnce(makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)]))
       .mockReturnValueOnce(refetch.promise);
     endpoints.updateSection.mockReturnValueOnce(patch.promise);
-    render(<PagesQueryFormFixture slug={PageSlug.OFFER} />);
+    render(<PagesEditView slug={PageSlug.OFFER} />);
     await screen.findByLabelText("Section Title");
 
     const title = "Submitted fixture title";
     const body = "Submitted fixture body";
     const saved = {
       title,
-      blocks: blocks.map((block, index) => (index === 0 ? { ...block, body } : block)),
+      blocks: data.blocks.map((block, index) => (index === 0 ? { ...block, body } : block)),
     };
 
     typeInto("Section Title", title);
@@ -130,7 +135,7 @@ describe("page section save lifecycle with real query hooks", () => {
       makePage(PageSlug.HOME, [makeSectionRow("home:seo", data)]),
     );
     endpoints.updateSection.mockReturnValueOnce(patch.promise);
-    render(<PagesQueryFormFixture slug={PageSlug.HOME} />);
+    render(<PagesEditView slug={PageSlug.HOME} />);
     await screen.findByLabelText("Search Result Title");
     typeInto("Search Result Title", title);
     clickButton("Update Section");
@@ -178,7 +183,7 @@ describe("page section save lifecycle with real query hooks", () => {
       makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)]),
     );
     endpoints.updateSection.mockReturnValueOnce(patch.promise);
-    render(<PagesQueryFormFixture slug={PageSlug.OFFER} />);
+    render(<PagesEditView slug={PageSlug.OFFER} />);
     await screen.findByLabelText("Section Title");
     typeInto("Section Title", title);
     typeIntoNth("Body", 1, body);
@@ -238,18 +243,28 @@ describe("page section save lifecycle with real query hooks", () => {
     );
   });
 
-  it("releases mutation pending after a failed invalidation GET", async () => {
+  it("keeps every section mounted and unlocks after one failed refresh with production query defaults", async () => {
     const patch = makeDeferred<void>();
     const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const page = makePage(PageSlug.HOME, [
+      makeSectionRow("home:seo", makeSeoData()),
+      makeSectionRow("home:reviews", { title: "Stored reviews title" }),
+    ]);
 
-    endpoints.getPageBySlug
-      .mockResolvedValueOnce(makePage(PageSlug.HOME, [makeSectionRow("home:seo", makeSeoData())]))
-      .mockReturnValueOnce(refetch.promise);
+    endpoints.getPageBySlug.mockResolvedValueOnce(page).mockReturnValueOnce(refetch.promise);
     endpoints.updateSection.mockReturnValueOnce(patch.promise);
-    render(<PagesQueryFormFixture slug={PageSlug.HOME} />);
+    render(
+      <QueryProvider>
+        <PagesEditView slug={PageSlug.HOME} />
+      </QueryProvider>,
+    );
     await screen.findByLabelText("Search Result Title");
     const title = "Fixture title awaiting refetch";
+    const unsavedTitle = "Unsaved reviews title";
+    const seoInput = screen.getByLabelText("Search Result Title");
+    const reviewsInput = screen.getByLabelText("Section Title");
 
+    typeInto("Section Title", unsavedTitle);
     typeInto("Search Result Title", title);
     clickButton("Update Section");
     await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeDisabled());
@@ -260,9 +275,16 @@ describe("page section save lifecycle with real query hooks", () => {
     await act(async () => refetch.reject(new Error("Fixture GET failure")));
 
     await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeEnabled());
+    expect(screen.getByLabelText("Search Result Title")).toBe(seoInput);
+    expect(screen.getByLabelText("Section Title")).toBe(reviewsInput);
     expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
+    expect(screen.getByLabelText("Section Title")).toHaveValue(unsavedTitle);
+    expect(screen.getByLabelText("Section Title")).toBeEnabled();
     expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
-    expect(notifications.success).toHaveBeenCalledTimes(1);
+    expect(getSection("home:reviews").getByText("Update Section").closest("button")).toBeEnabled();
+    expect(screen.queryByText("Failed to load data")).not.toBeInTheDocument();
+    expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2);
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
     expect(notifications.error).not.toHaveBeenCalled();
   });
 
@@ -281,7 +303,7 @@ describe("page section save lifecycle with real query hooks", () => {
       )
       .mockReturnValueOnce(refetch.promise);
     endpoints.updateSection.mockReturnValueOnce(patch.promise);
-    render(<PagesQueryFormFixture slug={PageSlug.HOME} />);
+    render(<PagesEditView slug={PageSlug.HOME} />);
     await screen.findByLabelText("Search Result Title");
     const subtitle = "Unsaved reviews subtitle";
 

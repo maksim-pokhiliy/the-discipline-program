@@ -16,7 +16,12 @@ export const PagesEditView: React.FC<PagesEditViewProps> = ({ slug }) => {
   const { data, isLoading, error } = usePageDetails(slug);
 
   return (
-    <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading page...">
+    <QueryWrapper
+      isLoading={isLoading}
+      error={data ? null : error}
+      data={data}
+      loadingMessage="Loading page..."
+    >
       {(page) => (
         <Suspense>
           <PagesEditForm page={page} />

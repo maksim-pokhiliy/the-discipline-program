@@ -15,10 +15,14 @@ export const usePagesListData = () =>
     queryFn: api.pages.getPages,
   });
 
+const pageDetailsQuery = (slug: string) => ({
+  queryKey: adminKeys.pages.bySlug(slug),
+  queryFn: () => api.pages.getPageBySlug(slug),
+});
+
 export const usePageDetails = (slug: string) =>
   useQuery({
-    queryKey: adminKeys.pages.bySlug(slug),
-    queryFn: () => api.pages.getPageBySlug(slug),
+    ...pageDetailsQuery(slug),
     enabled: !!slug,
   });
 
@@ -30,7 +34,9 @@ export const useUpdatePageSection = () => {
       api.pages.updateSection(slug, body),
 
     onSuccess: async (_, { slug }) => {
-      await queryClient.invalidateQueries({ queryKey: adminKeys.pages.bySlug(slug) });
+      await queryClient
+        .fetchQuery({ ...pageDetailsQuery(slug), staleTime: 0 })
+        .catch(() => undefined);
       toast.success("Section updated successfully");
     },
 
