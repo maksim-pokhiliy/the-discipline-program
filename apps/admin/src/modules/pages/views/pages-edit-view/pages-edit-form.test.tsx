@@ -8,7 +8,7 @@ import { clickButton, typeInto } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import { PAGE_LABELS } from "../../config/page-labels";
-import { makePage, makeSectionRow } from "../../pages.fixtures";
+import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const updateSectionMock = vi.fn();
 
@@ -68,5 +68,83 @@ describe("PagesEditForm", () => {
         body: { section: "offer:hero", data: { ...data, title } },
       }),
     );
+  });
+
+  it("clears a populated document and saves only a field touched after an equal empty refresh", async () => {
+    const populated = makePage(PageSlug.HOME, [makeSectionRow("home:seo", makeSeoData())]);
+    const empty = makePage(PageSlug.HOME, [makeSectionRow("home:seo", {})]);
+    const { rerender } = render(<PagesEditForm page={populated} />);
+
+    rerender(<PagesEditForm page={empty} />);
+
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
+    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+
+    const title = "Only edited fixture title";
+
+    typeInto("Search Result Title", title);
+    rerender(<PagesEditForm page={makePage(PageSlug.HOME, [makeSectionRow("home:seo", {})])} />);
+
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
+    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    clickButton("Update Section");
+
+    await waitFor(() =>
+      expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
+        slug: PageSlug.HOME,
+        body: { section: "home:seo", data: { title } },
+      }),
+    );
+  });
+
+  it("clears old field-array rows and keeps a new row through an equal empty refresh", async () => {
+    const blocks = [{ heading: "Old fixture heading", body: "Old fixture body" }];
+    const row = makeSectionRow("offer:terms", { title: "Old fixture title", blocks });
+    const { rerender } = render(<PagesEditForm page={makePage(PageSlug.OFFER, [row])} />);
+
+    rerender(
+      <PagesEditForm page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})])} />,
+    );
+
+    expect(screen.getByLabelText("Section Title")).toHaveValue("");
+    expect(screen.queryByLabelText("Heading")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Body")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+
+    clickButton("Add Terms Block");
+    const heading = "New fixture heading";
+
+    typeInto("Heading", heading);
+    rerender(
+      <PagesEditForm page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})])} />,
+    );
+
+    expect(screen.getByLabelText("Heading")).toHaveValue(heading);
+    expect(screen.getAllByLabelText("Body")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    clickButton("Update Section");
+
+    await waitFor(() =>
+      expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
+        slug: PageSlug.OFFER,
+        body: { section: "offer:terms", data: { blocks: [{ heading, body: "" }] } },
+      }),
+    );
+  });
+
+  it("keeps dirty edits when an equal populated document refreshes with a new timestamp", () => {
+    const row = makeSectionRow("home:seo", makeSeoData());
+    const { rerender } = render(<PagesEditForm page={makePage(PageSlug.HOME, [row])} />);
+    const title = "Unsaved fixture title";
+
+    typeInto("Search Result Title", title);
+    const refreshed = { ...row, data: makeSeoData(), updatedAt: new Date() };
+
+    rerender(<PagesEditForm page={makePage(PageSlug.HOME, [refreshed])} />);
+
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
   });
 });

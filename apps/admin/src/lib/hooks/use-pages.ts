@@ -29,8 +29,8 @@ export const useUpdatePageSection = () => {
     mutationFn: ({ slug, body }: { slug: string; body: UpdatePageSectionBody }) =>
       api.pages.updateSection(slug, body),
 
-    onSuccess: (_, { slug }) => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.pages.bySlug(slug) });
+    onSuccess: async (_, { slug }) => {
+      await queryClient.invalidateQueries({ queryKey: adminKeys.pages.bySlug(slug) });
       toast.success("Section updated successfully");
     },
 

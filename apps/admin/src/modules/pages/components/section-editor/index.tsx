@@ -24,6 +24,8 @@ import {
 import { SECTION_FORMS } from "../../config/section-forms";
 import { SECTION_LABELS } from "../../config/section-labels";
 
+export { getSectionEditorKey } from "./section-editor-key";
+
 type SectionEditorProps<TKey extends SectionSchemaKey> = {
   section: AdminPageSection<TKey>;
   isExpanded: boolean;
@@ -54,7 +56,12 @@ export const SectionEditor = <TKey extends SectionSchemaKey>({
 
       <AccordionDetails>
         <FormProvider {...methods}>
-          <Stack spacing={3}>
+          <Stack
+            component="fieldset"
+            disabled={isLoading}
+            spacing={3}
+            sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}
+          >
             {SECTION_FORMS[section.section]}
 
             <Stack direction="row" justifyContent="flex-end">

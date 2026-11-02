@@ -8,7 +8,7 @@ import { ContentSection } from "@repo/ui";
 
 import { useUpdatePageSection } from "@app/lib/hooks";
 
-import { SectionEditor } from "../../components/section-editor";
+import { getSectionEditorKey, SectionEditor } from "../../components/section-editor";
 import { PAGE_LABELS } from "../../config/page-labels";
 
 type PagesEditFormProps = {
@@ -49,7 +49,7 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
       <Stack spacing={2}>
         {page.sections.map((section) => (
           <SectionEditor
-            key={section.id}
+            key={getSectionEditorKey(section)}
             section={section}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
