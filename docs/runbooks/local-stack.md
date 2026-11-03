@@ -181,10 +181,10 @@ or a test run.
 ## Provider webhooks from the internet (Monobank, storefront-billing 0.2+)
 
 Mono posts invoice and subscription events to the `webHookUrl` we register, so the platform dev
-server on 3001 needs a public HTTPS address. `cloudflared` (installed 2026-09-25 as
+server on 4711 needs a public HTTPS address. `cloudflared` (installed 2026-09-25 as
 `~/.local/bin/cloudflared`, release 2026.9.3 from GitHub) gives two options:
 
-- **Quick tunnel** — `task stack:tunnel` (`cloudflared tunnel --url http://localhost:3001`) prints
+- **Quick tunnel** — `task stack:tunnel` (`cloudflared tunnel --url http://localhost:4711`) prints
   a random `https://<words>.trycloudflare.com` address, no account needed, new address every run.
   **It does not work from the owner's network:** `api.trycloudflare.com` times out on TCP (both
   IPv4 and IPv6, verified 2026-09-25) while `api.cloudflare.com` and the tunnel edge
@@ -195,7 +195,7 @@ server on 3001 needs a public HTTPS address. `cloudflared` (installed 2026-09-25
   and are never committed. Run it whenever a provider must reach this machine:
 
   ```bash
-  task stack:tunnel                     # platform dev server: https://mono-dev.thedisciplineprogram.com -> localhost:3001
+  task stack:tunnel                     # platform dev server: https://mono-dev.thedisciplineprogram.com -> localhost:4711
   task stack:tunnel TDP_TUNNEL_PORT=3999  # the spike's webhook receiver (mono-spike.mjs webhook:listen)
   ```
 
@@ -205,14 +205,20 @@ server on 3001 needs a public HTTPS address. `cloudflared` (installed 2026-09-25
   `cloudflared tunnel route dns tdp-local mono-dev.thedisciplineprogram.com`. Delete the DNS route and the
   tunnel when the initiative closes.
 
-`NEXTAUTH_URL` stays `http://localhost:3001` — webhooks carry no session, and Next's
+`NEXTAUTH_URL` stays `http://localhost:4711` — webhooks carry no session, and Next's
 `allowedDevOrigins` only concerns browser asset requests, not server-to-server POSTs.
 
 ## Troubleshooting
 
 - **`docker compose up` fails to bind 5432** — something else owns the port; use `task stack:up TDP_DB_PORT=<port>`.
-- **Port 3002 answers a Django server** — that is another project's dev server on this box, not
-  admin; run admin on a free port for the session: `pnpm --filter admin exec next dev --port 3012`.
+- **A dev port is taken** — the apps listen on 4710 (marketing), 4711 (platform), 4712 (admin) and
+  4713 (storybook), moved off 3000-3002 and 6006 on 2026-11-03 because other projects on this box
+  bind those. The block avoids the common dev-tool defaults, sits below this box's Linux ephemeral
+  range (`/proc/sys/net/ipv4/ip_local_port_range`, 44620-48715) and the Windows dynamic range
+  (49152 and up), and outside the ranges Windows reserves (`netsh.exe int ipv4 show excludedportrange
+protocol=tcp`; 5357 and 50000-50059 today) — WSL's mirrored networking shares the port space with
+  Windows. For one session on another port: `pnpm --filter <app> exec next dev --port <port>`, with
+  that app's `NEXTAUTH_URL` / `NEXT_PUBLIC_APP_URL` and the other apps' URL of it moved to match.
 - **Image pull fails with `docker-credential-desktop.exe not found`** — Docker Desktop's credential
   helper is missing from a non-interactive PATH; pull once from an interactive terminal. The image
   is already cached on the owner's box.
