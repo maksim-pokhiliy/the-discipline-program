@@ -4,7 +4,7 @@ Component development environment for The Discipline Program. Hosts stories that
 
 ## Where it runs
 
-- **Port:** `6006`
+- **Port:** `4713`
 - **Dev:** `pnpm --filter storybook dev`
 - **Build (static export):** `pnpm --filter storybook build` — emits `storybook-static/`.
 

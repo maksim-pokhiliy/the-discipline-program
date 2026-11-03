@@ -59,7 +59,7 @@ task stack:demo     # optional: demo coach + demo athlete with a published plan 
 pnpm dev            # all four apps in parallel
 ```
 
-Apps start on ports 3000 (marketing), 3001 (platform), 3002 (admin), 6006 (storybook).
+Apps start on ports 4710 (marketing), 4711 (platform), 4712 (admin), 4713 (storybook).
 
 ## Project Structure
 

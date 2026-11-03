@@ -8,10 +8,10 @@
 
 ### apps/
 
-- `admin` — Next.js, port 3002 (internal console)
-- `marketing` — Next.js, port 3000, +framer-motion (public site)
-- `platform` — Next.js, port 3001, +@dnd-kit (product)
-- `storybook` — Storybook 10 + @storybook/nextjs-vite
+- `admin` — Next.js, port 4712 (internal console)
+- `marketing` — Next.js, port 4710, +framer-motion (public site)
+- `platform` — Next.js, port 4711, +@dnd-kit (product)
+- `storybook` — Storybook 10 + @storybook/nextjs-vite, port 4713
 
 ### packages/
 

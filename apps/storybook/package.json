@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "storybook dev -p 6006",
+    "dev": "storybook dev -p 4713",
     "build": "storybook build",
     "lint": "eslint . --fix --max-warnings 0",
     "check-types": "tsc --noEmit"
