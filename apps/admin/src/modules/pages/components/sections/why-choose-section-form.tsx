@@ -8,6 +8,7 @@ import { type HomePageWhyChooseData } from "@repo/contracts/cms/pages";
 
 import { FormCard } from "@app/lib/components/form-card";
 
+import { getRowControls } from "./row-controls";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
 import { WhyChooseFeatureCard } from "./why-choose-feature-card";
 
@@ -18,7 +19,7 @@ export const WhyChooseSectionForm = () => {
     formState: { errors },
   } = useFormContext<HomePageWhyChooseData>();
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, move, remove } = useFieldArray({
     control,
     name: "features",
   });
@@ -54,7 +55,11 @@ export const WhyChooseSectionForm = () => {
 
         <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
-            <WhyChooseFeatureCard key={field.id} index={index} onRemove={() => remove(index)} />
+            <WhyChooseFeatureCard
+              key={field.id}
+              index={index}
+              controls={getRowControls(index, fields.length, { move, remove })}
+            />
           ))}
 
           <Button

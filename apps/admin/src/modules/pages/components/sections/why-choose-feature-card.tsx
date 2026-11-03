@@ -6,12 +6,14 @@ import { useFormContext } from "react-hook-form";
 import { type HomePageWhyChooseData } from "@repo/contracts/cms/pages";
 import { DynamicListItem } from "@repo/ui";
 
+import { type RowControls } from "./row-controls";
+
 type WhyChooseFeatureCardProps = {
   index: number;
-  onRemove: () => void;
+  controls: RowControls;
 };
 
-export const WhyChooseFeatureCard = ({ index, onRemove }: WhyChooseFeatureCardProps) => {
+export const WhyChooseFeatureCard = ({ index, controls }: WhyChooseFeatureCardProps) => {
   const {
     register,
     formState: { errors },
@@ -20,7 +22,7 @@ export const WhyChooseFeatureCard = ({ index, onRemove }: WhyChooseFeatureCardPr
   const featureError = errors.features?.[index];
 
   return (
-    <DynamicListItem onRemove={onRemove}>
+    <DynamicListItem {...controls}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField

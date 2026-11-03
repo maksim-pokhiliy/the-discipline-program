@@ -16,12 +16,43 @@ import {
   type getOfferPageResponseSchema,
   type getSitePageResponseSchema,
   type revalidateQuerySchema,
+  type SECTION_SCHEMAS,
 } from "./pages-api.schema";
+import { type SectionSchemaKey } from "./pages.types";
 
 export type AdminPageListItem = z.infer<typeof adminPageListItemSchema>;
 export type AdminPageDetails = z.infer<typeof adminPageDetailsSchema>;
 export type UpdatePageSectionBody = z.input<typeof updatePageSectionBodySchema>;
 export type UpdatePageSectionData = z.input<typeof updatePageSectionSchema>;
+
+type SectionSchemas = typeof SECTION_SCHEMAS;
+
+export type SectionWriteData = {
+  [TKey in SectionSchemaKey]: z.input<ReturnType<SectionSchemas[TKey]["deepPartial"]>>;
+};
+
+type SectionReadData = {
+  [TKey in SectionSchemaKey]: z.output<ReturnType<SectionSchemas[TKey]["deepPartial"]>>;
+};
+
+export type SectionWriteBody<TKey extends SectionSchemaKey = SectionSchemaKey> = {
+  [TSection in TKey]: {
+    section: TSection;
+    data: SectionWriteData[TSection];
+    locale?: UpdatePageSectionBody["locale"];
+  };
+}[TKey];
+
+export type AdminPageSection<TKey extends SectionSchemaKey = SectionSchemaKey> = {
+  [TSection in TKey]: Omit<AdminPageDetails["sections"][number], "section" | "data"> & {
+    section: TSection;
+    data: SectionReadData[TSection];
+  };
+}[TKey];
+
+export type CorrelatedAdminPageDetails = Omit<AdminPageDetails, "sections"> & {
+  sections: AdminPageSection[];
+};
 
 export type HomePageData = z.infer<typeof getHomePageResponseSchema>;
 export type StorefrontProgramsPageData = z.infer<typeof getStorefrontProgramsPageResponseSchema>;

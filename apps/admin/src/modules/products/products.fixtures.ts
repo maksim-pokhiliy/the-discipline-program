@@ -58,10 +58,4 @@ export const pickOption = async (label: string, option: string): Promise<void> =
   await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
 };
 
-export const typeInto = (label: string, value: string): void => {
-  fireEvent.change(screen.getByLabelText(label), { target: { value } });
-};
-
-export const clickButton = (name: string): void => {
-  fireEvent.click(screen.getByRole("button", { name }));
-};
+export { clickButton, typeInto } from "@app/test/interactions";

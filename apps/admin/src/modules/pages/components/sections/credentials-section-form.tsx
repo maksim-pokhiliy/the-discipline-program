@@ -10,6 +10,7 @@ import { DynamicListItem } from "@repo/ui";
 
 import { FormCard } from "@app/lib/components/form-card";
 
+import { getRowControls } from "./row-controls";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
 
 type CredentialsSectionData = z.infer<typeof aboutPageCredentialsSchema>;
@@ -21,7 +22,7 @@ export const CredentialsSectionForm = () => {
     formState: { errors },
   } = useFormContext<CredentialsSectionData>();
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, move, remove } = useFieldArray({
     control,
     name: "items",
   });
@@ -57,7 +58,10 @@ export const CredentialsSectionForm = () => {
 
         <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
-            <DynamicListItem key={field.id} onRemove={() => remove(index)}>
+            <DynamicListItem
+              key={field.id}
+              {...getRowControls(index, fields.length, { move, remove })}
+            >
               <TextField
                 label="Title"
                 fullWidth

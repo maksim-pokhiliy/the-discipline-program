@@ -3,16 +3,16 @@
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/cms/pages";
-import { capitalize } from "@repo/shared";
+import { type CorrelatedAdminPageDetails } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { useUpdatePageSection } from "@app/lib/hooks";
 
-import { SectionEditor } from "../../components/section-editor";
+import { getSectionEditorKey, SectionEditor } from "../../components/section-editor";
+import { PAGE_LABELS } from "../../config/page-labels";
 
 type PagesEditFormProps = {
-  page: AdminPageDetails;
+  page: CorrelatedAdminPageDetails;
 };
 
 export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
@@ -36,24 +36,10 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const onSaveSection = (
-    pageSlug: string,
-    sectionName: UpdatePageSectionData["section"],
-    data: UpdatePageSectionData["data"],
-  ) => {
-    updateSection({
-      slug: pageSlug,
-      data: {
-        section: sectionName,
-        data,
-      },
-    });
-  };
-
   return (
     <ContentSection
       title="Edit Marketing Page"
-      subtitle={capitalize(page.slug)}
+      subtitle={PAGE_LABELS[page.slug]}
       backHref="/pages"
       backLabel="Back to Pages"
       maxWidth="xl"
@@ -63,11 +49,11 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
       <Stack spacing={2}>
         {page.sections.map((section) => (
           <SectionEditor
-            key={section.id}
+            key={getSectionEditorKey(section)}
             section={section}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
-            onSave={(formData) => onSaveSection(page.slug, section.section, formData)}
+            onSave={(body) => updateSection({ slug: page.slug, body })}
             isLoading={isPending}
           />
         ))}
