@@ -116,7 +116,7 @@ export const cmsLocaleAdminApi = {
         }
       }, TX_BUDGET_DEFAULT);
 
-      return listLocales();
+      return await listLocales();
     } catch (error) {
       return handlePrismaError(error, { entity: "Locale", field: "code" });
     }

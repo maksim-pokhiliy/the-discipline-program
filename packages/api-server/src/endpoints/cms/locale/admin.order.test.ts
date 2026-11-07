@@ -1,8 +1,9 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_LOCALE_CODE, getLocalesResponseSchema } from "@repo/contracts/cms/locale";
-import { ConflictError } from "@repo/errors";
+import { AppError, ConflictError, InternalServerError } from "@repo/errors";
 
+import { prisma } from "../../../db/client";
 import { cleanupRaw } from "../../../test/helpers";
 import {
   captureMarketingPagesState,
@@ -35,6 +36,10 @@ describe("cmsLocaleAdminApi — catalog order", () => {
   beforeEach(async () => {
     await clearMarketingPagesState();
     await seedLocaleCatalog();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -90,6 +95,23 @@ describe("cmsLocaleAdminApi — catalog order", () => {
         isDefault: true,
         sortOrder: 0,
       });
+    });
+
+    it("maps a failed post-commit list read without rolling back the new order", async () => {
+      const rawFailure = new Error("Post-commit read failed");
+      const orderedCodes = [...NON_DEFAULT_CODES].reverse();
+
+      vi.spyOn(prisma.marketingLocale, "findMany").mockRejectedValueOnce(rawFailure);
+
+      const error = await cmsLocaleAdminApi
+        .reorderLocales({ orderedCodes })
+        .catch((failure: unknown) => failure);
+
+      expect(error).toBeInstanceOf(AppError);
+      expect(error).toBeInstanceOf(InternalServerError);
+      expect(error).not.toBe(rawFailure);
+      expect(error).toMatchObject({ message: "Database operation failed for Locale" });
+      await expectCatalogOrder([DEFAULT_LOCALE_CODE, ...orderedCodes]);
     });
 
     it("refuses a set missing a catalog code with ConflictError 409 and leaves the order", async () => {
