@@ -1,4 +1,3 @@
-import { QueryClient } from "@tanstack/react-query";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,7 +6,6 @@ import { SECTION_SCHEMAS } from "@repo/contracts/cms/pages";
 import { ConflictError, NotFoundError, ValidationError } from "@repo/errors";
 
 import { api } from "@app/lib/api";
-import { adminKeys } from "@app/lib/api/keys";
 import { render } from "@app/test/render";
 
 import {
@@ -147,17 +145,20 @@ describe("LanguagesListSection", () => {
     expect(api.locales.reorder).toHaveBeenCalledTimes(1);
   });
 
-  it("toggles only the selected row and toasts on success", async () => {
-    render(<LanguagesListSection locales={CATALOG} />);
-    fireEvent.click(screen.getByLabelText(`Enable ${UKRAINIAN.name}`));
+  it.each([false, true])(
+    "toggles only the selected row from enabled state %s and toasts on success",
+    async (isEnabled) => {
+      render(<LanguagesListSection locales={[ENGLISH, makeLanguage({ isEnabled }), POLISH]} />);
+      fireEvent.click(screen.getByLabelText(`Enable ${UKRAINIAN.name}`));
 
-    await waitFor(() =>
-      expect(api.locales.update).toHaveBeenCalledExactlyOnceWith(UKRAINIAN.code, {
-        isEnabled: true,
-      }),
-    );
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Language status updated"));
-  });
+      await waitFor(() =>
+        expect(api.locales.update).toHaveBeenCalledExactlyOnceWith(UKRAINIAN.code, {
+          isEnabled: !isEnabled,
+        }),
+      );
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Language status updated"));
+    },
+  );
 
   it("keeps the pending switch focusable and guarded while other rows remain available", async () => {
     const pending = makePendingRequest();
@@ -305,33 +306,33 @@ describe("LanguagesListSection", () => {
     expect(api.locales.delete).toHaveBeenCalledExactlyOnceWith(UKRAINIAN.code);
   });
 
-  it("explains a stale reorder and invalidates the list instead of showing the server message", async () => {
-    const invalidate = vi.spyOn(QueryClient.prototype, "invalidateQueries");
-
-    vi.mocked(api.locales.reorder).mockRejectedValueOnce(new ConflictError("Server stale wording"));
-    render(<LanguagesListSection locales={CATALOG} />);
-    click(`Move ${POLISH.name} up`);
-
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        "The language list changed in the meantime and was reloaded. Try the move again.",
-      ),
-    );
-    expect(toast.error).not.toHaveBeenCalledWith("Server stale wording");
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: adminKeys.locales.list() });
-  });
-
-  it("uses the shared validation notifier for other reorder failures", async () => {
-    vi.mocked(api.locales.reorder).mockRejectedValueOnce(
-      new ValidationError("Rejected", {
+  it.each([
+    {
+      kind: "validation issues",
+      error: new ValidationError("Rejected", {
         issues: [{ path: "orderedCodes", message: "Invalid order" }],
       }),
-    );
-    render(<LanguagesListSection locales={CATALOG} />);
-    click(`Move ${POLISH.name} up`);
+      message: "orderedCodes: Invalid order",
+    },
+    {
+      kind: "an error message",
+      error: new Error("Service unavailable"),
+      message: "Service unavailable",
+    },
+    { kind: "an empty error", error: new Error(""), message: "Failed to reorder languages" },
+  ])(
+    "uses the shared notifier for $kind on a non-conflict reorder failure",
+    async ({ error, message }) => {
+      vi.mocked(api.locales.reorder).mockRejectedValueOnce(error);
+      render(<LanguagesListSection locales={CATALOG} />);
+      await act(async () => {
+        click(`Move ${POLISH.name} up`);
+      });
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("orderedCodes: Invalid order"));
-  });
+      await waitFor(() => expect(toast.error).toHaveBeenCalledExactlyOnceWith(message));
+      expect(toast.success).not.toHaveBeenCalled();
+    },
+  );
 
   it("invites the first language only while English is alone", () => {
     const { rerender } = render(<LanguagesListSection locales={[ENGLISH]} />);

@@ -3,11 +3,19 @@ import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ConflictError } from "@repo/errors";
+
 import { api } from "@app/lib/api";
 import { adminKeys } from "@app/lib/api/keys";
 import { render } from "@app/test/render";
 
-import { ENGLISH, makePendingCatalog, POLISH, UKRAINIAN } from "../../languages.fixtures";
+import {
+  ENGLISH,
+  makeLanguage,
+  makePendingCatalog,
+  POLISH,
+  UKRAINIAN,
+} from "../../languages.fixtures";
 
 import { LanguagesListView } from "./index";
 
@@ -46,6 +54,7 @@ beforeEach(() => {
   vi.spyOn(api.locales, "delete").mockResolvedValue(undefined);
   vi.spyOn(api.locales, "reorder").mockResolvedValue(REORDERED);
   vi.spyOn(toast, "success").mockImplementation(() => "toast");
+  vi.spyOn(toast, "error").mockImplementation(() => "toast");
 });
 afterEach(() => {
   cleanup();
@@ -59,6 +68,49 @@ afterEach(() => {
 });
 
 describe("LanguagesListView reconciliation", () => {
+  it("reloads a stale catalog after a conflict and retries the move with the current full set", async () => {
+    const german = makeLanguage({ code: "de", name: "Deutsch", sortOrder: CATALOG.length });
+    const current = [...CATALOG, german];
+    const reordered = [...REORDERED, german];
+
+    vi.mocked(api.locales.list)
+      .mockResolvedValueOnce(CATALOG)
+      .mockResolvedValueOnce(current)
+      .mockResolvedValueOnce(reordered);
+    vi.mocked(api.locales.reorder)
+      .mockRejectedValueOnce(new ConflictError("Server stale wording"))
+      .mockResolvedValueOnce(reordered);
+
+    const client = renderCatalog();
+
+    await screen.findByLabelText(`Enable ${POLISH.name}`);
+    await click(`Move ${POLISH.name} up`);
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledExactlyOnceWith(
+        "The language list changed in the meantime and was reloaded. Try the move again.",
+      ),
+    );
+    await screen.findByRole("link", { name: german.name });
+    expect(api.locales.list).toHaveBeenCalledTimes(2);
+    expect(client.getQueryData(QUERY_KEY)).toEqual(current);
+    expect(toast.success).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: `Move ${POLISH.name} up` })).toHaveAttribute(
+        "aria-disabled",
+        "false",
+      ),
+    );
+    await click(`Move ${POLISH.name} up`);
+    await waitFor(() => expect(client.getQueryData(QUERY_KEY)).toEqual(reordered));
+    await waitFor(() => expect(client.isMutating()).toBe(0));
+    expect(vi.mocked(api.locales.reorder).mock.calls).toEqual([
+      [{ orderedCodes: [POLISH.code, UKRAINIAN.code] }],
+      [{ orderedCodes: [POLISH.code, UKRAINIAN.code, german.code] }],
+    ]);
+    expect(toast.error).not.toHaveBeenCalledWith("Server stale wording");
+    expect(toast.success).toHaveBeenCalledExactlyOnceWith("Languages reordered");
+  });
+
   it.each(["toggle", "delete"])(
     "reconciles a delayed reorder snapshot after a newer %s refetch",
     async (operation) => {
