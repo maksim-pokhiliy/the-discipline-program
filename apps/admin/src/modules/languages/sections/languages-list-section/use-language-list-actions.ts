@@ -35,6 +35,10 @@ export const useLanguageListActions = (locales: AdminLocaleListItem[]): Language
     isDeleting,
     confirmDelete,
     closeDelete: () => {
+      if (isDeleting) {
+        return;
+      }
+
       deleteMutation.reset();
       cancelDelete();
     },

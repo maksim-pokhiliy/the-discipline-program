@@ -28,7 +28,8 @@ export const LanguageMoveButton = ({
           ? {
               color: "action.disabled",
               cursor: "default",
-              "&:hover": { backgroundColor: "action.disabledBackground" },
+              "&:hover": { backgroundColor: "transparent" },
+              "&:active": { transform: "none" },
             }
           : {}
       }

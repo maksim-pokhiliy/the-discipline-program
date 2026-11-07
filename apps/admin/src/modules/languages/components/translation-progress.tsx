@@ -24,7 +24,7 @@ export const TranslationProgress = ({
         variant="determinate"
         value={rateToPercent(language.translatedSectionCount / TRANSLATABLE_SECTION_COUNT)}
         aria-label={`${language.name} translation progress`}
-        sx={(theme) => ({ height: theme.spacing(PROGRESS_HEIGHT), borderRadius: 1, flex: 1 })}
+        sx={(theme) => ({ height: theme.spacing(PROGRESS_HEIGHT), borderRadius: 1 })}
       />
       <Typography
         variant="caption"

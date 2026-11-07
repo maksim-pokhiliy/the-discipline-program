@@ -78,7 +78,8 @@ export const useToggleLocale = (): UseMutationResult<void, Error, LocaleToggle> 
     mutationFn: ({ code, isEnabled }) => api.locales.update(code, { isEnabled }),
     onSuccess: () => {
       toast.success("Language status updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.locales.list() });
+
+      return queryClient.invalidateQueries({ queryKey: adminKeys.locales.list() });
     },
     onError: (error) => notifyError(error, "Failed to update language status"),
   });
@@ -103,12 +104,11 @@ export const useReorderLocales = (): UseMutationResult<
         toast.error(
           "The language list changed in the meantime and was reloaded. Try the move again.",
         );
-        queryClient.invalidateQueries({ queryKey: adminKeys.locales.list() });
 
-        return;
+        return queryClient.invalidateQueries({ queryKey: adminKeys.locales.list() });
       }
 
-      notifyError(error, "Failed to reorder languages");
+      return notifyError(error, "Failed to reorder languages");
     },
   });
 };
