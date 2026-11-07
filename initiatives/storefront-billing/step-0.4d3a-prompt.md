@@ -22,8 +22,9 @@ Ukrainian, each page with its progress; he opens Home, and the whole screen says
 editing Ukrainian (and that the language is hidden from the site while it is disabled);
 every section shows, before he opens it, whether it is not translated, translated, or older
 than its English; he opens the hero: its words are empty with the English text beside each
-field, its links and image the English ones, read-only (D-24); he writes the words, saves,
-and the section turns translated; "Clear translation" returns a section to the English
+field, its links and image the English ones, read-only (D-24); he writes the words, saves
+(halfway is fine: the section stays a draft the site does not show), and once every word is
+written the section turns translated; "Clear translation" returns a section to the English
 fallback.
 
 One delivery PR, these deliverables:
@@ -160,8 +161,14 @@ updatedAt }] }` in the page's section order, each `data` parsed with
   and moved in English only). The server writes every non-default save from the English row:
   the English shared values and row set, the locale's own words matched by row `id` (a word
   of a row English no longer has is dropped). A section that is not translated opens with its
-  words empty, the English shown beside each. "Update Section" is enabled only when every word
-  whose English counterpart is non-empty is filled. A translated section opens with its own
+  words empty, the English shown beside each. A section saves at any time, as in English (dirty → "Update
+  Section"): the coach can stop halfway. The server decides whether the saved row is live:
+  it writes `isActive = true` only when every word whose English counterpart is non-empty is
+  filled (in a list, by row `id`), otherwise `isActive = false`, a **draft**: kept and shown in
+  the editor, never served (the site falls back to English for that section), never counted.
+  The completeness check runs on the server from the registry and the English row, in the
+  same write, one place (D-24 amended again, owner 2026-11-08: «ограничение "сохранить только
+  полную форму или никак" нам не нужно»). English rows are always written active. A translated section opens with its own
   words and the current English shared values. In this step the six list forms keep their add,
   remove and move controls in every locale (0.4d3b removes them outside English); a structure
   change made there in a non-default locale is not saved, by the server rule above. Rationale: "translated" then means every word written in the
@@ -170,7 +177,8 @@ updatedAt }] }` in the page's section order, each `data` parsed with
 - **R3 — one notion of "translated", owned by the server.** A section's state in a locale
   is computed on the server with `parseServedSectionData` and the reader's other conditions
   (the row active, its section of its page): `translated` when the reader would serve the
-  locale's own row, otherwise `not translated`; `English newer` when it is translated and the
+  locale's own row; `draft` when it would serve it but for `isActive = false` (a saved, not
+  yet complete translation, R2); otherwise `not translated`; `English newer` when it is translated and the
   English row's `updatedAt` is later than the locale row's. The client renders the state and
   never recomputes it. The page's translated count on the Pages list is the number of its
   sections in state `translated`, its denominator the page's section count from the
@@ -188,7 +196,9 @@ updatedAt }] }` in the page's section order, each `data` parsed with
   coach can confirm a translation that still holds, which clears the mark and, by R2's
   server rule, writes the current English links, images and list rows. Until that save the
   locale's page shows the previous ones; the stale mark is the signal (SB-90 records the
-  automatic alternative, not this step's).
+  automatic alternative, not this step's). A re-save of a translated section whose English
+  gained a word since is no longer complete and goes back to draft by R2's server rule (the
+  section then falls back to English rather than showing an empty word).
 - **R6 — saves carry the locale; English is never written by accident.** Every read and
   write of the editor names its locale: the query key, the client call, the save body. A save
   from the Ukrainian editor writes `uk` and nothing else; switching the language while a form
@@ -221,7 +231,8 @@ updatedAt }] }` in the page's section order, each `data` parsed with
   progress, the link, helper texts, toasts, aria labels) are English admin copy you own; list
   every one in your report for the planner's veto. Never in the PR body.
 - **R12 — docs.** `docs/BOUNDED-CONTEXTS.md` §2: an Invariants line for the words-and-the-rest
-  rule; the Consumer apps line names the editor's locale controls and the Pages list
+  rule and the draft (a non-default row is live only when every word is written; an inactive
+  row is a draft, which also covers the rows SB-63's rollback note hides); the Consumer apps line names the editor's locale controls and the Pages list
   progress; the fallback line's last sentence on the delete guard is rewritten for the clear
   writing exactly `{}`. No ADR: D-24 is the record and ADR-0045's model stands.
 
@@ -284,9 +295,10 @@ reaches CMS through `@repo/contracts/cms/*` and its own route handlers) · migra
   (mutant: the English guard removed); the Pages list count per page in a locale (mutant: a
   literal denominator); in the admin, a save from the Ukrainian editor sends `locale: "uk"` and
   never touches the English cache (mutant: the locale dropped from the body or the key); a
-  not-translated section opens with its shared fields from English and its words empty, and
-  "Update Section" stays disabled until every word with a non-empty English counterpart is
-  filled (mutant: the word check removed); a non-default write is stored with the English shared values and
+  not-translated section opens with its shared fields from English and its words empty, a
+  save with a word missing is stored as a draft (`isActive = false`, state `draft`, not
+  counted, the public reader falls back to English for it) and a save with every word filled is
+  live (mutant: the completeness check removed or inverted); a draft reopens with its words; a non-default write is stored with the English shared values and
   row set whatever the body says (a changed link or image, an extra row, a reordered list),
   the locale's words kept by row `id` (mutant: the server rule removed); the shared fields of
   a form that is not a list form are read-only in a non-default locale; an `English newer`
@@ -304,9 +316,10 @@ reaches CMS through `@repo/contracts/cms/*` and its own route handlers) · migra
   - [ ] Open Home in Ukrainian: the screen says Ukrainian everywhere and that the language is
         hidden from the site; every section is marked not translated
   - [ ] Open the Home hero: the words are empty with the English beside each, the link and
-        the background image are the English ones and cannot be changed here; Update Section stays unavailable
-        until every word is written
-  - [ ] Write the words, Update Section: the section turns translated, Home's count on Pages
+        the background image are the English ones and cannot be changed here
+  - [ ] Write the title only, Update Section: the hero is saved as a draft, marked so, and
+        Home's count on Pages does not move; leave the page and come back: the title is there
+  - [ ] Write the remaining words, Update Section: the section turns translated, Home's count on Pages
         grows by one; reload: it persists; switch to English: the English hero is unchanged
   - [ ] Change the English hero title and background image and save; back in Ukrainian the
         hero is marked older than its English; Update Section without an edit clears the
@@ -358,7 +371,7 @@ where the state is computed and how it reuses `parseServedSectionData`; the defa
 `{}` guard; the client's query keys, calls and save body with the locale; the switch, the
 language banner and the state marks (where they sit, what they say, how a disabled language
 shows); the server's non-default write rule (the English shared values and row set, words by
-row `id`); the seeding and the save rule of R2 and R5 with react-hook-form (`values`,
+row `id`, the completeness check and the `isActive` it writes) and the `draft` state; the seeding and the save rule of R2 and R5 with react-hook-form (`values`,
 `isDirty`, the word check, the key), lists included; the reference mechanism and how a form
 that is not a list form receives it; the SB-80 lock and its reconciliation; the "Clear
 translation" flow; the "Translate" link; how an unparsable stored row is presented; the
