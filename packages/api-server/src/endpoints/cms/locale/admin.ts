@@ -1,49 +1,66 @@
 import { Prisma } from "@prisma/client";
 
 import {
+  type AdminLocaleListItem,
   type CreateLocaleData,
   DEFAULT_LOCALE_CODE,
   type Locale,
   type LocaleCode,
+  type ReorderLocalesData,
   type UpdateLocaleData,
 } from "@repo/contracts/cms/locale";
 import { BadRequestError, ConflictError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
+import { TX_BUDGET_DEFAULT } from "../../../db/transaction-config";
 import { mapToLocale } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { EMPTY_SECTION_DATA } from "../pages/page-sections";
 
+import { isCatalogPermutation } from "./catalog-permutation";
 import { assertAdminLocale, ensureDefaultLocale, LOCALE_ORDER } from "./locale-access";
+import { lockLocaleOrder } from "./locale-order-lock";
+import { countServedSections } from "./translation-progress";
 
 const translatedSectionsWhere = (code: LocaleCode): Prisma.MarketingPageSectionWhereInput => ({
   locale: code,
   NOT: { data: { equals: EMPTY_SECTION_DATA } },
 });
 
+const listLocales = async (): Promise<AdminLocaleListItem[]> => {
+  await ensureDefaultLocale();
+
+  const [locales, sectionRows] = await Promise.all([
+    prisma.marketingLocale.findMany({ orderBy: LOCALE_ORDER }),
+    prisma.marketingPageSection.findMany({
+      where: { isActive: true },
+      select: { locale: true, pageSlug: true, section: true, data: true },
+    }),
+  ]);
+  const servedCounts = countServedSections(sectionRows);
+
+  return locales.map((locale) => ({
+    ...mapToLocale(locale),
+    translatedSectionCount: servedCounts.get(locale.code) ?? 0,
+  }));
+};
+
 export const cmsLocaleAdminApi = {
-  getLocales: async (): Promise<Locale[]> => {
-    await ensureDefaultLocale();
-
-    const locales = await prisma.marketingLocale.findMany({ orderBy: LOCALE_ORDER });
-
-    return locales.map(mapToLocale);
-  },
+  getLocales: listLocales,
 
   createLocale: async (data: CreateLocaleData): Promise<Locale> => {
     await ensureDefaultLocale();
 
-    const { _max } = await prisma.marketingLocale.aggregate({ _max: { sortOrder: true } });
-
     try {
-      const locale = await prisma.marketingLocale.create({
-        data: {
-          code: data.code,
-          name: data.name,
-          isEnabled: false,
-          sortOrder: (_max.sortOrder ?? 0) + 1,
-        },
-      });
+      const locale = await prisma.$transaction(async (tx) => {
+        await lockLocaleOrder(tx);
+
+        const sortOrder = await tx.marketingLocale.count();
+
+        return tx.marketingLocale.create({
+          data: { code: data.code, name: data.name, isEnabled: false, sortOrder },
+        });
+      }, TX_BUDGET_DEFAULT);
 
       return mapToLocale(locale);
     } catch (error) {
@@ -64,11 +81,42 @@ export const cmsLocaleAdminApi = {
         data: {
           ...(data.name !== undefined && { name: data.name }),
           ...(data.isEnabled !== undefined && { isEnabled: data.isEnabled }),
-          ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
         },
       });
 
       return mapToLocale(locale);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Locale", field: "code" });
+    }
+  },
+
+  reorderLocales: async ({ orderedCodes }: ReorderLocalesData): Promise<AdminLocaleListItem[]> => {
+    try {
+      await prisma.$transaction(async (tx) => {
+        await lockLocaleOrder(tx);
+
+        const catalog = await tx.marketingLocale.findMany({
+          where: { code: { not: DEFAULT_LOCALE_CODE } },
+          select: { code: true },
+        });
+
+        if (
+          !isCatalogPermutation(
+            catalog.map(({ code }) => code),
+            orderedCodes,
+          )
+        ) {
+          throw new ConflictError(
+            "The languages have changed since this list was loaded; reload it and try again",
+          );
+        }
+
+        for (const [index, code] of orderedCodes.entries()) {
+          await tx.marketingLocale.update({ where: { code }, data: { sortOrder: index + 1 } });
+        }
+      }, TX_BUDGET_DEFAULT);
+
+      return listLocales();
     } catch (error) {
       return handlePrismaError(error, { entity: "Locale", field: "code" });
     }
@@ -93,12 +141,19 @@ export const cmsLocaleAdminApi = {
     }
 
     try {
-      await prisma.$transaction([
-        prisma.marketingPageSection.deleteMany({
+      await prisma.$transaction(async (tx) => {
+        await lockLocaleOrder(tx);
+        await tx.marketingPageSection.deleteMany({
           where: { locale: code, data: { equals: EMPTY_SECTION_DATA } },
-        }),
-        prisma.marketingLocale.delete({ where: { code } }),
-      ]);
+        });
+
+        const removed = await tx.marketingLocale.delete({ where: { code } });
+
+        await tx.marketingLocale.updateMany({
+          where: { sortOrder: { gt: removed.sortOrder } },
+          data: { sortOrder: { decrement: 1 } },
+        });
+      }, TX_BUDGET_DEFAULT);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
         throw new ConflictError(

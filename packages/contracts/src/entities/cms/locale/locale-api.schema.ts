@@ -6,6 +6,7 @@ import {
   localeCodeSchema,
   localeSchema,
   publicLocaleSchema,
+  reorderLocalesSchema,
   updateLocaleSchema,
 } from "./locale.schema";
 
@@ -15,10 +16,18 @@ export const localeQuerySchema = z.object({
   locale: localeCodeSchema.default(DEFAULT_LOCALE_CODE),
 });
 
-export const getLocalesResponseSchema = z.array(localeSchema);
+export const adminLocaleListItemSchema = localeSchema.extend({
+  translatedSectionCount: z.number().int().nonnegative(),
+});
+
+export const getLocalesResponseSchema = z.array(adminLocaleListItemSchema);
 
 export const createLocaleRequestSchema = createLocaleSchema;
 
 export const updateLocaleRequestSchema = updateLocaleSchema;
+
+export const reorderLocalesRequestSchema = reorderLocalesSchema;
+
+export const reorderLocalesResponseSchema = getLocalesResponseSchema;
 
 export const getPublicLocalesResponseSchema = z.array(publicLocaleSchema);

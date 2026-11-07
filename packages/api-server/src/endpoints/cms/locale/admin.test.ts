@@ -32,8 +32,7 @@ import { refusalOf } from "./__fixtures__/lock-race";
 import { cmsLocaleAdminApi } from "./admin";
 import { cmsLocalePublicApi } from "./public";
 
-const ORDERED_CODES = [DEFAULT_LOCALE_CODE, UKRAINIAN.code, GERMAN.code, CATALAN.code, FRENCH.code];
-const LAST_SORT_ORDER = FRENCH.sortOrder;
+const ORDERED_CODES = [DEFAULT_LOCALE_CODE, UKRAINIAN.code, GERMAN.code, FRENCH.code, CATALAN.code];
 const POLISH = { code: "pl", name: "Polski" };
 const TRANSLATED_SECTION_COUNTS = [1, 2];
 
@@ -68,11 +67,26 @@ describe("cmsLocaleAdminApi", () => {
   });
 
   describe("getLocales", () => {
-    it("returns every locale ordered by sortOrder then code", async () => {
+    it("returns every locale in catalog order", async () => {
       const locales = await cmsLocaleAdminApi.getLocales();
 
       expect(locales.map((locale) => locale.code)).toEqual(ORDERED_CODES);
       expect(getLocalesResponseSchema.parse(locales)).toEqual(locales);
+    });
+
+    it("breaks a sortOrder tie by code", async () => {
+      await cleanupRaw.marketingLocale.update({
+        where: { code: CATALAN.code },
+        data: { sortOrder: FRENCH.sortOrder },
+      });
+
+      expect((await cmsLocaleAdminApi.getLocales()).map((locale) => locale.code)).toEqual([
+        DEFAULT_LOCALE_CODE,
+        UKRAINIAN.code,
+        GERMAN.code,
+        CATALAN.code,
+        FRENCH.code,
+      ]);
     });
 
     it("marks the default locale and only the default locale as default", async () => {
@@ -94,8 +108,8 @@ describe("cmsLocaleAdminApi", () => {
   });
 
   describe("createLocale", () => {
-    it("creates a disabled locale ordered after the current last one", async () => {
-      const expected = { ...POLISH, isEnabled: false, sortOrder: LAST_SORT_ORDER + 1 };
+    it("creates a disabled locale at the end of the catalog", async () => {
+      const expected = { ...POLISH, isEnabled: false, sortOrder: ORDERED_CODES.length };
 
       const created = await cmsLocaleAdminApi.createLocale(POLISH);
 
@@ -133,8 +147,8 @@ describe("cmsLocaleAdminApi", () => {
   });
 
   describe("updateLocale", () => {
-    it("updates the name, the enabled flag and the sort order", async () => {
-      const changes = { name: "Ukrainian", isEnabled: false, sortOrder: 7 };
+    it("updates the name and the enabled flag", async () => {
+      const changes = { name: "Ukrainian", isEnabled: false };
 
       const updated = await cmsLocaleAdminApi.updateLocale(UKRAINIAN.code, changes);
 
@@ -143,9 +157,9 @@ describe("cmsLocaleAdminApi", () => {
     });
 
     it("keeps the fields an update omits", async () => {
-      await cmsLocaleAdminApi.updateLocale(UKRAINIAN.code, { sortOrder: 5 });
+      await cmsLocaleAdminApi.updateLocale(UKRAINIAN.code, { name: "Ukrainian" });
 
-      expect(await readLocale(UKRAINIAN.code)).toMatchObject({ ...UKRAINIAN, sortOrder: 5 });
+      expect(await readLocale(UKRAINIAN.code)).toMatchObject({ ...UKRAINIAN, name: "Ukrainian" });
     });
 
     it("refuses to disable the default locale with BadRequestError and leaves it enabled", async () => {
@@ -175,13 +189,13 @@ describe("cmsLocaleAdminApi", () => {
       expect(await readLocale(DEFAULT_LOCALE_CODE)).toMatchObject({ isEnabled: true });
     });
 
-    it("renames and reorders the default locale", async () => {
-      const changes = { name: "English (UK)", sortOrder: 9 };
+    it("renames the default locale and keeps it first", async () => {
+      const changes = { name: "English (UK)" };
 
       const updated = await cmsLocaleAdminApi.updateLocale(DEFAULT_LOCALE_CODE, changes);
 
-      expect(updated).toMatchObject({ ...changes, isEnabled: true, isDefault: true });
-      expect(await readLocale(DEFAULT_LOCALE_CODE)).toMatchObject(changes);
+      expect(updated).toMatchObject({ ...changes, isEnabled: true, isDefault: true, sortOrder: 0 });
+      expect(await readLocale(DEFAULT_LOCALE_CODE)).toMatchObject({ ...changes, sortOrder: 0 });
     });
 
     it("refuses an unknown code with NotFoundError", async () => {
