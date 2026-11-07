@@ -28,13 +28,17 @@ import { useNavigate } from "./use-navigate";
 type LocaleUpdate = { code: string; data: UpdateLocaleRequest };
 type LocaleToggle = { code: string; isEnabled: boolean };
 
+const localesListQuery = {
+  queryKey: adminKeys.locales.list(),
+  queryFn: () => api.locales.list(),
+};
+
 export const useLocales = (): UseQueryResult<AdminLocaleListItem[], Error> =>
-  useQuery({ queryKey: adminKeys.locales.list(), queryFn: api.locales.list });
+  useQuery({ ...localesListQuery });
 
 export const useLocale = (code: string): UseQueryResult<AdminLocaleListItem | undefined, Error> =>
   useQuery({
-    queryKey: adminKeys.locales.list(),
-    queryFn: api.locales.list,
+    ...localesListQuery,
     select: (locales) => locales.find((locale) => locale.code === code),
   });
 

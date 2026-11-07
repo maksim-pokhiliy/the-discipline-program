@@ -8,13 +8,7 @@ import { ConflictError, NotFoundError, ValidationError } from "@repo/errors";
 import { api } from "@app/lib/api";
 import { render } from "@app/test/render";
 
-import {
-  ENGLISH,
-  makeLanguage,
-  makePendingRequest,
-  POLISH,
-  UKRAINIAN,
-} from "../../languages.fixtures";
+import { ENGLISH, makeLanguage, makePending, POLISH, UKRAINIAN } from "../../languages.fixtures";
 
 import { LanguagesListSection } from "./index";
 
@@ -113,7 +107,7 @@ describe("LanguagesListSection", () => {
   });
 
   it("keeps every move focusable and guarded during a reorder", async () => {
-    const pending = makePendingRequest();
+    const pending = makePending<void>();
 
     vi.mocked(api.locales.reorder).mockImplementationOnce(async () => {
       await pending.promise;
@@ -161,7 +155,7 @@ describe("LanguagesListSection", () => {
   );
 
   it("keeps the pending switch focusable and guarded while other rows remain available", async () => {
-    const pending = makePendingRequest();
+    const pending = makePending<void>();
 
     vi.mocked(api.locales.update).mockReturnValueOnce(pending.promise);
     render(<LanguagesListSection locales={CATALOG} />);
@@ -189,8 +183,8 @@ describe("LanguagesListSection", () => {
   });
 
   it("keeps the first row guarded after another row finishes its overlapping toggle", async () => {
-    const ukrainian = makePendingRequest();
-    const polish = makePendingRequest();
+    const ukrainian = makePending<void>();
+    const polish = makePending<void>();
 
     vi.mocked(api.locales.update)
       .mockReturnValueOnce(ukrainian.promise)

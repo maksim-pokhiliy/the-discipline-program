@@ -22,7 +22,7 @@ export const adminKeys = {
   },
 
   locales: {
-    list: () => [...ROOT, "locales", "list"],
+    list: () => [...ROOT, "locales", "list"] as const,
   },
 
   pages: {

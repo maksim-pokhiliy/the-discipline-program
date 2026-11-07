@@ -3,19 +3,14 @@ import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type AdminLocaleListItem } from "@repo/contracts/cms/locale";
 import { ConflictError } from "@repo/errors";
 
 import { api } from "@app/lib/api";
 import { adminKeys } from "@app/lib/api/keys";
 import { render } from "@app/test/render";
 
-import {
-  ENGLISH,
-  makeLanguage,
-  makePendingCatalog,
-  POLISH,
-  UKRAINIAN,
-} from "../../languages.fixtures";
+import { ENGLISH, makeLanguage, makePending, POLISH, UKRAINIAN } from "../../languages.fixtures";
 
 import { LanguagesListView } from "./index";
 
@@ -114,8 +109,8 @@ describe("LanguagesListView reconciliation", () => {
   it.each(["toggle", "delete"])(
     "reconciles a delayed reorder snapshot after a newer %s refetch",
     async (operation) => {
-      const reorder = makePendingCatalog();
-      const reconciliation = makePendingCatalog();
+      const reorder = makePending<AdminLocaleListItem[]>();
+      const reconciliation = makePending<AdminLocaleListItem[]>();
       const current =
         operation === "toggle"
           ? [ENGLISH, POLISH, { ...UKRAINIAN, isEnabled: true }]
@@ -173,9 +168,9 @@ describe("LanguagesListView reconciliation", () => {
   );
 
   it("suppresses an older in-flight GET that ignores cancellation and completes after reconciliation", async () => {
-    const older = makePendingCatalog();
-    const reorder = makePendingCatalog();
-    const reconciliation = makePendingCatalog();
+    const older = makePending<AdminLocaleListItem[]>();
+    const reorder = makePending<AdminLocaleListItem[]>();
+    const reconciliation = makePending<AdminLocaleListItem[]>();
     const current = [ENGLISH, POLISH, { ...UKRAINIAN, isEnabled: true }];
 
     vi.mocked(api.locales.list)

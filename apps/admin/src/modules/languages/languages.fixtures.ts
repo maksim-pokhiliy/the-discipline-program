@@ -36,27 +36,18 @@ export const INVALID_LANGUAGE_NAMES = [
   },
 ];
 
-type PendingCatalog = {
-  promise: Promise<AdminLocaleListItem[]>;
-  resolve: (locales: AdminLocaleListItem[]) => void;
+type Pending<TValue extends void | AdminLocaleListItem[]> = {
+  promise: Promise<TValue>;
+  resolve: (value: TValue) => void;
 };
 
-export const makePendingCatalog = (): PendingCatalog => {
-  let resolve = (_locales: AdminLocaleListItem[]): void => undefined;
-  const promise = new Promise<AdminLocaleListItem[]>((finish) => {
+export const makePending = <TValue extends void | AdminLocaleListItem[]>(): Pending<TValue> => {
+  let resolve: Pending<TValue>["resolve"] = () => {
+    throw new Error("Pending promise was not initialized");
+  };
+  const promise = new Promise<TValue>((finish) => {
     resolve = finish;
   });
 
-  return { promise, resolve: (locales) => resolve(locales) };
-};
-
-type PendingRequest = { promise: Promise<void>; resolve: () => void };
-
-export const makePendingRequest = (): PendingRequest => {
-  let resolve = (): void => undefined;
-  const promise = new Promise<void>((finish) => {
-    resolve = finish;
-  });
-
-  return { promise, resolve: () => resolve() };
+  return { promise, resolve };
 };
