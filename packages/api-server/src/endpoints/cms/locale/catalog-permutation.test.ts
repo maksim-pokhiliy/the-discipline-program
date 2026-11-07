@@ -22,6 +22,10 @@ describe("isCatalogPermutation", () => {
     expect(isCatalogPermutation(CATALOG, ["uk", "de", "de"])).toBe(false);
   });
 
+  it("refuses a complete catalog with an additional duplicate", () => {
+    expect(isCatalogPermutation(CATALOG, ["uk", "de", "fr", "fr"])).toBe(false);
+  });
+
   it("accepts two empty lists", () => {
     expect(isCatalogPermutation([], [])).toBe(true);
   });
