@@ -8,6 +8,7 @@ import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
 import LabelOutlined from "@mui/icons-material/LabelOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import StarBorderOutlined from "@mui/icons-material/StarBorderOutlined";
+import TranslateOutlined from "@mui/icons-material/TranslateOutlined";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import ViewModuleOutlined from "@mui/icons-material/ViewModuleOutlined";
 import WebOutlined from "@mui/icons-material/WebOutlined";
@@ -18,6 +19,7 @@ const icons = {
   reviews: StarBorderOutlined,
   blog: ArticleOutlined,
   pages: WebOutlined,
+  languages: TranslateOutlined,
   contacts: ContactMailOutlined,
   exercises: FitnessCenterOutlined,
   labels: LabelOutlined,
