@@ -5,8 +5,8 @@ import { DEFAULT_LOCALE_CODE, LOCALE_CONSTANTS, RESERVED_LOCALE_CODES } from "./
 import {
   createLocaleSchema,
   localeCodeSchema,
-  localeSchema,
   publicLocaleSchema,
+  reorderLocalesSchema,
   updateLocaleSchema,
 } from "./locale.schema";
 
@@ -27,14 +27,9 @@ const ACCEPTED_CODES = ["en", "uk", "crh"];
 
 const REFUSED_CODES = ["EN", "uk-UA", "u", "ukr1", "", "uk1", "uk/", " uk", "uk ", "üb", "ук"];
 
-const REFUSED_SORT_ORDERS = [-1, 1.5, LOCALE_CONSTANTS.MAX_SORT_ORDER + 1];
-
-const ACCEPTED_SORT_ORDERS = [0, LOCALE_CONSTANTS.MAX_SORT_ORDER];
-
 const SINGLE_FIELD_UPDATES: [string, Record<string, unknown>][] = [
   ["name", { name: "Ukrainian" }],
   ["isEnabled", { isEnabled: false }],
-  ["sortOrder", { sortOrder: 3 }],
 ];
 
 describe("localeCodeSchema", () => {
@@ -42,8 +37,13 @@ describe("localeCodeSchema", () => {
     expect(localeCodeSchema.safeParse(code).success).toBe(true);
   });
 
-  it.each(REFUSED_CODES)("refuses %j", (code) => {
-    expect(localeCodeSchema.safeParse(code).success).toBe(false);
+  it.each(REFUSED_CODES)("refuses %j with the code rule message", (code) => {
+    const result = localeCodeSchema.safeParse(code);
+
+    expect(result.success).toBe(false);
+    expect(
+      result.error?.issues.every((issue) => issue.message === "Use two or three lowercase letters"),
+    ).toBe(true);
   });
 });
 
@@ -125,20 +125,33 @@ describe("updateLocaleSchema", () => {
     expect(updateLocaleSchema.safeParse({ code: "de" }).success).toBe(false);
   });
 
-  it.each(REFUSED_SORT_ORDERS)("refuses a sort order of %s", (sortOrder) => {
-    expect(updateLocaleSchema.safeParse({ sortOrder }).success).toBe(false);
-  });
-
-  it.each(ACCEPTED_SORT_ORDERS)("accepts a sort order of %s", (sortOrder) => {
-    expect(updateLocaleSchema.safeParse({ sortOrder }).success).toBe(true);
+  it("refuses sortOrder as an unknown key", () => {
+    expect(updateLocaleSchema.safeParse({ sortOrder: 1 }).success).toBe(false);
   });
 });
 
-describe("localeSchema", () => {
-  it("accepts a sort order above the input maximum", () => {
-    const sortOrder = LOCALE_CONSTANTS.MAX_SORT_ORDER + 1;
+describe("reorderLocalesSchema", () => {
+  it.each([
+    ["uk", "de"],
+    ["de", "uk"],
+  ])("accepts non-default codes in order %j", (...orderedCodes) => {
+    expect(reorderLocalesSchema.parse({ orderedCodes })).toEqual({ orderedCodes });
+  });
 
-    expect(localeSchema.safeParse({ ...LOCALE_ROW, sortOrder }).success).toBe(true);
+  it.each([
+    ["empty", []],
+    ["duplicate", ["uk", "uk"]],
+    ["default", ["en", "uk"]],
+    ["malformed", ["UK"]],
+    ["reserved", ["faq"]],
+  ])("refuses a %s list", (_name, orderedCodes) => {
+    expect(reorderLocalesSchema.safeParse({ orderedCodes }).success).toBe(false);
+  });
+
+  it("refuses an unknown key", () => {
+    expect(reorderLocalesSchema.safeParse({ orderedCodes: ["uk"], extra: true }).success).toBe(
+      false,
+    );
   });
 });
 

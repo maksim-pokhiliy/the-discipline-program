@@ -1,20 +1,20 @@
 import { z } from "zod";
 
-import { LOCALE_CONSTANTS, RESERVED_LOCALE_CODES } from "./locale.constants";
+import { DEFAULT_LOCALE_CODE, LOCALE_CONSTANTS, RESERVED_LOCALE_CODES } from "./locale.constants";
+
+const LOCALE_CODE_RULE_MESSAGE = "Use two or three lowercase letters";
 
 export const localeCodeSchema = z
   .string()
-  .min(LOCALE_CONSTANTS.MIN_CODE_LENGTH)
-  .max(LOCALE_CONSTANTS.MAX_CODE_LENGTH)
-  .regex(LOCALE_CONSTANTS.CODE_PATTERN)
+  .min(LOCALE_CONSTANTS.MIN_CODE_LENGTH, LOCALE_CODE_RULE_MESSAGE)
+  .max(LOCALE_CONSTANTS.MAX_CODE_LENGTH, LOCALE_CODE_RULE_MESSAGE)
+  .regex(LOCALE_CONSTANTS.CODE_PATTERN, LOCALE_CODE_RULE_MESSAGE)
   .refine(
     (code) => !RESERVED_LOCALE_CODES.includes(code),
     (code) => ({ message: `The locale code "${code}" is reserved by a path of the site` }),
   );
 
 const localeNameSchema = z.string().trim().min(1).max(LOCALE_CONSTANTS.MAX_NAME_LENGTH);
-
-const localeSortOrderSchema = z.number().int().nonnegative().max(LOCALE_CONSTANTS.MAX_SORT_ORDER);
 
 export const localeSchema = z.object({
   code: localeCodeSchema,
@@ -37,9 +37,22 @@ export const updateLocaleSchema = z
   .object({
     name: localeNameSchema,
     isEnabled: z.boolean(),
-    sortOrder: localeSortOrderSchema,
   })
   .partial()
+  .strict();
+
+export const reorderLocalesSchema = z
+  .object({
+    orderedCodes: z
+      .array(localeCodeSchema)
+      .min(1)
+      .refine((codes) => new Set(codes).size === codes.length, {
+        message: "orderedCodes must be unique",
+      })
+      .refine((codes) => !codes.includes(DEFAULT_LOCALE_CODE), {
+        message: "orderedCodes must not include the default locale",
+      }),
+  })
   .strict();
 
 export const publicLocaleSchema = localeSchema.pick({ code: true, name: true });

@@ -26,8 +26,8 @@ import { cmsLocalePublicApi } from "./public";
 const ENABLED_LOCALES = [
   { code: DEFAULT_LOCALE_CODE, name: DEFAULT_LOCALE_NAME },
   { code: UKRAINIAN.code, name: UKRAINIAN.name },
-  { code: CATALAN.code, name: CATALAN.name },
   { code: FRENCH.code, name: FRENCH.name },
+  { code: CATALAN.code, name: CATALAN.name },
 ];
 
 describe("cmsLocalePublicApi", () => {
@@ -47,7 +47,7 @@ describe("cmsLocalePublicApi", () => {
   });
 
   describe("getEnabledLocales", () => {
-    it("returns the enabled locales as code and name only, ordered by sortOrder then code", async () => {
+    it("returns the enabled locales as code and name only, ordered by sortOrder", async () => {
       const locales = await cmsLocalePublicApi.getEnabledLocales();
 
       expect(locales).toEqual(ENABLED_LOCALES);
