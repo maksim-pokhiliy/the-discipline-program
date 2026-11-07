@@ -3,6 +3,7 @@ export { createContactsAPI } from "./contacts";
 export { createDashboardAPI } from "./dashboard";
 export { createExercisesAPI } from "./exercises";
 export { createLabelsAPI } from "./labels";
+export { createLocalesAPI } from "./locales";
 export { createPagesAPI } from "./pages";
 export { createProfileAxesAPI } from "./profile-axes";
 export { createProductsAPI } from "./products";

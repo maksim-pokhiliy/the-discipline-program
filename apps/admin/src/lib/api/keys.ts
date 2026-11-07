@@ -21,6 +21,10 @@ export const adminKeys = {
     coaches: () => [...ROOT, "users-coaches"] as const,
   },
 
+  locales: {
+    list: () => [...ROOT, "locales", "list"] as const,
+  },
+
   pages: {
     list: () => [...ROOT, "pages", "list"] as const,
     bySlug: (slug: string) => [...ROOT, "pages", slug] as const,

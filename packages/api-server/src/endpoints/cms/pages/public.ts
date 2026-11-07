@@ -1,5 +1,4 @@
 import { type Prisma } from "@prisma/client";
-import { type z } from "zod";
 
 import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
@@ -14,7 +13,6 @@ import {
   type SectionSchemaKey,
   PageSlug,
   PAGE_SECTIONS_MAP,
-  SECTION_SCHEMAS,
 } from "@repo/contracts/cms/pages";
 
 import { prisma } from "../../../db/client";
@@ -23,14 +21,12 @@ import { mapToReview, mapToProduct } from "../../../mappers/cms";
 import { cmsBlogPublicApi } from "../blog/public";
 import { assertPublicLocale } from "../locale/locale-access";
 
+import { parseServedSectionData, type SectionData } from "./page-sections";
+
 const HOME_PAGE_PRODUCTS_LIMIT = 6;
 const HOME_PAGE_REVIEWS_LIMIT = 12;
 
 type SectionRow = { section: string; locale: string; data: Prisma.JsonValue };
-
-type SectionData<TKey extends SectionSchemaKey> = z.infer<
-  ReturnType<(typeof SECTION_SCHEMAS)[TKey]["deepPartial"]>
->;
 
 type SectionPicker = <TKey extends SectionSchemaKey>(sectionName: TKey) => SectionData<TKey> | null;
 
@@ -44,10 +40,10 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
     return null;
   }
 
-  const result = SECTION_SCHEMAS[sectionName].deepPartial().safeParse(section.data);
+  const parse = parseServedSectionData(sectionName, section.data);
 
-  if (!result.success) {
-    defaultMonitoring.captureException(result.error, {
+  if (parse.kind === "invalid") {
+    defaultMonitoring.captureException(parse.error, {
       level: "warning",
       tags: { area: "cms.pages.public", section: sectionName, locale: section.locale },
       extra: { rawData: section.data },
@@ -56,13 +52,7 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
     return null;
   }
 
-  const parsed = result.data as SectionData<TKey>;
-
-  if (Object.keys(parsed).length === 0) {
-    return null;
-  }
-
-  return parsed;
+  return parse.kind === "served" ? parse.data : null;
 };
 
 const localeChain = (locale: LocaleCode): LocaleCode[] =>
