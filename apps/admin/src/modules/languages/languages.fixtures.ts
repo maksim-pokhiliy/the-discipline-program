@@ -1,4 +1,4 @@
-import { type AdminLocaleListItem } from "@repo/contracts/cms/locale";
+import { LOCALE_CONSTANTS, type AdminLocaleListItem } from "@repo/contracts/cms/locale";
 
 const FIXTURE_DATE = new Date("2026-11-07T12:00:00.000Z");
 
@@ -25,6 +25,30 @@ export const ENGLISH = makeLanguage({
 });
 export const UKRAINIAN = makeLanguage();
 export const POLISH = makeLanguage({ code: "pl", name: "Polski", sortOrder: 2 });
+
+export const INVALID_LANGUAGE_NAMES = [
+  { kind: "empty", name: "", message: "String must contain at least 1 character(s)" },
+  { kind: "whitespace-only", name: "   ", message: "String must contain at least 1 character(s)" },
+  {
+    kind: "over-limit",
+    name: "x".repeat(LOCALE_CONSTANTS.MAX_NAME_LENGTH + 1),
+    message: `String must contain at most ${LOCALE_CONSTANTS.MAX_NAME_LENGTH} character(s)`,
+  },
+];
+
+type PendingCatalog = {
+  promise: Promise<AdminLocaleListItem[]>;
+  resolve: (locales: AdminLocaleListItem[]) => void;
+};
+
+export const makePendingCatalog = (): PendingCatalog => {
+  let resolve = (_locales: AdminLocaleListItem[]): void => undefined;
+  const promise = new Promise<AdminLocaleListItem[]>((finish) => {
+    resolve = finish;
+  });
+
+  return { promise, resolve: (locales) => resolve(locales) };
+};
 
 type PendingRequest = { promise: Promise<void>; resolve: () => void };
 

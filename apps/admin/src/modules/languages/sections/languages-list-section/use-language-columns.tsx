@@ -1,4 +1,3 @@
-import { type AdminLocaleListItem } from "@repo/contracts/cms/locale";
 import { type Column } from "@repo/ui";
 
 import {
@@ -13,9 +12,7 @@ import {
 } from "../../components";
 
 type LanguageColumnsOptions = {
-  pendingToggleCode: string | undefined;
   isReordering: boolean;
-  onToggle: (language: AdminLocaleListItem) => void;
   onMove: (code: string, direction: MoveDirection) => void;
   onDelete: (code: string) => void;
 };
@@ -46,13 +43,7 @@ export const useLanguageColumns = (options: LanguageColumnsOptions): Column<Lang
     id: "status",
     label: "Status",
     width: "18%",
-    render: (language) => (
-      <LanguageStatusCell
-        language={language}
-        isPending={options.pendingToggleCode === language.code}
-        onToggle={options.onToggle}
-      />
-    ),
+    render: (language) => <LanguageStatusCell language={language} />,
   },
   {
     id: "order",

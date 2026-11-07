@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,7 +6,7 @@ import { api } from "@app/lib/api";
 import { clickButton, typeInto } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
-import { ENGLISH, UKRAINIAN } from "../../languages.fixtures";
+import { ENGLISH, INVALID_LANGUAGE_NAMES, UKRAINIAN } from "../../languages.fixtures";
 
 import { LanguagesEditForm } from "./languages-edit-form";
 
@@ -33,7 +33,7 @@ describe("LanguagesEditForm", () => {
 
   it("submits the name alone and toasts on success", async () => {
     render(<LanguagesEditForm language={UKRAINIAN} />);
-    typeInto("Name", "Ukrainian");
+    typeInto("Name", " Ukrainian ");
     clickButton("Save changes");
 
     await waitFor(() =>
@@ -45,4 +45,19 @@ describe("LanguagesEditForm", () => {
       expect(toast.success).toHaveBeenCalledWith("Language updated successfully"),
     );
   });
+
+  it.each(INVALID_LANGUAGE_NAMES)(
+    "refuses a $kind name on its field",
+    async ({ name, message }) => {
+      render(<LanguagesEditForm language={UKRAINIAN} />);
+      typeInto("Name", name);
+      await act(async () => {
+        clickButton("Save changes");
+      });
+
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toHaveAttribute("aria-invalid", "true");
+      expect(api.locales.update).not.toHaveBeenCalled();
+    },
+  );
 });

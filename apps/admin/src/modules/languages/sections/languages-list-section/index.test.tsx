@@ -86,14 +86,16 @@ describe("LanguagesListSection", () => {
     );
   });
 
-  it("keeps edge moves focusable and sends no request when they are clicked", () => {
+  it("keeps edge moves focusable and sends no request when they are clicked", async () => {
     render(<LanguagesListSection locales={CATALOG} />);
 
     for (const name of [`Move ${UKRAINIAN.name} up`, `Move ${POLISH.name} down`]) {
       const control = screen.getByRole("button", { name });
 
       expectFocusableUnavailable(control);
-      fireEvent.click(control);
+      await act(async () => {
+        fireEvent.click(control);
+      });
       expect(control).toHaveFocus();
     }
 
@@ -131,7 +133,9 @@ describe("LanguagesListSection", () => {
 
     for (const control of screen.getAllByRole("button", { name: /^Move / })) {
       expectFocusableUnavailable(control);
-      fireEvent.click(control);
+      await act(async () => {
+        fireEvent.click(control);
+      });
     }
 
     expect(api.locales.reorder).toHaveBeenCalledTimes(1);
@@ -139,6 +143,8 @@ describe("LanguagesListSection", () => {
       pending.resolve();
       await pending.promise;
     });
+    await waitFor(() => expect(focused).toHaveAttribute("aria-disabled", "false"));
+    expect(api.locales.reorder).toHaveBeenCalledTimes(1);
   });
 
   it("toggles only the selected row and toasts on success", async () => {
@@ -165,7 +171,9 @@ describe("LanguagesListSection", () => {
     fireEvent.click(control);
     await waitFor(() => expect(control).toHaveAttribute("aria-disabled", "true"));
     expectFocusableUnavailable(control);
-    fireEvent.click(control);
+    await act(async () => {
+      fireEvent.click(control);
+    });
     expect(api.locales.update).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText(`Enable ${POLISH.name}`)).toHaveAttribute(
       "aria-disabled",
@@ -175,6 +183,50 @@ describe("LanguagesListSection", () => {
       pending.resolve();
       await pending.promise;
     });
+    await waitFor(() => expect(control).toHaveAttribute("aria-disabled", "false"));
+    expect(api.locales.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the first row guarded after another row finishes its overlapping toggle", async () => {
+    const ukrainian = makePendingRequest();
+    const polish = makePendingRequest();
+
+    vi.mocked(api.locales.update)
+      .mockReturnValueOnce(ukrainian.promise)
+      .mockReturnValueOnce(polish.promise);
+    render(<LanguagesListSection locales={CATALOG} />);
+
+    const first = screen.getByLabelText(`Enable ${UKRAINIAN.name}`);
+    const second = screen.getByLabelText(`Enable ${POLISH.name}`);
+
+    await act(async () => {
+      fireEvent.click(first);
+    });
+    await waitFor(() => expect(first).toHaveAttribute("aria-disabled", "true"));
+    await act(async () => {
+      fireEvent.click(second);
+    });
+    await waitFor(() => expect(second).toHaveAttribute("aria-disabled", "true"));
+    await act(async () => {
+      polish.resolve();
+      await polish.promise;
+    });
+    await waitFor(() => expect(second).toHaveAttribute("aria-disabled", "false"));
+    expectFocusableUnavailable(first);
+    await act(async () => {
+      fireEvent.click(first);
+    });
+    expect(api.locales.update).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.locales.update).mock.calls).toEqual([
+      [UKRAINIAN.code, { isEnabled: true }],
+      [POLISH.code, { isEnabled: true }],
+    ]);
+    await act(async () => {
+      ukrainian.resolve();
+      await ukrainian.promise;
+    });
+    await waitFor(() => expect(first).toHaveAttribute("aria-disabled", "false"));
+    expect(api.locales.update).toHaveBeenCalledTimes(2);
   });
 
   it.each([true, false])(
@@ -230,6 +282,27 @@ describe("LanguagesListSection", () => {
       expect(toast.success).toHaveBeenCalledWith("Language deleted successfully"),
     );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("clears a removed row's delete failure before confirming another language", async () => {
+    vi.mocked(api.locales.delete).mockRejectedValueOnce(
+      new NotFoundError("Previous language no longer exists"),
+    );
+
+    const { rerender } = render(<LanguagesListSection locales={CATALOG} />);
+
+    click(`Delete ${UKRAINIAN.name}`);
+    click("Delete");
+    expect(await screen.findByText("Previous language no longer exists")).toBeInTheDocument();
+    rerender(<LanguagesListSection locales={[ENGLISH, POLISH]} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await act(async () => {
+      click(`Delete ${POLISH.name}`);
+    });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.queryByText("Previous language no longer exists")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(api.locales.delete).toHaveBeenCalledExactlyOnceWith(UKRAINIAN.code);
   });
 
   it("explains a stale reorder and invalidates the list instead of showing the server message", async () => {

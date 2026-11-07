@@ -1,15 +1,14 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createLocaleRequestSchema } from "@repo/contracts/cms/locale";
 import { ConflictError, ValidationError } from "@repo/errors";
 
 import { api } from "@app/lib/api";
 import { clickButton, typeInto } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
-import { UKRAINIAN } from "../../languages.fixtures";
+import { INVALID_LANGUAGE_NAMES, UKRAINIAN } from "../../languages.fixtures";
 
 import { LanguagesCreateView } from "./index";
 
@@ -96,19 +95,34 @@ describe("LanguagesCreateView", () => {
     expect(screen.getByLabelText("Code")).toHaveAttribute("aria-invalid", "false");
   });
 
-  it("submits only the code and trimmed name accepted by the request schema and toasts", async () => {
+  it.each(INVALID_LANGUAGE_NAMES)(
+    "refuses a $kind name on its field",
+    async ({ name, message }) => {
+      render(<LanguagesCreateView />);
+      fill();
+      typeInto("Name", name);
+      await act(async () => {
+        clickButton("Create");
+      });
+
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toHaveAttribute("aria-invalid", "true");
+      expect(api.locales.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it("submits only the code and trimmed name and toasts", async () => {
     render(<LanguagesCreateView />);
     fill();
     typeInto("Name", ` ${UKRAINIAN.name} `);
     clickButton("Create");
 
-    await waitFor(() => expect(api.locales.create).toHaveBeenCalledTimes(1));
-
-    const payload = createLocaleRequestSchema.parse(
-      vi.mocked(api.locales.create).mock.calls[0]?.[0],
+    await waitFor(() =>
+      expect(api.locales.create).toHaveBeenCalledExactlyOnceWith({
+        code: UKRAINIAN.code,
+        name: UKRAINIAN.name,
+      }),
     );
-
-    expect(payload).toEqual({ code: UKRAINIAN.code, name: UKRAINIAN.name });
     await waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith("Language created successfully"),
     );

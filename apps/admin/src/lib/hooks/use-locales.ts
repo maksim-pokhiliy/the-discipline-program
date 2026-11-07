@@ -89,9 +89,10 @@ export const useReorderLocales = (): UseMutationResult<
 
   return useMutation({
     mutationFn: api.locales.reorder,
-    onSuccess: (locales) => {
+    onSuccess: async (locales) => {
       queryClient.setQueryData(adminKeys.locales.list(), locales);
       toast.success("Languages reordered");
+      await queryClient.invalidateQueries({ queryKey: adminKeys.locales.list() });
     },
     onError: (error) => {
       if (error instanceof ConflictError) {
