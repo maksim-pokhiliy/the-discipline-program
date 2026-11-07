@@ -22,7 +22,7 @@ Ukrainian, each page with its progress; he opens Home, and the whole screen says
 editing Ukrainian (and that the language is hidden from the site while it is disabled);
 every section shows, before he opens it, whether it is not translated, translated, or older
 than its English; he opens the hero: its words are empty with the English text beside each
-field, its links and image already taken from English (D-24); he writes the words, saves,
+field, its links and image the English ones, read-only (D-24); he writes the words, saves,
 and the section turns translated; "Clear translation" returns a section to the English
 fallback.
 
@@ -49,8 +49,8 @@ One delivery PR, these deliverables:
 Not yours: the six list forms (`why-choose-section-form.tsx`, `journey-section-form.tsx`,
 `credentials-section-form.tsx`, `faq-section-form.tsx`, `offer-requisites-section-form.tsx`,
 `offer-terms-section-form.tsx`, with `why-choose-feature-card.tsx` and `row-controls.ts`),
-the English reference inside them, the shared list editor and the list controls' focus
-(0.4d3b: SB-83, SB-82); product translations (0.4c, 0.4e); the marketing site reading
+the English reference inside them, the shared list editor, its structure controls shown in
+English only, and the list controls' focus (0.4d3b: SB-83, SB-82); product translations (0.4c, 0.4e); the marketing site reading
 locales and localizing internal links (0.4f, SB-89).
 
 ## Read before planning
@@ -154,12 +154,17 @@ updatedAt }] }` in the page's section order, each `data` parsed with
   years, everything not listed below) or **shared** (never language-dependent: links, image
   URLs, icon names, row ids). The registry lives in the contracts package beside
   `SECTION_SCHEMAS`, and a test walks every schema and fails on a field that is not
-  classified. In a non-default locale a section that is not translated opens with its shared
-  fields taken from English (editable: a coach may set a language-specific link or image) and
-  its words empty, the English shown beside each. "Update Section" is enabled only when every
-  word whose English counterpart is non-empty is filled; in a list the counterpart is the
-  English row with the same `id`, and a row without one needs its words filled. A translated
-  section opens with its own row. Rationale: "translated" then means every word written in the
+  classified. In a non-default locale the shared part of a section is read-only and always
+  the current English (D-24 amended the same day, owner «да, принимаю»): its shared fields
+  and, for a list, its structure (the rows, their ids, their order; rows are added, removed
+  and moved in English only). The server writes every non-default save from the English row:
+  the English shared values and row set, the locale's own words matched by row `id` (a word
+  of a row English no longer has is dropped). A section that is not translated opens with its
+  words empty, the English shown beside each. "Update Section" is enabled only when every word
+  whose English counterpart is non-empty is filled. A translated section opens with its own
+  words and the current English shared values. In this step the six list forms keep their add,
+  remove and move controls in every locale (0.4d3b removes them outside English); a structure
+  change made there in a non-default locale is not saved, by the server rule above. Rationale: "translated" then means every word written in the
   language, the count the coach reads stays the reader's own predicate (one notion, SB-55's
   lesson), and no link or image is lost to the per-section fallback (D-21).
 - **R3 — one notion of "translated", owned by the server.** A section's state in a locale
@@ -176,13 +181,14 @@ updatedAt }] }` in the page's section order, each `data` parsed with
   carries each section's English `data` and `updatedAt` beside the locale's own row, in one
   request. The forms that are not list forms render the English value of every word beside
   its input, read-only (the brief's task 2: a text field, a long text area); the English
-  reference of a shared field shows what was taken. One mechanism serves every form (the
+  shared fields render read-only with their English values. One mechanism serves every form (the
   editor provides the reference, the field renders it); no per-form copy of the logic.
 - **R5 — the stale mark.** An `English newer` section opens with its own row and the
   current English beside each word; "Update Section" is enabled without an edit there, so the
-  coach can confirm a translation that still holds, which clears the mark. Shared fields are
-  copied at save: a later English change to a link or image reaches the locale when the coach
-  saves it again, and the stale mark is the signal.
+  coach can confirm a translation that still holds, which clears the mark and, by R2's
+  server rule, writes the current English links, images and list rows. Until that save the
+  locale's page shows the previous ones; the stale mark is the signal (SB-90 records the
+  automatic alternative, not this step's).
 - **R6 — saves carry the locale; English is never written by accident.** Every read and
   write of the editor names its locale: the query key, the client call, the save body. A save
   from the Ukrainian editor writes `uk` and nothing else; switching the language while a form
@@ -280,8 +286,11 @@ reaches CMS through `@repo/contracts/cms/*` and its own route handlers) · migra
   never touches the English cache (mutant: the locale dropped from the body or the key); a
   not-translated section opens with its shared fields from English and its words empty, and
   "Update Section" stays disabled until every word with a non-empty English counterpart is
-  filled (mutant: the word check removed); a list section in a non-default locale follows the
-  same rule by row `id`; an `English newer` section saves without an edit; the English value
+  filled (mutant: the word check removed); a non-default write is stored with the English shared values and
+  row set whatever the body says (a changed link or image, an extra row, a reordered list),
+  the locale's words kept by row `id` (mutant: the server rule removed); the shared fields of
+  a form that is not a list form are read-only in a non-default locale; an `English newer`
+  section saves without an edit and its saved row carries the current English image; the English value
   shows beside a word of a form that is not a list form; a dirty form does not survive a
   language switch; the save lock holds across leaving and returning to the editor during a
   save (SB-80); "Clear translation" sends exactly `{}` after its confirmation; the English row
@@ -295,12 +304,13 @@ reaches CMS through `@repo/contracts/cms/*` and its own route handlers) · migra
   - [ ] Open Home in Ukrainian: the screen says Ukrainian everywhere and that the language is
         hidden from the site; every section is marked not translated
   - [ ] Open the Home hero: the words are empty with the English beside each, the link and
-        the background image are already the English ones; Update Section stays unavailable
+        the background image are the English ones and cannot be changed here; Update Section stays unavailable
         until every word is written
   - [ ] Write the words, Update Section: the section turns translated, Home's count on Pages
         grows by one; reload: it persists; switch to English: the English hero is unchanged
-  - [ ] Change the English hero title and save; back in Ukrainian the hero is marked older
-        than its English; Update Section without an edit clears the mark
+  - [ ] Change the English hero title and background image and save; back in Ukrainian the
+        hero is marked older than its English; Update Section without an edit clears the
+        mark, and the Ukrainian hero now shows the new image
   - [ ] Clear translation on the hero after the confirmation: it is not translated again;
         the Languages progress drops by one
   - [ ] Type in a Ukrainian field, switch the language without saving: nothing typed reaches
@@ -347,7 +357,8 @@ TypeScript (the state, the English reference, the count, the SB-76 typing, the S
 where the state is computed and how it reuses `parseServedSectionData`; the default-locale
 `{}` guard; the client's query keys, calls and save body with the locale; the switch, the
 language banner and the state marks (where they sit, what they say, how a disabled language
-shows); the seeding and the save rule of R2 and R5 with react-hook-form (`values`,
+shows); the server's non-default write rule (the English shared values and row set, words by
+row `id`); the seeding and the save rule of R2 and R5 with react-hook-form (`values`,
 `isDirty`, the word check, the key), lists included; the reference mechanism and how a form
 that is not a list form receives it; the SB-80 lock and its reconciliation; the "Clear
 translation" flow; the "Translate" link; how an unparsable stored row is presented; the
