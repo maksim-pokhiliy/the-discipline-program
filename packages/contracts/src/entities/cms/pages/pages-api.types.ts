@@ -1,8 +1,11 @@
 import { type z } from "zod";
 
+import { type LocaleCode } from "../locale";
+
 import {
   type adminPageListItemSchema,
   type adminPageDetailsSchema,
+  type adminPageSectionSchema,
   type getPageBySlugParamsSchema,
   type pageSlugRouteParamsSchema,
   type updatePageSectionBodySchema,
@@ -22,17 +25,16 @@ import { type SectionSchemaKey } from "./pages.types";
 
 export type AdminPageListItem = z.infer<typeof adminPageListItemSchema>;
 export type AdminPageDetails = z.infer<typeof adminPageDetailsSchema>;
+export type AdminPageSection = z.infer<typeof adminPageSectionSchema>;
+export type AdminSectionTranslation = NonNullable<AdminPageSection["translation"]>;
 export type UpdatePageSectionBody = z.input<typeof updatePageSectionBodySchema>;
 export type UpdatePageSectionData = z.input<typeof updatePageSectionSchema>;
+export type LocalizedSectionWriteBody = UpdatePageSectionBody & { locale: LocaleCode };
 
 type SectionSchemas = typeof SECTION_SCHEMAS;
 
 export type SectionWriteData = {
   [TKey in SectionSchemaKey]: z.input<ReturnType<SectionSchemas[TKey]["deepPartial"]>>;
-};
-
-type SectionReadData = {
-  [TKey in SectionSchemaKey]: z.output<ReturnType<SectionSchemas[TKey]["deepPartial"]>>;
 };
 
 export type SectionWriteBody<TKey extends SectionSchemaKey = SectionSchemaKey> = {
@@ -42,17 +44,6 @@ export type SectionWriteBody<TKey extends SectionSchemaKey = SectionSchemaKey> =
     locale?: UpdatePageSectionBody["locale"];
   };
 }[TKey];
-
-export type AdminPageSection<TKey extends SectionSchemaKey = SectionSchemaKey> = {
-  [TSection in TKey]: Omit<AdminPageDetails["sections"][number], "section" | "data"> & {
-    section: TSection;
-    data: SectionReadData[TSection];
-  };
-}[TKey];
-
-export type CorrelatedAdminPageDetails = Omit<AdminPageDetails, "sections"> & {
-  sections: AdminPageSection[];
-};
 
 export type HomePageData = z.infer<typeof getHomePageResponseSchema>;
 export type StorefrontProgramsPageData = z.infer<typeof getStorefrontProgramsPageResponseSchema>;

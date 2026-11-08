@@ -8,4 +8,5 @@ export * from "./language-name-cell";
 export * from "./language-order";
 export * from "./language-path-cell";
 export * from "./language-status-cell";
+export * from "./language-translation-cell";
 export * from "./translation-progress";

@@ -5,3 +5,4 @@ export * from "./pages-api.schema";
 export * from "./pages-api.types";
 export * from "./marketing-page-path";
 export * from "./section-defaults";
+export * from "./section-field-kinds";

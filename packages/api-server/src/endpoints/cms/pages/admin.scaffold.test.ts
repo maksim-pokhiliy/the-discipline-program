@@ -20,6 +20,7 @@ import {
 } from "./__fixtures__/marketing-pages-state";
 import { FULL_SECTION_DATA } from "./__fixtures__/section-data";
 import { cmsPagesAdminApi } from "./admin";
+import { scaffoldSectionData } from "./page-sections";
 
 type ScaffoldRow = { section: string; data: unknown };
 
@@ -143,13 +144,27 @@ describe("cmsPagesAdminApi — the scaffold and the English defaults", () => {
   );
 
   it.each(NON_DEFAULT_LOCALES)(
-    "writes nothing to English when it scaffolds a %s page",
+    "scaffolds the English rows of pages opened in %s and keeps the locale deletable",
     async (locale) => {
       await scaffoldEveryPage(locale);
 
+      for (const slug of Object.values(PageSlug)) {
+        expect(await readScaffold(slug, DEFAULT_LOCALE_CODE)).toEqual(
+          bySection(
+            Object.values(PAGE_SECTIONS_MAP[slug]).map((section) => ({
+              section,
+              data: scaffoldSectionData(section, DEFAULT_LOCALE_CODE),
+            })),
+          ),
+        );
+      }
+
+      await cmsLocaleAdminApi.deleteLocale(locale);
+
+      expect(await cleanupRaw.marketingLocale.findUnique({ where: { code: locale } })).toBeNull();
       expect(
         await cleanupRaw.marketingPageSection.count({ where: { locale: DEFAULT_LOCALE_CODE } }),
-      ).toBe(0);
+      ).toBe(SECTION_COUNT);
     },
   );
 });

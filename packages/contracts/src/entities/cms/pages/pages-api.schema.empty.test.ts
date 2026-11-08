@@ -345,7 +345,9 @@ describe("pages-api schema empty collections", () => {
           id: "clxxxxxxxxxxxxxxxxxxx",
           section: "home:hero",
           data: {},
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
+          hasUnreadableData: false,
+          translation: null,
         },
       ],
     });

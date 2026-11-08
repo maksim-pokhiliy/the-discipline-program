@@ -6,6 +6,7 @@ import { SECTION_SCHEMAS } from "@repo/contracts/cms/pages";
 import { clickButton, typeInto } from "@app/test/interactions";
 
 import { SECTION_FORMS } from "../../config/section-forms";
+import { ENGLISH_LOCALE } from "../../locale.fixtures";
 import {
   makeSectionRow,
   makeSeoData,
@@ -43,7 +44,14 @@ describe("SectionEditor", () => {
     expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
 
     rerender(
-      <SectionEditor section={row} isExpanded onToggle={vi.fn()} onSave={vi.fn()} isLoading />,
+      <SectionEditor
+        section={row}
+        locale={ENGLISH_LOCALE}
+        isExpanded
+        onToggle={vi.fn()}
+        onSave={vi.fn()}
+        isLoading
+      />,
     );
 
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
@@ -81,6 +89,7 @@ describe("SectionEditor", () => {
     rerender(
       <SectionEditor
         section={makeSectionRow("home:seo", { ...data, title })}
+        locale={ENGLISH_LOCALE}
         isExpanded
         onToggle={vi.fn()}
         onSave={onSave}
@@ -102,6 +111,7 @@ describe("SectionEditor", () => {
     rerender(
       <SectionEditor
         section={makeSectionRow("home:seo", makeSeoData())}
+        locale={ENGLISH_LOCALE}
         isExpanded
         onToggle={vi.fn()}
         onSave={vi.fn()}

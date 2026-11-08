@@ -1,11 +1,12 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type LocaleCode } from "@repo/contracts/cms/locale";
 import {
-  type CorrelatedAdminPageDetails,
+  type AdminPageDetails,
   PageSlug,
   type SectionSchemaKey,
-  type UpdatePageSectionBody,
+  type LocalizedSectionWriteBody,
 } from "@repo/contracts/cms/pages";
 import { QueryProvider } from "@repo/query";
 
@@ -15,18 +16,27 @@ import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
 import { makeTermsData } from "../../list-editor.fixtures";
+import { LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
-  getPageBySlug: vi.fn<(slug: string) => Promise<CorrelatedAdminPageDetails>>(),
-  updateSection: vi.fn<(slug: string, body: UpdatePageSectionBody) => Promise<void>>(),
+  listLocales: vi.fn<typeof Api.api.locales.list>(),
+  getPageBySlug: vi.fn<(slug: string, locale: LocaleCode) => Promise<AdminPageDetails>>(),
+  updateSection: vi.fn<(slug: string, body: LocalizedSectionWriteBody) => Promise<void>>(),
 }));
 const notifications = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
 vi.mock("@app/lib/api", async () => {
   const actual = await vi.importActual<typeof Api>("@app/lib/api");
 
-  return { ...actual, api: { ...actual.api, pages: { ...actual.api.pages, ...endpoints } } };
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      pages: { ...actual.api.pages, ...endpoints },
+      locales: { ...actual.api.locales, list: endpoints.listLocales },
+    },
+  };
 });
 vi.mock("sonner", () => ({ toast: notifications }));
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
@@ -61,6 +71,7 @@ const getSection = (section: SectionSchemaKey) => {
 };
 
 beforeEach(() => {
+  endpoints.listLocales.mockReset().mockResolvedValue(LOCALE_CATALOG);
   endpoints.getPageBySlug.mockReset();
   endpoints.updateSection.mockReset();
   notifications.success.mockReset();
@@ -79,7 +90,7 @@ describe("page section save lifecycle with real query hooks", () => {
   it("excludes native text and list edits throughout PATCH and GET, then becomes clean and unlocked", async () => {
     const data = makeTermsData(["First", "Second"]);
     const patch = makeDeferred<void>();
-    const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const refetch = makeDeferred<AdminPageDetails>();
 
     endpoints.getPageBySlug
       .mockResolvedValueOnce(makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)]))
@@ -101,6 +112,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
     await waitFor(() =>
       expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.OFFER, {
+        locale: "en",
         section: "offer:terms",
         data: saved,
       }),
@@ -160,11 +172,14 @@ describe("page section save lifecycle with real query hooks", () => {
 
     await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.HOME, {
+      locale: "en",
       section: "home:seo",
       data: { ...data, title },
     });
     expect(screen.getByLabelText("Search Result Title")).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
+    );
   });
 
   it("retains a reordered and edited list after PATCH fails and retries the complete body", async () => {
@@ -192,6 +207,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
     await waitFor(() =>
       expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.OFFER, {
+        locale: "en",
         section: "offer:terms",
         data: saved,
       }),
@@ -231,6 +247,7 @@ describe("page section save lifecycle with real query hooks", () => {
     await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
     expect(endpoints.updateSection).toHaveBeenCalledTimes(2);
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.OFFER, {
+      locale: "en",
       section: "offer:terms",
       data: saved,
     });
@@ -245,7 +262,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
   it("keeps every section mounted and unlocks after one failed refresh with production query defaults", async () => {
     const patch = makeDeferred<void>();
-    const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const refetch = makeDeferred<AdminPageDetails>();
     const page = makePage(PageSlug.HOME, [
       makeSectionRow("home:seo", makeSeoData()),
       makeSectionRow("home:reviews", { title: "Stored reviews title" }),
@@ -292,7 +309,7 @@ describe("page section save lifecycle with real query hooks", () => {
     const data = makeSeoData();
     const other = { title: "Stored reviews title", subtitle: "Stored reviews subtitle" };
     const patch = makeDeferred<void>();
-    const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const refetch = makeDeferred<AdminPageDetails>();
 
     endpoints.getPageBySlug
       .mockResolvedValueOnce(
