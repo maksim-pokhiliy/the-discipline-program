@@ -14,12 +14,7 @@ import { LOCALE_PARAM } from "../../config/locale-url";
 
 import { resolveLocaleParam, type EditorLocale } from "./resolve-locale-param";
 
-export {
-  DEFAULT_EDITOR_LOCALE,
-  resolveLocaleParam,
-  type EditorLocale,
-  type LocaleParamResolution,
-} from "./resolve-locale-param";
+export { DEFAULT_EDITOR_LOCALE, type EditorLocale } from "./resolve-locale-param";
 
 type LocaleGateProps = { children: (locale: EditorLocale) => ReactNode };
 
