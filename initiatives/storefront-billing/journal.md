@@ -484,3 +484,11 @@ Round two (a fresh Opus `step-reviewer`, deep, CAPPED because another project's 
 Ruled by the planner: RF-7, RF-8, RF-9 and RF-11 to RF-17 go to the Codex fix leg from `step-0.4d3a-fix-prompt.md`; RF-10 (one sentence of the PR body that claims the English reference in the list sections too) is the planner's; RF-18 → SB-93; RF-21 → SB-94, deferred rather than the reviewer's drop, because the RF-8 fix adds a trigger and 0.4d3b's list editor makes English row changes common; RF-19 → SB-95; RF-27 → SB-96. Dropped for the reviewer's reasons: RF-20, RF-22 to RF-26, RF-28, the breaker's S4 (the English guard refuses only `{}`, design §5.3.5) and S6 (two stored rows sharing an id, which the form never mints).
 
 **Next:** the Codex fix leg, then the planner verification, the owner's browser pass, the merge on his word, the production smoke.
+
+## 2026-11-08 — 0.4d3a: the first fix leg stopped on the planner's expectation, a successor continues (claude)
+
+The Codex fix leg (`gpt-6.1-sol`, `xhigh`, thread `01a1bcca-77b7-72b1-a0be-1eceb28aa8df`) exited 0 with a `blocked` report and no commit. Checked before reading: no `spawn_agent` call in the rollout (the roster INLINE, as a fix leg's must be); the branch at `9a0f2a2c7`, dirty only with the eighteen declared files; its container removed, port 4714 free, no process of it left. It had applied nine items with their tests (targeted admin runs green, 6 files, 144 tests) and stopped on item 4 (RF-11): the fix prompt told it to expect a draft's `data` to equal exactly its written word, while the admin read composes a non-default row with the English row's shared values (D-24), so the measured `data` carried the English link and image too. The leg was right; the expectation was the planner's, written from the reviewer's shorthand without reading the composer.
+
+Ruled: the draft's exact `data` is its word plus the two shared values of `ENGLISH_HERO`; the mutant stays and must be red in both tests. `step-0.4d3a-fix-continue-prompt.md` carries the ruling, the preserved files to inspect one by one, and the run from the battery on; the second fix leg runs it.
+
+**Next:** the second fix leg, then the planner verification, the owner's browser pass, the merge on his word, the production smoke.
