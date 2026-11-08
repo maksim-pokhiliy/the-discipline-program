@@ -13,9 +13,11 @@ import { clickButton, typeInto } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
+import { LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
+  listLocales: vi.fn<typeof Api.api.locales.list>(),
   getPageBySlug: vi.fn<(slug: string, locale: LocaleCode) => Promise<AdminPageDetails>>(),
   updateSection: vi.fn<(slug: string, body: LocalizedSectionWriteBody) => Promise<void>>(),
   uploadImage: vi.fn<typeof Api.api.upload.uploadImage>(),
@@ -34,6 +36,7 @@ vi.mock("@app/lib/api", async () => {
         getPageBySlug: endpoints.getPageBySlug,
         updateSection: endpoints.updateSection,
       },
+      locales: { ...actual.api.locales, list: endpoints.listLocales },
       upload: {
         ...actual.api.upload,
         uploadImage: endpoints.uploadImage,
@@ -48,6 +51,7 @@ vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNe
 const { PagesEditView } = await import("./index");
 
 beforeEach(() => {
+  endpoints.listLocales.mockReset().mockResolvedValue(LOCALE_CATALOG);
   endpoints.getPageBySlug.mockReset();
   endpoints.updateSection.mockReset();
   endpoints.uploadImage.mockReset();

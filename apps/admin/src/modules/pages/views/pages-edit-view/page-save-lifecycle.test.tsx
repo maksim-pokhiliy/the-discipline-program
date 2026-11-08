@@ -16,9 +16,11 @@ import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
 import { makeTermsData } from "../../list-editor.fixtures";
+import { LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
+  listLocales: vi.fn<typeof Api.api.locales.list>(),
   getPageBySlug: vi.fn<(slug: string, locale: LocaleCode) => Promise<AdminPageDetails>>(),
   updateSection: vi.fn<(slug: string, body: LocalizedSectionWriteBody) => Promise<void>>(),
 }));
@@ -27,7 +29,14 @@ const notifications = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("@app/lib/api", async () => {
   const actual = await vi.importActual<typeof Api>("@app/lib/api");
 
-  return { ...actual, api: { ...actual.api, pages: { ...actual.api.pages, ...endpoints } } };
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      pages: { ...actual.api.pages, ...endpoints },
+      locales: { ...actual.api.locales, list: endpoints.listLocales },
+    },
+  };
 });
 vi.mock("sonner", () => ({ toast: notifications }));
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
@@ -62,6 +71,7 @@ const getSection = (section: SectionSchemaKey) => {
 };
 
 beforeEach(() => {
+  endpoints.listLocales.mockReset().mockResolvedValue(LOCALE_CATALOG);
   endpoints.getPageBySlug.mockReset();
   endpoints.updateSection.mockReset();
   notifications.success.mockReset();

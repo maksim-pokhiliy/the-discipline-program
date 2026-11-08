@@ -1,15 +1,17 @@
 import { screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import { PageSlug, updatePageSectionBodySchema } from "@repo/contracts/cms/pages";
 
+import { api } from "@app/lib/api";
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import { PAGE_LABELS } from "../../config/page-labels";
 import { makeTermsData } from "../../list-editor.fixtures";
+import { ENGLISH_LOCALE, LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const { updateSectionMock, updateSectionHookMock } = vi.hoisted(() => {
@@ -45,20 +47,25 @@ const makeOfferPage = () =>
     makeSectionRow("offer:seo", {}),
   ]);
 
+beforeEach(() => {
+  vi.spyOn(api.locales, "list").mockResolvedValue(LOCALE_CATALOG);
+});
+
 afterEach(() => {
+  vi.restoreAllMocks();
   updateSectionMock.mockReset();
   updateSectionHookMock.mockClear();
 });
 
 describe("PagesEditForm", () => {
   it("names the page in the header", () => {
-    render(<PagesEditForm page={makeOfferPage()} />);
+    render(<PagesEditForm locale={ENGLISH_LOCALE} page={makeOfferPage()} />);
 
     expect(screen.getByText(PAGE_LABELS[PageSlug.OFFER])).toBeInTheDocument();
   });
 
   it("renders one accordion per section of the page", () => {
-    render(<PagesEditForm page={makeOfferPage()} />);
+    render(<PagesEditForm locale={ENGLISH_LOCALE} page={makeOfferPage()} />);
 
     ["Offer Hero", "Offer Requisites", "Offer Terms", "Offer SEO"].forEach((name) => {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
@@ -70,7 +77,7 @@ describe("PagesEditForm", () => {
     const title = "Edited fixture offer title";
     const page = makePage(PageSlug.OFFER, [makeSectionRow("offer:hero", data)]);
 
-    render(<PagesEditForm page={page} />);
+    render(<PagesEditForm locale={ENGLISH_LOCALE} page={page} />);
 
     typeInto("Section Title", title);
     clickButton("Update Section");
@@ -87,9 +94,9 @@ describe("PagesEditForm", () => {
   it("clears a populated document and saves only a field touched after an equal empty refresh", async () => {
     const populated = makePage(PageSlug.HOME, [makeSectionRow("home:seo", makeSeoData())]);
     const empty = makePage(PageSlug.HOME, [makeSectionRow("home:seo", {})]);
-    const { rerender } = render(<PagesEditForm page={populated} />);
+    const { rerender } = render(<PagesEditForm locale={ENGLISH_LOCALE} page={populated} />);
 
-    rerender(<PagesEditForm page={empty} />);
+    rerender(<PagesEditForm locale={ENGLISH_LOCALE} page={empty} />);
 
     expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
     expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
@@ -98,7 +105,12 @@ describe("PagesEditForm", () => {
     const title = "Only edited fixture title";
 
     typeInto("Search Result Title", title);
-    rerender(<PagesEditForm page={makePage(PageSlug.HOME, [makeSectionRow("home:seo", {})])} />);
+    rerender(
+      <PagesEditForm
+        locale={ENGLISH_LOCALE}
+        page={makePage(PageSlug.HOME, [makeSectionRow("home:seo", {})])}
+      />,
+    );
 
     expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
     expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
@@ -116,10 +128,15 @@ describe("PagesEditForm", () => {
   it("clears old field-array rows and keeps a new row through an equal empty refresh", async () => {
     const blocks = [{ heading: "Old fixture heading", body: "Old fixture body" }];
     const row = makeSectionRow("offer:terms", { title: "Old fixture title", blocks });
-    const { rerender } = render(<PagesEditForm page={makePage(PageSlug.OFFER, [row])} />);
+    const { rerender } = render(
+      <PagesEditForm locale={ENGLISH_LOCALE} page={makePage(PageSlug.OFFER, [row])} />,
+    );
 
     rerender(
-      <PagesEditForm page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})])} />,
+      <PagesEditForm
+        locale={ENGLISH_LOCALE}
+        page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})])}
+      />,
     );
 
     expect(screen.getByLabelText("Section Title")).toHaveValue("");
@@ -132,7 +149,10 @@ describe("PagesEditForm", () => {
 
     typeInto("Heading", heading);
     rerender(
-      <PagesEditForm page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})])} />,
+      <PagesEditForm
+        locale={ENGLISH_LOCALE}
+        page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})])}
+      />,
     );
 
     expect(screen.getByLabelText("Heading")).toHaveValue(heading);
@@ -150,7 +170,7 @@ describe("PagesEditForm", () => {
 
   it("adopts a populated server list from an empty document and saves an edit against its rows", async () => {
     const empty = makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", {})]);
-    const { rerender } = render(<PagesEditForm page={empty} />);
+    const { rerender } = render(<PagesEditForm locale={ENGLISH_LOCALE} page={empty} />);
 
     expect(screen.queryByLabelText("Heading")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
@@ -158,7 +178,10 @@ describe("PagesEditForm", () => {
     const data = makeTermsData();
 
     rerender(
-      <PagesEditForm page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)])} />,
+      <PagesEditForm
+        locale={ENGLISH_LOCALE}
+        page={makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)])}
+      />,
     );
 
     expect(screen.getByLabelText("Section Title")).toHaveValue(data.title);
@@ -191,11 +214,14 @@ describe("PagesEditForm", () => {
     const title = "Fixture requisites title";
     const items = ["First", "Second"].map((name) => ({ label: name, value: `${name} value` }));
     const populated = makeSectionRow("offer:requisites", { title, items });
-    const { rerender } = render(<PagesEditForm page={makePage(PageSlug.OFFER, [populated])} />);
+    const { rerender } = render(
+      <PagesEditForm locale={ENGLISH_LOCALE} page={makePage(PageSlug.OFFER, [populated])} />,
+    );
 
     expect(screen.getByText("Requisites (2)")).toBeInTheDocument();
     rerender(
       <PagesEditForm
+        locale={ENGLISH_LOCALE}
         page={makePage(PageSlug.OFFER, [makeSectionRow("offer:requisites", { title })])}
       />,
     );
@@ -222,7 +248,9 @@ describe("PagesEditForm", () => {
 
   it("keeps dirty edits when an equal populated document refreshes with a new timestamp", () => {
     const row = makeSectionRow("home:seo", makeSeoData());
-    const { rerender } = render(<PagesEditForm page={makePage(PageSlug.HOME, [row])} />);
+    const { rerender } = render(
+      <PagesEditForm locale={ENGLISH_LOCALE} page={makePage(PageSlug.HOME, [row])} />,
+    );
     const title = "Unsaved fixture title";
 
     typeInto("Search Result Title", title);
@@ -231,7 +259,7 @@ describe("PagesEditForm", () => {
       updatedAt: new Date().toISOString(),
     };
 
-    rerender(<PagesEditForm page={makePage(PageSlug.HOME, [refreshed])} />);
+    rerender(<PagesEditForm locale={ENGLISH_LOCALE} page={makePage(PageSlug.HOME, [refreshed])} />);
 
     expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
     expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();

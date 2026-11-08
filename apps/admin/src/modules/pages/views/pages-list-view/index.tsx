@@ -1,19 +1,13 @@
 "use client";
 
-import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
+import { type ReactElement, Suspense } from "react";
 
-import { AdminListView } from "@app/lib/components/admin-list-view";
-import { usePagesListData } from "@app/lib/hooks";
+import { LocaleGate } from "../../components/locale-gate";
 
-import { PagesListSection } from "../../sections";
+import { PagesListContent } from "./pages-list-content";
 
-export const PagesListView = () => (
-  <AdminListView
-    queryResult={usePagesListData(DEFAULT_LOCALE_CODE)}
-    loadingMessage="Loading pages..."
-    title="Pages"
-    subtitle="Edit content and sections for marketing site pages"
-  >
-    {(pages) => <PagesListSection pages={pages} />}
-  </AdminListView>
+export const PagesListView = (): ReactElement => (
+  <Suspense>
+    <LocaleGate>{(locale) => <PagesListContent locale={locale} />}</LocaleGate>
+  </Suspense>
 );
