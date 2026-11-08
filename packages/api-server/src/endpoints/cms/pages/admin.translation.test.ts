@@ -172,8 +172,14 @@ describe("cmsPagesAdminApi — translating a section", () => {
     it("reopens a draft with its words", async () => {
       await saveHero(UK_HERO_TITLE_ONLY);
 
-      expect(await readAdminHero()).toMatchObject({
-        data: UK_HERO_TITLE_ONLY,
+      const hero = await readAdminHero();
+
+      expect(hero?.data).toEqual({
+        ...UK_HERO_TITLE_ONLY,
+        buttonHref: ENGLISH_HERO.buttonHref,
+        backgroundImage: ENGLISH_HERO.backgroundImage,
+      });
+      expect(hero).toMatchObject({
         translation: { state: SectionTranslationState.DRAFT },
       });
     });
@@ -345,11 +351,14 @@ describe("cmsPagesAdminApi — translating a section", () => {
 
       expect(page.sections.map(({ section }) => section)).toEqual(Object.values(ABOUT));
       expect(page.sections.every(({ translation }) => translation !== null)).toBe(true);
-      expect(page.sections.find(({ section }) => section === ABOUT.hero)).toMatchObject({
-        data: {
-          buttonHref: ENGLISH_HERO.buttonHref,
-          backgroundImage: ENGLISH_HERO.backgroundImage,
-        },
+
+      const hero = page.sections.find(({ section }) => section === ABOUT.hero);
+
+      expect(hero?.data).toEqual({
+        buttonHref: ENGLISH_HERO.buttonHref,
+        backgroundImage: ENGLISH_HERO.backgroundImage,
+      });
+      expect(hero).toMatchObject({
         hasUnreadableData: false,
         translation: {
           state: SectionTranslationState.NOT_TRANSLATED,
