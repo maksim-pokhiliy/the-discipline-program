@@ -19,6 +19,7 @@ import { PagesListView } from "../pages-list-view";
 
 import {
   makeClearedLocaleSeoPage,
+  makeEnglishNewerSeoPage,
   makeLocaleSeoAndHeroPage,
   makeLocaleSeoPage,
   makeLocaleTermsPage,
@@ -224,6 +225,71 @@ describe("page editor in a language with real query hooks", () => {
     expect(title).toHaveValue("Unsaved Ukrainian word");
     expect(screen.queryByText("Failed to load data")).not.toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Page Name" })).toBeInTheDocument();
+    unmount();
+    client.clear();
+  });
+
+  it("refreshes an active Ukrainian page after the English save the coach left pending", async () => {
+    const client = createClient();
+    const patch = makeDeferred<void>();
+    const ukrainianRefresh = makeDeferred<AdminPageDetails>();
+    const englishTitle = "Changed English reference";
+
+    client.setQueryData(adminKeys.locales.list(), LOCALE_CATALOG);
+    client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "uk"), makeLocaleSeoPage("uk"));
+    client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "en"), makeLocaleSeoPage("en"));
+    endpoints.updateSection.mockReturnValueOnce(patch.promise);
+    endpoints.getPageBySlug.mockImplementation((_slug, locale) =>
+      locale === "uk"
+        ? ukrainianRefresh.promise
+        : Promise.resolve(makeLocaleSeoPage("en", englishTitle)),
+    );
+    const editor = (
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.HOME} />
+      </QueryClientProvider>
+    );
+    const { rerender, unmount } = render(editor);
+
+    await screen.findByRole("button", { name: "Home SEO Translated" });
+    setMockNavigation({ search: "" });
+    rerender(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.HOME} />
+      </QueryClientProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Search Result Title")).toHaveValue("en title"),
+    );
+    typeInto("Search Result Title", englishTitle);
+    clickButton("Update Section");
+    await waitFor(() => expect(endpoints.updateSection).toHaveBeenCalledTimes(1));
+    setMockNavigation({ search: "locale=uk" });
+    rerender(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.HOME} />
+      </QueryClientProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Search Result Title")).toHaveValue("uk title"),
+    );
+    expect(endpoints.getPageBySlug).not.toHaveBeenCalled();
+    await act(async () => patch.resolve());
+    await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
+    expect(endpoints.getPageBySlug.mock.calls).toEqual([
+      [PageSlug.HOME, "en"],
+      [PageSlug.HOME, "uk"],
+    ]);
+    await act(async () => ukrainianRefresh.resolve(makeEnglishNewerSeoPage(englishTitle)));
+
+    await screen.findByRole("button", { name: "Home SEO English is newer" });
+    expect(screen.getByLabelText("Search Result Title")).toHaveAccessibleDescription(
+      new RegExp(`^English ${englishTitle}`),
+    );
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    expect(endpoints.getPageBySlug.mock.calls.filter(([, locale]) => locale === "en")).toHaveLength(
+      1,
+    );
     unmount();
     client.clear();
   });

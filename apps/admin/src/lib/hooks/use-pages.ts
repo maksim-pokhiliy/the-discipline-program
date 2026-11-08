@@ -73,6 +73,14 @@ export const useUpdatePageSection = (
         .fetchQuery({ ...pageDetailsQuery(slug, locale), staleTime: 0 })
         .catch(() => undefined);
 
+      if (locale === DEFAULT_LOCALE_CODE) {
+        void queryClient.refetchQueries({
+          queryKey: adminKeys.pages.details(slug),
+          type: "active",
+          predicate: ({ queryKey }) => queryKey.at(-1) !== DEFAULT_LOCALE_CODE,
+        });
+      }
+
       if (locale !== DEFAULT_LOCALE_CODE) {
         void queryClient.invalidateQueries({ queryKey: adminKeys.pages.list(locale) });
         void queryClient.invalidateQueries({ queryKey: adminKeys.locales.list() });

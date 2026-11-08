@@ -48,6 +48,23 @@ export const makeClearedLocaleSeoPage = (locale: LocaleCode): AdminPageDetails =
   locale,
 });
 
+export const makeEnglishNewerSeoPage = (englishTitle: string): AdminPageDetails => ({
+  ...makeLocaleSeoPage("uk"),
+  sections: [
+    makeTranslatedRow(
+      "home:seo",
+      { title: "uk title", description: "uk description" },
+      {
+        state: SectionTranslationState.ENGLISH_NEWER,
+        english: {
+          data: { ...ENGLISH_SEO, title: englishTitle },
+          updatedAt: ENGLISH_UPDATED_AT,
+        },
+      },
+    ),
+  ],
+});
+
 export const makeLocaleSeoAndHeroPage = (): AdminPageDetails => {
   const page = makeLocaleSeoPage("uk");
 
