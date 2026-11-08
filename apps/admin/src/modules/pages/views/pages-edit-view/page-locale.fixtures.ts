@@ -34,6 +34,20 @@ export const makeLocaleSeoPage = (
   return { ...makePage(PageSlug.HOME, [section]), locale };
 };
 
+export const makeClearedLocaleSeoPage = (locale: LocaleCode): AdminPageDetails => ({
+  ...makePage(PageSlug.HOME, [
+    makeTranslatedRow(
+      "home:seo",
+      {},
+      {
+        state: SectionTranslationState.NOT_TRANSLATED,
+        english: { data: ENGLISH_SEO, updatedAt: ENGLISH_UPDATED_AT },
+      },
+    ),
+  ]),
+  locale,
+});
+
 export const makeLocaleTermsPage = (
   locale: LocaleCode,
   title = `${locale} terms`,

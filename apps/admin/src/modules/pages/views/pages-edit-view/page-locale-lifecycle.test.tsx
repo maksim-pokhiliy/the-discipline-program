@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type LocaleCode } from "@repo/contracts/cms/locale";
@@ -17,7 +17,11 @@ import { ENGLISH_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.f
 import { makePageListItem } from "../../pages.fixtures";
 import { PagesListView } from "../pages-list-view";
 
-import { makeLocaleSeoPage, makeLocaleTermsPage } from "./page-locale.fixtures";
+import {
+  makeClearedLocaleSeoPage,
+  makeLocaleSeoPage,
+  makeLocaleTermsPage,
+} from "./page-locale.fixtures";
 
 import { PagesEditView } from "./index";
 
@@ -56,10 +60,13 @@ beforeEach(() => {
   setMockNavigation({ pathname: "/pages/home", search: "locale=uk" });
 });
 
-const prepareSaveRace = (locale: LocaleCode) => {
-  const client = new QueryClient({
+const createClient = (): QueryClient =>
+  new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: STALE_TIMES.THIRTY_SECONDS } },
   });
+
+const prepareSaveRace = (locale: LocaleCode) => {
+  const client = createClient();
   const patch = makeDeferred<void>();
   const beforeWrite = makeDeferred<AdminPageDetails>();
   const refresh = makeDeferred<AdminPageDetails>();
@@ -84,7 +91,94 @@ const expectLockedSeoEditor = (title: string) => {
   expect(notifications.success).not.toHaveBeenCalled();
 };
 
+const prepareTranslationClear = () => {
+  const client = createClient();
+  const english = makeLocaleSeoPage("en");
+  const german = makeLocaleSeoPage("de");
+  const page = { ...makePageListItem(PageSlug.HOME), translatedSectionCount: 1 };
+  const catalog = LOCALE_CATALOG.map((locale) => ({
+    ...locale,
+    translatedSectionCount: locale.code === "uk" ? 1 : 0,
+  }));
+
+  client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "en"), english);
+  client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "de"), german);
+  endpoints.getPageBySlug
+    .mockResolvedValueOnce(makeLocaleSeoPage("uk"))
+    .mockResolvedValue(makeClearedLocaleSeoPage("uk"));
+  endpoints.getPages
+    .mockResolvedValueOnce([page])
+    .mockResolvedValue([{ ...page, translatedSectionCount: 0 }]);
+  endpoints.listLocales.mockResolvedValueOnce(catalog).mockResolvedValue(LOCALE_CATALOG);
+
+  return { client, english, german, catalog };
+};
+
 describe("page editor in a language with real query hooks", () => {
+  it("keeps the Ukrainian editor unavailable while its language catalog loads or fails", async () => {
+    const catalog = makeDeferred<void>();
+
+    endpoints.listLocales.mockImplementationOnce(async () => {
+      await catalog.promise;
+
+      return LOCALE_CATALOG;
+    });
+    render(<PagesEditView slug={PageSlug.HOME} />);
+
+    expect(screen.getByText("Loading languages...")).toBeInTheDocument();
+    expect(endpoints.getPageBySlug).not.toHaveBeenCalled();
+    await act(async () => catalog.reject(new Error("Language catalog unavailable")));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load data");
+    expect(screen.queryByText("Loading languages...")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Update Section" })).not.toBeInTheDocument();
+    expect(endpoints.getPageBySlug).not.toHaveBeenCalled();
+    expect(endpoints.updateSection).not.toHaveBeenCalled();
+  });
+
+  it("clears Ukrainian through the confirmed write and refreshes both counts without changing other languages", async () => {
+    const { client, english, german, catalog } = prepareTranslationClear();
+
+    const { unmount } = render(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.HOME} />
+        <PagesListView />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("1 of 6 translated");
+    await screen.findByLabelText("Search Result Title");
+    expect(client.getQueryData(adminKeys.locales.list())).toEqual(catalog);
+    clickButton("Clear Translation");
+    expect(endpoints.updateSection).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Clear Translation" }),
+    );
+    await waitFor(() =>
+      expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.HOME, {
+        section: "home:seo",
+        data: {},
+        locale: "uk",
+      }),
+    );
+    await screen.findByText("0 of 6 translated");
+    await waitFor(() =>
+      expect(client.getQueryData(adminKeys.locales.list())).toEqual(LOCALE_CATALOG),
+    );
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Translation cleared");
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
+    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Home SEO Not translated" })).toBeInTheDocument();
+    expect(client.getQueryData(adminKeys.pages.detail(PageSlug.HOME, "en"))).toEqual(english);
+    expect(client.getQueryData(adminKeys.pages.detail(PageSlug.HOME, "de"))).toEqual(german);
+    expect(endpoints.getPageBySlug.mock.calls).toEqual([
+      [PageSlug.HOME, "uk"],
+      [PageSlug.HOME, "uk"],
+    ]);
+    unmount();
+    client.clear();
+  });
+
   it.each([ENGLISH_LOCALE, UKRAINIAN_LOCALE])(
     "replaces a pre-write read on returning to the $name editor during a save",
     async ({ code }) => {
