@@ -33,7 +33,7 @@ import { cmsPagesAdminApi } from "./admin";
 
 const ABOUT_HERO = PAGE_SECTIONS_MAP.about.hero;
 const ABOUT_JOURNEY_ROW = { pageSlug: PageSlug.ABOUT, section: PAGE_SECTIONS_MAP.about.journey };
-const REVERSED_SECTION_ID_PREFIX = "reversed-uk-about-section-";
+const REVERSED_SECTION_ID_PREFIX = "creversedukaboutsection";
 const REWRITTEN_UK_ABOUT_HERO = { title: "Про мене, друга редакція" };
 const REWRITTEN_ENGLISH_ABOUT_HERO = { title: "About, second edit" };
 const UK_PARTIAL_JOURNEY = { title: "Мій шлях", timeline: [{ year: "2019" }] };

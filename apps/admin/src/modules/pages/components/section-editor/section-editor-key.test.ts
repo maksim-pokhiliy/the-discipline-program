@@ -36,7 +36,7 @@ describe("getSectionEditorKey", () => {
 
   it("includes the row identity but ignores the timestamp and object identity", () => {
     const row = makeSectionRow("home:seo", makeSeoData());
-    const refreshed = { ...row, data: makeSeoData(), updatedAt: new Date() };
+    const refreshed = { ...row, data: makeSeoData(), updatedAt: new Date().toISOString() };
 
     expect(getSectionEditorKey(refreshed)).toBe(getSectionEditorKey(row));
     expect(getSectionEditorKey({ ...row, id: "another-fixture-row" })).not.toBe(

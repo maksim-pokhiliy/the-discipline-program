@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { type CorrelatedAdminPageDetails } from "@repo/contracts/cms/pages";
+import { type AdminPageDetails } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { useUpdatePageSection } from "@app/lib/hooks";
@@ -12,7 +12,7 @@ import { getSectionEditorKey, SectionEditor } from "../../components/section-edi
 import { PAGE_LABELS } from "../../config/page-labels";
 
 type PagesEditFormProps = {
-  page: CorrelatedAdminPageDetails;
+  page: AdminPageDetails;
 };
 
 export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {

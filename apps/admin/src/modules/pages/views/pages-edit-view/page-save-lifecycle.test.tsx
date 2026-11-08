@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  type CorrelatedAdminPageDetails,
+  type AdminPageDetails,
   PageSlug,
   type SectionSchemaKey,
   type UpdatePageSectionBody,
@@ -18,7 +18,7 @@ import { makeTermsData } from "../../list-editor.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
-  getPageBySlug: vi.fn<(slug: string) => Promise<CorrelatedAdminPageDetails>>(),
+  getPageBySlug: vi.fn<(slug: string) => Promise<AdminPageDetails>>(),
   updateSection: vi.fn<(slug: string, body: UpdatePageSectionBody) => Promise<void>>(),
 }));
 const notifications = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
@@ -79,7 +79,7 @@ describe("page section save lifecycle with real query hooks", () => {
   it("excludes native text and list edits throughout PATCH and GET, then becomes clean and unlocked", async () => {
     const data = makeTermsData(["First", "Second"]);
     const patch = makeDeferred<void>();
-    const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const refetch = makeDeferred<AdminPageDetails>();
 
     endpoints.getPageBySlug
       .mockResolvedValueOnce(makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", data)]))
@@ -245,7 +245,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
   it("keeps every section mounted and unlocks after one failed refresh with production query defaults", async () => {
     const patch = makeDeferred<void>();
-    const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const refetch = makeDeferred<AdminPageDetails>();
     const page = makePage(PageSlug.HOME, [
       makeSectionRow("home:seo", makeSeoData()),
       makeSectionRow("home:reviews", { title: "Stored reviews title" }),
@@ -292,7 +292,7 @@ describe("page section save lifecycle with real query hooks", () => {
     const data = makeSeoData();
     const other = { title: "Stored reviews title", subtitle: "Stored reviews subtitle" };
     const patch = makeDeferred<void>();
-    const refetch = makeDeferred<CorrelatedAdminPageDetails>();
+    const refetch = makeDeferred<AdminPageDetails>();
 
     endpoints.getPageBySlug
       .mockResolvedValueOnce(

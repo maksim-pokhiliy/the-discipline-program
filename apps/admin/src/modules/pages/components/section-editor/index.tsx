@@ -30,7 +30,7 @@ import { SECTION_LABELS } from "../../config/section-labels";
 export { getSectionEditorKey } from "./section-editor-key";
 
 type SectionEditorProps<TKey extends SectionSchemaKey> = {
-  section: AdminPageSection<TKey>;
+  section: Extract<AdminPageSection, { section: TKey }>;
   isExpanded: boolean;
   onToggle: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   onSave: (body: SectionWriteBody<TKey>) => void;

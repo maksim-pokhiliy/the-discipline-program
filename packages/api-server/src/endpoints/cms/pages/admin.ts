@@ -5,6 +5,7 @@ import {
   type AdminPageListItem,
   type AdminPageDetails,
   type UpdatePageSectionData,
+  adminPageDetailsSchema,
   PageSlug,
   SECTION_SCHEMAS,
 } from "@repo/contracts/cms/pages";
@@ -74,6 +75,7 @@ export const cmsPagesAdminApi = {
         slug: p.slug,
         title: p.title,
         updatedAt: p.updatedAt,
+        translatedSectionCount: null,
       }));
   },
 
@@ -105,7 +107,7 @@ export const cmsPagesAdminApi = {
       return aIndex - bIndex;
     });
 
-    return {
+    return adminPageDetailsSchema.parse({
       slug,
       locale,
       sections: sortedSections
@@ -114,9 +116,11 @@ export const cmsPagesAdminApi = {
           id: s.id,
           section: s.section,
           data: SECTION_SCHEMAS[s.section].deepPartial().parse(asJsonRecord(s.data) ?? {}),
-          updatedAt: s.updatedAt,
+          updatedAt: s.updatedAt.toISOString(),
+          hasUnreadableData: false,
+          translation: null,
         })),
-    };
+    });
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {

@@ -216,7 +216,10 @@ describe("PagesEditForm", () => {
     const title = "Unsaved fixture title";
 
     typeInto("Search Result Title", title);
-    const refreshed = { ...row, data: makeSeoData(), updatedAt: new Date() };
+    const refreshed = {
+      ...makeSectionRow("home:seo", makeSeoData()),
+      updatedAt: new Date().toISOString(),
+    };
 
     rerender(<PagesEditForm page={makePage(PageSlug.HOME, [refreshed])} />);
 

@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  type CorrelatedAdminPageDetails,
+  type AdminPageDetails,
   PageSlug,
   type UpdatePageSectionBody,
 } from "@repo/contracts/cms/pages";
@@ -15,7 +15,7 @@ import { makeDeferred } from "../../deferred.fixtures";
 import { makePage, makeSectionRow } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
-  getPageBySlug: vi.fn<(slug: string) => Promise<CorrelatedAdminPageDetails>>(),
+  getPageBySlug: vi.fn<(slug: string) => Promise<AdminPageDetails>>(),
   updateSection: vi.fn<(slug: string, body: UpdatePageSectionBody) => Promise<void>>(),
   uploadImage: vi.fn<typeof Api.api.upload.uploadImage>(),
   deleteImage: vi.fn<typeof Api.api.upload.deleteImage>(),

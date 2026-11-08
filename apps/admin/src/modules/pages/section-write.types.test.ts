@@ -5,7 +5,6 @@ import { describe, expectTypeOf, it } from "vitest";
 import type {
   AdminPageDetails,
   AdminPageSection,
-  CorrelatedAdminPageDetails,
   SectionWriteBody,
   UpdatePageSectionBody,
 } from "@repo/contracts/cms/pages";
@@ -47,8 +46,7 @@ describe("section write types at the admin call sites", () => {
     >();
   });
 
-  it("keep the correlated read row inside the contract row", () => {
-    expectTypeOf<AdminPageSection>().toExtend<AdminPageDetails["sections"][number]>();
-    expectTypeOf<CorrelatedAdminPageDetails>().toExtend<AdminPageDetails>();
+  it("keep the read row equal to the contract row", () => {
+    expectTypeOf<AdminPageSection>().toEqualTypeOf<AdminPageDetails["sections"][number]>();
   });
 });
