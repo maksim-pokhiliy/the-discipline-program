@@ -1,14 +1,22 @@
 import { type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageDetails,
+  adminPageSectionSchema,
   PageSlug,
   SectionTranslationState,
+  type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 
 import { makeTermsData } from "../../list-editor.fixtures";
-import { makePage, makeSectionRow, makeTranslatedRow } from "../../pages.fixtures";
+import {
+  makePage,
+  makeLocalizedSectionRow,
+  makeSectionRow,
+  makeTranslatedRow,
+} from "../../pages.fixtures";
 
 const ENGLISH_SEO = { title: "English title", description: "English description" };
+const ENGLISH_UPDATED_AT = "2026-11-02T09:00:00.000Z";
 
 export const makeLocaleSeoPage = (
   locale: LocaleCode,
@@ -20,7 +28,7 @@ export const makeLocaleSeoPage = (
       ? makeSectionRow("home:seo", data)
       : makeTranslatedRow("home:seo", data, {
           state: SectionTranslationState.TRANSLATED,
-          english: { data: ENGLISH_SEO, updatedAt: "2026-11-02T09:00:00.000Z" },
+          english: { data: ENGLISH_SEO, updatedAt: ENGLISH_UPDATED_AT },
         });
 
   return { ...makePage(PageSlug.HOME, [section]), locale };
@@ -37,8 +45,20 @@ export const makeLocaleTermsPage = (
       ? makeSectionRow("offer:terms", data)
       : makeTranslatedRow("offer:terms", data, {
           state: SectionTranslationState.TRANSLATED,
-          english: { data: english, updatedAt: "2026-11-02T09:00:00.000Z" },
+          english: { data: english, updatedAt: ENGLISH_UPDATED_AT },
         });
 
   return { ...makePage(PageSlug.OFFER, [section]), locale };
 };
+
+export const makeContactDraftPage = (
+  fieldLabels: NonNullable<SectionWriteData["contact:form"]["fieldLabels"]>,
+): AdminPageDetails => ({
+  ...makePage(PageSlug.CONTACT, [
+    adminPageSectionSchema.parse({
+      ...makeLocalizedSectionRow("contact:form", SectionTranslationState.DRAFT),
+      data: { fieldLabels },
+    }),
+  ]),
+  locale: "uk",
+});

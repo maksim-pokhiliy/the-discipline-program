@@ -1,16 +1,19 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type LocaleCode } from "@repo/contracts/cms/locale";
 import { PageSlug, type AdminPageDetails } from "@repo/contracts/cms/pages";
-import { QueryProvider } from "@repo/query";
+import { QueryProvider, STALE_TIMES } from "@repo/query";
 
 import type * as Api from "@app/lib/api";
+import { adminKeys } from "@app/lib/api/keys";
 import { clickButton, typeInto } from "@app/test/interactions";
 import { resetMockNavigation, setMockNavigation } from "@app/test/mocks";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
-import { LOCALE_CATALOG } from "../../locale.fixtures";
+import { ENGLISH_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import { makePageListItem } from "../../pages.fixtures";
 import { PagesListView } from "../pages-list-view";
 
@@ -53,7 +56,78 @@ beforeEach(() => {
   setMockNavigation({ pathname: "/pages/home", search: "locale=uk" });
 });
 
+const prepareSaveRace = (locale: LocaleCode) => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: STALE_TIMES.THIRTY_SECONDS } },
+  });
+  const patch = makeDeferred<void>();
+  const beforeWrite = makeDeferred<AdminPageDetails>();
+  const refresh = makeDeferred<AdminPageDetails>();
+  const queryKey = adminKeys.pages.detail(PageSlug.HOME, locale);
+  const initial = makeLocaleSeoPage(locale);
+  const saved = makeLocaleSeoPage(locale, "Saved title");
+
+  client.setQueryData(queryKey, initial);
+  endpoints.updateSection.mockReturnValueOnce(patch.promise);
+  endpoints.getPageBySlug
+    .mockReturnValueOnce(beforeWrite.promise)
+    .mockReturnValueOnce(refresh.promise);
+  setMockNavigation({ search: locale === ENGLISH_LOCALE.code ? "" : `locale=${locale}` });
+
+  return { client, patch, beforeWrite, refresh, queryKey, initial, saved };
+};
+
+const expectLockedSeoEditor = (title: string) => {
+  expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
+  screen.getAllByRole("textbox").forEach((field) => expect(field).toBeDisabled());
+  expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+  expect(notifications.success).not.toHaveBeenCalled();
+};
+
 describe("page editor in a language with real query hooks", () => {
+  it.each([ENGLISH_LOCALE, UKRAINIAN_LOCALE])(
+    "replaces a pre-write read on returning to the $name editor during a save",
+    async ({ code }) => {
+      const { client, patch, beforeWrite, refresh, queryKey, initial, saved } =
+        prepareSaveRace(code);
+      const editor = (
+        <QueryClientProvider client={client}>
+          <PagesEditView slug={PageSlug.HOME} />
+        </QueryClientProvider>
+      );
+      const { rerender, unmount } = render(editor);
+
+      await screen.findByLabelText("Search Result Title");
+      typeInto("Search Result Title", "Saved title");
+      clickButton("Update Section");
+      await waitFor(() => expect(endpoints.updateSection).toHaveBeenCalledTimes(1));
+      expectLockedSeoEditor("Saved title");
+      rerender(<QueryClientProvider client={client}>Left editor</QueryClientProvider>);
+      await act(async () => {
+        await client.invalidateQueries({ queryKey, exact: true, refetchType: "none" });
+      });
+      rerender(editor);
+      await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(1));
+      expectLockedSeoEditor(`${code} title`);
+      await act(async () => patch.resolve());
+      await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
+      expectLockedSeoEditor(`${code} title`);
+      await act(async () => refresh.resolve(saved));
+      await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeEnabled());
+      expect(screen.getByLabelText("Search Result Title")).toHaveValue("Saved title");
+      expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
+      await act(async () => beforeWrite.resolve(initial));
+      expect(client.getQueryData(queryKey)).toEqual(saved);
+      expect(screen.getByLabelText("Search Result Title")).toHaveValue("Saved title");
+      expect(endpoints.getPageBySlug.mock.calls).toEqual([
+        [PageSlug.HOME, code],
+        [PageSlug.HOME, code],
+      ]);
+      unmount();
+      client.clear();
+    },
+  );
+
   it("reads and saves the Ukrainian page with locale uk and leaves the English page as it was", async () => {
     setMockNavigation({ search: "" });
     const { rerender } = render(

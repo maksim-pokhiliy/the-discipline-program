@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PageSlug } from "@repo/contracts/cms/pages";
@@ -17,6 +17,7 @@ import {
 } from "../../locale.fixtures";
 import { makePage, makeSectionRow, makeLocalizedSectionRow } from "../../pages.fixtures";
 
+import { makeContactDraftPage } from "./page-locale.fixtures";
 import { PagesEditForm } from "./pages-edit-form";
 
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
@@ -91,5 +92,41 @@ describe("PagesEditForm across languages", () => {
       "href",
       "/pages?locale=uk",
     );
+  });
+
+  it("shrinks the label when a same-locale contact draft gains a nested word", async () => {
+    const initial = makeContactDraftPage({ contact: "Contact" });
+    const refreshed = makeContactDraftPage({ contact: "Contact", name: "Name" });
+    const { rerender } = render(<PagesEditForm page={initial} locale={UKRAINIAN_LOCALE} />);
+
+    expect(screen.getByLabelText("Name Field Label")).toHaveValue("");
+    expect(screen.getByText("Name Field Label", { selector: "label" })).toHaveAttribute(
+      "data-shrink",
+      "false",
+    );
+    rerender(<PagesEditForm page={refreshed} locale={UKRAINIAN_LOCALE} />);
+
+    await waitFor(() => expect(screen.getByLabelText("Name Field Label")).toHaveValue("Name"));
+    expect(screen.getByText("Name Field Label", { selector: "label" })).toHaveAttribute(
+      "data-shrink",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+  });
+
+  it("preserves dirty nested edits when an equal draft is refreshed", () => {
+    const initial = makeContactDraftPage({ contact: "Contact" });
+    const { rerender } = render(<PagesEditForm page={initial} locale={UKRAINIAN_LOCALE} />);
+
+    typeInto("Name Field Label", "Unsaved name");
+    rerender(
+      <PagesEditForm
+        page={makeContactDraftPage({ contact: "Contact" })}
+        locale={UKRAINIAN_LOCALE}
+      />,
+    );
+
+    expect(screen.getByLabelText("Name Field Label")).toHaveValue("Unsaved name");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
   });
 });

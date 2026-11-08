@@ -65,6 +65,10 @@ export const useUpdatePageSection = (
         });
       }
 
+      await queryClient.cancelQueries({
+        queryKey: adminKeys.pages.detail(slug, locale),
+        exact: true,
+      });
       await queryClient
         .fetchQuery({ ...pageDetailsQuery(slug, locale), staleTime: 0 })
         .catch(() => undefined);
