@@ -167,7 +167,9 @@ describe("page section save lifecycle with real query hooks", () => {
       data: { ...data, title },
     });
     expect(screen.getByLabelText("Search Result Title")).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
+    );
   });
 
   it("retains a reordered and edited list after PATCH fails and retries the complete body", async () => {

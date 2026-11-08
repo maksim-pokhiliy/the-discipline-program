@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { type MarketingPageSection, Prisma } from "@prisma/client";
 
 import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
@@ -7,25 +7,35 @@ import {
   type UpdatePageSectionData,
   adminPageDetailsSchema,
   PageSlug,
-  SECTION_SCHEMAS,
+  SECTION_FIELD_KINDS,
+  type SectionSchemaKey,
 } from "@repo/contracts/cms/pages";
-import { NotFoundError } from "@repo/errors";
+import { BadRequestError, NotFoundError } from "@repo/errors";
 import { capitalize } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
+import { TX_BUDGET_DEFAULT } from "../../../db/transaction-config";
+import { type TxClient } from "../../../db/tx";
 import { handlePrismaError } from "../../../utils";
-import { asJsonRecord } from "../../../utils/json-record";
-import { assertAdminLocale } from "../locale/locale-access";
+import { assertAdminLocale, ensureDefaultLocale } from "../locale/locale-access";
+import { countServedSectionsByPage } from "../locale/translation-progress";
 
-import { getPageSectionsOrder, scaffoldSectionData } from "./page-sections";
+import {
+  getPageSectionsOrder,
+  isSectionOfPage,
+  lockPageSection,
+  readableSectionData,
+  scaffoldSectionData,
+  sectionTranslationState,
+} from "./page-sections";
+import {
+  composeTranslatedSection,
+  type ComposedSection,
+  overlayWords,
+} from "./section-translation";
 
 const PAGE_SLUGS: ReadonlySet<string> = new Set(Object.values(PageSlug));
-const SECTION_KEYS: ReadonlySet<string> = new Set(Object.keys(SECTION_SCHEMAS));
-
-type SectionKey = keyof typeof SECTION_SCHEMAS;
-
 const isValidPageSlug = (slug: string): slug is PageSlug => PAGE_SLUGS.has(slug);
-const isValidSectionKey = (key: string): key is SectionKey => SECTION_KEYS.has(key);
 
 const ensurePages = async (slugs: readonly PageSlug[]): Promise<void> => {
   await prisma.marketingPage.createMany({
@@ -42,17 +52,22 @@ const handleSectionWriteError = (error: unknown): never => {
   return handlePrismaError(error, { entity: "Page section" });
 };
 
-const ensurePageScaffold = async (slug: PageSlug, locale: LocaleCode): Promise<void> => {
+const ensurePageScaffold = async (
+  slug: PageSlug,
+  locales: readonly LocaleCode[],
+): Promise<void> => {
   await ensurePages([slug]);
 
   try {
     await prisma.marketingPageSection.createMany({
-      data: getPageSectionsOrder(slug).map((section) => ({
-        pageSlug: slug,
-        section,
-        locale,
-        data: scaffoldSectionData(section, locale),
-      })),
+      data: locales.flatMap((locale) =>
+        getPageSectionsOrder(slug).map((section) => ({
+          pageSlug: slug,
+          section,
+          locale,
+          data: scaffoldSectionData(section, locale),
+        })),
+      ),
       skipDuplicates: true,
     });
   } catch (error) {
@@ -60,13 +75,82 @@ const ensurePageScaffold = async (slug: PageSlug, locale: LocaleCode): Promise<v
   }
 };
 
+const toAdminSection = (
+  section: SectionSchemaKey,
+  row: MarketingPageSection,
+  englishRow: MarketingPageSection | undefined,
+) => {
+  const own = readableSectionData(section, row.data);
+  const base = {
+    id: row.id,
+    section,
+    updatedAt: row.updatedAt.toISOString(),
+    hasUnreadableData: !own.isReadable,
+  };
+
+  if (!englishRow) {
+    return { ...base, data: own.data, translation: null };
+  }
+
+  const english = readableSectionData(section, englishRow.data);
+
+  return {
+    ...base,
+    data: overlayWords(SECTION_FIELD_KINDS[section], english.data, own.data),
+    translation: {
+      state: sectionTranslationState(row, englishRow.updatedAt),
+      english: { data: english.data, updatedAt: englishRow.updatedAt.toISOString() },
+    },
+  };
+};
+
+const composeFromEnglish = async (
+  tx: TxClient,
+  payload: UpdatePageSectionData,
+): Promise<ComposedSection> => {
+  const where = {
+    pageSlug: payload.pageSlug,
+    section: payload.section,
+    locale: DEFAULT_LOCALE_CODE,
+  };
+
+  await tx.marketingPageSection.createMany({
+    data: [{ ...where, data: scaffoldSectionData(payload.section, DEFAULT_LOCALE_CODE) }],
+    skipDuplicates: true,
+  });
+
+  const english = await tx.marketingPageSection.findUnique({
+    where: { pageSlug_section_locale: where },
+    select: { data: true },
+  });
+
+  return composeTranslatedSection(
+    payload.section,
+    readableSectionData(payload.section, english?.data ?? null).data,
+    payload.data,
+  );
+};
+
 export const cmsPagesAdminApi = {
-  getPages: async (): Promise<AdminPageListItem[]> => {
+  getPages: async (locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<AdminPageListItem[]> => {
+    const isDefaultLocale = locale === DEFAULT_LOCALE_CODE;
+
+    if (!isDefaultLocale) {
+      await assertAdminLocale(locale);
+    }
+
     await ensurePages(Object.values(PageSlug));
 
-    const pages = await prisma.marketingPage.findMany({
-      orderBy: { slug: "asc" },
-    });
+    const [pages, sectionRows] = await Promise.all([
+      prisma.marketingPage.findMany({ orderBy: { slug: "asc" } }),
+      isDefaultLocale
+        ? []
+        : prisma.marketingPageSection.findMany({
+            where: { locale, isActive: true },
+            select: { pageSlug: true, section: true, data: true },
+          }),
+    ]);
+    const counts = countServedSectionsByPage(sectionRows);
 
     return pages
       .filter((p): p is typeof p & { slug: PageSlug } => isValidPageSlug(p.slug))
@@ -75,7 +159,7 @@ export const cmsPagesAdminApi = {
         slug: p.slug,
         title: p.title,
         updatedAt: p.updatedAt,
-        translatedSectionCount: null,
+        translatedSectionCount: isDefaultLocale ? null : (counts.get(p.slug) ?? 0),
       }));
   },
 
@@ -87,71 +171,74 @@ export const cmsPagesAdminApi = {
       throw new NotFoundError(`Page with slug ${slug} not found`);
     }
 
+    const isDefaultLocale = locale === DEFAULT_LOCALE_CODE;
+
     await assertAdminLocale(locale);
-    await ensurePageScaffold(slug, locale);
 
-    const page = await prisma.marketingPage.findUnique({
-      where: { slug },
-      include: { sections: { where: { locale } } },
-    });
-
-    if (!page) {
-      throw new NotFoundError(`Page with slug ${slug} not found`);
+    if (!isDefaultLocale) {
+      await ensureDefaultLocale();
     }
 
-    const sectionsOrder = getPageSectionsOrder(slug);
-    const sortedSections = [...page.sections].sort((a, b) => {
-      const aIndex = sectionsOrder.indexOf(a.section);
-      const bIndex = sectionsOrder.indexOf(b.section);
+    const locales = isDefaultLocale ? [DEFAULT_LOCALE_CODE] : [DEFAULT_LOCALE_CODE, locale];
 
-      return aIndex - bIndex;
+    await ensurePageScaffold(slug, locales);
+
+    const rows = await prisma.marketingPageSection.findMany({
+      where: { pageSlug: slug, locale: { in: locales } },
+    });
+    const sections = getPageSectionsOrder(slug).flatMap((section) => {
+      const ownRow = rows.find((row) => row.section === section && row.locale === locale);
+      const englishRow = rows.find(
+        (row) => row.section === section && row.locale === DEFAULT_LOCALE_CODE,
+      );
+
+      if (!isSectionOfPage(slug, section) || !ownRow || (!isDefaultLocale && !englishRow)) {
+        return [];
+      }
+
+      return [toAdminSection(section, ownRow, isDefaultLocale ? undefined : englishRow)];
     });
 
-    return adminPageDetailsSchema.parse({
-      slug,
-      locale,
-      sections: sortedSections
-        .filter((s): s is typeof s & { section: SectionKey } => isValidSectionKey(s.section))
-        .map((s) => ({
-          id: s.id,
-          section: s.section,
-          data: SECTION_SCHEMAS[s.section].deepPartial().parse(asJsonRecord(s.data) ?? {}),
-          updatedAt: s.updatedAt.toISOString(),
-          hasUnreadableData: false,
-          translation: null,
-        })),
-    });
+    return adminPageDetailsSchema.parse({ slug, locale, sections });
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {
     const locale = payload.locale ?? DEFAULT_LOCALE_CODE;
+    const isDefaultLocale = locale === DEFAULT_LOCALE_CODE;
 
-    if (!getPageSectionsOrder(payload.pageSlug).includes(payload.section)) {
+    if (!isSectionOfPage(payload.pageSlug, payload.section)) {
       throw new NotFoundError(`Section ${payload.section} for page ${payload.pageSlug} not found`);
     }
 
+    if (isDefaultLocale && Object.keys(payload.data).length === 0) {
+      throw new BadRequestError("An English section cannot be saved empty", {
+        section: payload.section,
+      });
+    }
+
     await assertAdminLocale(locale);
+
+    if (!isDefaultLocale) {
+      await ensureDefaultLocale();
+    }
+
     await ensurePages([payload.pageSlug]);
 
     try {
-      await prisma.marketingPageSection.upsert({
-        where: {
-          pageSlug_section_locale: {
-            pageSlug: payload.pageSlug,
-            section: payload.section,
-            locale,
-          },
-        },
-        create: {
-          pageSlug: payload.pageSlug,
-          section: payload.section,
-          locale,
-          data: structuredClone(payload.data),
-        },
-        update: {
-          data: structuredClone(payload.data),
-        },
-      });
+      await prisma.$transaction(async (tx) => {
+        await lockPageSection(tx, payload.pageSlug, payload.section);
+
+        const row = isDefaultLocale
+          ? { data: structuredClone(payload.data), isActive: true }
+          : await composeFromEnglish(tx, payload);
+        const where = { pageSlug: payload.pageSlug, section: payload.section, locale };
+
+        await tx.marketingPageSection.upsert({
+          where: { pageSlug_section_locale: where },
+          create: { ...where, ...row },
+          update: row,
+        });
+      }, TX_BUDGET_DEFAULT);
     } catch (error) {
       return handleSectionWriteError(error);
     }
