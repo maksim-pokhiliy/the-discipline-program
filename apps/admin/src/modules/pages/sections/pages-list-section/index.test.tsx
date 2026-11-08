@@ -66,6 +66,17 @@ describe("PagesListSection", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
+  it.each([
+    [ENGLISH_LOCALE, ["60%", "30%", null]],
+    [UKRAINIAN_LOCALE, ["40%", "30%", "20%", null]],
+  ] as const)("preserves the column widths in $0.name", (locale, widths) => {
+    render(<PagesListSection pages={SERVER_ORDER.map(makePageListItem)} locale={locale} />);
+
+    expect(screen.getAllByRole("columnheader").map((cell) => cell.getAttribute("width"))).toEqual(
+      widths,
+    );
+  });
+
   it("links every page to its editor in the list's language", () => {
     render(
       <PagesListSection pages={SERVER_ORDER.map(makePageListItem)} locale={UKRAINIAN_LOCALE} />,

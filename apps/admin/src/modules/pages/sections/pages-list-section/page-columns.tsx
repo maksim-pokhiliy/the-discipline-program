@@ -15,6 +15,7 @@ import { pageSectionCount } from "../../config/page-section-count";
 const translationColumn: Column<AdminPageListItem> = {
   id: "translatedSectionCount",
   label: "Translation",
+  width: "30%",
   render: (page) => (
     <PageTranslationProgress
       pageLabel={PAGE_LABELS[page.slug]}
@@ -28,12 +29,14 @@ export const pageColumns = (locale: EditorLocale): Column<AdminPageListItem>[] =
   {
     id: "id",
     label: "Page Name",
+    width: locale.isDefault ? "60%" : "40%",
     render: (page) => <Typography variant="subtitle2">{PAGE_LABELS[page.slug]}</Typography>,
   },
   ...(locale.isDefault ? [] : [translationColumn]),
   {
     id: "updatedAt",
     label: "Last Updated",
+    width: locale.isDefault ? "30%" : "20%",
     render: (page) => (
       <Typography variant="body2">{formatDate(page.updatedAt, "medium")}</Typography>
     ),
