@@ -29,12 +29,8 @@ export const resolveLocaleParam = (
     return { kind: "resolved", locale: DEFAULT_EDITOR_LOCALE };
   }
 
-  if (catalog.isError) {
-    return { kind: "failed" };
-  }
-
   if (catalog.data === undefined) {
-    return { kind: "loading" };
+    return { kind: catalog.isError ? "failed" : "loading" };
   }
 
   const locale = catalog.data.find(({ code }) => code === param);

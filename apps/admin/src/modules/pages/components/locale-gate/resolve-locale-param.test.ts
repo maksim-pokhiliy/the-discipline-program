@@ -38,6 +38,19 @@ describe("resolveLocaleParam", () => {
     });
   });
 
+  it("resolves a cached language when a background catalog refetch fails", () => {
+    expect(resolveLocaleParam("uk", { data: LOCALE_CATALOG, isError: true })).toEqual({
+      kind: "resolved",
+      locale: expect.objectContaining(UKRAINIAN_LOCALE),
+    });
+  });
+
+  it("rejects an unknown language using the cached catalog after a failed refetch", () => {
+    expect(resolveLocaleParam("xx", { data: LOCALE_CATALOG, isError: true })).toEqual({
+      kind: "notFound",
+    });
+  });
+
   it.each(["xx", "UK", "faq", "api", "uk-UA", " uk "])(
     "never falls back to English for %s",
     (param) => {

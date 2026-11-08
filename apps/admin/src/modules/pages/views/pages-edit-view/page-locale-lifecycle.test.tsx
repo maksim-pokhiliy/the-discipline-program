@@ -19,6 +19,7 @@ import { PagesListView } from "../pages-list-view";
 
 import {
   makeClearedLocaleSeoPage,
+  makeLocaleSeoAndHeroPage,
   makeLocaleSeoPage,
   makeLocaleTermsPage,
 } from "./page-locale.fixtures";
@@ -175,6 +176,54 @@ describe("page editor in a language with real query hooks", () => {
       [PageSlug.HOME, "uk"],
       [PageSlug.HOME, "uk"],
     ]);
+    unmount();
+    client.clear();
+  });
+
+  it("keeps cached Ukrainian pages mounted and unsaved words after a save's catalog refetch fails", async () => {
+    const client = createClient();
+    const page = makeLocaleSeoAndHeroPage();
+    const pages = [makePageListItem(PageSlug.HOME)];
+
+    client.setQueryData(adminKeys.locales.list(), LOCALE_CATALOG);
+    client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "uk"), page);
+    client.setQueryData(adminKeys.pages.list("uk"), pages);
+    endpoints.getPageBySlug.mockResolvedValue(page);
+    endpoints.listLocales.mockRejectedValue(new Error("Language catalog unavailable"));
+    const editor = (
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.HOME} />
+        <PagesListView />
+      </QueryClientProvider>
+    );
+    const { rerender, unmount } = render(editor);
+
+    await screen.findByLabelText("Search Result Title");
+    const title = screen.getByLabelText("Search Result Title");
+
+    typeInto("Search Result Title", "Unsaved Ukrainian word");
+    setMockNavigation({ search: "locale=uk&section=home:hero" });
+    rerender(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.HOME} />
+        <PagesListView />
+      </QueryClientProvider>,
+    );
+    typeInto("Title", "Saved Ukrainian hero");
+    const hero = screen.getByRole("region", { name: "Home Hero Translated" });
+
+    fireEvent.click(within(hero).getByRole("button", { name: "Update Section" }));
+    await waitFor(() =>
+      expect(client.getQueryState(adminKeys.locales.list())?.status).toBe("error"),
+    );
+    expect(endpoints.updateSection).toHaveBeenCalledWith(
+      PageSlug.HOME,
+      expect.objectContaining({ section: "home:hero", locale: "uk" }),
+    );
+    expect(screen.getByLabelText("Search Result Title")).toBe(title);
+    expect(title).toHaveValue("Unsaved Ukrainian word");
+    expect(screen.queryByText("Failed to load data")).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Page Name" })).toBeInTheDocument();
     unmount();
     client.clear();
   });

@@ -48,6 +48,12 @@ export const makeClearedLocaleSeoPage = (locale: LocaleCode): AdminPageDetails =
   locale,
 });
 
+export const makeLocaleSeoAndHeroPage = (): AdminPageDetails => {
+  const page = makeLocaleSeoPage("uk");
+
+  return { ...page, sections: [...page.sections, makeLocalizedSectionRow("home:hero")] };
+};
+
 export const makeLocaleTermsPage = (
   locale: LocaleCode,
   title = `${locale} terms`,
