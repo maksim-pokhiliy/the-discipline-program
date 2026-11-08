@@ -9,30 +9,27 @@ type SectionRowForCount = {
   data: Prisma.JsonValue;
 };
 
-export const countServedSections = (
-  rows: readonly SectionRowForCount[],
+const countServedSectionsBy = <TRow extends Omit<SectionRowForCount, "locale">>(
+  rows: readonly TRow[],
+  keyOf: (row: TRow) => string,
 ): ReadonlyMap<string, number> => {
   const counts = new Map<string, number>();
 
   for (const row of rows) {
     if (isServedSectionRow(row)) {
-      counts.set(row.locale, (counts.get(row.locale) ?? 0) + 1);
+      const key = keyOf(row);
+
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
 
   return counts;
 };
+
+export const countServedSections = (
+  rows: readonly SectionRowForCount[],
+): ReadonlyMap<string, number> => countServedSectionsBy(rows, (row) => row.locale);
 
 export const countServedSectionsByPage = (
   rows: readonly Omit<SectionRowForCount, "locale">[],
-): ReadonlyMap<string, number> => {
-  const counts = new Map<string, number>();
-
-  for (const row of rows) {
-    if (isServedSectionRow(row)) {
-      counts.set(row.pageSlug, (counts.get(row.pageSlug) ?? 0) + 1);
-    }
-  }
-
-  return counts;
-};
+): ReadonlyMap<string, number> => countServedSectionsBy(rows, (row) => row.pageSlug);
