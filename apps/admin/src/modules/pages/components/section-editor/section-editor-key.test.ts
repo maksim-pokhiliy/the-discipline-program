@@ -23,6 +23,24 @@ describe("getSectionEditorKey", () => {
     );
   });
 
+  it("gives an empty-string leaf the same key as an absent leaf", () => {
+    const absent = makeSectionRow("home:hero", {});
+    const empty = makeSectionRow("home:hero", { buttonHref: "" });
+
+    expect(getSectionEditorKey(empty, UKRAINIAN_LOCALE.code)).toBe(
+      getSectionEditorKey(absent, UKRAINIAN_LOCALE.code),
+    );
+  });
+
+  it("changes the key when an empty-string leaf gains or loses a value", () => {
+    const empty = makeSectionRow("home:hero", { buttonHref: "" });
+    const populated = makeSectionRow("home:hero", { buttonHref: "/storefront" });
+
+    expect(getSectionEditorKey(populated, UKRAINIAN_LOCALE.code)).not.toBe(
+      getSectionEditorKey(empty, UKRAINIAN_LOCALE.code),
+    );
+  });
+
   it("keeps the key for equal top-level key sets in any order", () => {
     const populated = makeSectionRow("offer:requisites", { title: "Fixture title", items: [] });
     const reordered = { ...populated, data: { items: [], title: "Changed fixture title" } };

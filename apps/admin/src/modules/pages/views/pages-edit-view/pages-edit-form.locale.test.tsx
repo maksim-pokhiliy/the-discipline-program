@@ -80,6 +80,37 @@ describe("PagesEditForm across languages", () => {
     ).toBeInTheDocument();
   });
 
+  it("remounts a cached Ukrainian hero when its empty shared link gains a value", async () => {
+    const row = makeLocalizedSectionRow("home:hero");
+
+    if (row.section !== "home:hero") {
+      throw new Error("Expected a Home hero fixture");
+    }
+
+    const initial = {
+      ...makePage(PageSlug.HOME, [{ ...row, data: { ...row.data, buttonHref: "" } }]),
+      locale: "uk",
+    };
+    const refreshed = {
+      ...makePage(PageSlug.HOME, [{ ...row, data: { ...row.data, buttonHref: "/storefront" } }]),
+      locale: "uk",
+    };
+    const { rerender } = render(<PagesEditForm page={initial} locale={UKRAINIAN_LOCALE} />);
+
+    expect(screen.getByLabelText("Button Link")).toHaveValue("");
+    expect(screen.getByText("Button Link", { selector: "label" })).toHaveAttribute(
+      "data-shrink",
+      "false",
+    );
+    rerender(<PagesEditForm page={refreshed} locale={UKRAINIAN_LOCALE} />);
+
+    await waitFor(() => expect(screen.getByLabelText("Button Link")).toHaveValue("/storefront"));
+    expect(screen.getByText("Button Link", { selector: "label" })).toHaveAttribute(
+      "data-shrink",
+      "true",
+    );
+  });
+
   it("links back to the Pages list in the same language", () => {
     const page = {
       ...makePage(PageSlug.HOME, [makeLocalizedSectionRow("home:seo")]),

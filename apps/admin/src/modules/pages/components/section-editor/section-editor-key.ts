@@ -7,6 +7,10 @@ const getPropertyPaths = (value: unknown, prefix = ""): string[] => {
   }
 
   return Object.entries(value).flatMap(([name, child]) => {
+    if (child === "") {
+      return [];
+    }
+
     const path = prefix ? `${prefix}.${name}` : name;
 
     return [path, ...getPropertyPaths(child, path)];
