@@ -462,3 +462,15 @@ The gate's main finding was the planner's own miss: D-24 says a list row's words
 The planner's rulings: the write rule in a new api-server module (`section-translation.ts`); the contracts schema file split only past `max-lines`; a save with no word written stores exactly `{}` (not a draft), which is how "Clear Translation" writes; the clear on drafts too; the Pages count by the reader's predicate (translated and `English newer`), summing to the Languages count; one PR; two of 27 strings reworded (the banner no longer claims the English beside every field while the list forms lack it; the clear modal no longer says a draft "goes back to English"). D-24 amended; plan rows 0.4d3a (four states) and 0.4d3b (SB-91) updated. Production read (no write) on 2026-11-08: `en` alone, 21 active rows, none `{}`.
 
 **Next:** the docs PR with `step-0.4d3a-implement-prompt.md`, then the Codex implement leg.
+
+## 2026-11-08 — 0.4d3a: the first implement leg stopped on the handoff, a successor continues (claude)
+
+The Codex implement leg (`gpt-6.1-sol`, `xhigh`, thread `01a1bb6b-eb8d-70c0-89e4-b62b1a9c52c1`) exited 0 with a `blocked` report and no PR. Checked before reading: eight `spawn_agent` calls in the rollout, all `pipeline_worker`, matching the reported implement roster (pre-flight inline, the orchestrator's own work); the branch at `6cb7e715c` with three checkpoint commits, waves one to three (T1 to T5, T7 to T11, T14); the tree dirty only with the declared wave-four work (the Pages list route and its test, the partial section editor, the docs); its container removed, port 4714 free, no process left; every changed file inside the fence, none of the six list forms; no host-probe warning, no guard denial.
+
+The block was the planner's: ruling 11 required the six docs sentences of design §8.2 verbatim, and the last sentence of its first item ("Any inactive non-default row reads as a draft in the editor") contradicts the handoff's own superseded line for R3, where a row that fails to parse, an empty row and a row of another page are not translated whatever their flag, which is also what the design's state section, its tests and the committed code say. The leg stopped instead of choosing. Ruled by the planner: the sentence reads "Any inactive non-default row that the reader would otherwise serve reads as a draft in the editor, …"; the code stays; the rows ADR-0045's rollback note hides hold words and stay drafts.
+
+Deviations checked: thirteen `fence` entries, each a pre-granted file of ruling 12 or a direct consumer whose diff carries only the changed types (the lifecycle test: the locale in its mocks and bodies); one `law` entry, the lifecycle retry test's last "Update Section is disabled" assertion wrapped in `waitFor` (the form's reset settles after the toast; the assertion itself unchanged), kept and named for the round-two reviewer.
+
+`step-0.4d3a-implement-continue-prompt.md` carries the amendment, the checkpoints, the preserved files to inspect one by one before building on them, and the resume from `tasks.md`; the successor leg runs it.
+
+**Next:** the successor leg to the delivery PR, then the planner's check of it.
