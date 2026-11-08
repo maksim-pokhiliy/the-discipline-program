@@ -1,3 +1,4 @@
+import { type LocaleCode } from "@repo/contracts/cms/locale";
 import { createEntityKeys } from "@repo/query";
 
 const ROOT = ["admin"] as const;
@@ -26,7 +27,11 @@ export const adminKeys = {
   },
 
   pages: {
-    list: () => [...ROOT, "pages", "list"] as const,
-    bySlug: (slug: string) => [...ROOT, "pages", slug] as const,
+    list: (locale: LocaleCode) => [...ROOT, "pages", "list", locale] as const,
+    details: (slug: string) => [...ROOT, "pages", "detail", slug] as const,
+    detail: (slug: string, locale: LocaleCode) =>
+      [...ROOT, "pages", "detail", slug, locale] as const,
+    sectionSave: (slug: string, locale: LocaleCode) =>
+      [...ROOT, "pages", "save", slug, locale] as const,
   },
 } as const;

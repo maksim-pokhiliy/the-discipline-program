@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import { QueryWrapper } from "@repo/ui";
 
 import { usePageDetails } from "@app/lib/hooks";
@@ -13,7 +14,7 @@ type PagesEditViewProps = {
 };
 
 export const PagesEditView: React.FC<PagesEditViewProps> = ({ slug }) => {
-  const { data, isLoading, error } = usePageDetails(slug);
+  const { data, isLoading, error } = usePageDetails(slug, DEFAULT_LOCALE_CODE);
 
   return (
     <QueryWrapper

@@ -5,6 +5,7 @@ import { describe, expectTypeOf, it } from "vitest";
 import type {
   AdminPageDetails,
   AdminPageSection,
+  LocalizedSectionWriteBody,
   SectionWriteBody,
   UpdatePageSectionBody,
 } from "@repo/contracts/cms/pages";
@@ -17,7 +18,7 @@ import type { SectionEditor } from "./components/section-editor";
 type EndpointBody = Parameters<ReturnType<typeof createPagesAPI>["updateSection"]>[1];
 type HookVariables = Parameters<ReturnType<typeof useUpdatePageSection>["mutate"]>[0];
 type EditorBody = Parameters<ComponentProps<typeof SectionEditor>["onSave"]>[0];
-type ForeignBody = { section: "home:seo"; data: { items: [] } };
+type ForeignBody = { section: "home:seo"; data: { items: [] }; locale: string };
 type MatchedBody = { section: "home:seo"; data: { title: string; description: string } };
 
 describe("section write types at the admin call sites", () => {
@@ -26,7 +27,7 @@ describe("section write types at the admin call sites", () => {
   });
 
   it("reject a payload of another section in the hook variables", () => {
-    expectTypeOf<{ slug: string; body: ForeignBody }>().not.toExtend<HookVariables>();
+    expectTypeOf<ForeignBody>().not.toExtend<HookVariables>();
   });
 
   it("reject a payload of another section in the editor save body", () => {
@@ -34,9 +35,15 @@ describe("section write types at the admin call sites", () => {
   });
 
   it("accept a payload matched to its section at every call site", () => {
-    expectTypeOf<MatchedBody>().toExtend<EndpointBody>();
-    expectTypeOf<{ slug: string; body: MatchedBody }>().toExtend<HookVariables>();
+    expectTypeOf<MatchedBody & { locale: string }>().toExtend<EndpointBody>();
+    expectTypeOf<MatchedBody>().toExtend<HookVariables>();
     expectTypeOf<MatchedBody>().toExtend<EditorBody>();
+  });
+
+  it("requires the locale in the endpoint body and leaves it to the hook at the editor", () => {
+    expectTypeOf<MatchedBody>().not.toExtend<EndpointBody>();
+    expectTypeOf<EndpointBody>().toEqualTypeOf<LocalizedSectionWriteBody>();
+    expectTypeOf<HookVariables>().toEqualTypeOf<SectionWriteBody>();
   });
 
   it("keep the write alias equal to the contract body", () => {

@@ -1,11 +1,12 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageDetails,
   PageSlug,
   type SectionSchemaKey,
-  type UpdatePageSectionBody,
+  type LocalizedSectionWriteBody,
 } from "@repo/contracts/cms/pages";
 import { QueryProvider } from "@repo/query";
 
@@ -18,8 +19,8 @@ import { makeTermsData } from "../../list-editor.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
-  getPageBySlug: vi.fn<(slug: string) => Promise<AdminPageDetails>>(),
-  updateSection: vi.fn<(slug: string, body: UpdatePageSectionBody) => Promise<void>>(),
+  getPageBySlug: vi.fn<(slug: string, locale: LocaleCode) => Promise<AdminPageDetails>>(),
+  updateSection: vi.fn<(slug: string, body: LocalizedSectionWriteBody) => Promise<void>>(),
 }));
 const notifications = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
@@ -101,6 +102,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
     await waitFor(() =>
       expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.OFFER, {
+        locale: "en",
         section: "offer:terms",
         data: saved,
       }),
@@ -160,6 +162,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
     await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.HOME, {
+      locale: "en",
       section: "home:seo",
       data: { ...data, title },
     });
@@ -192,6 +195,7 @@ describe("page section save lifecycle with real query hooks", () => {
 
     await waitFor(() =>
       expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.OFFER, {
+        locale: "en",
         section: "offer:terms",
         data: saved,
       }),
@@ -231,6 +235,7 @@ describe("page section save lifecycle with real query hooks", () => {
     await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
     expect(endpoints.updateSection).toHaveBeenCalledTimes(2);
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.OFFER, {
+      locale: "en",
       section: "offer:terms",
       data: saved,
     });

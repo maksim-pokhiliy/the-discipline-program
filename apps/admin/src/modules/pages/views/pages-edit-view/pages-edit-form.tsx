@@ -3,10 +3,11 @@
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import { type AdminPageDetails } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-import { useUpdatePageSection } from "@app/lib/hooks";
+import { useIsPageSectionSaving, useUpdatePageSection } from "@app/lib/hooks";
 
 import { getSectionEditorKey, SectionEditor } from "../../components/section-editor";
 import { PAGE_LABELS } from "../../config/page-labels";
@@ -16,7 +17,8 @@ type PagesEditFormProps = {
 };
 
 export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
-  const { mutate: updateSection, isPending } = useUpdatePageSection();
+  const { mutate: updateSection } = useUpdatePageSection(page.slug, DEFAULT_LOCALE_CODE);
+  const isSaving = useIsPageSectionSaving(page.slug, DEFAULT_LOCALE_CODE);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -53,8 +55,8 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
             section={section}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
-            onSave={(body) => updateSection({ slug: page.slug, body })}
-            isLoading={isPending}
+            onSave={(body) => updateSection(body)}
+            isLoading={isSaving}
           />
         ))}
       </Stack>

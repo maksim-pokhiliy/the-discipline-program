@@ -1,6 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import { PageSlug, updatePageSectionBodySchema } from "@repo/contracts/cms/pages";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -11,7 +12,16 @@ import { PAGE_LABELS } from "../../config/page-labels";
 import { makeTermsData } from "../../list-editor.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
-const updateSectionMock = vi.fn();
+const { updateSectionMock, updateSectionHookMock } = vi.hoisted(() => {
+  const updateSectionMock = vi.fn();
+
+  return {
+    updateSectionMock,
+    updateSectionHookMock: vi.fn((_slug: string, _locale: LocaleCode) => ({
+      mutate: updateSectionMock,
+    })),
+  };
+});
 
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
 
@@ -20,7 +30,8 @@ vi.mock("@app/lib/hooks", async () => {
 
   return {
     ...actual,
-    useUpdatePageSection: () => ({ mutate: updateSectionMock, isPending: false }),
+    useUpdatePageSection: updateSectionHookMock,
+    useIsPageSectionSaving: () => false,
   };
 });
 
@@ -36,6 +47,7 @@ const makeOfferPage = () =>
 
 afterEach(() => {
   updateSectionMock.mockReset();
+  updateSectionHookMock.mockClear();
 });
 
 describe("PagesEditForm", () => {
@@ -65,10 +77,11 @@ describe("PagesEditForm", () => {
 
     await waitFor(() =>
       expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
-        slug: PageSlug.OFFER,
-        body: { section: "offer:hero", data: { ...data, title } },
+        section: "offer:hero",
+        data: { ...data, title },
       }),
     );
+    expect(updateSectionHookMock).toHaveBeenCalledWith(PageSlug.OFFER, DEFAULT_LOCALE_CODE);
   });
 
   it("clears a populated document and saves only a field touched after an equal empty refresh", async () => {
@@ -94,8 +107,8 @@ describe("PagesEditForm", () => {
 
     await waitFor(() =>
       expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
-        slug: PageSlug.HOME,
-        body: { section: "home:seo", data: { title } },
+        section: "home:seo",
+        data: { title },
       }),
     );
   });
@@ -129,8 +142,8 @@ describe("PagesEditForm", () => {
 
     await waitFor(() =>
       expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
-        slug: PageSlug.OFFER,
-        body: { section: "offer:terms", data: { blocks: [{ heading, body: "" }] } },
+        section: "offer:terms",
+        data: { blocks: [{ heading, body: "" }] },
       }),
     );
   });
@@ -165,13 +178,10 @@ describe("PagesEditForm", () => {
 
     await waitFor(() =>
       expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
-        slug: PageSlug.OFFER,
-        body: {
-          section: "offer:terms",
-          data: {
-            ...data,
-            blocks: data.blocks.map((block, index) => (index === 1 ? { ...block, body } : block)),
-          },
+        section: "offer:terms",
+        data: {
+          ...data,
+          blocks: data.blocks.map((block, index) => (index === 1 ? { ...block, body } : block)),
         },
       }),
     );
@@ -202,8 +212,8 @@ describe("PagesEditForm", () => {
     await waitFor(() => expect(updateSectionMock).toHaveBeenCalledTimes(1));
     const saved = updateSectionMock.mock.calls[0]?.[0];
 
-    expect(saved?.slug).toBe(PageSlug.OFFER);
-    expect(updatePageSectionBodySchema.parse(saved?.body)).toEqual({
+    expect(updateSectionHookMock).toHaveBeenCalledWith(PageSlug.OFFER, DEFAULT_LOCALE_CODE);
+    expect(updatePageSectionBodySchema.parse(saved)).toEqual({
       locale: "en",
       section: "offer:requisites",
       data: { title, items: [item] },

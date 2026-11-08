@@ -6,7 +6,7 @@ import { PageSlug } from "@repo/contracts/cms/pages";
 import { UNPARSABLE_SECTION_DATA, UK_ABOUT_HERO } from "../pages/__fixtures__/section-data";
 
 import { GERMAN, UKRAINIAN } from "./__fixtures__/locale-catalog";
-import { countServedSections } from "./translation-progress";
+import { countServedSections, countServedSectionsByPage } from "./translation-progress";
 
 type SectionRow = Parameters<typeof countServedSections>[0][number];
 
@@ -71,5 +71,49 @@ describe("countServedSections", () => {
         [DEFAULT_LOCALE_CODE, 1],
       ]),
     );
+  });
+});
+
+describe("countServedSectionsByPage", () => {
+  it("counts served rows per page", () => {
+    const rows = [
+      makeSectionRow(),
+      makeSectionRow({ section: "about:cta" }),
+      makeSectionRow({ pageSlug: PageSlug.HOME, section: "home:hero" }),
+    ];
+
+    expect(countServedSectionsByPage(rows)).toEqual(
+      new Map([
+        [PageSlug.ABOUT, UKRAINIAN_SECTION_COUNT],
+        [PageSlug.HOME, 1],
+      ]),
+    );
+  });
+
+  it("skips the rows countServedSections skips", () => {
+    const rows = [
+      makeSectionRow({ data: {} }),
+      makeSectionRow({ data: { retiredTitle: "Old title" } }),
+      makeSectionRow({ data: UNPARSABLE_SECTION_DATA }),
+      makeSectionRow({ section: "about:retired" }),
+      makeSectionRow({ pageSlug: PageSlug.HOME }),
+      makeSectionRow({ pageSlug: "constructor" }),
+      makeSectionRow({ section: "constructor" }),
+    ];
+
+    expect(countServedSectionsByPage(rows).size).toBe(0);
+    expect(countServedSections(rows).size).toBe(0);
+  });
+
+  it("counts a partial nested list row by the same predicate as the Languages count", () => {
+    const row = makeSectionRow({
+      section: "about:journey",
+      data: { timeline: [{ year: "2026" }] },
+    });
+
+    expect(countServedSectionsByPage([row])).toEqual(new Map([[PageSlug.ABOUT, 1]]));
+    expect([...countServedSectionsByPage([row]).values()]).toEqual([
+      ...countServedSections([row]).values(),
+    ]);
   });
 });

@@ -1,10 +1,11 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageDetails,
   PageSlug,
-  type UpdatePageSectionBody,
+  type LocalizedSectionWriteBody,
 } from "@repo/contracts/cms/pages";
 
 import type * as Api from "@app/lib/api";
@@ -15,8 +16,8 @@ import { makeDeferred } from "../../deferred.fixtures";
 import { makePage, makeSectionRow } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({
-  getPageBySlug: vi.fn<(slug: string) => Promise<AdminPageDetails>>(),
-  updateSection: vi.fn<(slug: string, body: UpdatePageSectionBody) => Promise<void>>(),
+  getPageBySlug: vi.fn<(slug: string, locale: LocaleCode) => Promise<AdminPageDetails>>(),
+  updateSection: vi.fn<(slug: string, body: LocalizedSectionWriteBody) => Promise<void>>(),
   uploadImage: vi.fn<typeof Api.api.upload.uploadImage>(),
   deleteImage: vi.fn<typeof Api.api.upload.deleteImage>(),
 }));
@@ -98,6 +99,7 @@ describe("page section image save gate with real query hooks", () => {
 
     await waitFor(() =>
       expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.HOME, {
+        locale: "en",
         section: "home:hero",
         data: saved,
       }),
@@ -141,6 +143,7 @@ describe("page section image save gate with real query hooks", () => {
 
     await waitFor(() =>
       expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.ABOUT, {
+        locale: "en",
         section: "about:personal",
         data: saved,
       }),
