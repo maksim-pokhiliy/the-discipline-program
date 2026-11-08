@@ -9,7 +9,10 @@ import {
   type AdminSectionTranslation,
   adminPageSectionSchema,
   PAGE_SECTIONS_MAP,
+  SECTION_FIELD_KINDS,
   SECTION_SCHEMAS,
+  SectionFieldKind,
+  type SectionFieldKindTree,
   SectionTranslationState,
   type PageSlug,
   type SectionSchemaKey,
@@ -22,31 +25,33 @@ import { render } from "@app/test/render";
 
 import { DEFAULT_EDITOR_LOCALE, type EditorLocale } from "./components/locale-gate";
 import { SectionEditor } from "./components/section-editor";
+import { fieldKindAt } from "./components/section-field/field-at-path";
 
 const FIXTURE_DATE = new Date("2026-11-02T09:00:00.000Z");
 const FIXTURE_UPDATED_AT = FIXTURE_DATE.toISOString();
-const SHARED_FIELD_NAMES = new Set(["id", "iconName", "buttonHref", "backgroundImage", "image"]);
-
-const schemaFixture = (schema: unknown, prefix: string, path: string): unknown => {
+const schemaFixture = (
+  schema: unknown,
+  tree: SectionFieldKindTree,
+  prefix: string,
+  path: string,
+): unknown => {
   if (schema instanceof z.ZodOptional) {
-    return schemaFixture(schema.unwrap(), prefix, path);
+    return schemaFixture(schema.unwrap(), tree, prefix, path);
   }
 
   if (schema instanceof z.ZodString) {
-    const fieldName = path.split(".").at(-1) ?? "";
-
-    return `${SHARED_FIELD_NAMES.has(fieldName) ? "English" : prefix} ${path}`;
+    return `${fieldKindAt(tree, path) === SectionFieldKind.SHARED ? "English" : prefix} ${path}`;
   }
 
   if (schema instanceof z.ZodArray) {
-    return [schemaFixture(schema.element, prefix, `${path}.0`)];
+    return [schemaFixture(schema.element, tree, prefix, `${path}.0`)];
   }
 
   if (schema instanceof z.ZodObject) {
     return Object.fromEntries(
       Object.entries(schema.shape).map(([name, child]) => [
         name,
-        schemaFixture(child, prefix, path ? `${path}.${name}` : name),
+        schemaFixture(child, tree, prefix, path ? `${path}.${name}` : name),
       ]),
     );
   }
@@ -104,7 +109,7 @@ export const makePopulatedSectionRow = (
 ): AdminPageSection =>
   adminPageSectionSchema.parse({
     ...makeSectionRow(section, {}),
-    data: schemaFixture(SECTION_SCHEMAS[section], prefix, ""),
+    data: schemaFixture(SECTION_SCHEMAS[section], SECTION_FIELD_KINDS[section], prefix, ""),
   });
 
 export const makeLocalizedSectionRow = (
