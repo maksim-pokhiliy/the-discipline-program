@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -261,7 +261,7 @@ describe("SectionEditor in a non-default locale", () => {
 
   it.each(SECTIONS_WITH_IMAGES)(
     "shows the %s image without a Remove control outside English",
-    (section) => {
+    async (section) => {
       const image = sectionTextEntries(makePopulatedSectionRow(section).data).find(([path]) =>
         IMAGE_FIELDS.has(path),
       );
@@ -271,6 +271,11 @@ describe("SectionEditor in a non-default locale", () => {
       expect(screen.getByRole("img", { name: "Preview" })).toHaveAttribute("src", image?.[1]);
       expect(screen.getByLabelText("Upload Image")).toBeDisabled();
       expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText("Upload Image"), {
+          target: { files: [new File(["fixture image"], "fixture.png", { type: "image/png" })] },
+        });
+      });
       expect(uploads.uploadImage).not.toHaveBeenCalled();
       expect(uploads.deleteImage).not.toHaveBeenCalled();
     },
