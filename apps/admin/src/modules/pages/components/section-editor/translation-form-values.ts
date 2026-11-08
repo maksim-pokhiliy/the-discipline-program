@@ -8,10 +8,9 @@ import {
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 
-type JsonRecord = Readonly<Record<string, unknown>>;
+import { isRecord } from "../section-field/field-at-path";
 
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+type JsonRecord = Readonly<Record<string, unknown>>;
 
 const recordOf = (value: unknown): JsonRecord => (isRecord(value) ? value : {});
 
