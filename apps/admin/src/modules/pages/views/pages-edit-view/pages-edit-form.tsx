@@ -9,6 +9,7 @@ import { ContentSection } from "@repo/ui";
 
 import { useIsPageSectionSaving, useUpdatePageSection } from "@app/lib/hooks";
 
+import { DEFAULT_EDITOR_LOCALE } from "../../components/locale-gate";
 import { getSectionEditorKey, SectionEditor } from "../../components/section-editor";
 import { PAGE_LABELS } from "../../config/page-labels";
 
@@ -51,8 +52,9 @@ export const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
       <Stack spacing={2}>
         {page.sections.map((section) => (
           <SectionEditor
-            key={getSectionEditorKey(section)}
+            key={getSectionEditorKey(section, DEFAULT_LOCALE_CODE)}
             section={section}
+            locale={DEFAULT_EDITOR_LOCALE}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
             onSave={(body) => updateSection(body)}
