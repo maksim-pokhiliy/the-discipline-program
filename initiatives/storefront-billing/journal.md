@@ -492,3 +492,13 @@ The Codex fix leg (`gpt-6.1-sol`, `xhigh`, thread `01a1bcca-77b7-72b1-a0be-1eceb
 Ruled: the draft's exact `data` is its word plus the two shared values of `ENGLISH_HERO`; the mutant stays and must be red in both tests. `step-0.4d3a-fix-continue-prompt.md` carries the ruling, the preserved files to inspect one by one, and the run from the battery on; the second fix leg runs it.
 
 **Next:** the second fix leg, then the planner verification, the owner's browser pass, the merge on his word, the production smoke.
+
+## 2026-11-08 — 0.4d3a: the second fix leg landed the ten items, the PR waits for the browser pass (claude)
+
+The second Codex fix leg (`gpt-6.1-sol`, `xhigh`, thread `01a1bcdf-52df-7db2-8178-647a12250b79`) exited 0 with a valid report and pushed ten commits on `9a0f2a2c7` to `6f6f5ad06`, one per item (RF-7, RF-8, RF-9, RF-11 to RF-17). Checked before reading: no `spawn_agent` call in the rollout (inline, as a fix leg's must be); the branch clean and equal to origin; eighteen files, all inside the fence; no trailer or Cyrillic in the messages; its container removed. Its mutants (RF-7, RF-8 twice, RF-9, RF-11, RF-12) all red and restored. One deviation, kept as minor: the format check overlapped the admin build, both inside the fence.
+
+The planner's verification, fresh: admin 44 files and 427 tests, contracts 87 and 1452, api-server 211 and 2721 on the planner's own container `tdp-0-4d3a-verify` (removed after); admin and api-server lint with no warning, the type check of thirteen tasks uncached, the boundary check with no violation, the format check clean; CI 9/9 and the PR mergeable. Six admin-side mutants the breaker never reached, all killed on assertions and restored: the save lock read from the mounted form's own mutation, the locale dropped from the editor key (caught by the unit test of the key alone), clearing that sends the form values, confirming English is newer only after an edit, the shared fields made editable, the locale dropped from the query key. The admin build was not re-run locally; CI built the head.
+
+The browser-gate checklist went to the owner with one caution: the local admin's Blob token writes to production's store, so item 6 changes the English button link, not the image, and the Personal image Remove stays untouched.
+
+**Next:** the owner's browser pass on 4712, the merge on his word, the production smoke, the close-out docs.
