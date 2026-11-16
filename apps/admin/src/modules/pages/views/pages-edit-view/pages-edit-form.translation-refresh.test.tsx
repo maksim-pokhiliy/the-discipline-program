@@ -111,6 +111,48 @@ describe("PagesEditForm keeps unsaved words across a refresh", () => {
     expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
   });
 
+  it("keeps unsaved row words through consecutive refreshes while adopting each new stored word", () => {
+    const firstWords = {
+      items: [...WORDS.items, { id: "c", question: "First stored question C" }],
+    };
+    const nextWords = {
+      items: [...WORDS.items, { id: "c", question: "Next stored question C" }],
+    };
+    const { rerender } = render(
+      <PagesEditForm page={makeLocaleFaqPage([A, B, C], WORDS)} locale={UKRAINIAN_LOCALE} />,
+    );
+    const title = screen.getByLabelText("Section Title");
+
+    typeIntoNth("Answer", 1, TYPED);
+    rerender(
+      <PagesEditForm page={makeLocaleFaqPage([C, B], firstWords)} locale={UKRAINIAN_LOCALE} />,
+    );
+
+    expect(screen.getAllByLabelText("Question")[0]).toHaveAccessibleDescription(
+      "English Question C",
+    );
+    expect(screen.getAllByLabelText("Answer")[1]).toHaveAccessibleDescription("English Answer B");
+    expect(screen.getAllByLabelText("Question")[0]).toHaveValue("First stored question C");
+    expect(screen.getAllByLabelText("Answer")[1]).toHaveValue(TYPED);
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    rerender(
+      <PagesEditForm page={makeLocaleFaqPage([B, D, C], nextWords)} locale={UKRAINIAN_LOCALE} />,
+    );
+
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription("English Answer B");
+    expect(screen.getAllByLabelText("Question")[2]).toHaveAccessibleDescription(
+      "English Question C",
+    );
+    expect(screen.getByLabelText("Section Title")).toBe(title);
+    expect(screen.getAllByLabelText("Answer")).toHaveLength(3);
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(TYPED);
+    expect(screen.getAllByLabelText("Question")[1]).toHaveValue("");
+    expect(screen.getAllByLabelText("Answer")[1]).toHaveValue("");
+    expect(screen.getAllByLabelText("Question")[2]).toHaveValue("Next stored question C");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    expect(updateSection).not.toHaveBeenCalled();
+  });
+
   it("adopts a changed English icon while keeping the typed feature title", () => {
     const { rerender } = render(
       <PagesEditForm page={makeFeaturePage("OldIcon")} locale={UKRAINIAN_LOCALE} />,
