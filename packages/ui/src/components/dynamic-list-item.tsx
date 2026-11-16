@@ -7,8 +7,6 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IconButton, Stack, Paper, alpha } from "@mui/material";
 
-import { useMoveFocus } from "./use-move-focus";
-
 export type DynamicListItemProps = {
   children: ReactNode;
   itemLabel: string;
@@ -35,8 +33,6 @@ export const DynamicListItem = ({
   canMoveUp = true,
   canMoveDown = true,
 }: DynamicListItemProps): ReactElement => {
-  const { moveUpRef, moveDownRef, moveKeepingFocus } = useMoveFocus();
-
   return (
     <Paper
       variant="outlined"
@@ -64,10 +60,9 @@ export const DynamicListItem = ({
               <>
                 <IconButton
                   size="medium"
-                  ref={moveUpRef}
                   onClick={() => {
                     if (canMoveUp) {
-                      moveKeepingFocus("up", onMoveUp);
+                      onMoveUp();
                     }
                   }}
                   aria-disabled={!canMoveUp}
@@ -78,10 +73,9 @@ export const DynamicListItem = ({
                 </IconButton>
                 <IconButton
                   size="medium"
-                  ref={moveDownRef}
                   onClick={() => {
                     if (canMoveDown) {
-                      moveKeepingFocus("down", onMoveDown);
+                      onMoveDown();
                     }
                   }}
                   aria-disabled={!canMoveDown}
