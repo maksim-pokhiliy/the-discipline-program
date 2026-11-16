@@ -78,8 +78,8 @@ describe("buildTranslationSeed", () => {
         title: "",
         subtitle: "",
         items: [
-          { question: "", answer: "" },
-          { question: "Written question", answer: "" },
+          { id: "", question: "", answer: "" },
+          { id: "", question: "Written question", answer: "" },
         ],
       },
     );

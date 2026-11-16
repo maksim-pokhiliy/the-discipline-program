@@ -12,7 +12,7 @@ export enum SectionFieldKind {
 type FieldKindNode<TValue> = TValue extends string
   ? SectionFieldKind
   : TValue extends readonly (infer TRow)[]
-    ? { readonly list: FieldKindTree<TRow>; readonly identity?: keyof TRow & string }
+    ? { readonly list: FieldKindTree<TRow>; readonly identity: Extract<keyof TRow, "id"> }
     : { readonly group: FieldKindTree<TValue> };
 
 type FieldKindTree<TData> = {
@@ -23,7 +23,7 @@ type SectionFieldKindsMap = {
   readonly [TKey in SectionSchemaKey]: FieldKindTree<z.infer<(typeof SECTION_SCHEMAS)[TKey]>>;
 };
 
-export type ListFieldKinds = { readonly list: SectionFieldKindTree; readonly identity?: string };
+export type ListFieldKinds = { readonly list: SectionFieldKindTree; readonly identity: string };
 export type GroupFieldKinds = { readonly group: SectionFieldKindTree };
 export type SectionFieldKindNode = SectionFieldKind | ListFieldKinds | GroupFieldKinds;
 export type SectionFieldKindTree = { readonly [field: string]: SectionFieldKindNode };
@@ -36,6 +36,7 @@ export const isGroupFieldKinds = (node: SectionFieldKindNode): node is GroupFiel
 
 const WORD = SectionFieldKind.WORD;
 const SHARED = SectionFieldKind.SHARED;
+const ROW_ID: { readonly id: SectionFieldKind.SHARED } = { id: SHARED };
 const TITLE_SUBTITLE = { title: WORD, subtitle: WORD } as const;
 const CTA = { ...TITLE_SUBTITLE, buttonText: WORD, buttonHref: SHARED } as const;
 const HERO = { ...CTA, backgroundImage: SHARED } as const;
@@ -52,7 +53,7 @@ export const SECTION_FIELD_KINDS = {
   [PAGE_SECTIONS_MAP.home.whyChoose]: {
     ...TITLE_SUBTITLE,
     features: {
-      list: { id: SHARED, title: WORD, description: WORD, iconName: SHARED },
+      list: { ...ROW_ID, title: WORD, description: WORD, iconName: SHARED },
       identity: "id",
     },
   },
@@ -67,11 +68,11 @@ export const SECTION_FIELD_KINDS = {
   [PAGE_SECTIONS_MAP.about.hero]: HERO,
   [PAGE_SECTIONS_MAP.about.journey]: {
     ...TITLE_SUBTITLE,
-    timeline: { list: { year: WORD, title: WORD, description: WORD } },
+    timeline: { list: { ...ROW_ID, year: WORD, title: WORD, description: WORD }, identity: "id" },
   },
   [PAGE_SECTIONS_MAP.about.credentials]: {
     ...TITLE_SUBTITLE,
-    items: { list: { title: WORD, description: WORD } },
+    items: { list: { ...ROW_ID, title: WORD, description: WORD }, identity: "id" },
   },
   [PAGE_SECTIONS_MAP.about.personal]: {
     ...TITLE_SUBTITLE,
@@ -108,18 +109,18 @@ export const SECTION_FIELD_KINDS = {
   [PAGE_SECTIONS_MAP.faq.hero]: HERO,
   [PAGE_SECTIONS_MAP.faq.content]: {
     ...TITLE_SUBTITLE,
-    items: { list: { question: WORD, answer: WORD } },
+    items: { list: { ...ROW_ID, question: WORD, answer: WORD }, identity: "id" },
   },
   [PAGE_SECTIONS_MAP.faq.cta]: CTA,
   [PAGE_SECTIONS_MAP.faq.seo]: SEO,
   [PAGE_SECTIONS_MAP.offer.hero]: TITLE_SUBTITLE,
   [PAGE_SECTIONS_MAP.offer.requisites]: {
     title: WORD,
-    items: { list: { label: WORD, value: WORD } },
+    items: { list: { ...ROW_ID, label: WORD, value: WORD }, identity: "id" },
   },
   [PAGE_SECTIONS_MAP.offer.terms]: {
     title: WORD,
-    blocks: { list: { heading: WORD, body: WORD } },
+    blocks: { list: { ...ROW_ID, heading: WORD, body: WORD }, identity: "id" },
   },
   [PAGE_SECTIONS_MAP.offer.seo]: SEO,
   [PAGE_SECTIONS_MAP.site.navigation]: {

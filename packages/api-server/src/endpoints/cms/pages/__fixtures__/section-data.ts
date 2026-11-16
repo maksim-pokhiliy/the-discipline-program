@@ -113,13 +113,13 @@ export const FULL_SECTION_DATA: FullSectionData = {
   "offer:requisites": {
     title: "Requisites",
     items: [
-      { label: "Seller", value: "Sample seller" },
-      { label: "Tax number", value: "0000000000" },
+      { id: "fixture-seller", label: "Seller", value: "Sample seller" },
+      { id: "fixture-tax-number", label: "Tax number", value: "0000000000" },
     ],
   },
   "offer:terms": {
     title: "Terms",
-    blocks: [{ heading: "Payment", body: "Sample payment terms" }],
+    blocks: [{ id: "fixture-payment", heading: "Payment", body: "Sample payment terms" }],
   },
   "offer:seo": seoSection("Offer"),
   "site:navigation": {

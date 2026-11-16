@@ -246,7 +246,7 @@ describe("PagesEditForm", () => {
     expect(updatePageSectionBodySchema.parse(saved)).toEqual({
       locale: "en",
       section: "offer:requisites",
-      data: { title, items: [item] },
+      data: { title, items: [{ id: expect.any(String), ...item }] },
     });
   });
 
