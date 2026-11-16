@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { SECTION_FIELD_KINDS } from "@repo/contracts/cms/pages";
+import { SECTION_FIELD_KINDS, type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
 
@@ -135,20 +135,93 @@ describe("SectionListEditor in English", () => {
     expectUnavailable("Move FAQ item 1 up");
   });
 
-  it("keeps Why Choose's English columns under the real theme", () => {
-    const row = makeListReorderCases().find(({ row }) => row.section === "home:whyChoose")?.row;
+  it.each<{
+    section: SectionSchemaKey;
+    cardTitle: string;
+    countLabel: string;
+    addLabel: string;
+    labels: string[];
+    columns: [string, string][];
+  }>([
+    {
+      section: "home:whyChoose",
+      cardTitle: "Why Choose Us Settings",
+      countLabel: "Feature Cards",
+      addLabel: "Add New Card",
+      labels: ["Section Title", "Section Subtitle", "Icon Name", "Feature Title", "Description"],
+      columns: [
+        ["Icon Name", "MuiGrid-grid-sm-4"],
+        ["Feature Title", "MuiGrid-grid-sm-8"],
+      ],
+    },
+    {
+      section: "about:journey",
+      cardTitle: "Journey Section Settings",
+      countLabel: "Timeline",
+      addLabel: "Add Timeline Item",
+      labels: ["Section Title", "Section Subtitle", "Year", "Title", "Description"],
+      columns: [
+        ["Year", "MuiGrid-grid-sm-2"],
+        ["Title", "MuiGrid-grid-sm-10"],
+      ],
+    },
+    {
+      section: "about:credentials",
+      cardTitle: "Credentials Section Settings",
+      countLabel: "Credentials",
+      addLabel: "Add Credential",
+      labels: ["Section Title", "Section Subtitle", "Title", "Description"],
+      columns: [],
+    },
+    {
+      section: "faq:content",
+      cardTitle: "FAQ Settings",
+      countLabel: "FAQ Items",
+      addLabel: "Add FAQ Item",
+      labels: ["Section Title", "Section Subtitle", "Question", "Answer"],
+      columns: [],
+    },
+    {
+      section: "offer:requisites",
+      cardTitle: "Requisites Settings",
+      countLabel: "Requisites",
+      addLabel: "Add Requisite",
+      labels: ["Section Title", "Label", "Value"],
+      columns: [
+        ["Label", "MuiGrid-grid-sm-4"],
+        ["Value", "MuiGrid-grid-sm-8"],
+      ],
+    },
+    {
+      section: "offer:terms",
+      cardTitle: "Terms Settings",
+      countLabel: "Terms Blocks",
+      addLabel: "Add Terms Block",
+      labels: ["Section Title", "Heading", "Body"],
+      columns: [],
+    },
+  ])(
+    "keeps $section's original English labels and columns under the real theme",
+    ({ section, cardTitle, countLabel, addLabel, labels, columns }) => {
+      const row = makeListReorderCases().find(({ row }) => row.section === section)?.row;
 
-    if (row === undefined) {
-      throw new Error("Missing Why Choose fixture");
-    }
+      if (row === undefined) {
+        throw new Error(`Missing ${section} fixture`);
+      }
 
-    renderSectionEditor(row);
+      renderSectionEditor(row);
 
-    expect(screen.getAllByLabelText("Icon Name")[0]?.closest(".MuiGrid-root")).toHaveClass(
-      "MuiGrid-grid-sm-4",
-    );
-    expect(screen.getAllByLabelText("Feature Title")[0]?.closest(".MuiGrid-root")).toHaveClass(
-      "MuiGrid-grid-sm-8",
-    );
-  });
+      expect(screen.getByText(cardTitle)).toBeInTheDocument();
+      expect(screen.getByText(`${countLabel} (3)`)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: addLabel })).toBeEnabled();
+      for (const label of labels) {
+        expect(screen.getAllByLabelText(label).length).toBeGreaterThan(0);
+      }
+      for (const [label, gridClass] of columns) {
+        for (const field of screen.getAllByLabelText(label)) {
+          expect(field.closest(".MuiGrid-root")).toHaveClass(gridClass);
+        }
+      }
+    },
+  );
 });
