@@ -538,3 +538,11 @@ Ruled by the planner: the bar is a column at every width, the banner across it, 
 **Closed:** SB-55, SB-76, SB-77, SB-80, SB-81. **Opened:** SB-97, SB-98.
 
 **Next:** the 0.4d3b contour.
+
+## 2026-11-16 — 0.4d3b: the contour approved, the prompt written (claude)
+
+**The contour (owner: «step delegated capped => feature full, id ставим миграцией»).** The six list sections come into D-24's translation through one shared list editor (SB-83) with the English beside every word of every row and no structure controls outside English; every list row gets an `id` (SB-91); the row controls keep keyboard focus and name their row (SB-82); a dirty form survives a refresh of the page under it (SB-94, or the gate says why not); the two load-sensitive lifecycle tests are rewritten (SB-93, SB-98). Mode delegated (Opus `step-executor` to the gate, a Codex implement leg, a fresh Opus `step-reviewer`, a Codex fix leg), capped (another session of the owner shares the host), `/feature` full, one delivery PR.
+
+**The row ids come by a data migration, not by a hand-run script (owner, 2026-11-16).** The planner's reason: one file that runs the same way in the local stack, in the tests and on production, sits under review, and reaches production before the code that stops pairing rows by position. It adds an `id` key to list row objects and changes nothing else; it is dispatched from the PR branch before the merge by the runbook, on the owner's word at that moment.
+
+**Read for the prompt, 2026-11-16 at `1be589c78`.** Production (read-only): 10 English list rows without an `id` (4 `about:journey`, 3 `about:credentials`, 3 `faq:content`), 3 `home:whyChoose` rows with one, no `offer` row, no row of another language, Postgres 17.12, 15 migrations. The tree: only `home:whyChoose` declares a row identity; the server pairs the other five lists by position (`rowIdentity` in `section-translation.ts`); the six list forms render plain `TextField`s outside the reference mechanism and show their structure controls in every locale; `DynamicListItem` has no consumer outside these forms; the marketing site reads list rows through `deepPartial` shapes and keys them by content, so it does not notice an `id`; no test runs a migration file's SQL today.

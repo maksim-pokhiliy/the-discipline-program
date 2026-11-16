@@ -40,7 +40,7 @@ Prior: **FOUNDED 2026-09-23.** Two days of dialogue distilled: the Apple-vs-Mono
 
 ## Next action
 
-**▶ P0.4d3b next: the contour for the six list sections through one shared list editor with the English reference per row, and an `id` on every list row (SB-82, SB-83, SB-91 with its one-off additive production write of ids into the English list rows, the owner's word given 2026-11-08; SB-93, SB-94 and SB-98 ride it); the mode is asked at the contour.** The coach starts translating after it. Not on the critical path of the acquiring application any more (D-12 amended): the bank is answered by the footer line.
+**▶ P0.4d3b running: the contour is approved (owner, 2026-11-16: delegated mode, capped, `/feature` full, the row ids supplied by a data migration) and the prompt is `step-0.4d3b-prompt.md`; the Opus `step-executor` plans to the gate.** Next for the planner: the plan-gate triage (roster first), then the handoff file and the Codex implement leg. The migration is dispatched to production from the PR branch before the merge, on the owner's word at that moment (`docs/runbooks/db-migrate-dispatch.md`). The coach starts translating after this step. Not on the critical path of the acquiring application (D-12 amended).
 
 ## Open decisions awaiting ratification
 
