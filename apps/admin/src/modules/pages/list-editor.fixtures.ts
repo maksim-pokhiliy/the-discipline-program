@@ -20,11 +20,7 @@ const INITIAL_ORDER = ["First", "Second", "Third"];
 const MOVED_ORDER = ["Second", "Third", "First"];
 const LIST_HEADING = { title: "Fixture list title", subtitle: "Fixture list subtitle" };
 
-export const LAST_ROW_INDEX = 2;
-
-export const makeTermsBlock = (
-  name: string,
-): z.infer<typeof offerTermsSchema>["blocks"][number] & { id: string } => ({
+const makeTermsBlock = (name: string): z.infer<typeof offerTermsSchema>["blocks"][number] => ({
   id: `fixture-${name}`,
   heading: `${name} fixture heading`,
   body: `${name} fixture first paragraph.\n\n${name} fixture second paragraph.`,

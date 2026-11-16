@@ -1,7 +1,2 @@
 export { SectionListEditor } from "./section-list-editor";
-export type {
-  ListRowField,
-  SectionList,
-  ListRowValues,
-  ListFormValues,
-} from "./section-list.types";
+export type { ListRowField, SectionList } from "./section-list.types";

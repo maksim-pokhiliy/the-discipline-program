@@ -6,13 +6,10 @@ import {
   type SectionFieldKindTree,
 } from "@repo/contracts/cms/pages";
 
-import { isRecord } from "../section-field/field-at-path";
+import { type JsonRecord, isRecord, recordOf } from "../section-field/field-at-path";
 
 export type KeptWord = { path: string; value: string };
 
-type JsonRecord = Readonly<Record<string, unknown>>;
-
-const recordOf = (value: unknown): JsonRecord => (isRecord(value) ? value : {});
 const rowsOf = (value: unknown): readonly unknown[] => (Array.isArray(value) ? value : []);
 const wordOf = (value: unknown): string =>
   typeof value === "string" && value.trim() !== "" ? value : "";
