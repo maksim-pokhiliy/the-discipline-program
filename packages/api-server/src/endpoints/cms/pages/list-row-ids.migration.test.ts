@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { type Prisma } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
+import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug, type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
 import { cleanupRaw } from "../../../test/helpers";
-import { seedLocaleCatalog, UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
+import { GERMAN, seedLocaleCatalog, UKRAINIAN } from "../locale/__fixtures__/locale-catalog";
 
 import {
   captureMarketingPagesState,
@@ -188,6 +188,148 @@ describe("migration 20261116120000_cms_list_row_ids", () => {
       expect(await captureMarketingPagesState()).toEqual(once);
     },
   );
+
+  it.each<{
+    name: string;
+    rows: {
+      pageSlug: PageSlug;
+      section: SectionSchemaKey;
+      locale: LocaleCode;
+      data: Prisma.InputJsonValue;
+      expectedData?: unknown;
+    }[];
+  }>([
+    {
+      name: "copies no id from a different language when English has no rows",
+      rows: [
+        { pageSlug: PageSlug.FAQ, section: FAQ, locale: "en", data: { items: [] } },
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: GERMAN.code,
+          data: { items: [{ id: "de-row", question: "German", extra: true }] },
+        },
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: UKRAINIAN.code,
+          data: { items: [{ question: "Ukrainian" }] },
+        },
+      ],
+    },
+    {
+      name: "copies no id from a different section on the same page",
+      rows: [
+        {
+          pageSlug: PageSlug.ABOUT,
+          section: "about:hero",
+          locale: "en",
+          data: { items: [{ id: "hero" }] },
+        },
+        {
+          pageSlug: PageSlug.ABOUT,
+          section: "about:credentials",
+          locale: "en",
+          data: { items: [] },
+        },
+        {
+          pageSlug: PageSlug.ABOUT,
+          section: "about:credentials",
+          locale: UKRAINIAN.code,
+          data: { items: [{}] },
+        },
+      ],
+    },
+    {
+      name: "keeps a whitespace English id as stored without refusing the run",
+      rows: [
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: "en",
+          data: { items: [{ id: " ", question: "English" }] },
+        },
+      ],
+    },
+    {
+      name: "mints an English id beside a non-array translation without raising or changing it",
+      rows: [
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: "en",
+          data: { items: [{ question: "E" }] },
+          expectedData: { items: [{ question: "E", id: expect.stringMatching(UUID) }] },
+        },
+        { pageSlug: PageSlug.FAQ, section: FAQ, locale: UKRAINIAN.code, data: { items: {} } },
+      ],
+    },
+    {
+      name: "copies English ids to two languages independently",
+      rows: [
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: "en",
+          data: {
+            items: [
+              { id: "a", question: "English A" },
+              { id: "b", question: "English B" },
+            ],
+          },
+        },
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: UKRAINIAN.code,
+          data: {
+            title: "Ukrainian",
+            items: [{ question: "Ukrainian A" }, { answer: "Ukrainian B" }],
+          },
+          expectedData: {
+            title: "Ukrainian",
+            items: [
+              { id: "a", question: "Ukrainian A" },
+              { id: "b", answer: "Ukrainian B" },
+            ],
+          },
+        },
+        {
+          pageSlug: PageSlug.FAQ,
+          section: FAQ,
+          locale: GERMAN.code,
+          data: { extra: true, items: [{ answer: "German A" }, { question: "German B" }] },
+          expectedData: {
+            extra: true,
+            items: [
+              { id: "a", answer: "German A" },
+              { id: "b", question: "German B" },
+            ],
+          },
+        },
+      ],
+    },
+  ])("$name, preserving every other key and metadata", async ({ rows }) => {
+    for (const { pageSlug, section, data, locale } of rows) {
+      await seedTranslationRow(pageSlug, section, data, locale, false);
+    }
+
+    const before = await captureMarketingPagesState();
+
+    await runMigration();
+
+    expect(await captureMarketingPagesState()).toEqual({
+      ...before,
+      sections: before.sections.map((row) => {
+        const seed = rows.find(
+          ({ pageSlug, section, locale }) =>
+            pageSlug === row.pageSlug && section === row.section && locale === row.locale,
+        );
+
+        return { ...row, data: seed?.expectedData ?? row.data };
+      }),
+    });
+  });
 
   it.each(LIST_FIELDS)(
     "mints and copies the English id for $section / $field",
