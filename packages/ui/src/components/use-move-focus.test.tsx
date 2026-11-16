@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 
 import { fireEvent, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { render } from "../test/render";
 
@@ -24,37 +24,14 @@ const FocusRow = ({ label, onMove }: FocusRowProps): ReactElement => {
   );
 };
 
-const blurMovedControl = (node: Node): void => {
-  const active = document.activeElement;
-
-  if (node.parentNode !== null && active instanceof HTMLElement && node.contains(active)) {
-    active.blur();
-  }
-};
-
-beforeEach(() => {
-  const insertBefore = Node.prototype.insertBefore;
-  const appendChild = Node.prototype.appendChild;
-
-  vi.spyOn(Node.prototype, "insertBefore").mockImplementation(function (this: Node, node, child) {
-    blurMovedControl(node);
-
-    return insertBefore.call(this, node, child);
-  });
-  vi.spyOn(Node.prototype, "appendChild").mockImplementation(function (this: Node, node) {
-    blurMovedControl(node);
-
-    return appendChild.call(this, node);
-  });
-});
-
-afterEach(() => vi.restoreAllMocks());
-
 describe("useMoveFocus", () => {
   it.each(["up", "down"])(
-    "restores the moved row's %s control after browser focus fixup",
+    "restores the moved row's %s control when focus is lost before reorder",
     (direction) => {
       const onMove = () => {
+        expect(button).toHaveFocus();
+        button.blur();
+        expect(button).not.toHaveFocus();
         rerender(
           <>
             <FocusRow key="b" label="B" onMove={onMove} />
