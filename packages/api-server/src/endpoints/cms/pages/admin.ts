@@ -20,6 +20,7 @@ import { handlePrismaError } from "../../../utils";
 import { assertAdminLocale, ensureDefaultLocale } from "../locale/locale-access";
 import { countServedSectionsByPage } from "../locale/translation-progress";
 
+import { withEnglishRowIds } from "./list-row-identity";
 import {
   getPageSectionsOrder,
   isSectionOfPage,
@@ -216,6 +217,8 @@ export const cmsPagesAdminApi = {
       });
     }
 
+    const englishData = isDefaultLocale ? withEnglishRowIds(payload.section, payload.data) : null;
+
     await assertAdminLocale(locale);
 
     if (!isDefaultLocale) {
@@ -228,9 +231,10 @@ export const cmsPagesAdminApi = {
       await prisma.$transaction(async (tx) => {
         await lockPageSection(tx, payload.pageSlug, payload.section);
 
-        const row = isDefaultLocale
-          ? { data: structuredClone(payload.data), isActive: true }
-          : await composeFromEnglish(tx, payload);
+        const row =
+          englishData === null
+            ? await composeFromEnglish(tx, payload)
+            : { data: englishData, isActive: true };
         const where = { pageSlug: payload.pageSlug, section: payload.section, locale };
 
         await tx.marketingPageSection.upsert({

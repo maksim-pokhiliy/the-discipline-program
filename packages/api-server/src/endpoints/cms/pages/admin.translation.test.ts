@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import {
   PAGE_SECTIONS_MAP,
   PageSlug,
+  faqContentSchema,
   SectionTranslationState,
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
@@ -47,6 +48,7 @@ import { cmsPagesPublicApi } from "./public";
 const ABOUT = PAGE_SECTIONS_MAP.about;
 const ABOUT_HERO_ROW = { pageSlug: PageSlug.ABOUT, section: ABOUT.hero };
 const FALLBACK_CASES = sectionFallbackCases(ABOUT.hero, UK_HERO, UNPARSABLE_SECTION_DATA);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const saveHero = (data: SectionWriteData["about:hero"]): Promise<void> =>
   cmsPagesAdminApi.updateSection({ ...ABOUT_HERO_ROW, data, locale: UKRAINIAN.code });
@@ -112,9 +114,9 @@ describe("cmsPagesAdminApi — translating a section", () => {
       ).toEqual(EXPECTED_UK_FEATURES);
     });
 
-    it("matches id-less list words by position, drops extra rows and leaves missing rows unwritten as a draft", async () => {
+    it("matches list words by row id, drops rows English lacks and leaves missing rows unwritten as a draft", async () => {
       const row = { pageSlug: PageSlug.FAQ, section: PAGE_SECTIONS_MAP.faq.content };
-      const completeData = { ...UK_FAQ, items: UK_FAQ.items.slice(0, ENGLISH_FAQ.items.length) };
+      const completeData = { ...UK_FAQ, items: [UK_FAQ.items[1], UK_FAQ.items[0]] };
       const partialData = { ...UK_FAQ, items: UK_FAQ.items.slice(0, 1) };
 
       await seedTranslationRow(row.pageSlug, row.section, ENGLISH_FAQ);
@@ -129,7 +131,10 @@ describe("cmsPagesAdminApi — translating a section", () => {
 
       const partial = await readTranslationRow(row.pageSlug, row.section, UKRAINIAN.code);
 
-      expect(partial?.data).toEqual({ ...partialData, items: [...partialData.items, {}] });
+      expect(partial?.data).toEqual({
+        ...partialData,
+        items: [{ id: "first" }, ...partialData.items],
+      });
       expect(partial?.isActive).toBe(false);
 
       const page = await cmsPagesAdminApi.getPageBySlug(row.pageSlug, UKRAINIAN.code);
@@ -297,6 +302,55 @@ describe("cmsPagesAdminApi — translating a section", () => {
   });
 
   describe("updateSection in the default locale", () => {
+    it("gives every English list row without an id a fresh one and keeps the ids it carries", async () => {
+      const row = { pageSlug: PageSlug.FAQ, section: PAGE_SECTIONS_MAP.faq.content };
+      const addedRows = [
+        { question: "Missing id question", answer: "Missing id answer" },
+        { id: "", question: "Empty id question", answer: "Empty id answer" },
+      ];
+      const data = { ...ENGLISH_FAQ, items: [...ENGLISH_FAQ.items, ...addedRows] };
+      const original = structuredClone(data);
+
+      await cmsPagesAdminApi.updateSection({ ...row, data });
+
+      const stored = await readTranslationRow(row.pageSlug, row.section);
+      const parsed = faqContentSchema.parse(stored?.data);
+      const ids = parsed.items.map(({ id }) => id);
+
+      expect(parsed).toEqual({
+        ...data,
+        items: [
+          ...ENGLISH_FAQ.items,
+          ...addedRows.map((item) => ({ ...item, id: expect.stringMatching(UUID) })),
+        ],
+      });
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(stored?.isActive).toBe(true);
+      expect(data).toEqual(original);
+    });
+
+    it("refuses an English list that repeats a row id with a BadRequestError and writes nothing", async () => {
+      await clearMarketingPagesState();
+
+      const before = await captureMarketingPagesState();
+      const section = PAGE_SECTIONS_MAP.faq.content;
+      const data = {
+        ...ENGLISH_FAQ,
+        items: ENGLISH_FAQ.items.map((item) => ({ ...item, id: "same-id" })),
+      };
+      const refusal = await refusalOf(
+        cmsPagesAdminApi.updateSection({ pageSlug: PageSlug.FAQ, section, data }),
+      );
+
+      expect(refusal).toMatchObject({
+        name: BadRequestError.name,
+        statusCode: 400,
+        message: "Two rows of the list share the id same-id",
+        details: { section, list: "items", id: "same-id" },
+      });
+      expect(await captureMarketingPagesState()).toEqual(before);
+    });
+
     it("refuses an empty English write with a BadRequestError and writes nothing", async () => {
       await clearMarketingPagesState();
 
@@ -346,6 +400,83 @@ describe("cmsPagesAdminApi — translating a section", () => {
   });
 
   describe("getPageBySlug", () => {
+    it("keeps a translation's words on their rows after English moves one row and removes another", async () => {
+      const row = { pageSlug: PageSlug.FAQ, section: PAGE_SECTIONS_MAP.faq.content };
+      const third = { id: "third", question: "Third question", answer: "Third answer" };
+      const thirdWords = { id: "third", question: "Третє питання", answer: "Третя відповідь" };
+      const english = { ...ENGLISH_FAQ, items: [...ENGLISH_FAQ.items, third] };
+      const ukrainian = {
+        ...UK_FAQ,
+        items: [...UK_FAQ.items.slice(0, ENGLISH_FAQ.items.length).reverse(), thirdWords],
+      };
+      const changed = { ...ENGLISH_FAQ, items: [third, ...ENGLISH_FAQ.items.slice(0, 1)] };
+
+      await seedTranslationRow(row.pageSlug, row.section, english);
+      await seedTranslationRow(row.pageSlug, row.section, ukrainian, UKRAINIAN.code);
+      await cmsPagesAdminApi.updateSection({ ...row, data: changed });
+
+      const page = await cmsPagesAdminApi.getPageBySlug(row.pageSlug, UKRAINIAN.code);
+      const section = page.sections.find(({ section }) => section === row.section);
+
+      expect(section?.data).toEqual({ ...UK_FAQ, items: [thirdWords, UK_FAQ.items[1]] });
+      expect(section?.translation).toMatchObject({
+        state: SectionTranslationState.ENGLISH_NEWER,
+        english: { data: changed },
+      });
+      expect((await readTranslationRow(row.pageSlug, row.section, UKRAINIAN.code))?.data).toEqual(
+        ukrainian,
+      );
+    });
+
+    it("reads a stored English row without an id without breaking, gives it no words, and the next English save gives it an id", async () => {
+      const row = { pageSlug: PageSlug.FAQ, section: PAGE_SECTIONS_MAP.faq.content };
+      const english = {
+        ...ENGLISH_FAQ,
+        items: ENGLISH_FAQ.items.map(({ question, answer }) => ({ question, answer })),
+      };
+      const words = {
+        ...UK_FAQ,
+        items: UK_FAQ.items
+          .slice(0, ENGLISH_FAQ.items.length)
+          .map(({ question, answer }) => ({ question, answer })),
+      };
+
+      await seedTranslationRow(row.pageSlug, row.section, english);
+      await seedTranslationRow(row.pageSlug, row.section, words, UKRAINIAN.code);
+
+      const englishPage = await cmsPagesAdminApi.getPageBySlug(row.pageSlug);
+      const translatedPage = await cmsPagesAdminApi.getPageBySlug(row.pageSlug, UKRAINIAN.code);
+
+      expect(englishPage.sections.find(({ section }) => section === row.section)).toMatchObject({
+        data: english,
+        hasUnreadableData: false,
+      });
+      expect(translatedPage.sections.find(({ section }) => section === row.section)).toMatchObject({
+        data: { title: UK_FAQ.title, subtitle: UK_FAQ.subtitle, items: [{}, {}] },
+        hasUnreadableData: false,
+        translation: { english: { data: english } },
+      });
+
+      await cmsPagesAdminApi.updateSection({ ...row, data: english });
+
+      const healed = faqContentSchema.parse(
+        (await readTranslationRow(row.pageSlug, row.section))?.data,
+      );
+      const ids = healed.items.map(({ id }) => id);
+      const refreshed = await cmsPagesAdminApi.getPageBySlug(row.pageSlug, UKRAINIAN.code);
+
+      expect(healed).toEqual({
+        ...english,
+        items: english.items.map((item) => ({ ...item, id: expect.stringMatching(UUID) })),
+      });
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(refreshed.sections.find(({ section }) => section === row.section)?.data).toEqual({
+        title: UK_FAQ.title,
+        subtitle: UK_FAQ.subtitle,
+        items: healed.items.map(({ id }) => ({ id })),
+      });
+    });
+
     it("returns each non-default section with its state and its English row", async () => {
       const page = await cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT, UKRAINIAN.code);
 
