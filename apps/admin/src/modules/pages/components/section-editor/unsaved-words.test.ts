@@ -27,12 +27,47 @@ describe("keptWords", () => {
     );
   });
 
-  it.each(["", " ", "\t\n", undefined, null, 7, false, {}, []])(
-    "does not keep an empty, whitespace-only or non-string edit: %j",
+  it.each([undefined, null, 7, false, {}, []])("does not keep a non-string edit: %j", (title) => {
+    expect(keptWords(SEO, { title: "Applied" }, { title }, { title: "Server" })).toEqual([]);
+  });
+
+  it.each(["", " ", "\t\n"])("keeps an unsaved erasure as typed: %j", (title) => {
+    expect(keptWords(SEO, { title: "Applied" }, { title }, { title: "Server" })).toEqual([
+      { path: "title", value: title },
+    ]);
+  });
+
+  it.each(["", " ", "\t\n"])(
+    "does not keep an empty edit over an empty applied word when the server fills it: %j",
     (title) => {
-      expect(keptWords(SEO, { title: "Applied" }, { title }, { title: "Server" })).toEqual([]);
+      expect(keptWords(SEO, { title: "" }, { title }, { title: "Server" })).toEqual([]);
     },
   );
+
+  it.each(["", " ", "\t\n"])("keeps an erasure at its row's next coordinate: %j", (answer) => {
+    const applied = {
+      items: [
+        { id: "a", answer: "Saved A" },
+        { id: "b", answer: "Saved B" },
+      ],
+    };
+    const current = {
+      items: [
+        { id: "a", answer },
+        { id: "b", answer: "Saved B" },
+      ],
+    };
+    const next = {
+      items: [
+        { id: "b", answer: "Saved B" },
+        { id: "a", answer: "Server A" },
+      ],
+    };
+
+    expect(keptWords(FAQ, applied, current, next)).toEqual([
+      { path: "items.1.answer", value: answer },
+    ]);
+  });
 
   it("keeps nonblank words verbatim without trimming their surrounding whitespace", () => {
     expect(keptWords(SEO, { title: "\t" }, { title: " Edited \n" }, { title: " " })).toEqual([

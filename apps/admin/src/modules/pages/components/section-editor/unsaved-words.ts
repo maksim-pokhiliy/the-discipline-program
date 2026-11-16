@@ -69,12 +69,12 @@ export const keptWords = (
       return nested.map(({ path, value }) => ({ path: `${field}.${path}`, value }));
     }
 
-    const value = wordOf(current[field]);
+    const value = current[field];
 
     return node === SectionFieldKind.WORD &&
-      value !== "" &&
-      value !== wordOf(applied[field]) &&
-      value !== wordOf(next[field])
+      typeof value === "string" &&
+      wordOf(value) !== wordOf(applied[field]) &&
+      wordOf(value) !== wordOf(next[field])
       ? [{ path: field, value }]
       : [];
   });

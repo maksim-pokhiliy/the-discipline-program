@@ -93,6 +93,58 @@ describe("PagesEditForm keeps unsaved words across a refresh", () => {
     expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
   });
 
+  it("keeps erased row words and the title through an English move and lands the saved erasure clean", async () => {
+    const words = { ...WORDS, title: "Stored section title" };
+    const { rerender } = render(
+      <PagesEditForm page={makeLocaleFaqPage([A, B], words)} locale={UKRAINIAN_LOCALE} />,
+    );
+
+    typeInto("Section Title", "");
+    typeIntoNth("Answer", 1, "");
+    const moved = makeLocaleFaqPage([B, A], words);
+
+    for (const row of moved.sections) {
+      if (row.translation !== null) {
+        row.translation.state = SectionTranslationState.ENGLISH_NEWER;
+      }
+    }
+
+    rerender(<PagesEditForm page={moved} locale={UKRAINIAN_LOCALE} />);
+
+    expect(screen.getByLabelText("Section Title")).toHaveValue("");
+    expect(screen.getByText("Section Title", { selector: "label" })).toHaveAttribute(
+      "data-shrink",
+      "false",
+    );
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue("");
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription("English Answer B");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeEnabled();
+    clickButton("Update Section");
+
+    await waitFor(() =>
+      expect(updateSection).toHaveBeenCalledExactlyOnceWith({
+        section: "faq:content",
+        data: {
+          title: "",
+          subtitle: "",
+          items: [
+            { id: "b", question: "", answer: "" },
+            { id: "a", question: "", answer: "" },
+          ],
+        },
+      }),
+    );
+    rerender(<PagesEditForm page={makeLocaleFaqPage([B, A])} locale={UKRAINIAN_LOCALE} />);
+
+    expect(screen.getByLabelText("Section Title")).toHaveValue("");
+    expect(screen.getByText("Section Title", { selector: "label" })).toHaveAttribute(
+      "data-shrink",
+      "false",
+    );
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+  });
+
   it("keeps a typed word when English empties it and shows the empty reference", () => {
     const { rerender } = render(
       <PagesEditForm page={makeLocaleFaqPage([B], WORDS)} locale={UKRAINIAN_LOCALE} />,
