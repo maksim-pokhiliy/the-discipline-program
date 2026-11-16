@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import { createPatchByParamHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
 import { cmsPagesAdminApi } from "@repo/api-server/cms";
 import {
@@ -57,7 +59,7 @@ export const PATCH = withAdminAuth(
     createPatchByParamHandler(
       async ({ slug }, body) => {
         await cmsPagesAdminApi.updateSection({ ...body, pageSlug: slug });
-        await triggerMarketingRevalidation(marketingRevalidationTarget(slug, body.locale));
+        after(() => triggerMarketingRevalidation(marketingRevalidationTarget(slug, body.locale)));
       },
       pageSlugRouteParamsSchema,
       updatePageSectionBodySchema,
