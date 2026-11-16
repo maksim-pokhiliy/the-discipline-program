@@ -8,7 +8,7 @@ import { QueryProvider, STALE_TIMES } from "@repo/query";
 
 import type * as Api from "@app/lib/api";
 import { adminKeys } from "@app/lib/api/keys";
-import { clickButton, typeInto } from "@app/test/interactions";
+import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
 import { resetMockNavigation, setMockNavigation } from "@app/test/mocks";
 import { render } from "@app/test/render";
 
@@ -20,6 +20,7 @@ import { PagesListView } from "../pages-list-view";
 import {
   makeClearedLocaleSeoPage,
   makeEnglishNewerSeoPage,
+  makeLocaleFaqPage,
   makeLocaleSeoAndHeroPage,
   makeLocaleSeoPage,
   makeLocaleTermsPage,
@@ -117,7 +118,85 @@ const prepareTranslationClear = () => {
   return { client, english, german, catalog, clearedRefresh };
 };
 
+const prepareFaqRefreshRace = () => {
+  const client = createClient();
+  const patch = makeDeferred<void>();
+  const refresh = makeDeferred<AdminPageDetails>();
+  const first = { id: "a", question: "Question A", answer: "Answer A" };
+  const second = { id: "b", question: "Question B", answer: "Answer B" };
+  const words = { items: [{ id: "b", answer: "Saved answer B" }] };
+  const moved = [{ ...second, answer: "Refreshed answer B" }, first];
+  const queryKey = adminKeys.pages.detail(PageSlug.FAQ, "uk");
+
+  client.setQueryData(adminKeys.locales.list(), LOCALE_CATALOG);
+  client.setQueryData(queryKey, makeLocaleFaqPage([first, second], words));
+  endpoints.updateSection.mockReturnValueOnce(patch.promise);
+  endpoints.getPageBySlug.mockReturnValueOnce(refresh.promise);
+  setMockNavigation({ pathname: "/pages/faq", search: "locale=uk" });
+
+  return { client, patch, refresh, queryKey, words, moved };
+};
+
 describe("page editor in a language with real query hooks", () => {
+  it("keeps sent list words on their row through a foreign refresh during a save and lands its own refresh clean", async () => {
+    const { client, patch, refresh, queryKey, words, moved } = prepareFaqRefreshRace();
+    const sent = "Sent answer B";
+    const { unmount } = render(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.FAQ} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByLabelText("Section Title");
+    typeIntoNth("Answer", 1, sent);
+    clickButton("Update Section");
+    await waitFor(() => expect(screen.getAllByLabelText("Answer")[1]).toBeDisabled());
+    expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.FAQ, {
+      section: "faq:content",
+      data: {
+        title: "",
+        subtitle: "",
+        items: [
+          { id: "a", question: "", answer: "" },
+          { id: "b", question: "", answer: sent },
+        ],
+      },
+      locale: "uk",
+    });
+    await act(async () => {
+      client.setQueryData(queryKey, makeLocaleFaqPage(moved, words));
+    });
+    await waitFor(() =>
+      expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription(
+        "English Refreshed answer B",
+      ),
+    );
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    screen.getAllByRole("textbox").forEach((field) => expect(field).toBeDisabled());
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () => patch.resolve());
+    await waitFor(() =>
+      expect(endpoints.getPageBySlug).toHaveBeenCalledExactlyOnceWith(PageSlug.FAQ, "uk"),
+    );
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    expect(screen.getAllByLabelText("Answer")[0]).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () =>
+      refresh.resolve(makeLocaleFaqPage(moved, { items: [{ id: "b", answer: sent }] })),
+    );
+    await waitFor(() => expect(screen.getAllByLabelText("Answer")[0]).toBeEnabled());
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription(
+      "English Refreshed answer B",
+    );
+    expect(screen.getAllByLabelText("Answer")[1]).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
+    unmount();
+    client.clear();
+  });
+
   it("keeps the Ukrainian editor unavailable while its language catalog loads or fails", async () => {
     const catalog = makeDeferred<void>();
 
