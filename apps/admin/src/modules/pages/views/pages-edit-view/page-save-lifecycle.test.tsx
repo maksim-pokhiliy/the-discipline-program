@@ -164,22 +164,31 @@ describe("page section save lifecycle with real query hooks", () => {
     expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(1);
     expect(notifications.error).toHaveBeenCalledExactlyOnceWith("Fixture PATCH failure");
 
+    const retryRefresh = makeDeferred<AdminPageDetails>();
+
     endpoints.updateSection.mockResolvedValueOnce(undefined);
-    endpoints.getPageBySlug.mockResolvedValueOnce(
-      makePage(PageSlug.HOME, [makeSectionRow("home:seo", { ...data, title })]),
-    );
+    endpoints.getPageBySlug.mockReturnValueOnce(retryRefresh.promise);
     clickButton("Update Section");
 
-    await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.HOME, {
       locale: "en",
       section: "home:seo",
       data: { ...data, title },
     });
-    expect(screen.getByLabelText("Search Result Title")).toBeEnabled();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
+    expect(screen.getByLabelText("Search Result Title")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () =>
+      retryRefresh.resolve(
+        makePage(PageSlug.HOME, [makeSectionRow("home:seo", { ...data, title })]),
+      ),
     );
+
+    await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
   });
 
   it("retains a reordered and edited list after PATCH fails and retries the complete body", async () => {
@@ -244,26 +253,32 @@ describe("page section save lifecycle with real query hooks", () => {
       screen.getByRole("button", { name: "Move terms block 2 up" }).click();
     });
 
+    const retryRefresh = makeDeferred<AdminPageDetails>();
+
     endpoints.updateSection.mockResolvedValueOnce(undefined);
-    endpoints.getPageBySlug.mockResolvedValueOnce(
-      makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", saved)]),
-    );
+    endpoints.getPageBySlug.mockReturnValueOnce(retryRefresh.promise);
     clickButton("Update Section");
 
-    await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
     expect(endpoints.updateSection).toHaveBeenCalledTimes(2);
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.OFFER, {
       locale: "en",
       section: "offer:terms",
       data: saved,
     });
-    expect(screen.getByLabelText("Section Title")).toBeEnabled();
+    expect(screen.getByLabelText("Section Title")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () =>
+      retryRefresh.resolve(makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", saved)])),
+    );
+
+    await waitFor(() => expect(screen.getByLabelText("Section Title")).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
     expect(screen.getAllByLabelText("Body")[0]).toHaveValue(body);
     expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Move terms block 1 down" })).toBeEnabled();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
-    );
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
   });
 
   it("keeps every section mounted and unlocks after one failed refresh with production query defaults", async () => {

@@ -95,6 +95,7 @@ const expectLockedSeoEditor = (title: string) => {
 
 const prepareTranslationClear = () => {
   const client = createClient();
+  const clearedRefresh = makeDeferred<AdminPageDetails>();
   const english = makeLocaleSeoPage("en");
   const german = makeLocaleSeoPage("de");
   const page = { ...makePageListItem(PageSlug.HOME), translatedSectionCount: 1 };
@@ -107,13 +108,13 @@ const prepareTranslationClear = () => {
   client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "de"), german);
   endpoints.getPageBySlug
     .mockResolvedValueOnce(makeLocaleSeoPage("uk"))
-    .mockResolvedValue(makeClearedLocaleSeoPage("uk"));
+    .mockReturnValueOnce(clearedRefresh.promise);
   endpoints.getPages
     .mockResolvedValueOnce([page])
     .mockResolvedValue([{ ...page, translatedSectionCount: 0 }]);
   endpoints.listLocales.mockResolvedValueOnce(catalog).mockResolvedValue(LOCALE_CATALOG);
 
-  return { client, english, german, catalog };
+  return { client, english, german, catalog, clearedRefresh };
 };
 
 describe("page editor in a language with real query hooks", () => {
@@ -139,7 +140,7 @@ describe("page editor in a language with real query hooks", () => {
   });
 
   it("clears Ukrainian through the confirmed write and refreshes both counts without changing other languages", async () => {
-    const { client, english, german, catalog } = prepareTranslationClear();
+    const { client, english, german, catalog, clearedRefresh } = prepareTranslationClear();
 
     const { unmount } = render(
       <QueryClientProvider client={client}>
@@ -150,6 +151,8 @@ describe("page editor in a language with real query hooks", () => {
 
     await screen.findByText("1 of 6 translated");
     await screen.findByLabelText("Search Result Title");
+    const saveButton = screen.getByRole("button", { name: "Update Section" });
+
     expect(client.getQueryData(adminKeys.locales.list())).toEqual(catalog);
     clickButton("Clear Translation");
     expect(endpoints.updateSection).not.toHaveBeenCalled();
@@ -163,14 +166,21 @@ describe("page editor in a language with real query hooks", () => {
         locale: "uk",
       }),
     );
+    await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
+    expect(screen.getByLabelText("Search Result Title")).toBeDisabled();
+    expect(screen.getByLabelText("Search Result Description")).toBeDisabled();
+    expect(saveButton).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () => clearedRefresh.resolve(makeClearedLocaleSeoPage("uk")));
+
+    await screen.findByRole("button", { name: "Home SEO Not translated" });
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
+    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Translation cleared");
     await screen.findByText("0 of 6 translated");
     await waitFor(() =>
       expect(client.getQueryData(adminKeys.locales.list())).toEqual(LOCALE_CATALOG),
     );
-    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Translation cleared");
-    expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
-    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
-    expect(screen.getByRole("button", { name: "Home SEO Not translated" })).toBeInTheDocument();
     expect(client.getQueryData(adminKeys.pages.detail(PageSlug.HOME, "en"))).toEqual(english);
     expect(client.getQueryData(adminKeys.pages.detail(PageSlug.HOME, "de"))).toEqual(german);
     expect(endpoints.getPageBySlug.mock.calls).toEqual([
@@ -310,6 +320,7 @@ describe("page editor in a language with real query hooks", () => {
       typeInto("Search Result Title", "Saved title");
       clickButton("Update Section");
       await waitFor(() => expect(endpoints.updateSection).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeDisabled());
       expectLockedSeoEditor("Saved title");
       rerender(<QueryClientProvider client={client}>Left editor</QueryClientProvider>);
       await act(async () => {
