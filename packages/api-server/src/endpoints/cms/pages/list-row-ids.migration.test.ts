@@ -38,13 +38,17 @@ const LIST_FIELDS: readonly { pageSlug: PageSlug; section: SectionSchemaKey; fie
   { pageSlug: PageSlug.OFFER, section: "offer:terms", field: "blocks" },
 ];
 
-const runMigration = async (): Promise<void> => {
+const runMigration = async (): Promise<number[]> => {
   expect(STATEMENTS).toHaveLength(4);
 
-  await cleanupRaw.$transaction(async (tx) => {
+  return cleanupRaw.$transaction(async (tx) => {
+    const counts: number[] = [];
+
     for (const statement of STATEMENTS) {
-      await tx.$executeRawUnsafe(statement);
+      counts.push(await tx.$executeRawUnsafe(statement));
     }
+
+    return counts;
   });
 };
 
@@ -115,35 +119,75 @@ describe("migration 20261116120000_cms_list_row_ids", () => {
     });
   });
 
-  it("copies ids by position, keeps another language's own ids and leaves past-end rows untouched", async () => {
-    const english = { items: [{ id: "first" }, { id: "second" }, { id: "third" }] };
-    const first = { question: "Перший", extra: [1, 2] };
-    const second = { id: "", question: "Другий" };
-    const tail = [{ id: "own", question: "Третій" }, { question: "Past the English end" }];
-    const data = { title: "Питання", items: [first, second, ...tail] };
+  it.each([
+    {
+      name: "copies by position, keeps own ids and leaves past-end rows untouched",
+      englishIds: ["first", "second", "third"],
+      items: [
+        { question: "Перший", extra: [1, 2] },
+        { id: "", question: "Другий" },
+        { id: "own", question: "Третій" },
+        { question: "Past the English end" },
+      ],
+      expectedIds: ["first", "second", "own", undefined],
+      updatedRows: 1,
+    },
+    {
+      name: "skips the English id already held by another row of the list",
+      englishIds: ["a", "b"],
+      items: [
+        { id: "b", question: "Kept" },
+        { question: "Skipped", extra: true },
+      ],
+      expectedIds: ["b", undefined],
+      updatedRows: 0,
+    },
+    {
+      name: "copies a free English id while skipping an id already held by the list",
+      englishIds: ["a", "b", "c"],
+      items: [
+        { question: "Copied", extra: [1, 2] },
+        { question: "Skipped" },
+        { id: "b", question: "Own" },
+      ],
+      expectedIds: ["a", undefined, "b"],
+      updatedRows: 1,
+    },
+  ])(
+    "$name without changing other keys or metadata, and is idempotent",
+    async ({ englishIds, items, expectedIds, updatedRows }) => {
+      const english = { items: englishIds.map((id) => ({ id })) };
+      const data = { title: "Питання", items };
 
-    await seedTranslationRow(PageSlug.FAQ, FAQ, english, DEFAULT_LOCALE_CODE, false);
-    await seedTranslationRow(PageSlug.FAQ, FAQ, data, UKRAINIAN.code, true);
+      await seedTranslationRow(PageSlug.FAQ, FAQ, english, DEFAULT_LOCALE_CODE, false);
+      await seedTranslationRow(PageSlug.FAQ, FAQ, data, UKRAINIAN.code, true);
 
-    const before = await captureMarketingPagesState();
+      const before = await captureMarketingPagesState();
 
-    await runMigration();
+      expect((await runMigration()).slice(2)).toEqual([0, updatedRows]);
 
-    expect(await captureMarketingPagesState()).toEqual({
-      ...before,
-      sections: before.sections.map((row) =>
-        row.locale === UKRAINIAN.code
-          ? {
-              ...row,
-              data: {
-                ...data,
-                items: [{ ...first, id: "first" }, { ...second, id: "second" }, ...tail],
-              },
-            }
-          : row,
-      ),
-    });
-  });
+      const once = await captureMarketingPagesState();
+
+      expect(once).toEqual({
+        ...before,
+        sections: before.sections.map((row) =>
+          row.locale === UKRAINIAN.code
+            ? {
+                ...row,
+                data: {
+                  ...data,
+                  items: items.map((item, index) =>
+                    expectedIds[index] === undefined ? item : { ...item, id: expectedIds[index] },
+                  ),
+                },
+              }
+            : row,
+        ),
+      });
+      expect((await runMigration()).slice(2)).toEqual([0, 0]);
+      expect(await captureMarketingPagesState()).toEqual(once);
+    },
+  );
 
   it.each(LIST_FIELDS)(
     "mints and copies the English id for $section / $field",

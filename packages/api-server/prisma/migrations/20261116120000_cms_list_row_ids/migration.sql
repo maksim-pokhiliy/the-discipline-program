@@ -103,6 +103,12 @@ SET data = jsonb_set(
             AND coalesce(list_row.element ->> 'id', '') = ''
             AND jsonb_typeof(english_row.element) = 'object'
             AND coalesce(english_row.element ->> 'id', '') <> ''
+            AND NOT EXISTS (
+              SELECT 1
+              FROM jsonb_array_elements(section_row.data -> list_fields.field) AS held_row (element)
+              WHERE jsonb_typeof(held_row.element) = 'object'
+                AND held_row.element ->> 'id' = english_row.element ->> 'id'
+            )
           THEN list_row.element || jsonb_build_object('id', english_row.element -> 'id')
           ELSE list_row.element
         END
@@ -153,4 +159,15 @@ WHERE section_row.section = list_fields.section
       AND coalesce(list_row.element ->> 'id', '') = ''
       AND jsonb_typeof(english_row.element) = 'object'
       AND coalesce(english_row.element ->> 'id', '') <> ''
+      AND NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(
+          CASE WHEN jsonb_typeof(section_row.data -> list_fields.field) = 'array'
+            THEN section_row.data -> list_fields.field
+            ELSE '[]'::jsonb
+          END
+        ) AS held_row (element)
+        WHERE jsonb_typeof(held_row.element) = 'object'
+          AND held_row.element ->> 'id' = english_row.element ->> 'id'
+      )
   );
