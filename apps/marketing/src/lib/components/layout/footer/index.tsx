@@ -53,7 +53,8 @@ export const Footer = ({
             columnGap={2}
           >
             <Typography color="text.secondary" variant="caption" suppressHydrationWarning>
-              © {new Date().getFullYear()} {SEO_CONFIG.siteName}. All rights reserved.
+              © {new Date().getFullYear()} {SEO_CONFIG.siteName}. All rights reserved. Created in
+              Ukraine.
             </Typography>
 
             <Typography color="text.secondary" variant="caption">
