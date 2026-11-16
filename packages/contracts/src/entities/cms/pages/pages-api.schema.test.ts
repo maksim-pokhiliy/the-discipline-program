@@ -4,9 +4,12 @@ import { DEFAULT_LOCALE_CODE } from "../locale";
 
 import {
   adminPageDetailsSchema,
+  adminPageListItemSchema,
+  adminPageSectionSchema,
   pageSlugRouteParamsSchema,
   revalidateQuerySchema,
   SECTION_SCHEMAS,
+  SectionTranslationState,
   updatePageSectionBodySchema,
 } from "./pages-api.schema";
 import { PAGE_SECTIONS_MAP, PageSlug } from "./pages.constants";
@@ -26,6 +29,18 @@ const PAGE_REVALIDATION = { path: "/uk/offer" };
 const CATALOG_SECTIONS = Object.values(PAGE_SECTIONS_MAP).flatMap((sections) =>
   Object.values(sections),
 );
+
+const ADMIN_UPDATED_AT = "2026-11-02T09:00:00.000Z";
+const ADMIN_HERO_ROW = {
+  id: "cfixtureadminherorow",
+  section: PAGE_SECTIONS_MAP.home.hero,
+  data: { title: "Fixture title" },
+  updatedAt: ADMIN_UPDATED_AT,
+  hasUnreadableData: false,
+  translation: null,
+};
+const ADMIN_ENGLISH_HERO = { data: ADMIN_HERO_ROW.data, updatedAt: ADMIN_UPDATED_AT };
+const TRANSLATION_STATES = ["NOT_TRANSLATED", "DRAFT", "TRANSLATED", "ENGLISH_NEWER"];
 
 describe("pageSlugRouteParamsSchema", () => {
   it.each(Object.values(PageSlug))("accepts known page slug: %s", (slug) => {
@@ -145,6 +160,109 @@ describe("SECTION_SCHEMAS", () => {
         data: content,
       }).data,
     ).toEqual(content);
+  });
+});
+
+describe("adminPageSectionSchema", () => {
+  it("has one admin variant per section", () => {
+    const variantSections = adminPageSectionSchema.options.map(
+      (variant) => variant.shape.section.value,
+    );
+
+    expect([...variantSections].sort()).toEqual([...CATALOG_SECTIONS].sort());
+  });
+
+  it("builds every admin variant with the top-level fields of its own section", () => {
+    const mismatched = adminPageSectionSchema.options.filter((variant) => {
+      const expectedFields = Object.keys(SECTION_SCHEMAS[variant.shape.section.value].shape);
+      const englishData = variant.shape.translation.unwrap().shape.english.shape.data;
+
+      return (
+        Object.keys(variant.shape.data.shape).join() !== expectedFields.join() ||
+        Object.keys(englishData.shape).join() !== expectedFields.join()
+      );
+    });
+
+    expect(mismatched.map((variant) => variant.shape.section.value)).toEqual([]);
+  });
+
+  it("strips a field of another section from a row's data and its English reference", () => {
+    const data = { ...ADMIN_HERO_ROW.data, readMoreLabel: "Foreign fixture field" };
+    const row = adminPageSectionSchema.parse({
+      ...ADMIN_HERO_ROW,
+      data,
+      translation: {
+        state: SectionTranslationState.TRANSLATED,
+        english: { ...ADMIN_ENGLISH_HERO, data },
+      },
+    });
+
+    expect(row.data).toEqual(ADMIN_HERO_ROW.data);
+    expect(row.translation?.english.data).toEqual(ADMIN_HERO_ROW.data);
+  });
+
+  it("carries the row and English dates as ISO strings", () => {
+    const translation = {
+      state: SectionTranslationState.TRANSLATED,
+      english: ADMIN_ENGLISH_HERO,
+    };
+    const row = { ...ADMIN_HERO_ROW, translation };
+
+    expect(adminPageSectionSchema.parse(row)).toEqual(row);
+    expect(
+      adminPageSectionSchema.safeParse({ ...row, updatedAt: new Date(ADMIN_UPDATED_AT) }).success,
+    ).toBe(false);
+    expect(
+      adminPageSectionSchema.safeParse({
+        ...row,
+        translation: {
+          ...translation,
+          english: { ...ADMIN_ENGLISH_HERO, updatedAt: new Date(ADMIN_UPDATED_AT) },
+        },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts only the four translation states", () => {
+    expect(Object.values(SectionTranslationState)).toEqual(TRANSLATION_STATES);
+
+    for (const state of [...TRANSLATION_STATES, "UNKNOWN"]) {
+      const result = adminPageSectionSchema.safeParse({
+        ...ADMIN_HERO_ROW,
+        translation: { state, english: ADMIN_ENGLISH_HERO },
+      });
+
+      expect(result.success).toBe(TRANSLATION_STATES.includes(state));
+    }
+  });
+
+  it("accepts an English row without a translation", () => {
+    expect(adminPageSectionSchema.parse(ADMIN_HERO_ROW)).toEqual(ADMIN_HERO_ROW);
+  });
+});
+
+describe("adminPageListItemSchema", () => {
+  it("carries a translated count or null", () => {
+    const page = {
+      id: "cfixtureadminpage",
+      slug: PageSlug.HOME,
+      title: "Fixture page",
+      updatedAt: new Date(ADMIN_UPDATED_AT),
+    };
+
+    for (const translatedSectionCount of [null, 0, 1]) {
+      const row = { ...page, translatedSectionCount };
+
+      expect(adminPageListItemSchema.parse(row)).toEqual(row);
+    }
+
+    expect(adminPageListItemSchema.safeParse(page).success).toBe(false);
+    expect(adminPageListItemSchema.safeParse({ ...page, translatedSectionCount: -1 }).success).toBe(
+      false,
+    );
+    expect(
+      adminPageListItemSchema.safeParse({ ...page, translatedSectionCount: 1.5 }).success,
+    ).toBe(false);
   });
 });
 

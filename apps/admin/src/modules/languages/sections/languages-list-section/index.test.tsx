@@ -55,6 +55,20 @@ describe("LanguagesListSection", () => {
     expect(english.queryByRole("switch")).toBeNull();
     expect(english.queryByRole("button")).toBeNull();
     expect(english.queryByRole("progressbar")).toBeNull();
+    expect(english.queryByRole("link", { name: /^Translate / })).toBeNull();
+  });
+
+  it("links each non-default language to its Pages list", () => {
+    render(<LanguagesListSection locales={CATALOG} />);
+
+    for (const language of [UKRAINIAN, POLISH]) {
+      const translationLink = within(rowOf(language.name)).getByRole("link", {
+        name: `Translate ${language.name}`,
+      });
+
+      expect(translationLink).toHaveTextContent("Translate");
+      expect(translationLink).toHaveAttribute("href", `/pages?locale=${language.code}`);
+    }
   });
 
   it("renders row-specific controls, real paths and a contract-derived translation count", () => {

@@ -1,17 +1,13 @@
 "use client";
 
-import { AdminListView } from "@app/lib/components/admin-list-view";
-import { usePagesListData } from "@app/lib/hooks";
+import { type ReactElement, Suspense } from "react";
 
-import { PagesListSection } from "../../sections";
+import { LocaleGate } from "../../components/locale-gate";
 
-export const PagesListView = () => (
-  <AdminListView
-    queryResult={usePagesListData()}
-    loadingMessage="Loading pages..."
-    title="Pages"
-    subtitle="Edit content and sections for marketing site pages"
-  >
-    {(pages) => <PagesListSection pages={pages} />}
-  </AdminListView>
+import { PagesListContent } from "./pages-list-content";
+
+export const PagesListView = (): ReactElement => (
+  <Suspense>
+    <LocaleGate>{(locale) => <PagesListContent locale={locale} />}</LocaleGate>
+  </Suspense>
 );

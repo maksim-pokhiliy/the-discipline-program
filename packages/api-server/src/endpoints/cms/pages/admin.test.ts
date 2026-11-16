@@ -22,7 +22,7 @@ const heroSectionData = {
   backgroundImage: "/test.jpg",
 };
 
-const REVERSED_SECTION_ID_PREFIX = "reversed-about-section-";
+const REVERSED_SECTION_ID_PREFIX = "creversedaboutsection";
 const NON_CANONICAL_SECTION = "contact:retiredBanner";
 const SITE_FOOTER_ROW = { pageSlug: PageSlug.SITE, section: PAGE_SECTIONS_MAP.site.footer };
 const STOREFRONT_GRID_ROW = {
@@ -60,6 +60,7 @@ describe("cmsPagesAdminApi", () => {
         slug: PageSlug.HOME,
         title: "Test Home Page",
         updatedAt: expect.any(Date),
+        translatedSectionCount: null,
       });
     });
 

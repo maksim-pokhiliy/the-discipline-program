@@ -2,24 +2,21 @@
 
 import { type ReactElement } from "react";
 
-import { TextField } from "@mui/material";
-import { useFormContext } from "react-hook-form";
-
 import { FormCard } from "@app/lib/components/form-card";
+
+import { SectionTextField } from "../section-field";
 
 import { type FieldGroup } from "./flat-fields-section-form.types";
 
 type FlatFieldGroupProps = { group: FieldGroup };
 
 export const FlatFieldGroup = ({ group }: FlatFieldGroupProps): ReactElement => {
-  const { register } = useFormContext<Record<string, string>>();
   const inputs = Object.entries(group.fields).map(([name, field]) => (
-    <TextField
+    <SectionTextField<Record<string, string>>
       key={name}
       label={field.label}
-      fullWidth
-      {...(field.isMultiline && { multiline: true, minRows: 2 })}
-      {...register(name)}
+      name={name}
+      {...(field.isMultiline && { minRows: 2 })}
     />
   ));
 

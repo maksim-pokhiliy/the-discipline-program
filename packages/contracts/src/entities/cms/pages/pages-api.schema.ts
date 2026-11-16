@@ -111,6 +111,7 @@ export const adminPageListItemSchema = z.object({
   slug: z.nativeEnum(PageSlug),
   title: z.string(),
   updatedAt: z.date(),
+  translatedSectionCount: z.number().int().nonnegative().nullable(),
 });
 
 type PageSectionsMap = typeof PAGE_SECTIONS_MAP;
@@ -214,29 +215,83 @@ export const updatePageSectionSchema = updatePageSectionBodySchema.and(
   z.object({ pageSlug: z.nativeEnum(PageSlug) }),
 );
 
-const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
-  const [first, ...rest] = arr;
+export enum SectionTranslationState {
+  NOT_TRANSLATED = "NOT_TRANSLATED",
+  DRAFT = "DRAFT",
+  TRANSLATED = "TRANSLATED",
+  ENGLISH_NEWER = "ENGLISH_NEWER",
+}
 
-  if (first === undefined) {
-    throw new Error("Expected non-empty array");
-  }
+const isoDateTimeSchema = z.string().datetime();
 
-  return [first, ...rest];
+const adminSectionVariant = <TKey extends PageSectionKey, TSchema extends z.AnyZodObject>(
+  key: TKey,
+  schema: TSchema,
+) => {
+  const data = schema.deepPartial();
+
+  return z.object({
+    id: z.string().cuid(),
+    section: z.literal(key),
+    data,
+    updatedAt: isoDateTimeSchema,
+    hasUnreadableData: z.boolean(),
+    translation: z
+      .object({
+        state: z.nativeEnum(SectionTranslationState),
+        english: z.object({ data, updatedAt: isoDateTimeSchema }),
+      })
+      .nullable(),
+  });
 };
 
-const adminSectionVariants = SECTION_VARIANTS.map((variant) =>
-  z.object({
-    id: z.string().cuid(),
-    section: variant.shape.section,
-    data: variant.shape.data,
-    updatedAt: z.date(),
-  }),
-);
+const adminVariantOf = <TKey extends PageSectionKey>(key: TKey) =>
+  adminSectionVariant(key, SECTION_SCHEMAS[key]);
+
+const ADMIN_SECTION_VARIANTS = [
+  adminVariantOf(PAGE_SECTIONS_MAP.home.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.home.whyChoose),
+  adminVariantOf(PAGE_SECTIONS_MAP.home.storefront),
+  adminVariantOf(PAGE_SECTIONS_MAP.home.reviews),
+  adminVariantOf(PAGE_SECTIONS_MAP.home.contact),
+  adminVariantOf(PAGE_SECTIONS_MAP.home.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.storefront.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.storefront.grid),
+  adminVariantOf(PAGE_SECTIONS_MAP.storefront.cta),
+  adminVariantOf(PAGE_SECTIONS_MAP.storefront.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.about.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.about.journey),
+  adminVariantOf(PAGE_SECTIONS_MAP.about.credentials),
+  adminVariantOf(PAGE_SECTIONS_MAP.about.personal),
+  adminVariantOf(PAGE_SECTIONS_MAP.about.cta),
+  adminVariantOf(PAGE_SECTIONS_MAP.about.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.blog.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.blog.grid),
+  adminVariantOf(PAGE_SECTIONS_MAP.blog.related),
+  adminVariantOf(PAGE_SECTIONS_MAP.blog.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.contact.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.contact.form),
+  adminVariantOf(PAGE_SECTIONS_MAP.contact.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.faq.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.faq.content),
+  adminVariantOf(PAGE_SECTIONS_MAP.faq.cta),
+  adminVariantOf(PAGE_SECTIONS_MAP.faq.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.offer.hero),
+  adminVariantOf(PAGE_SECTIONS_MAP.offer.requisites),
+  adminVariantOf(PAGE_SECTIONS_MAP.offer.terms),
+  adminVariantOf(PAGE_SECTIONS_MAP.offer.seo),
+  adminVariantOf(PAGE_SECTIONS_MAP.site.navigation),
+  adminVariantOf(PAGE_SECTIONS_MAP.site.footer),
+  adminVariantOf(PAGE_SECTIONS_MAP.site.leadForm),
+  adminVariantOf(PAGE_SECTIONS_MAP.site.errors),
+] as const;
+
+export const adminPageSectionSchema = z.discriminatedUnion("section", ADMIN_SECTION_VARIANTS);
 
 export const adminPageDetailsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
   locale: localeCodeSchema,
-  sections: z.array(z.discriminatedUnion("section", toNonEmptyArray(adminSectionVariants))),
+  sections: z.array(adminPageSectionSchema),
 });
 
 export const getPageBySlugParamsSchema = z.object({

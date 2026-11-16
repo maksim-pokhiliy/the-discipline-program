@@ -1,9 +1,12 @@
 "use client";
 
-import { Stack, TextField } from "@mui/material";
-import { useFormContext } from "react-hook-form";
+import { type ReactElement, type ReactNode } from "react";
+
+import { Stack } from "@mui/material";
 
 import { FormCard } from "@app/lib/components/form-card";
+
+import { SectionTextField } from "../section-field";
 
 type TitleSubtitleFields = {
   title: string;
@@ -12,41 +15,19 @@ type TitleSubtitleFields = {
 
 type TitleSubtitleSectionFormProps = {
   cardTitle: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export const TitleSubtitleSectionForm = ({
   cardTitle,
   children,
-}: TitleSubtitleSectionFormProps) => {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext<TitleSubtitleFields>();
+}: TitleSubtitleSectionFormProps): ReactElement => (
+  <FormCard title={cardTitle}>
+    <Stack spacing={3}>
+      <SectionTextField<TitleSubtitleFields> name="title" label="Section Title" />
+      <SectionTextField<TitleSubtitleFields> name="subtitle" label="Section Subtitle" minRows={2} />
 
-  return (
-    <FormCard title={cardTitle}>
-      <Stack spacing={3}>
-        <TextField
-          label="Section Title"
-          fullWidth
-          error={!!errors.title}
-          helperText={errors.title?.message}
-          {...register("title")}
-        />
-
-        <TextField
-          label="Section Subtitle"
-          fullWidth
-          multiline
-          minRows={2}
-          error={!!errors.subtitle}
-          helperText={errors.subtitle?.message}
-          {...register("subtitle")}
-        />
-
-        {children}
-      </Stack>
-    </FormCard>
-  );
-};
+      {children}
+    </Stack>
+  </FormCard>
+);

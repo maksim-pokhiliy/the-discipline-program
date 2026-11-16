@@ -29,11 +29,12 @@ import {
 import { FULL_SECTION_DATA, GERMAN_ABOUT_HERO, UK_ABOUT_HERO } from "./__fixtures__/section-data";
 import { ABOUT_HERO_ROW, ABOUT_SECTIONS, readRows } from "./__fixtures__/section-rows";
 import { seedSectionsWithOverrides } from "./__fixtures__/seed-with-overrides";
+import { ENGLISH_JOURNEY, seedTranslationRow } from "./__fixtures__/translation-rows";
 import { cmsPagesAdminApi } from "./admin";
 
 const ABOUT_HERO = PAGE_SECTIONS_MAP.about.hero;
 const ABOUT_JOURNEY_ROW = { pageSlug: PageSlug.ABOUT, section: PAGE_SECTIONS_MAP.about.journey };
-const REVERSED_SECTION_ID_PREFIX = "reversed-uk-about-section-";
+const REVERSED_SECTION_ID_PREFIX = "creversedukaboutsection";
 const REWRITTEN_UK_ABOUT_HERO = { title: "Про мене, друга редакція" };
 const REWRITTEN_ENGLISH_ABOUT_HERO = { title: "About, second edit" };
 const UK_PARTIAL_JOURNEY = { title: "Мій шлях", timeline: [{ year: "2019" }] };
@@ -174,6 +175,7 @@ describe("cmsPagesAdminApi — locales", () => {
     });
 
     it("returns a nested partial item that updateSection stored", async () => {
+      await seedTranslationRow(PageSlug.ABOUT, ABOUT_JOURNEY_ROW.section, ENGLISH_JOURNEY);
       await cmsPagesAdminApi.updateSection({
         ...ABOUT_JOURNEY_ROW,
         data: UK_PARTIAL_JOURNEY,

@@ -1,16 +1,18 @@
 import { type ApiClient } from "@repo/api-client";
+import { type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageListItem,
-  type CorrelatedAdminPageDetails,
-  type UpdatePageSectionBody,
+  type AdminPageDetails,
+  type LocalizedSectionWriteBody,
 } from "@repo/contracts/cms/pages";
 
 export const createPagesAPI = (client: ApiClient) => ({
-  getPages: (): Promise<AdminPageListItem[]> => client.request("/api/admin/pages"),
+  getPages: (locale: LocaleCode): Promise<AdminPageListItem[]> =>
+    client.request("/api/admin/pages", "GET", undefined, { locale }),
 
-  getPageBySlug: (slug: string): Promise<CorrelatedAdminPageDetails> =>
-    client.request(`/api/admin/pages/${slug}`),
+  getPageBySlug: (slug: string, locale: LocaleCode): Promise<AdminPageDetails> =>
+    client.request(`/api/admin/pages/${slug}`, "GET", undefined, { locale }),
 
-  updateSection: (slug: string, body: UpdatePageSectionBody): Promise<void> =>
+  updateSection: (slug: string, body: LocalizedSectionWriteBody): Promise<void> =>
     client.requestNoContent(`/api/admin/pages/${slug}/sections`, "PATCH", body),
 });

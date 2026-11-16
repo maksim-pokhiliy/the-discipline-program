@@ -4,7 +4,13 @@ import { type z } from "zod";
 import { type LocaleQuery } from "../locale";
 
 import { type SECTION_SCHEMAS } from "./pages-api.schema";
-import { type UpdatePageSectionBody, type UpdatePageSectionData } from "./pages-api.types";
+import {
+  type AdminPageSection,
+  type AdminSectionTranslation,
+  type LocalizedSectionWriteBody,
+  type UpdatePageSectionBody,
+  type UpdatePageSectionData,
+} from "./pages-api.types";
 import { type homePageHeroSchema, type siteNavigationSchema } from "./pages.schema";
 import { type SectionSchemaKey } from "./pages.types";
 
@@ -16,6 +22,10 @@ type SectionPayload<TSection extends UpdatePageSectionBody["section"]> = Extract
 >["data"];
 
 type DeepPartialInput<TSchema extends z.AnyZodObject> = z.input<ReturnType<TSchema["deepPartial"]>>;
+type DeepPartialOutput<TSchema extends z.AnyZodObject> = z.output<
+  ReturnType<TSchema["deepPartial"]>
+>;
+type AdminRow<TKey extends SectionSchemaKey> = Extract<AdminPageSection, { section: TKey }>;
 
 describe("request types with a defaulted locale", () => {
   it("let the caller omit the locale", () => {
@@ -47,5 +57,39 @@ describe("section write types", () => {
   it("keep a field of one section out of another section's payload", () => {
     expectTypeOf<SectionPayload<"blog:related">>().not.toHaveProperty("buttonText");
     expectTypeOf<SectionPayload<"home:hero">>().toHaveProperty("buttonText");
+  });
+});
+
+describe("admin read types", () => {
+  it("correlates every admin row's data with its own section", () => {
+    expectTypeOf<AdminPageSection["section"]>().toEqualTypeOf<SectionSchemaKey>();
+    expectTypeOf<{
+      [TKey in SectionSchemaKey]: AdminRow<TKey>["data"];
+    }>().toEqualTypeOf<{
+      [TKey in SectionSchemaKey]: DeepPartialOutput<(typeof SECTION_SCHEMAS)[TKey]>;
+    }>();
+    expectTypeOf<{
+      [TKey in SectionSchemaKey]: NonNullable<AdminRow<TKey>["translation"]>["english"]["data"];
+    }>().toEqualTypeOf<{
+      [TKey in SectionSchemaKey]: DeepPartialOutput<(typeof SECTION_SCHEMAS)[TKey]>;
+    }>();
+  });
+
+  it("types the admin read dates as strings", () => {
+    expectTypeOf<AdminPageSection["updatedAt"]>().toEqualTypeOf<string>();
+    expectTypeOf<AdminSectionTranslation["english"]["updatedAt"]>().toEqualTypeOf<string>();
+  });
+
+  it("requires the locale on a localized write body", () => {
+    expectTypeOf<{
+      section: "home:hero";
+      data: { title: string };
+    }>().not.toExtend<LocalizedSectionWriteBody>();
+    expectTypeOf<{
+      section: "home:hero";
+      data: { title: string };
+      locale: "uk";
+    }>().toExtend<LocalizedSectionWriteBody>();
+    expectTypeOf<LocalizedSectionWriteBody["locale"]>().toEqualTypeOf<string>();
   });
 });

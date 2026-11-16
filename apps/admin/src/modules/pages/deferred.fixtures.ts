@@ -1,14 +1,12 @@
-import { type CorrelatedAdminPageDetails } from "@repo/contracts/cms/pages";
+import { type AdminPageDetails } from "@repo/contracts/cms/pages";
 
-type Deferred<TValue extends void | CorrelatedAdminPageDetails> = {
+type Deferred<TValue extends void | AdminPageDetails> = {
   promise: Promise<TValue>;
   resolve: (value: TValue) => void;
   reject: (error: Error) => void;
 };
 
-export const makeDeferred = <
-  TValue extends void | CorrelatedAdminPageDetails,
->(): Deferred<TValue> => {
+export const makeDeferred = <TValue extends void | AdminPageDetails>(): Deferred<TValue> => {
   let resolve: Deferred<TValue>["resolve"] = () => {
     throw new Error("Deferred promise was not initialized");
   };

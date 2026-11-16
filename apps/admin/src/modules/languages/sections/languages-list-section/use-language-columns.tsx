@@ -6,7 +6,7 @@ import {
   LanguageNameCell,
   LanguagePathCell,
   LanguageStatusCell,
-  TranslationProgress,
+  LanguageTranslationCell,
   type LanguageRow,
   type MoveDirection,
 } from "../../components";
@@ -33,7 +33,7 @@ const TRANSLATION_COLUMN: Column<LanguageRow> = {
   id: "translation",
   label: "Translation",
   width: "23%",
-  render: (language) => <TranslationProgress language={language} />,
+  render: (language) => <LanguageTranslationCell language={language} />,
 };
 
 export const useLanguageColumns = (options: LanguageColumnsOptions): Column<LanguageRow>[] => [

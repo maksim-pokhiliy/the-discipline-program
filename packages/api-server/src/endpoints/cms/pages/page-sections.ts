@@ -7,8 +7,11 @@ import {
   type PageSlug,
   SECTION_DEFAULTS,
   SECTION_SCHEMAS,
+  SectionTranslationState,
   type SectionSchemaKey,
 } from "@repo/contracts/cms/pages";
+
+import { asJsonRecord } from "../../../utils";
 
 export type SectionData<TKey extends SectionSchemaKey> = z.infer<
   ReturnType<(typeof SECTION_SCHEMAS)[TKey]["deepPartial"]>
@@ -18,6 +21,16 @@ export type ServedSectionParse<TKey extends SectionSchemaKey> =
   | { kind: "served"; data: SectionData<TKey> }
   | { kind: "empty" }
   | { kind: "invalid"; error: z.ZodError };
+
+type SectionRowForState = {
+  pageSlug: string;
+  section: string;
+  data: Prisma.JsonValue;
+  isActive: boolean;
+  updatedAt: Date;
+};
+
+export type ReadableSectionData = { data: Prisma.InputJsonObject; isReadable: boolean };
 
 export const EMPTY_SECTION_DATA: Prisma.InputJsonObject = {};
 
@@ -52,6 +65,48 @@ export const parseServedSectionData = <TKey extends SectionSchemaKey>(
   }
 
   return { kind: "served", data: parsed };
+};
+
+export const isServedSectionRow = (
+  row: Pick<SectionRowForState, "pageSlug" | "section" | "data">,
+): boolean =>
+  isSectionOfPage(row.pageSlug, row.section) &&
+  parseServedSectionData(row.section, row.data).kind === "served";
+
+export const sectionTranslationState = (
+  row: SectionRowForState,
+  englishUpdatedAt: Date,
+): SectionTranslationState => {
+  if (!isServedSectionRow(row)) {
+    return SectionTranslationState.NOT_TRANSLATED;
+  }
+
+  if (!row.isActive) {
+    return SectionTranslationState.DRAFT;
+  }
+
+  return englishUpdatedAt.getTime() > row.updatedAt.getTime()
+    ? SectionTranslationState.ENGLISH_NEWER
+    : SectionTranslationState.TRANSLATED;
+};
+
+export const readableSectionData = (
+  section: SectionSchemaKey,
+  data: Prisma.JsonValue | null,
+): ReadableSectionData => {
+  const result = SECTION_SCHEMAS[section].deepPartial().safeParse(asJsonRecord(data) ?? {});
+
+  return result.success
+    ? { data: result.data, isReadable: true }
+    : { data: EMPTY_SECTION_DATA, isReadable: false };
+};
+
+export const lockPageSection = async (
+  tx: Pick<Prisma.TransactionClient, "$executeRaw">,
+  pageSlug: PageSlug,
+  section: SectionSchemaKey,
+): Promise<void> => {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`cms-page-section:${pageSlug}:${section}`}))`;
 };
 
 export const getPageSectionsOrder = (pageSlug: PageSlug): string[] => {

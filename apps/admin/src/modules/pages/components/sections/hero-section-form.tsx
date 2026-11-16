@@ -1,16 +1,16 @@
 "use client";
 
-import { Stack, TextField } from "@mui/material";
-import { useFormContext } from "react-hook-form";
+import { type ReactElement } from "react";
+
+import { Stack } from "@mui/material";
 import { type z } from "zod";
 
 import { type homePageHeroSchema } from "@repo/contracts/cms/pages";
-import { ImageUpload } from "@repo/ui";
 
 import { FormCard } from "@app/lib/components/form-card";
-import { useUploadImage } from "@app/lib/hooks";
 
 import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
+import { SectionImageField, SectionTextField } from "../section-field";
 
 type HeroSectionData = z.infer<typeof homePageHeroSchema>;
 
@@ -18,75 +18,23 @@ type HeroSectionFormProps = {
   sectionType: HeroSectionType;
 };
 
-export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
-  const {
-    register,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useFormContext<HeroSectionData>();
-  const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
-
+export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps): ReactElement => {
   const features = SECTION_FEATURES[sectionType];
 
   return (
     <FormCard title="Hero Section Settings">
       <Stack spacing={3}>
-        <TextField
-          label="Title"
-          fullWidth
-          error={!!errors.title}
-          helperText={errors.title?.message}
-          {...register("title")}
-        />
-
-        <TextField
-          label="Subtitle"
-          fullWidth
-          multiline
-          minRows={3}
-          error={!!errors.subtitle}
-          helperText={errors.subtitle?.message}
-          {...register("subtitle")}
-        />
+        <SectionTextField<HeroSectionData> name="title" label="Title" />
+        <SectionTextField<HeroSectionData> name="subtitle" label="Subtitle" minRows={3} />
 
         {features.hasButton && (
           <>
-            <TextField
-              label="Button Text"
-              fullWidth
-              error={!!errors.buttonText}
-              helperText={errors.buttonText?.message}
-              {...register("buttonText")}
-            />
-
-            <TextField
-              label="Button Link"
-              fullWidth
-              error={!!errors.buttonHref}
-              helperText={errors.buttonHref?.message}
-              {...register("buttonHref")}
-            />
+            <SectionTextField<HeroSectionData> name="buttonText" label="Button Text" />
+            <SectionTextField<HeroSectionData> name="buttonHref" label="Button Link" />
           </>
         )}
 
-        {features.hasBackground && (
-          <ImageUpload
-            previewUrl={watch("backgroundImage") || ""}
-            isUploading={isUploading}
-            onFileSelect={(file) => {
-              uploadImage(
-                { file, context: "marketing" },
-                {
-                  onSuccess: (res) => setValue("backgroundImage", res.url, { shouldDirty: true }),
-                },
-              );
-            }}
-            onRemove={() => {
-              setValue("backgroundImage", "", { shouldDirty: true });
-            }}
-          />
-        )}
+        {features.hasBackground && <SectionImageField name="backgroundImage" />}
       </Stack>
     </FormCard>
   );
