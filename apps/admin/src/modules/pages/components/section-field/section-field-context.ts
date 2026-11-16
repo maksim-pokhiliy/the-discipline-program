@@ -20,6 +20,12 @@ export type SectionFieldMode =
 
 export const SectionFieldContext = createContext<SectionFieldContextValue | null>(null);
 
+export const useIsEditingEnglish = (): boolean => {
+  const context = useContext(SectionFieldContext);
+
+  return context === null || context.english === null;
+};
+
 export const useSectionField = (name: string): SectionFieldMode => {
   const context = useContext(SectionFieldContext);
 

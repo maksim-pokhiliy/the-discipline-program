@@ -37,17 +37,17 @@ describe("LanguageBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("states the draft rule outside English without promising references in list forms", () => {
+  it("states the reference and draft rules outside English", () => {
     render(<LanguageBanner locale={UKRAINIAN_LOCALE} />);
 
     expect(
-      screen.getByText("Links, images and list rows always come from English."),
+      screen.getByText(/Links, images and list rows always come from English\./),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
         `A section goes live in ${UKRAINIAN_LOCALE.name} once every English text in it has a translation. Until then it is saved as a draft that the site does not show.`,
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/Each field shows its English text beside it/)).toBeNull();
+    expect(screen.getByText(/Each field shows its English text beside it/)).toBeInTheDocument();
   });
 });

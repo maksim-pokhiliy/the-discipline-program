@@ -431,9 +431,12 @@ describe("page editor in a language with real query hooks", () => {
     screen.getAllByRole("textbox").forEach((field) => expect(field).toBeDisabled());
     screen
       .getAllByRole("button", {
-        name: /Add Terms Block|Move up|Move down|Remove item|Update Section|Clear Translation/,
+        name: /^Update Section$|^Clear Translation$/,
       })
       .forEach((button) => expect(button).toBeDisabled());
+    expect(
+      screen.queryByRole("button", { name: /^Add Terms Block$|^Move |^Remove / }),
+    ).not.toBeInTheDocument();
     endpoints.getPageBySlug.mockReturnValueOnce(refresh.promise);
     await act(async () => patch.resolve());
     await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(4));
@@ -443,7 +446,7 @@ describe("page editor in a language with real query hooks", () => {
 
     await waitFor(() => expect(screen.getByLabelText("Section Title")).toBeEnabled());
     expect(screen.getByLabelText("Section Title")).toHaveValue("Saved Ukrainian terms");
-    expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Add Terms Block" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
   });
 

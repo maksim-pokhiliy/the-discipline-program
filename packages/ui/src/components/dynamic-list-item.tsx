@@ -7,27 +7,36 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IconButton, Stack, Paper, alpha } from "@mui/material";
 
+import { useMoveFocus } from "./use-move-focus";
+
 export type DynamicListItemProps = {
   children: ReactNode;
-  onRemove: () => void;
-  disableRemove?: boolean;
-  removeAriaLabel?: string;
+  itemLabel: string;
+  onRemove?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
-  disableMoveUp?: boolean;
-  disableMoveDown?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+};
+
+const UNAVAILABLE_MOVE_SX = {
+  color: "action.disabled",
+  cursor: "default",
+  "&:hover": { backgroundColor: "transparent" },
+  "&:active": { transform: "none" },
 };
 
 export const DynamicListItem = ({
   children,
+  itemLabel,
   onRemove,
-  disableRemove = false,
-  removeAriaLabel = "Remove item",
   onMoveUp,
   onMoveDown,
-  disableMoveUp = false,
-  disableMoveDown = false,
+  canMoveUp = true,
+  canMoveDown = true,
 }: DynamicListItemProps): ReactElement => {
+  const { moveUpRef, moveDownRef, moveKeepingFocus } = useMoveFocus();
+
   return (
     <Paper
       variant="outlined"
@@ -49,37 +58,52 @@ export const DynamicListItem = ({
           {children}
         </Stack>
 
-        <Stack sx={{ mt: 0.5 }}>
-          {onMoveUp && onMoveDown && (
-            <>
+        {(onRemove || (onMoveUp && onMoveDown)) && (
+          <Stack sx={{ mt: 0.5 }}>
+            {onMoveUp && onMoveDown && (
+              <>
+                <IconButton
+                  size="medium"
+                  ref={moveUpRef}
+                  onClick={() => {
+                    if (canMoveUp) {
+                      moveKeepingFocus("up", onMoveUp);
+                    }
+                  }}
+                  aria-disabled={!canMoveUp}
+                  sx={canMoveUp ? {} : UNAVAILABLE_MOVE_SX}
+                  aria-label={`Move ${itemLabel} up`}
+                >
+                  <ArrowUpwardIcon />
+                </IconButton>
+                <IconButton
+                  size="medium"
+                  ref={moveDownRef}
+                  onClick={() => {
+                    if (canMoveDown) {
+                      moveKeepingFocus("down", onMoveDown);
+                    }
+                  }}
+                  aria-disabled={!canMoveDown}
+                  sx={canMoveDown ? {} : UNAVAILABLE_MOVE_SX}
+                  aria-label={`Move ${itemLabel} down`}
+                >
+                  <ArrowDownwardIcon />
+                </IconButton>
+              </>
+            )}
+            {onRemove && (
               <IconButton
                 size="medium"
-                onClick={onMoveUp}
-                disabled={disableMoveUp}
-                aria-label="Move up"
+                color="error"
+                onClick={onRemove}
+                aria-label={`Remove ${itemLabel}`}
               >
-                <ArrowUpwardIcon />
+                <DeleteIcon />
               </IconButton>
-              <IconButton
-                size="medium"
-                onClick={onMoveDown}
-                disabled={disableMoveDown}
-                aria-label="Move down"
-              >
-                <ArrowDownwardIcon />
-              </IconButton>
-            </>
-          )}
-          <IconButton
-            size="medium"
-            color="error"
-            onClick={onRemove}
-            disabled={disableRemove}
-            aria-label={removeAriaLabel}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Stack>
+            )}
+          </Stack>
+        )}
       </Stack>
     </Paper>
   );

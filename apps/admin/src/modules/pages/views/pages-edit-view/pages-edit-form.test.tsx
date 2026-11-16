@@ -163,7 +163,7 @@ describe("PagesEditForm", () => {
     await waitFor(() =>
       expect(updateSectionMock).toHaveBeenCalledExactlyOnceWith({
         section: "offer:terms",
-        data: { blocks: [{ heading, body: "" }] },
+        data: { blocks: [{ id: expect.any(String), heading, body: "" }] },
       }),
     );
   });
@@ -238,6 +238,10 @@ describe("PagesEditForm", () => {
     await waitFor(() => expect(updateSectionMock).toHaveBeenCalledTimes(1));
     const saved = updateSectionMock.mock.calls[0]?.[0];
 
+    expect(saved).toEqual({
+      section: "offer:requisites",
+      data: { title, items: [{ id: expect.any(String), ...item }] },
+    });
     expect(updateSectionHookMock).toHaveBeenCalledWith(PageSlug.OFFER, DEFAULT_LOCALE_CODE);
     expect(updatePageSectionBodySchema.parse(saved)).toEqual({
       locale: "en",

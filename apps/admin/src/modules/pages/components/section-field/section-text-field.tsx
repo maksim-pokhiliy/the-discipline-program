@@ -2,7 +2,7 @@
 
 import { type ReactElement, useId } from "react";
 
-import { Grid, TextField } from "@mui/material";
+import { Grid, TextField, type TextFieldProps } from "@mui/material";
 import { type FieldPath, type FieldValues, useFormContext } from "react-hook-form";
 
 import { EnglishReference } from "./english-reference";
@@ -13,6 +13,7 @@ type SectionTextFieldProps<TValues extends FieldValues> = {
   label: string;
   minRows?: number;
   helperText?: string;
+  size?: TextFieldProps["size"];
 };
 
 export const SectionTextField = <TValues extends FieldValues>({
@@ -20,6 +21,7 @@ export const SectionTextField = <TValues extends FieldValues>({
   label,
   minRows,
   helperText = "",
+  size,
 }: SectionTextFieldProps<TValues>): ReactElement => {
   const { register, getFieldState, formState } = useFormContext<TValues>();
   const field = useSectionField(name);
@@ -35,6 +37,7 @@ export const SectionTextField = <TValues extends FieldValues>({
     <TextField
       id={id}
       label={label}
+      {...(size !== undefined && { size })}
       fullWidth
       error={error !== undefined}
       helperText={help}

@@ -9,32 +9,32 @@ const MIDDLE_ROW_INDEX = 1;
 const makeOperations = () => ({ move: vi.fn(), remove: vi.fn() });
 
 describe("getRowControls", () => {
-  it("disables move up on the first row", () => {
+  it("marks move up unavailable on the first row", () => {
     const controls = getRowControls(0, ROW_COUNT, makeOperations());
 
-    expect(controls.disableMoveUp).toBe(true);
-    expect(controls.disableMoveDown).toBe(false);
+    expect(controls.canMoveUp).toBe(false);
+    expect(controls.canMoveDown).toBe(true);
   });
 
-  it("disables move down on the last row", () => {
+  it("marks move down unavailable on the last row", () => {
     const controls = getRowControls(LAST_ROW_INDEX, ROW_COUNT, makeOperations());
 
-    expect(controls.disableMoveUp).toBe(false);
-    expect(controls.disableMoveDown).toBe(true);
+    expect(controls.canMoveUp).toBe(true);
+    expect(controls.canMoveDown).toBe(false);
   });
 
-  it("disables both moves on a single row", () => {
+  it("marks both moves unavailable on a single row", () => {
     const controls = getRowControls(0, 1, makeOperations());
 
-    expect(controls.disableMoveUp).toBe(true);
-    expect(controls.disableMoveDown).toBe(true);
+    expect(controls.canMoveUp).toBe(false);
+    expect(controls.canMoveDown).toBe(false);
   });
 
   it("enables both moves on a middle row", () => {
     const controls = getRowControls(MIDDLE_ROW_INDEX, ROW_COUNT, makeOperations());
 
-    expect(controls.disableMoveUp).toBe(false);
-    expect(controls.disableMoveDown).toBe(false);
+    expect(controls.canMoveUp).toBe(true);
+    expect(controls.canMoveDown).toBe(true);
   });
 
   it("moves a row one place up and one place down", () => {
