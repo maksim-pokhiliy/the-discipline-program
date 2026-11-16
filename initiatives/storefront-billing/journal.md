@@ -502,3 +502,21 @@ The planner's verification, fresh: admin 44 files and 427 tests, contracts 87 an
 The browser-gate checklist went to the owner with one caution: the local admin's Blob token writes to production's store, so item 6 changes the English button link, not the image, and the Personal image Remove stays untouched.
 
 **Next:** the owner's browser pass on 4712, the merge on his word, the production smoke, the close-out docs.
+
+## 2026-11-16 — 0.4d3a: the owner's browser pass, two fixes before the merge (claude)
+
+The owner came back after a week. The local stack was down after a host restart; the planner started the existing `tdp-platform-db` container (fifteen migrations applied, `uk` present and disabled, the page tables empty and filled by the admin on first open) and merged the docs PR #461 whose watcher had died with the session.
+
+His first pass, with only the admin running as the planner had told him, reported five things; diagnosed at their source:
+
+- The language banner is a narrow column beside a full-width switch from `md` up: the theme's `TextField` default is `fullWidth` (`packages/mui/src/theme/components/text-field.ts:7`), so the switch takes the row and the banner's `flex: 1` collapses. A defect of this step; jsdom has no layout, so no test saw it.
+- The state chip changed and "Clear Translation" took effect only after a reload. The save route awaits the marketing cache refresh (a `fetch` with a ten-second abort) before it answers, the browser client allows five seconds an attempt, and on this host (WSL mirrored networking) a connection to a port nobody listens on hangs instead of refusing: measured ten seconds to the abort with the marketing dev server down. The row was written, the editor reported a failure and refetched nothing. In the route since 0.4b, untouched by this step; the planner's instruction to run the admin alone exposed it. The owner ruled to fix it in this PR.
+- The English reference showed in the hero only: Why Choose and Reviews are list sections (0.4d3b), and the local English rows of Storefront and Contact are empty, so their reference reads "No English text". As designed.
+- He asked whether shared values should be editable from every language; kept as is (D-24, confirmed).
+- He uploaded an image before reading the caution about the Blob store: one file in production's store that no production row names. Production's site is unchanged; the removal is a production write and waits for his word.
+
+His second pass, with the marketing server up: the nine items pass.
+
+Ruled by the planner: the bar is a column at every width, the banner across it, the switch under it and not stretched from `md` up; the save answers after the write and schedules the refresh with `after` from `next/server` (Next 16.2.6; it throws outside a request scope, `next/dist/server/after/after.js:12-21`, so the route test mocks it). Both with their regression tests and mutants in `step-0.4d3a-gate-fix-prompt.md`; the fence gains the route file and its test.
+
+**Next:** the Codex fix leg, the planner verification, the owner's short recheck, the merge on his word, the production smoke.
