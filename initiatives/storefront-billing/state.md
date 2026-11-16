@@ -40,7 +40,7 @@ Prior: **FOUNDED 2026-09-23.** Two days of dialogue distilled: the Apple-vs-Mono
 
 ## Next action
 
-**▶ P0.4d3b running: the contour is approved (owner, 2026-11-16: delegated mode, capped, `/feature` full, the row ids supplied by a data migration) and the prompt is `step-0.4d3b-prompt.md`; the Opus `step-executor` plans to the gate.** Next for the planner: the plan-gate triage (roster first), then the handoff file and the Codex implement leg. The migration is dispatched to production from the PR branch before the merge, on the owner's word at that moment (`docs/runbooks/db-migrate-dispatch.md`). The coach starts translating after this step. Not on the critical path of the acquiring application (D-12 amended).
+**▶ P0.4d3b running: the plan gate is ratified (2026-11-16; one PR on the owner's word, the rest the planner's rulings) and the handoff is `step-0.4d3b-implement-prompt.md`; the Codex implement leg builds the plan of `.feature-dev/1794825820/` to the delivery PR.** Next for the planner: verify the leg's exit before reading its report (the roster against the rollout, the PR, the tree, the deviations), then the fresh Opus `step-reviewer`, the Codex fix leg, Phase 6 and the owner's browser pass. Before the merge: the 0.4d3b section of `docs/runbooks/db-migrate-dispatch.md` (the planner's docs commit; text at `plan.md` "Runbook section text" of the artifacts, the consistency query at design (c)), the rehearsal of the final file on a clone of a production snapshot, a production read for rows of another language, then the dispatch from the PR branch on the owner's word, with the admin pages editor frozen from the dispatch until the deploy is verified. The coach starts translating after this step.
 
 ## Open decisions awaiting ratification
 
