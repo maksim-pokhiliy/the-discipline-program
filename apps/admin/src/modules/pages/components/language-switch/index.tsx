@@ -21,11 +21,12 @@ export const LanguageSwitch = ({
 }: LanguageSwitchProps): ReactElement => (
   <TextField
     select
+    fullWidth={false}
     label="Language"
     size="small"
     value={locale.code}
     onChange={(event) => onChange(event.target.value)}
-    sx={{ minWidth: "12rem" }}
+    sx={{ minWidth: "12rem", width: { xs: "100%", md: "auto" } }}
   >
     {(catalog ?? [locale]).map((language) => (
       <MenuItem key={language.code} value={language.code}>

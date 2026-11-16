@@ -29,7 +29,7 @@ export const LanguageBar = ({ locale }: LanguageBarProps): ReactElement => {
 
   return (
     <Stack
-      direction={{ xs: "column", md: "row" }}
+      direction="column"
       spacing={2}
       alignItems="flex-start"
       sx={{ position: "sticky", top: 0, zIndex: "appBar", bgcolor: "background.default", py: 2 }}

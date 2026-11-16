@@ -31,6 +31,14 @@ afterEach(() => {
 });
 
 describe("LanguageSwitch", () => {
+  it("opts out of the app theme's full-width form control", () => {
+    render(<LanguageSwitch locale={ENGLISH_LOCALE} catalog={LOCALE_CATALOG} onChange={vi.fn()} />);
+
+    expect(
+      screen.getByRole("combobox", { name: "Language" }).closest(".MuiFormControl-root"),
+    ).not.toHaveClass("MuiFormControl-fullWidth");
+  });
+
   it("lists every language in catalog order with English first and marked default", () => {
     render(<LanguageSwitch locale={ENGLISH_LOCALE} catalog={LOCALE_CATALOG} onChange={vi.fn()} />);
     openLanguages();

@@ -7,7 +7,7 @@ import { type EditorLocale } from "../locale-gate";
 type LanguageBannerProps = { locale: EditorLocale };
 
 export const LanguageBanner = ({ locale }: LanguageBannerProps): ReactElement => (
-  <Alert severity="info" sx={{ flex: 1 }}>
+  <Alert severity="info" sx={{ width: "100%" }}>
     <AlertTitle>
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
         <span>Editing {locale.name}</span>
