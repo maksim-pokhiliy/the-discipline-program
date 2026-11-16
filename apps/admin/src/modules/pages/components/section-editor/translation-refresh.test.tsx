@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { type ReactElement, useEffect } from "react";
 
 import { screen } from "@testing-library/react";
 import { FormProvider, type FormState, useFieldArray, useForm, useWatch } from "react-hook-form";
@@ -42,11 +42,21 @@ const makeRefreshSeeds = () => {
   return { initial, next, saved };
 };
 
-const TranslationForm = ({ seed }: { seed: FaqValues }): ReactElement => {
+const TranslationForm = ({
+  seed,
+  commits,
+}: {
+  seed: FaqValues;
+  commits: boolean[];
+}): ReactElement => {
   const form = useForm<FaqValues>({ defaultValues: seed });
   const { fields } = useFieldArray({ control: form.control, name: "items" });
   const values = useWatch({ control: form.control });
   const { defaultValues: defaults, dirtyFields, isDirty } = form.formState;
+
+  useEffect(() => {
+    commits.push(isDirty);
+  });
 
   return (
     <FormProvider {...form}>
@@ -77,7 +87,8 @@ const expectFormState = (expected: FormSnapshot): void => {
 describe("TranslationRefresh", () => {
   it("marks only the retained word at its new row coordinate and clears it on a changed own-save seed", () => {
     const { initial, next, saved } = makeRefreshSeeds();
-    const { rerender } = render(<TranslationForm seed={initial} />);
+    const commits: boolean[] = [];
+    const { rerender } = render(<TranslationForm seed={initial} commits={commits} />);
 
     expectFormState({ isDirty: false, dirtyFields: {}, defaults: initial, values: initial });
     typeInto("items.0.answer", "Unsaved answer A");
@@ -92,7 +103,11 @@ describe("TranslationRefresh", () => {
         makeFaqRow("c"),
       ]),
     });
-    rerender(<TranslationForm seed={next} />);
+    commits.length = 0;
+    rerender(<TranslationForm seed={next} commits={commits} />);
+
+    expect(commits.length).toBeGreaterThan(0);
+    expect(commits).not.toContain(false);
 
     expectFormState({
       isDirty: true,
@@ -100,7 +115,7 @@ describe("TranslationRefresh", () => {
       defaults: next,
       values: saved,
     });
-    rerender(<TranslationForm seed={saved} />);
+    rerender(<TranslationForm seed={saved} commits={commits} />);
 
     expectFormState({ isDirty: false, dirtyFields: {}, defaults: saved, values: saved });
   });
