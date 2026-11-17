@@ -168,3 +168,61 @@ select count(*) from marketing_page_sections;
 Expected: `0`, one row `en`, and the same section count before the dispatch and after the deploy
 (nothing was written in the window). Once the coach adds a language the first query stops being a
 law.
+
+## storefront-billing 0.4d3b (cms list row ids)
+
+The migration `20261116120000_cms_list_row_ids` is data only: it gives an `id` to every list row of
+the six list sections (`home:whyChoose`, `about:journey`, `about:credentials`, `faq:content`,
+`offer:requisites`, `offer:terms`), a fresh one in English and, in another language, the English
+row's at the same position unless that list already holds it. It changes nothing else, and it
+refuses list row ids that are not text or that repeat inside one list.
+
+The freeze is every section save in the admin pages editor: the old admin drops the `id` of an about
+journey, about credentials, FAQ, offer requisites or offer terms row when it reads and when it writes a
+section, so one English save of those sections in the window stores rows without an `id` again (the
+home why-choose rows keep theirs). The editor stays closed from the dispatch until the deploy is
+verified. The consistency queries for the window between the dispatch and the end of the freeze:
+
+```sql
+SELECT section_row."pageSlug", section_row.section, section_row.locale, count(*) AS rows_without_id
+FROM "marketing_page_sections" AS section_row
+JOIN (
+  VALUES
+    ('home:whyChoose', 'features'),
+    ('about:journey', 'timeline'),
+    ('about:credentials', 'items'),
+    ('faq:content', 'items'),
+    ('offer:requisites', 'items'),
+    ('offer:terms', 'blocks')
+) AS list_fields (section, field) ON list_fields.section = section_row.section
+CROSS JOIN LATERAL jsonb_array_elements(
+  CASE WHEN jsonb_typeof(section_row.data -> list_fields.field) = 'array'
+    THEN section_row.data -> list_fields.field
+    ELSE '[]'::jsonb
+  END
+) AS list_row (element)
+WHERE jsonb_typeof(list_row.element) = 'object'
+  AND (jsonb_typeof(list_row.element -> 'id') IS DISTINCT FROM 'string' OR list_row.element ->> 'id' = '')
+GROUP BY section_row."pageSlug", section_row.section, section_row.locale
+ORDER BY section_row."pageSlug", section_row.section, section_row.locale;
+
+select count(*) from marketing_page_sections;
+```
+
+Expected: no row right after the dispatch and none after the deploy, and the same section count. A
+row listed after the deploy names a section that lost its ids in the window: one English save of that
+section in the new admin gives them back. A row of another language saved by the old deployment
+inside the window is not healed by an English save (it mints English ids only): the two `UPDATE`
+statements of the migration, run again by hand, give it its ids while the English order is unchanged.
+
+Rehearsed on a copy of production taken 2026-11-17 (fifteen migrations, 22 sections, one language):
+three rows changed (about journey, about credentials, FAQ), ten ids minted, the three home why-choose
+ids kept, every other key and every `updatedAt` identical, and a second run of the file updated
+nothing.
+
+After the deploy, before the first save: every admin tab opened before the deploy is reloaded or
+closed, the coach's included. The admin serves with Skew Protection (its asset URLs carry `?dpl=`),
+so a tab keeps the old bundle across navigations, while its saves reach the new server. An old bundle
+does not know the row ids: when it saves a list section without them, the server mints fresh ids for
+English rows, and the words another language holds for those rows no longer belong to any row; a
+section of another language saved that way stores no list words and turns into a draft.
