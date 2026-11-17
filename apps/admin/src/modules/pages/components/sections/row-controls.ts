@@ -1,10 +1,7 @@
 import type { DynamicListItemProps } from "@repo/ui";
 
 export type RowControls = Required<
-  Pick<
-    DynamicListItemProps,
-    "onRemove" | "onMoveUp" | "onMoveDown" | "disableMoveUp" | "disableMoveDown"
-  >
+  Pick<DynamicListItemProps, "onRemove" | "onMoveUp" | "onMoveDown" | "canMoveUp" | "canMoveDown">
 >;
 
 type RowOperations = {
@@ -20,6 +17,6 @@ export const getRowControls = (
   onRemove: () => remove(index),
   onMoveUp: () => move(index, index - 1),
   onMoveDown: () => move(index, index + 1),
-  disableMoveUp: index === 0,
-  disableMoveDown: index === count - 1,
+  canMoveUp: index > 0,
+  canMoveDown: index < count - 1,
 });

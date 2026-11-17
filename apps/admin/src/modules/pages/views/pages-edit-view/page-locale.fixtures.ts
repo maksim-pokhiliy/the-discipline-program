@@ -1,7 +1,10 @@
+import { type z } from "zod";
+
 import { type LocaleCode } from "@repo/contracts/cms/locale";
 import {
   type AdminPageDetails,
   adminPageSectionSchema,
+  type faqContentSchema,
   PageSlug,
   SectionTranslationState,
   type SectionWriteData,
@@ -17,6 +20,28 @@ import {
 
 const ENGLISH_SEO = { title: "English title", description: "English description" };
 const ENGLISH_UPDATED_AT = "2026-11-02T09:00:00.000Z";
+
+export const makeLocaleFaqPage = (
+  englishRows: z.infer<typeof faqContentSchema>["items"],
+  words: SectionWriteData["faq:content"] = {},
+): AdminPageDetails => {
+  const english = { title: "English FAQ", subtitle: "English FAQ subtitle", items: englishRows };
+  const data = {
+    ...words,
+    items: englishRows.map(({ id }) => ({ ...words.items?.find((row) => row.id === id), id })),
+  };
+  const hasWords = [
+    words.title,
+    words.subtitle,
+    ...(words.items ?? []).flatMap(({ question, answer }) => [question, answer]),
+  ].some((value) => typeof value === "string" && value.trim() !== "");
+  const section = makeTranslatedRow("faq:content", data, {
+    state: hasWords ? SectionTranslationState.DRAFT : SectionTranslationState.NOT_TRANSLATED,
+    english: { data: english, updatedAt: ENGLISH_UPDATED_AT },
+  });
+
+  return { ...makePage(PageSlug.FAQ, [section]), locale: "uk" };
+};
 
 export const makeLocaleSeoPage = (
   locale: LocaleCode,

@@ -2,16 +2,12 @@ import { type ReactElement } from "react";
 
 import { type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
+import { SectionListEditor } from "../components/section-list";
 import { BlogGridSectionForm } from "../components/sections/blog-grid-section-form";
 import { ContactFormSectionForm } from "../components/sections/contact-form-section-form";
 import { ContactSectionForm } from "../components/sections/contact-section-form";
-import { CredentialsSectionForm } from "../components/sections/credentials-section-form";
-import { FaqSectionForm } from "../components/sections/faq-section-form";
 import { FlatFieldsSectionForm } from "../components/sections/flat-fields-section-form";
 import { HeroSectionForm } from "../components/sections/hero-section-form";
-import { JourneySectionForm } from "../components/sections/journey-section-form";
-import { OfferRequisitesSectionForm } from "../components/sections/offer-requisites-section-form";
-import { OfferTermsSectionForm } from "../components/sections/offer-terms-section-form";
 import { PersonalSectionForm } from "../components/sections/personal-section-form";
 import { ReviewsSectionForm } from "../components/sections/reviews-section-form";
 import { SeoSectionForm } from "../components/sections/seo-section-form";
@@ -19,8 +15,8 @@ import { StorefrontGridSectionForm } from "../components/sections/storefront-gri
 import { StorefrontProgramsSectionForm } from "../components/sections/storefront-programs-section-form";
 import { TitleSectionForm } from "../components/sections/title-section-form";
 import { TitleSubtitleSectionForm } from "../components/sections/title-subtitle-section-form";
-import { WhyChooseSectionForm } from "../components/sections/why-choose-section-form";
 
+import { LIST_SECTIONS } from "./list-section-fields";
 import {
   SITE_ERRORS_GROUPS,
   SITE_FOOTER_GROUPS,
@@ -30,7 +26,11 @@ import {
 
 export const SECTION_FORMS = {
   "home:hero": <HeroSectionForm sectionType="home:hero" />,
-  "home:whyChoose": <WhyChooseSectionForm />,
+  "home:whyChoose": (
+    <TitleSubtitleSectionForm cardTitle="Why Choose Us Settings">
+      <SectionListEditor list={LIST_SECTIONS["home:whyChoose"]} />
+    </TitleSubtitleSectionForm>
+  ),
   "home:storefront": <StorefrontProgramsSectionForm />,
   "home:reviews": <ReviewsSectionForm />,
   "home:contact": <ContactSectionForm />,
@@ -40,8 +40,16 @@ export const SECTION_FORMS = {
   "storefront:cta": <ContactSectionForm />,
   "storefront:seo": <SeoSectionForm />,
   "about:hero": <HeroSectionForm sectionType="about:hero" />,
-  "about:journey": <JourneySectionForm />,
-  "about:credentials": <CredentialsSectionForm />,
+  "about:journey": (
+    <TitleSubtitleSectionForm cardTitle="Journey Section Settings">
+      <SectionListEditor list={LIST_SECTIONS["about:journey"]} />
+    </TitleSubtitleSectionForm>
+  ),
+  "about:credentials": (
+    <TitleSubtitleSectionForm cardTitle="Credentials Section Settings">
+      <SectionListEditor list={LIST_SECTIONS["about:credentials"]} />
+    </TitleSubtitleSectionForm>
+  ),
   "about:personal": <PersonalSectionForm />,
   "about:cta": <ContactSectionForm />,
   "about:seo": <SeoSectionForm />,
@@ -53,12 +61,24 @@ export const SECTION_FORMS = {
   "contact:form": <ContactFormSectionForm />,
   "contact:seo": <SeoSectionForm />,
   "faq:hero": <HeroSectionForm sectionType="faq:hero" />,
-  "faq:content": <FaqSectionForm />,
+  "faq:content": (
+    <TitleSubtitleSectionForm cardTitle="FAQ Settings">
+      <SectionListEditor list={LIST_SECTIONS["faq:content"]} />
+    </TitleSubtitleSectionForm>
+  ),
   "faq:cta": <ContactSectionForm />,
   "faq:seo": <SeoSectionForm />,
   "offer:hero": <TitleSubtitleSectionForm cardTitle="Offer Hero" />,
-  "offer:requisites": <OfferRequisitesSectionForm />,
-  "offer:terms": <OfferTermsSectionForm />,
+  "offer:requisites": (
+    <TitleSectionForm cardTitle="Requisites Settings">
+      <SectionListEditor list={LIST_SECTIONS["offer:requisites"]} />
+    </TitleSectionForm>
+  ),
+  "offer:terms": (
+    <TitleSectionForm cardTitle="Terms Settings">
+      <SectionListEditor list={LIST_SECTIONS["offer:terms"]} />
+    </TitleSectionForm>
+  ),
   "offer:seo": <SeoSectionForm />,
   "site:navigation": (
     <FlatFieldsSectionForm cardTitle="Navigation Labels" groups={SITE_NAVIGATION_GROUPS} />

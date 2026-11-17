@@ -44,7 +44,7 @@ const schemaFixture = (
   }
 
   if (schema instanceof z.ZodArray) {
-    return [schemaFixture(schema.element, tree, prefix, `${path}.0`)];
+    return [0, 1].map((index) => schemaFixture(schema.element, tree, prefix, `${path}.${index}`));
   }
 
   if (schema instanceof z.ZodObject) {

@@ -63,6 +63,46 @@ describe("getSectionEditorKey", () => {
     );
   });
 
+  it.each([ENGLISH_LOCALE, UKRAINIAN_LOCALE])(
+    "keeps the $name key when list rows are added, removed, moved or filled",
+    ({ code }) => {
+      const first = { id: "first", heading: "First heading", body: "" };
+      const second = { id: "second", heading: "", body: "Second body" };
+      const row = makeSectionRow("offer:terms", { title: "Terms", blocks: [first, second] });
+      const initialKey = getSectionEditorKey(row, code);
+      const changes = [
+        { change: "added", blocks: [first, second, { id: "third", heading: "Third heading" }] },
+        { change: "removed", blocks: [second] },
+        { change: "emptied", blocks: [] },
+        { change: "moved", blocks: [second, first] },
+        { change: "filled", blocks: [{ ...first, body: "Server-filled body" }, second] },
+      ];
+
+      for (const { change, blocks } of changes) {
+        const refreshed = makeSectionRow("offer:terms", { title: "Terms", blocks });
+
+        expect(getSectionEditorKey(refreshed, code), change).toBe(initialKey);
+      }
+    },
+  );
+
+  it.each([ENGLISH_LOCALE, UKRAINIAN_LOCALE])(
+    "changes the $name key when the list key appears or disappears",
+    ({ code }) => {
+      const absent = makeSectionRow("offer:terms", { title: "Terms" });
+      const empty = makeSectionRow("offer:terms", { title: "Terms", blocks: [] });
+      const populated = makeSectionRow("offer:terms", {
+        title: "Terms",
+        blocks: [{ id: "first", heading: "First heading" }],
+      });
+
+      expect(getSectionEditorKey(empty, code)).not.toBe(getSectionEditorKey(absent, code));
+      expect(getSectionEditorKey(populated, code)).not.toBe(getSectionEditorKey(absent, code));
+      expect(getSectionEditorKey(populated, code)).toBe(getSectionEditorKey(empty, code));
+      expect(getSectionEditorKey(empty, code)).toBe(`${code}:${empty.id}:blocks,title`);
+    },
+  );
+
   it("includes the row identity but ignores the timestamp and object identity", () => {
     const row = makeSectionRow("home:seo", makeSeoData());
     const refreshed = { ...row, data: makeSeoData(), updatedAt: new Date().toISOString() };

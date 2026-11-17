@@ -23,10 +23,12 @@ const FIRST_FEATURE = { id: "strength", title: "Strength", description: "Lift", 
 const SECOND_FEATURE = { id: "fitness", title: "Fitness", description: "Run", iconName: "run" };
 const FIRST_FEATURE_WORDS = { ...FIRST_FEATURE, title: "Сила", description: "Вага" };
 const SECOND_FEATURE_WORDS = { ...SECOND_FEATURE, title: "Форма", description: "Біг" };
-const FIRST_FAQ = { question: "When?", answer: "Today" };
-const SECOND_FAQ = { question: "Where?", answer: "Here" };
-const FIRST_FAQ_WORDS = { question: "Коли?", answer: "Сьогодні" };
-const SECOND_FAQ_WORDS = { question: "Де?", answer: "Тут" };
+const FIRST_FAQ = { id: "when", question: "When?", answer: "Today" };
+const SECOND_FAQ = { id: "where", question: "Where?", answer: "Here" };
+const THIRD_FAQ = { id: "how", question: "How?", answer: "Together" };
+const FIRST_FAQ_WORDS = { ...FIRST_FAQ, question: "Коли?", answer: "Сьогодні" };
+const SECOND_FAQ_WORDS = { ...SECOND_FAQ, question: "Де?", answer: "Тут" };
+const THIRD_FAQ_WORDS = { ...THIRD_FAQ, question: "Як?", answer: "Разом" };
 
 const makeFeatures = (features = [FIRST_FEATURE, SECOND_FEATURE]) => ({
   ...FULL_SECTION_DATA["home:whyChoose"],
@@ -87,38 +89,101 @@ describe("overlayWords", () => {
     });
   });
 
-  it("uses position when the registry names an id but the row has none", () => {
+  it("gives no words to an English row with an empty id", () => {
     const english = makeFeatures([{ ...FIRST_FEATURE, id: "" }]);
     const body = { features: [{ title: "Сила", description: "Вага" }] };
 
     expect(overlayWords(FEATURES_TREE, english, body)).toEqual({
-      features: [{ ...FIRST_FEATURE_WORDS, id: "" }],
+      features: [{ id: "", iconName: FIRST_FEATURE.iconName }],
     });
-  });
-
-  it("matches the words of a list without row ids by position", () => {
-    const body = makeFaq([SECOND_FAQ_WORDS, FIRST_FAQ_WORDS, FIRST_FAQ_WORDS]);
-
-    expect(overlayWords(FAQ_TREE, makeFaq(), body)).toEqual({
-      ...body,
-      items: [SECOND_FAQ_WORDS, FIRST_FAQ_WORDS],
-    });
-    expect(composeTranslatedSection("faq:content", makeFaq(), body).isActive).toBe(true);
-  });
-
-  it("leaves unmatched English rows unwritten and saves the shorter id-less list as a draft", () => {
-    const body = makeFaq([FIRST_FAQ_WORDS]);
-
-    expect(composeTranslatedSection("faq:content", makeFaq(), body)).toEqual({
-      data: { ...body, items: [FIRST_FAQ_WORDS, {}] },
+    expect(composeTranslatedSection("home:whyChoose", english, body)).toEqual({
+      data: {},
       isActive: false,
     });
   });
 
-  it("keeps positions when a source list contains a non-record row", () => {
-    const body = { items: [null, SECOND_FAQ_WORDS] };
+  it("gives no words to an English row without an id and leaves its section a draft", () => {
+    const english = { items: [{ question: FIRST_FAQ.question, answer: FIRST_FAQ.answer }] };
+    const body = {
+      items: [{ question: FIRST_FAQ_WORDS.question, answer: FIRST_FAQ_WORDS.answer }],
+    };
 
-    expect(overlayWords(FAQ_TREE, makeFaq(), body)).toEqual({ items: [{}, SECOND_FAQ_WORDS] });
+    expect(overlayWords(FAQ_TREE, english, body)).toEqual({ items: [{}] });
+    expect(isEveryWordWritten(FAQ_TREE, english, body)).toBe(false);
+    expect(composeTranslatedSection("faq:content", english, body)).toEqual({
+      data: {},
+      isActive: false,
+    });
+  });
+
+  it("matches FAQ words by id in a reordered body and drops extra rows", () => {
+    const body = makeFaq([SECOND_FAQ_WORDS, FIRST_FAQ_WORDS, THIRD_FAQ_WORDS]);
+
+    expect(overlayWords(FAQ_TREE, makeFaq(), body)).toEqual({
+      ...body,
+      items: [FIRST_FAQ_WORDS, SECOND_FAQ_WORDS],
+    });
+    expect(composeTranslatedSection("faq:content", makeFaq(), body).isActive).toBe(true);
+  });
+
+  it("leaves unmatched English rows unwritten and saves the shorter by-id list as a draft", () => {
+    const body = makeFaq([FIRST_FAQ_WORDS]);
+
+    expect(composeTranslatedSection("faq:content", makeFaq(), body)).toEqual({
+      data: { ...body, items: [FIRST_FAQ_WORDS, { id: SECOND_FAQ.id }] },
+      isActive: false,
+    });
+  });
+
+  it("ignores a non-record source row and matches the remaining rows by id", () => {
+    const body = { items: [null, SECOND_FAQ_WORDS, FIRST_FAQ_WORDS] };
+
+    expect(overlayWords(FAQ_TREE, makeFaq(), body)).toEqual({
+      items: [FIRST_FAQ_WORDS, SECOND_FAQ_WORDS],
+    });
+  });
+
+  it("does not take words from an id-less source row at the same position", () => {
+    const body = {
+      items: [{ question: FIRST_FAQ_WORDS.question, answer: FIRST_FAQ_WORDS.answer }],
+    };
+
+    expect(overlayWords(FAQ_TREE, makeFaq([FIRST_FAQ]), body)).toEqual({
+      items: [{ id: FIRST_FAQ.id }],
+    });
+    expect(composeTranslatedSection("faq:content", makeFaq([FIRST_FAQ]), body)).toEqual({
+      data: {},
+      isActive: false,
+    });
+  });
+
+  it.each([
+    {
+      change: "moves a row",
+      items: [THIRD_FAQ, FIRST_FAQ, SECOND_FAQ],
+      words: [THIRD_FAQ_WORDS, FIRST_FAQ_WORDS, SECOND_FAQ_WORDS],
+    },
+    {
+      change: "removes a row",
+      items: [FIRST_FAQ, THIRD_FAQ],
+      words: [FIRST_FAQ_WORDS, THIRD_FAQ_WORDS],
+    },
+    {
+      change: "moves one row and removes another",
+      items: [THIRD_FAQ, FIRST_FAQ],
+      words: [THIRD_FAQ_WORDS, FIRST_FAQ_WORDS],
+    },
+  ])("keeps words on their rows when English $change", ({ items, words }) => {
+    const english = makeFaq(items);
+    const body = makeFaq([FIRST_FAQ_WORDS, SECOND_FAQ_WORDS, THIRD_FAQ_WORDS]);
+    const expected = { ...body, items: words };
+
+    expect(overlayWords(FAQ_TREE, english, body)).toEqual(expected);
+    expect(isEveryWordWritten(FAQ_TREE, english, body)).toBe(true);
+    expect(composeTranslatedSection("faq:content", english, body)).toEqual({
+      data: expected,
+      isActive: true,
+    });
   });
 
   it("drops the words of a row English does not have", () => {
@@ -172,6 +237,23 @@ describe("isEveryWordWritten", () => {
     const body = makeFeatures([FIRST_FEATURE_WORDS, { ...SECOND_FEATURE_WORDS, description: "" }]);
 
     expect(isEveryWordWritten(FEATURES_TREE, makeFeatures(), body)).toBe(false);
+  });
+
+  it("checks each English row's required words against its own id in a reordered body", () => {
+    const english = {
+      items: [
+        { ...FIRST_FAQ, answer: "" },
+        { ...SECOND_FAQ, question: "" },
+      ],
+    };
+    const body = {
+      items: [
+        { id: SECOND_FAQ.id, answer: SECOND_FAQ_WORDS.answer },
+        { id: FIRST_FAQ.id, question: FIRST_FAQ_WORDS.question },
+      ],
+    };
+
+    expect(isEveryWordWritten(FAQ_TREE, english, body)).toBe(true);
   });
 
   it("requires written nested English words", () => {

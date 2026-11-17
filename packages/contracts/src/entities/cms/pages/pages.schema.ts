@@ -53,6 +53,7 @@ export const storefrontPageCtaSchema = ctaSectionSchema;
 export const aboutPageHeroSchema = heroSectionSchema;
 
 export const timelineItemSchema = z.object({
+  id: z.string(),
   year: z.string(),
   title: z.string(),
   description: z.string(),
@@ -65,6 +66,7 @@ export const aboutPageJourneySchema = z.object({
 });
 
 export const credentialItemSchema = z.object({
+  id: z.string(),
   title: z.string(),
   description: z.string(),
 });
@@ -113,6 +115,7 @@ export const programOptionSchema = z.object({
 });
 
 export const faqItemSchema = z.object({
+  id: z.string(),
   question: z.string(),
   answer: z.string(),
 });
@@ -157,6 +160,7 @@ export const seoSectionSchema = z.object({
 export const offerPageHeroSchema = titleSubtitleSchema;
 
 export const requisiteItemSchema = z.object({
+  id: z.string(),
   label: z.string(),
   value: z.string(),
 });
@@ -167,6 +171,7 @@ export const offerRequisitesSchema = z.object({
 });
 
 export const termsBlockSchema = z.object({
+  id: z.string(),
   heading: z.string(),
   body: z.string(),
 });

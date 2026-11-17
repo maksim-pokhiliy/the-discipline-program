@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 
 import { Stack } from "@mui/material";
 
@@ -14,12 +14,14 @@ type TitleFields = {
 
 type TitleSectionFormProps = {
   cardTitle: string;
+  children?: ReactNode;
 };
 
-export const TitleSectionForm = ({ cardTitle }: TitleSectionFormProps): ReactElement => (
+export const TitleSectionForm = ({ cardTitle, children }: TitleSectionFormProps): ReactElement => (
   <FormCard title={cardTitle}>
     <Stack spacing={3}>
       <SectionTextField<TitleFields> name="title" label="Section Title" />
+      {children}
     </Stack>
   </FormCard>
 );

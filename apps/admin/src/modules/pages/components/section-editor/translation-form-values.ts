@@ -8,11 +8,7 @@ import {
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 
-import { isRecord } from "../section-field/field-at-path";
-
-type JsonRecord = Readonly<Record<string, unknown>>;
-
-const recordOf = (value: unknown): JsonRecord => (isRecord(value) ? value : {});
+import { type JsonRecord, recordOf } from "../section-field/field-at-path";
 
 const seedField = (node: SectionFieldKindNode, value: unknown): unknown => {
   if (isGroupFieldKinds(node)) {

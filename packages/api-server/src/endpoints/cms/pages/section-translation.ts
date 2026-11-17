@@ -11,6 +11,7 @@ import {
   type SectionSchemaKey,
 } from "@repo/contracts/cms/pages";
 
+import { rowIdOf } from "./list-row-identity";
 import { EMPTY_SECTION_DATA } from "./page-sections";
 
 type JsonRecord = Readonly<Record<string, unknown>>;
@@ -33,21 +34,18 @@ const asRows = (value: unknown): readonly JsonRecord[] => {
 export const isWordWritten = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
-const rowIdentity = (list: ListFieldKinds, row: JsonRecord, index: number): string => {
-  const id = list.identity === undefined ? undefined : row[list.identity];
-
-  return typeof id === "string" && id !== "" ? `id:${id}` : `index:${index}`;
-};
-
 const matchRow = (
   list: ListFieldKinds,
   sourceRows: readonly JsonRecord[],
   englishRow: JsonRecord,
-  englishIndex: number,
 ): JsonRecord => {
-  const identity = rowIdentity(list, englishRow, englishIndex);
+  const id = rowIdOf(list, englishRow);
 
-  return sourceRows.find((row, index) => rowIdentity(list, row, index) === identity) ?? EMPTY_ROW;
+  if (id === undefined) {
+    return EMPTY_ROW;
+  }
+
+  return sourceRows.find((row) => rowIdOf(list, row) === id) ?? EMPTY_ROW;
 };
 
 const overlayRows = (
@@ -55,8 +53,8 @@ const overlayRows = (
   englishRows: readonly JsonRecord[],
   sourceRows: readonly JsonRecord[],
 ): Prisma.InputJsonObject[] =>
-  englishRows.map((englishRow, index) =>
-    overlayWords(list.list, englishRow, matchRow(list, sourceRows, englishRow, index)),
+  englishRows.map((englishRow) =>
+    overlayWords(list.list, englishRow, matchRow(list, sourceRows, englishRow)),
   );
 
 const overlayField = (
@@ -121,8 +119,8 @@ export const isEveryWordWritten = (
     if (isListFieldKinds(node)) {
       const sourceRows = asRows(data[field]);
 
-      return asRows(english[field]).every((row, index) =>
-        isEveryWordWritten(node.list, row, matchRow(node, sourceRows, row, index)),
+      return asRows(english[field]).every((row) =>
+        isEveryWordWritten(node.list, row, matchRow(node, sourceRows, row)),
       );
     }
 

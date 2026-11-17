@@ -64,23 +64,23 @@ export const EXPECTED_UK_FEATURES = {
 export const ENGLISH_JOURNEY = {
   title: "Journey",
   subtitle: "Milestones",
-  timeline: [{ year: "2019", title: "Start", description: "Started training" }],
+  timeline: [{ id: "start", year: "2019", title: "Start", description: "Started training" }],
 };
 export const ENGLISH_FAQ = {
   title: "Questions",
   subtitle: "Before training",
   items: [
-    { question: "First question", answer: "First answer" },
-    { question: "Second question", answer: "Second answer" },
+    { id: "first", question: "First question", answer: "First answer" },
+    { id: "second", question: "Second question", answer: "Second answer" },
   ],
 };
 export const UK_FAQ = {
   title: "Питання",
   subtitle: "Перед тренуванням",
   items: [
-    { question: "Друге питання", answer: "Друга відповідь" },
-    { question: "Перше питання", answer: "Перша відповідь" },
-    { question: "Зайве питання", answer: "Зайва відповідь" },
+    { id: "second", question: "Друге питання", answer: "Друга відповідь" },
+    { id: "first", question: "Перше питання", answer: "Перша відповідь" },
+    { id: "extra", question: "Зайве питання", answer: "Зайва відповідь" },
   ],
 };
 

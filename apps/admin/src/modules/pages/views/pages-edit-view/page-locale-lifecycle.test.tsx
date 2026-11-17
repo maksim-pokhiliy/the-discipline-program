@@ -8,7 +8,7 @@ import { QueryProvider, STALE_TIMES } from "@repo/query";
 
 import type * as Api from "@app/lib/api";
 import { adminKeys } from "@app/lib/api/keys";
-import { clickButton, typeInto } from "@app/test/interactions";
+import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
 import { resetMockNavigation, setMockNavigation } from "@app/test/mocks";
 import { render } from "@app/test/render";
 
@@ -20,6 +20,7 @@ import { PagesListView } from "../pages-list-view";
 import {
   makeClearedLocaleSeoPage,
   makeEnglishNewerSeoPage,
+  makeLocaleFaqPage,
   makeLocaleSeoAndHeroPage,
   makeLocaleSeoPage,
   makeLocaleTermsPage,
@@ -95,6 +96,7 @@ const expectLockedSeoEditor = (title: string) => {
 
 const prepareTranslationClear = () => {
   const client = createClient();
+  const clearedRefresh = makeDeferred<AdminPageDetails>();
   const english = makeLocaleSeoPage("en");
   const german = makeLocaleSeoPage("de");
   const page = { ...makePageListItem(PageSlug.HOME), translatedSectionCount: 1 };
@@ -107,16 +109,94 @@ const prepareTranslationClear = () => {
   client.setQueryData(adminKeys.pages.detail(PageSlug.HOME, "de"), german);
   endpoints.getPageBySlug
     .mockResolvedValueOnce(makeLocaleSeoPage("uk"))
-    .mockResolvedValue(makeClearedLocaleSeoPage("uk"));
+    .mockReturnValueOnce(clearedRefresh.promise);
   endpoints.getPages
     .mockResolvedValueOnce([page])
     .mockResolvedValue([{ ...page, translatedSectionCount: 0 }]);
   endpoints.listLocales.mockResolvedValueOnce(catalog).mockResolvedValue(LOCALE_CATALOG);
 
-  return { client, english, german, catalog };
+  return { client, english, german, catalog, clearedRefresh };
+};
+
+const prepareFaqRefreshRace = () => {
+  const client = createClient();
+  const patch = makeDeferred<void>();
+  const refresh = makeDeferred<AdminPageDetails>();
+  const first = { id: "a", question: "Question A", answer: "Answer A" };
+  const second = { id: "b", question: "Question B", answer: "Answer B" };
+  const words = { items: [{ id: "b", answer: "Saved answer B" }] };
+  const moved = [{ ...second, answer: "Refreshed answer B" }, first];
+  const queryKey = adminKeys.pages.detail(PageSlug.FAQ, "uk");
+
+  client.setQueryData(adminKeys.locales.list(), LOCALE_CATALOG);
+  client.setQueryData(queryKey, makeLocaleFaqPage([first, second], words));
+  endpoints.updateSection.mockReturnValueOnce(patch.promise);
+  endpoints.getPageBySlug.mockReturnValueOnce(refresh.promise);
+  setMockNavigation({ pathname: "/pages/faq", search: "locale=uk" });
+
+  return { client, patch, refresh, queryKey, words, moved };
 };
 
 describe("page editor in a language with real query hooks", () => {
+  it("keeps sent list words on their row through a foreign refresh during a save and lands its own refresh clean", async () => {
+    const { client, patch, refresh, queryKey, words, moved } = prepareFaqRefreshRace();
+    const sent = "Sent answer B";
+    const { unmount } = render(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.FAQ} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByLabelText("Section Title");
+    typeIntoNth("Answer", 1, sent);
+    clickButton("Update Section");
+    await waitFor(() => expect(screen.getAllByLabelText("Answer")[1]).toBeDisabled());
+    expect(endpoints.updateSection).toHaveBeenCalledExactlyOnceWith(PageSlug.FAQ, {
+      section: "faq:content",
+      data: {
+        title: "",
+        subtitle: "",
+        items: [
+          { id: "a", question: "", answer: "" },
+          { id: "b", question: "", answer: sent },
+        ],
+      },
+      locale: "uk",
+    });
+    await act(async () => {
+      client.setQueryData(queryKey, makeLocaleFaqPage(moved, words));
+    });
+    await waitFor(() =>
+      expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription(
+        "English Refreshed answer B",
+      ),
+    );
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    screen.getAllByRole("textbox").forEach((field) => expect(field).toBeDisabled());
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () => patch.resolve());
+    await waitFor(() =>
+      expect(endpoints.getPageBySlug).toHaveBeenCalledExactlyOnceWith(PageSlug.FAQ, "uk"),
+    );
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    expect(screen.getAllByLabelText("Answer")[0]).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () =>
+      refresh.resolve(makeLocaleFaqPage(moved, { items: [{ id: "b", answer: sent }] })),
+    );
+    await waitFor(() => expect(screen.getAllByLabelText("Answer")[0]).toBeEnabled());
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription(
+      "English Refreshed answer B",
+    );
+    expect(screen.getAllByLabelText("Answer")[1]).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
+    unmount();
+    client.clear();
+  });
+
   it("keeps the Ukrainian editor unavailable while its language catalog loads or fails", async () => {
     const catalog = makeDeferred<void>();
 
@@ -139,7 +219,7 @@ describe("page editor in a language with real query hooks", () => {
   });
 
   it("clears Ukrainian through the confirmed write and refreshes both counts without changing other languages", async () => {
-    const { client, english, german, catalog } = prepareTranslationClear();
+    const { client, english, german, catalog, clearedRefresh } = prepareTranslationClear();
 
     const { unmount } = render(
       <QueryClientProvider client={client}>
@@ -150,6 +230,8 @@ describe("page editor in a language with real query hooks", () => {
 
     await screen.findByText("1 of 6 translated");
     await screen.findByLabelText("Search Result Title");
+    const saveButton = screen.getByRole("button", { name: "Update Section" });
+
     expect(client.getQueryData(adminKeys.locales.list())).toEqual(catalog);
     clickButton("Clear Translation");
     expect(endpoints.updateSection).not.toHaveBeenCalled();
@@ -163,14 +245,21 @@ describe("page editor in a language with real query hooks", () => {
         locale: "uk",
       }),
     );
+    await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
+    expect(screen.getByLabelText("Search Result Title")).toBeDisabled();
+    expect(screen.getByLabelText("Search Result Description")).toBeDisabled();
+    expect(saveButton).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () => clearedRefresh.resolve(makeClearedLocaleSeoPage("uk")));
+
+    await screen.findByRole("button", { name: "Home SEO Not translated" });
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
+    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Translation cleared");
     await screen.findByText("0 of 6 translated");
     await waitFor(() =>
       expect(client.getQueryData(adminKeys.locales.list())).toEqual(LOCALE_CATALOG),
     );
-    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Translation cleared");
-    expect(screen.getByLabelText("Search Result Title")).toHaveValue("");
-    expect(screen.getByLabelText("Search Result Description")).toHaveValue("");
-    expect(screen.getByRole("button", { name: "Home SEO Not translated" })).toBeInTheDocument();
     expect(client.getQueryData(adminKeys.pages.detail(PageSlug.HOME, "en"))).toEqual(english);
     expect(client.getQueryData(adminKeys.pages.detail(PageSlug.HOME, "de"))).toEqual(german);
     expect(endpoints.getPageBySlug.mock.calls).toEqual([
@@ -310,6 +399,7 @@ describe("page editor in a language with real query hooks", () => {
       typeInto("Search Result Title", "Saved title");
       clickButton("Update Section");
       await waitFor(() => expect(endpoints.updateSection).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeDisabled());
       expectLockedSeoEditor("Saved title");
       rerender(<QueryClientProvider client={client}>Left editor</QueryClientProvider>);
       await act(async () => {
@@ -431,9 +521,12 @@ describe("page editor in a language with real query hooks", () => {
     screen.getAllByRole("textbox").forEach((field) => expect(field).toBeDisabled());
     screen
       .getAllByRole("button", {
-        name: /Add Terms Block|Move up|Move down|Remove item|Update Section|Clear Translation/,
+        name: /^Update Section$|^Clear Translation$/,
       })
       .forEach((button) => expect(button).toBeDisabled());
+    expect(
+      screen.queryByRole("button", { name: /^Add Terms Block$|^Move |^Remove / }),
+    ).not.toBeInTheDocument();
     endpoints.getPageBySlug.mockReturnValueOnce(refresh.promise);
     await act(async () => patch.resolve());
     await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(4));
@@ -443,7 +536,7 @@ describe("page editor in a language with real query hooks", () => {
 
     await waitFor(() => expect(screen.getByLabelText("Section Title")).toBeEnabled());
     expect(screen.getByLabelText("Section Title")).toHaveValue("Saved Ukrainian terms");
-    expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Add Terms Block" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
   });
 

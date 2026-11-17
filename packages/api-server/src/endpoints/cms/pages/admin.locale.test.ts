@@ -37,7 +37,7 @@ const ABOUT_JOURNEY_ROW = { pageSlug: PageSlug.ABOUT, section: PAGE_SECTIONS_MAP
 const REVERSED_SECTION_ID_PREFIX = "creversedukaboutsection";
 const REWRITTEN_UK_ABOUT_HERO = { title: "Про мене, друга редакція" };
 const REWRITTEN_ENGLISH_ABOUT_HERO = { title: "About, second edit" };
-const UK_PARTIAL_JOURNEY = { title: "Мій шлях", timeline: [{ year: "2019" }] };
+const UK_PARTIAL_JOURNEY = { title: "Мій шлях", timeline: [{ id: "start", year: "2019" }] };
 const LOCALE_NOT_FOUND = { name: NotFoundError.name, message: "Locale not found" };
 const LOCALE_WRITES: readonly (readonly [string, (locale: LocaleCode) => Promise<unknown>])[] = [
   ["getPageBySlug scaffolds", (locale) => cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT, locale)],

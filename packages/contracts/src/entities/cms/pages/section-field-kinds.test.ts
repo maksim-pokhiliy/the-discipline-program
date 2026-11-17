@@ -12,7 +12,7 @@ import {
 } from "./section-field-kinds";
 
 type ClassifiedField = { path: string; kind: SectionFieldKind };
-type ListIdentity = { path: string; identity: string | null };
+type ListIdentity = { path: string; identity: string };
 
 const SECTION_KEYS = Object.values(PAGE_SECTIONS_MAP).flatMap((sections) =>
   Object.values(sections),
@@ -29,6 +29,8 @@ const SHARED_PATHS = [
   "storefront:cta.buttonHref",
   "about:hero.buttonHref",
   "about:hero.backgroundImage",
+  "about:journey.timeline[].id",
+  "about:credentials.items[].id",
   "about:personal.image",
   "about:cta.buttonHref",
   "blog:hero.backgroundImage",
@@ -37,6 +39,9 @@ const SHARED_PATHS = [
   "faq:hero.buttonHref",
   "faq:hero.backgroundImage",
   "faq:cta.buttonHref",
+  "faq:content.items[].id",
+  "offer:requisites.items[].id",
+  "offer:terms.blocks[].id",
 ];
 
 const stringPaths = (schema: unknown, path: string): string[] => {
@@ -82,7 +87,7 @@ const listIdentities = (tree: SectionFieldKindTree, path: string): ListIdentity[
 
     if (isListFieldKinds(node)) {
       return [
-        { path: fieldPath, identity: node.identity ?? null },
+        { path: fieldPath, identity: node.identity },
         ...listIdentities(node.list, `${fieldPath}[]`),
       ];
     }
@@ -127,18 +132,29 @@ describe("SECTION_FIELD_KINDS", () => {
     }
   });
 
-  it("identifies feature rows by their id and no other list by a field", () => {
+  it("identifies every list row by its id", () => {
     const identities = SECTION_KEYS.flatMap((section) =>
       listIdentities(SECTION_FIELD_KINDS[section], section),
     );
 
     expect(identities).toEqual([
       { path: "home:whyChoose.features", identity: "id" },
-      { path: "about:journey.timeline", identity: null },
-      { path: "about:credentials.items", identity: null },
-      { path: "faq:content.items", identity: null },
-      { path: "offer:requisites.items", identity: null },
-      { path: "offer:terms.blocks", identity: null },
+      { path: "about:journey.timeline", identity: "id" },
+      { path: "about:credentials.items", identity: "id" },
+      { path: "faq:content.items", identity: "id" },
+      { path: "offer:requisites.items", identity: "id" },
+      { path: "offer:terms.blocks", identity: "id" },
     ]);
+  });
+
+  it("names a shared id as the identity of every list", () => {
+    for (const section of SECTION_KEYS) {
+      for (const node of Object.values(SECTION_FIELD_KINDS[section])) {
+        if (isListFieldKinds(node)) {
+          expect(node.identity).toBe("id");
+          expect(node.list[node.identity]).toBe(SectionFieldKind.SHARED);
+        }
+      }
+    }
   });
 });

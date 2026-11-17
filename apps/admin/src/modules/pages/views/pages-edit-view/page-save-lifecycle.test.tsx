@@ -11,7 +11,7 @@ import {
 import { QueryProvider } from "@repo/query";
 
 import type * as Api from "@app/lib/api";
-import { clickButton, nthButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
@@ -47,13 +47,13 @@ const expectTermsLocked = () => {
   screen.getAllByRole("textbox").forEach((input) => expect(input).toBeDisabled());
   screen
     .getAllByRole("button", {
-      name: /Add Terms Block|Move up|Move down|Remove item|Update Section/,
+      name: /^Add Terms Block$|^Move terms block \d+ (up|down)$|^Remove terms block \d+$|^Update Section$/,
     })
     .forEach((button) => expect(button).toBeDisabled());
   act(() => {
     screen.getByRole("button", { name: "Add Terms Block" }).click();
-    nthButton("Remove item", 0).click();
-    nthButton("Move down", 0).click();
+    screen.getByRole("button", { name: "Remove terms block 1" }).click();
+    screen.getByRole("button", { name: "Move terms block 1 down" }).click();
   });
   expect(screen.getAllByLabelText("Heading")).toHaveLength(2);
   expect(screen.getAllByLabelText("Heading")[0]).toHaveValue("First fixture heading");
@@ -132,8 +132,8 @@ describe("page section save lifecycle with real query hooks", () => {
     expect(screen.getByLabelText("Section Title")).toHaveValue(title);
     expect(screen.getAllByLabelText("Body")[0]).toHaveValue(body);
     expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
-    expect(nthButton("Move down", 0)).toBeEnabled();
-    expect(nthButton("Remove item", 0)).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Move terms block 1 down" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Remove terms block 1" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
     expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
   });
@@ -164,22 +164,31 @@ describe("page section save lifecycle with real query hooks", () => {
     expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(1);
     expect(notifications.error).toHaveBeenCalledExactlyOnceWith("Fixture PATCH failure");
 
+    const retryRefresh = makeDeferred<AdminPageDetails>();
+
     endpoints.updateSection.mockResolvedValueOnce(undefined);
-    endpoints.getPageBySlug.mockResolvedValueOnce(
-      makePage(PageSlug.HOME, [makeSectionRow("home:seo", { ...data, title })]),
-    );
+    endpoints.getPageBySlug.mockReturnValueOnce(retryRefresh.promise);
     clickButton("Update Section");
 
-    await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.HOME, {
       locale: "en",
       section: "home:seo",
       data: { ...data, title },
     });
-    expect(screen.getByLabelText("Search Result Title")).toBeEnabled();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
+    expect(screen.getByLabelText("Search Result Title")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () =>
+      retryRefresh.resolve(
+        makePage(PageSlug.HOME, [makeSectionRow("home:seo", { ...data, title })]),
+      ),
     );
+
+    await waitFor(() => expect(screen.getByLabelText("Search Result Title")).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(screen.getByLabelText("Search Result Title")).toHaveValue(title);
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
   });
 
   it("retains a reordered and edited list after PATCH fails and retries the complete body", async () => {
@@ -202,7 +211,7 @@ describe("page section save lifecycle with real query hooks", () => {
     await screen.findByLabelText("Section Title");
     typeInto("Section Title", title);
     typeIntoNth("Body", 1, body);
-    fireEvent.click(nthButton("Move up", 1));
+    fireEvent.click(screen.getByRole("button", { name: "Move terms block 2 up" }));
     clickButton("Update Section");
 
     await waitFor(() =>
@@ -225,39 +234,51 @@ describe("page section save lifecycle with real query hooks", () => {
     });
     screen.getAllByRole("textbox").forEach((input) => expect(input).toBeEnabled());
     expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
-    expect(nthButton("Move up", 0)).toBeDisabled();
-    expect(nthButton("Move down", 0)).toBeEnabled();
-    expect(nthButton("Move up", 1)).toBeEnabled();
-    expect(nthButton("Remove item", 0)).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Move terms block 1 up" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Move terms block 1 up" })).not.toHaveAttribute(
+      "disabled",
+    );
+    expect(screen.getByRole("button", { name: "Move terms block 1 down" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Move terms block 2 up" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Remove terms block 1" })).toBeEnabled();
     expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(1);
     expect(notifications.error).toHaveBeenCalledExactlyOnceWith("Fixture list PATCH failure");
     act(() => {
-      nthButton("Move down", 0).click();
+      screen.getByRole("button", { name: "Move terms block 1 down" }).click();
     });
     act(() => {
-      nthButton("Move up", 1).click();
+      screen.getByRole("button", { name: "Move terms block 2 up" }).click();
     });
 
+    const retryRefresh = makeDeferred<AdminPageDetails>();
+
     endpoints.updateSection.mockResolvedValueOnce(undefined);
-    endpoints.getPageBySlug.mockResolvedValueOnce(
-      makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", saved)]),
-    );
+    endpoints.getPageBySlug.mockReturnValueOnce(retryRefresh.promise);
     clickButton("Update Section");
 
-    await waitFor(() => expect(notifications.success).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(endpoints.getPageBySlug).toHaveBeenCalledTimes(2));
     expect(endpoints.updateSection).toHaveBeenCalledTimes(2);
     expect(endpoints.updateSection).toHaveBeenLastCalledWith(PageSlug.OFFER, {
       locale: "en",
       section: "offer:terms",
       data: saved,
     });
-    expect(screen.getByLabelText("Section Title")).toBeEnabled();
+    expect(screen.getByLabelText("Section Title")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
+    expect(notifications.success).not.toHaveBeenCalled();
+    await act(async () =>
+      retryRefresh.resolve(makePage(PageSlug.OFFER, [makeSectionRow("offer:terms", saved)])),
+    );
+
+    await waitFor(() => expect(screen.getByLabelText("Section Title")).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled();
     expect(screen.getAllByLabelText("Body")[0]).toHaveValue(body);
     expect(screen.getByRole("button", { name: "Add Terms Block" })).toBeEnabled();
-    expect(nthButton("Move down", 0)).toBeEnabled();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Update Section" })).toBeDisabled(),
-    );
+    expect(screen.getByRole("button", { name: "Move terms block 1 down" })).toBeEnabled();
+    expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
   });
 
   it("keeps every section mounted and unlocks after one failed refresh with production query defaults", async () => {

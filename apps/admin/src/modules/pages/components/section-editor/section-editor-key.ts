@@ -2,7 +2,7 @@ import { type LocaleCode } from "@repo/contracts/cms/locale";
 import { type AdminPageSection } from "@repo/contracts/cms/pages";
 
 const getPropertyPaths = (value: unknown, prefix = ""): string[] => {
-  if (typeof value !== "object" || value === null) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return [];
   }
 

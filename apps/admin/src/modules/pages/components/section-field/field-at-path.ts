@@ -33,8 +33,12 @@ export const fieldKindAt = (
     : undefined;
 };
 
-export const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
+export type JsonRecord = Readonly<Record<string, unknown>>;
+
+export const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+export const recordOf = (value: unknown): JsonRecord => (isRecord(value) ? value : {});
 
 export const textAt = (record: Readonly<Record<string, unknown>>, path: string): string => {
   let value: unknown = record;

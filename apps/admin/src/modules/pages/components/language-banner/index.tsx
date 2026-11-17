@@ -23,7 +23,8 @@ export const LanguageBanner = ({ locale }: LanguageBannerProps): ReactElement =>
       ) : (
         <>
           <Typography variant="body2">
-            Links, images and list rows always come from English.
+            Each field shows its English text beside it. Links, images and list rows always come
+            from English.
           </Typography>
           <Typography variant="body2">
             A section goes live in {locale.name} once every English text in it has a translation.

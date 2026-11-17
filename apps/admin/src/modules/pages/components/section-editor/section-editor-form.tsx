@@ -22,6 +22,7 @@ import { SectionFieldContext } from "../section-field";
 
 import { SectionEditorActions } from "./section-editor-actions";
 import { SectionNotices } from "./section-notices";
+import { TranslationRefresh } from "./translation-refresh";
 import { useSectionForm } from "./use-section-form";
 
 export type SectionEditorFormProps<TKey extends SectionSchemaKey> = {
@@ -46,7 +47,7 @@ export const SectionEditorForm = <TKey extends SectionSchemaKey>({
   isLoading,
 }: SectionEditorFormProps<TKey>): ReactElement => {
   const isImageBusy = useIsMutating({ mutationKey: IMAGE_MUTATION_KEY }) > 0;
-  const { methods, canSave, handleSave, handleClear } = useSectionForm({
+  const { methods, seed, canSave, handleSave, handleClear } = useSectionForm({
     section,
     isDefaultLocale: locale.isDefault,
     isLoading,
@@ -60,6 +61,7 @@ export const SectionEditorForm = <TKey extends SectionSchemaKey>({
 
   return (
     <FormProvider {...methods}>
+      {!locale.isDefault && <TranslationRefresh section={section.section} seed={seed} />}
       <SectionFieldContext.Provider value={fieldContext}>
         <Stack component="fieldset" disabled={isLoading} spacing={3} sx={fieldsetStyles}>
           <SectionNotices section={section} />
