@@ -612,3 +612,39 @@ Ruled by the planner: the bar is a column at every width, the banner across it, 
 **How the step ran.** Delegated, capped, `/feature` full: an Opus executor to the plan gate; a Codex implement leg that stopped `blocked` on the handoff and a Codex successor that delivered PR #468; round two by a fresh Opus reviewer (deep, capped: 122 candidates pooled, 31 reported, 18 confirmed); ruling 21 (the focus hook deleted: React restores focus by itself); one Codex fix leg of six commits; the planner's verification (the battery, fourteen mutants, focus in real Chromium, the rehearsal on a copy of production); one delivery PR, the docs through their own PRs.
 
 **Next.** Nothing runs. 0.4c on the owner's word.
+
+## 2026-11-25 — 0.4c: the contour, 0.4e merged in, the prompt written (claude)
+
+The owner came back after the 0.4d3b close-out («привет! будем продолжать. покажи плиз контур шага 0.4с»). The planner read the charter, the board, D-21 to D-24, ADR-0013 and ADR-0045, the admin product UI spec, the product code (the model, both product endpoints, the mapper, the contracts, the three page readers that serve products, the language catalog and its delete, the upload path) and production, read only: 4 products, none soft-deleted, all active, one featured, features 4, 4, 4 and 0; 4 active prices; no subscription; one language (`en`); 16 migrations.
+
+**The contour.** It proposed merging 0.4c and 0.4e: the server half alone changes nothing the coach can see, and its admin API depends on the form it serves, so a separate server step would likely be reworked; one migration, one review, one browser pass. It also proposed a save per language as in Pages, the same four states as a section, the photo with upload, replace and remove, a thumbnail and a "translated into" mark on the list, and two small review findings as riders. On features it proposed pairing a translated feature with its English by position, because production holds four products of up to four features. It asked the mode and whether a parallel session shares the host.
+
+**The owner's answers.** «ок, склеиваем шаги, хорошая идея»; on features: «так продуктов и пунктов внутри ведь может быть сколько угодно? я бы добавил id, но окончательное решение делегирую тебе, приму любое»; «Сохранение отдельно на каждый язык - да»; «Попутно мелочи из отложенного - делаем»; «фото грузим в прод и затем удаляем»; «формат /step delegated stock => /feature full».
+
+**The planner's rulings.**
+
+- **Features get stable ids.** The position argument was weak: products and features are unbounded, and pairing by position is the defect SB-91 cost a data migration to remove from the page lists.
+- **Riders found at the contour:**
+  - product create and update keep one featured product, as the blog does (SB-103: today the form's checkbox can leave two);
+  - the public product reads get a fixed order, `createdAt` ascending (SB-104: today the order moves with every save, and the storefront and the home page served two different orders on 2026-11-25); the owner is told and may veto;
+  - the dead `cmsProductPublicApi` goes;
+  - ADR-0013's `Product.image` line is corrected.
+- **The photo:**
+  - it is shared by every language;
+  - its old file is deleted only after the save that drops it (SB-92's hazard);
+  - no crop or ratio before the designer's card (0.4g).
+- **The migration and its window** are constrained in the prompt (R4); the gate brings the design.
+
+**The side note.** While the prompt was being written the owner forwarded a side agent's note. The Languages page counts only page sections, and the coach enables a language by that count. With products translatable but not counted, it could read complete while the product cards still show in English.
+
+The planner verified it: `translation-progress.tsx` shows `translatedSectionCount of TRANSLATABLE_SECTION_COUNT`. The planner had meant to keep that count sections only, which narrowed a requirement the owner had ratified: the honest count is D-24's own rationale. The planner ruled products in (R11): a products line beside the sections, by the reader's predicate. D-24's extension records it.
+
+**Promoted.**
+
+- D-22, D-23 and D-24 amended.
+- Plan rows 0.4c (merged), 0.4e (merged into 0.4c) and 0.4g (the structured data named, as D-23 says).
+- The UI spec's rulings section.
+- SB-25 RF-13 and RF-31 scheduled to 0.4c; SB-103 and SB-104 opened as riders.
+- The board.
+
+**Next.** The Opus executor runs `step-0.4c-prompt.md` to its plan gate.

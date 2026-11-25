@@ -71,3 +71,35 @@ English UI labels; desktop-first at 1280px, tablet 768px must hold.
 An interaction spec: the translation block and its language switching, the reference
 presentation, the photo block (states, aspect ratio, errors), save semantics, microcopy, and
 desktop mockups of the edit form with English + Ukrainian and a photo, plus the list row.
+
+## Rulings 2026-11-25 (the 0.4c contour; 0.4e merged into 0.4c)
+
+The contour the owner approved answers the design tasks above; the step prompt
+(`step-0.4c-prompt.md`, R2 to R12) carries them to the executor, whose design confirms the
+details at its plan gate.
+
+- **Translations (task 1).** The product edit page takes the page editor's language switch
+  (`?locale=`). English is today's form plus the photo block. Another language shows only
+  the words (the title, the description, the text of each feature) as inputs, each with its
+  English beside it; the price, the slug, the visibility and the photo are read-only there
+  and always the current English (D-24 extended to products). The product's state in a
+  language reads as a section's (not translated, draft, translated, English newer), and
+  "Clear translation" works as in the page editor. The create page is English only.
+- **Features.** Every feature has a stable id (the planner's ruling on the owner's
+  delegation), so a translated word follows its feature when English moves or removes one.
+  The features become a list of rows edited like a page list section (add, move and remove
+  in English; the English beside each row in another language) instead of the tags input.
+- **The photo (task 2).** One per product, shared by every language, optional: upload,
+  preview, replace and remove through the existing `ImageUpload`. Its old file is deleted
+  after the save that drops it, never on the Remove click. No crop and no aspect ratio in
+  this step: the storefront card that decides the ratio is the designer's (0.4g), so the
+  edge case "a photo of the wrong aspect ratio" waits for it; the preview shows the photo
+  whole.
+- **Saving (task 3).** Each language saves on its own, with its own Save (owner: «Сохранение
+  отдельно на каждый язык - да»); the English Save writes the product, its photo and its
+  price as today.
+- **The list page (task 4).** A photo thumbnail, or a mark that there is none, and the
+  languages the product is translated into, beside today's columns.
+- **The Languages page.** It counts the translated products beside the sections, so the
+  count the coach enables a language by does not read complete while the product cards
+  would still be English (a side note the owner forwarded on 2026-11-25).
