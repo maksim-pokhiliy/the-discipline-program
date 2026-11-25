@@ -722,3 +722,24 @@ The page case that failed twice in the first leg's full admin runs at T8 ("keeps
 - **For the owner.** A restart of WSL should stop the clock steps. It stops every session and container, so it waits for a quiet moment.
 
 **Next.** The amended continuation reaches `main` through a docs PR; then the second leg runs from T9 to the delivery PR.
+
+## 2026-11-26 — 0.4c: the second implement leg opened PR #476; round one routed (claude)
+
+**The second leg.** Codex thread `01a213e6-438f-7a50-8e88-10a1bb7777aa`, gpt-6.1-sol at xhigh, from the amended continuation; it ran from 18:09Z to 22:03Z on 2026-11-25.
+
+- **What landed.** T9 (`c21831a8b`), ruling 16 (`8b35a9490`), ruling 17 (`3662db252`), T10 to T16 (`77b78425b` to `4e09c4fe0`), the fix pass (`d2560e430`) and the docs pass (`f88e236f5`), pushed. PR #476 is open against `main`, and its nine checks are green.
+- **Ruling 17.** The new backwards-clock case was red on the old hook and green after the invalidation; the mutant that removes the invalidation reds it (no refresh instead of one). No page lifecycle case went red in any full admin run of the leg.
+- **Roster.** The rollout shows eleven `spawn_agent` calls, all `pipeline_worker`: two implementers, three lenses, three refuters, the breaker, the test stage and the docs stage. The fix pass went to the first implementer and the final battery with the mutant campaign to the breaker, both as follow-ups to live workers, and the report says so. The preflight, the sweep and the PR are the orchestrator's own, as the skills have them.
+- **Deviations.** 105 `fence` entries and one `read-retry`, the first leg's included. Every one sits inside the grants of rulings 2, 7, 12, 16 and 17 or is a direct consumer of a granted change (T9's test of the removed reader, `admin.types.ts` in the product subtree). The planner's diff check found renames, imports, moves and thin wrappers that pass the same words; the list goes to round two to confirm or refute.
+- **Checked on exit.** The tree is clean at `f88e236f5` and equals the remote; the migration has ruling 5's sha256; no process of the leg is alive and its container is gone; the wrapper reported no host probe; the PR's files hold no planner artifact.
+- **The leg's final battery** at `f88e236f5`: 7 046 tests green across contracts, admin, UI, platform and the API; types, lint, format, the dependency check and the admin build green; 47 mutants red, none survived. The admin type check needs `NODE_OPTIONS=--max-old-space-size=2048` inside the 3 GB fence, because the default heap aborts.
+
+**Round one** (the leg's review at deep): 11 raw candidates, 5 findings after deduplication, all reported; the refuters confirmed 4 and refuted none, and the breaker reproduced the rest.
+
+- **RF-1, fixed.** English feature rows stayed editable while a save was pending, and the edits were lost; the feature card is now disabled during the save.
+- **RF-2, fixed.** An English save always resent the photo the form was loaded with, so a stale tab could clear or restore a photo; an update now omits an untouched photo.
+- **RF-3, deferred as SB-107.** A retried save whose photo field is dirty can still write a photo whose file is gone. Closing it needs a write precondition or a lifetime rule for Blob files, a mechanism the step never set out to build.
+- **RF-4, deferred as SB-108.** Two featured saves at the same moment can leave two featured products, as the blog's convention can. It needs a database backstop or a catalog lock.
+- **RF-5, dropped.** The default heap aborts the admin type check inside the fence, and the caller's 2 GB heap passes: a host measurement, not a defect.
+
+**Next.** Round two, a fresh Opus `step-reviewer` at deep, runs on PR #476; then the fix leg, the planner's verification, the rehearsal of the migration on a copy of production, the runbook section and the owner's browser pass.
