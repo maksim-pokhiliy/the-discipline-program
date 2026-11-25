@@ -2,22 +2,22 @@ import { type ReactElement } from "react";
 
 import { Chip } from "@mui/material";
 
-import { SectionTranslationState } from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
 
 const STATE_LABELS = {
-  [SectionTranslationState.NOT_TRANSLATED]: "Not translated",
-  [SectionTranslationState.DRAFT]: "Draft",
-  [SectionTranslationState.TRANSLATED]: "Translated",
-  [SectionTranslationState.ENGLISH_NEWER]: "English is newer",
+  [TranslationState.NOT_TRANSLATED]: "Not translated",
+  [TranslationState.DRAFT]: "Draft",
+  [TranslationState.TRANSLATED]: "Translated",
+  [TranslationState.ENGLISH_NEWER]: "English is newer",
 };
 const STATE_COLORS = {
-  [SectionTranslationState.NOT_TRANSLATED]: "default",
-  [SectionTranslationState.DRAFT]: "warning",
-  [SectionTranslationState.TRANSLATED]: "success",
-  [SectionTranslationState.ENGLISH_NEWER]: "info",
+  [TranslationState.NOT_TRANSLATED]: "default",
+  [TranslationState.DRAFT]: "warning",
+  [TranslationState.TRANSLATED]: "success",
+  [TranslationState.ENGLISH_NEWER]: "info",
 } as const;
 
-type SectionStateChipProps = { state: SectionTranslationState };
+type SectionStateChipProps = { state: TranslationState };
 
 export const SectionStateChip = ({ state }: SectionStateChipProps): ReactElement => (
   <Chip label={STATE_LABELS[state]} color={STATE_COLORS[state]} variant="outlined" size="small" />

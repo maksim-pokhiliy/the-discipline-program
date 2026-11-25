@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SectionTranslationState } from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
 
 import { ENGLISH_LOCALE, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import { makeLocalizedSectionRow, makeSectionRow, makeSeoData } from "../../pages.fixtures";
@@ -157,13 +157,13 @@ describe("getSectionEditorKey", () => {
   });
 
   it("ignores translation state and reference changes for an equal nested document", () => {
-    const initial = makeLocalizedSectionRow("contact:form", SectionTranslationState.DRAFT);
+    const initial = makeLocalizedSectionRow("contact:form", TranslationState.DRAFT);
     const refreshed = {
       ...initial,
       updatedAt: new Date().toISOString(),
       translation: initial.translation && {
         ...initial.translation,
-        state: SectionTranslationState.ENGLISH_NEWER,
+        state: TranslationState.ENGLISH_NEWER,
         english: { data: {}, updatedAt: new Date().toISOString() },
       },
     };

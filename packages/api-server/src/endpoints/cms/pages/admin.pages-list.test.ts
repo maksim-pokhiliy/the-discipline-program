@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { PAGE_SECTIONS_MAP, PageSlug, SectionTranslationState } from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
+import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
@@ -76,7 +77,7 @@ describe("cmsPagesAdminApi.getPages — translated count per page", () => {
     const about = await cmsPagesAdminApi.getPageBySlug(PageSlug.ABOUT, UKRAINIAN.code);
 
     expect(about.sections.find(({ section }) => section === ABOUT.hero)?.translation?.state).toBe(
-      SectionTranslationState.ENGLISH_NEWER,
+      TranslationState.ENGLISH_NEWER,
     );
     expect(
       pages.map(({ slug, translatedSectionCount }) => ({ slug, translatedSectionCount })),

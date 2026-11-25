@@ -3,3 +3,4 @@ export * from "./locale.types";
 export * from "./locale.constants";
 export * from "./locale-api.schema";
 export * from "./locale-api.types";
+export * from "./translation-state";

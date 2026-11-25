@@ -1,13 +1,12 @@
 import { type Prisma } from "@prisma/client";
 import { type z } from "zod";
 
-import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
+import { DEFAULT_LOCALE_CODE, type LocaleCode, TranslationState } from "@repo/contracts/cms/locale";
 import {
   PAGE_SECTIONS_MAP,
   type PageSlug,
   SECTION_DEFAULTS,
   SECTION_SCHEMAS,
-  SectionTranslationState,
   type SectionSchemaKey,
 } from "@repo/contracts/cms/pages";
 
@@ -76,18 +75,18 @@ export const isServedSectionRow = (
 export const sectionTranslationState = (
   row: SectionRowForState,
   englishUpdatedAt: Date,
-): SectionTranslationState => {
+): TranslationState => {
   if (!isServedSectionRow(row)) {
-    return SectionTranslationState.NOT_TRANSLATED;
+    return TranslationState.NOT_TRANSLATED;
   }
 
   if (!row.isActive) {
-    return SectionTranslationState.DRAFT;
+    return TranslationState.DRAFT;
   }
 
   return englishUpdatedAt.getTime() > row.updatedAt.getTime()
-    ? SectionTranslationState.ENGLISH_NEWER
-    : SectionTranslationState.TRANSLATED;
+    ? TranslationState.ENGLISH_NEWER
+    : TranslationState.TRANSLATED;
 };
 
 export const readableSectionData = (

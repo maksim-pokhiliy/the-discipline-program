@@ -3,7 +3,7 @@ import { type ReactElement } from "react";
 import SaveIcon from "@mui/icons-material/Save";
 import { Button, Stack } from "@mui/material";
 
-import { SectionTranslationState } from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
 
 import { type EditorLocale } from "../locale-gate";
 
@@ -12,7 +12,7 @@ import { ClearTranslationButton } from "./clear-translation-button";
 type SectionEditorActionsProps = {
   sectionLabel: string;
   locale: EditorLocale;
-  state: SectionTranslationState | undefined;
+  state: TranslationState | undefined;
   isDisabled: boolean;
   canSave: boolean;
   onSave: () => Promise<void>;
@@ -29,16 +29,14 @@ export const SectionEditorActions = ({
   onClear,
 }: SectionEditorActionsProps): ReactElement => (
   <Stack direction="row" justifyContent="flex-end" spacing={2}>
-    {!locale.isDefault &&
-      state !== undefined &&
-      state !== SectionTranslationState.NOT_TRANSLATED && (
-        <ClearTranslationButton
-          sectionLabel={sectionLabel}
-          languageName={locale.name}
-          isDisabled={isDisabled}
-          onConfirm={onClear}
-        />
-      )}
+    {!locale.isDefault && state !== undefined && state !== TranslationState.NOT_TRANSLATED && (
+      <ClearTranslationButton
+        sectionLabel={sectionLabel}
+        languageName={locale.name}
+        isDisabled={isDisabled}
+        onConfirm={onClear}
+      />
+    )}
     <Button variant="contained" startIcon={<SaveIcon />} onClick={onSave} disabled={!canSave}>
       Update Section
     </Button>

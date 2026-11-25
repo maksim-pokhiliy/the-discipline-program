@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { publicBlogPostSchema } from "../blog";
-import { DEFAULT_LOCALE_CODE, localeCodeSchema } from "../locale";
+import { DEFAULT_LOCALE_CODE, localeCodeSchema, TranslationState } from "../locale";
 import { productSchema } from "../product";
 import { reviewSchema } from "../review";
 
@@ -215,13 +215,6 @@ export const updatePageSectionSchema = updatePageSectionBodySchema.and(
   z.object({ pageSlug: z.nativeEnum(PageSlug) }),
 );
 
-export enum SectionTranslationState {
-  NOT_TRANSLATED = "NOT_TRANSLATED",
-  DRAFT = "DRAFT",
-  TRANSLATED = "TRANSLATED",
-  ENGLISH_NEWER = "ENGLISH_NEWER",
-}
-
 const isoDateTimeSchema = z.string().datetime();
 
 const adminSectionVariant = <TKey extends PageSectionKey, TSchema extends z.AnyZodObject>(
@@ -238,7 +231,7 @@ const adminSectionVariant = <TKey extends PageSectionKey, TSchema extends z.AnyZ
     hasUnreadableData: z.boolean(),
     translation: z
       .object({
-        state: z.nativeEnum(SectionTranslationState),
+        state: z.nativeEnum(TranslationState),
         english: z.object({ data, updatedAt: isoDateTimeSchema }),
       })
       .nullable(),

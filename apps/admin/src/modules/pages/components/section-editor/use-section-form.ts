@@ -4,10 +4,10 @@ import { useMemo } from "react";
 
 import { type DefaultValues, type UseFormReturn, useForm } from "react-hook-form";
 
+import { TranslationState } from "@repo/contracts/cms/locale";
 import {
   type AdminPageSection,
   SECTION_FIELD_KINDS,
-  SectionTranslationState,
   type SectionSchemaKey,
   type SectionWriteBody,
   type SectionWriteData,
@@ -64,7 +64,7 @@ export const useSectionForm = <TKey extends SectionSchemaKey>({
         : {},
   );
   const canConfirm =
-    !isDefaultLocale && section.translation?.state === SectionTranslationState.ENGLISH_NEWER;
+    !isDefaultLocale && section.translation?.state === TranslationState.ENGLISH_NEWER;
   const canSave = !isLoading && !isImageBusy && (methods.formState.isDirty || canConfirm);
   const handleSave = methods.handleSubmit((data) =>
     onSave({

@@ -1,12 +1,12 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { TranslationState } from "@repo/contracts/cms/locale";
 import {
   isListFieldKinds,
   SECTION_FIELD_KINDS,
   SECTION_SCHEMAS,
   SectionFieldKind,
-  SectionTranslationState,
 } from "@repo/contracts/cms/pages";
 
 import type * as Api from "@app/lib/api";
@@ -55,10 +55,10 @@ const SECTIONS_WITH_IMAGES = NON_LIST_SECTION_KEYS.filter((section) =>
   ),
 );
 const STATE_LABELS = [
-  [SectionTranslationState.NOT_TRANSLATED, "Not translated"],
-  [SectionTranslationState.DRAFT, "Draft"],
-  [SectionTranslationState.TRANSLATED, "Translated"],
-  [SectionTranslationState.ENGLISH_NEWER, "English is newer"],
+  [TranslationState.NOT_TRANSLATED, "Not translated"],
+  [TranslationState.DRAFT, "Draft"],
+  [TranslationState.TRANSLATED, "Translated"],
+  [TranslationState.ENGLISH_NEWER, "English is newer"],
 ] as const;
 
 beforeEach(() => {
@@ -76,7 +76,7 @@ describe("SectionEditor in a non-default locale", () => {
         backgroundImage: english.backgroundImage,
       },
       {
-        state: SectionTranslationState.NOT_TRANSLATED,
+        state: TranslationState.NOT_TRANSLATED,
         english: { data: english, updatedAt: makeSectionRow("home:hero", {}).updatedAt },
       },
     );
@@ -187,7 +187,7 @@ describe("SectionEditor in a non-default locale", () => {
   });
 
   it("enables Update Section without an edit on an English newer section", async () => {
-    const row = makeLocalizedSectionRow("home:hero", SectionTranslationState.ENGLISH_NEWER);
+    const row = makeLocalizedSectionRow("home:hero", TranslationState.ENGLISH_NEWER);
     const onSave = vi.fn();
 
     renderSectionEditor(row, onSave, UKRAINIAN_LOCALE);
@@ -212,7 +212,7 @@ describe("SectionEditor in a non-default locale", () => {
     const onSave = vi.fn();
 
     renderSectionEditor(
-      makeLocalizedSectionRow("home:hero", SectionTranslationState.DRAFT),
+      makeLocalizedSectionRow("home:hero", TranslationState.DRAFT),
       onSave,
       UKRAINIAN_LOCALE,
     );
@@ -246,7 +246,7 @@ describe("SectionEditor in a non-default locale", () => {
     renderSectionEditor(makeLocalizedSectionRow("home:hero", state), vi.fn(), UKRAINIAN_LOCALE);
 
     expect(screen.queryByRole("button", { name: "Clear Translation" }) !== null).toBe(
-      state !== SectionTranslationState.NOT_TRANSLATED,
+      state !== TranslationState.NOT_TRANSLATED,
     );
   });
 
@@ -283,7 +283,7 @@ describe("SectionEditor in a non-default locale", () => {
 
   it("shows the unreadable-row notice", () => {
     const row = {
-      ...makeLocalizedSectionRow("home:hero", SectionTranslationState.NOT_TRANSLATED),
+      ...makeLocalizedSectionRow("home:hero", TranslationState.NOT_TRANSLATED),
       hasUnreadableData: true,
     };
 

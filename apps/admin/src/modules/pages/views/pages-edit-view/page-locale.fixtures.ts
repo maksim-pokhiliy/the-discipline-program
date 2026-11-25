@@ -1,12 +1,11 @@
 import { type z } from "zod";
 
-import { type LocaleCode } from "@repo/contracts/cms/locale";
+import { type LocaleCode, TranslationState } from "@repo/contracts/cms/locale";
 import {
   type AdminPageDetails,
   adminPageSectionSchema,
   type faqContentSchema,
   PageSlug,
-  SectionTranslationState,
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 
@@ -36,7 +35,7 @@ export const makeLocaleFaqPage = (
     ...(words.items ?? []).flatMap(({ question, answer }) => [question, answer]),
   ].some((value) => typeof value === "string" && value.trim() !== "");
   const section = makeTranslatedRow("faq:content", data, {
-    state: hasWords ? SectionTranslationState.DRAFT : SectionTranslationState.NOT_TRANSLATED,
+    state: hasWords ? TranslationState.DRAFT : TranslationState.NOT_TRANSLATED,
     english: { data: english, updatedAt: ENGLISH_UPDATED_AT },
   });
 
@@ -52,7 +51,7 @@ export const makeLocaleSeoPage = (
     locale === "en"
       ? makeSectionRow("home:seo", data)
       : makeTranslatedRow("home:seo", data, {
-          state: SectionTranslationState.TRANSLATED,
+          state: TranslationState.TRANSLATED,
           english: { data: ENGLISH_SEO, updatedAt: ENGLISH_UPDATED_AT },
         });
 
@@ -65,7 +64,7 @@ export const makeClearedLocaleSeoPage = (locale: LocaleCode): AdminPageDetails =
       "home:seo",
       {},
       {
-        state: SectionTranslationState.NOT_TRANSLATED,
+        state: TranslationState.NOT_TRANSLATED,
         english: { data: ENGLISH_SEO, updatedAt: ENGLISH_UPDATED_AT },
       },
     ),
@@ -80,7 +79,7 @@ export const makeEnglishNewerSeoPage = (englishTitle: string): AdminPageDetails 
       "home:seo",
       { title: "uk title", description: "uk description" },
       {
-        state: SectionTranslationState.ENGLISH_NEWER,
+        state: TranslationState.ENGLISH_NEWER,
         english: {
           data: { ...ENGLISH_SEO, title: englishTitle },
           updatedAt: ENGLISH_UPDATED_AT,
@@ -106,7 +105,7 @@ export const makeLocaleTermsPage = (
     locale === "en"
       ? makeSectionRow("offer:terms", data)
       : makeTranslatedRow("offer:terms", data, {
-          state: SectionTranslationState.TRANSLATED,
+          state: TranslationState.TRANSLATED,
           english: { data: english, updatedAt: ENGLISH_UPDATED_AT },
         });
 
@@ -118,7 +117,7 @@ export const makeContactDraftPage = (
 ): AdminPageDetails => ({
   ...makePage(PageSlug.CONTACT, [
     adminPageSectionSchema.parse({
-      ...makeLocalizedSectionRow("contact:form", SectionTranslationState.DRAFT),
+      ...makeLocalizedSectionRow("contact:form", TranslationState.DRAFT),
       data: { fieldLabels },
     }),
   ]),

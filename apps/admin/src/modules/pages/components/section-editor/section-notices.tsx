@@ -2,7 +2,8 @@ import { type ReactElement } from "react";
 
 import { Alert } from "@mui/material";
 
-import { type AdminPageSection, SectionTranslationState } from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
+import { type AdminPageSection } from "@repo/contracts/cms/pages";
 
 type SectionNoticesProps = { section: Pick<AdminPageSection, "hasUnreadableData" | "translation"> };
 
@@ -14,7 +15,7 @@ export const SectionNotices = ({ section }: SectionNoticesProps): ReactElement =
         form replaces it.
       </Alert>
     )}
-    {section.translation?.state === SectionTranslationState.ENGLISH_NEWER && (
+    {section.translation?.state === TranslationState.ENGLISH_NEWER && (
       <Alert severity="info">
         English changed after this translation was saved. Check the words against the English, then
         click Update Section to confirm them.

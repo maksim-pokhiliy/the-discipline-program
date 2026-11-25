@@ -2,6 +2,7 @@ import { type RenderResult } from "@testing-library/react";
 import { vi } from "vitest";
 import { z } from "zod";
 
+import { TranslationState } from "@repo/contracts/cms/locale";
 import {
   type AdminPageListItem,
   type AdminPageSection,
@@ -13,7 +14,6 @@ import {
   SECTION_SCHEMAS,
   SectionFieldKind,
   type SectionFieldKindTree,
-  SectionTranslationState,
   type PageSlug,
   type SectionSchemaKey,
   type SectionWriteBody,
@@ -114,7 +114,7 @@ export const makePopulatedSectionRow = (
 
 export const makeLocalizedSectionRow = (
   section: SectionSchemaKey,
-  state = SectionTranslationState.TRANSLATED,
+  state = TranslationState.TRANSLATED,
 ): AdminPageSection =>
   adminPageSectionSchema.parse({
     ...makePopulatedSectionRow(section, "Localized"),
