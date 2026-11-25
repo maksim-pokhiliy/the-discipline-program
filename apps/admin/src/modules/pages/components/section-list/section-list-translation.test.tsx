@@ -3,16 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 
 import { SECTION_FIELD_KINDS, SectionFieldKind } from "@repo/contracts/cms/pages";
 
+import {
+  fieldKindAt,
+  SHARED_FIELD_HELPER,
+} from "@app/lib/components/localized-editor/section-field";
+import { UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
+
 import { makeListAddCases } from "../../list-editor.fixtures";
-import { UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import {
   makeLocalizedSectionRow,
   makePopulatedSectionRow,
   renderSectionEditor,
   sectionTextEntries,
 } from "../../pages.fixtures";
-import { fieldKindAt } from "../section-field/field-at-path";
-import { SHARED_FIELD_HELPER } from "../section-field/section-field-context";
 
 describe("SectionListEditor in another language", () => {
   it.each(makeListAddCases())(

@@ -4,7 +4,7 @@ import {
   type AdminLocaleListItem,
 } from "@repo/contracts/cms/locale";
 
-import { type EditorLocale } from "./components/locale-gate";
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
 
 const FIXTURE_DATE = new Date("2026-11-08T12:00:00.000Z");
 

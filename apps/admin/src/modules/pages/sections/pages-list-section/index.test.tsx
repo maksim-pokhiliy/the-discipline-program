@@ -4,10 +4,10 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { PageSlug } from "@repo/contracts/cms/pages";
 
 import { api } from "@app/lib/api";
+import { ENGLISH_LOCALE, UKRAINIAN_LOCALE, LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import { PAGE_LABELS } from "../../config/page-labels";
-import { ENGLISH_LOCALE, UKRAINIAN_LOCALE, LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePageListItem } from "../../pages.fixtures";
 
 import { PagesListSection } from "./index";

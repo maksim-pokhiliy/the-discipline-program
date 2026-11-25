@@ -8,9 +8,10 @@ import { type z } from "zod";
 import { type aboutPagePersonalSchema } from "@repo/contracts/cms/pages";
 
 import { FormCard } from "@app/lib/components/form-card";
+import { SectionTextField } from "@app/lib/components/localized-editor/section-field";
 import { useDeleteImage } from "@app/lib/hooks";
 
-import { SectionImageField, SectionTextField } from "../section-field";
+import { SectionImageField } from "../section-field";
 
 type PersonalSectionData = z.infer<typeof aboutPagePersonalSchema>;
 

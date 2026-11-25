@@ -5,9 +5,8 @@ import { Button, Stack } from "@mui/material";
 
 import { TranslationState } from "@repo/contracts/cms/locale";
 
-import { type EditorLocale } from "../locale-gate";
-
-import { ClearTranslationButton } from "./clear-translation-button";
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
+import { ClearTranslationButton } from "@app/lib/components/localized-editor/translation-state";
 
 type SectionEditorActionsProps = {
   sectionLabel: string;
@@ -31,7 +30,7 @@ export const SectionEditorActions = ({
   <Stack direction="row" justifyContent="flex-end" spacing={2}>
     {!locale.isDefault && state !== undefined && state !== TranslationState.NOT_TRANSLATED && (
       <ClearTranslationButton
-        sectionLabel={sectionLabel}
+        message={`The ${locale.name} words written for ${sectionLabel} are removed, and the ${locale.name} site shows this section in English.`}
         languageName={locale.name}
         isDisabled={isDisabled}
         onConfirm={onClear}

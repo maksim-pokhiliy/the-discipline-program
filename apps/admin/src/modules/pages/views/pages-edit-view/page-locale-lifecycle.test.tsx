@@ -9,11 +9,11 @@ import { QueryProvider, STALE_TIMES } from "@repo/query";
 import type * as Api from "@app/lib/api";
 import { adminKeys } from "@app/lib/api/keys";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { ENGLISH_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { resetMockNavigation, setMockNavigation } from "@app/test/mocks";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
-import { ENGLISH_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import { makePageListItem } from "../../pages.fixtures";
 import { PagesListView } from "../pages-list-view";
 

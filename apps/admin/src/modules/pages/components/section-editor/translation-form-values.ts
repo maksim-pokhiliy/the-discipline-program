@@ -8,7 +8,7 @@ import {
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 
-import { type JsonRecord, recordOf } from "../section-field/field-at-path";
+import { type JsonRecord, recordOf } from "@app/lib/components/localized-editor/section-field";
 
 const seedField = (node: SectionFieldKindNode, value: unknown): unknown => {
   if (isGroupFieldKinds(node)) {

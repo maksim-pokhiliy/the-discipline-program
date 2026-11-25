@@ -9,7 +9,7 @@ import {
   type whyChooseFeatureItemSchema,
 } from "@repo/contracts/cms/pages";
 
-import { type SectionList } from "../components/section-list";
+import { type SectionList } from "@app/lib/components/localized-editor/section-list";
 
 import { type RowFieldsOf } from "./schema-fields.types";
 

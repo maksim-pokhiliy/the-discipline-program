@@ -2,10 +2,9 @@ import { screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@app/lib/api";
+import { LOCALE_CATALOG, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { resetMockNavigation } from "@app/test/mocks";
 import { render } from "@app/test/render";
-
-import { LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 
 import { LanguageBar } from "./index";
 

@@ -6,10 +6,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type AdminPageDetails } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
 import { useIsPageSectionSaving, useUpdatePageSection } from "@app/lib/hooks";
 
 import { LanguageBar } from "../../components/language-bar";
-import { type EditorLocale } from "../../components/locale-gate";
 import { getSectionEditorKey, SectionEditor } from "../../components/section-editor";
 import { pagesListHref } from "../../config/locale-url";
 import { PAGE_LABELS } from "../../config/page-labels";

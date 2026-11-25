@@ -7,8 +7,8 @@ import { Grid } from "@mui/material";
 import { DynamicListItem } from "@repo/ui";
 
 import { SectionTextField, useIsEditingEnglish } from "../section-field";
-import { type RowControls } from "../sections/row-controls";
 
+import { type RowControls } from "./row-controls";
 import { type ListFormValues, type SectionList } from "./section-list.types";
 
 type SectionListRowProps = { list: SectionList; index: number; controls: RowControls | null };

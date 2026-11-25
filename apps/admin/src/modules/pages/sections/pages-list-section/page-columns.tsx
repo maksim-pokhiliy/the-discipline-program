@@ -6,7 +6,8 @@ import { type AdminPageListItem } from "@repo/contracts/cms/pages";
 import { formatDate } from "@repo/shared";
 import { type Column } from "@repo/ui";
 
-import { type EditorLocale } from "../../components/locale-gate";
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
+
 import { PageTranslationProgress } from "../../components/page-translation-progress";
 import { pageEditHref } from "../../config/locale-url";
 import { PAGE_LABELS } from "../../config/page-labels";

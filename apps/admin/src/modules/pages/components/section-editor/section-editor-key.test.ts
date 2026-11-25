@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { TranslationState } from "@repo/contracts/cms/locale";
 
-import { ENGLISH_LOCALE, UKRAINIAN_LOCALE } from "../../locale.fixtures";
+import { ENGLISH_LOCALE, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
+
 import { makeLocalizedSectionRow, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 import { getSectionEditorKey } from "./section-editor-key";

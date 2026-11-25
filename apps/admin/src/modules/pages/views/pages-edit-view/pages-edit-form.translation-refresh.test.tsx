@@ -7,9 +7,9 @@ import { type AdminPageDetails, PageSlug } from "@repo/contracts/cms/pages";
 import { api } from "@app/lib/api";
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { LOCALE_CATALOG, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
-import { LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import { makePage, makeTranslatedRow } from "../../pages.fixtures";
 
 import { makeLocaleFaqPage } from "./page-locale.fixtures";

@@ -8,9 +8,10 @@ import { type z } from "zod";
 import { type homePageHeroSchema } from "@repo/contracts/cms/pages";
 
 import { FormCard } from "@app/lib/components/form-card";
+import { SectionTextField } from "@app/lib/components/localized-editor/section-field";
 
 import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
-import { SectionImageField, SectionTextField } from "../section-field";
+import { SectionImageField } from "../section-field";
 
 type HeroSectionData = z.infer<typeof homePageHeroSchema>;
 

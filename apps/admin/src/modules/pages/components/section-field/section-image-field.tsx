@@ -7,9 +7,11 @@ import { useFormContext } from "react-hook-form";
 
 import { ImageUpload } from "@repo/ui";
 
+import {
+  SHARED_FIELD_HELPER,
+  useSectionField,
+} from "@app/lib/components/localized-editor/section-field";
 import { useUploadImage } from "@app/lib/hooks";
-
-import { SHARED_FIELD_HELPER, useSectionField } from "./section-field-context";
 
 type SectionImageFieldProps = { name: string; onRemoveImage?: (url: string) => void };
 

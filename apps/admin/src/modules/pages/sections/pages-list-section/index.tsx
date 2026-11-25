@@ -5,8 +5,9 @@ import { Stack } from "@mui/material";
 import { type AdminPageListItem, PageSlug } from "@repo/contracts/cms/pages";
 import { DataTable } from "@repo/ui";
 
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
+
 import { LanguageBar } from "../../components/language-bar";
-import { type EditorLocale } from "../../components/locale-gate";
 
 import { pageColumns } from "./page-columns";
 

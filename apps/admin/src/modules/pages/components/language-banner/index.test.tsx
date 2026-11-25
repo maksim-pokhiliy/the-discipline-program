@@ -1,9 +1,8 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { ENGLISH_LOCALE, HIDDEN_LOCALE, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
-
-import { ENGLISH_LOCALE, HIDDEN_LOCALE, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 
 import { LanguageBanner } from "./index";
 

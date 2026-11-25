@@ -7,14 +7,14 @@ import { Button } from "@mui/material";
 import { ConfirmationModal } from "@repo/ui";
 
 type ClearTranslationButtonProps = {
-  sectionLabel: string;
+  message: string;
   languageName: string;
   isDisabled: boolean;
   onConfirm: () => void;
 };
 
 export const ClearTranslationButton = ({
-  sectionLabel,
+  message,
   languageName,
   isDisabled,
   onConfirm,
@@ -38,7 +38,7 @@ export const ClearTranslationButton = ({
       <ConfirmationModal
         open={isOpen}
         title={`Clear the ${languageName} translation?`}
-        message={`The ${languageName} words written for ${sectionLabel} are removed, and the ${languageName} site shows this section in English.`}
+        message={message}
         confirmText="Clear Translation"
         type="warning"
         isConfirming={isDisabled}

@@ -10,11 +10,15 @@ import {
 } from "@repo/contracts/cms/pages";
 
 import type * as Api from "@app/lib/api";
+import {
+  fieldKindAt,
+  SHARED_FIELD_HELPER,
+} from "@app/lib/components/localized-editor/section-field";
 import { clickButton, typeInto } from "@app/test/interactions";
+import { ENGLISH_LOCALE, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import { SECTION_LABELS } from "../../config/section-labels";
-import { ENGLISH_LOCALE, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import {
   makeLocalizedSectionRow,
   makePopulatedSectionRow,
@@ -24,8 +28,6 @@ import {
   SECTION_KEYS,
   sectionTextEntries,
 } from "../../pages.fixtures";
-import { fieldKindAt } from "../section-field/field-at-path";
-import { SHARED_FIELD_HELPER } from "../section-field/section-field-context";
 
 import { SectionEditor } from "./index";
 

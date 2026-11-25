@@ -6,8 +6,9 @@ import { type z } from "zod";
 
 import { type homePageStorefrontProgramsSchema } from "@repo/contracts/cms/pages";
 
+import { SectionTextField } from "@app/lib/components/localized-editor/section-field";
+
 import { PROGRAM_LISTING_GROUP } from "../../config/listing-section-fields";
-import { SectionTextField } from "../section-field";
 
 import { FlatFieldGroup } from "./flat-field-group";
 import { TitleSubtitleSectionForm } from "./title-subtitle-section-form";

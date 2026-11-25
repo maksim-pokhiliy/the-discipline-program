@@ -7,12 +7,12 @@ import { Button, Divider, Stack, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { useIsEditingEnglish } from "../section-field";
-import { getRowControls } from "../sections/row-controls";
-import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "../sections/shared-styles";
 
 import { makeListRow } from "./new-list-row";
+import { getRowControls } from "./row-controls";
 import { SectionListRow } from "./section-list-row";
 import { type ListFormValues, type SectionList } from "./section-list.types";
+import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
 
 type SectionListEditorProps = { list: SectionList };
 

@@ -8,9 +8,8 @@ import { useSearchParams } from "next/navigation";
 import { LoadingState } from "@repo/ui";
 import { NotFoundPageContent } from "@repo/ui/error-pages";
 
+import { LOCALE_PARAM } from "@app/lib/config/locale-url";
 import { useLocales } from "@app/lib/hooks";
-
-import { LOCALE_PARAM } from "../../config/locale-url";
 
 import { resolveLocaleParam, type EditorLocale } from "./resolve-locale-param";
 

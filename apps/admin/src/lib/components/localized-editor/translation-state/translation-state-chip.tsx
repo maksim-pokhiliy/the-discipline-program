@@ -17,8 +17,8 @@ const STATE_COLORS = {
   [TranslationState.ENGLISH_NEWER]: "info",
 } as const;
 
-type SectionStateChipProps = { state: TranslationState };
+type TranslationStateChipProps = { state: TranslationState };
 
-export const SectionStateChip = ({ state }: SectionStateChipProps): ReactElement => (
+export const TranslationStateChip = ({ state }: TranslationStateChipProps): ReactElement => (
   <Chip label={STATE_LABELS[state]} color={STATE_COLORS[state]} variant="outlined" size="small" />
 );

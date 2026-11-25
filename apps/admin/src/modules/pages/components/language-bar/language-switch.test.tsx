@@ -2,18 +2,17 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@app/lib/api";
-import { readMockNavigationCalls, resetMockNavigation, setMockNavigation } from "@app/test/mocks";
-import { render } from "@app/test/render";
-
+import { LanguageSwitch } from "@app/lib/components/localized-editor/language-switch";
 import {
   ENGLISH_LOCALE,
   HIDDEN_LOCALE,
   LOCALE_CATALOG,
   UKRAINIAN_LOCALE,
-} from "../../locale.fixtures";
-import { LanguageBar } from "../language-bar";
+} from "@app/test/locale.fixtures";
+import { readMockNavigationCalls, resetMockNavigation, setMockNavigation } from "@app/test/mocks";
+import { render } from "@app/test/render";
 
-import { LanguageSwitch } from "./index";
+import { LanguageBar } from "./index";
 
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
 

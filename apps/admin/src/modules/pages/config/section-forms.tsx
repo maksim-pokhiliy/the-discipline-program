@@ -2,7 +2,8 @@ import { type ReactElement } from "react";
 
 import { type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
-import { SectionListEditor } from "../components/section-list";
+import { SectionListEditor } from "@app/lib/components/localized-editor/section-list";
+
 import { BlogGridSectionForm } from "../components/sections/blog-grid-section-form";
 import { ContactFormSectionForm } from "../components/sections/contact-form-section-form";
 import { ContactSectionForm } from "../components/sections/contact-section-form";

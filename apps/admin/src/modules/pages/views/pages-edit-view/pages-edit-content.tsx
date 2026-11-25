@@ -4,9 +4,8 @@ import { type ReactElement } from "react";
 
 import { QueryWrapper } from "@repo/ui";
 
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
 import { usePageDetails } from "@app/lib/hooks";
-
-import { type EditorLocale } from "../../components/locale-gate";
 
 import { PagesEditForm } from "./pages-edit-form";
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { HIDDEN_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
+import { HIDDEN_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 
 import { DEFAULT_EDITOR_LOCALE, resolveLocaleParam } from "./resolve-locale-param";
 

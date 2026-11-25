@@ -1,8 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
-
-import { useFormContext } from "react-hook-form";
+import { type ReactElement } from "react";
 
 import {
   SECTION_FIELD_KINDS,
@@ -10,7 +8,7 @@ import {
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 
-import { keptWords } from "./unsaved-words";
+import { TranslationSeedRefresh } from "@app/lib/components/localized-editor/translation-refresh";
 
 type TranslationRefreshProps<TKey extends SectionSchemaKey> = {
   section: TKey;
@@ -20,25 +18,6 @@ type TranslationRefreshProps<TKey extends SectionSchemaKey> = {
 export const TranslationRefresh = <TKey extends SectionSchemaKey>({
   section,
   seed,
-}: TranslationRefreshProps<TKey>): null => {
-  const { getValues, reset, setValue } = useFormContext<Record<string, unknown>>();
-  const applied = useRef(seed);
-
-  useLayoutEffect(() => {
-    if (JSON.stringify(applied.current) === JSON.stringify(seed)) {
-      return;
-    }
-
-    const kept = keptWords(SECTION_FIELD_KINDS[section], applied.current, getValues(), seed);
-
-    reset(seed, { keepFieldsRef: true });
-
-    for (const { path, value } of kept) {
-      setValue(path, value, { shouldDirty: true });
-    }
-
-    applied.current = seed;
-  }, [section, seed, getValues, reset, setValue]);
-
-  return null;
-};
+}: TranslationRefreshProps<TKey>): ReactElement => (
+  <TranslationSeedRefresh kinds={SECTION_FIELD_KINDS[section]} seed={seed} />
+);

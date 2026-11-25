@@ -13,12 +13,12 @@ import {
   type SectionWriteBody,
 } from "@repo/contracts/cms/pages";
 
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
+import { SectionFieldContext } from "@app/lib/components/localized-editor/section-field";
 import { IMAGE_MUTATION_KEY } from "@app/lib/hooks";
 
 import { SECTION_FORMS } from "../../config/section-forms";
 import { SECTION_LABELS } from "../../config/section-labels";
-import { type EditorLocale } from "../locale-gate";
-import { SectionFieldContext } from "../section-field";
 
 import { SectionEditorActions } from "./section-editor-actions";
 import { SectionNotices } from "./section-notices";

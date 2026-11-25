@@ -7,11 +7,11 @@ import { PageSlug, updatePageSectionBodySchema } from "@repo/contracts/cms/pages
 import { api } from "@app/lib/api";
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { ENGLISH_LOCALE, LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import { PAGE_LABELS } from "../../config/page-labels";
 import { makeTermsData } from "../../list-editor.fixtures";
-import { ENGLISH_LOCALE, LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const { updateSectionMock, updateSectionHookMock } = vi.hoisted(() => {

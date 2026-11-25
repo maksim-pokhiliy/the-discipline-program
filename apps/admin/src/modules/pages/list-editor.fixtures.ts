@@ -12,7 +12,8 @@ import {
   type SectionWriteBody,
 } from "@repo/contracts/cms/pages";
 
-import { type SectionList } from "./components/section-list";
+import { type SectionList } from "@app/lib/components/localized-editor/section-list";
+
 import { LIST_SECTIONS } from "./config/list-section-fields";
 import { makeSectionRow, SECTION_KEYS } from "./pages.fixtures";
 

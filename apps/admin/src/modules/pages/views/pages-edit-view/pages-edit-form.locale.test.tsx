@@ -6,15 +6,15 @@ import { QueryProvider } from "@repo/query";
 
 import { api } from "@app/lib/api";
 import { typeInto } from "@app/test/interactions";
-import { resetMockNavigation } from "@app/test/mocks";
-import { render } from "@app/test/render";
-
 import {
   ENGLISH_LOCALE,
   HIDDEN_LOCALE,
   LOCALE_CATALOG,
   UKRAINIAN_LOCALE,
-} from "../../locale.fixtures";
+} from "@app/test/locale.fixtures";
+import { resetMockNavigation } from "@app/test/mocks";
+import { render } from "@app/test/render";
+
 import { makePage, makeSectionRow, makeLocalizedSectionRow } from "../../pages.fixtures";
 
 import { makeContactDraftPage } from "./page-locale.fixtures";

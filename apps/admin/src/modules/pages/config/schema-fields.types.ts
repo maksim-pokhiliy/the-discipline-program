@@ -1,6 +1,7 @@
 import { type z } from "zod";
 
-import { type ListRowField } from "../components/section-list";
+import { type ListRowField } from "@app/lib/components/localized-editor/section-list";
+
 import { type FieldDescriptor } from "../components/sections/flat-fields-section-form.types";
 
 export type FieldsOf<TSchema extends z.AnyZodObject> = Record<
