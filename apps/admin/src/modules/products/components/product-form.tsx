@@ -58,7 +58,13 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
             </Stack>
           </FormCard>
 
-          <ProductFeaturesCard />
+          <Stack
+            component="fieldset"
+            disabled={isLoading}
+            sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+          >
+            <ProductFeaturesCard />
+          </Stack>
           <ProductPhotoCard isLoading={isLoading} />
         </Stack>
       </Grid>

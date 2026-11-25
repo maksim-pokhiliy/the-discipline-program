@@ -20,7 +20,7 @@ import {
   ProductForm,
   ProductLanguageBanner,
   productFormSchema,
-  toProductApiData,
+  toProductUpdateApiData,
   type ProductFormData,
 } from "../../components";
 
@@ -62,11 +62,17 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({
         : { ...PRODUCT_PRICE_DEFAULTS },
     },
   });
+  const { dirtyFields } = methods.formState;
 
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => updateProduct({ id: product.id, data: toProductApiData(data) })}
+      onSubmit={(data) =>
+        updateProduct({
+          id: product.id,
+          data: toProductUpdateApiData(data, dirtyFields.imageUrl === true),
+        })
+      }
       isPending={isPending}
       title="Edit Product"
       subtitle={product.title}

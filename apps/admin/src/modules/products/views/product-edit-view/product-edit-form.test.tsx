@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -20,6 +20,7 @@ import {
 } from "../../products.fixtures";
 
 const updateProductMock: Mock = vi.fn();
+const mutation = vi.hoisted(() => ({ isPending: false }));
 
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
 
@@ -30,7 +31,7 @@ vi.mock("@app/lib/hooks", async () => {
 
   return {
     ...actual,
-    useUpdateProduct: () => ({ mutate: updateProductMock, isPending: false }),
+    useUpdateProduct: () => ({ mutate: updateProductMock, isPending: mutation.isPending }),
     useLocales: () => ({ data: LOCALE_CATALOG }),
   };
 });
@@ -60,6 +61,7 @@ describe("ProductEditForm language bar", () => {
 
 afterEach(() => {
   updateProductMock.mockReset();
+  mutation.isPending = false;
 });
 
 describe("ProductEditForm pricing", () => {
@@ -153,6 +155,43 @@ describe("ProductEditForm features", () => {
   const first = { id: "first", text: "First feature" };
   const second = { id: "second", text: "Second feature" };
   const third = { id: "third", text: "Third feature" };
+
+  it("blocks feature text, add, move and remove while the update is pending", async () => {
+    const product = { ...makeProduct([MONTHLY_USD_PRICE]), features: [first, second] };
+    const { rerender } = render(<ProductEditForm product={product} />);
+
+    act(() => screen.getByRole("button", { name: "Save Changes" }).focus());
+    clickButton("Save Changes");
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(1));
+    mutation.isPending = true;
+    rerender(<ProductEditForm product={product} />);
+
+    for (const field of screen.getAllByLabelText("Text")) {
+      expect(field).toBeDisabled();
+      field.focus();
+      expect(field).not.toHaveFocus();
+    }
+
+    for (const button of screen.getAllByRole("button", {
+      name: /^Add Feature$|^Move Feature|^Remove Feature/,
+    })) {
+      expect(button).toBeDisabled();
+      act(() => button.click());
+    }
+
+    expect(screen.getByText("Key features (2)")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Text")[0]).toHaveValue(first.text);
+    expect(screen.getAllByLabelText("Text")[1]).toHaveValue(second.text);
+    expect(updateProductMock).toHaveBeenCalledTimes(1);
+    mutation.isPending = false;
+    rerender(<ProductEditForm product={product} />);
+    typeIntoNth("Text", 0, "Editable again");
+    clickButton("Move Feature 1 down");
+    clickButton("Remove Feature 1");
+    clickButton("Add Feature");
+    expect(screen.getAllByLabelText("Text")[0]).toHaveValue("Editable again");
+    expect(screen.getByText("Key features (2)")).toBeInTheDocument();
+  });
 
   it("adds, moves, removes and edits features while keeping their ids", async () => {
     const product = { ...makeProduct([MONTHLY_USD_PRICE]), features: [first, second, third] };

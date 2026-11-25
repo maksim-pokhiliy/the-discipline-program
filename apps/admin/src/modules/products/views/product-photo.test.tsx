@@ -101,6 +101,35 @@ beforeEach(() => {
 });
 
 describe("product photo upload", () => {
+  it.each([null, PREVIOUS])(
+    "omits a stale untouched photo %s when unrelated words are saved",
+    async (imageUrl) => {
+      const product = { ...makeProduct([makePrice()]), imageUrl };
+      const { rerender } = render(<ProductEditForm product={product} />);
+
+      rerender(<ProductEditForm product={{ ...product, imageUrl: PHOTO }} />);
+
+      if (imageUrl === null) {
+        expect(screen.queryByRole("img", { name: "Preview" })).not.toBeInTheDocument();
+      } else {
+        expect(screen.getByRole("img", { name: "Preview" })).toHaveAttribute("src", imageUrl);
+      }
+
+      typeInto("Product Title", "Unrelated words from the stale form");
+      clickButton("Save Changes");
+      await waitFor(() => expect(endpoints.update).toHaveBeenCalledTimes(1));
+
+      const data = endpoints.update.mock.calls[0]?.[0]?.data;
+
+      expect(data).not.toHaveProperty("imageUrl");
+      expect(updateProductRequestSchema.parse(data).title).toBe(
+        "Unrelated words from the stale form",
+      );
+      expect(endpoints.uploadImage).not.toHaveBeenCalled();
+      expect(endpoints.deleteImage).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(MODES)(
     "%s Save waits for upload and writes its returned photo",
     async (_name, isCreate) => {
@@ -167,9 +196,10 @@ describe("product photo upload", () => {
       ).toBeNull();
     } else {
       await waitFor(() => expect(endpoints.update).toHaveBeenCalledTimes(1));
+      expect(endpoints.update.mock.calls[0]?.[0]?.data).not.toHaveProperty("imageUrl");
       expect(
         updateProductRequestSchema.parse(endpoints.update.mock.calls[0]?.[0]?.data).imageUrl,
-      ).toBe(PREVIOUS);
+      ).toBeUndefined();
     }
 
     expect(endpoints.deleteImage).not.toHaveBeenCalled();
