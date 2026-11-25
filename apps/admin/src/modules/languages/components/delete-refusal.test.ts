@@ -44,6 +44,48 @@ describe("deleteRefusalOf", () => {
   );
 
   it.each([
+    {
+      details: { translatedSectionCount: 0, translatedProductCount: 1 },
+      parts: "1 product",
+    },
+    {
+      details: { translatedProductCount: 3 },
+      parts: "3 products",
+    },
+    {
+      details: { translatedSectionCount: 1, translatedProductCount: 1 },
+      parts: "1 section and 1 product",
+    },
+    {
+      details: { translatedSectionCount: 3, translatedProductCount: 2 },
+      parts: "3 sections and 2 products",
+    },
+    {
+      details: { translatedSectionCount: "1", translatedProductCount: 1 },
+      parts: "1 product",
+    },
+    {
+      details: { translatedSectionCount: 1, translatedProductCount: { count: 2 } },
+      parts: "1 section",
+    },
+  ])("names each positive part as $parts", ({ details, parts }) => {
+    const error = new ConflictError("Never display this server message", details);
+
+    expect(deleteRefusalOf(error, UKRAINIAN)).toBe(
+      `${NAME} still has content in ${parts}, so it cannot be deleted. It stays hidden from the site while it is disabled.`,
+    );
+  });
+
+  it.each([
+    { translatedSectionCount: 0, translatedProductCount: 0 },
+    { translatedSectionCount: -1, translatedProductCount: 0 },
+    { translatedSectionCount: null, translatedProductCount: "1" },
+    { translatedSectionCount: [], translatedProductCount: true },
+  ])("returns null when neither count names positive content: %s", (details) => {
+    expect(deleteRefusalOf(new ConflictError("unmapped counts", details), UKRAINIAN)).toBeNull();
+  });
+
+  it.each([
     null,
     new Error("plain failure"),
     new NotFoundError(),

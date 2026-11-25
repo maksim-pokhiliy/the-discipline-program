@@ -17,6 +17,7 @@ vi.mock("next-auth/react", async () => (await import("@app/test/mocks")).buildNe
 
 const CATALOG = [ENGLISH, UKRAINIAN, POLISH];
 const MANY_SECTIONS = 3;
+const SECTION_COUNT = Object.keys(SECTION_SCHEMAS).length;
 const EMPTY_MESSAGE = "The site is in English only. Add a language to start translating it.";
 const rowOf = (name: string): HTMLElement => screen.getByRole("row", { name: new RegExp(name) });
 const click = (name: string): void => {
@@ -55,6 +56,8 @@ describe("LanguagesListSection", () => {
     expect(english.queryByRole("switch")).toBeNull();
     expect(english.queryByRole("button")).toBeNull();
     expect(english.queryByRole("progressbar")).toBeNull();
+    expect(english.queryByText(/sections translated$/)).toBeNull();
+    expect(english.queryByText(/products translated$/)).toBeNull();
     expect(english.queryByRole("link", { name: /^Translate / })).toBeNull();
   });
 
@@ -78,8 +81,11 @@ describe("LanguagesListSection", () => {
     expect(within(rowOf(UKRAINIAN.name)).getByText("/uk")).toBeInTheDocument();
     expect(
       within(rowOf(UKRAINIAN.name)).getByText(
-        `0 of ${Object.keys(SECTION_SCHEMAS).length} translated`,
+        `0 of ${Object.keys(SECTION_SCHEMAS).length} sections translated`,
       ),
+    ).toBeInTheDocument();
+    expect(
+      within(rowOf(UKRAINIAN.name)).getByText("0 of 0 products translated"),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(`Enable ${UKRAINIAN.name}`)).not.toBeChecked();
     expect(
@@ -91,6 +97,38 @@ describe("LanguagesListSection", () => {
       "/languages/create",
     );
   });
+
+  it.each([
+    { translatedSectionCount: SECTION_COUNT, translatedProductCount: 0 },
+    { translatedSectionCount: 0, translatedProductCount: SECTION_COUNT },
+  ])(
+    "combines $translatedSectionCount sections and $translatedProductCount products in one bar with separate captions",
+    ({ translatedSectionCount, translatedProductCount }) => {
+      render(
+        <LanguagesListSection
+          locales={[
+            ENGLISH,
+            makeLanguage({
+              translatedSectionCount,
+              translatedProductCount,
+              shownProductCount: SECTION_COUNT,
+            }),
+          ]}
+        />,
+      );
+
+      const row = within(rowOf(UKRAINIAN.name));
+
+      expect(row.getAllByRole("progressbar")).toHaveLength(1);
+      expect(row.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
+      expect(
+        row.getByText(`${translatedSectionCount} of ${SECTION_COUNT} sections translated`),
+      ).toBeInTheDocument();
+      expect(
+        row.getByText(`${translatedProductCount} of ${SECTION_COUNT} products translated`),
+      ).toBeInTheDocument();
+    },
+  );
 
   it("keeps edge moves focusable and sends no request when they are clicked", async () => {
     render(<LanguagesListSection locales={CATALOG} />);
@@ -264,6 +302,26 @@ describe("LanguagesListSection", () => {
       expect(toast.error).not.toHaveBeenCalled();
     },
   );
+
+  it.each([
+    { translatedSectionCount: 0, translatedProductCount: 1, parts: "1 product" },
+    { translatedSectionCount: 1, translatedProductCount: 2, parts: "1 section and 2 products" },
+  ])("names $parts in the delete modal", async ({ parts, ...details }) => {
+    vi.mocked(api.locales.delete).mockRejectedValueOnce(
+      new ConflictError("Never show the server wording", details),
+    );
+    render(<LanguagesListSection locales={CATALOG} />);
+    click(`Delete ${UKRAINIAN.name}`);
+    click("Delete");
+
+    expect(
+      await screen.findByText(
+        `${UKRAINIAN.name} still has content in ${parts}, so it cannot be deleted. It stays hidden from the site while it is disabled.`,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Never show the server wording")).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
 
   it("shows unmapped delete failures and clears them before another modal opens", async () => {
     vi.mocked(api.locales.delete).mockRejectedValueOnce(
