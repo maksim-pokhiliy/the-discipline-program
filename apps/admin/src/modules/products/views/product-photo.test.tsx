@@ -13,9 +13,10 @@ import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
-import { makePrice, makeProduct } from "../modules/products/products.fixtures";
-import { ProductCreateView } from "../modules/products/views/product-create-view";
-import { ProductEditForm } from "../modules/products/views/product-edit-view/product-edit-form";
+import { makePrice, makeProduct } from "../products.fixtures";
+
+import { ProductCreateView } from "./product-create-view";
+import { ProductEditForm } from "./product-edit-view/product-edit-form";
 
 const endpoints = vi.hoisted(() => ({
   uploadImage: vi.fn<typeof Api.api.upload.uploadImage>(),
