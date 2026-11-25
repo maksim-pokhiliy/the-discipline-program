@@ -14,7 +14,12 @@ export const adminKeys = {
   exercises: createEntityKeys(ROOT, "exercises"),
   labels: createEntityKeys(ROOT, "labels"),
   profileAxes: createEntityKeys(ROOT, "profileAxes"),
-  products: createEntityKeys(ROOT, "products"),
+  products: {
+    ...createEntityKeys(ROOT, "products"),
+    detail: (id: string, locale: LocaleCode) => [...ROOT, "products", id, locale] as const,
+    translationSave: (id: string, locale: LocaleCode) =>
+      [...ROOT, "products", "save", id, locale] as const,
+  },
   reviews: createEntityKeys(ROOT, "reviews"),
 
   users: {

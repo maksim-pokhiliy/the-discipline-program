@@ -11,6 +11,7 @@ import {
 import type * as Api from "@app/lib/api";
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto } from "@app/test/interactions";
+import { LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import { makePrice, makeProduct } from "../products.fixtures";
@@ -47,6 +48,7 @@ vi.mock("@app/lib/hooks", async () => {
     ...actual,
     useCreateProduct: () => ({ mutate: endpoints.create, isPending: false }),
     useUpdateProduct: () => ({ mutate: endpoints.update, isPending: false }),
+    useLocales: () => ({ data: LOCALE_CATALOG }),
   };
 });
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());

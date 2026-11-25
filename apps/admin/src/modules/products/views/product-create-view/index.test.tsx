@@ -162,6 +162,12 @@ describe("ProductCreateView pricing", () => {
 });
 
 describe("ProductCreateView features", () => {
+  it("shows no language bar on the English-only create page", () => {
+    render(<ProductCreateView />);
+
+    expect(screen.queryByRole("combobox", { name: "Language" })).not.toBeInTheDocument();
+  });
+
   it("creates with fresh, distinct feature row ids", async () => {
     render(<ProductCreateView />);
     fillProduct("10");

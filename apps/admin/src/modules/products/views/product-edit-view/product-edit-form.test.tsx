@@ -7,6 +7,7 @@ import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
 import { typeIntoNth } from "@app/test/interactions";
+import { LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import {
@@ -30,6 +31,7 @@ vi.mock("@app/lib/hooks", async () => {
   return {
     ...actual,
     useUpdateProduct: () => ({ mutate: updateProductMock, isPending: false }),
+    useLocales: () => ({ data: LOCALE_CATALOG }),
   };
 });
 
@@ -41,6 +43,19 @@ const MONTHLY_USD_PRICE = makePrice({
   periodCount: 1,
   periodUnit: PeriodUnit.MONTH,
   autoRenew: true,
+});
+
+describe("ProductEditForm language bar", () => {
+  it("shows the language switch and the English product note", () => {
+    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+
+    expect(screen.getByRole("combobox", { name: "Language" })).toHaveTextContent("English");
+    expect(
+      screen.getByText(
+        "English is the default language: every other language falls back to it, product by product.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
 
 afterEach(() => {

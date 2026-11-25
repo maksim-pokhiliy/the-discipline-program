@@ -9,9 +9,7 @@ import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/mater
 import Link from "next/link";
 
 import { type AdminProductListItem } from "@repo/contracts/cms/product";
-import { formatPeriod } from "@repo/contracts/common";
 import { useDeleteConfirmation } from "@repo/query";
-import { DEFAULT_LOCALE, formatPrice } from "@repo/shared";
 import {
   ConfirmationModal,
   DataTable,
@@ -23,17 +21,7 @@ import {
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteProduct, useToggleProductFeatured, useToggleProductStatus } from "@app/lib/hooks";
 
-const getDisplayPrice = (product: AdminProductListItem): string => {
-  const activePrice = product.prices.find((p) => p.isActive);
-
-  if (!activePrice) {
-    return "No price";
-  }
-
-  const amount = formatPrice(activePrice.amountCents, activePrice.currency);
-
-  return `${amount}/${formatPeriod(activePrice, DEFAULT_LOCALE)}`;
-};
+import { getDisplayPrice } from "../../components";
 
 const filters: DataTableFilter<AdminProductListItem>[] = [
   {

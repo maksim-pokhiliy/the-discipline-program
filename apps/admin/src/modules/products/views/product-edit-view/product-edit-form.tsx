@@ -9,10 +9,16 @@ import { PRODUCT_PRICE_DEFAULTS, type AdminProductDetails } from "@repo/contract
 import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
+import { EditorLanguageBar } from "@app/lib/components/localized-editor/editor-language-bar";
+import {
+  DEFAULT_EDITOR_LOCALE,
+  type EditorLocale,
+} from "@app/lib/components/localized-editor/locale-gate";
 import { IMAGE_MUTATION_KEY, useUpdateProduct } from "@app/lib/hooks";
 
 import {
   ProductForm,
+  ProductLanguageBanner,
   productFormSchema,
   toProductApiData,
   type ProductFormData,
@@ -22,9 +28,13 @@ type ProductFormInput = z.input<typeof productFormSchema>;
 
 type ProductEditFormProps = {
   product: AdminProductDetails;
+  locale?: EditorLocale;
 };
 
-export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
+export const ProductEditForm: React.FC<ProductEditFormProps> = ({
+  product,
+  locale = DEFAULT_EDITOR_LOCALE,
+}) => {
   const { mutate: updateProduct, isPending: isSaving } = useUpdateProduct();
   const isImageBusy = useIsMutating({ mutationKey: IMAGE_MUTATION_KEY }) > 0;
   const isPending = isSaving || isImageBusy;
@@ -63,6 +73,9 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => 
       backHref="/products"
       backLabel="Back to List"
     >
+      <EditorLanguageBar locale={locale}>
+        <ProductLanguageBanner locale={locale} />
+      </EditorLanguageBar>
       <ProductForm isLoading={isPending} disableAutoSlug={true} />
     </FormView>
   );
