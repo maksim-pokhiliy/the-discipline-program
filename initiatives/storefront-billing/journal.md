@@ -684,3 +684,28 @@ The Opus `step-executor` ran `step-0.4c-prompt.md` to its plan gate in about thr
 - The plan row and the board.
 
 **Next.** The handoff reaches `main` through a docs PR; then the Codex implement leg starts on the executor's container `tdp-0-4c-leg`, which the planner keeps up for it.
+
+## 2026-11-25 — 0.4c: the first implement leg stopped blocked; a second leg continues (claude)
+
+**The first leg.** Codex thread `01a2132e-7cd5-7df1-bb29-e714b5021987`, gpt-6.1-sol at xhigh.
+
+- **What landed.** It committed T1 to T8 of the sixteen tasks on `feat/storefront-billing-product-translations`, `cc470c4f5` to `fe9473325`, not pushed. It wrote T9 (the public product order and the dead public reader removed) and left it uncommitted.
+- **Why it stopped.** The automatic approval review missed its deadline twice on T9's test run, at 16:47:57Z and 16:50:02Z. Neither attempt started a process, and the review gave no reason, so it was a timeout, not a refusal. Under the preamble the second timeout ends that action. The leg rightly committed nothing unverified and spawned nothing after it.
+- **Roster.** The rollout shows four `spawn_agent` calls, all `pipeline_worker`: `perf_baseline`, `implement_t1`, `implement_t2` and `implement_products`. They match the report, and the root made no patch of its own.
+- **Deviations.** 102 `fence` entries and one `read-retry`. All but one sit inside the grants of rulings 2 and 12, or are direct consumers of a granted change. That one is the product photo test placed in `apps/admin/src/test/`, which ruling 16 corrects.
+- **Checked on exit.** The migration file still has ruling 5's sha256, no process of the leg is alive, and the container is up for the next leg.
+
+**The planner's measurements.**
+
+- **T9's command.** He ran the blocked command on the leg's tree against its container: 35 files and 500 tests, green.
+- **The full admin suite.** He ran it at `fe9473325`, while two other Codex legs ran on the host: 528 tests green at two workers and again at one. The leg's runs at T8 had failed one case twice, "keeps sent list words on their row through a foreign refresh during a save and lands its own refresh clean". That case comes from 0.4d3b and was green in the leg's own runs at T3 and T6. The planner reads it as load-sensitive; the cause is not established.
+
+**The rulings of the continuation** (`step-0.4c-implement-continue-prompt.md`):
+
+- **14.** T9 is verified. Format, check and commit it; if the approval times out twice again, commit on the planner's run.
+- **15.** The lifecycle case is not this step's code. On a red it is re-run once alone, and a second red is a reported point, never a change to the test.
+- **16.** The photo test goes beside the product views. The R9 grep gate reads production files only, which resolves a contradiction inside the plan, and the pages module already works this way.
+
+The leg reports and the T9 backup are kept in `.feature-dev/1795605417/legs/`.
+
+**Next.** The continuation reaches `main` through a docs PR. Then the second leg runs from T9 to the delivery PR, and round two follows.
