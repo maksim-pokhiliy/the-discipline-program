@@ -226,3 +226,107 @@ so a tab keeps the old bundle across navigations, while its saves reach the new 
 does not know the row ids: when it saves a list section without them, the server mints fresh ids for
 English rows, and the words another language holds for those rows no longer belong to any row; a
 section of another language saved that way stores no list words and turns into a draft.
+
+## storefront-billing 0.4c (product translations expand)
+
+The migration `20261125120000_cms_product_translations` is an expand. It adds three columns to
+`app_products`:
+
+- `featureList`, the features as `{ id, text }` rows, filled from `features` in the same order,
+  every row with a fresh `id`; an empty or `NULL` list gives `[]`;
+- `imageUrl`, the product photo, `NULL`;
+- `wordsUpdatedAt`, the clock of the English words, set to the product's `updatedAt`.
+
+It creates the empty table `app_product_translations`, keyed to the product (`ON DELETE CASCADE`)
+and to the language (`ON DELETE RESTRICT`). It changes no other value, `updatedAt` included, and
+before it changes anything it refuses a product whose `features` holds a `NULL` entry. The old
+column `features` stays: the new code no longer reads it (`@ignore`), and a later contract
+migration drops it.
+
+Before the dispatch this returns no row:
+
+```sql
+SELECT "id" FROM "app_products" WHERE array_position("features", NULL) IS NOT NULL;
+```
+
+The freeze is product create and product edit in the admin, from the dispatch until the deploy is
+verified. The old admin writes features only into `features`, so once the new code reads
+`featureList`, a product created in the window shows no features and a product edited in the
+window shows its features from before the edit. The status and featured toggles of the products
+list stay free: both versions read `isActive` and `isFeatured` the same way. The consistency
+queries for the window between the dispatch and the end of the freeze:
+
+```sql
+SELECT p."id", p."slug"
+FROM "app_products" AS p
+WHERE COALESCE(p."features", ARRAY[]::TEXT[]) IS DISTINCT FROM COALESCE(
+  (
+    SELECT array_agg(f.item ->> 'text' ORDER BY f.ord)
+    FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
+  ),
+  ARRAY[]::TEXT[]
+);
+
+SELECT p."id", p."slug"
+FROM "app_products" AS p
+CROSS JOIN LATERAL jsonb_array_elements(p."featureList") AS f(item)
+GROUP BY p."id", p."slug"
+HAVING count(*) <> count(DISTINCT NULLIF(f.item ->> 'id', ''));
+
+SELECT
+  (SELECT count(*) FROM "app_product_translations") AS translations,
+  (SELECT count(*) FROM "app_products" WHERE "imageUrl" IS NOT NULL) AS photos;
+
+SELECT "slug", jsonb_array_length("featureList") AS features
+FROM "app_products"
+ORDER BY "createdAt", "id";
+```
+
+Expected: the first two return no row, the third returns `0` and `0`, and the fourth lists the
+products with the feature counts read before the dispatch (on 2026-11-25: 4, 4, 4 and 0, in that
+order). The first query is read twice inside the freeze: after the dispatch, before the merge, and
+again once the deploy is live. The freeze ends only after that second reading returns no row. A
+row of the first query names a product written in the window: open it in the new admin, enter its
+features again and save. Once the freeze ends, the new code writes features into `featureList`
+only and the first query stops being a law; the second stays one.
+
+After the deploy, before the first product save: every admin tab opened before the deploy is
+reloaded or closed, the coach's included. An old bundle cannot show a product whose features are
+rows (its edit page fails), and a save it sends with features is refused with a 400. A save of a
+product without features is stored correctly and keeps the photo, because an update without
+`imageUrl` leaves the photo alone. Nothing an old tab sends stores a feature without its `id`.
+
+A rollback of the deploy to the code before this step: the old code reads `features`, which holds
+the features as they were at the dispatch. Feature edits made after the deploy live only in
+`featureList`, and a product created after the deploy reads as having no features. The old code
+never reads the translations or the photo, so the site serves every product in English without a
+photo. Before rolling back, rewrite the old column from the new one:
+
+```sql
+UPDATE "app_products" AS p
+SET "features" = COALESCE(
+  (
+    SELECT array_agg(f.item ->> 'text' ORDER BY f.ord)
+    FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
+  ),
+  ARRAY[]::TEXT[]
+)
+WHERE COALESCE(p."features", ARRAY[]::TEXT[]) IS DISTINCT FROM COALESCE(
+  (
+    SELECT array_agg(f.item ->> 'text' ORDER BY f.ord)
+    FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
+  ),
+  ARRAY[]::TEXT[]
+);
+```
+
+Then roll back, put the freeze back until the roll-forward, and run the first query again: no row.
+
+Rehearsed on a copy of production taken 2026-11-25 at 22:16Z (sixteen migrations, four products
+with 4, 4, 4 and 0 features, one language): the apply took about a second; `app_products` kept
+every old value, `updatedAt` included; every feature got a distinct version 4 `id` with its text
+and its place unchanged; `wordsUpdatedAt` equals `updatedAt`; no photo, no translation; the four
+queries returned what is expected above. On clones of the migrated copy: the code before this step
+read the products, and a create and an edit it made showed up in the first query; the recovery
+`UPDATE` changed nothing on untouched rows and emptied the first query after writes of the new
+code; the new code's public read served the four products in English, in `createdAt` order.
