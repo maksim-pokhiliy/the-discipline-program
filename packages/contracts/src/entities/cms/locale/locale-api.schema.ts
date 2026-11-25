@@ -18,6 +18,8 @@ export const localeQuerySchema = z.object({
 
 export const adminLocaleListItemSchema = localeSchema.extend({
   translatedSectionCount: z.number().int().nonnegative(),
+  translatedProductCount: z.number().int().nonnegative(),
+  shownProductCount: z.number().int().nonnegative(),
 });
 
 export const getLocalesResponseSchema = z.array(adminLocaleListItemSchema);

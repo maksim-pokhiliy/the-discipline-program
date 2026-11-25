@@ -11,6 +11,8 @@ export const makeLanguage = (
   isDefault: false,
   sortOrder: 1,
   translatedSectionCount: 0,
+  translatedProductCount: 0,
+  shownProductCount: 0,
   createdAt: FIXTURE_DATE,
   updatedAt: FIXTURE_DATE,
   ...overrides,

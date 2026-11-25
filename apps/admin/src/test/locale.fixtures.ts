@@ -35,6 +35,8 @@ export const LOCALE_CATALOG: AdminLocaleListItem[] = [
   ...locale,
   sortOrder,
   translatedSectionCount: 0,
+  translatedProductCount: 0,
+  shownProductCount: 0,
   createdAt: FIXTURE_DATE,
   updatedAt: FIXTURE_DATE,
 }));
