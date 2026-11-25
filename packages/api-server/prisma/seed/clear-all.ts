@@ -17,6 +17,7 @@ export const clearAll = async (db: PrismaClient): Promise<void> => {
   await db.marketingContactSubmission.deleteMany();
   await db.marketingPageSection.deleteMany();
   await db.marketingPage.deleteMany();
+  await db.productTranslation.deleteMany();
   await db.marketingLocale.deleteMany({ where: { code: { not: DEFAULT_LOCALE_CODE } } });
   await db.price.deleteMany();
   await db.product.deleteMany();

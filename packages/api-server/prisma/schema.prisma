@@ -231,25 +231,47 @@ enum ProfileAxisBinding {
 }
 
 model Product {
-  id            String         @id @default(cuid())
-  slug          String         @unique
-  title         String
-  description   String
-  features      String[]
-  isFeatured    Boolean        @default(false)
-  isActive      Boolean        @default(true)
-  prices        Price[]
-  plans         ProductPlan[]
-  subscriptions Subscription[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
+  id             String               @id @default(cuid())
+  slug           String               @unique
+  title          String
+  description    String
+  features       String[]
+  featureList    Json                 @default("[]")
+  imageUrl       String?
+  wordsUpdatedAt DateTime             @default(now())
+  isFeatured     Boolean              @default(false)
+  isActive       Boolean              @default(true)
+  prices         Price[]
+  plans          ProductPlan[]
+  subscriptions  Subscription[]
+  translations   ProductTranslation[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  deletedAt      DateTime?
 
   @@index([createdAt, title])
   @@index([deletedAt])
   @@index([isActive])
   @@index([isFeatured])
   @@map("app_products")
+}
+
+model ProductTranslation {
+  id              String          @id @default(cuid())
+  productId       String
+  product         Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale          String
+  marketingLocale MarketingLocale @relation(fields: [locale], references: [code], onDelete: Restrict)
+  title           String
+  description     String
+  featureList     Json
+  isActive        Boolean
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([productId, locale])
+  @@index([locale])
+  @@map("app_product_translations")
 }
 
 model ProductPlan {
@@ -574,13 +596,14 @@ model MarketingPageSection {
 }
 
 model MarketingLocale {
-  code      String                 @id
-  name      String
-  isEnabled Boolean                @default(false)
-  sortOrder Int                    @default(0)
-  sections  MarketingPageSection[]
-  createdAt DateTime               @default(now())
-  updatedAt DateTime               @updatedAt
+  code                String                 @id
+  name                String
+  isEnabled           Boolean                @default(false)
+  sortOrder           Int                    @default(0)
+  sections            MarketingPageSection[]
+  productTranslations ProductTranslation[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
 
   @@map("marketing_locales")
 }

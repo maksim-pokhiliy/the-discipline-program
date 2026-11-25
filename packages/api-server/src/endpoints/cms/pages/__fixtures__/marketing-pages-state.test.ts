@@ -8,7 +8,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
 import { PAGE_SECTIONS_MAP, PageSlug } from "@repo/contracts/cms/pages";
 
-import { cleanupRaw } from "../../../../test/helpers";
+import { cleanupRaw, createTestProduct } from "../../../../test/helpers";
 import { marshalNullableJson } from "../../../../utils/to-input-json";
 import { UKRAINIAN } from "../../locale/__fixtures__/locale-catalog";
 
@@ -122,6 +122,7 @@ const SEEDED_STATE: MarketingPagesState = {
   locales: SEEDED_LOCALES,
   pages: SEEDED_PAGES,
   sections: SEEDED_SECTIONS,
+  productTranslations: [],
 };
 
 const seedKnownContent = async (): Promise<void> => {
@@ -179,6 +180,7 @@ const readTables = async (): Promise<MarketingPagesState> => ({
   locales: await cleanupRaw.marketingLocale.findMany({ orderBy: { code: "asc" } }),
   pages: await cleanupRaw.marketingPage.findMany({ orderBy: { id: "asc" } }),
   sections: await cleanupRaw.marketingPageSection.findMany({ orderBy: { id: "asc" } }),
+  productTranslations: await cleanupRaw.productTranslation.findMany({ orderBy: { id: "asc" } }),
 });
 
 describe("marketing pages state fixture", () => {
@@ -220,6 +222,36 @@ describe("marketing pages state fixture", () => {
         select: { code: true, name: true, isEnabled: true, sortOrder: true },
       }),
     ).toEqual([DEFAULT_LOCALE_ROW]);
+  });
+
+  it("a product translation survives a clear and a restore", async () => {
+    await seedKnownContent();
+
+    const product = await createTestProduct();
+
+    try {
+      const translation = await cleanupRaw.productTranslation.create({
+        data: {
+          productId: product.id,
+          locale: UKRAINIAN.code,
+          title: "Stored translation",
+          description: "Stored description",
+          featureList: [{ id: "stored-feature", text: "Stored feature" }],
+          isActive: false,
+          createdAt: new Date("2021-04-01T01:02:03.004Z"),
+          updatedAt: new Date("2021-04-02T01:02:03.004Z"),
+        },
+      });
+      const captured = await captureMarketingPagesState();
+
+      expect(captured.productTranslations).toEqual([translation]);
+      await clearMarketingPagesState();
+      expect(await cleanupRaw.productTranslation.count()).toBe(0);
+      await restoreMarketingPagesState(captured);
+      expect(await readTables()).toEqual(captured);
+    } finally {
+      await cleanupRaw.product.delete({ where: { id: product.id } });
+    }
   });
 
   it("refuses to seed the default locale over pages and sections that were not cleared", async () => {
