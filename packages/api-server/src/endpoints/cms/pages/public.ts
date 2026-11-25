@@ -17,9 +17,10 @@ import {
 
 import { prisma } from "../../../db/client";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
-import { mapToReview, mapToPublicProduct } from "../../../mappers/cms";
+import { mapToReview } from "../../../mappers/cms";
 import { cmsBlogPublicApi } from "../blog/public";
 import { assertPublicLocale } from "../locale/locale-access";
+import { readProgramOptions, readServedProducts } from "../product/served-products";
 
 import { parseServedSectionData, type SectionData } from "./page-sections";
 
@@ -85,11 +86,7 @@ export const cmsPagesPublicApi = {
 
     const [pick, products, reviews] = await Promise.all([
       readSections(PageSlug.HOME, locale),
-      prisma.product.findMany({
-        where: { isActive: true },
-        include: { prices: { where: { isActive: true } } },
-        take: HOME_PAGE_PRODUCTS_LIMIT,
-      }),
+      readServedProducts(HOME_PAGE_PRODUCTS_LIMIT),
       prisma.marketingReview.findMany({
         where: { isActive: true },
         take: HOME_PAGE_REVIEWS_LIMIT,
@@ -105,7 +102,7 @@ export const cmsPagesPublicApi = {
       reviews: pick(map.reviews),
       contact: pick(map.contact),
       seo: pick(map.seo),
-      productsList: products.map(mapToPublicProduct),
+      productsList: products,
       reviewsList: reviews.map(mapToReview),
     };
   },
@@ -117,10 +114,7 @@ export const cmsPagesPublicApi = {
 
     const [pick, products] = await Promise.all([
       readSections(PageSlug.STOREFRONT, locale),
-      prisma.product.findMany({
-        where: { isActive: true },
-        include: { prices: { where: { isActive: true } } },
-      }),
+      readServedProducts(),
     ]);
 
     const map = PAGE_SECTIONS_MAP.storefront;
@@ -130,7 +124,7 @@ export const cmsPagesPublicApi = {
       grid: pick(map.grid),
       cta: pick(map.cta),
       seo: pick(map.seo),
-      productsList: products.map(mapToPublicProduct),
+      productsList: products,
     };
   },
 
@@ -173,9 +167,7 @@ export const cmsPagesPublicApi = {
 
     const [pick, products] = await Promise.all([
       readSections(PageSlug.CONTACT, locale),
-      prisma.product.findMany({
-        where: { isActive: true },
-      }),
+      readProgramOptions(),
     ]);
 
     const map = PAGE_SECTIONS_MAP.contact;
@@ -184,7 +176,7 @@ export const cmsPagesPublicApi = {
       hero: pick(map.hero),
       form: pick(map.form),
       seo: pick(map.seo),
-      programOptions: products.map((p) => ({ slug: p.slug, title: p.title })),
+      programOptions: products,
     };
   },
 
