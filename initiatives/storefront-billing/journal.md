@@ -709,3 +709,16 @@ The Opus `step-executor` ran `step-0.4c-prompt.md` to its plan gate in about thr
 The leg reports and the T9 backup are kept in `.feature-dev/1795605417/legs/`.
 
 **Next.** The continuation reaches `main` through a docs PR. Then the second leg runs from T9 to the delivery PR, and round two follows.
+
+## 2026-11-25 — 0.4c: the lifecycle case's red is the host's clock; ruling 17 (claude)
+
+The page case that failed twice in the first leg's full admin runs at T8 ("keeps sent list words on their row through a foreign refresh during a save and lands its own refresh clean", `page-locale-lifecycle.test.tsx:180`, no `getPageBySlug` call after the save) has its cause. The previous entry read it as load-sensitive, and that was wrong. So was the planner's first word to the owner, that it failed only in the Codex sandbox: the leg's two red runs were escalated, outside the sandbox, like the planner's own.
+
+- **The host.** Since 08:23Z the WSL clock runs about 5 % fast, and `systemd-timesyncd` steps it back about 1.7 s every 30 s: some 1 100 steps by 17:50Z, all through both red runs. Just before the first step the journal is silent and WSL reports network errors, which looks like a host sleep.
+- **The mechanism.** `useUpdatePageSection` (unchanged since #458) refreshes with `fetchQuery({ ...pageDetailsQuery(slug, locale), staleTime: 0 })`. TanStack Query 5.80.2 skips that fetch when the query is not invalidated and `Date.now()` is earlier than its `dataUpdatedAt`. The case writes a foreign refresh 0.95 s before the save resolves, and a clock step inside that window skips the refresh.
+- **The proof.** `Date.now` moved back 1.7 s before the resolve reds the case with the same message, and moved forward leaves it green. A bare TanStack loop on the host with no mocks ran 70 times and skipped the refresh three times, each exactly on a clock step. The hook's sequence with an exact invalidation after the cancel fetched once, with and without a fetch in flight; the invalidation before the cancel fetched nothing with a fetch in flight.
+- **The odds.** A few percent a run on this host. CI's runners do not step their clocks, and eleven CI runs were green. SB-98 (0.4d3a, the clear case: the success toast over the old value) very likely had the same cause; #468 rewrote that test, not the hook.
+- **Ruling 17** (in the continuation file): one exact `invalidateQueries` with `refetchType: "none"` after the hook's `cancelQueries`, and a new case that moves `Date.now` back a minute and expects one refresh, red on the old hook first. Ruling 15 is rewritten around the cause: a later red of the file is a fact to report, never to re-run away.
+- **For the owner.** A restart of WSL should stop the clock steps. It stops every session and container, so it waits for a quiet moment.
+
+**Next.** The amended continuation reaches `main` through a docs PR; then the second leg runs from T9 to the delivery PR.
