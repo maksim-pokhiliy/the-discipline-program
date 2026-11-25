@@ -40,11 +40,11 @@ Uploaded URLs are public (`access: "public"`) and returned to the client as plai
 - **~~Direct vendor coupling.~~** Closed in commit `6f9ca98` and subsequently relocated when the upload endpoint moved out of IAM into a dedicated Storage supporting context. `packages/api-server/src/endpoints/storage/upload.ts` no longer imports anything from `@vercel/blob`. The endpoint is a pure factory `createStorageUploadAdminApi(storage: StoragePort)` that depends on the port defined in `packages/api-server/src/infrastructure/storage/port.ts`. `createVercelBlobAdapter()` in `vercel-blob-adapter.ts` is the only file in the repo that imports from `@vercel/blob`, and the default instance is wired in the `endpoints/storage/index.ts` barrel with `defaultStorage` injected. Future provider swaps (S3 / R2 / GCS) only need a new adapter implementation — no endpoint rewrite, no test rewrite.
 - **Vendor lock-in scales with image count.** Migrating to S3 at 100 images is trivial. At 100,000 images, it is a weekend of migration scripting. At 10 million, it is a project. The later we abstract, the more expensive the decoupling becomes.
 - **Pricing is not the best at scale.** Vercel Blob is competitive at low volume. At high volume, S3 or R2 is cheaper by a meaningful margin. Not an issue today; will be an issue if the platform ever serves millions of images.
-- **Collision risk in filenames.** The current upload code uses `Date.now()` as part of the filename, which collides under bursty uploads (two in the same millisecond). The fix is straightforward (use `crypto.randomUUID()` or a content hash) and is flagged as a known security/reliability gap.
-- **No retry, no timeout, no error mapping.** The `put` and `del` calls are awaited without any resilience guarantees. If Vercel Blob is briefly unreachable, the upload fails with an opaque error. When we introduce the `StoragePort` adapter, these become properties of the adapter implementation.
+- **No application-level retry or error mapping.** The adapter passes a 30-second abort signal to uploads, deletions and its health-check request, and otherwise lets SDK errors propagate. It adds no application-level retries or error mapping.
 
 **Neutral:**
 
+- Upload keys combine the configured storage prefix, `crypto.randomUUID()` and the sanitized original filename.
 - `BLOB_READ_WRITE_TOKEN` is one of the env vars that must be in `turbo.json` `globalEnv`. Missing it there was the cause of commit `cab4fe1`. Documented so we do not repeat the mistake for the next env var that lands.
 - The `@repo/env/blob` entry exists specifically to isolate the blob token from the rest of the env. If we migrate storage providers, only `@repo/env/storage` would need to change (after ADR supersession).
 
