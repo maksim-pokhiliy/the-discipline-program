@@ -8,7 +8,7 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToAdminProduct } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { toggleExclusiveFeatured } from "../toggle-exclusive-featured";
+import { ensureExclusiveFeatured, toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
 import { withFeatureIds } from "./feature-identity";
 import { writeProductPrice, buildPriceData } from "./product-price";
@@ -46,13 +46,22 @@ export const cmsProductAdminApi = {
       const { price, features, ...productData } = data;
       const featureList = withFeatureIds(features);
 
-      const product = await prisma.product.create({
-        data: {
-          ...productData,
-          featureList,
-          ...(price && { prices: { create: buildPriceData(price) } }),
-        },
-        include: includeWithPrices,
+      const product = await prisma.$transaction(async (tx) => {
+        await ensureExclusiveFeatured(data.isFeatured === true, () =>
+          tx.product.updateMany({
+            where: { isFeatured: true },
+            data: { isFeatured: false },
+          }),
+        );
+
+        return tx.product.create({
+          data: {
+            ...productData,
+            featureList,
+            ...(price && { prices: { create: buildPriceData(price) } }),
+          },
+          include: includeWithPrices,
+        });
       });
 
       return mapToAdminProduct(product);
@@ -68,6 +77,14 @@ export const cmsProductAdminApi = {
 
       const product = await prisma.$transaction(async (tx) => {
         const before = await findOrThrow(tx.product.findUnique({ where: { id } }), "Product");
+
+        await ensureExclusiveFeatured(data.isFeatured === true, () =>
+          tx.product.updateMany({
+            where: { isFeatured: true, id: { not: id } },
+            data: { isFeatured: false },
+          }),
+        );
+
         const update = buildProductUpdate(before, productData, featureList);
 
         if (price) {
