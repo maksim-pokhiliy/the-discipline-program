@@ -1,44 +1,38 @@
 import {
   type AdminProductsPageData,
   type CreateProductData,
-  type Product,
+  type AdminProduct,
   type UpdateProductData,
 } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../../db/client";
-import { mapToProduct } from "../../../mappers/cms";
+import { mapToAdminProduct } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
+import { withFeatureIds } from "./feature-identity";
+import { writeProductPrice, buildPriceData } from "./product-price";
+import { buildProductUpdate } from "./product-update";
+
 const includeWithPrices = { prices: { where: { isActive: true } } } as const;
 
-type PriceTerms = NonNullable<CreateProductData["price"]>;
-
-const buildPriceData = (price: PriceTerms): PriceTerms => ({
-  amountCents: price.amountCents,
-  currency: price.currency,
-  periodCount: price.periodCount,
-  periodUnit: price.periodUnit,
-  autoRenew: price.autoRenew,
-});
-
 export const cmsProductAdminApi = {
-  getAll: async (): Promise<Product[]> => {
+  getAll: async (): Promise<AdminProduct[]> => {
     const products = await prisma.product.findMany({
       include: includeWithPrices,
       orderBy: [{ createdAt: "desc" }, { title: "asc" }],
     });
 
-    return products.map(mapToProduct);
+    return products.map(mapToAdminProduct);
   },
 
-  getById: async (id: string): Promise<Product> => {
+  getById: async (id: string): Promise<AdminProduct> => {
     const product = await findOrThrow(
       prisma.product.findUnique({ where: { id }, include: includeWithPrices }),
       "Product",
     );
 
-    return mapToProduct(product);
+    return mapToAdminProduct(product);
   },
 
   getPageData: async (): Promise<AdminProductsPageData> => {
@@ -47,63 +41,47 @@ export const cmsProductAdminApi = {
     return { products };
   },
 
-  create: async (data: CreateProductData): Promise<Product> => {
+  create: async (data: CreateProductData): Promise<AdminProduct> => {
     try {
-      const { price, ...productData } = data;
+      const { price, features, ...productData } = data;
+      const featureList = withFeatureIds(features);
 
       const product = await prisma.product.create({
         data: {
           ...productData,
+          featureList,
           ...(price && { prices: { create: buildPriceData(price) } }),
         },
         include: includeWithPrices,
       });
 
-      return mapToProduct(product);
+      return mapToAdminProduct(product);
     } catch (error) {
       return handlePrismaError(error, { entity: "Product", field: "slug" });
     }
   },
 
-  update: async (id: string, data: UpdateProductData): Promise<Product> => {
+  update: async (id: string, data: UpdateProductData): Promise<AdminProduct> => {
     try {
-      const { price, ...productData } = data;
+      const { price, features, ...productData } = data;
+      const featureList = features === undefined ? undefined : withFeatureIds(features);
 
       const product = await prisma.$transaction(async (tx) => {
-        if (price) {
-          const existingPrice = await tx.price.findFirst({
-            where: { productId: id, isActive: true },
-          });
+        const before = await findOrThrow(tx.product.findUnique({ where: { id } }), "Product");
+        const update = buildProductUpdate(before, productData, featureList);
 
-          if (existingPrice) {
-            await tx.price.update({
-              where: { id: existingPrice.id },
-              data: buildPriceData(price),
-            });
-          } else {
-            await tx.price.create({ data: { productId: id, ...buildPriceData(price) } });
-          }
+        if (price) {
+          await writeProductPrice(tx, id, price);
         }
 
         return tx.product.update({
-          where: { id },
-          data: {
-            ...(productData.title !== undefined && { title: productData.title }),
-            ...(productData.slug !== undefined && { slug: productData.slug }),
-            ...(productData.description !== undefined && {
-              description: productData.description,
-            }),
-            ...(productData.features !== undefined && { features: productData.features }),
-            ...(productData.isFeatured !== undefined && {
-              isFeatured: productData.isFeatured,
-            }),
-            ...(productData.isActive !== undefined && { isActive: productData.isActive }),
-          },
+          where: { id, deletedAt: null },
+          data: update,
           include: includeWithPrices,
         });
       });
 
-      return mapToProduct(product);
+      return mapToAdminProduct(product);
     } catch (error) {
       return handlePrismaError(error, { entity: "Product", field: "slug" });
     }
@@ -119,7 +97,7 @@ export const cmsProductAdminApi = {
     }
   },
 
-  toggleStatus: async (id: string): Promise<Product> => {
+  toggleStatus: async (id: string): Promise<AdminProduct> => {
     const product = await findOrThrow(
       prisma.product.findUnique({ where: { id }, include: includeWithPrices }),
       "Product",
@@ -131,10 +109,10 @@ export const cmsProductAdminApi = {
       include: includeWithPrices,
     });
 
-    return mapToProduct(updated);
+    return mapToAdminProduct(updated);
   },
 
-  toggleFeatured: async (id: string): Promise<Product> =>
+  toggleFeatured: async (id: string): Promise<AdminProduct> =>
     prisma.$transaction((tx) =>
       toggleExclusiveFeatured({
         find: () => tx.product.findUnique({ where: { id }, include: includeWithPrices }),
@@ -145,7 +123,7 @@ export const cmsProductAdminApi = {
           }),
         update: (isFeatured) =>
           tx.product.update({ where: { id }, data: { isFeatured }, include: includeWithPrices }),
-        map: mapToProduct,
+        map: mapToAdminProduct,
         entityName: "Product",
         id,
       }),

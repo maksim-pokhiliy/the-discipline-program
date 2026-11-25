@@ -2,7 +2,7 @@
 
 import type {
   AdminProductsPageData,
-  Product,
+  AdminProduct,
   CreateProductData,
   UpdateProductData,
 } from "@repo/contracts/cms/product";
@@ -15,7 +15,7 @@ import { useNavigate } from "./use-navigate";
 
 const productHooks = createCrudHooks<
   AdminProductsPageData,
-  Product,
+  AdminProduct,
   CreateProductData,
   UpdateProductData
 >({

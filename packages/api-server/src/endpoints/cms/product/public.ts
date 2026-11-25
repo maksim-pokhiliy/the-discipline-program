@@ -1,7 +1,7 @@
 import { type Product } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../../db/client";
-import { mapToProduct } from "../../../mappers/cms";
+import { mapToPublicProduct } from "../../../mappers/cms";
 import { findOrThrow } from "../../../utils";
 
 export const cmsProductPublicApi = {
@@ -12,7 +12,7 @@ export const cmsProductPublicApi = {
       include: { prices: { where: { isActive: true } } },
     });
 
-    return products.map(mapToProduct);
+    return products.map(mapToPublicProduct);
   },
 
   getBySlug: async (slug: string): Promise<Product> => {
@@ -24,6 +24,6 @@ export const cmsProductPublicApi = {
       "Product",
     );
 
-    return mapToProduct(product);
+    return mapToPublicProduct(product);
   },
 };

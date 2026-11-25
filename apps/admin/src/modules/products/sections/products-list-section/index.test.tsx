@@ -50,3 +50,18 @@ describe("ProductsListSection price column", () => {
     expect(screen.getByText("No price")).toBeInTheDocument();
   });
 });
+
+describe("ProductsListSection features column", () => {
+  it("counts admin feature rows and keeps the existing columns", () => {
+    const features = [
+      { id: "first", text: "First feature" },
+      { id: "second", text: "Second feature" },
+    ];
+
+    render(<ProductsListSection products={[{ ...makeProduct([]), features }]} />);
+    expect(screen.getByText("2 items")).toBeInTheDocument();
+    for (const name of ["Product Name", "Status", "Spotlight", "Price", "Features", "Actions"]) {
+      expect(screen.getByRole("columnheader", { name: new RegExp(name) })).toBeInTheDocument();
+    }
+  });
+});

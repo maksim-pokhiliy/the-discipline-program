@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
-import { PRODUCT_PRICE_DEFAULTS, type Product } from "@repo/contracts/cms/product";
+import { PRODUCT_PRICE_DEFAULTS, type AdminProduct } from "@repo/contracts/cms/product";
 import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
@@ -20,7 +20,7 @@ import {
 type ProductFormInput = z.input<typeof productFormSchema>;
 
 type ProductEditFormProps = {
-  product: Product;
+  product: AdminProduct;
 };
 
 export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {

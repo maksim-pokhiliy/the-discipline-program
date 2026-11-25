@@ -2,7 +2,7 @@ import { createMultiToggleHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@r
 import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   ProductToggleField,
-  productSchema,
+  adminProductSchema,
   toggleProductParamsSchema,
   toggleProductQuerySchema,
 } from "@repo/contracts/cms/product";
@@ -18,7 +18,7 @@ export const PATCH = withAdminAuth(
       },
       toggleProductParamsSchema,
       toggleProductQuerySchema,
-      productSchema,
+      adminProductSchema,
     ),
     RATE_LIMIT_TIER.API,
   ),

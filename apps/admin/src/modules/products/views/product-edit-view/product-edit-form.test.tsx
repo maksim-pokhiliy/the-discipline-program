@@ -1,4 +1,4 @@
-import { waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -6,6 +6,7 @@ import { updateProductRequestSchema } from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
+import { typeIntoNth } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import {
@@ -116,5 +117,46 @@ describe("ProductEditForm pricing", () => {
       periodUnit: PeriodUnit.WEEK,
       autoRenew: true,
     });
+  });
+});
+
+describe("ProductEditForm features", () => {
+  const first = { id: "first", text: "First feature" };
+  const second = { id: "second", text: "Second feature" };
+  const third = { id: "third", text: "Third feature" };
+
+  it("adds, moves, removes and edits features while keeping their ids", async () => {
+    const product = { ...makeProduct([MONTHLY_USD_PRICE]), features: [first, second, third] };
+
+    render(<ProductEditForm product={product} />);
+    clickButton("Add Feature");
+    typeIntoNth("Text", 3, "New feature");
+    typeIntoNth("Text", 0, "Edited first");
+    clickButton("Move Feature 2 up");
+    clickButton("Remove Feature 3");
+    expect(screen.getByText("Key features (3)")).toBeInTheDocument();
+    clickButton("Save Changes");
+
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(1));
+    const data = updateProductRequestSchema.parse(updateProductMock.mock.calls[0]?.[0]?.data);
+
+    expect(data.features).toEqual([
+      second,
+      { ...first, text: "Edited first" },
+      { id: expect.any(String), text: "New feature" },
+    ]);
+    const added = data.features?.[2];
+
+    expect(added?.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect([first.id, second.id, third.id]).not.toContain(added?.id);
+  });
+
+  it("a blank feature blocks the save with the field message", async () => {
+    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+    clickButton("Add Feature");
+    clickButton("Save Changes");
+
+    expect(await screen.findByText("Write the feature or remove it")).toBeInTheDocument();
+    expect(updateProductMock).not.toHaveBeenCalled();
   });
 });

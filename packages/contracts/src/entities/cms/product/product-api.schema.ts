@@ -3,9 +3,9 @@ import { z } from "zod";
 import { idParamSchema } from "../../../common";
 
 import { ProductToggleField } from "./product.constants";
-import { createProductSchema, updateProductSchema, productSchema } from "./product.schema";
+import { createProductSchema, updateProductSchema, adminProductSchema } from "./product.schema";
 
-export const getProductsResponseSchema = z.array(productSchema);
+export const getProductsResponseSchema = z.array(adminProductSchema);
 
 export const getProductByIdParamsSchema = idParamSchema;
 

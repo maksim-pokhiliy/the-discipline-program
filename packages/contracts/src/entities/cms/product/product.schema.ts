@@ -49,6 +49,10 @@ export const productSchema = z.object({
   updatedAt: z.date(),
 });
 
+export const adminProductSchema = productSchema.extend({
+  features: z.array(productFeatureSchema),
+});
+
 export const createProductPriceSchema = z
   .object({
     amountCents: priceTermsShape.amountCents,
@@ -68,7 +72,7 @@ export const createProductSchema = z.object({
     .max(PRODUCT_CONSTANTS.MAX_SLUG_LENGTH)
     .regex(/^[a-z0-9-]+$/),
   description: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_DESCRIPTION_LENGTH),
-  features: z.array(z.string()),
+  features: z.array(productFeatureWriteSchema),
   isFeatured: z.boolean(),
   isActive: z.boolean(),
   price: createProductPriceSchema.optional(),

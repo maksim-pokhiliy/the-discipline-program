@@ -2,12 +2,15 @@ import { type z } from "zod";
 
 import {
   type productSchema,
+  type adminProductSchema,
   type priceSchema,
   type createProductSchema,
   type updateProductSchema,
   type productFeatureSchema,
   type productFeatureWriteSchema,
 } from "./product.schema";
+
+export type AdminProduct = z.infer<typeof adminProductSchema>;
 
 export type Product = z.infer<typeof productSchema>;
 

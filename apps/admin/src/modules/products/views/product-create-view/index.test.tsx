@@ -6,6 +6,7 @@ import { createProductRequestSchema } from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
+import { typeIntoNth } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import {
@@ -157,5 +158,25 @@ describe("ProductCreateView pricing", () => {
     fillProduct("1000000");
 
     await expectRefusedWith("Number must be less than or equal to 999999.99");
+  });
+});
+
+describe("ProductCreateView features", () => {
+  it("creates with fresh, distinct feature row ids", async () => {
+    render(<ProductCreateView />);
+    fillProduct("10");
+    clickButton("Add Feature");
+    typeIntoNth("Text", 0, "First feature");
+    clickButton("Add Feature");
+    typeIntoNth("Text", 1, "Second feature");
+    clickButton(CREATE_LABEL);
+
+    await waitFor(() => expect(createProductMock).toHaveBeenCalledTimes(1));
+    const payload = createProductRequestSchema.parse(createProductMock.mock.calls[0]?.[0]);
+
+    expect(payload.features.map(({ text }) => text)).toEqual(["First feature", "Second feature"]);
+    expect(payload.features[0]?.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(payload.features[1]?.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(payload.features[0]?.id).not.toBe(payload.features[1]?.id);
   });
 });

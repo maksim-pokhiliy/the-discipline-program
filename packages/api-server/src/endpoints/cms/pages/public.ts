@@ -17,7 +17,7 @@ import {
 
 import { prisma } from "../../../db/client";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
-import { mapToReview, mapToProduct } from "../../../mappers/cms";
+import { mapToReview, mapToPublicProduct } from "../../../mappers/cms";
 import { cmsBlogPublicApi } from "../blog/public";
 import { assertPublicLocale } from "../locale/locale-access";
 
@@ -105,7 +105,7 @@ export const cmsPagesPublicApi = {
       reviews: pick(map.reviews),
       contact: pick(map.contact),
       seo: pick(map.seo),
-      productsList: products.map(mapToProduct),
+      productsList: products.map(mapToPublicProduct),
       reviewsList: reviews.map(mapToReview),
     };
   },
@@ -130,7 +130,7 @@ export const cmsPagesPublicApi = {
       grid: pick(map.grid),
       cta: pick(map.cta),
       seo: pick(map.seo),
-      productsList: products.map(mapToProduct),
+      productsList: products.map(mapToPublicProduct),
     };
   },
 

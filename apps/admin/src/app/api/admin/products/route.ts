@@ -8,7 +8,7 @@ import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   createProductRequestSchema,
   getProductsResponseSchema,
-  productSchema,
+  adminProductSchema,
 } from "@repo/contracts/cms/product";
 
 import { withAdminAuth } from "@app/lib/server/auth";
@@ -22,7 +22,7 @@ export const GET = withAdminAuth(
 
 export const POST = withAdminAuth(
   withAuthRateLimit(
-    createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, productSchema),
+    createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, adminProductSchema),
     RATE_LIMIT_TIER.API,
   ),
 );

@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { expect } from "vitest";
 
-import { type Price, type Product } from "@repo/contracts/cms/product";
+import { type Price, type AdminProduct } from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 export const makePrice = (overrides: Partial<Price> = {}): Price => ({
@@ -15,7 +15,7 @@ export const makePrice = (overrides: Partial<Price> = {}): Price => ({
   ...overrides,
 });
 
-export const makeProduct = (prices: Price[]): Product => ({
+export const makeProduct = (prices: Price[]): AdminProduct => ({
   id: "clz00000000000000000prd1",
   slug: "strength-mastery",
   title: "Strength Mastery",

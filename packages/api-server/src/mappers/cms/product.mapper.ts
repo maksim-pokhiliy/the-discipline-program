@@ -1,6 +1,18 @@
-import { type Price as PrismaPrice, type Product as PrismaProduct } from "@prisma/client";
+import {
+  type Price as PrismaPrice,
+  type Product as PrismaProduct,
+  type Prisma,
+} from "@prisma/client";
+import { z } from "zod";
 
-import { type Price, type Product } from "@repo/contracts/cms/product";
+import {
+  type AdminProduct,
+  type Price,
+  type Product,
+  type ProductFeature,
+  productFeatureSchema,
+} from "@repo/contracts/cms/product";
+import { InternalServerError } from "@repo/errors";
 
 import { CURRENCY_MAP } from "../common";
 
@@ -18,15 +30,36 @@ export const mapToPrice = (p: PrismaPrice): Price => ({
 
 type ProductWithPrices = PrismaProduct & { prices: PrismaPrice[] };
 
-export const mapToProduct = (p: ProductWithPrices): Product => ({
+const featureListSchema = z.array(productFeatureSchema);
+
+export const parseFeatureList = (value: Prisma.JsonValue, productId: string): ProductFeature[] => {
+  const parsed = featureListSchema.safeParse(value);
+
+  if (!parsed.success) {
+    throw new InternalServerError("A stored feature list does not match its shape", {
+      productId,
+      issues: parsed.error.issues,
+    });
+  }
+
+  return parsed.data;
+};
+
+export const mapToAdminProduct = (p: ProductWithPrices): AdminProduct => ({
   id: p.id,
   slug: p.slug,
   title: p.title,
   description: p.description,
-  features: p.features,
+  features: parseFeatureList(p.featureList, p.id),
   isFeatured: p.isFeatured,
   isActive: p.isActive,
   prices: p.prices.map(mapToPrice),
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });
+
+export const mapToPublicProduct = (p: ProductWithPrices): Product => {
+  const product = mapToAdminProduct(p);
+
+  return { ...product, features: product.features.map(({ text }) => text) };
+};

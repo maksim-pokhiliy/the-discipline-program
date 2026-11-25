@@ -235,7 +235,7 @@ model Product {
   slug           String               @unique
   title          String
   description    String
-  features       String[]
+  features       String[]             @ignore
   featureList    Json                 @default("[]")
   imageUrl       String?
   wordsUpdatedAt DateTime             @default(now())

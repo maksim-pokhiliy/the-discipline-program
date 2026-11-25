@@ -9,7 +9,7 @@ import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   deleteProductParamsSchema,
   getProductByIdParamsSchema,
-  productSchema,
+  adminProductSchema,
   updateProductParamsSchema,
   updateProductRequestSchema,
 } from "@repo/contracts/cms/product";
@@ -18,7 +18,11 @@ import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
   withAuthRateLimit(
-    createGetByIdHandler(cmsProductAdminApi.getById, getProductByIdParamsSchema, productSchema),
+    createGetByIdHandler(
+      cmsProductAdminApi.getById,
+      getProductByIdParamsSchema,
+      adminProductSchema,
+    ),
     RATE_LIMIT_TIER.API,
   ),
 );
@@ -29,7 +33,7 @@ export const PUT = withAdminAuth(
       cmsProductAdminApi.update,
       updateProductParamsSchema,
       updateProductRequestSchema,
-      productSchema,
+      adminProductSchema,
     ),
     RATE_LIMIT_TIER.API,
   ),

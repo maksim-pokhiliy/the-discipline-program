@@ -8,7 +8,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type Product } from "@repo/contracts/cms/product";
+import { type AdminProduct } from "@repo/contracts/cms/product";
 import { formatPeriod } from "@repo/contracts/common";
 import { useDeleteConfirmation } from "@repo/query";
 import { DEFAULT_LOCALE, formatPrice } from "@repo/shared";
@@ -23,7 +23,7 @@ import {
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteProduct, useToggleProductFeatured, useToggleProductStatus } from "@app/lib/hooks";
 
-const getDisplayPrice = (product: Product): string => {
+const getDisplayPrice = (product: AdminProduct): string => {
   const activePrice = product.prices.find((p) => p.isActive);
 
   if (!activePrice) {
@@ -35,7 +35,7 @@ const getDisplayPrice = (product: Product): string => {
   return `${amount}/${formatPeriod(activePrice, DEFAULT_LOCALE)}`;
 };
 
-const filters: DataTableFilter<Product>[] = [
+const filters: DataTableFilter<AdminProduct>[] = [
   {
     id: "status",
     label: "Status",
@@ -57,7 +57,7 @@ const filters: DataTableFilter<Product>[] = [
 ];
 
 type ProductsListSectionProps = {
-  products: Product[];
+  products: AdminProduct[];
 };
 
 export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
@@ -68,7 +68,7 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 
-  const columns: Column<Product>[] = useMemo(
+  const columns: Column<AdminProduct>[] = useMemo(
     () => [
       {
         id: "title",

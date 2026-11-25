@@ -4,6 +4,10 @@ import { Currency, PeriodUnit } from "../../../common";
 
 import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS } from "./product.constants";
 import {
+  adminProductSchema,
+  createProductSchema,
+  productFeatureWriteSchema,
+  productSchema,
   createProductPriceSchema,
   priceSchema,
   updateProductPriceSchema,
@@ -162,5 +166,87 @@ describe("priceSchema", () => {
         isActive: true,
       }).success,
     ).toBe(false);
+  });
+});
+
+const FEATURE = { id: "feature-one", text: "Coached sessions" };
+const PRODUCT_INPUT = {
+  title: "Test product",
+  slug: "test-product",
+  description: "Description",
+  features: [FEATURE],
+  isFeatured: false,
+  isActive: true,
+};
+const PRODUCT_RESPONSE = {
+  ...PRODUCT_INPUT,
+  id: PRICE_ID,
+  prices: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+describe("productFeatureWriteSchema", () => {
+  it("accepts a feature without an id", () => {
+    expect(productFeatureWriteSchema.parse({ text: FEATURE.text })).toEqual({ text: FEATURE.text });
+  });
+
+  it("keeps a given id", () => {
+    expect(productFeatureWriteSchema.parse(FEATURE)).toEqual(FEATURE);
+  });
+
+  it.each(["", " ", "\t\n"])("refuses unwritten text %j with the field message", (text) => {
+    const result = productFeatureWriteSchema.safeParse({ text });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("Write the feature or remove it");
+    }
+  });
+
+  it("keeps feature text unbounded", () => {
+    expect(
+      productFeatureWriteSchema.parse({
+        text: "x".repeat(PRODUCT_CONSTANTS.MAX_DESCRIPTION_LENGTH + 1),
+      }).text.length,
+    ).toBeGreaterThan(PRODUCT_CONSTANTS.MAX_DESCRIPTION_LENGTH);
+  });
+});
+
+describe("createProductSchema — features", () => {
+  it("refuses features sent as plain strings", () => {
+    expect(
+      createProductSchema.safeParse({ ...PRODUCT_INPUT, features: [FEATURE.text] }).success,
+    ).toBe(false);
+  });
+
+  it("accepts an empty list from an old tab", () => {
+    expect(createProductSchema.parse({ ...PRODUCT_INPUT, features: [] }).features).toEqual([]);
+  });
+});
+
+describe("product feature read contracts", () => {
+  it("keeps public features as strings", () => {
+    expect(productSchema.parse({ ...PRODUCT_RESPONSE, features: [FEATURE.text] }).features).toEqual(
+      [FEATURE.text],
+    );
+    expect(productSchema.safeParse(PRODUCT_RESPONSE).success).toBe(false);
+  });
+
+  it("requires a non-empty id on every admin feature", () => {
+    expect(adminProductSchema.parse(PRODUCT_RESPONSE).features).toEqual([FEATURE]);
+    expect(
+      adminProductSchema.safeParse({ ...PRODUCT_RESPONSE, features: [{ text: FEATURE.text }] })
+        .success,
+    ).toBe(false);
+    expect(
+      adminProductSchema.safeParse({ ...PRODUCT_RESPONSE, features: [{ ...FEATURE, id: "" }] })
+        .success,
+    ).toBe(false);
+  });
+
+  it("leaves features absent when not supplied for update", () => {
+    expect(updateProductSchema.parse({ title: "Renamed" })).not.toHaveProperty("features");
   });
 });
