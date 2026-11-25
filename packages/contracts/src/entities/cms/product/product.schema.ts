@@ -4,6 +4,16 @@ import { Currency, periodSchema } from "../../../common";
 
 import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS } from "./product.constants";
 
+export const productFeatureSchema = z.object({
+  id: z.string().min(1),
+  text: z.string(),
+});
+
+export const productFeatureWriteSchema = z.object({
+  id: z.string().optional(),
+  text: z.string().refine((text) => text.trim().length > 0, "Write the feature or remove it"),
+});
+
 const priceAmountCentsSchema = z
   .number()
   .int()
