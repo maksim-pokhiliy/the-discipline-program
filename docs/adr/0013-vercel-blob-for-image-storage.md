@@ -21,9 +21,9 @@ The constraint that matters most today is the fourth one — time to first uploa
 
 We use **Vercel Blob** (`@vercel/blob` 0.27.0) as the image storage layer for the interim. The token is provided via `BLOB_READ_WRITE_TOKEN` through `@repo/env/blob`. The upload endpoint lives at `packages/api-server/src/endpoints/storage/upload.ts` (relocated out of IAM into a dedicated Storage supporting context after the port refactor) and since commit `6f9ca98` it depends on a `StoragePort` abstraction defined in `packages/api-server/src/infrastructure/storage/`. The only file in the repo that imports from `@vercel/blob` is the adapter `packages/api-server/src/infrastructure/storage/vercel-blob-adapter.ts`.
 
-The config for allowed file types, max size, and storage prefix lives in `@repo/contracts/storage/upload` via `UPLOAD_CONFIG[context]`, where `context` is a typed enum (`UploadContext`) that names the kind of upload ("blog-cover", "review-avatar", etc.). Each context has its own accepted MIME types, max size, and storage prefix.
+The config for allowed file types, max size, and storage prefix lives in `@repo/contracts/storage/upload` via `UPLOAD_CONFIG[context]`, where `context` is a typed union (`UploadContext`) that names the kind of upload (`avatar`, `blog`, `marketing`, `exercise`, `product`). Each context has its own accepted MIME types, max size, and storage prefix.
 
-Uploaded URLs are public (`access: "public"`) and returned to the client as plain URL strings. They are stored in the database as strings in columns like `MarketingBlogPost.coverImage` and `Product.image`.
+Uploaded URLs are public (`access: "public"`) and returned to the client as plain URL strings. They are stored in the database as strings in columns like `MarketingBlogPost.coverImage` and `Product.imageUrl` (uploaded under the `product` context).
 
 ## Consequences
 
