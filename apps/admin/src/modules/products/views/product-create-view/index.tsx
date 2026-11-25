@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useIsMutating } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
 import { PRODUCT_PRICE_DEFAULTS } from "@repo/contracts/cms/product";
 import { FormView } from "@repo/ui";
 
-import { useCreateProduct } from "@app/lib/hooks";
+import { IMAGE_MUTATION_KEY, useCreateProduct } from "@app/lib/hooks";
 
 import {
   ProductForm,
@@ -19,7 +20,9 @@ import {
 type ProductFormInput = z.input<typeof productFormSchema>;
 
 export const ProductCreateView = () => {
-  const { mutate: createProduct, isPending } = useCreateProduct();
+  const { mutate: createProduct, isPending: isSaving } = useCreateProduct();
+  const isImageBusy = useIsMutating({ mutationKey: IMAGE_MUTATION_KEY }) > 0;
+  const isPending = isSaving || isImageBusy;
 
   const methods = useForm<ProductFormInput, unknown, ProductFormData>({
     resolver: zodResolver(productFormSchema),
@@ -28,6 +31,7 @@ export const ProductCreateView = () => {
       slug: "",
       description: "",
       features: [],
+      imageUrl: null,
       isFeatured: false,
       isActive: true,
       price: { ...PRODUCT_PRICE_DEFAULTS },

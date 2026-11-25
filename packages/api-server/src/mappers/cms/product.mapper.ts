@@ -51,6 +51,7 @@ export const mapToAdminProduct = (p: ProductWithPrices): AdminProduct => ({
   title: p.title,
   description: p.description,
   features: parseFeatureList(p.featureList, p.id),
+  imageUrl: p.imageUrl,
   isFeatured: p.isFeatured,
   isActive: p.isActive,
   prices: p.prices.map(mapToPrice),

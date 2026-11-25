@@ -58,6 +58,16 @@ describe("parseFeatureList", () => {
 });
 
 describe("product mappers", () => {
+  it.each([null, "https://synthetic.public.blob.vercel-storage.com/products/mapped.jpg"])(
+    "keeps the shared photo in admin and public mappings: %s",
+    (imageUrl) => {
+      const row = { ...PRODUCT, imageUrl };
+
+      expect(mapToAdminProduct(row).imageUrl).toBe(imageUrl);
+      expect(mapToPublicProduct(row).imageUrl).toBe(imageUrl);
+    },
+  );
+
   it("maps admin features as rows", () => {
     expect(mapToAdminProduct(PRODUCT).features).toEqual(FEATURES);
   });

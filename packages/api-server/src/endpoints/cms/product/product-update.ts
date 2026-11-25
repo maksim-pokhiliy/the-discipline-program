@@ -26,6 +26,7 @@ export const buildProductUpdate = (
     ...(fields.description !== undefined && { description: fields.description }),
     ...(fields.isFeatured !== undefined && { isFeatured: fields.isFeatured }),
     ...(fields.isActive !== undefined && { isActive: fields.isActive }),
+    ...(fields.imageUrl !== undefined && { imageUrl: fields.imageUrl }),
     ...(features !== undefined && { featureList: features }),
     ...(haveEnglishWordsChanged(previous, after) && { wordsUpdatedAt: new Date() }),
   };

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useIsMutating } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
@@ -8,7 +9,7 @@ import { PRODUCT_PRICE_DEFAULTS, type AdminProduct } from "@repo/contracts/cms/p
 import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
-import { useUpdateProduct } from "@app/lib/hooks";
+import { IMAGE_MUTATION_KEY, useUpdateProduct } from "@app/lib/hooks";
 
 import {
   ProductForm,
@@ -24,7 +25,9 @@ type ProductEditFormProps = {
 };
 
 export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
-  const { mutate: updateProduct, isPending } = useUpdateProduct();
+  const { mutate: updateProduct, isPending: isSaving } = useUpdateProduct();
+  const isImageBusy = useIsMutating({ mutationKey: IMAGE_MUTATION_KEY }) > 0;
+  const isPending = isSaving || isImageBusy;
 
   const activePrice = product.prices.find((p) => p.isActive);
 
@@ -35,6 +38,7 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => 
       slug: product.slug,
       description: product.description || "",
       features: product.features,
+      imageUrl: product.imageUrl,
       isFeatured: product.isFeatured,
       isActive: product.isActive,
       price: activePrice

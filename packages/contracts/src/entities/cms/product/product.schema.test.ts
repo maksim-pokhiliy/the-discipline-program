@@ -182,6 +182,7 @@ const PRODUCT_RESPONSE = {
   ...PRODUCT_INPUT,
   id: PRICE_ID,
   prices: [],
+  imageUrl: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -248,5 +249,44 @@ describe("product feature read contracts", () => {
 
   it("leaves features absent when not supplied for update", () => {
     expect(updateProductSchema.parse({ title: "Renamed" })).not.toHaveProperty("features");
+  });
+});
+
+const PHOTO = "https://synthetic.public.blob.vercel-storage.com/products/photo.jpg";
+
+describe("product photo contracts", () => {
+  it.each([PHOTO, null, undefined])(
+    "accepts an uploaded Blob photo, null or omitted: %s",
+    (imageUrl) => {
+      expect(createProductSchema.safeParse({ ...PRODUCT_INPUT, imageUrl }).success).toBe(true);
+    },
+  );
+
+  it.each([
+    "https://example.com/photo.jpg",
+    "https://synthetic.public.blob.vercel-storage.com.example.com/photo.jpg",
+    "",
+  ])("refuses a photo URL that is not an uploaded Blob: %s", (imageUrl) => {
+    expect(createProductSchema.safeParse({ ...PRODUCT_INPUT, imageUrl }).success).toBe(false);
+    expect(updateProductSchema.safeParse({ imageUrl }).success).toBe(false);
+  });
+
+  it("leaves absent features and the photo out of an update", () => {
+    expect(updateProductSchema.parse({ title: "Renamed" })).toEqual({ title: "Renamed" });
+  });
+
+  it("accepts explicit null to remove the photo", () => {
+    expect(updateProductSchema.parse({ imageUrl: null })).toEqual({ imageUrl: null });
+  });
+
+  it("requires a nullable public photo and keeps feature strings", () => {
+    const response = { ...PRODUCT_RESPONSE, features: [FEATURE.text] };
+    const withoutPhoto = Object.fromEntries(
+      Object.entries(response).filter(([key]) => key !== "imageUrl"),
+    );
+
+    expect(productSchema.parse(response).imageUrl).toBeNull();
+    expect(productSchema.parse({ ...response, imageUrl: PHOTO }).imageUrl).toBe(PHOTO);
+    expect(productSchema.safeParse(withoutPhoto).success).toBe(false);
   });
 });

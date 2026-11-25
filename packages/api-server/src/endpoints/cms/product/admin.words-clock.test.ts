@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { type UpdateProductData } from "@repo/contracts/cms/product";
 
 import { cleanupRaw } from "../../../test/helpers";
 
-import { cmsProductAdminApi } from "./admin";
+import { createCmsProductAdminApi } from "./admin";
 import {
   FEATURES,
   FIRST_FEATURE,
@@ -13,6 +13,8 @@ import {
   SECOND_FEATURE,
   useTestProducts,
 } from "./admin-test.fixtures";
+
+const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 const createProduct = useTestProducts();
 const WORD_CHANGES: { name: string; data: UpdateProductData }[] = [
@@ -32,6 +34,10 @@ const SHARED_CHANGES: { name: string; data: UpdateProductData }[] = [
   { name: "slug", data: { slug: `test-clock-${crypto.randomUUID()}` } },
   { name: "visibility", data: { isActive: false } },
   { name: "featured", data: { isFeatured: true } },
+  {
+    name: "photo",
+    data: { imageUrl: "https://synthetic.public.blob.vercel-storage.com/products/clock.jpg" },
+  },
   {
     name: "same words",
     data: { title: "Test product", description: "Test description", features: FEATURES },

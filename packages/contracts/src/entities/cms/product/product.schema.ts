@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { Currency, periodSchema } from "../../../common";
+import { blobImageUrlSchema, Currency, imageUrlSchema, periodSchema } from "../../../common";
 
 import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS } from "./product.constants";
 
@@ -42,6 +42,7 @@ export const productSchema = z.object({
   title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
   description: z.string().min(1),
   features: z.array(z.string()),
+  imageUrl: imageUrlSchema,
   isFeatured: z.boolean(),
   isActive: z.boolean(),
   prices: z.array(priceSchema),
@@ -73,6 +74,7 @@ export const createProductSchema = z.object({
     .regex(/^[a-z0-9-]+$/),
   description: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_DESCRIPTION_LENGTH),
   features: z.array(productFeatureWriteSchema),
+  imageUrl: blobImageUrlSchema.optional(),
   isFeatured: z.boolean(),
   isActive: z.boolean(),
   price: createProductPriceSchema.optional(),

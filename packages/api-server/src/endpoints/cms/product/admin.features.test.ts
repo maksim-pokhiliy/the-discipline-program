@@ -5,7 +5,7 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../../db/client";
 import { cleanupRaw } from "../../../test/helpers";
 
-import { cmsProductAdminApi } from "./admin";
+import { createCmsProductAdminApi } from "./admin";
 import {
   createProductInput,
   FEATURES,
@@ -14,6 +14,8 @@ import {
   SECOND_FEATURE,
   useTestProducts,
 } from "./admin-test.fixtures";
+
+const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 const createProduct = useTestProducts();
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;

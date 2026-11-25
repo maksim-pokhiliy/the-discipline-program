@@ -21,6 +21,7 @@ export const makeProduct = (prices: Price[]): AdminProduct => ({
   title: "Strength Mastery",
   description: "Twelve weeks of barbell strength work.",
   features: [],
+  imageUrl: null,
   isFeatured: false,
   isActive: true,
   prices,

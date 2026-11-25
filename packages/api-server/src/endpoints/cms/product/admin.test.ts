@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { type z } from "zod";
 
 import {
@@ -12,7 +12,9 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 import { mapToPrice } from "../../../mappers/cms";
 import { cleanup, cleanupRaw, createTestProduct } from "../../../test/helpers";
 
-import { cmsProductAdminApi } from "./admin";
+import { createCmsProductAdminApi } from "./admin";
+
+const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 const createSlug = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 

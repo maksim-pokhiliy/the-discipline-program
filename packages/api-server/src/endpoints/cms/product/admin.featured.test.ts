@@ -1,12 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { type UpdateProductData } from "@repo/contracts/cms/product";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
 
-import { cmsProductAdminApi } from "./admin";
+import { createCmsProductAdminApi } from "./admin";
 import { createProductInput, OLD_WORDS_AT, useTestProducts } from "./admin-test.fixtures";
+
+const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 const createProduct = useTestProducts();
 const UNFEATURED_UPDATES: { name: string; data: UpdateProductData }[] = [

@@ -8,6 +8,7 @@ import { useAutoSlug } from "@app/lib/hooks";
 
 import { ProductFeaturesCard } from "./product-features-card";
 import { type ProductFormData } from "./product-form-schema";
+import { ProductPhotoCard } from "./product-photo-card";
 import { ProductPricingCard } from "./product-pricing-card";
 
 type ProductFormProps = {
@@ -58,6 +59,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
           </FormCard>
 
           <ProductFeaturesCard />
+          <ProductPhotoCard isLoading={isLoading} />
         </Stack>
       </Grid>
 
