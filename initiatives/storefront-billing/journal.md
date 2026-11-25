@@ -648,3 +648,39 @@ The planner verified it: `translation-progress.tsx` shows `translatedSectionCoun
 - The board.
 
 **Next.** The Opus executor runs `step-0.4c-prompt.md` to its plan gate.
+
+## 2026-11-25 — 0.4c: the plan gate ruled, the implement handoff written (claude)
+
+The Opus `step-executor` ran `step-0.4c-prompt.md` to its plan gate in about three hours and stopped there. Roster checked against its transcript: two `pipeline-worker` agents, one for research and one for design and plan, and no stage inline. Its artifacts are in `.feature-dev/1795605417/`: research, design, a plan of 16 tasks, and the probed migration with its trials. It re-ran the migration on rows of its own inside a rolled-back transaction, and the result matched the design.
+
+**The planner's verification before ruling.**
+
+- Production, read-only: Postgres 17 (`server_version_num` 170012), and `gen_random_uuid()` answers. The `features` column is nullable with no default. 4 products with features 4, 4, 4 and 0, with no NULL list, no NULL entry and no blank entry. The new columns and the translation table are absent. 16 migrations; one language.
+- The tree holds every precedent the design leans on: `SET LOCAL lock_timeout` with a guard `DO` block, `@ignore`, the SQL replay test, and the per-key advisory lock with its race helpers.
+- The calls the design names exist with the shapes it uses: the monitoring context, `deleteImage`, the route factories, `IMAGE_MUTATION_KEY`, and the list editor's translation mode. The soft-delete extension filters `count` and `groupBy`, but not a relation filter inside a `where`.
+- Marketing pages render dynamically today, so no product save needs to revalidate. The consequence for 0.4f is SB-106.
+- `apps/admin/.env.local` carries the production Blob token, and the adapter reads it when `@repo/api-server/storage` is imported. This became ruling 7.
+
+**The rulings.** No item was the owner's: the plan keeps one PR, as R1 rules.
+
+1. One PR; T3's move as its own commit with `git mv`.
+2. The translation state moves to `cms/locale/translation-state.ts` as `TranslationState`, renamed at all fifteen consumers with no alias, and the chip becomes `TranslationStateChip`. The design had proposed `cms/pages/translation-state.ts` with the old name, which would make the product contract depend on the pages folder and put a `Section…` name in product code.
+3. The deploy window as designed, plus one rule: query 1 is read before the merge and again once the deploy is live, and the freeze lifts only when the second reading is empty.
+4. The runbook section is the planner's, written after the rehearsal and landed before the dispatch, as in 0.4d3b.
+5. The migration is the probed file byte for byte (sha256 `2e9fe267…`).
+6. The migration test is the one the design specified.
+7. No test reaches the real Blob store: `deleteImage` is injected, and a grep gate covers the admin tests.
+8. One Languages bar over sections and products, with two captions.
+9. Q-3 to Q-13 as recommended.
+10. The order stands; the owner's veto stays open until the merge.
+11. The strings stand.
+12. Fence deviations granted in advance.
+
+**Promoted.**
+
+- `step-0.4c-implement-prompt.md`.
+- SB-105, the drop of the old `features` column in the next contract migration.
+- SB-106, the revalidation for 0.4f once pages are cached.
+- The plan row and the board.
+
+**Next.** The handoff reaches `main` through a docs PR; then the Codex implement leg starts on the executor's container `tdp-0-4c-leg`, which the planner keeps up for it.
