@@ -63,6 +63,20 @@ afterEach(() => {
 });
 
 describe("ProductEditForm pricing", () => {
+  it.each([
+    { label: "Price", message: "Enter the price as a number" },
+    { label: "Period length", message: "Enter the period length as a whole number" },
+  ])("explains an empty $label on its field and blocks the save", async ({ label, message }) => {
+    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+    typeInto(label, "");
+    clickButton("Save Changes");
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.getByLabelText(label)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(label)).toHaveAccessibleDescription(message);
+    expect(updateProductMock).not.toHaveBeenCalled();
+  });
+
   it("shows a stored 4-week UAH price without auto-renew", () => {
     const price = makePrice({
       amountCents: 120000,
