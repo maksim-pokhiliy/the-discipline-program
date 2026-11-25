@@ -2,17 +2,21 @@ import {
   type AdminProductsPageData,
   type CreateProductData,
   type AdminProduct,
+  type AdminProductListItem,
   type UpdateProductData,
 } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../../db/client";
-import { mapToAdminProduct } from "../../../mappers/cms";
+import { TX_BUDGET_DEFAULT } from "../../../db/transaction-config";
+import { mapToAdminProduct, mapToAdminProductListItem } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { ensureExclusiveFeatured, toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
 import { type CmsProductAdminApi } from "./admin.types";
 import { withFeatureIds } from "./feature-identity";
 import { type DeleteImage, deleteDroppedPhoto } from "./photo-cleanup";
+import { readProductDetails } from "./product-details";
+import { lockProduct } from "./product-lock";
 import { writeProductPrice, buildPriceData } from "./product-price";
 import { buildProductUpdate } from "./product-update";
 
@@ -24,23 +28,27 @@ export const createCmsProductAdminApi = (deps: {
   deleteImage: DeleteImage;
 }): CmsProductAdminApi => {
   const api: CmsProductAdminApi = {
-    getAll: async (): Promise<AdminProduct[]> => {
+    getAll: async (): Promise<AdminProductListItem[]> => {
       const products = await prisma.product.findMany({
-        include: includeWithPrices,
+        include: {
+          ...includeWithPrices,
+          translations: {
+            select: {
+              locale: true,
+              isActive: true,
+              updatedAt: true,
+              marketingLocale: { select: { name: true } },
+            },
+            orderBy: { marketingLocale: { sortOrder: "asc" } },
+          },
+        },
         orderBy: [{ createdAt: "desc" }, { title: "asc" }],
       });
 
-      return products.map(mapToAdminProduct);
+      return products.map(mapToAdminProductListItem);
     },
 
-    getById: async (id: string): Promise<AdminProduct> => {
-      const product = await findOrThrow(
-        prisma.product.findUnique({ where: { id }, include: includeWithPrices }),
-        "Product",
-      );
-
-      return mapToAdminProduct(product);
-    },
+    getById: readProductDetails,
 
     getPageData: async (): Promise<AdminProductsPageData> => {
       const products = await api.getAll();
@@ -84,6 +92,8 @@ export const createCmsProductAdminApi = (deps: {
         const featureList = features === undefined ? undefined : withFeatureIds(features);
 
         const { product, previousImageUrl } = await prisma.$transaction(async (tx) => {
+          await lockProduct(tx, id);
+
           const before = await findOrThrow(tx.product.findUnique({ where: { id } }), "Product");
 
           await ensureExclusiveFeatured(data.isFeatured === true, () =>
@@ -106,7 +116,7 @@ export const createCmsProductAdminApi = (deps: {
           });
 
           return { product, previousImageUrl: before.imageUrl };
-        });
+        }, TX_BUDGET_DEFAULT);
 
         await deleteDroppedPhoto(deps.deleteImage, id, previousImageUrl, data.imageUrl);
 

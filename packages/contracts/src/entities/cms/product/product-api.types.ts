@@ -3,9 +3,13 @@ import { type z } from "zod";
 import {
   type getProductsResponseSchema,
   type getProductByIdParamsSchema,
+  type getProductQuerySchema,
+  type getProductResponseSchema,
   type createProductRequestSchema,
   type updateProductParamsSchema,
   type updateProductRequestSchema,
+  type updateProductTranslationBodySchema,
+  type updateProductTranslationParamsSchema,
   type deleteProductParamsSchema,
   type toggleProductParamsSchema,
   type toggleProductQuerySchema,
@@ -15,6 +19,10 @@ import {
 export type GetProductsResponse = z.infer<typeof getProductsResponseSchema>;
 
 export type GetProductByIdParams = z.infer<typeof getProductByIdParamsSchema>;
+export type GetProductQuery = z.infer<typeof getProductQuerySchema>;
+export type GetProductResponse = z.infer<typeof getProductResponseSchema>;
+export type UpdateProductTranslationParams = z.infer<typeof updateProductTranslationParamsSchema>;
+export type UpdateProductTranslationBody = z.input<typeof updateProductTranslationBodySchema>;
 
 export type CreateProductRequest = z.infer<typeof createProductRequestSchema>;
 

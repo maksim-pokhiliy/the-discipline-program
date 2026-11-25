@@ -1,6 +1,9 @@
 "use client";
 
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+
 import type {
+  AdminProductDetails,
   AdminProductsPageData,
   AdminProduct,
   CreateProductData,
@@ -34,7 +37,12 @@ const productHooks = createCrudHooks<
 });
 
 export const useProductsPageData = productHooks.usePageData;
-export const useProduct = productHooks.useById;
+export const useProduct = (id: string): UseQueryResult<AdminProductDetails, Error> =>
+  useQuery({
+    queryKey: adminKeys.products.byId(id),
+    queryFn: () => api.products.getById(id),
+    enabled: !!id,
+  });
 export const useCreateProduct = productHooks.useCreate;
 export const useUpdateProduct = productHooks.useUpdate;
 export const useDeleteProduct = productHooks.useDelete;

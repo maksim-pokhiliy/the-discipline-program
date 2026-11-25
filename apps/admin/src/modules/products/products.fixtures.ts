@@ -1,7 +1,11 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { expect } from "vitest";
 
-import { type Price, type AdminProduct } from "@repo/contracts/cms/product";
+import {
+  type Price,
+  type AdminProductDetails,
+  type AdminProductListItem,
+} from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 export const makePrice = (overrides: Partial<Price> = {}): Price => ({
@@ -15,13 +19,15 @@ export const makePrice = (overrides: Partial<Price> = {}): Price => ({
   ...overrides,
 });
 
-export const makeProduct = (prices: Price[]): AdminProduct => ({
+export const makeProduct = (prices: Price[]): AdminProductDetails & AdminProductListItem => ({
   id: "clz00000000000000000prd1",
   slug: "strength-mastery",
   title: "Strength Mastery",
   description: "Twelve weeks of barbell strength work.",
   features: [],
   imageUrl: null,
+  translation: null,
+  translations: [],
   isFeatured: false,
   isActive: true,
   prices,

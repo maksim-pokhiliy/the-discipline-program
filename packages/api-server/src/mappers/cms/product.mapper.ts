@@ -1,12 +1,14 @@
 import {
   type Price as PrismaPrice,
   type Product as PrismaProduct,
+  type ProductTranslation,
   type Prisma,
 } from "@prisma/client";
 import { z } from "zod";
 
 import {
   type AdminProduct,
+  type AdminProductListItem,
   type Price,
   type Product,
   type ProductFeature,
@@ -14,6 +16,7 @@ import {
 } from "@repo/contracts/cms/product";
 import { InternalServerError } from "@repo/errors";
 
+import { productTranslationState } from "../../endpoints/cms/product/product-translation";
 import { CURRENCY_MAP } from "../common";
 
 import { PERIOD_UNIT_MAP } from "./enum-maps";
@@ -59,8 +62,37 @@ export const mapToAdminProduct = (p: ProductWithPrices): AdminProduct => ({
   updatedAt: p.updatedAt,
 });
 
-export const mapToPublicProduct = (p: ProductWithPrices): Product => {
-  const product = mapToAdminProduct(p);
+type ProductWithTranslations = ProductWithPrices & {
+  translations: {
+    locale: string;
+    isActive: boolean;
+    updatedAt: Date;
+    marketingLocale: { name: string };
+  }[];
+};
 
-  return { ...product, features: product.features.map(({ text }) => text) };
+export const mapToAdminProductListItem = (p: ProductWithTranslations): AdminProductListItem => ({
+  ...mapToAdminProduct(p),
+  translations: p.translations.map((row) => ({
+    locale: row.locale,
+    name: row.marketingLocale.name,
+    state: productTranslationState(row, p.wordsUpdatedAt),
+  })),
+});
+
+export const mapToPublicProduct = (
+  p: ProductWithPrices,
+  translation: ProductTranslation | null = null,
+): Product => {
+  const product = mapToAdminProduct(p);
+  const words = translation
+    ? { ...translation, features: parseFeatureList(translation.featureList, p.id) }
+    : product;
+
+  return {
+    ...product,
+    title: words.title,
+    description: words.description,
+    features: words.features.map(({ text }) => text),
+  };
 };

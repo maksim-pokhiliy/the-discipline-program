@@ -86,7 +86,7 @@ export const cmsPagesPublicApi = {
 
     const [pick, products, reviews] = await Promise.all([
       readSections(PageSlug.HOME, locale),
-      readServedProducts(HOME_PAGE_PRODUCTS_LIMIT),
+      readServedProducts(locale, HOME_PAGE_PRODUCTS_LIMIT),
       prisma.marketingReview.findMany({
         where: { isActive: true },
         take: HOME_PAGE_REVIEWS_LIMIT,
@@ -114,7 +114,7 @@ export const cmsPagesPublicApi = {
 
     const [pick, products] = await Promise.all([
       readSections(PageSlug.STOREFRONT, locale),
-      readServedProducts(),
+      readServedProducts(locale),
     ]);
 
     const map = PAGE_SECTIONS_MAP.storefront;
@@ -167,7 +167,7 @@ export const cmsPagesPublicApi = {
 
     const [pick, products] = await Promise.all([
       readSections(PageSlug.CONTACT, locale),
-      readProgramOptions(),
+      readProgramOptions(locale),
     ]);
 
     const map = PAGE_SECTIONS_MAP.contact;

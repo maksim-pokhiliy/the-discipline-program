@@ -1,17 +1,24 @@
 import { type ApiClient } from "@repo/api-client";
+import { DEFAULT_LOCALE_CODE, type LocaleCode } from "@repo/contracts/cms/locale";
 import {
+  type AdminProductDetails,
   type AdminProduct,
   type AdminProductsPageData,
   type CreateProductData,
   ProductToggleField,
   type UpdateProductData,
+  type UpdateProductTranslationBody,
 } from "@repo/contracts/cms/product";
 
 export const createProductsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminProductsPageData> =>
     client.request("/api/admin/products/page-data"),
 
-  getById: (id: string): Promise<AdminProduct> => client.request(`/api/admin/products/${id}`),
+  getById: (id: string, locale: LocaleCode = DEFAULT_LOCALE_CODE): Promise<AdminProductDetails> =>
+    client.request(`/api/admin/products/${id}?${new URLSearchParams({ locale })}`),
+
+  saveTranslation: (id: string, data: UpdateProductTranslationBody): Promise<void> =>
+    client.requestNoContent(`/api/admin/products/${id}/translations`, "PATCH", data),
 
   create: (data: CreateProductData): Promise<AdminProduct> =>
     client.request("/api/admin/products", "POST", data),
