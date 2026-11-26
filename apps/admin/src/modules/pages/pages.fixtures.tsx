@@ -2,6 +2,7 @@ import { type RenderResult } from "@testing-library/react";
 import { vi } from "vitest";
 import { z } from "zod";
 
+import { TranslationState } from "@repo/contracts/cms/locale";
 import {
   type AdminPageListItem,
   type AdminPageSection,
@@ -13,7 +14,6 @@ import {
   SECTION_SCHEMAS,
   SectionFieldKind,
   type SectionFieldKindTree,
-  SectionTranslationState,
   type PageSlug,
   type SectionSchemaKey,
   type SectionWriteBody,
@@ -21,11 +21,14 @@ import {
   type seoSectionSchema,
 } from "@repo/contracts/cms/pages";
 
+import {
+  DEFAULT_EDITOR_LOCALE,
+  type EditorLocale,
+} from "@app/lib/components/localized-editor/locale-gate";
+import { fieldKindAt } from "@app/lib/components/localized-editor/section-field";
 import { render } from "@app/test/render";
 
-import { DEFAULT_EDITOR_LOCALE, type EditorLocale } from "./components/locale-gate";
 import { SectionEditor } from "./components/section-editor";
-import { fieldKindAt } from "./components/section-field/field-at-path";
 
 const FIXTURE_DATE = new Date("2026-11-02T09:00:00.000Z");
 const FIXTURE_UPDATED_AT = FIXTURE_DATE.toISOString();
@@ -114,7 +117,7 @@ export const makePopulatedSectionRow = (
 
 export const makeLocalizedSectionRow = (
   section: SectionSchemaKey,
-  state = SectionTranslationState.TRANSLATED,
+  state = TranslationState.TRANSLATED,
 ): AdminPageSection =>
   adminPageSectionSchema.parse({
     ...makePopulatedSectionRow(section, "Localized"),

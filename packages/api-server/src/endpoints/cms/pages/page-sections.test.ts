@@ -1,7 +1,8 @@
 import { type Prisma } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
 
-import { PageSlug, SectionTranslationState } from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
+import { PageSlug } from "@repo/contracts/cms/pages";
 
 import { UNPARSABLE_SECTION_DATA, UK_ABOUT_HERO } from "./__fixtures__/section-data";
 import {
@@ -97,16 +98,16 @@ describe("sectionTranslationState", () => {
     { reason: "has an unknown section", overrides: { section: "about:retired" } },
   ])("is not translated when the row $reason", ({ overrides }) => {
     expect(sectionTranslationState(makeSectionRow(overrides), ROW_UPDATED_AT)).toBe(
-      SectionTranslationState.NOT_TRANSLATED,
+      TranslationState.NOT_TRANSLATED,
     );
     expect(
       sectionTranslationState(makeSectionRow({ ...overrides, isActive: false }), ROW_UPDATED_AT),
-    ).toBe(SectionTranslationState.NOT_TRANSLATED);
+    ).toBe(TranslationState.NOT_TRANSLATED);
   });
 
   it("is a draft when an inactive row would otherwise be served", () => {
     expect(sectionTranslationState(makeSectionRow({ isActive: false }), ROW_UPDATED_AT)).toBe(
-      SectionTranslationState.DRAFT,
+      TranslationState.DRAFT,
     );
   });
 
@@ -114,20 +115,20 @@ describe("sectionTranslationState", () => {
     "is translated when the reader would serve the locale's own row and English is no newer (%s)",
     (englishUpdatedAt) => {
       expect(sectionTranslationState(makeSectionRow(), englishUpdatedAt)).toBe(
-        SectionTranslationState.TRANSLATED,
+        TranslationState.TRANSLATED,
       );
     },
   );
 
   it("is English newer when a served row is older than its English row", () => {
     expect(sectionTranslationState(makeSectionRow(), NEWER_UPDATED_AT)).toBe(
-      SectionTranslationState.ENGLISH_NEWER,
+      TranslationState.ENGLISH_NEWER,
     );
   });
 
   it("stays a draft when a draft is older than its English row", () => {
     expect(sectionTranslationState(makeSectionRow({ isActive: false }), NEWER_UPDATED_AT)).toBe(
-      SectionTranslationState.DRAFT,
+      TranslationState.DRAFT,
     );
   });
 
@@ -137,9 +138,9 @@ describe("sectionTranslationState", () => {
       data: { timeline: [{ year: "2026" }] },
     });
 
-    expect(sectionTranslationState(row, ROW_UPDATED_AT)).toBe(SectionTranslationState.TRANSLATED);
+    expect(sectionTranslationState(row, ROW_UPDATED_AT)).toBe(TranslationState.TRANSLATED);
     expect(sectionTranslationState(makeSectionRow({ data: { title: "" } }), ROW_UPDATED_AT)).toBe(
-      SectionTranslationState.TRANSLATED,
+      TranslationState.TRANSLATED,
     );
   });
 });

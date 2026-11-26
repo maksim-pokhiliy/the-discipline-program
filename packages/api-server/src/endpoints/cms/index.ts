@@ -11,6 +11,7 @@ export * from "./locale/public";
 export * from "./pages/admin";
 export * from "./pages/public";
 export * from "./product/admin";
-export * from "./product/public";
+export * from "./product/translation-admin";
+export * from "./product/served-products";
 export * from "./review/admin";
 export * from "./review/public";

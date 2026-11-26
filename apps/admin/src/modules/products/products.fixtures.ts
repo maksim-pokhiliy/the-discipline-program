@@ -1,7 +1,13 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { expect } from "vitest";
 
-import { type Price, type Product } from "@repo/contracts/cms/product";
+import { TranslationState, type LocaleCode } from "@repo/contracts/cms/locale";
+import {
+  type AdminProductTranslation,
+  type Price,
+  type AdminProductDetails,
+  type AdminProductListItem,
+} from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 export const makePrice = (overrides: Partial<Price> = {}): Price => ({
@@ -15,18 +21,70 @@ export const makePrice = (overrides: Partial<Price> = {}): Price => ({
   ...overrides,
 });
 
-export const makeProduct = (prices: Price[]): Product => ({
+export const makeProduct = (prices: Price[]): AdminProductDetails & AdminProductListItem => ({
   id: "clz00000000000000000prd1",
   slug: "strength-mastery",
   title: "Strength Mastery",
   description: "Twelve weeks of barbell strength work.",
   features: [],
+  imageUrl: null,
+  translation: null,
+  translations: [],
   isFeatured: false,
   isActive: true,
   prices,
   createdAt: new Date("2026-06-16T09:00:00.000Z"),
   updatedAt: new Date("2026-06-16T09:00:00.000Z"),
 });
+
+export const makeTranslatedProduct = (
+  state: TranslationState = TranslationState.TRANSLATED,
+  locale: LocaleCode = "uk",
+): AdminProductDetails & { translation: AdminProductTranslation } => {
+  const features = [
+    { id: "strength", text: "Strength work" },
+    { id: "support", text: "Coaching support" },
+  ];
+  const isEmpty = state === TranslationState.NOT_TRANSLATED;
+
+  return {
+    ...makeProduct([makePrice()]),
+    imageUrl: "https://synthetic.public.blob.vercel-storage.com/products/fixture.jpg",
+    features,
+    translation: {
+      locale,
+      state,
+      words: {
+        title: isEmpty ? "" : "Localized title",
+        description: isEmpty || state === TranslationState.DRAFT ? "" : "Localized description",
+        features: features.map(({ id }) => ({ id, text: isEmpty ? "" : `Localized ${id}` })),
+      },
+    },
+  };
+};
+
+type ProductDeferred<TValue extends void | AdminProductDetails | { url: string }> = {
+  promise: Promise<TValue>;
+  resolve: (value: TValue) => void;
+  reject: (error: Error) => void;
+};
+
+export const makeProductDeferred = <
+  TValue extends void | AdminProductDetails | { url: string },
+>(): ProductDeferred<TValue> => {
+  let resolve: ProductDeferred<TValue>["resolve"] = () => {
+    throw new Error("Product deferred was not initialized");
+  };
+  let reject: ProductDeferred<TValue>["reject"] = () => {
+    throw new Error("Product deferred was not initialized");
+  };
+  const promise = new Promise<TValue>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  return { promise, resolve, reject };
+};
 
 type ExpectedPricing = {
   amount: number | null;

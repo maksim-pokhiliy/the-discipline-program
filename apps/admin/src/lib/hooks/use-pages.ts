@@ -69,6 +69,11 @@ export const useUpdatePageSection = (
         queryKey: adminKeys.pages.detail(slug, locale),
         exact: true,
       });
+      await queryClient.invalidateQueries({
+        queryKey: adminKeys.pages.detail(slug, locale),
+        exact: true,
+        refetchType: "none",
+      });
       await queryClient
         .fetchQuery({ ...pageDetailsQuery(slug, locale), staleTime: 0 })
         .catch(() => undefined);

@@ -1,18 +1,15 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type AdminPageDetails,
-  PageSlug,
-  SectionTranslationState,
-} from "@repo/contracts/cms/pages";
+import { TranslationState } from "@repo/contracts/cms/locale";
+import { type AdminPageDetails, PageSlug } from "@repo/contracts/cms/pages";
 
 import { api } from "@app/lib/api";
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { LOCALE_CATALOG, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
-import { LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import { makePage, makeTranslatedRow } from "../../pages.fixtures";
 
 import { makeLocaleFaqPage } from "./page-locale.fixtures";
@@ -43,7 +40,7 @@ const makeFeaturePage = (iconName: string): AdminPageDetails => {
   const english = { title: "English section", subtitle: "English subtitle", features: [feature] };
   const data = { ...english, features: [{ ...feature, title: "Saved title", description: "" }] };
   const row = makeTranslatedRow("home:whyChoose", data, {
-    state: SectionTranslationState.DRAFT,
+    state: TranslationState.DRAFT,
     english: { data: english, updatedAt: "2026-11-02T09:00:00.000Z" },
   });
 
@@ -105,7 +102,7 @@ describe("PagesEditForm keeps unsaved words across a refresh", () => {
 
     for (const row of moved.sections) {
       if (row.translation !== null) {
-        row.translation.state = SectionTranslationState.ENGLISH_NEWER;
+        row.translation.state = TranslationState.ENGLISH_NEWER;
       }
     }
 

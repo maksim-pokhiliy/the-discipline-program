@@ -22,7 +22,10 @@ export const TranslationProgress = ({
     <Stack spacing={0.5}>
       <LinearProgress
         variant="determinate"
-        value={rateToPercent(language.translatedSectionCount / TRANSLATABLE_SECTION_COUNT)}
+        value={rateToPercent(
+          (language.translatedSectionCount + language.translatedProductCount) /
+            (TRANSLATABLE_SECTION_COUNT + language.shownProductCount),
+        )}
         aria-label={`${language.name} translation progress`}
         sx={(theme) => ({ height: theme.spacing(PROGRESS_HEIGHT), borderRadius: 1 })}
       />
@@ -31,7 +34,14 @@ export const TranslationProgress = ({
         color="text.secondary"
         sx={{ fontVariantNumeric: "tabular-nums" }}
       >
-        {language.translatedSectionCount} of {TRANSLATABLE_SECTION_COUNT} translated
+        {language.translatedSectionCount} of {TRANSLATABLE_SECTION_COUNT} sections translated
+      </Typography>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {language.translatedProductCount} of {language.shownProductCount} products translated
       </Typography>
     </Stack>
   );

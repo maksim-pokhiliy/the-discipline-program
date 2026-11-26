@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   getProductsPageDataResponseSchema,
@@ -7,7 +7,9 @@ import {
 
 import { cleanupRaw } from "../../../test/helpers";
 
-import { cmsProductAdminApi } from "./admin";
+import { createCmsProductAdminApi } from "./admin";
+
+const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 const TEST_PREFIX = `test-empty-product-admin-${crypto.randomUUID().slice(0, 8)}`;
 

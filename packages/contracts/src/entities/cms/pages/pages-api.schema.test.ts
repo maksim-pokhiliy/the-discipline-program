@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_LOCALE_CODE } from "../locale";
+import { DEFAULT_LOCALE_CODE, TranslationState } from "../locale";
 
 import {
   adminPageDetailsSchema,
@@ -9,7 +9,6 @@ import {
   pageSlugRouteParamsSchema,
   revalidateQuerySchema,
   SECTION_SCHEMAS,
-  SectionTranslationState,
   updatePageSectionBodySchema,
 } from "./pages-api.schema";
 import { PAGE_SECTIONS_MAP, PageSlug } from "./pages.constants";
@@ -192,7 +191,7 @@ describe("adminPageSectionSchema", () => {
       ...ADMIN_HERO_ROW,
       data,
       translation: {
-        state: SectionTranslationState.TRANSLATED,
+        state: TranslationState.TRANSLATED,
         english: { ...ADMIN_ENGLISH_HERO, data },
       },
     });
@@ -203,7 +202,7 @@ describe("adminPageSectionSchema", () => {
 
   it("carries the row and English dates as ISO strings", () => {
     const translation = {
-      state: SectionTranslationState.TRANSLATED,
+      state: TranslationState.TRANSLATED,
       english: ADMIN_ENGLISH_HERO,
     };
     const row = { ...ADMIN_HERO_ROW, translation };
@@ -224,7 +223,7 @@ describe("adminPageSectionSchema", () => {
   });
 
   it("accepts only the four translation states", () => {
-    expect(Object.values(SectionTranslationState)).toEqual(TRANSLATION_STATES);
+    expect(Object.values(TranslationState)).toEqual(TRANSLATION_STATES);
 
     for (const state of [...TRANSLATION_STATES, "UNKNOWN"]) {
       const result = adminPageSectionSchema.safeParse({

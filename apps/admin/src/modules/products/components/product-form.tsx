@@ -3,12 +3,13 @@
 import { Checkbox, FormControlLabel, Grid, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { TagsInput } from "@repo/ui";
-
 import { FormCard } from "@app/lib/components/form-card";
+import { fieldsetStyles } from "@app/lib/components/localized-editor/fieldset-styles";
 import { useAutoSlug } from "@app/lib/hooks";
 
+import { ProductFeaturesCard } from "./product-features-card";
 import { type ProductFormData } from "./product-form-schema";
+import { ProductPhotoCard } from "./product-photo-card";
 import { ProductPricingCard } from "./product-pricing-card";
 
 type ProductFormProps = {
@@ -58,28 +59,10 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
             </Stack>
           </FormCard>
 
-          <FormCard title="Features List">
-            <Stack spacing={1}>
-              <Controller
-                name="features"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <TagsInput
-                    label="Key Features"
-                    placeholder="Type feature and press Enter (e.g. '5 days/week')"
-                    value={field.value || []}
-                    onChange={field.onChange}
-                    error={!!fieldState.error}
-                    size="medium"
-                    helperText={
-                      fieldState.error?.message || "Add bullet points for the marketing card"
-                    }
-                    disabled={isLoading}
-                  />
-                )}
-              />
-            </Stack>
-          </FormCard>
+          <Stack component="fieldset" disabled={isLoading} sx={fieldsetStyles}>
+            <ProductFeaturesCard />
+          </Stack>
+          <ProductPhotoCard isLoading={isLoading} />
         </Stack>
       </Grid>
 

@@ -6,7 +6,7 @@ import { type z } from "zod";
 
 import { type homePageContactSchema } from "@repo/contracts/cms/pages";
 
-import { SectionTextField } from "../section-field";
+import { SectionTextField } from "@app/lib/components/localized-editor/section-field";
 
 import { TitleSubtitleSectionForm } from "./title-subtitle-section-form";
 

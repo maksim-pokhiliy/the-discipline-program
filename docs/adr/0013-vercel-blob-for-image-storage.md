@@ -21,9 +21,9 @@ The constraint that matters most today is the fourth one — time to first uploa
 
 We use **Vercel Blob** (`@vercel/blob` 0.27.0) as the image storage layer for the interim. The token is provided via `BLOB_READ_WRITE_TOKEN` through `@repo/env/blob`. The upload endpoint lives at `packages/api-server/src/endpoints/storage/upload.ts` (relocated out of IAM into a dedicated Storage supporting context after the port refactor) and since commit `6f9ca98` it depends on a `StoragePort` abstraction defined in `packages/api-server/src/infrastructure/storage/`. The only file in the repo that imports from `@vercel/blob` is the adapter `packages/api-server/src/infrastructure/storage/vercel-blob-adapter.ts`.
 
-The config for allowed file types, max size, and storage prefix lives in `@repo/contracts/storage/upload` via `UPLOAD_CONFIG[context]`, where `context` is a typed enum (`UploadContext`) that names the kind of upload ("blog-cover", "review-avatar", etc.). Each context has its own accepted MIME types, max size, and storage prefix.
+The config for allowed file types, max size, and storage prefix lives in `@repo/contracts/storage/upload` via `UPLOAD_CONFIG[context]`, where `context` is a typed union (`UploadContext`) that names the kind of upload (`avatar`, `blog`, `marketing`, `exercise`, `product`). Each context has its own accepted MIME types, max size, and storage prefix.
 
-Uploaded URLs are public (`access: "public"`) and returned to the client as plain URL strings. They are stored in the database as strings in columns like `MarketingBlogPost.coverImage` and `Product.image`.
+Uploaded URLs are public (`access: "public"`) and returned to the client as plain URL strings. They are stored in the database as strings in columns like `MarketingBlogPost.coverImage` and `Product.imageUrl` (uploaded under the `product` context).
 
 ## Consequences
 
@@ -40,8 +40,8 @@ Uploaded URLs are public (`access: "public"`) and returned to the client as plai
 - **~~Direct vendor coupling.~~** Closed in commit `6f9ca98` and subsequently relocated when the upload endpoint moved out of IAM into a dedicated Storage supporting context. `packages/api-server/src/endpoints/storage/upload.ts` no longer imports anything from `@vercel/blob`. The endpoint is a pure factory `createStorageUploadAdminApi(storage: StoragePort)` that depends on the port defined in `packages/api-server/src/infrastructure/storage/port.ts`. `createVercelBlobAdapter()` in `vercel-blob-adapter.ts` is the only file in the repo that imports from `@vercel/blob`, and the default instance is wired in the `endpoints/storage/index.ts` barrel with `defaultStorage` injected. Future provider swaps (S3 / R2 / GCS) only need a new adapter implementation — no endpoint rewrite, no test rewrite.
 - **Vendor lock-in scales with image count.** Migrating to S3 at 100 images is trivial. At 100,000 images, it is a weekend of migration scripting. At 10 million, it is a project. The later we abstract, the more expensive the decoupling becomes.
 - **Pricing is not the best at scale.** Vercel Blob is competitive at low volume. At high volume, S3 or R2 is cheaper by a meaningful margin. Not an issue today; will be an issue if the platform ever serves millions of images.
-- **Collision risk in filenames.** The current upload code uses `Date.now()` as part of the filename, which collides under bursty uploads (two in the same millisecond). The fix is straightforward (use `crypto.randomUUID()` or a content hash) and is flagged as a known security/reliability gap.
-- **No retry, no timeout, no error mapping.** The `put` and `del` calls are awaited without any resilience guarantees. If Vercel Blob is briefly unreachable, the upload fails with an opaque error. When we introduce the `StoragePort` adapter, these become properties of the adapter implementation.
+- **~~Collision risk in filenames.~~** Closed in commit `647373e15`: upload keys combine the configured storage prefix, `crypto.randomUUID()` and the sanitized original filename.
+- **No retry, ~~no timeout,~~ no error mapping.** The timeout was closed in commit `9f991a73d`: the adapter passes a 30-second abort signal to uploads, deletions and its health-check request. It otherwise lets SDK errors propagate and adds no application-level retries or error mapping.
 
 **Neutral:**
 

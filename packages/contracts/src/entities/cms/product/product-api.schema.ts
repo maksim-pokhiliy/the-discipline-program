@@ -1,19 +1,32 @@
 import { z } from "zod";
 
 import { idParamSchema } from "../../../common";
+import { localeCodeSchema, localeQuerySchema } from "../locale";
 
+import {
+  adminProductDetailsSchema,
+  adminProductListItemSchema,
+  productTranslationWordsSchema,
+} from "./product-translation.schema";
 import { ProductToggleField } from "./product.constants";
-import { createProductSchema, updateProductSchema, productSchema } from "./product.schema";
+import { createProductSchema, updateProductSchema } from "./product.schema";
 
-export const getProductsResponseSchema = z.array(productSchema);
+export const getProductsResponseSchema = z.array(adminProductListItemSchema);
 
 export const getProductByIdParamsSchema = idParamSchema;
+export const getProductQuerySchema = localeQuerySchema;
+export const getProductResponseSchema = adminProductDetailsSchema;
 
 export const createProductRequestSchema = createProductSchema;
 
 export const updateProductParamsSchema = idParamSchema;
 
 export const updateProductRequestSchema = updateProductSchema;
+
+export const updateProductTranslationParamsSchema = idParamSchema;
+export const updateProductTranslationBodySchema = productTranslationWordsSchema.extend({
+  locale: localeCodeSchema,
+});
 
 export const deleteProductParamsSchema = idParamSchema;
 

@@ -60,6 +60,8 @@ describe("createStorageUploadAdminApi", () => {
       { context: "avatar", expectedPrefix: "avatars" },
       { context: "blog", expectedPrefix: "blog" },
       { context: "marketing", expectedPrefix: "marketing" },
+      { context: "exercise", expectedPrefix: "exercises" },
+      { context: "product", expectedPrefix: "products" },
     ])(
       "uses the $expectedPrefix storage prefix for $context context",
       async ({ context, expectedPrefix }) => {

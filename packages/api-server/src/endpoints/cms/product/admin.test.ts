@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { type z } from "zod";
 
 import {
@@ -12,7 +12,9 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 import { mapToPrice } from "../../../mappers/cms";
 import { cleanup, cleanupRaw, createTestProduct } from "../../../test/helpers";
 
-import { cmsProductAdminApi } from "./admin";
+import { createCmsProductAdminApi } from "./admin";
+
+const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 const createSlug = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 
@@ -21,7 +23,10 @@ const createInput = (overrides: Partial<z.input<typeof createProductRequestSchem
     title: "Test Product",
     slug: createSlug(),
     description: "Test product description",
-    features: ["feature-1", "feature-2"],
+    features: [
+      { id: "first", text: "feature-1" },
+      { id: "second", text: "feature-2" },
+    ],
     isFeatured: false,
     isActive: true,
     ...overrides,
@@ -64,7 +69,12 @@ describe("cmsProductAdminApi", () => {
 
   describe("getById", () => {
     it("returns a mapped product", async () => {
-      const product = await createTestProduct({ features: ["a", "b"] });
+      const product = await createTestProduct({
+        featureList: [
+          { id: "a", text: "a" },
+          { id: "b", text: "b" },
+        ],
+      });
 
       toCleanup.push({ table: "product", id: product.id });
 
@@ -73,7 +83,10 @@ describe("cmsProductAdminApi", () => {
       expect(result.id).toBe(product.id);
       expect(result.slug).toBe(product.slug);
       expect(result.title).toBe(product.title);
-      expect(result.features).toEqual(["a", "b"]);
+      expect(result.features).toEqual([
+        { id: "a", text: "a" },
+        { id: "b", text: "b" },
+      ]);
       expect(result.prices).toEqual([]);
       expect(result.createdAt).toBeInstanceOf(Date);
     });
@@ -112,7 +125,10 @@ describe("cmsProductAdminApi", () => {
       expect(product.title).toBe("Test Product");
       expect(product.slug).toBe(input.slug);
       expect(product.description).toBe("Test product description");
-      expect(product.features).toEqual(["feature-1", "feature-2"]);
+      expect(product.features).toEqual([
+        { id: "first", text: "feature-1" },
+        { id: "second", text: "feature-2" },
+      ]);
       expect(product.isActive).toBe(true);
       expect(product.isFeatured).toBe(false);
       expect(product.prices).toEqual([]);
@@ -192,13 +208,13 @@ describe("cmsProductAdminApi", () => {
         updateInput({
           title: "Updated Title",
           description: "Updated description",
-          features: ["new-feature"],
+          features: [{ id: "new", text: "new-feature" }],
         }),
       );
 
       expect(updated.title).toBe("Updated Title");
       expect(updated.description).toBe("Updated description");
-      expect(updated.features).toEqual(["new-feature"]);
+      expect(updated.features).toEqual([{ id: "new", text: "new-feature" }]);
       expect(updated.id).toBe(product.id);
     });
 

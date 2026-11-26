@@ -1,6 +1,19 @@
-import { type Price as PrismaPrice, type Product as PrismaProduct } from "@prisma/client";
+import {
+  type Price as PrismaPrice,
+  type Product as PrismaProduct,
+  type ProductTranslation,
+  type Prisma,
+} from "@prisma/client";
+import { z } from "zod";
 
-import { type Price, type Product } from "@repo/contracts/cms/product";
+import {
+  type AdminProduct,
+  type Price,
+  type Product,
+  type ProductFeature,
+  productFeatureSchema,
+} from "@repo/contracts/cms/product";
+import { InternalServerError } from "@repo/errors";
 
 import { CURRENCY_MAP } from "../common";
 
@@ -18,15 +31,48 @@ export const mapToPrice = (p: PrismaPrice): Price => ({
 
 type ProductWithPrices = PrismaProduct & { prices: PrismaPrice[] };
 
-export const mapToProduct = (p: ProductWithPrices): Product => ({
+const featureListSchema = z.array(productFeatureSchema);
+
+export const parseFeatureList = (value: Prisma.JsonValue, productId: string): ProductFeature[] => {
+  const parsed = featureListSchema.safeParse(value);
+
+  if (!parsed.success) {
+    throw new InternalServerError("A stored feature list does not match its shape", {
+      productId,
+      issues: parsed.error.issues,
+    });
+  }
+
+  return parsed.data;
+};
+
+export const mapToAdminProduct = (p: ProductWithPrices): AdminProduct => ({
   id: p.id,
   slug: p.slug,
   title: p.title,
   description: p.description,
-  features: p.features,
+  features: parseFeatureList(p.featureList, p.id),
+  imageUrl: p.imageUrl,
   isFeatured: p.isFeatured,
   isActive: p.isActive,
   prices: p.prices.map(mapToPrice),
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });
+
+export const mapToPublicProduct = (
+  p: ProductWithPrices,
+  translation: ProductTranslation | null = null,
+): Product => {
+  const product = mapToAdminProduct(p);
+  const words = translation
+    ? { ...translation, features: parseFeatureList(translation.featureList, p.id) }
+    : product;
+
+  return {
+    ...product,
+    title: words.title,
+    description: words.description,
+    features: words.features.map(({ text }) => text),
+  };
+};

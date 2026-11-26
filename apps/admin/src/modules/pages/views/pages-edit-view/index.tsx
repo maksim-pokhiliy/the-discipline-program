@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 
-import { LocaleGate } from "../../components/locale-gate";
+import { LocaleGate } from "@app/lib/components/localized-editor/locale-gate";
 
 import { PagesEditContent } from "./pages-edit-content";
 

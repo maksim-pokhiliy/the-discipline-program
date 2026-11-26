@@ -1,0 +1,6 @@
+export enum TranslationState {
+  NOT_TRANSLATED = "NOT_TRANSLATED",
+  DRAFT = "DRAFT",
+  TRANSLATED = "TRANSLATED",
+  ENGLISH_NEWER = "ENGLISH_NEWER",
+}

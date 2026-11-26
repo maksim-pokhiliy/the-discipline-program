@@ -1,8 +1,18 @@
 import { z } from "zod";
 
-import { Currency, periodSchema } from "../../../common";
+import { blobImageUrlSchema, Currency, imageUrlSchema, periodSchema } from "../../../common";
 
 import { PRODUCT_CONSTANTS, PRODUCT_PRICE_DEFAULTS } from "./product.constants";
+
+export const productFeatureSchema = z.object({
+  id: z.string().min(1),
+  text: z.string(),
+});
+
+export const productFeatureWriteSchema = z.object({
+  id: z.string().optional(),
+  text: z.string().refine((text) => text.trim().length > 0, "Write the feature or remove it"),
+});
 
 const priceAmountCentsSchema = z
   .number()
@@ -32,11 +42,16 @@ export const productSchema = z.object({
   title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
   description: z.string().min(1),
   features: z.array(z.string()),
+  imageUrl: imageUrlSchema,
   isFeatured: z.boolean(),
   isActive: z.boolean(),
   prices: z.array(priceSchema),
   createdAt: z.date(),
   updatedAt: z.date(),
+});
+
+export const adminProductSchema = productSchema.extend({
+  features: z.array(productFeatureSchema),
 });
 
 export const createProductPriceSchema = z
@@ -58,7 +73,8 @@ export const createProductSchema = z.object({
     .max(PRODUCT_CONSTANTS.MAX_SLUG_LENGTH)
     .regex(/^[a-z0-9-]+$/),
   description: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_DESCRIPTION_LENGTH),
-  features: z.array(z.string()),
+  features: z.array(productFeatureWriteSchema),
+  imageUrl: blobImageUrlSchema.optional(),
   isFeatured: z.boolean(),
   isActive: z.boolean(),
   price: createProductPriceSchema.optional(),

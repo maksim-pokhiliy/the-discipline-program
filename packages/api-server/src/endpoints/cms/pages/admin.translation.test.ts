@@ -1,11 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { DEFAULT_LOCALE_CODE } from "@repo/contracts/cms/locale";
+import { DEFAULT_LOCALE_CODE, TranslationState } from "@repo/contracts/cms/locale";
 import {
   PAGE_SECTIONS_MAP,
   PageSlug,
   faqContentSchema,
-  SectionTranslationState,
   type SectionWriteData,
 } from "@repo/contracts/cms/pages";
 import { BadRequestError } from "@repo/errors";
@@ -140,7 +139,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
       const page = await cmsPagesAdminApi.getPageBySlug(row.pageSlug, UKRAINIAN.code);
 
       expect(page.sections.find(({ section }) => section === row.section)?.translation?.state).toBe(
-        SectionTranslationState.DRAFT,
+        TranslationState.DRAFT,
       );
       expect((await cmsPagesPublicApi.getFaqPage(UKRAINIAN.code)).content).toEqual(ENGLISH_FAQ);
     });
@@ -156,7 +155,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
         },
         isActive: false,
       });
-      expect((await readAdminHero())?.translation?.state).toBe(SectionTranslationState.DRAFT);
+      expect((await readAdminHero())?.translation?.state).toBe(TranslationState.DRAFT);
       expect((await cmsPagesPublicApi.getAboutPage(UKRAINIAN.code)).hero).toEqual(ENGLISH_HERO);
       expect(await readCounts()).toEqual({ page: 0, language: 0 });
     });
@@ -169,7 +168,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
         data: UK_HERO,
         isActive: true,
       });
-      expect((await readAdminHero())?.translation?.state).toBe(SectionTranslationState.TRANSLATED);
+      expect((await readAdminHero())?.translation?.state).toBe(TranslationState.TRANSLATED);
       expect((await cmsPagesPublicApi.getAboutPage(UKRAINIAN.code)).hero).toEqual(UK_HERO);
       expect(await readCounts()).toEqual({ page: 1, language: 1 });
     });
@@ -185,7 +184,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
         backgroundImage: ENGLISH_HERO.backgroundImage,
       });
       expect(hero).toMatchObject({
-        translation: { state: SectionTranslationState.DRAFT },
+        translation: { state: TranslationState.DRAFT },
       });
     });
 
@@ -203,7 +202,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
       expect((await readTranslationRow(PageSlug.ABOUT, ABOUT.hero, UKRAINIAN.code))?.isActive).toBe(
         false,
       );
-      expect((await readAdminHero())?.translation?.state).toBe(SectionTranslationState.DRAFT);
+      expect((await readAdminHero())?.translation?.state).toBe(TranslationState.DRAFT);
     });
 
     it("writes the current English image when an English newer section is saved unchanged", async () => {
@@ -218,7 +217,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
 
       expect(await readAdminHero()).toMatchObject({
         data: { ...UK_HERO, backgroundImage: NEW_ENGLISH_IMAGE },
-        translation: { state: SectionTranslationState.ENGLISH_NEWER },
+        translation: { state: TranslationState.ENGLISH_NEWER },
       });
       expect((await cmsPagesPublicApi.getAboutPage(UKRAINIAN.code)).hero).toEqual(UK_HERO);
 
@@ -228,7 +227,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
         data: { ...UK_HERO, backgroundImage: NEW_ENGLISH_IMAGE },
         isActive: true,
       });
-      expect((await readAdminHero())?.translation?.state).toBe(SectionTranslationState.TRANSLATED);
+      expect((await readAdminHero())?.translation?.state).toBe(TranslationState.TRANSLATED);
     });
 
     it("clears a section with {}", async () => {
@@ -241,9 +240,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
       expect((await readTranslationRow(PageSlug.ABOUT, ABOUT.hero, UKRAINIAN.code))?.data).toEqual(
         {},
       );
-      expect((await readAdminHero())?.translation?.state).toBe(
-        SectionTranslationState.NOT_TRANSLATED,
-      );
+      expect((await readAdminHero())?.translation?.state).toBe(TranslationState.NOT_TRANSLATED);
       expect(await readCounts()).toEqual({ page: 0, language: 0 });
       expect((await cmsPagesPublicApi.getAboutPage(UKRAINIAN.code)).hero).toEqual(ENGLISH_HERO);
       await cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code);
@@ -255,9 +252,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
       expect((await readTranslationRow(PageSlug.ABOUT, ABOUT.hero, UKRAINIAN.code))?.data).toEqual(
         {},
       );
-      expect((await readAdminHero())?.translation?.state).toBe(
-        SectionTranslationState.NOT_TRANSLATED,
-      );
+      expect((await readAdminHero())?.translation?.state).toBe(TranslationState.NOT_TRANSLATED);
       await cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code);
     });
 
@@ -420,7 +415,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
 
       expect(section?.data).toEqual({ ...UK_FAQ, items: [thirdWords, UK_FAQ.items[1]] });
       expect(section?.translation).toMatchObject({
-        state: SectionTranslationState.ENGLISH_NEWER,
+        state: TranslationState.ENGLISH_NEWER,
         english: { data: changed },
       });
       expect((await readTranslationRow(row.pageSlug, row.section, UKRAINIAN.code))?.data).toEqual(
@@ -492,7 +487,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
       expect(hero).toMatchObject({
         hasUnreadableData: false,
         translation: {
-          state: SectionTranslationState.NOT_TRANSLATED,
+          state: TranslationState.NOT_TRANSLATED,
           english: { data: ENGLISH_HERO, updatedAt: ENGLISH_UPDATED_AT.toISOString() },
         },
       });
@@ -509,7 +504,7 @@ describe("cmsPagesAdminApi — translating a section", () => {
           expect((await readAdminHero(locale))?.data).toEqual({});
         } else {
           expect((await readAdminHero(locale))?.translation?.state).toBe(
-            SectionTranslationState.NOT_TRANSLATED,
+            TranslationState.NOT_TRANSLATED,
           );
         }
       },
@@ -547,8 +542,8 @@ describe("cmsPagesAdminApi — translating a section", () => {
 
         const expected =
           label === "present and inactive"
-            ? SectionTranslationState.DRAFT
-            : SectionTranslationState.NOT_TRANSLATED;
+            ? TranslationState.DRAFT
+            : TranslationState.NOT_TRANSLATED;
 
         expect((await readAdminHero())?.translation?.state).toBe(expected);
         expect((await cmsPagesPublicApi.getAboutPage(UKRAINIAN.code)).hero).toEqual(ENGLISH_HERO);

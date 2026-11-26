@@ -2,7 +2,7 @@
 
 import { type ReactElement } from "react";
 
-import { Stack, type Theme } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useIsMutating } from "@tanstack/react-query";
 import { FormProvider } from "react-hook-form";
 
@@ -13,12 +13,13 @@ import {
   type SectionWriteBody,
 } from "@repo/contracts/cms/pages";
 
+import { fieldsetStyles } from "@app/lib/components/localized-editor/fieldset-styles";
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
+import { SectionFieldContext } from "@app/lib/components/localized-editor/section-field";
 import { IMAGE_MUTATION_KEY } from "@app/lib/hooks";
 
 import { SECTION_FORMS } from "../../config/section-forms";
 import { SECTION_LABELS } from "../../config/section-labels";
-import { type EditorLocale } from "../locale-gate";
-import { SectionFieldContext } from "../section-field";
 
 import { SectionEditorActions } from "./section-editor-actions";
 import { SectionNotices } from "./section-notices";
@@ -31,14 +32,6 @@ export type SectionEditorFormProps<TKey extends SectionSchemaKey> = {
   onSave: (body: SectionWriteBody<TKey>) => void;
   isLoading: boolean;
 };
-
-const fieldsetStyles = (theme: Theme) => ({
-  border: 0,
-  m: 0,
-  p: 0,
-  minWidth: 0,
-  "&:disabled": { opacity: theme.palette.action.disabledOpacity },
-});
 
 export const SectionEditorForm = <TKey extends SectionSchemaKey>({
   section,

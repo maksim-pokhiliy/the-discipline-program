@@ -3,9 +3,9 @@
 import { type ReactElement } from "react";
 
 import { AdminListView } from "@app/lib/components/admin-list-view";
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
 import { usePagesListData } from "@app/lib/hooks";
 
-import { type EditorLocale } from "../../components/locale-gate";
 import { PagesListSection } from "../../sections";
 
 type PagesListContentProps = { locale: EditorLocale };

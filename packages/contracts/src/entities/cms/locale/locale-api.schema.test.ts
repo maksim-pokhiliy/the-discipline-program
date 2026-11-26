@@ -62,10 +62,13 @@ const LOCALE_ROW = {
   createdAt: FIXED_DATE,
   updatedAt: FIXED_DATE,
 };
+const PRODUCT_COUNTS = { translatedProductCount: 0, shownProductCount: 0 };
+const LIST_ROW = { ...LOCALE_ROW, translatedSectionCount: 0, ...PRODUCT_COUNTS };
+const PRODUCT_COUNT_FIELDS = ["translatedProductCount", "shownProductCount"];
 
 describe("adminLocaleListItemSchema", () => {
   it.each([0, 1])("accepts a translated section count of %i", (translatedSectionCount) => {
-    const row = { ...LOCALE_ROW, translatedSectionCount };
+    const row = { ...LOCALE_ROW, ...PRODUCT_COUNTS, translatedSectionCount };
 
     expect(adminLocaleListItemSchema.parse(row)).toEqual(row);
     expect(getLocalesResponseSchema.parse([row])).toEqual([row]);
@@ -77,8 +80,27 @@ describe("adminLocaleListItemSchema", () => {
 
   it.each([-1, 1.5])("refuses a translated section count of %s", (translatedSectionCount) => {
     expect(
-      adminLocaleListItemSchema.safeParse({ ...LOCALE_ROW, translatedSectionCount }).success,
+      adminLocaleListItemSchema.safeParse({
+        ...LOCALE_ROW,
+        ...PRODUCT_COUNTS,
+        translatedSectionCount,
+      }).success,
     ).toBe(false);
+  });
+
+  it.each([0, 1])("accepts both product counts as the non-negative integer %i", (count) => {
+    const row = { ...LIST_ROW, translatedProductCount: count, shownProductCount: count };
+
+    expect(adminLocaleListItemSchema.parse(row)).toEqual(row);
+    expect(getLocalesResponseSchema.parse([row])).toEqual([row]);
+  });
+
+  it.each(PRODUCT_COUNT_FIELDS)("requires %s as a non-negative integer", (field) => {
+    for (const value of [undefined, -1, 1.5, "1"]) {
+      expect(adminLocaleListItemSchema.safeParse({ ...LIST_ROW, [field]: value }).success).toBe(
+        false,
+      );
+    }
   });
 });
 

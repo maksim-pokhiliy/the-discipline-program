@@ -10,10 +10,10 @@ import {
 
 import type * as Api from "@app/lib/api";
 import { clickButton, typeInto } from "@app/test/interactions";
+import { LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
-import { LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({

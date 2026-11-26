@@ -9,8 +9,7 @@ import { type z } from "zod";
 import { type seoSectionSchema } from "@repo/contracts/cms/pages";
 
 import { FormCard } from "@app/lib/components/form-card";
-
-import { SectionTextField } from "../section-field";
+import { SectionTextField } from "@app/lib/components/localized-editor/section-field";
 
 import {
   formatLengthHint,

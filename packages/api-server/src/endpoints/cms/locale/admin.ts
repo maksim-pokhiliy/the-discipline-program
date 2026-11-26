@@ -30,19 +30,37 @@ const translatedSectionsWhere = (code: LocaleCode): Prisma.MarketingPageSectionW
 const listLocales = async (): Promise<AdminLocaleListItem[]> => {
   await ensureDefaultLocale();
 
-  const [locales, sectionRows] = await Promise.all([
+  const [locales, sectionRows, productGroups, shownProductCount] = await Promise.all([
     prisma.marketingLocale.findMany({ orderBy: LOCALE_ORDER }),
     prisma.marketingPageSection.findMany({
       where: { isActive: true },
       select: { locale: true, pageSlug: true, section: true, data: true },
     }),
+    prisma.productTranslation.groupBy({
+      by: ["locale"],
+      where: { isActive: true, product: { isActive: true, deletedAt: null } },
+      _count: { _all: true },
+    }),
+    prisma.product.count({ where: { isActive: true } }),
   ]);
   const servedCounts = countServedSections(sectionRows);
+  const productCounts = new Map(productGroups.map((group) => [group.locale, group._count._all]));
 
   return locales.map((locale) => ({
     ...mapToLocale(locale),
     translatedSectionCount: servedCounts.get(locale.code) ?? 0,
+    translatedProductCount: productCounts.get(locale.code) ?? 0,
+    shownProductCount,
   }));
+};
+
+const readLocaleContentCounts = async (code: LocaleCode) => {
+  const [translatedSectionCount, translatedProductCount] = await Promise.all([
+    prisma.marketingPageSection.count({ where: translatedSectionsWhere(code) }),
+    prisma.productTranslation.count({ where: { locale: code, product: { deletedAt: null } } }),
+  ]);
+
+  return { translatedSectionCount, translatedProductCount };
 };
 
 export const cmsLocaleAdminApi = {
@@ -129,14 +147,12 @@ export const cmsLocaleAdminApi = {
 
     await findOrThrow(prisma.marketingLocale.findUnique({ where: { code } }), "Locale");
 
-    const translatedSectionCount = await prisma.marketingPageSection.count({
-      where: translatedSectionsWhere(code),
-    });
+    const { translatedSectionCount, translatedProductCount } = await readLocaleContentCounts(code);
 
-    if (translatedSectionCount > 0) {
+    if (translatedSectionCount > 0 || translatedProductCount > 0) {
       throw new ConflictError(
-        `Locale ${code} has ${translatedSectionCount} translated section(s); clear them or disable the locale instead`,
-        { code, translatedSectionCount },
+        `Locale ${code} has ${translatedSectionCount} translated section(s) and ${translatedProductCount} translated product(s); clear them or disable the locale instead`,
+        { code, translatedSectionCount, translatedProductCount },
       );
     }
 
@@ -145,6 +161,9 @@ export const cmsLocaleAdminApi = {
         await lockLocaleOrder(tx);
         await tx.marketingPageSection.deleteMany({
           where: { locale: code, data: { equals: EMPTY_SECTION_DATA } },
+        });
+        await tx.productTranslation.deleteMany({
+          where: { locale: code, product: { deletedAt: { not: null } } },
         });
 
         const removed = await tx.marketingLocale.delete({ where: { code } });
@@ -157,7 +176,7 @@ export const cmsLocaleAdminApi = {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
         throw new ConflictError(
-          `Locale ${code} received new section rows while it was being deleted; try again`,
+          `Locale ${code} received new content while it was being deleted; try again`,
           { code },
         );
       }

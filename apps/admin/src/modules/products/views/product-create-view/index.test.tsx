@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -6,6 +6,7 @@ import { createProductRequestSchema } from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
+import { typeIntoNth } from "@app/test/interactions";
 import { render } from "@app/test/render";
 
 import {
@@ -17,6 +18,7 @@ import {
 } from "../../products.fixtures";
 
 const createProductMock: Mock = vi.fn();
+const mutation = vi.hoisted(() => ({ isPending: false }));
 
 vi.mock("next/navigation", async () => (await import("@app/test/mocks")).buildNextNavigationMock());
 
@@ -27,7 +29,7 @@ vi.mock("@app/lib/hooks", async () => {
 
   return {
     ...actual,
-    useCreateProduct: () => ({ mutate: createProductMock, isPending: false }),
+    useCreateProduct: () => ({ mutate: createProductMock, isPending: mutation.isPending }),
   };
 });
 
@@ -57,6 +59,7 @@ const expectRefusedWith = async (message: string): Promise<void> => {
 
 afterEach(() => {
   createProductMock.mockReset();
+  mutation.isPending = false;
 });
 
 describe("ProductCreateView pricing", () => {
@@ -157,5 +160,72 @@ describe("ProductCreateView pricing", () => {
     fillProduct("1000000");
 
     await expectRefusedWith("Number must be less than or equal to 999999.99");
+  });
+});
+
+describe("ProductCreateView features", () => {
+  it("blocks feature text, add, move and remove while creation is pending", async () => {
+    const { rerender } = render(<ProductCreateView />);
+
+    fillProduct("10");
+    clickButton("Add Feature");
+    typeIntoNth("Text", 0, "First feature");
+    clickButton("Add Feature");
+    typeIntoNth("Text", 1, "Second feature");
+    act(() => screen.getByRole("button", { name: CREATE_LABEL }).focus());
+    clickButton(CREATE_LABEL);
+    await waitFor(() => expect(createProductMock).toHaveBeenCalledTimes(1));
+    mutation.isPending = true;
+    rerender(<ProductCreateView />);
+
+    for (const field of screen.getAllByLabelText("Text")) {
+      expect(field).toBeDisabled();
+      field.focus();
+      expect(field).not.toHaveFocus();
+    }
+
+    for (const button of screen.getAllByRole("button", {
+      name: /^Add Feature$|^Move Feature|^Remove Feature/,
+    })) {
+      expect(button).toBeDisabled();
+      act(() => button.click());
+    }
+
+    expect(screen.getByText("Key features (2)")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Text")[0]).toHaveValue("First feature");
+    expect(screen.getAllByLabelText("Text")[1]).toHaveValue("Second feature");
+    expect(createProductMock).toHaveBeenCalledTimes(1);
+    mutation.isPending = false;
+    rerender(<ProductCreateView />);
+    typeIntoNth("Text", 0, "Editable again");
+    clickButton("Move Feature 1 down");
+    clickButton("Remove Feature 1");
+    clickButton("Add Feature");
+    expect(screen.getAllByLabelText("Text")[0]).toHaveValue("Editable again");
+    expect(screen.getByText("Key features (2)")).toBeInTheDocument();
+  });
+
+  it("shows no language bar on the English-only create page", () => {
+    render(<ProductCreateView />);
+
+    expect(screen.queryByRole("combobox", { name: "Language" })).not.toBeInTheDocument();
+  });
+
+  it("creates with fresh, distinct feature row ids", async () => {
+    render(<ProductCreateView />);
+    fillProduct("10");
+    clickButton("Add Feature");
+    typeIntoNth("Text", 0, "First feature");
+    clickButton("Add Feature");
+    typeIntoNth("Text", 1, "Second feature");
+    clickButton(CREATE_LABEL);
+
+    await waitFor(() => expect(createProductMock).toHaveBeenCalledTimes(1));
+    const payload = createProductRequestSchema.parse(createProductMock.mock.calls[0]?.[0]);
+
+    expect(payload.features.map(({ text }) => text)).toEqual(["First feature", "Second feature"]);
+    expect(payload.features[0]?.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(payload.features[1]?.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(payload.features[0]?.id).not.toBe(payload.features[1]?.id);
   });
 });

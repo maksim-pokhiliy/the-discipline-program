@@ -7,10 +7,11 @@ import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from
 
 import { type SectionSchemaKey } from "@repo/contracts/cms/pages";
 
+import { TranslationStateChip } from "@app/lib/components/localized-editor/translation-state";
+
 import { SECTION_LABELS } from "../../config/section-labels";
 
 import { SectionEditorForm, type SectionEditorFormProps } from "./section-editor-form";
-import { SectionStateChip } from "./section-state-chip";
 
 export { getSectionEditorKey } from "./section-editor-key";
 
@@ -36,7 +37,7 @@ export const SectionEditor = <TKey extends SectionSchemaKey>({
       <Stack direction="row" alignItems="center" spacing={2}>
         <Typography variant="subtitle1">{SECTION_LABELS[section.section]}</Typography>
         {!locale.isDefault && section.translation && (
-          <SectionStateChip state={section.translation.state} />
+          <TranslationStateChip state={section.translation.state} />
         )}
       </Stack>
     </AccordionSummary>

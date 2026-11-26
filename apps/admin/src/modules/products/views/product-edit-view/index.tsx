@@ -1,26 +1,17 @@
 "use client";
 
-import { QueryWrapper } from "@repo/ui";
+import { Suspense } from "react";
 
-import { useProduct } from "@app/lib/hooks";
+import { LocaleGate } from "@app/lib/components/localized-editor/locale-gate";
 
-import { ProductEditForm } from "./product-edit-form";
+import { ProductEditContent } from "./product-edit-content";
 
 type ProductEditViewProps = {
   id: string;
 };
 
-export const ProductEditView: React.FC<ProductEditViewProps> = ({ id }) => {
-  const { data, isLoading, error } = useProduct(id);
-
-  return (
-    <QueryWrapper
-      isLoading={isLoading}
-      error={error}
-      data={data}
-      loadingMessage="Loading product..."
-    >
-      {(product) => <ProductEditForm product={product} />}
-    </QueryWrapper>
-  );
-};
+export const ProductEditView: React.FC<ProductEditViewProps> = ({ id }) => (
+  <Suspense>
+    <LocaleGate>{(locale) => <ProductEditContent id={id} locale={locale} />}</LocaleGate>
+  </Suspense>
+);

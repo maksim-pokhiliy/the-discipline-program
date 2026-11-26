@@ -4,14 +4,14 @@ import {
   RATE_LIMIT_TIER,
   withAuthRateLimit,
 } from "@repo/api-routes";
-import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   createProductRequestSchema,
   getProductsResponseSchema,
-  productSchema,
+  adminProductSchema,
 } from "@repo/contracts/cms/product";
 
 import { withAdminAuth } from "@app/lib/server/auth";
+import { cmsProductAdminApi } from "@app/lib/server/cms-product-admin-api";
 
 export const GET = withAdminAuth(
   withAuthRateLimit(
@@ -22,7 +22,7 @@ export const GET = withAdminAuth(
 
 export const POST = withAdminAuth(
   withAuthRateLimit(
-    createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, productSchema),
+    createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, adminProductSchema),
     RATE_LIMIT_TIER.API,
   ),
 );

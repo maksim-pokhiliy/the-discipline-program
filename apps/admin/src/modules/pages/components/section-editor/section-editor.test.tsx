@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { SECTION_SCHEMAS } from "@repo/contracts/cms/pages";
 
 import { clickButton, typeInto } from "@app/test/interactions";
+import { ENGLISH_LOCALE } from "@app/test/locale.fixtures";
 
 import { SECTION_FORMS } from "../../config/section-forms";
-import { ENGLISH_LOCALE } from "../../locale.fixtures";
 import {
   makeSectionRow,
   makeSeoData,

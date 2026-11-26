@@ -3,6 +3,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
+import { cleanup, cleanupRaw } from "../../../test/helpers";
 import {
   captureMarketingPagesState,
   clearMarketingPagesState,
@@ -12,6 +13,7 @@ import {
 import { FULL_SECTION_DATA } from "../pages/__fixtures__/section-data";
 import { ABOUT_HERO_ROW, readRows } from "../pages/__fixtures__/section-rows";
 import { seedSectionsWithOverrides } from "../pages/__fixtures__/seed-with-overrides";
+import { seedTranslationProduct, translationBody } from "../product/__fixtures__/translations";
 
 import { readLocale, seedLocaleCatalog, UKRAINIAN } from "./__fixtures__/locale-catalog";
 import { openTransaction, refusalOf, waitForLockWaiter } from "./__fixtures__/lock-race";
@@ -21,12 +23,13 @@ const RACING_TRANSLATION = { title: "Переклад, збережений пі
 const DELETE_RACE_REFUSAL = {
   name: ConflictError.name,
   statusCode: 409,
-  message: `Locale ${UKRAINIAN.code} received new section rows while it was being deleted; try again`,
+  message: `Locale ${UKRAINIAN.code} received new content while it was being deleted; try again`,
   details: { code: UKRAINIAN.code },
 };
 
 describe("cmsLocaleAdminApi — deleteLocale races", () => {
   let snapshot: MarketingPagesState;
+  const rows: { table: string; id: string }[] = [];
 
   beforeAll(async () => {
     snapshot = await captureMarketingPagesState();
@@ -38,8 +41,9 @@ describe("cmsLocaleAdminApi — deleteLocale races", () => {
     await seedSectionsWithOverrides(FULL_SECTION_DATA);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks();
+    await cleanup(...rows.splice(0));
   });
 
   afterAll(async () => {
@@ -86,5 +90,37 @@ describe("cmsLocaleAdminApi — deleteLocale races", () => {
     );
     expect(await readLocale(UKRAINIAN.code)).not.toBeNull();
     expect(await readRows(UKRAINIAN.code)).toEqual(ukRows);
+  });
+
+  it("a product translation saved during the delete gets the retry refusal", async () => {
+    const product = await seedTranslationProduct();
+
+    rows.push({ table: "product", id: product.id });
+    await cleanupRaw.marketingPageSection.create({
+      data: { ...ABOUT_HERO_ROW, locale: UKRAINIAN.code, data: {} },
+    });
+
+    const ukRows = await readRows(UKRAINIAN.code);
+    const { features: featureList, ...words } = translationBody(product.id);
+    const writer = await openTransaction((tx) =>
+      tx.productTranslation.create({ data: { ...words, featureList, isActive: true } }),
+    );
+    const refusal = refusalOf(cmsLocaleAdminApi.deleteLocale(UKRAINIAN.code));
+
+    try {
+      await waitForLockWaiter("marketing_locales");
+    } finally {
+      await writer.commit();
+      await refusal;
+    }
+
+    expect(await refusal).toEqual(DELETE_RACE_REFUSAL);
+    expect(await readLocale(UKRAINIAN.code)).not.toBeNull();
+    expect(await readRows(UKRAINIAN.code)).toEqual(ukRows);
+    expect(
+      await cleanupRaw.productTranslation.findUnique({
+        where: { productId_locale: { productId: product.id, locale: UKRAINIAN.code } },
+      }),
+    ).toMatchObject({ ...words, featureList, isActive: true });
   });
 });

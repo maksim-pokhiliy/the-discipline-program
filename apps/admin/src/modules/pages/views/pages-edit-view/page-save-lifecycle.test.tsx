@@ -12,11 +12,11 @@ import { QueryProvider } from "@repo/query";
 
 import type * as Api from "@app/lib/api";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
 import { makeTermsData } from "../../list-editor.fixtures";
-import { LOCALE_CATALOG } from "../../locale.fixtures";
 import { makePage, makeSectionRow, makeSeoData } from "../../pages.fixtures";
 
 const endpoints = vi.hoisted(() => ({

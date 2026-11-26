@@ -9,11 +9,11 @@ import { QueryProvider, STALE_TIMES } from "@repo/query";
 import type * as Api from "@app/lib/api";
 import { adminKeys } from "@app/lib/api/keys";
 import { clickButton, typeInto, typeIntoNth } from "@app/test/interactions";
+import { ENGLISH_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "@app/test/locale.fixtures";
 import { resetMockNavigation, setMockNavigation } from "@app/test/mocks";
 import { render } from "@app/test/render";
 
 import { makeDeferred } from "../../deferred.fixtures";
-import { ENGLISH_LOCALE, LOCALE_CATALOG, UKRAINIAN_LOCALE } from "../../locale.fixtures";
 import { makePageListItem } from "../../pages.fixtures";
 import { PagesListView } from "../pages-list-view";
 
@@ -195,6 +195,51 @@ describe("page editor in a language with real query hooks", () => {
     expect(notifications.success).toHaveBeenCalledExactlyOnceWith("Section updated successfully");
     unmount();
     client.clear();
+  });
+
+  it("refreshes a saved Ukrainian FAQ after a foreign cache write even when the clock steps back", async () => {
+    const { client, patch, refresh, queryKey, words, moved } = prepareFaqRefreshRace();
+    const sent = "Sent after the clock step";
+    const { unmount } = render(
+      <QueryClientProvider client={client}>
+        <PagesEditView slug={PageSlug.FAQ} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByLabelText("Section Title");
+    typeIntoNth("Answer", 1, sent);
+    clickButton("Update Section");
+    await waitFor(() => expect(endpoints.updateSection).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      client.setQueryData(queryKey, makeLocaleFaqPage(moved, words));
+    });
+    await waitFor(() =>
+      expect(screen.getAllByLabelText("Answer")[0]).toHaveAccessibleDescription(
+        "English Refreshed answer B",
+      ),
+    );
+    expect(endpoints.getPageBySlug).not.toHaveBeenCalled();
+
+    const CLOCK_STEP_BACK_MS = 60_000;
+    const steppedBackNow = Date.now() - CLOCK_STEP_BACK_MS;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(steppedBackNow);
+
+    try {
+      expect(client.getQueryState(queryKey)?.dataUpdatedAt).toBeGreaterThan(Date.now());
+      await act(async () => patch.resolve());
+      await waitFor(() =>
+        expect(endpoints.getPageBySlug).toHaveBeenCalledExactlyOnceWith(PageSlug.FAQ, "uk"),
+      );
+      await act(async () =>
+        refresh.resolve(makeLocaleFaqPage(moved, { items: [{ id: "b", answer: sent }] })),
+      );
+      await waitFor(() => expect(screen.getAllByLabelText("Answer")[0]).toBeEnabled());
+      expect(screen.getAllByLabelText("Answer")[0]).toHaveValue(sent);
+    } finally {
+      clock.mockRestore();
+      unmount();
+      client.clear();
+    }
   });
 
   it("keeps the Ukrainian editor unavailable while its language catalog loads or fails", async () => {
