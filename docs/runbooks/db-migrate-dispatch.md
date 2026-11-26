@@ -257,15 +257,19 @@ list stay free: both versions read `isActive` and `isFeatured` the same way. The
 queries for the window between the dispatch and the end of the freeze:
 
 ```sql
-SELECT p."id", p."slug"
+SELECT p."id", p."slug", p."features", p."featureList", p."createdAt", p."updatedAt",
+  p."wordsUpdatedAt"
 FROM "app_products" AS p
-WHERE COALESCE(p."features", ARRAY[]::TEXT[]) IS DISTINCT FROM COALESCE(
-  (
-    SELECT array_agg(f.item ->> 'text' ORDER BY f.ord)
-    FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
-  ),
-  ARRAY[]::TEXT[]
-);
+WHERE ARRAY(
+  SELECT f."text"
+  FROM unnest(p."features") WITH ORDINALITY AS f("text", "position")
+  ORDER BY f."position"
+) IS DISTINCT FROM ARRAY(
+  SELECT f.item ->> 'text'
+  FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
+  ORDER BY f.ord
+)
+ORDER BY p."updatedAt", p."id";
 
 SELECT p."id", p."slug"
 FROM "app_products" AS p
@@ -284,8 +288,9 @@ ORDER BY "createdAt", "id";
 
 Expected: the first two return no row, the third returns `0` and `0`, and the fourth lists the
 products with the feature counts read before the dispatch (on 2026-11-25: 4, 4, 4 and 0, in that
-order). The first query is read twice inside the freeze: after the dispatch, before the merge, and
-again once the deploy is live. The freeze ends only after that second reading returns no row. A
+order). The first query builds both sides as new arrays, so an old column stored with a lower bound
+other than 1, which plain array equality counts as a difference, is not reported. It is read twice
+inside the freeze: after the dispatch, before the merge, and again once the deploy is live. The freeze ends only after that second reading returns no row. A
 row of the first query names a product written in the window: open it in the new admin, enter its
 features again and save. Once the freeze ends, the new code writes features into `featureList`
 only and the first query stops being a law; the second stays one.
@@ -300,27 +305,28 @@ A rollback of the deploy to the code before this step: the old code reads `featu
 the features as they were at the dispatch. Feature edits made after the deploy live only in
 `featureList`, and a product created after the deploy reads as having no features. The old code
 never reads the translations or the photo, so the site serves every product in English without a
-photo. Before rolling back, rewrite the old column from the new one:
+photo. Before rolling back, run the first query and decide each row it lists by its timestamps,
+never by one statement over every row. A row whose `updatedAt` falls after the deploy went live
+was written by the new code: its `featureList` holds the truth, and the statement below rewrites
+its old column. A row last written between the dispatch and the moment the deploy went live was
+written by the old code while the freeze was broken: its `features` already holds its newest
+words, which the old code reads, so it stays out of the statement. If the freeze held, the
+second reading inside the freeze was empty, and every row listed now is a write of the new code.
+Name the rows to rewrite:
 
 ```sql
 UPDATE "app_products" AS p
-SET "features" = COALESCE(
-  (
-    SELECT array_agg(f.item ->> 'text' ORDER BY f.ord)
-    FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
-  ),
-  ARRAY[]::TEXT[]
+SET "features" = ARRAY(
+  SELECT f.item ->> 'text'
+  FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
+  ORDER BY f.ord
 )
-WHERE COALESCE(p."features", ARRAY[]::TEXT[]) IS DISTINCT FROM COALESCE(
-  (
-    SELECT array_agg(f.item ->> 'text' ORDER BY f.ord)
-    FROM jsonb_array_elements(p."featureList") WITH ORDINALITY AS f(item, ord)
-  ),
-  ARRAY[]::TEXT[]
-);
+WHERE p."id" IN ('<id>', '<id>');
 ```
 
-Then roll back, put the freeze back until the roll-forward, and run the first query again: no row.
+Then roll back, put the freeze back until the roll-forward, and run the first query again: it lists
+only the rows left out on purpose, and each of them gets its features entered again in the new
+admin after the roll-forward.
 
 Rehearsed on a copy of production taken 2026-11-25 at 22:16Z (sixteen migrations, four products
 with 4, 4, 4 and 0 features, one language): the apply took about a second; `app_products` kept
@@ -329,4 +335,9 @@ and its place unchanged; `wordsUpdatedAt` equals `updatedAt`; no photo, no trans
 queries returned what is expected above. On clones of the migrated copy: the code before this step
 read the products, and a create and an edit it made showed up in the first query; the recovery
 `UPDATE` changed nothing on untouched rows and emptied the first query after writes of the new
-code; the new code's public read served the four products in English, in `createdAt` order.
+code; the new code's public read served the four products in English, in `createdAt` order. The
+first query's present form and the recovery by named rows were checked on 2026-11-26 on synthetic
+rows in a throwaway Postgres 17: an old array with a lower bound of 0, a `NULL` list beside `[]`
+and two empty lists are not reported; a different order and a window write of each code are; the
+named statement rewrites its rows only. The present form reports a subset of the rows its earlier
+form reported, so the rehearsal's empty readings hold for it.

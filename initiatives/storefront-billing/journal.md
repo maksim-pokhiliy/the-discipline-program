@@ -743,3 +743,56 @@ The page case that failed twice in the first leg's full admin runs at T8 ("keeps
 - **RF-5, dropped.** The default heap aborts the admin type check inside the fence, and the caller's 2 GB heap passes: a host measurement, not a defect.
 
 **Next.** Round two, a fresh Opus `step-reviewer` at deep, runs on PR #476; then the fix leg, the planner's verification, the rehearsal of the migration on a copy of production, the runbook section and the owner's browser pass.
+
+## 2026-11-26 — 0.4c: the rehearsal, the runbook and round two routed; the fix leg runs (claude)
+
+**The rehearsal.** A copy of production taken at 22:16Z on 2026-11-25 (the schema, the migrations table, the products, their prices and the languages; no athlete data) went into a throwaway Postgres 17 at 512 MB.
+
+- **Apply.** The guard found no row, and `prisma migrate deploy` applied the migration in about a second: 17 migrations, the pinned checksum, no log line.
+- **Rows.** The old columns hash the same before and after, `updatedAt` included. The 12 features kept their texts and their order with distinct version 4 ids, every item exactly `{id, text}`; `wordsUpdatedAt` equals `updatedAt`; no photo and no translation; the three indexes and both keys (the language `RESTRICT`, the product `CASCADE`). The four consistency queries returned what the runbook expects (4, 4, 4 and 0 features).
+- **Clones.** `main`'s client read the migrated rows, and a create and an edit it made showed up in the first query. The recovery changed nothing on untouched rows and emptied the first query after writes of the new code. The new public read served the four products in English, in `createdAt` order.
+- The container and the dumps are gone. The runbook section landed as #478 (`2d81b82e5`).
+
+**Round two** (a fresh Opus `step-reviewer` at deep, on `f88e236f5`): request-changes.
+
+- **Roster.** Three lenses, four refuters and the breaker, each a `pipeline-worker` the reviewer spawned (checked against the session's agent records, all finished); the sweep was the reviewer's own. The breaker's own report was read against the buckets.
+- **Evidence.** The battery is green, 47 of 47 mutants red, 30 attacks run. The 106 deviations are all confirmed. The reports and the evidence are archived in `.feature-dev/1795605417/r2/`.
+- **Counts.** 77 candidates pooled before any cap, 29 reported, 20 findings and 4 drops after deduplication. Of the 16 sent to refuters, 14 were confirmed (one as a mechanism only, its security framing refuted) and 2 refuted as framed with a narrower part confirmed; none unproven.
+
+The buckets, applied the same turn:
+
+- **fix-now, to the Codex fix leg from `step-0.4c-fix-prompt.md`:**
+  - RF-1: the lock-order race case cannot see the order regress; it now asserts the stored row.
+  - RF-4: two cases depend on two live clock stamps; they are pinned off the live clock.
+  - RF-5: the English lock-order case asserts a title only; it now pins the photo it deletes.
+  - RF-6: the mapper imports the endpoint's state function; the list's states move into the endpoint (ADR-0017).
+  - RF-7: the featured writes reach soft-deleted products; ruling 18 below.
+  - RF-11: the product fieldsets lock without dimming.
+  - RF-12: three spies watch `prisma` while the code runs on `tx`.
+  - RF-13: the public features case can be crowded out of the home list.
+  - RF-14: ADR-0013 deleted a retired consequence instead of striking it through.
+  - RF-15: an optional `locale` prop exists for the tests' sake.
+  - RF-16: a fixture file sits outside `__fixtures__`.
+  - RF-17: the module has two hand-rolled deferred helpers.
+  - RF-18: three names in the contracts test claim more than they check.
+- **RF-8, applied by the planner** to the body of PR #476, as in 0.4d3b. The body now says that the home page, the storefront and the contact form list products oldest first and can reorder at the deploy. Its last checklist item checks that order, and its photo risk sentence names the client's own retry. Production read: the `createdAt` order is today's home order, so the storefront and the contact form are the pages that change.
+- **Ruling 18, RF-7's third write.** The reviewer kept the products toggle's twin out of the fix "because that code is not in the diff". It is in the diff: `toggleFeatured`'s `unfeatureOthers` (`product/admin.ts:156-162`) sits on added lines of the hunk `@@ -106,47 +151,22 @@`, in the file the fix edits, and R13(a) covers every write. This moves into the fix set a part the reviewer had deferred, which the skill's latitude does not grant. The planner does it because the deferral rested on a false fact and the alternative is a rider fixed for two of three writes in one file. The owner may reverse it. The blog's three writes (`blog/admin.ts:77`, `:128`, `:188`) are outside the fence and go to SB-110.
+- **carry-forward, applied now in the planner's docs PR:**
+
+  - RF-9: the recovery before a rollback rewrote every row the first query flags, and could revert or erase a write the old code made in the window. It now rewrites only the rows it names, after the first query is read with the rows' timestamps.
+  - RF-20: the first query counted an old array's lower bound as a difference. It now builds both sides as new arrays.
+
+  Both were checked on synthetic rows in a throwaway Postgres 17. The corrected query reports a subset of what the rehearsed one did.
+
+- **defer:**
+  - RF-2 → SB-109: the words clock compares two wall clocks. The breaker rated it medium and wanted it in this PR. The planner keeps the reviewer's bucket: by R6 the comparison is shared with the page sections, so a column for products alone would split one meaning in two, and a fix for both costs one additive column per translation table later. Production clocks do not step, and nobody saves two forms within a second.
+  - RF-3 → SB-107: the stale photo write can be set off by the client's own retry under a stalled delete.
+  - RF-10 → SB-107: the photo cleanup trusts the stored URL. Only an API call reaches it, and design §8.1 ratifies that.
+  - RF-19 → SB-111: no dependency rule keeps CMS code away from the storage modules.
+- **drop:**
+  - the deviation-list hygiene: a pipeline artifact, and no verdict changes;
+  - O1: a repeated id in a translation body lets the first word win. The stored list is keyed by the English ids, and the refusal is specified for English writes only;
+  - O2: one malformed stored list fails whole pages. That is ratified in design §5.3, and no writer produces one;
+  - O4: a two-dimensional `features` value gets a generic error from the guard. Prisma cannot write one, the migration still aborts, and the file is pinned.
+
+**Next.** The Codex fix leg (gpt-6.1-sol at xhigh) applies the set on PR #476 against the planner's container `tdp-0-4c-fix`. Then come the planner's verification at the final HEAD, the owner's browser pass on 4712, and the dispatch and the merge on his word.
