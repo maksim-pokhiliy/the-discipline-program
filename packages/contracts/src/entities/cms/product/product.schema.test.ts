@@ -15,6 +15,7 @@ import {
 } from "./product.schema";
 
 const PRICE_ID = "clh3am8hi0000qwer1234abcd";
+const PRODUCT_ID = "clh3am8hi0001qwer1234abcd";
 
 const AMOUNT_ONLY = { amountCents: 100 };
 
@@ -180,7 +181,7 @@ const PRODUCT_INPUT = {
 };
 const PRODUCT_RESPONSE = {
   ...PRODUCT_INPUT,
-  id: PRICE_ID,
+  id: PRODUCT_ID,
   prices: [],
   imageUrl: null,
   createdAt: new Date(),
@@ -272,7 +273,7 @@ describe("product photo contracts", () => {
   });
 
   it("leaves absent features and the photo out of an update", () => {
-    expect(updateProductSchema.parse({ title: "Renamed" })).toEqual({ title: "Renamed" });
+    expect(updateProductSchema.parse({ title: "Renamed" })).toStrictEqual({ title: "Renamed" });
   });
 
   it("accepts explicit null to remove the photo", () => {
@@ -285,6 +286,7 @@ describe("product photo contracts", () => {
       Object.entries(response).filter(([key]) => key !== "imageUrl"),
     );
 
+    expect(productSchema.parse(response).features).toEqual([FEATURE.text]);
     expect(productSchema.parse(response).imageUrl).toBeNull();
     expect(productSchema.parse({ ...response, imageUrl: PHOTO }).imageUrl).toBe(PHOTO);
     expect(productSchema.safeParse(withoutPhoto).success).toBe(false);
