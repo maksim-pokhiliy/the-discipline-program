@@ -796,3 +796,32 @@ The buckets, applied the same turn:
   - O4: a two-dimensional `features` value gets a generic error from the guard. Prisma cannot write one, the migration still aborts, and the file is pinned.
 
 **Next.** The Codex fix leg (gpt-6.1-sol at xhigh) applies the set on PR #476 against the planner's container `tdp-0-4c-fix`. Then come the planner's verification at the final HEAD, the owner's browser pass on 4712, and the dispatch and the merge on his word.
+
+## 2026-11-26 — 0.4c: the fix leg applied round two's set and the planner verified it; the browser pass is next (claude)
+
+**The fix leg.** Codex thread `01a21549-b81f-7400-ab7e-ca4aae056a41` (gpt-6.1-sol at xhigh) ran from the byte-identical copy of `step-0.4c-fix-prompt.md` (sha256 `624889dd…`) against the planner's container `tdp-0-4c-fix` and reported `done`. Checked against the rollout and the tree before the report was read:
+
+- seven commits on PR #476 (`f88e236f5..9f98cc477`), one per concern; the PR is still the only one, its body and comments untouched, and CI is green at `9f98cc477`;
+- no agent spawned: the rollout holds no `spawn_agent` call, and the roster is four INLINE entries;
+- two `fence` deviations, both the fieldset style move the prompt granted; no `law` deviation and no guard denial; one approval review timed out, and its identical retry passed;
+- the migration's sha256 unchanged, the container removed, no process of the leg alive, no host-probe warning.
+
+**The planner's verification at `9f98cc477`.** It ran in a container of its own (`tdp-0-4c-verify`, removed after), with every heavy command inside the fence and the type check and the lint forced past the turbo cache:
+
+- contracts 88 files / 1 492 tests, admin 59 / 615, ui 34 / 275, platform 159 (+2 skipped) / 1 699 (+47 skipped), api-server 229 / 2 968 (round two's 2 965 plus the three featured cases);
+- check-types and lint 16 of 16, with the tree clean after the fixing lint; the three package ESLint runs at zero warnings; dep:check (2 680 modules), format and the admin build (52 pages) clean; the pre-push cone 32 of 32;
+- the handoff's grep gates and the fix prompt's two all hold, and the migration's sha256 is unchanged;
+- eight mutants of the planner's own, one per new guard. Each went red on exactly its intended assertion and was restored by sha256, and the four affected files were green before and after (39 tests):
+  - RF-1, the save reads before the lock: the stored-row assertion goes red while the old read-back stays green, so one run shows both the finding and its fix;
+  - RF-4, the confirming save keeps the stored stamp: both cases stay ENGLISH_NEWER;
+  - RF-5, the update reads before the lock (the wrong photo is deleted) and locks after the write (the save times out);
+  - RF-7, each of the three featured clauses without `deletedAt: null`: the soft-deleted product loses `isFeatured`;
+  - RF-12, the English refusal after a transaction read: `$transaction` is called.
+
+The evidence is in `.feature-dev/1795605417/verify/`, and the leg's in `.feature-dev/1795605417/fix/`.
+
+The fix pass changes nothing the PR body says, so the body stays. The one visible change is RF-11: the product fieldsets now dim during a save, as the page editor's do, and the browser pass sees it.
+
+**The test photos.** The product upload context (`storagePrefix: "products"`) is new in this PR, so no production code can write under `products/` in the Blob store until the deploy. Every file there before the deploy is a test upload from the browser pass. The sweep is the whole prefix, deleted on the owner's word before the merge.
+
+**Next.** The owner's browser pass on 4712. Then come the dispatch and the merge on his word, the freeze, the test photos deleted, the production smoke and the close-out.
