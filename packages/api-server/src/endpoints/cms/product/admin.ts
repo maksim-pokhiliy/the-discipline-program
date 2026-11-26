@@ -72,7 +72,7 @@ export const createCmsProductAdminApi = (deps: {
         const product = await prisma.$transaction(async (tx) => {
           await ensureExclusiveFeatured(data.isFeatured === true, () =>
             tx.product.updateMany({
-              where: { isFeatured: true },
+              where: { isFeatured: true, deletedAt: null },
               data: { isFeatured: false },
             }),
           );
@@ -106,7 +106,7 @@ export const createCmsProductAdminApi = (deps: {
 
           await ensureExclusiveFeatured(data.isFeatured === true, () =>
             tx.product.updateMany({
-              where: { isFeatured: true, id: { not: id } },
+              where: { isFeatured: true, deletedAt: null, id: { not: id } },
               data: { isFeatured: false },
             }),
           );
@@ -165,7 +165,7 @@ export const createCmsProductAdminApi = (deps: {
           find: () => tx.product.findUnique({ where: { id }, include: includeWithPrices }),
           unfeatureOthers: () =>
             tx.product.updateMany({
-              where: { isFeatured: true, id: { not: id } },
+              where: { isFeatured: true, deletedAt: null, id: { not: id } },
               data: { isFeatured: false },
             }),
           update: (isFeatured) =>

@@ -37,6 +37,31 @@ const expectOnlyFeatured = async (id: string): Promise<void> => {
 };
 
 describe("one featured product (SB-103)", () => {
+  it.each(["create", "update", "toggle"])(
+    "a featured %s leaves a soft-deleted featured product and its timestamp unchanged",
+    async (operation) => {
+      const deleted = await createProduct();
+      const target = await createProduct();
+      const before = await cleanupRaw.product.update({
+        where: { id: deleted.id },
+        data: { deletedAt: OLD_WORDS_DATE, isFeatured: true, updatedAt: OLD_WORDS_DATE },
+      });
+
+      if (operation === "create") {
+        await createProduct({ isFeatured: true });
+      } else if (operation === "update") {
+        await cmsProductAdminApi.update(target.id, { isFeatured: true });
+      } else {
+        await cmsProductAdminApi.toggleFeatured(target.id);
+      }
+
+      const after = await cleanupRaw.product.findUniqueOrThrow({ where: { id: deleted.id } });
+
+      expect(after.isFeatured).toBe(true);
+      expect(after.updatedAt).toEqual(before.updatedAt);
+    },
+  );
+
   it("a featured create unfeatures the others without moving their English words clock", async () => {
     const existing = await createProduct({ isFeatured: true });
 
