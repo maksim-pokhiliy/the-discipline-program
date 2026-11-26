@@ -5,7 +5,6 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../../db/client";
 import { cleanupRaw } from "../../../test/helpers";
 
-import { createCmsProductAdminApi } from "./admin";
 import {
   createProductInput,
   FEATURES,
@@ -13,7 +12,8 @@ import {
   PRICE,
   SECOND_FEATURE,
   useTestProducts,
-} from "./admin-test.fixtures";
+} from "./__fixtures__/admin-products";
+import { createCmsProductAdminApi } from "./admin";
 
 const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 

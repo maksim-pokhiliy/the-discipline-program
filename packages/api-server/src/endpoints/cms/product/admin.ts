@@ -8,7 +8,7 @@ import {
 
 import { prisma } from "../../../db/client";
 import { TX_BUDGET_DEFAULT } from "../../../db/transaction-config";
-import { mapToAdminProduct, mapToAdminProductListItem } from "../../../mappers/cms";
+import { mapToAdminProduct } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { ensureExclusiveFeatured, toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
@@ -18,6 +18,7 @@ import { type DeleteImage, deleteDroppedPhoto } from "./photo-cleanup";
 import { readProductDetails } from "./product-details";
 import { lockProduct } from "./product-lock";
 import { writeProductPrice, buildPriceData } from "./product-price";
+import { productTranslationState } from "./product-translation";
 import { buildProductUpdate } from "./product-update";
 
 const includeWithPrices = { prices: { where: { isActive: true } } } as const;
@@ -45,7 +46,14 @@ export const createCmsProductAdminApi = (deps: {
         orderBy: [{ createdAt: "desc" }, { title: "asc" }],
       });
 
-      return products.map(mapToAdminProductListItem);
+      return products.map((product) => ({
+        ...mapToAdminProduct(product),
+        translations: product.translations.map((row) => ({
+          locale: row.locale,
+          name: row.marketingLocale.name,
+          state: productTranslationState(row, product.wordsUpdatedAt),
+        })),
+      }));
     },
 
     getById: readProductDetails,

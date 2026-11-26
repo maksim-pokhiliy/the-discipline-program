@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { cleanupRaw } from "../../../test/helpers";
 import { cmsPagesPublicApi } from "../pages/public";
 
-import { FEATURES, useTestProducts } from "./admin-test.fixtures";
+import { FEATURES, useTestProducts } from "./__fixtures__/admin-products";
 
 const createProduct = useTestProducts();
 const PHOTO = "https://synthetic.public.blob.vercel-storage.com/products/public.jpg";

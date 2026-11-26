@@ -4,15 +4,15 @@ import { type UpdateProductData } from "@repo/contracts/cms/product";
 
 import { cleanupRaw } from "../../../test/helpers";
 
-import { createCmsProductAdminApi } from "./admin";
 import {
   FEATURES,
   FIRST_FEATURE,
-  OLD_WORDS_AT,
   PRICE,
   SECOND_FEATURE,
   useTestProducts,
-} from "./admin-test.fixtures";
+} from "./__fixtures__/admin-products";
+import { OLD_WORDS_DATE } from "./__fixtures__/translations";
+import { createCmsProductAdminApi } from "./admin";
 
 const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
@@ -46,7 +46,7 @@ const SHARED_CHANGES: { name: string; data: UpdateProductData }[] = [
 ];
 
 const ageWords = async (id: string): Promise<void> => {
-  await cleanupRaw.product.update({ where: { id }, data: { wordsUpdatedAt: OLD_WORDS_AT } });
+  await cleanupRaw.product.update({ where: { id }, data: { wordsUpdatedAt: OLD_WORDS_DATE } });
 };
 
 const readClock = async (id: string): Promise<Date> =>
@@ -58,7 +58,7 @@ describe("update — the English words clock", () => {
 
     await ageWords(product.id);
     await cmsProductAdminApi.update(product.id, data);
-    expect((await readClock(product.id)).getTime()).toBeGreaterThan(OLD_WORDS_AT.getTime());
+    expect((await readClock(product.id)).getTime()).toBeGreaterThan(OLD_WORDS_DATE.getTime());
   });
 
   it.each(SHARED_CHANGES)("stays on a $name change", async ({ data }) => {
@@ -66,7 +66,7 @@ describe("update — the English words clock", () => {
 
     await ageWords(product.id);
     await cmsProductAdminApi.update(product.id, data);
-    expect(await readClock(product.id)).toEqual(OLD_WORDS_AT);
+    expect(await readClock(product.id)).toEqual(OLD_WORDS_DATE);
   });
 
   it.each(["toggleStatus", "toggleFeatured"] as const)("stays on %s", async (toggle) => {
@@ -74,6 +74,6 @@ describe("update — the English words clock", () => {
 
     await ageWords(product.id);
     await cmsProductAdminApi[toggle](product.id);
-    expect(await readClock(product.id)).toEqual(OLD_WORDS_AT);
+    expect(await readClock(product.id)).toEqual(OLD_WORDS_DATE);
   });
 });

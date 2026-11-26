@@ -8,16 +8,14 @@ import {
 } from "@repo/contracts/cms/product";
 import { Currency, PeriodUnit } from "@repo/contracts/common";
 
-import { cleanup } from "../../../test/helpers";
-
-import { createCmsProductAdminApi, type CmsProductAdminApi } from "./admin";
+import { cleanup } from "../../../../test/helpers";
+import { createCmsProductAdminApi, type CmsProductAdminApi } from "../admin";
 
 const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
 export const FIRST_FEATURE = { id: "first", text: "First feature" };
 export const SECOND_FEATURE = { id: "second", text: "Second feature" };
 export const FEATURES: ProductFeature[] = [FIRST_FEATURE, SECOND_FEATURE];
-export const OLD_WORDS_AT = new Date("2000-01-01T00:00:00.000Z");
 export const PRICE = {
   amountCents: 1200,
   currency: Currency.UAH,

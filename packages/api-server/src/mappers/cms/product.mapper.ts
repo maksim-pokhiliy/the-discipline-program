@@ -8,7 +8,6 @@ import { z } from "zod";
 
 import {
   type AdminProduct,
-  type AdminProductListItem,
   type Price,
   type Product,
   type ProductFeature,
@@ -16,7 +15,6 @@ import {
 } from "@repo/contracts/cms/product";
 import { InternalServerError } from "@repo/errors";
 
-import { productTranslationState } from "../../endpoints/cms/product/product-translation";
 import { CURRENCY_MAP } from "../common";
 
 import { PERIOD_UNIT_MAP } from "./enum-maps";
@@ -60,24 +58,6 @@ export const mapToAdminProduct = (p: ProductWithPrices): AdminProduct => ({
   prices: p.prices.map(mapToPrice),
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
-});
-
-type ProductWithTranslations = ProductWithPrices & {
-  translations: {
-    locale: string;
-    isActive: boolean;
-    updatedAt: Date;
-    marketingLocale: { name: string };
-  }[];
-};
-
-export const mapToAdminProductListItem = (p: ProductWithTranslations): AdminProductListItem => ({
-  ...mapToAdminProduct(p),
-  translations: p.translations.map((row) => ({
-    locale: row.locale,
-    name: row.marketingLocale.name,
-    state: productTranslationState(row, p.wordsUpdatedAt),
-  })),
 });
 
 export const mapToPublicProduct = (

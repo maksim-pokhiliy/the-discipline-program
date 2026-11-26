@@ -5,8 +5,9 @@ import { ConflictError } from "@repo/errors";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { cleanupRaw } from "../../../test/helpers";
 
+import { useTestProducts } from "./__fixtures__/admin-products";
+import { OLD_WORDS_DATE } from "./__fixtures__/translations";
 import { createCmsProductAdminApi } from "./admin";
-import { OLD_WORDS_AT, useTestProducts } from "./admin-test.fixtures";
 import { type DeleteImage } from "./photo-cleanup";
 
 const PREVIOUS = "https://synthetic.public.blob.vercel-storage.com/products/previous.jpg";
@@ -39,7 +40,7 @@ describe("product photo", () => {
 
       await cleanupRaw.product.update({
         where: { id: product.id },
-        data: { wordsUpdatedAt: OLD_WORDS_AT },
+        data: { wordsUpdatedAt: OLD_WORDS_DATE },
       });
       deleteImage.mockImplementation(async () => {
         const committed = await cleanupRaw.product.findUniqueOrThrow({ where: { id: product.id } });
@@ -53,7 +54,7 @@ describe("product photo", () => {
       expect(saved.imageUrl).toBe(imageUrl);
       expect(
         (await cleanupRaw.product.findUniqueOrThrow({ where: { id: product.id } })).wordsUpdatedAt,
-      ).toEqual(OLD_WORDS_AT);
+      ).toEqual(OLD_WORDS_DATE);
     },
   );
 

@@ -5,8 +5,9 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
 
+import { createProductInput, useTestProducts } from "./__fixtures__/admin-products";
+import { OLD_WORDS_DATE } from "./__fixtures__/translations";
 import { createCmsProductAdminApi } from "./admin";
-import { createProductInput, OLD_WORDS_AT, useTestProducts } from "./admin-test.fixtures";
 
 const cmsProductAdminApi = createCmsProductAdminApi({ deleteImage: vi.fn() });
 
@@ -17,13 +18,13 @@ const UNFEATURED_UPDATES: { name: string; data: UpdateProductData }[] = [
 ];
 
 const ageWords = async (id: string): Promise<void> => {
-  await cleanupRaw.product.update({ where: { id }, data: { wordsUpdatedAt: OLD_WORDS_AT } });
+  await cleanupRaw.product.update({ where: { id }, data: { wordsUpdatedAt: OLD_WORDS_DATE } });
 };
 
 const expectClockUnchanged = async (id: string): Promise<void> => {
   const product = await cleanupRaw.product.findUniqueOrThrow({ where: { id } });
 
-  expect(product.wordsUpdatedAt).toEqual(OLD_WORDS_AT);
+  expect(product.wordsUpdatedAt).toEqual(OLD_WORDS_DATE);
 };
 
 const expectOnlyFeatured = async (id: string): Promise<void> => {
