@@ -6,7 +6,7 @@ import { Currency, PeriodUnit } from "@repo/contracts/common";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
-import { cleanup } from "../../../test/helpers";
+import { cleanup, cleanupRaw } from "../../../test/helpers";
 import { seedLocaleCatalog } from "../locale/__fixtures__/locale-catalog";
 import {
   captureMarketingPagesState,
@@ -193,6 +193,10 @@ describe("readProductDetails", () => {
     expect((await readProductDetails(product.id, "uk")).translation?.state).toBe(
       TranslationState.ENGLISH_NEWER,
     );
+    await cleanupRaw.product.update({
+      where: { id: product.id },
+      data: { wordsUpdatedAt: new Date("2000-01-03T00:00:00.000Z") },
+    });
     await cmsProductTranslationAdminApi.saveTranslation(translationBody(product.id));
     expect((await readProductDetails(product.id, "uk")).translation?.state).toBe(
       TranslationState.TRANSLATED,

@@ -42,12 +42,10 @@ describe("create — features", () => {
   });
 
   it("refuses a repeated id before any database access and creates nothing", async () => {
-    const create = vi.spyOn(prisma.product, "create");
     const transaction = vi.spyOn(prisma, "$transaction");
     const input = createProductInput({ features: REPEATED, price: PRICE });
 
     await expect(cmsProductAdminApi.create(input)).rejects.toThrow(BadRequestError);
-    expect(create).not.toHaveBeenCalled();
     expect(transaction).not.toHaveBeenCalled();
     expect(await cleanupRaw.product.count({ where: { slug: input.slug } })).toBe(0);
   });

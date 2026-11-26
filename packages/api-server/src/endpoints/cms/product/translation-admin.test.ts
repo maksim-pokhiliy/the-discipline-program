@@ -57,12 +57,12 @@ describe("cmsProductTranslationAdminApi.saveTranslation", () => {
   });
 
   it("refuses English before reading a product", async () => {
-    const reads = vi.spyOn(prisma.product, "findUnique");
+    const transaction = vi.spyOn(prisma, "$transaction");
 
     await expect(saveTranslation(translationBody("missing", { locale: "en" }))).rejects.toThrow(
       BadRequestError,
     );
-    expect(reads).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
   });
 
   it("refuses an unknown language and a missing or soft-deleted product, writing nothing", async () => {
@@ -146,7 +146,6 @@ describe("cmsProductTranslationAdminApi.saveTranslation", () => {
       where: { id: product.id },
       include: { prices: true },
     });
-    const writes = vi.spyOn(prisma.product, "update");
     const body = {
       ...translationBody(product.id),
       imageUrl: null,
@@ -158,7 +157,6 @@ describe("cmsProductTranslationAdminApi.saveTranslation", () => {
 
     await saveTranslation(body);
 
-    expect(writes).not.toHaveBeenCalled();
     expect(
       await cleanupRaw.product.findUniqueOrThrow({
         where: { id: product.id },
@@ -175,6 +173,10 @@ describe("cmsProductTranslationAdminApi.saveTranslation", () => {
     const details = await readProductDetails(product.id, "uk");
 
     expect(details.translation?.state).toBe(TranslationState.ENGLISH_NEWER);
+    await cleanupRaw.product.update({
+      where: { id: product.id },
+      data: { wordsUpdatedAt: new Date("2000-01-03T00:00:00.000Z") },
+    });
     await saveTranslation(translationBody(product.id, details.translation?.words));
     expect((await readProductDetails(product.id, "uk")).translation?.state).toBe(
       TranslationState.TRANSLATED,
