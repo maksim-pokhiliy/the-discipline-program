@@ -4,6 +4,7 @@ import { Checkbox, FormControlLabel, Grid, Stack, TextField } from "@mui/materia
 import { Controller, useFormContext } from "react-hook-form";
 
 import { FormCard } from "@app/lib/components/form-card";
+import { fieldsetStyles } from "@app/lib/components/localized-editor/fieldset-styles";
 import { useAutoSlug } from "@app/lib/hooks";
 
 import { ProductFeaturesCard } from "./product-features-card";
@@ -58,11 +59,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
             </Stack>
           </FormCard>
 
-          <Stack
-            component="fieldset"
-            disabled={isLoading}
-            sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
-          >
+          <Stack component="fieldset" disabled={isLoading} sx={fieldsetStyles}>
             <ProductFeaturesCard />
           </Stack>
           <ProductPhotoCard isLoading={isLoading} />

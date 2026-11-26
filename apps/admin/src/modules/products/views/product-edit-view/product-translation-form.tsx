@@ -18,6 +18,7 @@ import { FormView } from "@repo/ui";
 
 import { adminKeys } from "@app/lib/api/keys";
 import { EditorLanguageBar } from "@app/lib/components/localized-editor/editor-language-bar";
+import { fieldsetStyles } from "@app/lib/components/localized-editor/fieldset-styles";
 import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
 import { SectionFieldContext } from "@app/lib/components/localized-editor/section-field";
 import { TranslationSeedRefresh } from "@app/lib/components/localized-editor/translation-refresh";
@@ -73,12 +74,7 @@ export const ProductTranslationForm = ({
         <EditorLanguageBar locale={locale}>
           <ProductLanguageBanner locale={locale} />
         </EditorLanguageBar>
-        <Stack
-          component="fieldset"
-          disabled={isPending}
-          spacing={3}
-          sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
-        >
+        <Stack component="fieldset" disabled={isPending} spacing={3} sx={fieldsetStyles}>
           {translation.state === TranslationState.ENGLISH_NEWER && (
             <Alert severity="info">
               English changed after this translation was saved. Check the words against the English,
