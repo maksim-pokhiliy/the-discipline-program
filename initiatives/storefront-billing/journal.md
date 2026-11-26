@@ -825,3 +825,34 @@ The fix pass changes nothing the PR body says, so the body stays. The one visibl
 **The test photos.** The product upload context (`storagePrefix: "products"`) is new in this PR, so no production code can write under `products/` in the Blob store until the deploy. Every file there before the deploy is a test upload from the browser pass. The sweep is the whole prefix, deleted on the owner's word before the merge.
 
 **Next.** The owner's browser pass on 4712. Then come the dispatch and the merge on his word, the freeze, the test photos deleted, the production smoke and the close-out.
+
+## 2026-11-26 — 0.4c DONE: the browser pass, the test photos, the dispatch, the merge, the production smoke (claude)
+
+**The gate.** The owner walked the ten checklist items of PR #476 on his local stack and passed them all («все пункты прошли, всё круто»). The planner ticked the ten items in the PR body. Told what the production chain would do, and that the three open vetoes (R8's order, rulings 17 and 18) would be taken as accepted unless he objected, he gave his word: «да, удаляй фото и выкатывай на прод».
+
+**Before the word, read only.** No idle transaction; no product the migration's guard refuses; 16 migrations; the new columns absent; four products with 4, 4, 4 and 0 features and no write since 2026-06-25; one language. A scan of all 46 tables found no row that references a file under `products/`, and the Blob store held two files there, both uploaded during the pass (11:32Z and 11:36Z). The chain ran once dry, up to the dispatch.
+
+**Production, by the runbook (UTC).**
+
+- 11:51:33 the two test photos deleted; `products/` empty.
+- 11:51:36 the checks again; the branch head `9f98cc477` and the migration's sha256 `2e9fe267…`, the rehearsed file; the old columns' hash recorded and the four products kept in a snapshot outside the repository.
+- 11:51:37 `db-migrate.yml` dispatched on the PR branch (run 45814338300): "Applying migration `20261125120000_cms_product_translations`", the run green by 11:52:19.
+- Right after, the old code on the new schema: 17 migrations; query 1 empty (its first reading) and query 2 empty; no translation and no photo; the features 4, 4, 4 and 0; twelve feature ids, each a version 4 UUID in an item of exactly `{id, text}`; `wordsUpdatedAt` equal to `updatedAt`; the old columns' hash unchanged. Six public pages and the three `/api/ready` answered 200, the anonymous admin product read 401.
+- 11:52:32 the squash merge → `4c13ec095`. The run the merge triggered reported "No pending migrations to apply".
+- The three apps served `4c13ec095` by 11:58:13 (`/api/version`). Query 1 was empty again (its second reading), and the rest read as after the dispatch, the old columns' hash included: nothing was written in the window. The same pages answered 200 and the anonymous admin read 401. The storefront and the contact form now name the products in `createdAt` order; the home page already did. The freeze ended with that reading.
+
+**The other databases.** Dev Neon took the migration by hand at 11:58Z (16 → 17; it holds no product) through the commented dev line of `packages/api-server/.env`, the direct form of the root `.env`'s pooled line (endpoint, database and user compared in-process). The local `tdp` and `tdp_test` were at 17 from the owner's pass.
+
+**The ledger.** SB-103 and SB-104 are closed by the PR, and so are SB-25's RF-13 and RF-31; the rest of SB-25 stays open. SB-98's row now names its likely cause, the host clock (the 2026-11-25 entry), and the fix of ruling 17. SB-105 to SB-111 stay open; SB-106 is scheduled to 0.4f.
+
+**How the step ran.** Delegated, stock, `/feature` full, with 0.4e merged in:
+
+- an Opus executor to the plan gate;
+- a Codex implement leg that stopped `blocked` after T1–T8 on two approval timeouts, and a Codex successor that delivered PR #476;
+- round one inside the leg: five findings, two fixed, two deferred, one dropped;
+- round two by a fresh Opus reviewer at deep: 77 candidates pooled, 29 reported, 20 findings, 13 of them to the fix set;
+- rulings 14 to 18 and one Codex fix leg of seven commits;
+- the planner's verification: the battery, eight mutants of its own, the rehearsal on a copy of production and the runbook section;
+- one delivery PR, the docs through their own PRs, and a browser gate passed on the first walk.
+
+**Next.** Nothing runs. 0.4f and 0.4g wait for the marketing prototypes from Claude Design. On production the coach adds Ukrainian on the Languages page before he translates a product; the photos are his to upload.
