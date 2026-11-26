@@ -10,10 +10,7 @@ import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
 import { EditorLanguageBar } from "@app/lib/components/localized-editor/editor-language-bar";
-import {
-  DEFAULT_EDITOR_LOCALE,
-  type EditorLocale,
-} from "@app/lib/components/localized-editor/locale-gate";
+import { type EditorLocale } from "@app/lib/components/localized-editor/locale-gate";
 import { IMAGE_MUTATION_KEY, useUpdateProduct } from "@app/lib/hooks";
 
 import {
@@ -28,13 +25,10 @@ type ProductFormInput = z.input<typeof productFormSchema>;
 
 type ProductEditFormProps = {
   product: AdminProductDetails;
-  locale?: EditorLocale;
+  locale: EditorLocale;
 };
 
-export const ProductEditForm: React.FC<ProductEditFormProps> = ({
-  product,
-  locale = DEFAULT_EDITOR_LOCALE,
-}) => {
+export const ProductEditForm: React.FC<ProductEditFormProps> = ({ product, locale }) => {
   const { mutate: updateProduct, isPending: isSaving } = useUpdateProduct();
   const isImageBusy = useIsMutating({ mutationKey: IMAGE_MUTATION_KEY }) > 0;
   const isPending = isSaving || isImageBusy;

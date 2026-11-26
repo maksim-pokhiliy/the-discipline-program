@@ -11,10 +11,10 @@ import {
 import type * as Api from "@app/lib/api";
 import type * as Hooks from "@app/lib/hooks";
 import { clickButton, typeInto } from "@app/test/interactions";
-import { LOCALE_CATALOG } from "@app/test/locale.fixtures";
+import { ENGLISH_LOCALE, LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
-import { makePrice, makeProduct } from "../products.fixtures";
+import { makePrice, makeProduct, makeProductDeferred } from "../products.fixtures";
 
 import { ProductCreateView } from "./product-create-view";
 import { ProductEditForm } from "./product-edit-view/product-edit-form";
@@ -63,25 +63,6 @@ const MODES: [string, boolean][] = [
   ["edit", false],
 ];
 
-const deferredUpload = (): {
-  promise: Promise<{ url: string }>;
-  resolve: (value: { url: string }) => void;
-  reject: (error: Error) => void;
-} => {
-  let resolve: (value: { url: string }) => void = () => {
-    throw new Error("Upload promise was not initialized");
-  };
-  let reject: (error: Error) => void = () => {
-    throw new Error("Upload promise was not initialized");
-  };
-  const promise = new Promise<{ url: string }>((onResolve, onReject) => {
-    resolve = onResolve;
-    reject = onReject;
-  });
-
-  return { promise, resolve, reject };
-};
-
 const renderForm = (isCreate: boolean): void => {
   if (isCreate) {
     render(<ProductCreateView />);
@@ -92,7 +73,12 @@ const renderForm = (isCreate: boolean): void => {
     return;
   }
 
-  render(<ProductEditForm product={{ ...makeProduct([makePrice()]), imageUrl: PREVIOUS }} />);
+  render(
+    <ProductEditForm
+      locale={ENGLISH_LOCALE}
+      product={{ ...makeProduct([makePrice()]), imageUrl: PREVIOUS }}
+    />,
+  );
 };
 
 beforeEach(() => {
@@ -105,9 +91,11 @@ describe("product photo upload", () => {
     "omits a stale untouched photo %s when unrelated words are saved",
     async (imageUrl) => {
       const product = { ...makeProduct([makePrice()]), imageUrl };
-      const { rerender } = render(<ProductEditForm product={product} />);
+      const { rerender } = render(<ProductEditForm locale={ENGLISH_LOCALE} product={product} />);
 
-      rerender(<ProductEditForm product={{ ...product, imageUrl: PHOTO }} />);
+      rerender(
+        <ProductEditForm locale={ENGLISH_LOCALE} product={{ ...product, imageUrl: PHOTO }} />,
+      );
 
       if (imageUrl === null) {
         expect(screen.queryByRole("img", { name: "Preview" })).not.toBeInTheDocument();
@@ -133,7 +121,7 @@ describe("product photo upload", () => {
   it.each(MODES)(
     "%s Save waits for upload and writes its returned photo",
     async (_name, isCreate) => {
-      const upload = deferredUpload();
+      const upload = makeProductDeferred<{ url: string }>();
       const label = isCreate ? "Create Product" : "Save Changes";
 
       endpoints.uploadImage.mockReturnValueOnce(upload.promise);
@@ -171,7 +159,7 @@ describe("product photo upload", () => {
   );
 
   it.each(MODES)("a failed %s upload preserves the previous photo", async (_name, isCreate) => {
-    const upload = deferredUpload();
+    const upload = makeProductDeferred<{ url: string }>();
     const label = isCreate ? "Create Product" : "Save Changes";
 
     endpoints.uploadImage.mockReturnValueOnce(upload.promise);

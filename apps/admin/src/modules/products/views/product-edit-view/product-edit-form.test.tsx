@@ -7,7 +7,7 @@ import { Currency, PeriodUnit } from "@repo/contracts/common";
 
 import type * as Hooks from "@app/lib/hooks";
 import { typeIntoNth } from "@app/test/interactions";
-import { LOCALE_CATALOG } from "@app/test/locale.fixtures";
+import { ENGLISH_LOCALE, LOCALE_CATALOG } from "@app/test/locale.fixtures";
 import { render } from "@app/test/render";
 
 import {
@@ -48,7 +48,7 @@ const MONTHLY_USD_PRICE = makePrice({
 
 describe("ProductEditForm language bar", () => {
   it("shows the language switch and the English product note", () => {
-    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={makeProduct([MONTHLY_USD_PRICE])} />);
 
     expect(screen.getByRole("combobox", { name: "Language" })).toHaveTextContent("English");
     expect(
@@ -69,7 +69,7 @@ describe("ProductEditForm pricing", () => {
     { label: "Price", message: "Enter the price as a number" },
     { label: "Period length", message: "Enter the period length as a whole number" },
   ])("explains an empty $label on its field and blocks the save", async ({ label, message }) => {
-    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={makeProduct([MONTHLY_USD_PRICE])} />);
     typeInto(label, "");
     clickButton("Save Changes");
 
@@ -88,7 +88,7 @@ describe("ProductEditForm pricing", () => {
       autoRenew: false,
     });
 
-    render(<ProductEditForm product={makeProduct([price])} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={makeProduct([price])} />);
 
     expectPricing({
       amount: 1200,
@@ -101,7 +101,7 @@ describe("ProductEditForm pricing", () => {
   });
 
   it("shows a stored monthly USD price with auto-renew", () => {
-    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={makeProduct([MONTHLY_USD_PRICE])} />);
 
     expectPricing({
       amount: 99,
@@ -114,7 +114,12 @@ describe("ProductEditForm pricing", () => {
   });
 
   it("falls back to the contract defaults when the product has no active price", () => {
-    render(<ProductEditForm product={makeProduct([makePrice({ isActive: false })])} />);
+    render(
+      <ProductEditForm
+        locale={ENGLISH_LOCALE}
+        product={makeProduct([makePrice({ isActive: false })])}
+      />,
+    );
 
     expectPricing({
       amount: null,
@@ -129,7 +134,7 @@ describe("ProductEditForm pricing", () => {
   it("submits the edited price in a payload the update request schema accepts", async () => {
     const product = makeProduct([MONTHLY_USD_PRICE]);
 
-    render(<ProductEditForm product={product} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={product} />);
 
     typeInto("Price", "12.5");
     typeInto("Period length", "4");
@@ -158,13 +163,13 @@ describe("ProductEditForm features", () => {
 
   it("blocks feature text, add, move and remove while the update is pending", async () => {
     const product = { ...makeProduct([MONTHLY_USD_PRICE]), features: [first, second] };
-    const { rerender } = render(<ProductEditForm product={product} />);
+    const { rerender } = render(<ProductEditForm locale={ENGLISH_LOCALE} product={product} />);
 
     act(() => screen.getByRole("button", { name: "Save Changes" }).focus());
     clickButton("Save Changes");
     await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(1));
     mutation.isPending = true;
-    rerender(<ProductEditForm product={product} />);
+    rerender(<ProductEditForm locale={ENGLISH_LOCALE} product={product} />);
 
     for (const field of screen.getAllByLabelText("Text")) {
       expect(field).toBeDisabled();
@@ -184,7 +189,7 @@ describe("ProductEditForm features", () => {
     expect(screen.getAllByLabelText("Text")[1]).toHaveValue(second.text);
     expect(updateProductMock).toHaveBeenCalledTimes(1);
     mutation.isPending = false;
-    rerender(<ProductEditForm product={product} />);
+    rerender(<ProductEditForm locale={ENGLISH_LOCALE} product={product} />);
     typeIntoNth("Text", 0, "Editable again");
     clickButton("Move Feature 1 down");
     clickButton("Remove Feature 1");
@@ -196,7 +201,7 @@ describe("ProductEditForm features", () => {
   it("adds, moves, removes and edits features while keeping their ids", async () => {
     const product = { ...makeProduct([MONTHLY_USD_PRICE]), features: [first, second, third] };
 
-    render(<ProductEditForm product={product} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={product} />);
     clickButton("Add Feature");
     typeIntoNth("Text", 3, "New feature");
     typeIntoNth("Text", 0, "Edited first");
@@ -220,7 +225,7 @@ describe("ProductEditForm features", () => {
   });
 
   it("a blank feature blocks the save with the field message", async () => {
-    render(<ProductEditForm product={makeProduct([MONTHLY_USD_PRICE])} />);
+    render(<ProductEditForm locale={ENGLISH_LOCALE} product={makeProduct([MONTHLY_USD_PRICE])} />);
     clickButton("Add Feature");
     clickButton("Save Changes");
 

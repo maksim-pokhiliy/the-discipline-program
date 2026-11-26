@@ -63,22 +63,27 @@ export const makeTranslatedProduct = (
   };
 };
 
-type ProductDeferred<TValue extends void | AdminProductDetails> = {
+type ProductDeferred<TValue extends void | AdminProductDetails | { url: string }> = {
   promise: Promise<TValue>;
   resolve: (value: TValue) => void;
+  reject: (error: Error) => void;
 };
 
 export const makeProductDeferred = <
-  TValue extends void | AdminProductDetails,
+  TValue extends void | AdminProductDetails | { url: string },
 >(): ProductDeferred<TValue> => {
   let resolve: ProductDeferred<TValue>["resolve"] = () => {
     throw new Error("Product deferred was not initialized");
   };
-  const promise = new Promise<TValue>((resolvePromise) => {
+  let reject: ProductDeferred<TValue>["reject"] = () => {
+    throw new Error("Product deferred was not initialized");
+  };
+  const promise = new Promise<TValue>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
+    reject = rejectPromise;
   });
 
-  return { promise, resolve };
+  return { promise, resolve, reject };
 };
 
 type ExpectedPricing = {
